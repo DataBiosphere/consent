@@ -226,11 +226,11 @@ public class DataSetResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    public Response describeDataSets(@Context HttpServletRequest request , @QueryParam("dacUserId") Integer dacUserId){
+    public Response describeDataSets(@Context HttpServletRequest request, @QueryParam("dacUserId") Integer dacUserId){
         if (StringUtils.isEmpty(request.getParameter("dacUserId"))) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {
-            Collection<DataSetDTO> dataSetList = api.describeDataSets(dacUserId);
+            Collection<DataSetDTO> dataSetList = datasetService.describeDatasets(dacUserId);
             return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
         }
     }
@@ -350,9 +350,12 @@ public class DataSetResource extends Resource {
     @Path("/autocomplete/{partial}")
     @Produces("application/json")
     @PermitAll
-    public Response datasetAutocomplete(@PathParam("partial") String partial){
-        List<Map<String, String>> j = api.autoCompleteDataSets(partial);
-        return Response.ok(j, MediaType.APPLICATION_JSON).build();
+    public Response datasetAutocomplete(@Auth AuthUser authUser, @PathParam("partial") String partial){
+        User dacUser = userService.findUserByEmail(authUser.getName());
+        Integer dacUserId = dacUser.getDacUserId();
+        List<Map<String, String>> datasets = datasetService.autoCompleteDatasets(partial, dacUserId);
+
+        return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
     }
 
     @PUT
