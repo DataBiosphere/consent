@@ -107,7 +107,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
           "INNER JOIN consents c ON c.consentid = ca.consentid " +
           "INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
           "INNER JOIN dacuser u ON ur.user_id = u.dacUserId " +
-          "WHERE u.dacUserId = :dacUserId and d.name IS NOT NULL " +
+          "WHERE u.dacuserid = :dacuserid AND d.name IS NOT NULL " +
           "ORDER BY d.datasetid, k.displayorder")
     Set<DataSetDTO> findDatasetsByUser(@Bind("dacUserId") Integer dacUserId);
 
@@ -118,7 +118,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
           "INNER JOIN dictionary k ON k.keyid = dp.propertykey " +
           "INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
           "INNER JOIN consents c ON c.consentid = ca.consentid " +
-          "WHERE d.name IS NOT NULL and d.active = true " +
+          "WHERE d.name IS NOT NULL AND d.active = true " +
           "ORDER BY d.datasetid, k.displayorder")
     Set<DataSetDTO> findActiveDatasets();
 
@@ -139,7 +139,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
           "LEFT OUTER JOIN dictionary k on k.keyid = dp.propertykey " +
           "LEFT OUTER JOIN consentassociations ca on ca.datasetid = d.datasetid " +
           "LEFT OUTER JOIN consents c on c.consentid = ca.consentid " +
-          "WHERE d.datasetid = :dataSetId ORDER BY d.datasetid, k.displayorder")
+          "WHERE d.datasetid = :datasetid ORDER BY d.datasetid, k.displayorder")
     Set<DataSetDTO> findDatasetDTOWithPropertiesByDatasetId(@Bind("dataSetId") Integer dataSetId);
 
     @UseRowMapper(DatasetPropertyMapper.class)
