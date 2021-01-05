@@ -10,6 +10,7 @@ import org.broadinstitute.dsp.consent.models.DataUseModels._
 import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
 import org.broadinstitute.dsp.consent.models.NihModels._
 import org.broadinstitute.dsp.consent.models.DacModels._
+import org.broadinstitute.dsp.consent.models.ElectionModels._
 
 
 import scala.util.{Failure, Success, Try}
@@ -31,6 +32,7 @@ object JsonProtocols extends DefaultJsonProtocol {
     implicit val nihUserFormat = jsonFormat4(NihUserAccount)
     implicit val nihVerify = jsonFormat1(NihVerify)
     implicit val dacFormat = jsonFormat8(Dac)
+    implicit val electionStatusFormat = jsonFormat2(ElectionStatus)
 
     def optionalEntryReader[T](fieldName: String, data: Map[String,JsValue], converter: JsValue => T, default: T): T = {
         data.getOrElse(fieldName, None) match {
@@ -61,7 +63,7 @@ object JsonProtocols extends DefaultJsonProtocol {
                 }
 
             if (!darm.errors.isEmpty)
-                map += ("errors" -> JsArray(darm.errors.map(_.toJson).toVector))
+                map += ("errors" -> darm.errors.toJson)
 
             JsObject(map.toMap)
         }
@@ -119,9 +121,9 @@ object JsonProtocols extends DefaultJsonProtocol {
               }
 
             if (!ri.libraryCards.isEmpty)
-              map += ("libraryCards" -> JsArray(ri.libraryCards.map(_.toJson).toVector))
+              map += ("libraryCards" -> ri.libraryCards.toJson)
             if (!ri.libraryCardEntries.isEmpty)
-              map += ("libraryCardEntries" -> JsArray(ri.libraryCardEntries.map(_.toJson).toVector))
+              map += ("libraryCardEntries" -> ri.libraryCardEntries.toJson)
 
             JsObject(map.toMap)
         }
@@ -181,17 +183,19 @@ object JsonProtocols extends DefaultJsonProtocol {
                 }
 
             if (!dar.ontologies.isEmpty)
-                map += ("ontologies" -> JsArray(dar.ontologies.map(_.toJson).toVector))
+                map += ("ontologies" -> dar.ontologies.toJson)
             if (!dar.labCollaborators.isEmpty)
-                map += ("labCollaborators" -> JsArray(dar.labCollaborators.map(_.toJson).toVector))
+                map += ("labCollaborators" -> dar.labCollaborators.toJson)
             if (!dar.internalCollaborators.isEmpty)
-                map += ("internalCollaborators" -> JsArray(dar.internalCollaborators.map(_.toJson).toVector))
+                map += ("internalCollaborators" -> dar.internalCollaborators.toJson)
             if (!dar.externalCollaborators.isEmpty)
-                map += ("externalCollaborators" -> JsArray(dar.externalCollaborators.map(_.toJson).toVector))
+                map += ("externalCollaborators" -> dar.externalCollaborators.toJson)
             if (!dar.datasets.isEmpty)
-                map += ("datasets" -> JsArray(dar.datasets.map(_.toJson).toVector))
+                map += ("datasets" -> dar.datasets.toJson)
+            if (!dar.datasetIds.isEmpty)
+                map += ("datasetIds" -> dar.datasetIds.toJson)
             if (!dar.datasetDetail.isEmpty)
-                map += ("datasetDetail" -> JsArray(dar.datasetDetail.map(_.toJson).toVector))
+                map += ("datasetDetail" -> dar.datasetDetail.toJson)
 
             JsObject(map.toMap)
         }

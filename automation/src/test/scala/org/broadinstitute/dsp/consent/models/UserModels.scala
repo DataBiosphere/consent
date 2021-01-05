@@ -16,12 +16,13 @@ object UserModels {
         dacUserId: Option[Int] = None, 
         email: Option[String] = None,
         displayName: Option[String] = None,
-        createDate: Option[String] = None,
         roles: Option[Seq[UserRole]] = None,
         emailPreference: Option[Boolean] = None,
         status: Option[String] = None,
         rationale: Option[String] = None,
+        //createDate: Option[Long] = None,
         researcherProperties: Option[Seq[ResearcherProperty]] = None,
-        whitelistEntries: Option[Seq[WhiteListEntry]] = None
+        whitelistEntries: Option[Seq[WhiteListEntry]] = None,
+        profileCompleted: Option[Boolean] = None
     )
 }

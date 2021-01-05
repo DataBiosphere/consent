@@ -110,8 +110,10 @@ object DarService {
         }
     }
 
-    def getPendingDARByOwner(manageDars: Seq[DataAccessRequestManage], userId: Int): Seq[DataAccessRequestManage] = {
-        manageDars.filter(md => md.ownerUser.getOrElse(0) == userId 
-            && md.electionStatus.getOrElse("") != "Open" && md.electionStatus.getOrElse("") != "Final")
+    def getPendingDARsByMostRecent(manageDars: Seq[DataAccessRequestManage], limit: Int = 2): Seq[DataAccessRequestManage] = {
+        manageDars.filter(md => md.electionStatus.getOrElse("") != "Open" && md.electionStatus.getOrElse("") != "Final"
+            && md.electionStatus.getOrElse("") != "Pending Approval")
+            .sortWith((a, b) => a.createDate.getOrElse(0L) > b.createDate.getOrElse(0L))
+            .take(limit)
     }
 }

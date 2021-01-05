@@ -25,6 +25,10 @@ class AdminScenarios extends Simulation with TestRunner {
                 .exec(
                     AdminChains.manageAccess(TestConfig.adminHeader)
                 )
+                .pause(1)
+                .exec(
+                    AdminChains.createElections(TestConfig.adminHeader)
+                )
         )
     )
 }

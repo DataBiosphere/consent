@@ -283,4 +283,18 @@ object Requests {
         )
     }
   }
+
+  object Election {
+    val createElectionResponse: String = "createElectionResponse"
+
+    def createElection(expectedStatus: Int, dataRequestId: String, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Create Elections")
+        .post(s"api/dataRequest/$dataRequestId/election")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .body(StringBody(body)).asJson
+        .check(bodyString.saveAs(createElectionResponse))
+        .check(status.is(expectedStatus))
+    }
+  }
 }

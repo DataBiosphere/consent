@@ -43,17 +43,19 @@ object DarChains {
                 .parseJson.convertTo[DataAccessRequest];
             val referenceId = session("darReferenceId").as[String]
 
-            val dsIds = session("dataSetIds").as[Seq[Int]]
+            val dsIds = collection.mutable.ListBuffer[Int]()
             var datasetList = collection.mutable.ListBuffer[DataSet]()
             for (id <- 0 to 1) {
                 val dataSetStr = session(Requests.DataSet.dataSetsByDataSetId + id).as[String]
-                datasetList += dataSetStr.parseJson.convertTo[DataSet]
+                val dataSet = dataSetStr.parseJson.convertTo[DataSet]
+                datasetList += dataSet
+                dsIds += dataSet.dataSetId
             }
 
-            val partialUpdate = DarService.createDar(partialDar, researcherInfo, partialDar.userId, referenceId, dsIds, datasetList.toSeq, false)
-            val newSession = session.set("dataAccessRequestJson", partialUpdate.toJson.compactPrint)
-            val finalDar = DarService.createDar(partialDar, researcherInfo, partialDar.userId, referenceId, dsIds, datasetList.toSeq, true)
-            newSession.set("dataAccessRequestSubmit", finalDar.toJson.compactPrint)
+            val partialUpdate = DarService.createDar(partialDar, researcherInfo, partialDar.userId, referenceId, dsIds.toSeq, datasetList.toSeq, false)
+            val newSession = session.set("dataAccessRequestJson", partialUpdate.data.toJson.compactPrint)
+            val finalDar = DarService.createDar(partialDar, researcherInfo, partialDar.userId, referenceId, dsIds.toSeq, datasetList.toSeq, true)
+            newSession.set("dataAccessRequestSubmit", finalDar.data.toJson.compactPrint)
         }
         .exec(
             Requests.Dar.updatePartial(200, "${darReferenceId}", "${dataAccessRequestJson}", additionalHeaders)
