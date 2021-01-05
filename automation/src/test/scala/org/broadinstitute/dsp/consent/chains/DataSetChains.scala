@@ -9,7 +9,6 @@ import org.broadinstitute.dsp.consent.models.JsonProtocols
 import org.broadinstitute.dsp.consent.models.DataSetModels._
 import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
 import org.broadinstitute.dsp.consent.services._
-import scala.collection.mutable.ListBuffer
 
 object DataSetChains {
     def dataSetCatalogPickTwo(additionalHeaders: Map[String, String]): ChainBuilder = {
@@ -17,29 +16,30 @@ object DataSetChains {
             Requests.User.dataSetCatalog(200, "${dacUserId}", additionalHeaders)
         )
         .exec { session =>
-            implicit val dataSetFormatJson = JsonProtocols.dataSetFormat
-            implicit val dataSetEntryJson = JsonProtocols.dataSetEntryFormat
-            implicit val dataAccessRequestJson = JsonProtocols.dataAccessRequestDraftFormat
+            implicit val dataSetFormatJson: JsonProtocols.dataSetFormat.type = JsonProtocols.dataSetFormat
+            implicit val dataSetEntryJson: JsonProtocols.dataSetEntryFormat.type = JsonProtocols.dataSetEntryFormat
+            implicit val dataAccessRequestJson: JsonProtocols.dataAccessRequestDraftFormat.type = JsonProtocols.dataAccessRequestDraftFormat
 
-            var dataSetStr = session(Requests.DataSet.dataSetResponse).as[String]
-            val dataSets = dataSetStr.parseJson.convertTo[Seq[DataSet]]
+            val dataSetStr: String = session(Requests.DataSet.dataSetResponse).as[String]
+            val dataSets: Seq[DataSet] = dataSetStr.parseJson.convertTo[Seq[DataSet]]
             
-            var chosenSets = dataSets
+            val chosenSets: Seq[DataSet] = dataSets
                 .filter(ds => ds.active && !ds.dataUse.collaboratorRequired.getOrElse(false))
                 .groupBy(_.dacId)
                 .map(_._2.head)
                 .take(2)
+                .toSeq
 
-            var setIds = new ListBuffer[Int]()
-            var entrySets = new ListBuffer[DataSetEntry]()
-            chosenSets.foreach(set => {
-                setIds += set.dataSetId
-                entrySets += DataSetEntryBuilder.fromDataSet(set)
-            })
+            val setIds: Seq[Int] = chosenSets.map(s => s.dataSetId).toSeq
+            val entrySets: Seq[DataSetEntry] = chosenSets.map(s => DataSetEntryBuilder.fromDataSet(s)).toSeq
             
             val dacUserId: Int = session("dacUserId").as[Int]
-            val dar = DataAccessRequestDraft(dacUserId, entrySets, setIds)
-            val newSession = session.set("darRequestBody", dar.toJson.compactPrint)
+            val dar: DataAccessRequestDraft = DataAccessRequestDraft(
+                userId = dacUserId, 
+                datasets = entrySets, 
+                datasetId = setIds
+            )
+            val newSession: Session = session.set("darRequestBody", dar.toJson.compactPrint)
             newSession.set("dataSetIds", setIds)
         }
         .exec(

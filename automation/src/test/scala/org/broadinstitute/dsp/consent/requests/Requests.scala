@@ -3,12 +3,9 @@ package org.broadinstitute.dsp.consent.requests
 import java.net.URLEncoder
 
 import io.gatling.core.Predef._
-import io.gatling.core.structure.ChainBuilder
 import io.gatling.http.request.builder._
 import io.gatling.http.Predef._
 import org.broadinstitute.dsp.consent.TestConfig
-import org.broadinstitute.dsp.consent.models._
-import spray.json._
 
 object Requests {
 

@@ -27,18 +27,18 @@ object AdminChains {
             Requests.Dar.manageDar(200, additionalHeaders)
         )
         .exec { session =>
-            implicit val darManageFormat = JsonProtocols.DataAccessRequestManageFormat
-            implicit val userFormat = JsonProtocols.userFormat
-            implicit val dacFormat = JsonProtocols.dacFormat
-            implicit val electionStatusFormat = JsonProtocols.electionStatusFormat
+            implicit val darManageFormat: JsonProtocols.DataAccessRequestManageFormat.type = JsonProtocols.DataAccessRequestManageFormat
+            implicit val userFormat: JsonProtocols.userFormat.type = JsonProtocols.userFormat
+            implicit val dacFormat: JsonProtocols.dacFormat.type = JsonProtocols.dacFormat
+            implicit val electionStatusFormat: JsonProtocols.electionStatusFormat.type = JsonProtocols.electionStatusFormat
 
-            val manageDarStr = session(Requests.Dar.manageDarResponse).as[String]
-            var manageDars = manageDarStr.parseJson.convertTo[Seq[DataAccessRequestManage]]
+            val manageDarStr: String = session(Requests.Dar.manageDarResponse).as[String]
+            val manageDars: Seq[DataAccessRequestManage] = manageDarStr.parseJson.convertTo[Seq[DataAccessRequestManage]]
 
-            val newManageDars = DarService.setManageRolesByOwner(manageDars)
+            val newManageDars: Seq[DataAccessRequestManage] = DarService.setManageRolesByOwner(manageDars)
 
-            val researcherDars = DarService.getPendingDARsByMostRecent(manageDars, 2)
-            val electionStatus = ElectionStatus("Open", false)
+            val researcherDars: Seq[DataAccessRequestManage] = DarService.getPendingDARsByMostRecent(newManageDars, 2)
+            val electionStatus: ElectionStatus = ElectionStatus(status = "Open", finalAccessVote = false)
             
             val newSession = session.set(Requests.Dar.manageDarResponse, researcherDars)
             newSession.set("electionStatusBody", electionStatus.toJson.compactPrint)
@@ -51,8 +51,8 @@ object AdminChains {
     def createElections(additionalHeaders: Map[String, String]): ChainBuilder = {
         repeat (session => session(Requests.Dar.manageDarResponse).as[Seq[DataAccessRequestManage]].size, "darIndex") {
             exec { session =>
-                val manageDars = session(Requests.Dar.manageDarResponse).as[Seq[DataAccessRequestManage]]
-                val darIndex = session("darIndex").as[Int]
+                val manageDars: Seq[DataAccessRequestManage] = session(Requests.Dar.manageDarResponse).as[Seq[DataAccessRequestManage]]
+                val darIndex: Int = session("darIndex").as[Int]
 
                 session.set("dataRequestId", manageDars(darIndex).dataRequestId.getOrElse(""))
             }

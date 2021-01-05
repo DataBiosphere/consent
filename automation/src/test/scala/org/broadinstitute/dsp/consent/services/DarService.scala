@@ -16,17 +16,17 @@ object DarService {
                   dataSetIds: Seq[Int], 
                   datasets: Seq[DataSet], 
                   finalSubmit: Boolean = false): DataAccessRequest = {
-        implicit val dataAccessRequestDataFormat = JsonProtocols.DataAccessRequestDataFormat
-        implicit val dataSetEntryFormat = JsonProtocols.dataSetEntryFormat
-        var dataMap = collection.mutable.Map[String, JsValue]()
-        var darMap = collection.mutable.Map[String, JsValue]()
+        implicit val dataAccessRequestDataFormat: JsonProtocols.DataAccessRequestDataFormat.type = JsonProtocols.DataAccessRequestDataFormat
+        implicit val dataSetEntryFormat: JsonProtocols.dataSetEntryFormat.type = JsonProtocols.dataSetEntryFormat
+        var dataMap: collection.mutable.Map[String, JsValue] = collection.mutable.Map[String, JsValue]()
+        var darMap: collection.mutable.Map[String, JsValue] = collection.mutable.Map[String, JsValue]()
 
         dataMap += ("datasets" -> JsArray(datasets.map(DataSetEntryBuilder.fromDataSet(_).toJson).toVector))
         dataMap += ("datasetIds" -> JsArray(dataSetIds.map(_.toJson).toVector))
 
-        val piName = researcherInfo.piName.getOrElse("")
-        val profileName = researcherInfo.profileName.getOrElse("Test Researcher")
-        val isThePI = researcherInfo.isThePI.getOrElse("false")
+        val piName: String = researcherInfo.piName.getOrElse("")
+        val profileName: String = researcherInfo.profileName.getOrElse("Test Researcher")
+        val isThePI: String = researcherInfo.isThePI.getOrElse("false")
 
         dataMap += ("researcher" -> JsString(profileName))
         
@@ -115,5 +115,6 @@ object DarService {
             && md.electionStatus.getOrElse("") != "Pending Approval")
             .sortWith((a, b) => a.createDate.getOrElse(0L) > b.createDate.getOrElse(0L))
             .take(limit)
+            .toSeq
     }
 }

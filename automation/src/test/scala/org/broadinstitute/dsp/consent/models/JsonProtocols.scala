@@ -16,23 +16,23 @@ import org.broadinstitute.dsp.consent.models.ElectionModels._
 import scala.util.{Failure, Success, Try}
 
 object JsonProtocols extends DefaultJsonProtocol {
-    implicit val researcherPropertyFormat = jsonFormat4(ResearcherProperty)
-    implicit val userRoleFormat = jsonFormat5(UserRole)
-    implicit val whiteListEntryFormat = jsonFormat8(WhiteListEntry) 
-    implicit val dataSetPropertyFormat = jsonFormat2(DataSetProperty)
-    implicit val dataUseFormat = jsonFormat5(DataUse)
-    implicit val dataSetEntryFormat = jsonFormat4(DataSetEntry)
-    implicit val collaboratorFormat = jsonFormat6(Collaborator)
-    implicit val dataSetDetailFormat = jsonFormat3(DataSetDetailEntry)
-    implicit val ontologyEntryFormat = jsonFormat4(OntologyEntry)
-    implicit val userFormat = jsonFormat10(User)
-    implicit val dataSetFormat = jsonFormat16(DataSet)
-    implicit val dataAccessRequestDraftFormat = jsonFormat3(DataAccessRequestDraft)
-    implicit val fireCloudProfileFormat = jsonFormat11(FireCloudProfile)
-    implicit val nihUserFormat = jsonFormat4(NihUserAccount)
-    implicit val nihVerify = jsonFormat1(NihVerify)
-    implicit val dacFormat = jsonFormat8(Dac)
-    implicit val electionStatusFormat = jsonFormat2(ElectionStatus)
+    implicit val researcherPropertyFormat: JsonFormat[ResearcherProperty] = jsonFormat4(ResearcherProperty)
+    implicit val userRoleFormat: JsonFormat[UserRole] = jsonFormat5(UserRole)
+    implicit val whiteListEntryFormat: JsonFormat[WhiteListEntry] = jsonFormat8(WhiteListEntry) 
+    implicit val dataSetPropertyFormat: JsonFormat[DataSetProperty] = jsonFormat2(DataSetProperty)
+    implicit val dataUseFormat: JsonFormat[DataUse] = jsonFormat5(DataUse)
+    implicit val dataSetEntryFormat: JsonFormat[DataSetEntry] = jsonFormat4(DataSetEntry)
+    implicit val collaboratorFormat: JsonFormat[Collaborator] = jsonFormat6(Collaborator)
+    implicit val dataSetDetailFormat: JsonFormat[DataSetDetailEntry] = jsonFormat3(DataSetDetailEntry)
+    implicit val ontologyEntryFormat: JsonFormat[OntologyEntry] = jsonFormat4(OntologyEntry)
+    implicit val userFormat: JsonFormat[User] = jsonFormat10(User)
+    implicit val dataSetFormat: JsonFormat[DataSet] = jsonFormat16(DataSet)
+    implicit val dataAccessRequestDraftFormat: JsonFormat[DataAccessRequestDraft] = jsonFormat3(DataAccessRequestDraft)
+    implicit val fireCloudProfileFormat: JsonFormat[FireCloudProfile] = jsonFormat11(FireCloudProfile)
+    implicit val nihUserFormat: JsonFormat[NihUserAccount] = jsonFormat4(NihUserAccount)
+    implicit val nihVerify: JsonFormat[NihVerify] = jsonFormat1(NihVerify)
+    implicit val dacFormat: JsonFormat[Dac] = jsonFormat8(Dac)
+    implicit val electionStatusFormat: JsonFormat[ElectionStatus] = jsonFormat2(ElectionStatus)
 
     def optionalEntryReader[T](fieldName: String, data: Map[String,JsValue], converter: JsValue => T, default: T): T = {
         data.getOrElse(fieldName, None) match {
@@ -48,7 +48,7 @@ object JsonProtocols extends DefaultJsonProtocol {
             var map = collection.mutable.Map[String, JsValue]()
             val manualList = List("errors")
             darm.getClass.getDeclaredFields
-                .filterNot(f => manualList.exists(_ == f.getName))
+                .filterNot(f => manualList.contains(f.getName))
                 .foreach { f =>
                     f.setAccessible(true)
                     f.get(darm) match {
@@ -62,7 +62,7 @@ object JsonProtocols extends DefaultJsonProtocol {
                     }
                 }
 
-            if (!darm.errors.isEmpty)
+            if (darm.errors.isDefined)
                 map += ("errors" -> darm.errors.toJson)
 
             JsObject(map.toMap)
@@ -109,7 +109,7 @@ object JsonProtocols extends DefaultJsonProtocol {
             var map = collection.mutable.Map[String, JsValue]()
             val manualList = List("libraryCards", "libraryCardEntries")
             ri.getClass.getDeclaredFields
-              .filterNot(f => manualList.exists(_ == f.getName)).foreach { f =>
+              .filterNot(f => manualList.contains(f.getName)).foreach { f =>
                 f.setAccessible(true)
                 f.get(ri) match {
                     case Some(x: Boolean) => map += f.getName -> x.toJson
@@ -120,9 +120,9 @@ object JsonProtocols extends DefaultJsonProtocol {
                 }
               }
 
-            if (!ri.libraryCards.isEmpty)
+            if (ri.libraryCards.isDefined)
               map += ("libraryCards" -> ri.libraryCards.toJson)
-            if (!ri.libraryCardEntries.isEmpty)
+            if (ri.libraryCardEntries.isDefined)
               map += ("libraryCardEntries" -> ri.libraryCardEntries.toJson)
 
             JsObject(map.toMap)
@@ -131,36 +131,36 @@ object JsonProtocols extends DefaultJsonProtocol {
         def read(value: JsValue): ResearcherInfo = {
             val fields = value.asJsObject.fields
             ResearcherInfo(
-                optionalEntryReader("profileName", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("academicEmail", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("institution", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("department", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("address1", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("city", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("zipcode", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("isThePI", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("country", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("division", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("address2", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("state", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("eRACommonsID", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("pubmedID", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("scientificURL", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("havePI", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("piName", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("piEmail", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("piERACommonsID", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("completed", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("investigator", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("eraExpiration", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("eraAuthorized", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("nihUsername", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("linkedIn", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("researcherGate", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("orcid", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("checkNotifications", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("libraryCards", fields, _.convertTo[Option[Seq[String]]], None),
-                optionalEntryReader("libraryCardEntries", fields, _.convertTo[Option[Seq[WhiteListEntry]]], None)
+                profileName = optionalEntryReader("profileName", fields, _.convertTo[Option[String]], None),
+                academicEmail = optionalEntryReader("academicEmail", fields, _.convertTo[Option[String]], None),
+                institution = optionalEntryReader("institution", fields, _.convertTo[Option[String]], None),
+                department = optionalEntryReader("department", fields, _.convertTo[Option[String]], None),
+                address1 = optionalEntryReader("address1", fields, _.convertTo[Option[String]], None),
+                city = optionalEntryReader("city", fields, _.convertTo[Option[String]], None),
+                zipcode = optionalEntryReader("zipcode", fields, _.convertTo[Option[String]], None),
+                isThePI = optionalEntryReader("isThePI", fields, _.convertTo[Option[String]], None),
+                country = optionalEntryReader("country", fields, _.convertTo[Option[String]], None),
+                division = optionalEntryReader("division", fields, _.convertTo[Option[String]], None),
+                address2 = optionalEntryReader("address2", fields, _.convertTo[Option[String]], None),
+                state = optionalEntryReader("state", fields, _.convertTo[Option[String]], None),
+                eRACommonsID = optionalEntryReader("eRACommonsID", fields, _.convertTo[Option[String]], None),
+                pubmedID = optionalEntryReader("pubmedID", fields, _.convertTo[Option[String]], None),
+                scientificURL = optionalEntryReader("scientificURL", fields, _.convertTo[Option[String]], None),
+                havePI = optionalEntryReader("havePI", fields, _.convertTo[Option[String]], None),
+                piName = optionalEntryReader("piName", fields, _.convertTo[Option[String]], None),
+                piEmail = optionalEntryReader("piEmail", fields, _.convertTo[Option[String]], None),
+                piERACommonsID = optionalEntryReader("piERACommonsID", fields, _.convertTo[Option[String]], None),
+                completed = optionalEntryReader("completed", fields, _.convertTo[Option[String]], None),
+                investigator = optionalEntryReader("investigator", fields, _.convertTo[Option[String]], None),
+                eraExpiration = optionalEntryReader("eraExpiration", fields, _.convertTo[Option[String]], None),
+                eraAuthorized = optionalEntryReader("eraAuthorized", fields, _.convertTo[Option[String]], None),
+                nihUsername = optionalEntryReader("nihUsername", fields, _.convertTo[Option[String]], None),
+                linkedIn = optionalEntryReader("linkedIn", fields, _.convertTo[Option[String]], None),
+                researcherGate = optionalEntryReader("researcherGate", fields, _.convertTo[Option[String]], None),
+                orcid = optionalEntryReader("orcid", fields, _.convertTo[Option[String]], None),
+                checkNotifications = optionalEntryReader("checkNotifications", fields, _.convertTo[Option[String]], None),
+                libraryCards = optionalEntryReader("libraryCards", fields, _.convertTo[Option[Seq[String]]], None),
+                libraryCardEntries = optionalEntryReader("libraryCardEntries", fields, _.convertTo[Option[Seq[WhiteListEntry]]], None)
             )
         }
     }
@@ -171,7 +171,7 @@ object JsonProtocols extends DefaultJsonProtocol {
             val manualList = List("ontologies", "labCollaborators", "internalCollaborators", "externalCollaborators", "datasets", "datasetDetail")
 
             dar.getClass.getDeclaredFields
-                .filterNot(f => manualList.exists(_ == f.getName)).foreach { f =>
+                .filterNot(f => manualList.contains(f.getName)).foreach { f =>
                     f.setAccessible(true)
                     f.get(dar) match {
                         case Some(x: Boolean) => map += f.getName -> x.toJson
@@ -182,19 +182,19 @@ object JsonProtocols extends DefaultJsonProtocol {
                     }
                 }
 
-            if (!dar.ontologies.isEmpty)
+            if (dar.ontologies.isDefined)
                 map += ("ontologies" -> dar.ontologies.toJson)
-            if (!dar.labCollaborators.isEmpty)
+            if (dar.labCollaborators.isDefined)
                 map += ("labCollaborators" -> dar.labCollaborators.toJson)
-            if (!dar.internalCollaborators.isEmpty)
+            if (dar.internalCollaborators.isDefined)
                 map += ("internalCollaborators" -> dar.internalCollaborators.toJson)
-            if (!dar.externalCollaborators.isEmpty)
+            if (dar.externalCollaborators.isDefined)
                 map += ("externalCollaborators" -> dar.externalCollaborators.toJson)
-            if (!dar.datasets.isEmpty)
+            if (dar.datasets.isDefined)
                 map += ("datasets" -> dar.datasets.toJson)
-            if (!dar.datasetIds.isEmpty)
+            if (dar.datasetIds.isDefined)
                 map += ("datasetIds" -> dar.datasetIds.toJson)
-            if (!dar.datasetDetail.isEmpty)
+            if (dar.datasetDetail.isDefined)
                 map += ("datasetDetail" -> dar.datasetDetail.toJson)
 
             JsObject(map.toMap)
@@ -203,96 +203,96 @@ object JsonProtocols extends DefaultJsonProtocol {
         def read(value: JsValue): DataAccessRequestData = {
             val fields = value.asJsObject.fields
             DataAccessRequestData(
-                optionalEntryReader("referenceId", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("investigator", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("institution", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("department", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("division", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("address1", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("address2", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("city", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("zipCode", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("state", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("country", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("projectTitle", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("checkCollaborator", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("researcher", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("userId", fields, _.convertTo[Option[Int]], None),
-                optionalEntryReader("isThePi", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("havePi", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("piEmail", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("profileName", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("pubmedId", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("scientificUrl", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("eraExpiration", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("academicEmail", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("eraAuthorized", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("nihUsername", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("linkedIn", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("orcid", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("researcherGate", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("rus", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("nonTechRus", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("diseases", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("methods", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("controls", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("population", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("other", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("otherText", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("ontologies", fields, _.convertTo[Option[Seq[OntologyEntry]]], None),
-                optionalEntryReader("forProfit", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("oneGender", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("gender", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("pediatric", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("illegalBehavior", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("addiction", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("sexualDiseases", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("stigmatizedDiseases", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("vulnerablePopulation", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("populationMigration", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("psychiatricTraits", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("notHealth", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("hmb", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("status", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("poa", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("datasets", fields, _.convertTo[Option[Seq[DataSetEntry]]], None),
-                optionalEntryReader("darCode", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("partialDarCode", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("restriction", fields, jv => None, None),
-                optionalEntryReader("validRestriction", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("translatedUseRestriction", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None),
-                optionalEntryReader("sortDate", fields, _.convertTo[Option[Long]], None),
-                optionalEntryReader("datasetIds", fields, _.convertTo[Option[Seq[Int]]], None),
-                optionalEntryReader("datasetDetail", fields, _.convertTo[Option[Seq[DataSetDetailEntry]]], None),
-                optionalEntryReader("anvilUse", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("cloudUse", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("localUse", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("cloudProvider", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("cloudProviderType", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("cloudProviderDescription", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("geneticStudiesOnly", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("irb", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("irbDocumentLocation", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("irbDocumentName", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("irbProtocolExpiration", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("itDirector", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("signingOfficial", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("publication", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("collaboration", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("collaborationLetterLocation", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("collaborationLetterName", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("forensicActivities", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("sharingDistribution", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("labCollaborators", fields, _.convertTo[Option[Seq[Collaborator]]], None),
-                optionalEntryReader("internalCollaborators", fields, _.convertTo[Option[Seq[Collaborator]]], None),
-                optionalEntryReader("externalCollaborators", fields, _.convertTo[Option[Seq[Collaborator]]], None),
-                optionalEntryReader("dsAcknowledgement", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("gsoAcknowledgement", fields, _.convertTo[Option[Boolean]], None),
-                optionalEntryReader("pubAcknowledgement", fields, _.convertTo[Option[Boolean]], None)
+                referenceId = optionalEntryReader("referenceId", fields, _.convertTo[Option[String]], None),
+                investigator = optionalEntryReader("investigator", fields, _.convertTo[Option[String]], None),
+                institution = optionalEntryReader("institution", fields, _.convertTo[Option[String]], None),
+                department = optionalEntryReader("department", fields, _.convertTo[Option[String]], None),
+                division = optionalEntryReader("division", fields, _.convertTo[Option[String]], None),
+                address1 = optionalEntryReader("address1", fields, _.convertTo[Option[String]], None),
+                address2 = optionalEntryReader("address2", fields, _.convertTo[Option[String]], None),
+                city = optionalEntryReader("city", fields, _.convertTo[Option[String]], None),
+                zipCode = optionalEntryReader("zipCode", fields, _.convertTo[Option[String]], None),
+                state = optionalEntryReader("state", fields, _.convertTo[Option[String]], None),
+                country = optionalEntryReader("country", fields, _.convertTo[Option[String]], None),
+                projectTitle = optionalEntryReader("projectTitle", fields, _.convertTo[Option[String]], None),
+                checkCollaborator = optionalEntryReader("checkCollaborator", fields, _.convertTo[Option[Boolean]], None),
+                researcher = optionalEntryReader("researcher", fields, _.convertTo[Option[String]], None),
+                userId = optionalEntryReader("userId", fields, _.convertTo[Option[Int]], None),
+                isThePi = optionalEntryReader("isThePi", fields, _.convertTo[Option[String]], None),
+                havePi = optionalEntryReader("havePi", fields, _.convertTo[Option[String]], None),
+                piEmail = optionalEntryReader("piEmail", fields, _.convertTo[Option[String]], None),
+                profileName = optionalEntryReader("profileName", fields, _.convertTo[Option[String]], None),
+                pubmedId = optionalEntryReader("pubmedId", fields, _.convertTo[Option[String]], None),
+                scientificUrl = optionalEntryReader("scientificUrl", fields, _.convertTo[Option[String]], None),
+                eraExpiration = optionalEntryReader("eraExpiration", fields, _.convertTo[Option[Boolean]], None),
+                academicEmail = optionalEntryReader("academicEmail", fields, _.convertTo[Option[String]], None),
+                eraAuthorized = optionalEntryReader("eraAuthorized", fields, _.convertTo[Option[Boolean]], None),
+                nihUsername = optionalEntryReader("nihUsername", fields, _.convertTo[Option[String]], None),
+                linkedIn = optionalEntryReader("linkedIn", fields, _.convertTo[Option[String]], None),
+                orcid = optionalEntryReader("orcid", fields, _.convertTo[Option[String]], None),
+                researcherGate = optionalEntryReader("researcherGate", fields, _.convertTo[Option[String]], None),
+                rus = optionalEntryReader("rus", fields, _.convertTo[Option[String]], None),
+                nonTechRus = optionalEntryReader("nonTechRus", fields, _.convertTo[Option[String]], None),
+                diseases = optionalEntryReader("diseases", fields, _.convertTo[Option[Boolean]], None),
+                methods = optionalEntryReader("methods", fields, _.convertTo[Option[Boolean]], None),
+                controls = optionalEntryReader("controls", fields, _.convertTo[Option[Boolean]], None),
+                population = optionalEntryReader("population", fields, _.convertTo[Option[Boolean]], None),
+                other = optionalEntryReader("other", fields, _.convertTo[Option[Boolean]], None),
+                otherText = optionalEntryReader("otherText", fields, _.convertTo[Option[String]], None),
+                ontologies = optionalEntryReader("ontologies", fields, _.convertTo[Option[Seq[OntologyEntry]]], None),
+                forProfit = optionalEntryReader("forProfit", fields, _.convertTo[Option[Boolean]], None),
+                oneGender = optionalEntryReader("oneGender", fields, _.convertTo[Option[Boolean]], None),
+                gender = optionalEntryReader("gender", fields, _.convertTo[Option[String]], None),
+                pediatric = optionalEntryReader("pediatric", fields, _.convertTo[Option[Boolean]], None),
+                illegalBehavior = optionalEntryReader("illegalBehavior", fields, _.convertTo[Option[Boolean]], None),
+                addiction = optionalEntryReader("addiction", fields, _.convertTo[Option[Boolean]], None),
+                sexualDiseases = optionalEntryReader("sexualDiseases", fields, _.convertTo[Option[Boolean]], None),
+                stigmatizedDiseases = optionalEntryReader("stigmatizedDiseases", fields, _.convertTo[Option[Boolean]], None),
+                vulnerablePopulation = optionalEntryReader("vulnerablePopulation", fields, _.convertTo[Option[Boolean]], None),
+                populationMigration = optionalEntryReader("populationMigration", fields, _.convertTo[Option[Boolean]], None),
+                psychiatricTraits = optionalEntryReader("psychiatricTraits", fields, _.convertTo[Option[Boolean]], None),
+                notHealth = optionalEntryReader("notHealth", fields, _.convertTo[Option[Boolean]], None),
+                hmb = optionalEntryReader("hmb", fields, _.convertTo[Option[Boolean]], None),
+                status = optionalEntryReader("status", fields, _.convertTo[Option[String]], None),
+                poa = optionalEntryReader("poa", fields, _.convertTo[Option[Boolean]], None),
+                datasets = optionalEntryReader("datasets", fields, _.convertTo[Option[Seq[DataSetEntry]]], None),
+                darCode = optionalEntryReader("darCode", fields, _.convertTo[Option[String]], None),
+                partialDarCode = optionalEntryReader("partialDarCode", fields, _.convertTo[Option[String]], None),
+                restriction = optionalEntryReader("restriction", fields, jv => None, None),
+                validRestriction = optionalEntryReader("validRestriction", fields, _.convertTo[Option[Boolean]], None),
+                translatedUseRestriction = optionalEntryReader("translatedUseRestriction", fields, _.convertTo[Option[String]], None),
+                createDate = optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None),
+                sortDate = optionalEntryReader("sortDate", fields, _.convertTo[Option[Long]], None),
+                datasetIds = optionalEntryReader("datasetIds", fields, _.convertTo[Option[Seq[Int]]], None),
+                datasetDetail = optionalEntryReader("datasetDetail", fields, _.convertTo[Option[Seq[DataSetDetailEntry]]], None),
+                anvilUse = optionalEntryReader("anvilUse", fields, _.convertTo[Option[Boolean]], None),
+                cloudUse = optionalEntryReader("cloudUse", fields, _.convertTo[Option[Boolean]], None),
+                localUse = optionalEntryReader("localUse", fields, _.convertTo[Option[Boolean]], None),
+                cloudProvider = optionalEntryReader("cloudProvider", fields, _.convertTo[Option[String]], None),
+                cloudProviderType = optionalEntryReader("cloudProviderType", fields, _.convertTo[Option[String]], None),
+                cloudProviderDescription = optionalEntryReader("cloudProviderDescription", fields, _.convertTo[Option[String]], None),
+                geneticStudiesOnly = optionalEntryReader("geneticStudiesOnly", fields, _.convertTo[Option[Boolean]], None),
+                irb = optionalEntryReader("irb", fields, _.convertTo[Option[Boolean]], None),
+                irbDocumentLocation = optionalEntryReader("irbDocumentLocation", fields, _.convertTo[Option[String]], None),
+                irbDocumentName = optionalEntryReader("irbDocumentName", fields, _.convertTo[Option[String]], None),
+                irbProtocolExpiration = optionalEntryReader("irbProtocolExpiration", fields, _.convertTo[Option[String]], None),
+                itDirector = optionalEntryReader("itDirector", fields, _.convertTo[Option[String]], None),
+                signingOfficial = optionalEntryReader("signingOfficial", fields, _.convertTo[Option[String]], None),
+                publication = optionalEntryReader("publication", fields, _.convertTo[Option[Boolean]], None),
+                collaboration = optionalEntryReader("collaboration", fields, _.convertTo[Option[Boolean]], None),
+                collaborationLetterLocation = optionalEntryReader("collaborationLetterLocation", fields, _.convertTo[Option[String]], None),
+                collaborationLetterName = optionalEntryReader("collaborationLetterName", fields, _.convertTo[Option[String]], None),
+                forensicActivities = optionalEntryReader("forensicActivities", fields, _.convertTo[Option[Boolean]], None),
+                sharingDistribution = optionalEntryReader("sharingDistribution", fields, _.convertTo[Option[Boolean]], None),
+                labCollaborators = optionalEntryReader("labCollaborators", fields, _.convertTo[Option[Seq[Collaborator]]], None),
+                internalCollaborators = optionalEntryReader("internalCollaborators", fields, _.convertTo[Option[Seq[Collaborator]]], None),
+                externalCollaborators = optionalEntryReader("externalCollaborators", fields, _.convertTo[Option[Seq[Collaborator]]], None),
+                dsAcknowledgement = optionalEntryReader("dsAcknowledgement", fields, _.convertTo[Option[Boolean]], None),
+                gsoAcknowledgement = optionalEntryReader("gsoAcknowledgement", fields, _.convertTo[Option[Boolean]], None),
+                pubAcknowledgement = optionalEntryReader("pubAcknowledgement", fields, _.convertTo[Option[Boolean]], None)
             )
         }
     }
 
-    implicit val dataAccessRequestFormat = jsonFormat9(DataAccessRequest)
+    implicit val dataAccessRequestFormat: JsonFormat[DataAccessRequest] = jsonFormat9(DataAccessRequest)
 }

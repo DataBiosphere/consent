@@ -10,11 +10,10 @@ object NihService {
         24 * 60 * 60 * 1000
     }
     def expirationCount(expDate: Long): Int = {
-        var result = -1;
+        var result: Int = -1;
         if (expDate > 0) {
-            val currentTime = System.currentTimeMillis
-            val millisecondsPerDay = 24 * 60 * 60 * 1000
-            var count: Int = ((expDate - currentTime) / millisecondsPerDay).toInt
+            val currentTime: Long = System.currentTimeMillis
+            val count: Int = ((expDate - currentTime) / millisecondsPerDay).toInt
             if (count > 0) {
                 result = count
             }
@@ -24,23 +23,23 @@ object NihService {
     }
 
     def nextDate(): Long = {
-        val currentTime = System.currentTimeMillis
+        val currentTime: Long = System.currentTimeMillis
         currentTime + (millisecondsPerDay * 30)
     }
 
     def parseProfile(info: ResearcherInfo, user: User, title: String): FireCloudProfile = {
         FireCloudProfile(
-            Some(user.displayName.getOrElse("")),
-            Some(user.displayName.getOrElse("")),
-            Some(title),
-            Some(user.email.getOrElse("")),
-            Some(info.institution.getOrElse("n/a")),
-            Some("n/a"),
-            Some("n/a"),
-            Some("n/a"),
-            Some("n/a"),
-            if (info.havePI.getOrElse("false") == "true") Some(info.piName.getOrElse("")) else if (info.isThePI.getOrElse("false") == "true") Some(user.displayName.getOrElse("")) else Some("n/a"),
-            Some("n/a")
+            firstName = Some(user.displayName.getOrElse("")),
+            lastName = Some(user.displayName.getOrElse("")),
+            title = Some(title),
+            contactEmail = Some(user.email.getOrElse("")),
+            institute = Some(info.institution.getOrElse("n/a")),
+            institutionalProgram = Some("n/a"),
+            programLocationCity = Some("n/a"),
+            programLocationState = Some("n/a"),
+            programLocationCountry = Some("n/a"),
+            pi = if (info.havePI.getOrElse("false") == "true") Some(info.piName.getOrElse("")) else if (info.isThePI.getOrElse("false") == "true") Some(user.displayName.getOrElse("")) else Some("n/a"),
+            nonProfitStatus = Some("n/a")
         )
     }
 }

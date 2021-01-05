@@ -1,9 +1,9 @@
 {{with $environment := env "ENVIRONMENT"}}
 
 consent {
-  baseUrl = {{if eq $environment "local"}}"https://local.broadinstitute.org:27443/"{{else}}"https://consent.dsde-{{$environment}}.broadinstitute.org/"{{end}},
-  fireCloudUrl = "https://firecloud-orchestration.dsde-{{$environment}}.broadinstitute.org/",
-  profileUrl = "https://profile-dot-broad-shibboleth-prod.appspot.com/{{$environment}}"
+  baseUrl = {{if eq $environment "local"}}"https://local.broadinstitute.org:27443/"{{else}}"https://consent.dsde-dev.broadinstitute.org/"{{end}},
+  fireCloudUrl = "https://firecloud-orchestration.dsde-dev.broadinstitute.org/",
+  profileUrl = "https://profile-dot-broad-shibboleth-prod.appspot.com/dev"
 }
 
 {{end}}
