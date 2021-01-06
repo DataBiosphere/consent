@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -88,9 +87,6 @@ public class DatasetResourceTest {
 
     @Mock
     private UriBuilder uriBuilder;
-
-    @Mock
-    private HttpServletRequest httpServletRequest;
 
     private DataSetResource resource;
 
@@ -284,18 +280,12 @@ public class DatasetResourceTest {
 
     @Test
     public void testDescribeDatasetsSuccess() {
-        when(httpServletRequest.getParameter("dacUserId")).thenReturn("0");
+        when(authUser.getName()).thenReturn("authUserEmail");
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
         when(datasetService.describeDatasets(anyInt())).thenReturn(Collections.emptySet());
         initResource();
-        Response response = resource.describeDataSets(httpServletRequest, 0);
+        Response response = resource.describeDataSets(authUser);
         assertEquals(200, response.getStatus());
-    }
-
-    @Test
-    public void testDescribeDatasetsNotFound() {
-        initResource();
-        Response response = resource.describeDataSets(httpServletRequest, 0);
-        assertEquals(404, response.getStatus());
     }
 
     private MultiPart createFormData(File file) {
