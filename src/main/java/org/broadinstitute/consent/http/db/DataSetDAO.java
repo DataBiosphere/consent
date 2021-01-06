@@ -139,8 +139,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
           "LEFT OUTER JOIN dictionary k on k.keyid = dp.propertykey " +
           "LEFT OUTER JOIN consentassociations ca on ca.datasetid = d.datasetid " +
           "LEFT OUTER JOIN consents c on c.consentid = ca.consentid " +
-          "WHERE d.datasetid = :datasetid ORDER BY d.datasetid, k.displayorder")
-    Set<DataSetDTO> findDatasetDTOWithPropertiesByDatasetId(@Bind("dataSetId") Integer dataSetId);
+          "WHERE d.datasetid = :datasetId ORDER BY d.datasetid, k.displayorder")
+    Set<DataSetDTO> findDatasetDTOWithPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
     @UseRowMapper(DatasetPropertyMapper.class)
     @SqlQuery(
