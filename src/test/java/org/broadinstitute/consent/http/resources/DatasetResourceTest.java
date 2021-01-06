@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -308,7 +309,7 @@ public class DatasetResourceTest {
         assertEquals(200, response.getStatus());
     }
 
-    @Test
+    @Test(expected = NotFoundException.class)
     public void testValidateDatasetNameNotFound() {
         initResource();
         Response response = resource.validateDatasetName("test");
