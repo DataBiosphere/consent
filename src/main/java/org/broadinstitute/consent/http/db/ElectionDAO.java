@@ -158,7 +158,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Integer verifyOpenElections();
 
     @UseRowMapper(SimpleElectionMapper.class)
-    @SqlQuery("SELECT * from election WHERE referenceid = :referenceId")
+    @SqlQuery("SELECT * FROM election WHERE referenceid = :referenceId")
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, " +
