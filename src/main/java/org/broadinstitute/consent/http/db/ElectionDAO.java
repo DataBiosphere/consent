@@ -157,6 +157,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select count(*) from election e where (lower(e.status) = 'open' or lower(e.status) = 'final') and lower(e.electionType) != 'dataset' ")
     Integer verifyOpenElections();
 
+    @UseRowMapper(SimpleElectionMapper.class)
+    @SqlQuery("SELECT * from election WHERE referenceid = :referenceId")
+    List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
+
     @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, " +
             "v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e " +
             "inner join (select referenceId, MAX(createDate) maxDate from election e where e.electionType = :type group by referenceId) " +
