@@ -298,6 +298,23 @@ public class DatasetResourceTest {
         assertEquals(404, response.getStatus());
     }
 
+    @Test
+    public void testValidateDatasetNameSuccess() {
+        DataSet testDataset = new DataSet();
+        testDataset.setDataSetId(1);
+        when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
+        initResource();
+        Response response = resource.validateDatasetName("test");
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testValidateDatasetNameNotFound() {
+        initResource();
+        Response response = resource.validateDatasetName("test");
+        assertEquals(404, response.getStatus());
+    }
+
     private MultiPart createFormData(File file) {
         MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
