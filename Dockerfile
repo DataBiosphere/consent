@@ -1,10 +1,3 @@
-FROM adoptopenjdk:8-hotspot
-
-# Standard apt-get cleanup.
-RUN apt-get -yq autoremove && \
-    apt-get -yq clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/* && \
-    rm -rf /var/tmp/*
+FROM us.gcr.io/broad-dsp-gcr-public/base/jre:8-alpine
 
 COPY target/consent.jar /opt/consent.jar
