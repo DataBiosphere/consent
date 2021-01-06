@@ -172,70 +172,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return result;
     }
 
-
-    @Override
-    public Collection<DataSetDTO> describeDataSets(Integer dacUserId) {
-        Collection<DataSetDTO> dataSetDTOList;
-        if (userIs(UserRoles.RESEARCHER.getRoleName(), dacUserId)) {
-            dataSetDTOList = dsDAO.findDataSetsForResearcher();
-        } else {
-
-            /*
-            *  This three collections defined below are used to determine if "Associate Dataset with Data Owners"
-            *  functionality must be enabled or disabled for each dataset.
-            *  This restriction depends on the status of DataAccess elections and is represented by
-            *  DataSetDTO.updateAssociationToDataOwnerAllowed.
-            */
-
-            Collection<Election> dataOwnerOpenElections;
-            Collection<String> dataAccessElectionsReferenceId;
-            Collection<String> datasetsAssociatedToOpenElections = new HashSet<>();
-            dataOwnerOpenElections = electionDAO.getElectionByTypeAndStatus(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue());
-            if (CollectionUtils.isNotEmpty(dataOwnerOpenElections)) {
-                dataAccessElectionsReferenceId = dataOwnerOpenElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toSet());
-                datasetsAssociatedToOpenElections = accessAPI.getDatasetsInDARs(dataAccessElectionsReferenceId);
-            }
-            dataSetDTOList = dsDAO.findDataSets();
-            if (userIs(UserRoles.ADMIN.getRoleName(), dacUserId) && dataSetDTOList.size() != 0) {
-                List<Document> accessRequests = accessAPI.describeDataAccessRequests();
-                List<Integer> dataSetIdList = new ArrayList<>();
-
-                dataSetDTOList.stream().forEach(dataSet -> dataSetIdList.add(dataSet.getDataSetId()));
-
-                Set<Integer> accessRequestsDatasetIdSet = accessRequests.stream().map(ar -> (ArrayList<Integer>) ar.get(DarConstants.DATASET_ID)).flatMap(l -> l.stream()).collect(Collectors.toSet());
-                for (DataSetDTO dataSetDTO : dataSetDTOList) {
-                    Integer datasetId = dataSetDTO.getDataSetId();
-
-                    if (CollectionUtils.isNotEmpty(datasetsAssociatedToOpenElections) &&
-                            datasetsAssociatedToOpenElections.contains(dataSetDTO.getPropertyValue(DATASETID_PROPERTY_NAME))) {
-                        dataSetDTO.setUpdateAssociationToDataOwnerAllowed(false);
-                    } else {
-                        dataSetDTO.setUpdateAssociationToDataOwnerAllowed(true);
-                    }
-
-                    if (CollectionUtils.isEmpty(dataSetAssociationDAO.getDatasetAssociation(dataSetDTO.getDataSetId()))) {
-                        dataSetDTO.setIsAssociatedToDataOwners(false);
-                    } else {
-                        dataSetDTO.setIsAssociatedToDataOwners(true);
-                    }
-
-                    if (CollectionUtils.isNotEmpty(accessRequests)) {
-                        if (accessRequestsDatasetIdSet.contains(datasetId)) {
-                            dataSetDTO.setDeletable(false);
-                        } else {
-                            dataSetDTO.setDeletable(true);
-                        }
-                    } else {
-                        dataSetDTO.setDeletable(true);
-                    }
-                }
-            }
-        }
-        if (!dataSetDTOList.isEmpty()) setConsentNameDTOList(dataSetDTOList);
-        return dataSetDTOList;
-    }
-
-
     @Override
     public List<DataSet> getDataSetsForConsent(String consentId) {
         return dsDAO.getDataSetsForConsent(consentId);
@@ -254,11 +190,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     @Override
     public Collection<Dictionary> describeDictionaryByReceiveOrder() {
         return dsDAO.getMappedFieldsOrderByReceiveOrder();
-    }
-
-    @Override
-    public List<Map<String, String>> autoCompleteDataSets(String partial) {
-        return dsDAO.getDatasetsBySearchTerm(partial);
     }
 
     @Override

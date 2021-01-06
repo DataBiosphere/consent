@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -24,6 +25,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -52,6 +54,7 @@ public class DAOTestHelper {
     private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config("database.maxSize", String.valueOf(maxConnections));
 
     private static DropwizardTestSupport<ConsentConfiguration> testApp;
+    protected static ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     protected static ConsentDAO consentDAO;
     protected static CounterDAO counterDAO;
     protected static DacDAO dacDAO;
@@ -106,6 +109,7 @@ public class DAOTestHelper {
         jdbi.installPlugin(new SqlObjectPlugin());
         jdbi.installPlugin(new Gson2Plugin());
         jdbi.installPlugin(new GuavaPlugin());
+        approvalExpirationTimeDAO = jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         consentDAO = jdbi.onDemand(ConsentDAO.class);
         counterDAO = jdbi.onDemand(CounterDAO.class);
         dacDAO = jdbi.onDemand(DacDAO.class);
@@ -128,6 +132,10 @@ public class DAOTestHelper {
 
     @After
     public void tearDown() {
+        ApprovalExpirationTime aet = approvalExpirationTimeDAO.findApprovalExpirationTime();
+        if (Objects.nonNull(aet) && aet.getId() > 0) {
+            approvalExpirationTimeDAO.deleteApprovalExpirationTime(aet.getId());
+        }
         // Order is important for FK constraints
         createdConsentIds.forEach(id -> {
             matchDAO.deleteMatchByConsentId(id);
@@ -164,6 +172,21 @@ public class DAOTestHelper {
                 ElectionStatus.OPEN.getValue(),
                 new Date(),
                 referenceId,
+                datasetId
+        );
+        createdElectionIds.add(electionId);
+        return electionDAO.findElectionById(electionId);
+    }
+
+    protected Election createExtendedElection(String referenceId, Integer datasetId) {
+        Integer electionId = electionDAO.insertElection(
+                ElectionType.DATA_ACCESS.getValue(),
+                ElectionStatus.OPEN.getValue(),
+                new Date(),
+                referenceId,
+                Boolean.TRUE,
+                "dataUseLetter",
+                "dulName",
                 datasetId
         );
         createdElectionIds.add(electionId);

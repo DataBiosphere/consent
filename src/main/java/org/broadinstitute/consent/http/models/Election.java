@@ -2,8 +2,6 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-
 import java.util.Date;
 
 public class Election {
@@ -37,12 +35,6 @@ public class Election {
 
     @JsonProperty
     private Boolean finalAccessVote;
-
-    @JsonProperty
-    public UseRestriction useRestriction;
-
-    @JsonProperty
-    private String translatedUseRestriction;
 
     @JsonProperty
     private Integer dataSetId;
@@ -87,7 +79,7 @@ public class Election {
     public Election(Integer electionId, String electionType,
                     String status, Date createDate,
                     String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer dataSetId, Boolean archived,
-                    String dulName, String translatedUseRestriction, String dataUseLetter) {
+                    String dulName, String dataUseLetter) {
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -98,7 +90,6 @@ public class Election {
         this.dataSetId = dataSetId;
         this.archived = archived;
         this.dulName = dulName;
-        this.translatedUseRestriction = translatedUseRestriction;
         this.dataUseLetter = dataUseLetter;
     }
 
@@ -180,22 +171,6 @@ public class Election {
 
     public void setFinalAccessVote(Boolean finalAccessVote) {
         this.finalAccessVote = finalAccessVote;
-    }
-
-    public UseRestriction getUseRestriction() {
-        return useRestriction;
-    }
-
-    public void setUseRestriction(UseRestriction useRestriction) {
-        this.useRestriction = useRestriction;
-    }
-
-    public String getTranslatedUseRestriction() {
-        return translatedUseRestriction;
-    }
-
-    public void setTranslatedUseRestriction(String translatedUseRestriction) {
-        this.translatedUseRestriction = translatedUseRestriction;
     }
 
     public Date getLastUpdate() {

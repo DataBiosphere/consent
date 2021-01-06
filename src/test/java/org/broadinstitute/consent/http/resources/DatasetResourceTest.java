@@ -16,7 +16,9 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -86,6 +88,9 @@ public class DatasetResourceTest {
 
     @Mock
     private UriBuilder uriBuilder;
+
+    @Mock
+    private HttpServletRequest httpServletRequest;
 
     private DataSetResource resource;
 
@@ -263,6 +268,34 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.createDataSet(is, fileDataBodyPart, 1, false);
         assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDatasetAutocomplete() {
+        List<Map<String, String>> autocompleteMap = Collections.singletonList(Collections.EMPTY_MAP);
+        when(userService.findUserByEmail(anyString())).thenReturn(dacUser);
+        when(dacUser.getDacUserId()).thenReturn(0);
+        when(datasetService.autoCompleteDatasets(anyString(), anyInt())).thenReturn(autocompleteMap);
+
+        initResource();
+        Response response = resource.datasetAutocomplete(authUser, "test");
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeDatasetsSuccess() {
+        when(httpServletRequest.getParameter("dacUserId")).thenReturn("0");
+        when(datasetService.describeDatasets(anyInt())).thenReturn(Collections.emptySet());
+        initResource();
+        Response response = resource.describeDataSets(httpServletRequest, 0);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeDatasetsNotFound() {
+        initResource();
+        Response response = resource.describeDataSets(httpServletRequest, 0);
+        assertEquals(404, response.getStatus());
     }
 
     private MultiPart createFormData(File file) {
