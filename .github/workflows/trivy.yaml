@@ -3,7 +3,7 @@ on: [pull_request]
 jobs:
   build:
     name: Scan for Vulnerabilities
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -12,8 +12,6 @@ jobs:
           java-version: 11
       - name: Maven build
         run: |
-          sudo apt update
-          sudo apt install maven
           mvn -v
           mvn package -Dmaven.test.skip=true
 
