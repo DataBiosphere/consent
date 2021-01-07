@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
@@ -9,6 +11,7 @@ import java.util.List;
 /**
  * Entity representing a Data Access Committee
  */
+@JsonInclude(Include.NON_NULL)
 public class Dac {
 
     @JsonProperty
@@ -33,6 +36,8 @@ public class Dac {
     private List<User> members;
 
     private List<Integer> electionIds = new ArrayList<>();
+
+    private List<Integer> datasetIds = new ArrayList<>();
 
     public Dac() {
     }
@@ -101,5 +106,11 @@ public class Dac {
         this.electionIds.add(electionId);
     }
 
+    public List<Integer> getDatasetIds() {
+        return datasetIds;
+    }
 
+    public void addDatasetId(Integer datasetId) {
+        this.datasetIds.add(datasetId);
+    }
 }

@@ -1,10 +1,13 @@
 package org.broadinstitute.consent.http.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 
 import java.util.Date;
 
+@JsonInclude(Include.NON_NULL)
 public class Vote {
 
     @JsonProperty
@@ -52,17 +55,6 @@ public class Vote {
         this.type = type;
         this.isReminderSent = isReminderSent;
         this.hasConcerns = hasConcerns;
-    }
-
-    public void initVote(Integer dacUserId, Date createDate, Date updateDate,
-                         String rationale, Boolean isReminderSent, Boolean hasConcerns, Boolean vote) {
-        this.dacUserId = dacUserId;
-        this.createDate = createDate;
-        this.updateDate = updateDate;
-        this.rationale = rationale;
-        this.isReminderSent = isReminderSent;
-        this.hasConcerns = hasConcerns;
-        this.vote = vote;
     }
 
     public Integer getVoteId() {

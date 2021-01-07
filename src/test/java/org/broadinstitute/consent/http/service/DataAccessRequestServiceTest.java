@@ -1,12 +1,14 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -20,9 +22,14 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -30,6 +37,8 @@ import org.mockito.MockitoAnnotations;
 
 public class DataAccessRequestServiceTest {
 
+    @Mock
+    private AuthUser authUser;
     @Mock
     private ConsentDAO consentDAO;
     @Mock
@@ -143,6 +152,41 @@ public class DataAccessRequestServiceTest {
         initService();
         DataAccessRequest dar = service.insertDraftDataAccessRequest(null, null);
         assertNotNull(dar);
+    }
+
+    @Test
+    public void testDescribeDataAccessRequestManageV2() {
+        Integer genericId = 1;
+        DataAccessRequest dar = generateDataAccessRequest();
+        dar.setData(new DataAccessRequestData());
+        dar.getData().setDatasetIds(Collections.singletonList(genericId));
+        when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar));
+        when(dacService.filterDataAccessRequestsByDac(any(), any())).thenReturn(Collections.singletonList(dar));
+
+        Election e = new Election();
+        e.setReferenceId(dar.getReferenceId());
+        e.setElectionId(genericId);
+        when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), any())).thenReturn(Collections.singletonList(e));
+
+        Vote v = new Vote();
+        v.setVoteId(genericId);
+        v.setElectionId(e.getElectionId());
+        when(voteDAO.findVotesByElectionIds(any())).thenReturn(Collections.singletonList(v));
+
+        Dac d = new Dac();
+        d.setDacId(genericId);
+        d.addDatasetId(genericId);
+        when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Collections.singleton(d));
+        initService();
+
+        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(authUser);
+        assertNotNull(manages);
+        assertFalse(manages.isEmpty());
+        assertEquals(dar.getReferenceId(), manages.get(0).getDar().getReferenceId());
+        assertEquals(1, manages.size());
+        assertEquals(e.getElectionId(), manages.get(0).getElection().getElectionId());
+        assertEquals(d.getDacId(), manages.get(0).getDac().getDacId());
+        assertFalse(manages.get(0).getVotes().isEmpty());
     }
 
     private DataAccessRequest generateDataAccessRequest() {

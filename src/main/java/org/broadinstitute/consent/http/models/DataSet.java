@@ -1,10 +1,13 @@
 package org.broadinstitute.consent.http.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 import java.util.Set;
 
+@JsonInclude(Include.NON_NULL)
 public class DataSet {
 
     @JsonProperty
