@@ -19,6 +19,7 @@ object TestConfig {
   val defaultUserAgent: String = "Gatling Client"
   val plainTextHeader: Map[String, String] = Map("Accept" -> "text/plain")
   val jsonHeader: Map[String, String] = Map("Accept" -> "application/json")
+  val jsonBodyHeader: Map[String, String] = Map("Content-Type" -> "application/json")
 
   lazy val defaultHttpProtocol: HttpProtocolBuilder = {
     http
@@ -37,6 +38,8 @@ object TestConfig {
     token.getTokenValue
   }
 
+  lazy val fireCloudUrl: String = config.getString("consent.fireCloudUrl")
+  lazy val profileUrl: String = config.getString("consent.profileUrl")
   lazy val adminHeader: Map[String, String] = Map("Authorization" -> s"Bearer ${getAccessToken("/accounts/duos-automation-admin.json")}")
   lazy val chairHeader: Map[String, String] = Map("Authorization" -> s"Bearer ${getAccessToken("/accounts/duos-automation-chair.json")}")
   lazy val memberHeader: Map[String, String] = Map("Authorization" -> s"Bearer ${getAccessToken("/accounts/duos-automation-member.json")}")

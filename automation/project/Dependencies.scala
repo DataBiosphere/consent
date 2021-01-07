@@ -10,7 +10,8 @@ object Dependencies {
     "io.gatling"            % "gatling-http" % gatlingV,
     "io.gatling.highcharts" % "gatling-charts-highcharts" % gatlingV % "test",
     "io.gatling"            % "gatling-test-framework"    % gatlingV % "test",
-    "com.google.auth"       % "google-auth-library-oauth2-http" % "0.19.0"
+    "com.google.auth"       % "google-auth-library-oauth2-http" % "0.19.0",
+    "io.spray"             %%  "spray-json" % "1.3.6"
   )
 
 }
