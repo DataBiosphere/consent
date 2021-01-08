@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.User;
@@ -29,10 +29,10 @@ import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
-public class DataSetAssociationAPITest {
+public class DatasetAssociationServiceTest {
 
     @Mock
-    private DataSetAssociationDAO dsAssociationDAO;
+    private DatasetAssociationDAO dsAssociationDAO;
     @Mock
     private UserDAO userDAO;
     @Mock
@@ -40,7 +40,7 @@ public class DataSetAssociationAPITest {
     @Mock
     private UserRoleDAO userRoleDAO;
 
-    DataSetAssociationAPI associationAPI;
+    DatasetAssociationService associationAPI;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -49,7 +49,7 @@ public class DataSetAssociationAPITest {
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
-        associationAPI = new DataSetAssociationAPI(dsAssociationDAO, userDAO, dsDAO, userRoleDAO);
+        associationAPI = new DatasetAssociationService(dsAssociationDAO, userDAO, dsDAO, userRoleDAO);
     }
 
     @Test

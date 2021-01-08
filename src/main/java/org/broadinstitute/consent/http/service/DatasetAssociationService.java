@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -24,16 +24,16 @@ import java.util.List;
 import java.util.Map;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
-public class DataSetAssociationAPI {
+public class DatasetAssociationService {
 
-    private final DataSetAssociationDAO dsAssociationDAO;
+    private final DatasetAssociationDAO dsAssociationDAO;
     private final UserDAO userDAO;
     private final DataSetDAO dsDAO;
     private final UserRoleDAO userRoleDAO;
 
     @Inject
-    public DataSetAssociationAPI(
-        DataSetAssociationDAO dsAssociationDAO, UserDAO userDAO,
+    public DatasetAssociationService(
+        DatasetAssociationDAO dsAssociationDAO, UserDAO userDAO,
         DataSetDAO dsDAO, UserRoleDAO userRoleDAO) {
         this.dsAssociationDAO = dsAssociationDAO;
         this.userDAO = userDAO;

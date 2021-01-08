@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.UUID;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -45,7 +45,7 @@ public class VoteServiceTest {
     @Mock
     UserDAO userDAO;
     @Mock
-    DataSetAssociationDAO dataSetAssociationDAO;
+    DatasetAssociationDAO dataSetAssociationDAO;
     @Mock
     DataSetDAO datasetDAO;
     @Mock

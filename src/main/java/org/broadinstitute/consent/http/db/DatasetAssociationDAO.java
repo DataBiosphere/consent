@@ -17,7 +17,7 @@ import java.util.List;
 
 
 @RegisterRowMapper(DatasetAssociationMapper.class)
-public interface DataSetAssociationDAO extends Transactional<DataSetAssociationDAO> {
+public interface DatasetAssociationDAO extends Transactional<DatasetAssociationDAO> {
 
     @SqlBatch("insert into dataset_user_association (datasetId, dacuserId, createDate )" +
             " values (:datasetId, :dacuserId, :createDate)")

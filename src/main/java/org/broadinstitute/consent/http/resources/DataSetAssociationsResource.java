@@ -16,16 +16,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
+import org.broadinstitute.consent.http.service.DatasetAssociationService;
 
 @Path("api/datasetAssociation")
 public class DataSetAssociationsResource extends Resource {
 
 
-    private final DataSetAssociationAPI api;
+    private final DatasetAssociationService api;
 
     @Inject
-    public DataSetAssociationsResource(DataSetAssociationAPI api) {
+    public DataSetAssociationsResource(DatasetAssociationService api) {
         this.api = api;
     }
 

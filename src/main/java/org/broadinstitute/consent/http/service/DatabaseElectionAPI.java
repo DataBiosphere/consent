@@ -18,7 +18,7 @@ import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -61,7 +61,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private final VoteDAO voteDAO;
     private final UserDAO userDAO;
     private final DataSetDAO dataSetDAO;
-    private final DataSetAssociationDAO datasetAssociationDAO;
+    private final DatasetAssociationDAO datasetAssociationDAO;
     private final DataAccessRequestService dataAccessRequestService;
     private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
     private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
@@ -78,7 +78,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      */
     public static void initInstance(ConsentDAO consentDAO, UserDAO userDAO,
                                     DataAccessRequestService dataAccessRequestService,
-                                    DataSetAssociationDAO datasetAssociationDAO, DataSetDAO dataSetDAO,
+                                    DatasetAssociationDAO datasetAssociationDAO, DataSetDAO dataSetDAO,
                                     ElectionDAO electionDAO, EmailNotifierService emailNotifierService,
                                     MailMessageDAO mailMessageDAO, VoteDAO voteDAO) {
         ElectionAPIHolder.setInstance(new DatabaseElectionAPI(consentDAO, userDAO, dataAccessRequestService,
@@ -91,7 +91,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      */
     private DatabaseElectionAPI(ConsentDAO consentDAO, UserDAO userDAO,
                                 DataAccessRequestService dataAccessRequestService,
-                                DataSetAssociationDAO datasetAssociationDAO, DataSetDAO dataSetDAO, ElectionDAO electionDAO,
+                                DatasetAssociationDAO datasetAssociationDAO, DataSetDAO dataSetDAO, ElectionDAO electionDAO,
                                 EmailNotifierService emailNotifierService, MailMessageDAO mailMessageDAO,
                                 VoteDAO voteDAO) {
         this.consentDAO = consentDAO;
