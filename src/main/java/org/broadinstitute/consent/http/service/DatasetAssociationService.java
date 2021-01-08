@@ -3,25 +3,24 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 import java.sql.BatchUpdateException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
 public class DatasetAssociationService {
@@ -60,27 +59,32 @@ public class DatasetAssociationService {
 
     public Map<String, Collection<User>> findDataOwnersRelationWithDataset(Integer dataSetId) {
         List<DatasetAssociation> associationList = dsAssociationDAO.getDatasetAssociation(dsDAO.findDataSetById(dataSetId).getDataSetId());
-        Collection<User> associated_users = new ArrayList<>();
+        Collection<User> associatedUsers = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(associationList)) {
             Collection<Integer> usersIdList = associationList.stream().map(DatasetAssociation::getDacuserId).collect(
                 Collectors.toList());
-            associated_users = userDAO.findUsers(usersIdList);
+            associatedUsers = userDAO.findUsers(usersIdList);
         }
         Map<String, Collection<User>> usersMap = new HashMap<>();
-        usersMap.put("associated_users", associated_users);
+        usersMap.put("associated_users", associatedUsers);
         Collection<User> dataOwnersList = userDAO.describeUsersByRole(UserRoles.DATAOWNER.getRoleName());
-        usersMap.put("not_associated_users", CollectionUtils.subtract(dataOwnersList, associated_users));
+        Collection<User> finalAssociatedUsers = associatedUsers;
+        Collection<User> unAssociatedUsers = dataOwnersList
+            .stream()
+            .filter(dataOwner -> !finalAssociatedUsers.contains(dataOwner))
+            .collect(Collectors.toList());  // CollectionUtils.subtract(dataOwnersList, associatedUsers);
+        usersMap.put("not_associated_users", unAssociatedUsers);
         return usersMap;
     }
 
     public Map<User, List<DataSet>> findDataOwnersWithAssociatedDataSets(List<Integer> dataSetIdList) {
         List<DatasetAssociation> dataSetAssociations = dsAssociationDAO.getDatasetAssociations(dataSetIdList);
         Map<User, List<DataSet>> dataOwnerDataSetMap = new HashMap<>();
-        dataSetAssociations.stream().forEach(dsa -> {
+        dataSetAssociations.forEach(dsa -> {
             User dataOwner = userDAO.findUserById(dsa.getDacuserId());
             if (!dataOwnerDataSetMap.containsKey(dataOwner)) {
                 dataOwnerDataSetMap.put(userDAO.findUserById(dsa.getDacuserId()), new ArrayList<>(
-                    Arrays.asList(dsDAO.findDataSetById(dsa.getDatasetId()))));
+                    Collections.singletonList(dsDAO.findDataSetById(dsa.getDatasetId()))));
             } else {
                 dataOwnerDataSetMap.get(userDAO.findUserById(dsa.getDacuserId())).add(dsDAO.findDataSetById(dsa.getDatasetId()));
             }
