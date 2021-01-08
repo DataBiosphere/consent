@@ -50,9 +50,9 @@ public class DatasetAssociationsResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response getDatasetAssociations(@PathParam("dataSetId") Integer dataSetId) {
+    public Response getDatasetAssociations(@PathParam("dataSetId") Integer datasetId) {
         try {
-            Map<String, Collection<User>> userMap = service.findDataOwnersRelationWithDataset(dataSetId);
+            Map<String, Collection<User>> userMap = service.findDataOwnersRelationWithDataset(datasetId);
             return Response.ok().entity(userMap).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -64,10 +64,10 @@ public class DatasetAssociationsResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response updateDatasetAssociations(@PathParam("dataSetId") Integer dataSetId, List<Integer> userIdList) {
+    public Response updateDatasetAssociations(@PathParam("dataSetId") Integer datasetId, List<Integer> userIdList) {
         try {
             List<DatasetAssociation> associations = service
-                .updateDatasetAssociations(dataSetId, userIdList);
+                .updateDatasetAssociations(datasetId, userIdList);
             return Response.ok().entity(associations).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

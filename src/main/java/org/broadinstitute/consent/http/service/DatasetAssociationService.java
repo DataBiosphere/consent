@@ -57,8 +57,8 @@ public class DatasetAssociationService {
         return dsAssociationDAO.getDatasetAssociation(datasetId);
     }
 
-    public Map<String, Collection<User>> findDataOwnersRelationWithDataset(Integer dataSetId) {
-        List<DatasetAssociation> associationList = dsAssociationDAO.getDatasetAssociation(dsDAO.findDataSetById(dataSetId).getDataSetId());
+    public Map<String, Collection<User>> findDataOwnersRelationWithDataset(Integer datasetId) {
+        List<DatasetAssociation> associationList = dsAssociationDAO.getDatasetAssociation(dsDAO.findDataSetById(datasetId).getDataSetId());
         Collection<User> associatedUsers = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(associationList)) {
             Collection<Integer> usersIdList = associationList.stream().map(DatasetAssociation::getDacuserId).collect(
