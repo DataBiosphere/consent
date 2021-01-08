@@ -25,7 +25,7 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 /**
  * Implementation class for DataSetAPI database support.
  */
-public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI {
+public class DatabaseDataSetAssociationAPI { //extends AbstractDataSetAssociationAPI {
 
     private final DataSetAssociationDAO dsAssociationDAO;
     private final UserDAO userDAO;
