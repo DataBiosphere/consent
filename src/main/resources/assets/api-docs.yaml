@@ -2454,28 +2454,19 @@ paths:
           description: Could not find a vote with this id.
   /api/dataset:
     get:
-      summary: describeDatasets
-      description: Returns Dataset list filtering by Role.
-      parameters:
-        - name: dacUserId
-          in: query
-          description: UserId used to retrieve the user's roles
-          required: true
-          schema:
-            type: integer
+      summary: Get Datasets
+      description: Returns Dataset list filtered by authenticated user.
       tags:
         - Datasets
       responses:
         200:
-          description: An array of Datasets
+          description: A list of Datasets
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Dataset'
-        404:
-          description: Required parameter is null.
     post:
       summary: createDataSet
       description: Creates the Datasets defined in the input .TSV /.txt file.
