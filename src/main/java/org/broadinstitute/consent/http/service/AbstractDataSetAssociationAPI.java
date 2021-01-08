@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service;
 /**
  * Implement a skeleton for DataSetAPI interface that implements the singleton object management.
  */
-public abstract class AbstractDataSetAssociationAPI implements DataSetAssociationAPI {
+public abstract class AbstractDataSetAssociationAPI { //implements DataSetAssociationAPI {
     // Implement singleton management for the DataSetAssociationAPI.  We need to explicitly implement a singleton pattern,
     // to work around a problem with Dropwizard+GUICE lifecycle management.  Basically using GUICE to create
     // the singleton will cause it to be created too early, so rather than use dependency injection, the

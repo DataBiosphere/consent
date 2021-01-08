@@ -39,6 +39,7 @@ import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
@@ -225,6 +226,16 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DatasetService providesDatasetService() {
         return new DatasetService(providesConsentDAO(), providesDataSetDAO(), providesUserRoleDAO(), providesUseRestrictionConverter());
+    }
+
+    @Provides
+    DataSetAssociationAPI providesDataSetAssociationAPI() {
+        return new DataSetAssociationAPI(
+            providesDataSetAssociationDAO(),
+            providesUserDAO(),
+            providesDataSetDAO(),
+            providesUserRoleDAO()
+        );
     }
 
     @Provides

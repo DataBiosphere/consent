@@ -44,7 +44,7 @@ public class DataSetAssociationsResourceTest {
     }
 
     private void initResource() {
-        resource = new DataSetAssociationsResource();
+        resource = new DataSetAssociationsResource(datasetAssociationAPI);
     }
 
     @Test

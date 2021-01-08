@@ -62,12 +62,13 @@ public class DataRequestVoteResource extends Resource {
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
     @Inject
-    public DataRequestVoteResource(EmailNotifierService emailNotifierService, VoteService voteService) {
+    public DataRequestVoteResource(DataSetAssociationAPI dataSetAssociationAPI,
+        EmailNotifierService emailNotifierService, VoteService voteService) {
         this.emailNotifierService = emailNotifierService;
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.accessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.dataSetAPI = AbstractDataSetAPI.getInstance();
-        this.dataSetAssociationAPI = AbstractDataSetAssociationAPI.getInstance();
+        this.dataSetAssociationAPI = dataSetAssociationAPI;
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.api = AbstractVoteAPI.getInstance();
         this.voteService = voteService;

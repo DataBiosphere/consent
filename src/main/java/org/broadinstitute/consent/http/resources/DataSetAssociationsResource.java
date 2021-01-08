@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
@@ -25,8 +26,9 @@ public class DataSetAssociationsResource extends Resource {
 
     private final DataSetAssociationAPI api;
 
-    public DataSetAssociationsResource() {
-        this.api = AbstractDataSetAssociationAPI.getInstance();
+    @Inject
+    public DataSetAssociationsResource(DataSetAssociationAPI api) {
+        this.api = api;
     }
 
 

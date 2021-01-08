@@ -33,7 +33,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
     private final UserRoleDAO userRoleDAO;
 
     public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dsAssociationDAO, UserDAO userDAO, UserRoleDAO userRoleDAO) {
-        DataSetAssociationAPIHolder.setInstance(new DatabaseDataSetAssociationAPI(dsDAO, dsAssociationDAO, userDAO, userRoleDAO));
+//        DataSetAssociationAPIHolder.setInstance(new DatabaseDataSetAssociationAPI(dsDAO, dsAssociationDAO, userDAO, userRoleDAO));
     }
 
     protected DatabaseDataSetAssociationAPI(DataSetDAO dsDAO, DataSetAssociationDAO dsAssociationDAO, UserDAO userDAO, UserRoleDAO userRoleDAO) {
@@ -44,7 +44,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
     }
 
 
-    @Override
+//    @Override
     public List<DatasetAssociation> createDatasetUsersAssociation(Integer dataSetId, List<Integer> usersIdList) {
         verifyUsers(usersIdList);
         DataSet d = dsDAO.findDataSetById(dataSetId);
@@ -62,7 +62,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         return dsAssociationDAO.getDatasetAssociation(datasetId);
     }
 
-    @Override
+//    @Override
     public Map<String, Collection<User>> findDataOwnersRelationWithDataset(Integer dataSetId) {
         List<DatasetAssociation> associationList = dsAssociationDAO.getDatasetAssociation(dsDAO.findDataSetById(dataSetId).getDataSetId());
         Collection<User> associated_users = new ArrayList<>();
@@ -77,7 +77,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         return usersMap;
     }
 
-    @Override
+//    @Override
     public List<DatasetAssociation> updateDatasetAssociations(Integer dataSetId, List<Integer> usersIdList) {
         DataSet d = dsDAO.findDataSetById(dataSetId);
         if (Objects.isNull(d)) {
@@ -100,7 +100,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         return dsAssociationDAO.getDatasetAssociation(datasetId);
     }
 
-    @Override
+//    @Override
     public Map<User, List<DataSet>> findDataOwnersWithAssociatedDataSets(List<Integer> dataSetIdList) {
         List<DatasetAssociation> dataSetAssociations = dsAssociationDAO.getDatasetAssociations(dataSetIdList);
         Map<User, List<DataSet>> dataOwnerDataSetMap = new HashMap<>();
