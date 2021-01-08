@@ -11,5 +11,5 @@ COPY src /usr/src/app/src
 RUN mvn clean package -Dmaven.test.skip=true
 
 # Published
-FROM us.gcr.io/broad-dsp-gcr-public/base/jre:11-alpine
+FROM us.gcr.io/broad-dsp-gcr-public/base/jre:15-alpine
 COPY target/consent.jar /opt/consent.jar
