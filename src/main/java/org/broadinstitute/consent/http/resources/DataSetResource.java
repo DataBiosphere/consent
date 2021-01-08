@@ -245,6 +245,19 @@ public class DataSetResource extends Resource {
         }
     }
 
+    @GET
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/validate")
+    @PermitAll
+    public Response validateDatasetName(@QueryParam("name") String name) {
+        try {
+            DataSet datasetWithName = datasetService.getDatasetByName(name);
+            return Response.ok().entity(datasetWithName.getDataSetId()).build();
+        } catch (Exception e) {
+            throw new NotFoundException("Could not find the dataset with name: " + name);
+        }
+    }
 
     @GET
     @Path("/sample")
