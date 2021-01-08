@@ -16,12 +16,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-public class DataSetAssociationsResourceTest {
+public class DatasetAssociationsResourceTest {
 
     @Mock
     private DatasetAssociationService service;
 
-    private DataSetAssociationsResource resource;
+    private DatasetAssociationsResource resource;
 
     @Before
     public void setUp() {
@@ -32,7 +32,7 @@ public class DataSetAssociationsResourceTest {
     }
 
     private void initResource() {
-        resource = new DataSetAssociationsResource(service);
+        resource = new DatasetAssociationsResource(service);
     }
 
     @Test

@@ -71,7 +71,7 @@ import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
 import org.broadinstitute.consent.http.resources.DataRequestElectionResource;
 import org.broadinstitute.consent.http.resources.DataRequestReportsResource;
 import org.broadinstitute.consent.http.resources.DataRequestVoteResource;
-import org.broadinstitute.consent.http.resources.DataSetAssociationsResource;
+import org.broadinstitute.consent.http.resources.DatasetAssociationsResource;
 import org.broadinstitute.consent.http.resources.DataSetResource;
 import org.broadinstitute.consent.http.resources.DataUseLetterResource;
 import org.broadinstitute.consent.http.resources.ElectionResource;
@@ -283,7 +283,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, gcsService, userService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService));
         env.jersey().register(new DataSetResource(datasetService, userService));
-        env.jersey().register(DataSetAssociationsResource.class);
+        env.jersey().register(DatasetAssociationsResource.class);
         env.jersey().register(new ConsentResource(auditService, userService));
         env.jersey().register(new ConsentAssociationResource(userService));
         env.jersey().register(new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService));

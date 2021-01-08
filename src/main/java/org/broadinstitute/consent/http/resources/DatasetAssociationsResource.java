@@ -19,13 +19,13 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 
 @Path("api/datasetAssociation")
-public class DataSetAssociationsResource extends Resource {
+public class DatasetAssociationsResource extends Resource {
 
 
     private final DatasetAssociationService service;
 
     @Inject
-    public DataSetAssociationsResource(DatasetAssociationService service) {
+    public DatasetAssociationsResource(DatasetAssociationService service) {
         this.service = service;
     }
 
