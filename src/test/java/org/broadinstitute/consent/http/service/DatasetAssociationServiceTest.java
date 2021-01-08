@@ -40,7 +40,7 @@ public class DatasetAssociationServiceTest {
     @Mock
     private UserRoleDAO userRoleDAO;
 
-    DatasetAssociationService associationAPI;
+    DatasetAssociationService service;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -49,7 +49,7 @@ public class DatasetAssociationServiceTest {
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
-        associationAPI = new DatasetAssociationService(dsAssociationDAO, userDAO, dsDAO, userRoleDAO);
+        service = new DatasetAssociationService(dsAssociationDAO, userDAO, dsDAO, userRoleDAO);
     }
 
     @Test
@@ -57,7 +57,7 @@ public class DatasetAssociationServiceTest {
         when(dsDAO.findDataSetById(any())).thenReturn(ds1);
         when(userDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
         doNothing().when(userRoleDAO).insertSingleUserRole(any(), any());
-        associationAPI.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
+        service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 
     @Test
@@ -65,7 +65,7 @@ public class DatasetAssociationServiceTest {
         when(userDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
         thrown.expect(BadRequestException.class);
         thrown.expectMessage("Invalid UserId list.");
-        associationAPI.createDatasetUsersAssociation(1, Arrays.asList(1, 2, 3, 4));
+        service.createDatasetUsersAssociation(1, Arrays.asList(1, 2, 3, 4));
     }
 
     @Test
@@ -73,7 +73,7 @@ public class DatasetAssociationServiceTest {
         when(userDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
         when(dsDAO.findDataSetById(1)).thenReturn(ds1);
         when(dsAssociationDAO.getDatasetAssociation(1)).thenReturn(Arrays.asList(dsAssociation1, dsAssociation2));
-        associationAPI.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
+        service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 
     @Test
@@ -82,7 +82,7 @@ public class DatasetAssociationServiceTest {
         when(dsDAO.findDataSetById(1)).thenReturn(null);
         thrown.expect(NotFoundException.class);
         thrown.expectMessage("Invalid DatasetId");
-        associationAPI.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
+        service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 
     @Test(expected = BatchUpdateException.class)
@@ -91,7 +91,7 @@ public class DatasetAssociationServiceTest {
         when(dsDAO.findDataSetById(1)).thenReturn(ds1);
 
         Mockito.doThrow(BatchUpdateException.class).when(dsAssociationDAO).insertDatasetUserAssociation(anyObject());
-        associationAPI.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
+        service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 
 
