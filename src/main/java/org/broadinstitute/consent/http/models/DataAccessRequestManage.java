@@ -1,43 +1,111 @@
 package org.broadinstitute.consent.http.models;
 
-import java.sql.Timestamp;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
+/**
+ * This class represents the basic elements that are necessary for a list of Data Access Requests
+ * that can be managed by an admin, chair, or member.
+ */
+@JsonInclude(Include.NON_NULL)
 public class DataAccessRequestManage {
 
+    private DataAccessRequest dar;
+    private Election election;
+    private List<Vote> votes;
+    private Dac dac;
+
+    @Deprecated
     private String referenceId;
+    @Deprecated
     private String logged;
+    @Deprecated
     private Boolean alreadyVoted;
+    @Deprecated
     private Boolean isReminderSent;
+    @Deprecated
     private Boolean isFinalVote;
+    @Deprecated
     private Integer voteId;
+    @Deprecated
     private Integer totalVotes;
+    @Deprecated
     private Integer votesLogged;
+    @Deprecated
     private Integer rpElectionId;
+    @Deprecated
     private Integer rpVoteId;
     private String consentGroupName;
-    private Dac dac;
+    @Deprecated
     private String electionStatus;
+    @Deprecated
     private String status;
+    @Deprecated
     private String rus;
+    @Deprecated
     private String dataRequestId;
+    @Deprecated
     private String projectTitle;
+    @Deprecated
     private String frontEndId;
+    @Deprecated
     private Integer electionId;
+    @Deprecated
     private Long createDate;
+    @Deprecated
     private Long sortDate;
+    @Deprecated
     private Boolean electionVote;
+    @Deprecated
     private Boolean isCanceled;
+    @Deprecated
     private Boolean needsApproval;
+    @Deprecated
     private String dataSetElectionResult;
+    @Deprecated
     private Integer datasetId;
+    @Deprecated
     private Integer dacId;
+    @Deprecated
     private List<String> errors = new ArrayList<>();
+    @Deprecated
     private User ownerUser;
 
     public DataAccessRequestManage() {
+    }
+
+    public DataAccessRequest getDar() {
+        return dar;
+    }
+
+    public void setDar(DataAccessRequest dar) {
+        this.dar = dar;
+    }
+
+    public Election getElection() {
+        return election;
+    }
+
+    public void setElection(Election election) {
+        this.election = election;
+    }
+
+    public List<Vote> getVotes() {
+        return votes;
+    }
+
+    public void setVotes(List<Vote> votes) {
+        this.votes = votes;
+    }
+
+    public Dac getDac() {
+        return dac;
+    }
+
+    public void setDac(Dac dac) {
+        this.dac = dac;
     }
 
     public String getReferenceId() {
@@ -126,14 +194,6 @@ public class DataAccessRequestManage {
 
     public void setConsentGroupName(String consentGroupName) {
         this.consentGroupName = consentGroupName;
-    }
-
-    public Dac getDac() {
-        return dac;
-    }
-
-    public void setDac(Dac dac) {
-        this.dac = dac;
     }
 
     public String getElectionStatus() {

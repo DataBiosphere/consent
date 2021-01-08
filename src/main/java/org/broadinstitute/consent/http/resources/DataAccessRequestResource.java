@@ -245,6 +245,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/manage")
     @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
+    @Deprecated // Use describeManageDataAccessRequestsV2
     public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId, @Auth AuthUser authUser) {
         // If a user id is provided, ensure that is the current user.
         if (userId != null) {
@@ -254,6 +255,15 @@ public class DataAccessRequestResource extends Resource {
             }
         }
         List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManage(userId, authUser);
+        return Response.ok().entity(dars).build();
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/manage/v2")
+    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
+    public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser) {
+        List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(authUser);
         return Response.ok().entity(dars).build();
     }
 

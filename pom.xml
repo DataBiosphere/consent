@@ -10,7 +10,7 @@
   <name>Consent Management Services</name>
 
   <properties>
-    <java.version>1.8</java.version>
+    <java.version>11</java.version>
     <liquibase.version>4.2.2</liquibase.version>
     <dropwizard.version>2.0.17</dropwizard.version>
     <pdfbox.version>2.0.19</pdfbox.version>
@@ -554,6 +554,7 @@
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
       <version>4.2.3</version>
+      <classifier>no_aop</classifier>
     </dependency>
 
     <dependency>
@@ -723,6 +724,12 @@
       <groupId>org.webjars</groupId>
       <artifactId>swagger-ui</artifactId>
       <version>${swagger.ui.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.javassist</groupId>
+      <artifactId>javassist</artifactId>
+      <version>3.27.0-GA</version>
     </dependency>
 
     <dependency>

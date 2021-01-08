@@ -1,17 +1,22 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.http.HttpStatusCodes;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
@@ -180,6 +185,21 @@ public class DataAccessRequestResourceTest {
         when(userService.findUserByEmail(any())).thenReturn(user);
         resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService);
         resource.describeConsentForDAR(authUser, dar.getReferenceId());
+    }
+
+    @Test
+    public void testDescribeManageDataAccessRequestsV2() {
+        DataAccessRequest dar = generateDataAccessRequest();
+        DataAccessRequestManage manage = new DataAccessRequestManage();
+        manage.setDar(dar);
+        when(dataAccessRequestService.describeDataAccessRequestManageV2(any()))
+            .thenReturn(Collections.singletonList(manage));
+        resource = new DataAccessRequestResource(
+            dataAccessRequestService,
+            emailNotifierService,
+            userService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser);
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     private DataAccessRequest generateDataAccessRequest() {

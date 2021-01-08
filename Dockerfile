@@ -1,10 +1,15 @@
-FROM adoptopenjdk:8-hotspot
+# Builder
+FROM adoptopenjdk/maven-openjdk11:latest AS build
 
-# Standard apt-get cleanup.
-RUN apt-get -yq autoremove && \
-    apt-get -yq clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/* && \
-    rm -rf /var/tmp/*
+RUN mkdir /usr/src/app
+WORKDIR /usr/src/app
 
+COPY .git /usr/src/app/.git
+COPY pom.xml /usr/src/app/pom.xml
+COPY src /usr/src/app/src
+
+RUN mvn clean package -Dmaven.test.skip=true
+
+# Published
+FROM us.gcr.io/broad-dsp-gcr-public/base/jre:11-alpine
 COPY target/consent.jar /opt/consent.jar

@@ -226,13 +226,10 @@ public class DataSetResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    public Response describeDataSets(@Context HttpServletRequest request, @QueryParam("dacUserId") Integer dacUserId){
-        if (StringUtils.isEmpty(request.getParameter("dacUserId"))) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        } else {
-            Collection<DataSetDTO> dataSetList = datasetService.describeDatasets(dacUserId);
-            return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
-        }
+    public Response describeDataSets(@Auth AuthUser authUser) {
+        User user = userService.findUserByEmail(authUser.getName());
+        Collection<DataSetDTO> dataSetList = datasetService.describeDatasets(user.getDacUserId());
+        return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
     }
 
     @GET
