@@ -29,7 +29,7 @@ import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
-public class DatabaseDataSetAssociationAPITest {
+public class DataSetAssociationAPITest {
 
     @Mock
     private DataSetAssociationDAO dsAssociationDAO;
@@ -40,7 +40,7 @@ public class DatabaseDataSetAssociationAPITest {
     @Mock
     private UserRoleDAO userRoleDAO;
 
-    DatabaseDataSetAssociationAPI associationAPI;
+    DataSetAssociationAPI associationAPI;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -49,7 +49,7 @@ public class DatabaseDataSetAssociationAPITest {
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
-        associationAPI = new DatabaseDataSetAssociationAPI(dsDAO, dsAssociationDAO, userDAO, userRoleDAO);
+        associationAPI = new DataSetAssociationAPI(dsAssociationDAO, userDAO, dsDAO, userRoleDAO);
     }
 
     @Test
