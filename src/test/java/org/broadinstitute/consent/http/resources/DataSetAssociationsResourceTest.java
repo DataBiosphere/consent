@@ -19,20 +19,20 @@ import org.mockito.MockitoAnnotations;
 public class DataSetAssociationsResourceTest {
 
     @Mock
-    DatasetAssociationService datasetAssociationService;
+    private DatasetAssociationService service;
 
     private DataSetAssociationsResource resource;
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        when(datasetAssociationService.createDatasetUsersAssociation(any(), any())).thenReturn(Collections.emptyList());
-        when(datasetAssociationService.findDataOwnersRelationWithDataset(any())).thenReturn(Collections.emptyMap());
-        when(datasetAssociationService.updateDatasetAssociations(any(), any())).thenReturn(Collections.emptyList());
+        when(service.createDatasetUsersAssociation(any(), any())).thenReturn(Collections.emptyList());
+        when(service.findDataOwnersRelationWithDataset(any())).thenReturn(Collections.emptyMap());
+        when(service.updateDatasetAssociations(any(), any())).thenReturn(Collections.emptyList());
     }
 
     private void initResource() {
-        resource = new DataSetAssociationsResource(datasetAssociationService);
+        resource = new DataSetAssociationsResource(service);
     }
 
     @Test
@@ -44,7 +44,7 @@ public class DataSetAssociationsResourceTest {
 
     @Test
     public void testAssociateDatasetWithUsers_NotFound() {
-        when(datasetAssociationService.createDatasetUsersAssociation(any(), any())).thenThrow(new NotFoundException());
+        when(service.createDatasetUsersAssociation(any(), any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.associateDatasetWithUsers(RandomUtils.nextInt(1, 100), Collections.emptyList());
         Assert.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -52,7 +52,7 @@ public class DataSetAssociationsResourceTest {
 
     @Test
     public void testAssociateDatasetWithUsers_BadRequest() {
-        when(datasetAssociationService.createDatasetUsersAssociation(any(), any())).thenThrow(new BadRequestException());
+        when(service.createDatasetUsersAssociation(any(), any())).thenThrow(new BadRequestException());
         initResource();
         Response response = resource.associateDatasetWithUsers(RandomUtils.nextInt(1, 100), Collections.emptyList());
         Assert.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -74,7 +74,7 @@ public class DataSetAssociationsResourceTest {
 
     @Test
     public void testUpdateDatasetAssociations_Notfound() {
-        when(datasetAssociationService.updateDatasetAssociations(any(), any())).thenThrow(new NotFoundException());
+        when(service.updateDatasetAssociations(any(), any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.updateDatasetAssociations(RandomUtils.nextInt(1, 100), Collections.emptyList());
         Assert.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());

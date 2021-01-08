@@ -22,11 +22,11 @@ import org.broadinstitute.consent.http.service.DatasetAssociationService;
 public class DataSetAssociationsResource extends Resource {
 
 
-    private final DatasetAssociationService api;
+    private final DatasetAssociationService service;
 
     @Inject
-    public DataSetAssociationsResource(DatasetAssociationService api) {
-        this.api = api;
+    public DataSetAssociationsResource(DatasetAssociationService service) {
+        this.service = service;
     }
 
 
@@ -37,7 +37,8 @@ public class DataSetAssociationsResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response associateDatasetWithUsers(@PathParam("datasetId") Integer datasetId, List<Integer> userIdList) {
         try {
-            List<DatasetAssociation> associations = api.createDatasetUsersAssociation(datasetId, userIdList);
+            List<DatasetAssociation> associations = service
+                .createDatasetUsersAssociation(datasetId, userIdList);
             return Response.status(Response.Status.CREATED).entity(associations).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -51,7 +52,7 @@ public class DataSetAssociationsResource extends Resource {
     @PermitAll
     public Response getDatasetAssociations(@PathParam("dataSetId") Integer dataSetId) {
         try {
-            Map<String, Collection<User>> userMap = api.findDataOwnersRelationWithDataset(dataSetId);
+            Map<String, Collection<User>> userMap = service.findDataOwnersRelationWithDataset(dataSetId);
             return Response.ok().entity(userMap).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -65,7 +66,8 @@ public class DataSetAssociationsResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response updateDatasetAssociations(@PathParam("dataSetId") Integer dataSetId, List<Integer> userIdList) {
         try {
-            List<DatasetAssociation> associations = api.updateDatasetAssociations(dataSetId, userIdList);
+            List<DatasetAssociation> associations = service
+                .updateDatasetAssociations(dataSetId, userIdList);
             return Response.ok().entity(associations).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

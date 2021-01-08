@@ -40,7 +40,7 @@ public class DatasetAssociationServiceTest {
     @Mock
     private UserRoleDAO userRoleDAO;
 
-    DatasetAssociationService service;
+    private DatasetAssociationService service;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
