@@ -40,15 +40,15 @@ public class DatasetAssociationService {
         this.userRoleDAO = userRoleDAO;
     }
 
-    public List<DatasetAssociation> createDatasetUsersAssociation(Integer dataSetId, List<Integer> usersIdList) {
-        verifyUsers(usersIdList);
+    public List<DatasetAssociation> createDatasetUsersAssociation(Integer dataSetId, List<Integer> userIds) {
+        verifyUsers(userIds);
         DataSet d = dsDAO.findDataSetById(dataSetId);
         if (Objects.isNull(d)) {
             throw new NotFoundException("Invalid DatasetId");
         }
         Integer datasetId = d.getDataSetId();
         try {
-            dsAssociationDAO.insertDatasetUserAssociation(DatasetAssociation.createDatasetAssociations(datasetId, usersIdList));
+            dsAssociationDAO.insertDatasetUserAssociation(DatasetAssociation.createDatasetAssociations(datasetId, userIds));
         } catch (UnableToExecuteStatementException e) {
             if (e.getCause().getClass().equals(BatchUpdateException.class)) {
                 throw new BadRequestException("Duplicate entry for an Association");
@@ -92,19 +92,19 @@ public class DatasetAssociationService {
         return dataOwnerDataSetMap;
     }
 
-    public List<DatasetAssociation> updateDatasetAssociations(Integer dataSetId, List<Integer> usersIdList) {
+    public List<DatasetAssociation> updateDatasetAssociations(Integer dataSetId, List<Integer> userIds) {
         DataSet d = dsDAO.findDataSetById(dataSetId);
         if (Objects.isNull(d)) {
             throw new NotFoundException("Invalid DatasetId");
         }
         Integer datasetId = d.getDataSetId();
         checkAssociationsExist(datasetId);
-        verifyUsers(usersIdList);
+        verifyUsers(userIds);
         dsAssociationDAO.inTransaction(h -> {
             try {
                 h.delete(datasetId);
-                if (!usersIdList.isEmpty()) {
-                    dsAssociationDAO.insertDatasetUserAssociation(DatasetAssociation.createDatasetAssociations(datasetId, usersIdList));
+                if (!userIds.isEmpty()) {
+                    dsAssociationDAO.insertDatasetUserAssociation(DatasetAssociation.createDatasetAssociations(datasetId, userIds));
                 }
             } catch (Exception e) {
                 h.rollback();
@@ -120,10 +120,10 @@ public class DatasetAssociationService {
         }
     }
 
-    private void verifyUsers(List<Integer> usersIdList) {
-        if (usersIdList.isEmpty()) return;
-        Collection<User> userList = userDAO.findUsersWithRoles(usersIdList);
-        if (userList.size() == usersIdList.size()) {
+    private void verifyUsers(List<Integer> userIds) {
+        if (userIds.isEmpty()) return;
+        Collection<User> userList = userDAO.findUsersWithRoles(userIds);
+        if (userList.size() == userIds.size()) {
             for (User user : userList) {
                 if (user.getRoles().stream().noneMatch(role -> role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getRoleName()))) {
                     userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user.getDacUserId());
