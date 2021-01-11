@@ -194,6 +194,14 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     Election findLastElectionByReferenceIdAndStatus(@Bind("referenceId") String referenceIds, @Bind("status") String status);
 
+    @SqlQuery("SELECT distinct * " +
+            " FROM election e " +
+            " INNER JOIN (SELECT referenceid, max(createdate) maxdate FROM election e WHERE lower(e.electiontype) = lower(:type) GROUP BY referenceid) electionview ON electionview.maxdate = e.createdate AND electionview.referenceid = e.referenceid  " +
+            " WHERE e.referenceid in (<referenceIds>) " +
+            " AND lower(e.electiontype) = lower(:type)")
+    @UseRowMapper(SimpleElectionMapper.class)
+    List<Election> findLastElectionsByReferenceIdsAndType(@BindList("referenceIds") List<String> referenceIds, @Bind("type") String type);
+
     @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where lower(e.electionType) = lower(:type) group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
             "AND e.referenceId = :referenceId ")

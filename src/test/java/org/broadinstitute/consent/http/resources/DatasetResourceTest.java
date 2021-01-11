@@ -18,8 +18,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -88,9 +88,6 @@ public class DatasetResourceTest {
 
     @Mock
     private UriBuilder uriBuilder;
-
-    @Mock
-    private HttpServletRequest httpServletRequest;
 
     private DataSetResource resource;
 
@@ -284,17 +281,28 @@ public class DatasetResourceTest {
 
     @Test
     public void testDescribeDatasetsSuccess() {
-        when(httpServletRequest.getParameter("dacUserId")).thenReturn("0");
+        when(authUser.getName()).thenReturn("authUserEmail");
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
         when(datasetService.describeDatasets(anyInt())).thenReturn(Collections.emptySet());
         initResource();
-        Response response = resource.describeDataSets(httpServletRequest, 0);
+        Response response = resource.describeDataSets(authUser);
         assertEquals(200, response.getStatus());
     }
 
     @Test
-    public void testDescribeDatasetsNotFound() {
+    public void testValidateDatasetNameSuccess() {
+        DataSet testDataset = new DataSet();
+        testDataset.setDataSetId(1);
+        when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
         initResource();
-        Response response = resource.describeDataSets(httpServletRequest, 0);
+        Response response = resource.validateDatasetName("test");
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testValidateDatasetNameNotFound() {
+        initResource();
+        Response response = resource.validateDatasetName("test");
         assertEquals(404, response.getStatus());
     }
 

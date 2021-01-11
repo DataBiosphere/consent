@@ -1774,6 +1774,7 @@ paths:
       get:
         summary: Manage Data Access Requests
         description: |
+          DEPRECATED, use v2 endpoint
           Returns all the elections created for Data Access Requests relevant to the current user.
           If the user is requesting these as an admin, all are returned. As a DAC member, only those
           assigned to the DAC are returned. As a general user, only those created by the user are
@@ -1800,6 +1801,26 @@ paths:
             description: |
               If optional user id is provided, it must be that of the authenticated user. Non-admin
               and non-DAC users can only see their own Data Access Requests.
+  /api/dar/manage/v2:
+    get:
+      summary: Manage Data Access Requests V2
+      description: |
+        Returns all the elections created for Data Access Requests relevant to the current user.
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: A list of DAR elections.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequestManage'
+        400:
+          description: |
+            If optional user id is provided, it must be that of the authenticated user. Non-admin
+            and non-DAC users can only see their own Data Access Requests.
   /api/dar/cases/unreviewed:
       get:
         summary: getTotalUnReviewedDAR
@@ -2435,28 +2456,19 @@ paths:
           description: Could not find a vote with this id.
   /api/dataset:
     get:
-      summary: describeDatasets
-      description: Returns Dataset list filtering by Role.
-      parameters:
-        - name: dacUserId
-          in: query
-          description: UserId used to retrieve the user's roles
-          required: true
-          schema:
-            type: integer
+      summary: Get Datasets
+      description: Returns Dataset list filtered by authenticated user.
       tags:
         - Datasets
       responses:
         200:
-          description: An array of Datasets
+          description: A list of Datasets
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Dataset'
-        404:
-          description: Required parameter is null.
     post:
       summary: createDataSet
       description: Creates the Datasets defined in the input .TSV /.txt file.
@@ -2521,6 +2533,28 @@ paths:
           description: Dataset Name given is already in use by another dataset
         500:
           description: Internal Error (something went wrong processing a valid input)
+  /api/dataset/validate:
+    get:
+      summary: validateDatasetName
+      description: Returns the dataset id if one exists for the given name (ignores case).
+      parameters:
+        - name: name
+          in: query
+          description: The name of the dataset to search for.
+          required: true
+          schema:
+            type: string
+      tags:
+        - Datasets
+      responses:
+        200:
+          description: dataset id
+          content:
+            application/json:
+              schema:
+                type: integer
+        404:
+          description: Dataset not found
   /api/dataset/sample:
     get:
       summary: getDataSetSample

@@ -226,13 +226,10 @@ public class DataSetResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    public Response describeDataSets(@Context HttpServletRequest request, @QueryParam("dacUserId") Integer dacUserId){
-        if (StringUtils.isEmpty(request.getParameter("dacUserId"))) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        } else {
-            Collection<DataSetDTO> dataSetList = datasetService.describeDatasets(dacUserId);
-            return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
-        }
+    public Response describeDataSets(@Auth AuthUser authUser) {
+        User user = userService.findUserByEmail(authUser.getName());
+        Collection<DataSetDTO> dataSetList = datasetService.describeDatasets(user.getDacUserId());
+        return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
     }
 
     @GET
@@ -248,6 +245,19 @@ public class DataSetResource extends Resource {
         }
     }
 
+    @GET
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/validate")
+    @PermitAll
+    public Response validateDatasetName(@QueryParam("name") String name) {
+        try {
+            DataSet datasetWithName = datasetService.getDatasetByName(name);
+            return Response.ok().entity(datasetWithName.getDataSetId()).build();
+        } catch (Exception e) {
+            throw new NotFoundException("Could not find the dataset with name: " + name);
+        }
+    }
 
     @GET
     @Path("/sample")

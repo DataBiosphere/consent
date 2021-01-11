@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.RoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserMapper;
@@ -93,5 +94,21 @@ public interface DacDAO extends Transactional<DacDAO> {
     @UseRowMapper(UserRoleMapper.class)
     @SqlQuery("select ur.*, r.name from user_role ur inner join roles r on ur.role_id = r.roleId where ur.user_id in (<userIds>)")
     List<UserRole> findUserRolesForUsers(@BindList("userIds") List<Integer> userIds);
+
+    /**
+     * Find the Dacs for these datasets.
+     *
+     * DACs -> Consents -> Consent Associations -> DataSets
+     *
+     * @param datasetIds The list of dataset ids
+     * @return All DACs that corresponds to the provided dataset ids
+     */
+    @RegisterRowMapper(DacMapper.class)
+    @SqlQuery("SELECT d.*, a.datasetid " +
+            " FROM dac d " +
+            " INNER JOIN consents c ON d.dac_id = c.dac_id " +
+            " INNER JOIN consentassociations a ON a.consentid = c.consentid " +
+            " WHERE a.datasetid IN (<datasetIds>) ")
+    Set<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
 
 }

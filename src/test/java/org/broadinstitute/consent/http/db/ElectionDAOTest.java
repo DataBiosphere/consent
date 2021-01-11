@@ -7,7 +7,9 @@ import static org.junit.Assert.assertNotNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.Collections;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -145,5 +147,18 @@ public class ElectionDAOTest extends DAOTestHelper {
     Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
     assertNotNull(election);
     assertEquals(e.getElectionId(), election.getElectionId());
+  }
+
+  @Test
+  public void testFindLastElectionsByReferenceIdsAndType() {
+    DataAccessRequest dar = createDataAccessRequestV2();
+    DataSet d = createDataset();
+    createElection(dar.getReferenceId(), d.getDataSetId());
+    List<Election> elections =
+        electionDAO.findLastElectionsByReferenceIdsAndType(
+            Collections.singletonList(dar.getReferenceId()), ElectionType.DATA_ACCESS.getValue());
+    assertNotNull(elections);
+    assertFalse(elections.isEmpty());
+    assertEquals(1, elections.size());
   }
 }

@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.CaseFormat;
 import com.google.gson.Gson;
@@ -15,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+@JsonInclude(Include.NON_NULL)
 public class DataAccessRequest {
 
   @JsonProperty public Integer id;
