@@ -86,7 +86,7 @@ public class DatasetServiceTest {
 
     @Test
     public void testGetDatasetByName() {
-        when(datasetDAO.getDatasetByName(getDatasets().get(0).getName()))
+        when(datasetDAO.getDatasetByName(getDatasets().get(0).getName().toLowerCase()))
             .thenReturn(getDatasets().get(0));
         initService();
 

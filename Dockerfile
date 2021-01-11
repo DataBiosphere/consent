@@ -12,4 +12,4 @@ RUN mvn clean package -Dmaven.test.skip=true
 
 # Published
 FROM us.gcr.io/broad-dsp-gcr-public/base/jre:11-alpine
-COPY target/consent.jar /opt/consent.jar
+COPY --from=build /usr/src/app/target/consent.jar /opt/consent.jar

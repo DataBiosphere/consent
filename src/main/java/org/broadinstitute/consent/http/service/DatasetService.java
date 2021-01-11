@@ -126,7 +126,8 @@ public class DatasetService {
     }
 
     public DataSet getDatasetByName(String name) {
-        return dataSetDAO.getDatasetByName(name);
+        String lowercaseName = name.toLowerCase();
+        return dataSetDAO.getDatasetByName(lowercaseName);
     }
 
     public DataSet findDatasetById(Integer id) {
