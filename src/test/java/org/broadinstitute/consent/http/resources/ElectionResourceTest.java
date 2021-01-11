@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -30,9 +31,10 @@ import static org.mockito.Mockito.when;
 
 @SuppressWarnings("FieldCanBeLocal")
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({AbstractElectionAPI.class})
 public class ElectionResourceTest {
-    
+
     private final int OK = HttpStatusCodes.STATUS_CODE_OK;
     private final int NOT_FOUND = HttpStatusCodes.STATUS_CODE_NOT_FOUND;
     private final int ERROR = HttpStatusCodes.STATUS_CODE_SERVER_ERROR;
