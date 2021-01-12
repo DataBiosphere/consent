@@ -10,21 +10,22 @@ import org.broadinstitute.dsp.consent.models.ElectionModels._
 import org.broadinstitute.dsp.consent.models.JsonProtocols
 import org.broadinstitute.dsp.consent.services._
 import scala.concurrent.duration._
+import io.netty.handler.codec.http.HttpResponseStatus._
 
 object AdminChains {
     def loginToConsole(additionalHeaders: Map[String, String]): ChainBuilder = {
         exec(
-            Requests.User.me(200, additionalHeaders)
+            Requests.User.me(OK.code, additionalHeaders)
         )
         .pause(1)
         .exec(
-            Requests.Admin.initConsole(200, additionalHeaders)
+            Requests.Admin.initConsole(OK.code, additionalHeaders)
         )
     }
 
     def manageAccess(additionalHeaders: Map[String, String]): ChainBuilder = {
         exec(
-            Requests.Dar.manageDar(200, additionalHeaders)
+            Requests.Dar.manageDar(OK.code, additionalHeaders)
         )
         .exitBlockOnFail {
             exec { session =>
@@ -46,7 +47,7 @@ object AdminChains {
             }
         }   
         .exec(
-            Requests.Dac.list(200, additionalHeaders)
+            Requests.Dac.list(OK.code, additionalHeaders)
         )
     }
 
@@ -59,7 +60,7 @@ object AdminChains {
                 session.set("dataRequestId", manageDars(darIndex).dataRequestId.getOrElse(""))
             }
             .exec(
-                Requests.Election.createElection(201, "${dataRequestId}", "${electionStatusBody}", additionalHeaders)
+                Requests.Election.createElection(CREATED.code, "${dataRequestId}", "${electionStatusBody}", additionalHeaders)
             )
         }
     }

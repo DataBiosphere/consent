@@ -12,20 +12,21 @@ import org.broadinstitute.dsp.consent.models.ConsentModels._
 import spray.json._
 import DefaultJsonProtocol._
 import org.broadinstitute.dsp.consent.services.DarService
+import io.netty.handler.codec.http.HttpResponseStatus._
 
 object DarChains {
     def darApplicationPageLoad(additionalHeaders: Map[String, String]): ChainBuilder = exec(
-        Requests.Dar.getPartial(200, "${darReferenceId}", additionalHeaders)
+        Requests.Dar.getPartial(OK.code, "${darReferenceId}", additionalHeaders)
     )
     .exec(
         Requests.DataSet.getDataSetsByDataSetIds(
             200, 
             additionalHeaders,
-            Requests.DataSet.getDataSetsByDataSetId(200, "${dataSetIds(0)}", additionalHeaders, 0),
-            Requests.DataSet.getDataSetsByDataSetId(200, "${dataSetIds(1)}", additionalHeaders, 1))
+            Requests.DataSet.getDataSetsByDataSetId(OK.code, "${dataSetIds(0)}", additionalHeaders, 0),
+            Requests.DataSet.getDataSetsByDataSetId(OK.code, "${dataSetIds(1)}", additionalHeaders, 1))
     )
     .exec(
-        Requests.Researcher.getResearcherProperties(200, "${dacUserId}", additionalHeaders)
+        Requests.Researcher.getResearcherProperties(OK.code, "${dacUserId}", additionalHeaders)
     )
 
     def finalDarSubmit(additionalHeaders: Map[String, String]): ChainBuilder = {
@@ -58,10 +59,10 @@ object DarChains {
                 newSession.set("dataAccessRequestSubmit", finalDar.data.toJson.compactPrint)
             }
             .exec(
-                Requests.Dar.updatePartial(200, "${darReferenceId}", "${dataAccessRequestJson}", additionalHeaders)
+                Requests.Dar.updatePartial(OK.code, "${darReferenceId}", "${dataAccessRequestJson}", additionalHeaders)
             )
             .exec(
-                Requests.Dar.saveFinal(201, "${dataAccessRequestSubmit}", additionalHeaders)
+                Requests.Dar.saveFinal(CREATED.code, "${dataAccessRequestSubmit}", additionalHeaders)
             )
         }
     }
@@ -69,7 +70,7 @@ object DarChains {
     def describeDar(additionalHeaders: Map[String, String]): ChainBuilder = {
         exitBlockOnFail {
             exec(
-                Requests.Dar.getPartial(200, "${darReferenceId}", additionalHeaders)
+                Requests.Dar.getPartial(OK.code, "${darReferenceId}", additionalHeaders)
             )
             .exec { session =>
                 implicit val darFormat: JsonProtocols.DataAccessRequestDataFormat.type = JsonProtocols.DataAccessRequestDataFormat
@@ -79,7 +80,7 @@ object DarChains {
                 session.set("dataAccessUserId", dar.userId.getOrElse(0))
             }
             .exec(
-                Requests.User.getById(200, "${dataAccessUserId}", additionalHeaders)
+                Requests.User.getById(OK.code, "${dataAccessUserId}", additionalHeaders)
             )
         }
     }
@@ -90,7 +91,7 @@ object DarChains {
                 describeDar(additionalHeaders)
             )
             .exec(
-                Requests.Dar.getConsent(200, "${darReferenceId}", additionalHeaders)
+                Requests.Dar.getConsent(OK.code, "${darReferenceId}", additionalHeaders)
             )
             .exec { session =>
                 implicit val consentFormat: JsonProtocols.consentFormat.type = JsonProtocols.consentFormat
@@ -101,7 +102,7 @@ object DarChains {
                 session.set("consentDataUse", consent.dataUse.getOrElse(DataUseBuilder.empty).toJson.compactPrint)
             }
             .exec(
-                Requests.Dar.translateDataUse(200, "${consentDataUse}", additionalHeaders)
+                Requests.Dar.translateDataUse(OK.code, "${consentDataUse}", additionalHeaders)
             )
         }
     }

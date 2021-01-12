@@ -9,18 +9,19 @@ import org.broadinstitute.dsp.consent.models.PendingModels._
 import org.broadinstitute.dsp.consent.models.JsonProtocols
 import org.broadinstitute.dsp.consent.services.{DarService}
 import scala.concurrent.duration._
+import io.netty.handler.codec.http.HttpResponseStatus._
 
 object MemberChains {
     def loginToConsole(additionalHeaders: Map[String, String]): ChainBuilder = {
         exec(
-            Requests.User.me(200, additionalHeaders)
+            Requests.User.me(OK.code, additionalHeaders)
         )
         .pause(1)
         .exec(
-            Requests.PendingCases.getPendingDataRequestsByUserId(200, "${dacUserId}", additionalHeaders)
+            Requests.PendingCases.getPendingDataRequestsByUserId(OK.code, "${dacUserId}", additionalHeaders)
         )
         .exec(
-            Requests.PendingCases.getPendingCasesByUserId(200, "${dacUserId}", additionalHeaders)
+            Requests.PendingCases.getPendingCasesByUserId(OK.code, "${dacUserId}", additionalHeaders)
         )
     }
 

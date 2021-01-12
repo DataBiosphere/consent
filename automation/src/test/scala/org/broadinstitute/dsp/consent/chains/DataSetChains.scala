@@ -9,12 +9,13 @@ import org.broadinstitute.dsp.consent.models.JsonProtocols
 import org.broadinstitute.dsp.consent.models.DataSetModels._
 import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
 import org.broadinstitute.dsp.consent.services._
+import io.netty.handler.codec.http.HttpResponseStatus._
 
 object DataSetChains {
     def dataSetCatalogPickTwo(additionalHeaders: Map[String, String]): ChainBuilder = {
         exitBlockOnFail {
             exec(
-                Requests.User.dataSetCatalog(200, "${dacUserId}", additionalHeaders)
+                Requests.User.dataSetCatalog(OK.code, "${dacUserId}", additionalHeaders)
             )
             .exec { session =>
                 implicit val dataSetFormatJson: JsonProtocols.dataSetFormat.type = JsonProtocols.dataSetFormat
@@ -44,7 +45,7 @@ object DataSetChains {
                 newSession.set("dataSetIds", setIds)
             }
             .exec(
-                Requests.Dar.partialSave(201, """${darRequestBody}""", additionalHeaders)
+                Requests.Dar.partialSave(CREATED.code, """${darRequestBody}""", additionalHeaders)
             )
         }
     }

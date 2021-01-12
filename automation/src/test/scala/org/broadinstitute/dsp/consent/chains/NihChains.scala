@@ -10,6 +10,7 @@ import org.broadinstitute.dsp.consent.models.NihModels._
 import org.broadinstitute.dsp.consent.models.ResearcherModels._
 import org.broadinstitute.dsp.consent.models.UserModels._
 import org.broadinstitute.dsp.consent.services._
+import io.netty.handler.codec.http.HttpResponseStatus._
 
 object NihChains {
     def authenticate(additionalHeaders: Map[String, String]): ChainBuilder = {
@@ -43,13 +44,13 @@ object NihChains {
                 )
                 .exec { session => 
                     val verifyStatus: String = session(Requests.FireCloud.fireCloudVerifyStatus).as[String]
-                    val isFCUser: Boolean = if (verifyStatus == "200") true else false
+                    val isFCUser: Boolean = if (verifyStatus == OK.code.toString) true else false
                     session.set("isFCUser", isFCUser)
                 }
                 .doIfEquals("${isFCUser}", false) {
                     exitBlockOnFail {
                         exec(
-                            Requests.FireCloud.registerUser(200, "${fireCloudRegisterUserBody}", additionalHeaders)
+                            Requests.FireCloud.registerUser(OK.code, "${fireCloudRegisterUserBody}", additionalHeaders)
                         )
                         .exec{ session =>
                             session.set("isFCUser", true)
@@ -73,7 +74,7 @@ object NihChains {
                         session.set("nihUserBody", nihUser.toJson.compactPrint)
                     }
                     .exec(
-                        Requests.FireCloud.saveNihUser(200, "${nihUserBody}", additionalHeaders)
+                        Requests.FireCloud.saveNihUser(OK.code, "${nihUserBody}", additionalHeaders)
                     )
                 }
             }

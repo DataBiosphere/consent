@@ -5,6 +5,7 @@ import org.broadinstitute.dsp.consent.{TestConfig, TestRunner}
 import org.broadinstitute.dsp.consent.requests.Requests
 import scala.concurrent.duration._
 import org.broadinstitute.dsp.consent.chains.{DarChains, DataSetChains, NihChains, AdminChains, MemberChains}
+import io.netty.handler.codec.http.HttpResponseStatus._
 
 class DataAccessScenarios extends Simulation with TestRunner {
     runPopulations(
@@ -13,7 +14,7 @@ class DataAccessScenarios extends Simulation with TestRunner {
                 scenario("Researcher DAR with 2 DataSets")
                 .exitBlockOnFail {
                     exec(
-                        Requests.User.me(200, TestConfig.researcherHeader)
+                        Requests.User.me(OK.code, TestConfig.researcherHeader)
                     )
                     .pause(1 second)
                     .exec(

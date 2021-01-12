@@ -9,6 +9,7 @@ import org.broadinstitute.dsp.consent.models.PendingModels._
 import org.broadinstitute.dsp.consent.models.JsonProtocols
 import org.broadinstitute.dsp.consent.services._
 import scala.concurrent.duration._
+import io.netty.handler.codec.http.HttpResponseStatus._
 
 object AccessReviewChains {
     val referenceId: String = "darReferenceId"
@@ -16,19 +17,19 @@ object AccessReviewChains {
 
     def init(additionalHeaders: Map[String, String]): ChainBuilder = {
         exec(
-            Requests.Votes.getDarVote(200, "${darReferenceId}", "${voteId}", additionalHeaders)
+            Requests.Votes.getDarVote(OK.code, "${darReferenceId}", "${voteId}", additionalHeaders)
         )
         .exec(
-            Requests.Election.getDataAccessElectionReview(200, "${darElectionId}", "false", additionalHeaders)
+            Requests.Election.getDataAccessElectionReview(OK.code, "${darElectionId}", "false", additionalHeaders)
         )
         .exec(
             DarChains.describeDarWithConsent(additionalHeaders)
         )
         .exec(
-            Requests.Votes.getDarVoteList(200, "${darReferenceId}", additionalHeaders)
+            Requests.Votes.getDarVoteList(OK.code, "${darReferenceId}", additionalHeaders)
         )
         .exec(
-            Requests.Researcher.getResearcherProperties(200, "${dataAccessUserId}", additionalHeaders)
+            Requests.Researcher.getResearcherProperties(OK.code, "${dataAccessUserId}", additionalHeaders)
         )
     }
 }

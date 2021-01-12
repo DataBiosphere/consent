@@ -6,27 +6,28 @@ import io.gatling.core.Predef._
 import io.gatling.http.request.builder._
 import io.gatling.http.Predef._
 import org.broadinstitute.dsp.consent.TestConfig
+import io.netty.handler.codec.http.HttpResponseStatus._
 
 object Requests {
 
   val rootRequest: HttpRequestBuilder = {
     http("Root URL")
       .get("/")
-      .check(status.is(session => 200))
+      .check(status.is(session => OK.code))
   }
 
   val statusRequest: HttpRequestBuilder = {
     http("Status Request")
       .get("/status")
       .headers(TestConfig.jsonHeader)
-      .check(status.is(session => 200))
+      .check(status.is(session => OK.code))
   }
 
   val versionRequest: HttpRequestBuilder = {
     http("Version Request")
       .get("/version")
       .headers(TestConfig.jsonHeader)
-      .check(status.is(session => 200))
+      .check(status.is(session => OK.code))
   }
 
   private def encode(term: String): String = {
