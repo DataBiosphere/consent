@@ -6,27 +6,28 @@ import io.gatling.core.Predef._
 import io.gatling.http.request.builder._
 import io.gatling.http.Predef._
 import org.broadinstitute.dsp.consent.TestConfig
+import io.netty.handler.codec.http.HttpResponseStatus._
 
 object Requests {
 
   val rootRequest: HttpRequestBuilder = {
     http("Root URL")
       .get("/")
-      .check(status.is(session => 200))
+      .check(status.is(session => OK.code))
   }
 
   val statusRequest: HttpRequestBuilder = {
     http("Status Request")
       .get("/status")
       .headers(TestConfig.jsonHeader)
-      .check(status.is(session => 200))
+      .check(status.is(session => OK.code))
   }
 
   val versionRequest: HttpRequestBuilder = {
     http("Version Request")
       .get("/version")
       .headers(TestConfig.jsonHeader)
-      .check(status.is(session => 200))
+      .check(status.is(session => OK.code))
   }
 
   private def encode(term: String): String = {
@@ -60,6 +61,8 @@ object Requests {
   object User {
     val userResponse: String = "userResponse"
     val dacUserId: String = "dacUserId"
+    val userByIdResponse: String = "userByIdResponse"
+
     def me(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get User")
         .get("/api/user/me")
@@ -67,6 +70,15 @@ object Requests {
         .headers(additionalHeaders)
         .check(bodyString.saveAs(userResponse))
         .check(jsonPath("$.dacUserId").saveAs(dacUserId))
+        .check(status.is(expectedStatus))
+    }
+
+    def getById(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Get User By Id")
+        .get(s"api/user/$userId")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(userByIdResponse))
         .check(status.is(expectedStatus))
     }
 
@@ -135,6 +147,8 @@ object Requests {
     val darReferenceId: String = "darReferenceId"
     val darId: String = "darId"
     val manageDarResponse: String = "manageDarResponse"
+    val darConsentResponse: String = "darConsentResponse"
+    val translateResponse: String = "translateResponse"
 
     def getPartial(expectedStatus: Int, referenceId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get Partial Dar")
@@ -186,10 +200,31 @@ object Requests {
         .check(status.is(expectedStatus))
 
     }
+
+    def getConsent(expectedStatus: Int, referenceId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Get DAR Consent")
+        .get(s"api/dar/find/$referenceId/consent")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(darConsentResponse))
+        .check(status.is(expectedStatus))
+    }
+
+    def translateDataUse(expectedStatus: Int, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Translate Data Use")
+        .post(s"${TestConfig.ontologyUrl}translate/summary")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .body(StringBody(body))
+        .asJson
+        .check(bodyString.saveAs(translateResponse))
+        .check(status.is(expectedStatus))
+    }
   }
 
   object Researcher {
     val researcherPropertiesResponse: String = "researcherPropertiesResponse"
+    val researcherProfileResponse: String = "researcherProfileResponse"
 
     def getResearcherProperties(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get Researcher Properties")
@@ -283,6 +318,7 @@ object Requests {
 
   object Election {
     val createElectionResponse: String = "createElectionResponse"
+    val getDataAccessElectionReviewResponse: String = "getElectionReviewResponse"
 
     def createElection(expectedStatus: Int, dataRequestId: String, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Create Elections")
@@ -291,6 +327,63 @@ object Requests {
         .headers(additionalHeaders)
         .body(StringBody(body)).asJson
         .check(bodyString.saveAs(createElectionResponse))
+        .check(status.is(expectedStatus))
+    }
+
+    def getDataAccessElectionReview(expectedStatus: Int, electionId: String, isFinalAccess: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Get Election Review")
+        .get(s"api/electionReview/access/$electionId?isFinalVote=$isFinalAccess")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(getDataAccessElectionReviewResponse))
+        .check(status.is(expectedStatus))
+    }
+  }
+
+  object PendingCases {
+    val consentPendingResponse: String = "consentPendingResponse"
+    val dataRequestPendingResponse: String = "dataRequestPendingResponse"
+
+    def getPendingCasesByUserId(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Get Pending Cases")
+        .get(s"api/consent/cases/pending/$userId")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(consentPendingResponse))
+        .check(status.is(expectedStatus))
+    }
+
+    def getPendingDataRequestsByUserId(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Get Pending Data Requests")
+        .get(s"api/dataRequest/cases/pending/$userId")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(dataRequestPendingResponse))
+        .check(status.is(expectedStatus))
+    }
+  }
+
+  object Votes {
+    val getDarVoteResponse: String = "getDarVotesResponse"
+    val darElectionId: String = "darElectionId"
+    val getDarVoteListResponse: String = "getDarVoteListResponse"
+
+    def getDarVote(expectedStatus: Int, requestId: String, voteId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Get DAR Vote")
+        .get(s"api/dataRequest/$requestId/vote/$voteId")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(getDarVoteResponse))
+        .check(jsonPath("$.electionId").saveAs(darElectionId))
+        .check(status.is(expectedStatus))
+    }
+
+    def getDarVoteList(expectedStatus: Int, requestId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Get DAR Votes")
+        .get(s"api/dataRequest/$requestId/vote")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(getDarVoteListResponse))
         .check(status.is(expectedStatus))
     }
   }

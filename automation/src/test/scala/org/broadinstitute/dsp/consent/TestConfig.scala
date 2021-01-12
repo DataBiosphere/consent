@@ -40,6 +40,7 @@ object TestConfig {
 
   lazy val fireCloudUrl: String = config.getString("consent.fireCloudUrl")
   lazy val profileUrl: String = config.getString("consent.profileUrl")
+  lazy val ontologyUrl: String = config.getString("consent.ontologyUrl")
   lazy val adminHeader: Map[String, String] = Map("Authorization" -> s"Bearer ${getAccessToken("/accounts/duos-automation-admin.json")}")
   lazy val chairHeader: Map[String, String] = Map("Authorization" -> s"Bearer ${getAccessToken("/accounts/duos-automation-chair.json")}")
   lazy val memberHeader: Map[String, String] = Map("Authorization" -> s"Bearer ${getAccessToken("/accounts/duos-automation-member.json")}")
