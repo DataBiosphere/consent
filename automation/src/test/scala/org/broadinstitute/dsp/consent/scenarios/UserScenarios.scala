@@ -8,8 +8,7 @@ import io.netty.handler.codec.http.HttpResponseStatus._
 class UserScenarios extends Simulation with TestRunner {
     runScenarios(
         List(
-            scenario("User Login")
-                .exec(Requests.User.me(OK.code, TestConfig.researcherHeader))
+            scenario("User Login").exec(Requests.User.me(OK.code, TestConfig.researcherHeader))
         )
     )
 }

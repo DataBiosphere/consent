@@ -40,7 +40,7 @@ object AdminChains {
                 val newManageDars: Seq[DataAccessRequestManage] = DarService.setManageRolesByOwner(manageDars)
 
                 val researcherDars: Seq[DataAccessRequestManage] = DarService.getPendingDARsByMostRecent(newManageDars, 2)
-                val electionStatus: ElectionStatus = ElectionStatus(status = "Open", finalAccessVote = false)
+                val electionStatus: ElectionStatus = ElectionStatus(status = Status.OPEN, finalAccessVote = false)
                 
                 val newSession = session.set(Requests.Dar.manageDarResponse, researcherDars)
                 newSession.set("electionStatusBody", electionStatus.toJson.compactPrint)
