@@ -11,6 +11,8 @@ import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
 import org.broadinstitute.dsp.consent.models.NihModels._
 import org.broadinstitute.dsp.consent.models.DacModels._
 import org.broadinstitute.dsp.consent.models.ElectionModels._
+import org.broadinstitute.dsp.consent.models.PendingModels._
+import org.broadinstitute.dsp.consent.models.ConsentModels._
 
 
 import scala.util.{Failure, Success, Try}
@@ -33,6 +35,8 @@ object JsonProtocols extends DefaultJsonProtocol {
     implicit val nihVerify: JsonFormat[NihVerify] = jsonFormat1(NihVerify)
     implicit val dacFormat: JsonFormat[Dac] = jsonFormat8(Dac)
     implicit val electionStatusFormat: JsonFormat[ElectionStatus] = jsonFormat2(ElectionStatus)
+    implicit val pendingCaseFormat: JsonFormat[PendingCase] = jsonFormat18(PendingCase)
+    implicit val consentFormat: JsonFormat[Consent] = jsonFormat15(Consent)
 
     def optionalEntryReader[T](fieldName: String, data: Map[String,JsValue], converter: JsValue => T, default: T): T = {
         data.getOrElse(fieldName, None) match {

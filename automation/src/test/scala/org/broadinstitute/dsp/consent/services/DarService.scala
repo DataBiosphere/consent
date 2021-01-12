@@ -9,6 +9,8 @@ import spray.json._
 import DefaultJsonProtocol._
 
 object DarService {
+    val projectTitle: String = "Test Automation Project"
+
     def createDar(dar: DataAccessRequest,
                   researcherInfo: ResearcherInfo, 
                   userId: Int, 
@@ -65,7 +67,7 @@ object DarService {
         dataMap += ("anvilUse" -> JsBoolean(false))
         dataMap += ("cloudUse" -> JsBoolean(false))
         dataMap += ("localUse" -> JsBoolean(true))
-        dataMap += ("projectTitle" -> JsString("Test Project"))
+        dataMap += ("projectTitle" -> JsString(projectTitle))
         dataMap += ("rus" -> JsString("test"))
         dataMap += ("nonTechRus" -> JsString("test non technical"))
         dataMap += ("hmb" -> JsBoolean(false))

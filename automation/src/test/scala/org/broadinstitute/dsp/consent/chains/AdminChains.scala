@@ -26,23 +26,25 @@ object AdminChains {
         exec(
             Requests.Dar.manageDar(200, additionalHeaders)
         )
-        .exec { session =>
-            implicit val darManageFormat: JsonProtocols.DataAccessRequestManageFormat.type = JsonProtocols.DataAccessRequestManageFormat
-            implicit val userFormat: JsonProtocols.userFormat.type = JsonProtocols.userFormat
-            implicit val dacFormat: JsonProtocols.dacFormat.type = JsonProtocols.dacFormat
-            implicit val electionStatusFormat: JsonProtocols.electionStatusFormat.type = JsonProtocols.electionStatusFormat
+        .exitBlockOnFail {
+            exec { session =>
+                implicit val darManageFormat: JsonProtocols.DataAccessRequestManageFormat.type = JsonProtocols.DataAccessRequestManageFormat
+                implicit val userFormat: JsonProtocols.userFormat.type = JsonProtocols.userFormat
+                implicit val dacFormat: JsonProtocols.dacFormat.type = JsonProtocols.dacFormat
+                implicit val electionStatusFormat: JsonProtocols.electionStatusFormat.type = JsonProtocols.electionStatusFormat
 
-            val manageDarStr: String = session(Requests.Dar.manageDarResponse).as[String]
-            val manageDars: Seq[DataAccessRequestManage] = manageDarStr.parseJson.convertTo[Seq[DataAccessRequestManage]]
+                val manageDarStr: String = session(Requests.Dar.manageDarResponse).as[String]
+                val manageDars: Seq[DataAccessRequestManage] = manageDarStr.parseJson.convertTo[Seq[DataAccessRequestManage]]
 
-            val newManageDars: Seq[DataAccessRequestManage] = DarService.setManageRolesByOwner(manageDars)
+                val newManageDars: Seq[DataAccessRequestManage] = DarService.setManageRolesByOwner(manageDars)
 
-            val researcherDars: Seq[DataAccessRequestManage] = DarService.getPendingDARsByMostRecent(newManageDars, 2)
-            val electionStatus: ElectionStatus = ElectionStatus(status = "Open", finalAccessVote = false)
-            
-            val newSession = session.set(Requests.Dar.manageDarResponse, researcherDars)
-            newSession.set("electionStatusBody", electionStatus.toJson.compactPrint)
-        }
+                val researcherDars: Seq[DataAccessRequestManage] = DarService.getPendingDARsByMostRecent(newManageDars, 2)
+                val electionStatus: ElectionStatus = ElectionStatus(status = "Open", finalAccessVote = false)
+                
+                val newSession = session.set(Requests.Dar.manageDarResponse, researcherDars)
+                newSession.set("electionStatusBody", electionStatus.toJson.compactPrint)
+            }
+        }   
         .exec(
             Requests.Dac.list(200, additionalHeaders)
         )
