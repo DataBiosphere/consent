@@ -288,11 +288,11 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   }
 
   @DELETE
-  @Produces("application/json")
   @Path("/{referenceId}")
-  @RolesAllowed(RESEARCHER)
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, RESEARCHER})
   public Response deleteDar(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
-    validateAuthedRoleUser(Collections.emptyList(), authUser, referenceId);
+    validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
     try {
       dataAccessRequestService.deleteByReferenceId(referenceId);
       return Response.ok().build();
