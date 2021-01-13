@@ -37,6 +37,7 @@ object JsonProtocols extends DefaultJsonProtocol {
     implicit val electionStatusFormat: JsonFormat[ElectionStatus] = jsonFormat2(ElectionStatus)
     implicit val pendingCaseFormat: JsonFormat[PendingCase] = jsonFormat18(PendingCase)
     implicit val consentFormat: JsonFormat[Consent] = jsonFormat15(Consent)
+    implicit val votePostFormat: JsonFormat[VotePostObject] = jsonFormat4(VotePostObject)
 
     def optionalEntryReader[T](fieldName: String, data: Map[String,JsValue], converter: JsValue => T, default: T): T = {
         data.getOrElse(fieldName, None) match {
@@ -44,6 +45,45 @@ object JsonProtocols extends DefaultJsonProtocol {
                 throw DeserializationException(s"unexpected json type for $fieldName")
             )
             case None => default
+        }
+    }
+
+    implicit object VoteFormat extends JsonFormat[Vote] {
+        def write(vote: Vote) = {
+            var map = collection.mutable.Map[String, JsValue]()
+            val manualList = List("vType")
+            vote.getClass.getDeclaredFields
+                .filterNot(f => manualList.contains(f.getName))
+                .foreach { f =>
+                    f.setAccessible(true)
+                    f.get(vote) match {
+                        case Some(x: Boolean) => map += f.getName -> x.toJson
+                        case Some(y: String) => map += f.getName -> y.toJson
+                        case Some(l: Long) => map += f.getName -> l.toJson
+                        case Some(i: Int) => map += f.getName -> i.toJson
+                        case _ => map += f.getName -> JsNull
+                    }
+                }
+
+            map += ("type" -> JsString(vote.vType.getOrElse("")))
+            
+            JsObject(map.toMap)
+        }
+
+        def read(value: JsValue): Vote = {
+            val fields = value.asJsObject.fields
+            Vote(
+                voteId = optionalEntryReader("voteId", fields, _.convertTo[Int], 0),
+                vote = optionalEntryReader("vote", fields, _.convertTo[Option[Boolean]], None),
+                dacUserId = optionalEntryReader("dacUserId", fields, _.convertTo[Option[Int]], None),
+                createDate = optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None),
+                updateDate = optionalEntryReader("updateDate", fields, _.convertTo[Option[Long]], None),
+                electionId = optionalEntryReader("electionId", fields, _.convertTo[Option[Int]], None),
+                rationale = optionalEntryReader("rationale", fields, _.convertTo[Option[String]], None),
+                vType = optionalEntryReader("type", fields, _.convertTo[Option[String]], None),
+                isReminderSent = optionalEntryReader("isReminderSent", fields, _.convertTo[Option[Boolean]], None),
+                hasConcerns = optionalEntryReader("hasConcerns", fields, _.convertTo[Option[Boolean]], None)
+            )
         }
     }
 

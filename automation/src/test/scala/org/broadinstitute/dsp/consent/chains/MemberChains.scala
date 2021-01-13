@@ -59,6 +59,9 @@ object MemberChains {
                     .exec(
                         AccessReviewChains.init(additionalHeaders)
                     )
+                    .exec(
+                        AccessReviewChains.submitVote(false, additionalHeaders)
+                    )
                 }
             }
         }
