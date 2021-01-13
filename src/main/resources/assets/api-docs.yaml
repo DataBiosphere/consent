@@ -2454,28 +2454,19 @@ paths:
           description: Could not find a vote with this id.
   /api/dataset:
     get:
-      summary: describeDatasets
-      description: Returns Dataset list filtering by Role.
-      parameters:
-        - name: dacUserId
-          in: query
-          description: UserId used to retrieve the user's roles
-          required: true
-          schema:
-            type: integer
+      summary: Get Datasets
+      description: Returns Dataset list filtered by authenticated user.
       tags:
         - Datasets
       responses:
         200:
-          description: An array of Datasets
+          description: A list of Datasets
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Dataset'
-        404:
-          description: Required parameter is null.
     post:
       summary: createDataSet
       description: Creates the Datasets defined in the input .TSV /.txt file.
@@ -2540,6 +2531,28 @@ paths:
           description: Dataset Name given is already in use by another dataset
         500:
           description: Internal Error (something went wrong processing a valid input)
+  /api/dataset/validate:
+    get:
+      summary: validateDatasetName
+      description: Returns the dataset id if one exists for the given name (ignores case).
+      parameters:
+        - name: name
+          in: query
+          description: The name of the dataset to search for.
+          required: true
+          schema:
+            type: string
+      tags:
+        - Datasets
+      responses:
+        200:
+          description: dataset id
+          content:
+            application/json:
+              schema:
+                type: integer
+        404:
+          description: Dataset not found
   /api/dataset/sample:
     get:
       summary: getDataSetSample
