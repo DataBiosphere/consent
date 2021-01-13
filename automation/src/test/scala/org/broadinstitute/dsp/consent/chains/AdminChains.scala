@@ -10,41 +10,44 @@ import org.broadinstitute.dsp.consent.models.ElectionModels._
 import org.broadinstitute.dsp.consent.models.JsonProtocols
 import org.broadinstitute.dsp.consent.services._
 import scala.concurrent.duration._
+import io.netty.handler.codec.http.HttpResponseStatus._
 
 object AdminChains {
     def loginToConsole(additionalHeaders: Map[String, String]): ChainBuilder = {
         exec(
-            Requests.User.me(200, additionalHeaders)
+            Requests.User.me(OK.code, additionalHeaders)
         )
         .pause(1)
         .exec(
-            Requests.Admin.initConsole(200, additionalHeaders)
+            Requests.Admin.initConsole(OK.code, additionalHeaders)
         )
     }
 
     def manageAccess(additionalHeaders: Map[String, String]): ChainBuilder = {
         exec(
-            Requests.Dar.manageDar(200, additionalHeaders)
+            Requests.Dar.manageDar(OK.code, additionalHeaders)
         )
-        .exec { session =>
-            implicit val darManageFormat: JsonProtocols.DataAccessRequestManageFormat.type = JsonProtocols.DataAccessRequestManageFormat
-            implicit val userFormat: JsonProtocols.userFormat.type = JsonProtocols.userFormat
-            implicit val dacFormat: JsonProtocols.dacFormat.type = JsonProtocols.dacFormat
-            implicit val electionStatusFormat: JsonProtocols.electionStatusFormat.type = JsonProtocols.electionStatusFormat
+        .exitBlockOnFail {
+            exec { session =>
+                implicit val darManageFormat: JsonProtocols.DataAccessRequestManageFormat.type = JsonProtocols.DataAccessRequestManageFormat
+                implicit val userFormat: JsonProtocols.userFormat.type = JsonProtocols.userFormat
+                implicit val dacFormat: JsonProtocols.dacFormat.type = JsonProtocols.dacFormat
+                implicit val electionStatusFormat: JsonProtocols.electionStatusFormat.type = JsonProtocols.electionStatusFormat
 
-            val manageDarStr: String = session(Requests.Dar.manageDarResponse).as[String]
-            val manageDars: Seq[DataAccessRequestManage] = manageDarStr.parseJson.convertTo[Seq[DataAccessRequestManage]]
+                val manageDarStr: String = session(Requests.Dar.manageDarResponse).as[String]
+                val manageDars: Seq[DataAccessRequestManage] = manageDarStr.parseJson.convertTo[Seq[DataAccessRequestManage]]
 
-            val newManageDars: Seq[DataAccessRequestManage] = DarService.setManageRolesByOwner(manageDars)
+                val newManageDars: Seq[DataAccessRequestManage] = DarService.setManageRolesByOwner(manageDars)
 
-            val researcherDars: Seq[DataAccessRequestManage] = DarService.getPendingDARsByMostRecent(newManageDars, 2)
-            val electionStatus: ElectionStatus = ElectionStatus(status = "Open", finalAccessVote = false)
-            
-            val newSession = session.set(Requests.Dar.manageDarResponse, researcherDars)
-            newSession.set("electionStatusBody", electionStatus.toJson.compactPrint)
-        }
+                val researcherDars: Seq[DataAccessRequestManage] = DarService.getPendingDARsByMostRecent(newManageDars, 2)
+                val electionStatus: ElectionStatus = ElectionStatus(status = Status.OPEN, finalAccessVote = false)
+                
+                val newSession = session.set(Requests.Dar.manageDarResponse, researcherDars)
+                newSession.set("electionStatusBody", electionStatus.toJson.compactPrint)
+            }
+        }   
         .exec(
-            Requests.Dac.list(200, additionalHeaders)
+            Requests.Dac.list(OK.code, additionalHeaders)
         )
     }
 
@@ -57,7 +60,7 @@ object AdminChains {
                 session.set("dataRequestId", manageDars(darIndex).dataRequestId.getOrElse(""))
             }
             .exec(
-                Requests.Election.createElection(201, "${dataRequestId}", "${electionStatusBody}", additionalHeaders)
+                Requests.Election.createElection(CREATED.code, "${dataRequestId}", "${electionStatusBody}", additionalHeaders)
             )
         }
     }

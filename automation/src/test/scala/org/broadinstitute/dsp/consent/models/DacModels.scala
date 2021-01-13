@@ -9,8 +9,8 @@ object DacModels {
         description: Option[String],
         createDate: Option[Long],
         updateDate: Option[Long],
-        chairpersons: Option[User],
-        members: Option[User],
+        chairpersons: Option[Seq[User]],
+        members: Option[Seq[User]],
         electionIds: Option[Seq[Int]]
     )
 }

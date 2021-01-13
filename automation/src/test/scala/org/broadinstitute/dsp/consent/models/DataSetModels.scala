@@ -9,7 +9,7 @@ object DataSetModels {
     )
 
     case class DataSet(
-        dacId: Int,
+        dacId: Option[Int] = None,
         dataSetId: Int,
         consentId: String,
         translatedUseRestriction: Option[String],
