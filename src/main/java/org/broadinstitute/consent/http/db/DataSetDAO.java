@@ -196,7 +196,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("SELECT dataSetId FROM dataset WHERE name = :name")
     Integer getDatasetIdByName(@Bind("name") String name);
 
-    @SqlQuery("SELECT * FROM dataset WHERE LOWER(name) LIKE LOWER(:name)")
+    @SqlQuery("SELECT * FROM dataset WHERE LOWER(name) LIKE CONCAT('%', LOWER(:name), '%')")
     DataSet getDatasetByName(@Bind("name") String name);
 
     @SqlQuery("select *  from dataset where name in (<names>) ")
