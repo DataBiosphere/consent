@@ -24,7 +24,6 @@ import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
-import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -52,7 +51,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
         AbstractConsentAPI.class,
         AbstractMatchProcessAPI.class,
         AbstractUseRestrictionValidatorAPI.class,
-        AbstractTranslateService.class,
         AbstractDataSetAPI.class,
         AbstractDACUserAPI.class,
         AbstractElectionAPI.class
@@ -89,7 +87,6 @@ public class DataAccessRequestResourceTest {
         PowerMockito.mockStatic(AbstractConsentAPI.class);
         PowerMockito.mockStatic(AbstractMatchProcessAPI.class);
         PowerMockito.mockStatic(AbstractUseRestrictionValidatorAPI.class);
-        PowerMockito.mockStatic(AbstractTranslateService.class);
         PowerMockito.mockStatic(AbstractDataSetAPI.class);
         PowerMockito.mockStatic(AbstractDACUserAPI.class);
         PowerMockito.mockStatic(AbstractElectionAPI.class);

@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.NotFoundException;
@@ -21,13 +20,7 @@ public interface DataAccessRequestAPI {
 
     Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException;
 
-    List<Document> describeDataAccessRequests();
-
-    Collection<String> getDatasetsInDARs(Collection<String> dataAccessRequestIds);
-
     UseRestriction createStructuredResearchPurpose(Document document);
-
-    Document updateDataAccessRequest(Document dar, String id);
 
     List<Document> describeDraftDataAccessRequestManage(Integer userId);
 

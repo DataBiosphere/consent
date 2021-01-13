@@ -8,15 +8,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -31,11 +28,8 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -155,45 +149,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 collect(Collectors.toList());
     }
 
-    /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
-     *
-     * @return List<Document>
-     */
-    @Override
-    public List<Document> describeDataAccessRequests() {
-        return  dataAccessRequestService.getAllDataAccessRequestsAsDocuments();
-    }
-
-    @Override
-    public Collection<String> getDatasetsInDARs(Collection<String> dataAccessRequestIds) {
-        return dataAccessRequestService.getDataAccessRequestsByReferenceIds(new ArrayList<>(dataAccessRequestIds)).
-                stream().
-                map(DataAccessRequest::getData).filter(Objects::nonNull).
-                map(DataAccessRequestData::getDatasetDetail).filter(Objects::nonNull).
-                flatMap(List::stream).filter(Objects::nonNull).
-                map(DatasetDetailEntry::getDatasetId).filter(Objects::nonNull).
-                distinct().
-                collect(Collectors.toList());
-    }
-
-
     @Override
     public UseRestriction createStructuredResearchPurpose(Document document) {
         DataUse dataUse = converter.parseDataUsePurpose(document.toJson());
         return converter.parseUseRestriction(dataUse);
-    }
-
-    @Override
-    public Document updateDataAccessRequest(Document dataAccessRequest, String id) {
-        if (dataAccessRequestService.findByReferenceId(id) == null) {
-            throw new NotFoundException("Data access for the specified id does not exist");
-        }
-        Gson gson = new Gson();
-        DataAccessRequestData darData = gson.fromJson(dataAccessRequest.toJson(), DataAccessRequestData.class);
-        darData.setSortDate(new Date().getTime());
-        dataAccessRequestService.updateByReferenceId(id, darData);
-        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
     }
 
     @Override

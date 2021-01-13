@@ -40,15 +40,11 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
-import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.MatchProcessAPI;
-import org.broadinstitute.consent.http.service.TranslateService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
@@ -61,9 +57,7 @@ public class DataAccessRequestResource extends Resource {
     private final DataAccessRequestService dataAccessRequestService;
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private final ConsentAPI consentAPI;
-    private final MatchProcessAPI matchProcessAPI;
     private final EmailNotifierService emailNotifierService;
-    private final TranslateService translateService = AbstractTranslateService.getInstance();
     private final ElectionAPI electionAPI;
     private final UserService userService;
 
@@ -73,37 +67,8 @@ public class DataAccessRequestResource extends Resource {
         this.emailNotifierService = emailNotifierService;
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
-        this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.userService = userService;
-    }
-
-    @PUT
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/{id}")
-    @RolesAllowed(RESEARCHER)
-    @Deprecated // Use DataAccessRequestResourceVersion2
-    public Response updateDataAccessRequest(@Auth AuthUser authUser, Document dar, @PathParam("id") String id) {
-        validateAuthedRoleUser(Collections.emptyList(), authUser, id);
-        User user = findUserByEmail(authUser.getName());
-        try {
-            dar.put(DarConstants.USER_ID, user.getDacUserId());
-            dar.remove(DarConstants.RESTRICTION);
-            Boolean needsManualReview = DarUtil.requiresManualReview(dar);
-            if (!needsManualReview) {
-                // generates research purpose, if needed, and store it on Document rus
-                UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
-                dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
-            }
-            dar.append(DarConstants.TRANSLATED_RESTRICTION, translateService.generateStructuredTranslatedRestriction(dar, needsManualReview));
-            dar = dataAccessRequestAPI.updateDataAccessRequest(dar, id);
-            matchProcessAPI.processMatchesForPurpose(dar.getString(DarConstants.REFERENCE_ID));
-            return Response.ok().entity(dataAccessRequestAPI.updateDataAccessRequest(dar, id)).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
-        }
-
     }
 
     @GET
