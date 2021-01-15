@@ -6,6 +6,7 @@ import io.dropwizard.auth.Auth;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -14,6 +15,7 @@ import java.util.stream.Stream;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -280,6 +282,20 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       checkAuthorizedUpdateUser(user, dar);
       DataAccessRequest updatedDar = updateDarWithDocumentContents(DarDocumentType.COLLABORATION, user, dar, uploadInputStream, fileDetail);
       return Response.ok(updatedDar.convertToSimplifiedDar()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @DELETE
+  @Path("/{referenceId}")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, RESEARCHER})
+  public Response deleteDar(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
+    validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
+    try {
+      dataAccessRequestService.deleteByReferenceId(referenceId);
+      return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

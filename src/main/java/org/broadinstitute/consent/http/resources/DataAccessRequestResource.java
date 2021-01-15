@@ -18,7 +18,6 @@ import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -27,10 +26,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -178,21 +174,6 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{id}")
-    @RolesAllowed({RESEARCHER, ADMIN})
-    public Response delete(@Auth AuthUser authUser, @PathParam("id") String id) {
-        validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, id);
-        try {
-            dataAccessRequestAPI.deleteDataAccessRequestById(id);
-            matchProcessAPI.removeMatchesForPurpose(id);
-            return Response.status(Response.Status.OK).entity("Research Purpose was deleted").build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
     @GET
     @Path("/find/{id}")
     @Produces("application/json")
@@ -288,25 +269,6 @@ public class DataAccessRequestResource extends Resource {
         return dataAccessRequestService.findAllDraftDataAccessRequestDocumentsByUser(user.getDacUserId());
     }
 
-    @PUT
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/partial")
-    @RolesAllowed(RESEARCHER)
-    @Deprecated // Use DataAccessRequestResourceVersion2.updateDraftDataAccessRequest
-    public Response updatePartialDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, Document dar) {
-        String referenceId = dar.getString(DarConstants.REFERENCE_ID);
-        validateAuthedRoleUser(Collections.emptyList(), authUser, referenceId);
-        User user = findUserByEmail(authUser.getName());
-        try {
-            dar.put(DarConstants.USER_ID, user.getDacUserId());
-            dar = dataAccessRequestAPI.updateDraftDataAccessRequest(dar);
-            return Response.ok().entity(dar).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
-        }
-    }
-
     @GET
     @Produces("application/json")
     @Path("/partial/{id}")
@@ -318,21 +280,6 @@ public class DataAccessRequestResource extends Resource {
             return dataAccessRequestService.createDocumentFromDar(dar);
         }
         throw new ForbiddenException("User does not have permission");
-    }
-
-
-    @DELETE
-    @Produces("application/json")
-    @Path("/partial/{id}")
-    @RolesAllowed(RESEARCHER)
-    public Response deleteDraftDar(@Auth AuthUser authUser, @PathParam("id") String id, @Context UriInfo info) {
-        validateAuthedRoleUser(Collections.emptyList(), authUser, id);
-        try {
-            dataAccessRequestService.deleteByReferenceId(id);
-            return Response.ok().build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
     }
 
     @GET

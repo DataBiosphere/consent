@@ -246,7 +246,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getDacUserId(), election.getElectionId());
 
         Set<User> users = userDAO.findUsersForElectionsByRoles(
@@ -263,7 +263,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getDacUserId(), election.getElectionId());
 
         Set<User> users = userDAO.findUsersForElectionsByRoles(

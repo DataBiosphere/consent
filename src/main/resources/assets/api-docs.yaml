@@ -1417,6 +1417,31 @@ paths:
           description: Updates are restricted to the create user.
         500:
           description: Internal Server Error.
+    delete:
+      summary: delete
+      description: Deletes the DAR by reference id
+      parameters:
+        - name: referenceId
+          in: path
+          description: The id of the DAR
+          required: true
+          schema:
+            type: string
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Data Access Request was deleted
+          content:
+            application/json:
+              schema:
+                type: string
+        403:
+          description: Forbidden
+        404:
+          description: The requested DAR couldn't be found.
+        406:
+          description: There are existing resources that reference this Data Access Request
   /api/dar/v2/draft:
     post:
       summary: Create Draft Data Access Request
@@ -1652,29 +1677,6 @@ paths:
           description: Bad request.
         403:
           description: Forbidden
-    delete:
-      summary: delete
-      description: Deletes the DAR identified by the id
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Response = Research Purpose was deleted
-          content:
-            application/json:
-              schema:
-                type: string
-        403:
-          description: Forbidden
-        404:
-          description: The requested DAR couldn't be found.
   /api/dar/cancel/{id}:
     put:
       summary: Cancel a Data Access Request
