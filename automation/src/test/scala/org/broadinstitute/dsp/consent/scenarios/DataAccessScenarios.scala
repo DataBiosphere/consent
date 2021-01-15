@@ -4,7 +4,7 @@ import io.gatling.core.Predef._
 import org.broadinstitute.dsp.consent.{TestConfig, TestRunner}
 import org.broadinstitute.dsp.consent.requests.Requests
 import scala.concurrent.duration._
-import org.broadinstitute.dsp.consent.chains.{DarChains, DataSetChains, NihChains, AdminChains, MemberChains}
+import org.broadinstitute.dsp.consent.chains.{DarChains, DataSetChains, NihChains, AdminChains, MemberChains, ChairChains, AccessReviewChains}
 import io.netty.handler.codec.http.HttpResponseStatus._
 
 class DataAccessScenarios extends Simulation with TestRunner {
@@ -58,9 +58,23 @@ class DataAccessScenarios extends Simulation with TestRunner {
                             )
                             .pause(1)
                             .exec(
-                                MemberChains.voteOnPendingDars(TestConfig.memberHeader)
+                                AccessReviewChains.voteOnPendingDars(TestConfig.memberHeader, AccessReviewChains.submitVote(AccessReviewChains.electionDacVotes, TestConfig.memberHeader))
                             )
                         }
+                    )
+                    .andThen(
+                        defaultPopulation(
+                            scenario("Chair Voting")
+                            .exitBlockOnFail {
+                                exec(
+                                    ChairChains.loginToConsole(TestConfig.chairHeader)
+                                )
+                                .pause(1)
+                                .exec(
+                                    AccessReviewChains.voteOnPendingDars(TestConfig.memberHeader, ChairChains.submitVote(TestConfig.chairHeader))
+                                )
+                            }
+                        )
                     )
                 )
             )
