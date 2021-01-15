@@ -166,7 +166,7 @@ public class DAOTestHelper {
         consentDAO.insertConsentAssociation(consentId, ASSOCIATION_TYPE_TEST, datasetId);
     }
 
-    protected Election createElection(String referenceId, Integer datasetId) {
+    protected Election createAccessElection(String referenceId, Integer datasetId) {
         Integer electionId = electionDAO.insertElection(
                 ElectionType.DATA_ACCESS.getValue(),
                 ElectionStatus.OPEN.getValue(),

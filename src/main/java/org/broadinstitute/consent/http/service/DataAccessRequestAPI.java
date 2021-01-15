@@ -27,11 +27,7 @@ public interface DataAccessRequestAPI {
 
     UseRestriction createStructuredResearchPurpose(Document document);
 
-    void deleteDataAccessRequestById(String id) throws IllegalArgumentException;
-
     Document updateDataAccessRequest(Document dar, String id);
-
-    Document updateDraftDataAccessRequest(Document draftDar);
 
     List<Document> describeDraftDataAccessRequestManage(Integer userId);
 

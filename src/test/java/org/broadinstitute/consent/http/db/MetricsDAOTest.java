@@ -39,7 +39,7 @@ public class MetricsDAOTest extends DAOTestHelper {
     dar.getData().setDatasetIds(Collections.singletonList(dataset.getDataSetId()));
     dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getData());
     createAssociation(consent.getConsentId(), dataset.getDataSetId());
-    Election election = createElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     electionDAO.updateElectionById(
         election.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
 
@@ -77,7 +77,7 @@ public class MetricsDAOTest extends DAOTestHelper {
     dar.getData().setDatasetIds(Collections.singletonList(dataset.getDataSetId()));
     dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getData());
     createAssociation(consent.getConsentId(), dataset.getDataSetId());
-    Election election = createElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     electionDAO.updateElectionById(
         election.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
 
