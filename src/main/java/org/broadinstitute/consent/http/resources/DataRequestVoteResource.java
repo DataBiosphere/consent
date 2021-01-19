@@ -31,12 +31,11 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
-import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
+import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteAPI;
@@ -53,7 +52,7 @@ public class DataRequestVoteResource extends Resource {
     private final DACUserAPI dacUserAPI;
     private final DataAccessRequestAPI accessRequestAPI;
     private final DataSetAPI dataSetAPI;
-    private final DataSetAssociationAPI dataSetAssociationAPI;
+    private final DatasetAssociationService datasetAssociationService;
     private final ElectionAPI electionAPI;
     private final EmailNotifierService emailNotifierService;
     private final VoteAPI api;
@@ -62,12 +61,13 @@ public class DataRequestVoteResource extends Resource {
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
     @Inject
-    public DataRequestVoteResource(EmailNotifierService emailNotifierService, VoteService voteService) {
+    public DataRequestVoteResource(DatasetAssociationService datasetAssociationService,
+        EmailNotifierService emailNotifierService, VoteService voteService) {
         this.emailNotifierService = emailNotifierService;
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.accessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.dataSetAPI = AbstractDataSetAPI.getInstance();
-        this.dataSetAssociationAPI = AbstractDataSetAssociationAPI.getInstance();
+        this.datasetAssociationService = datasetAssociationService;
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.api = AbstractVoteAPI.getInstance();
         this.voteService = voteService;
@@ -219,7 +219,7 @@ public class DataRequestVoteResource extends Resource {
             List<DataSet> needsApprovedDataSets = dataSetAPI.findNeedsApprovalDataSetByObjectId(dataSets);
             List<Integer> dataSetIds = needsApprovedDataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(needsApprovedDataSets)){
-                Map<User, List<DataSet>> dataOwnerDataSet = dataSetAssociationAPI.findDataOwnersWithAssociatedDataSets(dataSetIds);
+                Map<User, List<DataSet>> dataOwnerDataSet = datasetAssociationService.findDataOwnersWithAssociatedDataSets(dataSetIds);
                 List<Election> elections = electionAPI.createDataSetElections(requestId, dataOwnerDataSet);
                 if(CollectionUtils.isNotEmpty(elections)){
                     elections.forEach(voteService::createDataOwnersReviewVotes);

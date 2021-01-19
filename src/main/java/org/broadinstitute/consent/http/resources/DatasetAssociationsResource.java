@@ -1,10 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DatasetAssociation;
-import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
-import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
-
+import com.google.inject.Inject;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -15,18 +14,19 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import org.broadinstitute.consent.http.models.DatasetAssociation;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.DatasetAssociationService;
 
 @Path("api/datasetAssociation")
-public class DataSetAssociationsResource extends Resource {
+public class DatasetAssociationsResource extends Resource {
 
 
-    private final DataSetAssociationAPI api;
+    private final DatasetAssociationService service;
 
-    public DataSetAssociationsResource() {
-        this.api = AbstractDataSetAssociationAPI.getInstance();
+    @Inject
+    public DatasetAssociationsResource(DatasetAssociationService service) {
+        this.service = service;
     }
 
 
@@ -37,7 +37,8 @@ public class DataSetAssociationsResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response associateDatasetWithUsers(@PathParam("datasetId") Integer datasetId, List<Integer> userIdList) {
         try {
-            List<DatasetAssociation> associations = api.createDatasetUsersAssociation(datasetId, userIdList);
+            List<DatasetAssociation> associations = service
+                .createDatasetUsersAssociation(datasetId, userIdList);
             return Response.status(Response.Status.CREATED).entity(associations).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -49,9 +50,9 @@ public class DataSetAssociationsResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response getDatasetAssociations(@PathParam("dataSetId") Integer dataSetId) {
+    public Response getDatasetAssociations(@PathParam("dataSetId") Integer datasetId) {
         try {
-            Map<String, Collection<User>> userMap = api.findDataOwnersRelationWithDataset(dataSetId);
+            Map<String, Collection<User>> userMap = service.findDataOwnersRelationWithDataset(datasetId);
             return Response.ok().entity(userMap).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -63,9 +64,10 @@ public class DataSetAssociationsResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response updateDatasetAssociations(@PathParam("dataSetId") Integer dataSetId, List<Integer> userIdList) {
+    public Response updateDatasetAssociations(@PathParam("dataSetId") Integer datasetId, List<Integer> userIdList) {
         try {
-            List<DatasetAssociation> associations = api.updateDatasetAssociations(dataSetId, userIdList);
+            List<DatasetAssociation> associations = service
+                .updateDatasetAssociations(datasetId, userIdList);
             return Response.ok().entity(associations).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

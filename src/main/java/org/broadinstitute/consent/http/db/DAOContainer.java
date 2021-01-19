@@ -13,7 +13,7 @@ public class DAOContainer {
   private CounterDAO counterDAO;
   private DacDAO dacDAO;
   private DataAccessRequestDAO dataAccessRequestDAO;
-  private DataSetAssociationDAO datasetAssociationDAO;
+  private DatasetAssociationDAO datasetAssociationDAO;
   private DataSetAuditDAO datasetAuditDAO;
   private DataSetDAO datasetDAO;
   private ElectionDAO electionDAO;
@@ -76,12 +76,12 @@ public class DAOContainer {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
   }
 
-  public DataSetAssociationDAO getDatasetAssociationDAO() {
+  public DatasetAssociationDAO getDatasetAssociationDAO() {
     return datasetAssociationDAO;
   }
 
   public void setDatasetAssociationDAO(
-      DataSetAssociationDAO datasetAssociationDAO) {
+      DatasetAssociationDAO datasetAssociationDAO) {
     this.datasetAssociationDAO = datasetAssociationDAO;
   }
 
