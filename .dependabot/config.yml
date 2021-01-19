@@ -6,8 +6,10 @@ update_configs:
   target_branch: "develop"
   default_reviewers:
     - "rushtong"
+    - "JVThomas"
   default_assignees:
     - "rushtong"
+    - "JVThomas"
   default_labels:
     - "dependency"
   commit_message:
