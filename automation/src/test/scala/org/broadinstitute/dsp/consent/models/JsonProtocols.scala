@@ -13,6 +13,7 @@ import org.broadinstitute.dsp.consent.models.DacModels._
 import org.broadinstitute.dsp.consent.models.ElectionModels._
 import org.broadinstitute.dsp.consent.models.PendingModels._
 import org.broadinstitute.dsp.consent.models.ConsentModels._
+import org.broadinstitute.dsp.consent.models.MatchModels._
 
 
 import scala.util.{Failure, Success, Try}
@@ -37,6 +38,12 @@ object JsonProtocols extends DefaultJsonProtocol {
     implicit val electionStatusFormat: JsonFormat[ElectionStatus] = jsonFormat2(ElectionStatus)
     implicit val pendingCaseFormat: JsonFormat[PendingCase] = jsonFormat18(PendingCase)
     implicit val consentFormat: JsonFormat[Consent] = jsonFormat15(Consent)
+    implicit val voteFormat: JsonFormat[Vote] = jsonFormat10(Vote)
+    implicit val votePostFormat: JsonFormat[VotePostObject] = jsonFormat4(VotePostObject)
+    implicit val electionFormat: JsonFormat[Election] = jsonFormat18(Election)
+    implicit val electionReviewVoteFormat: JsonFormat[ElectionReviewVote] = jsonFormat3(ElectionReviewVote)
+    implicit val electionReviewFormat: JsonFormat[ElectionReview] = jsonFormat6(ElectionReview)
+    implicit val matchFormat: JsonFormat[Match] = jsonFormat6(Match)
 
     def optionalEntryReader[T](fieldName: String, data: Map[String,JsValue], converter: JsValue => T, default: T): T = {
         data.getOrElse(fieldName, None) match {
@@ -46,6 +53,80 @@ object JsonProtocols extends DefaultJsonProtocol {
             case None => default
         }
     }
+
+    /*implicit object MatchFormat extends JsonFormat[Match] {
+        def write(matchObj: Match) = {
+            var map = collection.mutable.Map[String, JsValue]()
+            val manualList = List("cMatch")
+            matchObj.getClass.getDeclaredFields
+                .filterNot(f => manualList.contains(f.getName))
+                .foreach { f =>
+                    f.setAccessible(true)
+                    f.get(matchObj) match {
+                        case Some(x: Boolean) => map += f.getName -> x.toJson
+                        case Some(y: String) => map += f.getName -> y.toJson
+                        case Some(l: Long) => map += f.getName -> l.toJson
+                        case Some(i: Int) => map += f.getName -> i.toJson
+                        case _ => map += f.getName -> JsNull
+                    }
+                }
+
+            map += ("match" -> JsBoolean(matchObj.cMatch))
+            
+            JsObject(map.toMap)
+        }
+
+        def read(value: JsValue): Match = {
+            val fields = value.asJsObject.fields
+            Match(
+                id = optionalEntryReader("id", fields, _.convertTo[Int], 0),
+                consent = optionalEntryReader("consent", fields, _.convertTo[String], ""),
+                purpose = optionalEntryReader("purpose", fields, _.convertTo[String], ""),
+                cMatch = optionalEntryReader("match", fields, _.convertTo[Boolean], false),
+                failed = optionalEntryReader("failed", fields, _.convertTo[Boolean], false),
+                createDate = optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None)
+            )
+        }
+    }
+
+    implicit object VoteFormat extends JsonFormat[Vote] {
+        def write(vote: Vote) = {
+            var map = collection.mutable.Map[String, JsValue]()
+            val manualList = List("vType")
+            vote.getClass.getDeclaredFields
+                .filterNot(f => manualList.contains(f.getName))
+                .foreach { f =>
+                    f.setAccessible(true)
+                    f.get(vote) match {
+                        case Some(x: Boolean) => map += f.getName -> x.toJson
+                        case Some(y: String) => map += f.getName -> y.toJson
+                        case Some(l: Long) => map += f.getName -> l.toJson
+                        case Some(i: Int) => map += f.getName -> i.toJson
+                        case _ => map += f.getName -> JsNull
+                    }
+                }
+
+            map += ("type" -> JsString(vote.vType.getOrElse("")))
+            
+            JsObject(map.toMap)
+        }
+
+        def read(value: JsValue): Vote = {
+            val fields = value.asJsObject.fields
+            Vote(
+                voteId = optionalEntryReader("voteId", fields, _.convertTo[Option[Int]], None),
+                vote = optionalEntryReader("vote", fields, _.convertTo[Option[Boolean]], None),
+                dacUserId = optionalEntryReader("dacUserId", fields, _.convertTo[Option[Int]], None),
+                createDate = optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None),
+                updateDate = optionalEntryReader("updateDate", fields, _.convertTo[Option[Long]], None),
+                electionId = optionalEntryReader("electionId", fields, _.convertTo[Option[Int]], None),
+                rationale = optionalEntryReader("rationale", fields, _.convertTo[Option[String]], None),
+                vType = optionalEntryReader("type", fields, _.convertTo[Option[String]], None),
+                isReminderSent = optionalEntryReader("isReminderSent", fields, _.convertTo[Option[Boolean]], None),
+                hasConcerns = optionalEntryReader("hasConcerns", fields, _.convertTo[Option[Boolean]], None)
+            )
+        }
+    }*/
 
     implicit object DataAccessRequestManageFormat extends JsonFormat[DataAccessRequestManage] {
         def write(darm: DataAccessRequestManage) = {

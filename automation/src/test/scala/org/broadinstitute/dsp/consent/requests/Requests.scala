@@ -319,6 +319,7 @@ object Requests {
   object Election {
     val createElectionResponse: String = "createElectionResponse"
     val getDataAccessElectionReviewResponse: String = "getElectionReviewResponse"
+    val updateElectionResponse: String = "updateElectionResponse"
 
     def createElection(expectedStatus: Int, dataRequestId: String, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Create Elections")
@@ -336,6 +337,30 @@ object Requests {
         .headers(TestConfig.jsonHeader)
         .headers(additionalHeaders)
         .check(bodyString.saveAs(getDataAccessElectionReviewResponse))
+        .check(status.is(expectedStatus))
+    }
+
+    def updateElection(expectedStatus: Int, electionId: String, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Update Election")
+        .put(s"api/election/$electionId")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .body(StringBody(body))
+        .asJson
+        .check(bodyString.saveAs(updateElectionResponse))
+        .check(status.is(expectedStatus))
+    }
+  }
+
+  object Match {
+    val findMatchResponse: String = "findMatchResponse"
+
+    def findMatch(expectedStatus: Int, consentId: String, purposeId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Find Match Data")
+        .get(s"api/match/$consentId/$purposeId")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(findMatchResponse))
         .check(status.is(expectedStatus))
     }
   }
@@ -361,12 +386,25 @@ object Requests {
         .check(bodyString.saveAs(dataRequestPendingResponse))
         .check(status.is(expectedStatus))
     }
+
+    def chairConsole(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Chair Console")
+        .get("/")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .resources(
+          getPendingCasesByUserId(expectedStatus, userId, additionalHeaders),
+          getPendingDataRequestsByUserId(expectedStatus, userId, additionalHeaders)
+        )
+    }
   }
 
   object Votes {
     val getDarVoteResponse: String = "getDarVotesResponse"
     val darElectionId: String = "darElectionId"
     val getDarVoteListResponse: String = "getDarVoteListResponse"
+    val postDarVoteResponse: String = "postDarVoteResponse"
+    val updateDarVoteResponse: String = "updateDarVoteResponse"
 
     def getDarVote(expectedStatus: Int, requestId: String, voteId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get DAR Vote")
@@ -384,6 +422,28 @@ object Requests {
         .headers(TestConfig.jsonHeader)
         .headers(additionalHeaders)
         .check(bodyString.saveAs(getDarVoteListResponse))
+        .check(status.is(expectedStatus))
+    }
+
+    def postDarVote(expectedStatus: Int, requestId: String, voteId: String, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Post DAR Vote")
+        .post(s"api/dataRequest/$requestId/vote/$voteId")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .body(StringBody(body))
+        .asJson
+        .check(bodyString.saveAs(postDarVoteResponse))
+        .check(status.is(expectedStatus))
+    }
+
+    def updateDarVote(expectedStatus: Int, requestId: String, voteId: String, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Update DAR Vote")
+        .put(s"api/dataRequest/$requestId/vote/$voteId")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .body(StringBody(body))
+        .asJson
+        .check(bodyString.saveAs(updateDarVoteResponse))
         .check(status.is(expectedStatus))
     }
   }

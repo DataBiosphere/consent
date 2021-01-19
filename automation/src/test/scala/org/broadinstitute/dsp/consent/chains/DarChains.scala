@@ -99,7 +99,8 @@ object DarChains {
                 val consentStr: String = session(Requests.Dar.darConsentResponse).as[String]
                 val consent: Consent = consentStr.parseJson.convertTo[Consent]
                 
-                session.set("consentDataUse", consent.dataUse.getOrElse(DataUseBuilder.empty).toJson.compactPrint)
+                val session1 = session.set("consentDataUse", consent.dataUse.getOrElse(DataUseBuilder.empty).toJson.compactPrint)
+                session1.set("consentId", consent.consentId)
             }
             .exec(
                 Requests.Dar.translateDataUse(OK.code, "${consentDataUse}", additionalHeaders)
