@@ -41,7 +41,7 @@ object AccessReviewChains {
                 Requests.Researcher.getResearcherProperties(OK.code, "${dataAccessUserId}", additionalHeaders)
             )
             .exec { session =>
-                implicit val voteFormat: JsonProtocols.VoteFormat.type = JsonProtocols.VoteFormat
+                implicit val voteFormat: JsonProtocols.voteFormat.type = JsonProtocols.voteFormat
                 implicit val electionFormat: JsonProtocols.electionFormat.type = JsonProtocols.electionFormat
                 implicit val electionReviewVoteFormat: JsonProtocols.electionReviewVoteFormat.type = JsonProtocols.electionReviewVoteFormat
                 implicit val electionReviewFormat: JsonProtocols.electionReviewFormat.type = JsonProtocols.electionReviewFormat
@@ -80,7 +80,7 @@ object AccessReviewChains {
                 .sortWith { (pc1, pc2) =>
                     pc1.createDate.getOrElse(0L) > pc2.createDate.getOrElse(0L)
                 }
-                .take(limit).toSeq
+                .take(limit)
 
                 session.set("pendingCases", automationPending)
             }
@@ -113,23 +113,28 @@ object AccessReviewChains {
                 
                 try {
                     val votes: Seq[Vote] = session(votesString).as[Seq[Vote]]
-                    val vote = votes(0)
+                    val vote = votes.head
                     val dacUserId: Int = session(Requests.User.dacUserId).as[String].toInt
 
                     val votePostObject: VotePostObject = VotePostObject(
                         vote = Some(result == "true"),
                         dacUserId = Some(dacUserId),
-                        rationale = Some(""),
-                        hasConcerns = Some(false)
+                        rationale = Some(if (vote != null) vote.rationale.getOrElse("") else ""),
+                        hasConcerns = Some(if (vote != null) vote.hasConcerns.getOrElse(false) else false)
                     )
 
-                    session.set("submitVoteBody", votePostObject.toJson.compactPrint)
+                    if (vote != null) {
+                        val session1: Session = session.set(AccessReviewChains.voteId, vote.voteId.getOrElse(0))
+                        session1.set("submitVoteBody", votePostObject.toJson.compactPrint)
+                    } else {
+                        session.set("submitVoteBody", "")
+                    }
                 } catch {
                     case _: Throwable => session.set("submitVoteBody", "")
                 }
             }
             .doIf { session =>
-                session("submitVoteBody").as[String].length > 0
+                session("submitVoteBody").as[String].nonEmpty
             } {
                 exec(
                     Requests.Votes.postDarVote(OK.code, "${darReferenceId}", "${voteId}", "${submitVoteBody}", additionalHeaders)

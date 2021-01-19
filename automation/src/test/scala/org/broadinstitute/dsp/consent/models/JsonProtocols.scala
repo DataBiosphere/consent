@@ -38,10 +38,12 @@ object JsonProtocols extends DefaultJsonProtocol {
     implicit val electionStatusFormat: JsonFormat[ElectionStatus] = jsonFormat2(ElectionStatus)
     implicit val pendingCaseFormat: JsonFormat[PendingCase] = jsonFormat18(PendingCase)
     implicit val consentFormat: JsonFormat[Consent] = jsonFormat15(Consent)
+    implicit val voteFormat: JsonFormat[Vote] = jsonFormat10(Vote)
     implicit val votePostFormat: JsonFormat[VotePostObject] = jsonFormat4(VotePostObject)
     implicit val electionFormat: JsonFormat[Election] = jsonFormat18(Election)
     implicit val electionReviewVoteFormat: JsonFormat[ElectionReviewVote] = jsonFormat3(ElectionReviewVote)
     implicit val electionReviewFormat: JsonFormat[ElectionReview] = jsonFormat6(ElectionReview)
+    implicit val matchFormat: JsonFormat[Match] = jsonFormat6(Match)
 
     def optionalEntryReader[T](fieldName: String, data: Map[String,JsValue], converter: JsValue => T, default: T): T = {
         data.getOrElse(fieldName, None) match {
@@ -52,7 +54,7 @@ object JsonProtocols extends DefaultJsonProtocol {
         }
     }
 
-    implicit object MatchFormat extends JsonFormat[Match] {
+    /*implicit object MatchFormat extends JsonFormat[Match] {
         def write(matchObj: Match) = {
             var map = collection.mutable.Map[String, JsValue]()
             val manualList = List("cMatch")
@@ -124,7 +126,7 @@ object JsonProtocols extends DefaultJsonProtocol {
                 hasConcerns = optionalEntryReader("hasConcerns", fields, _.convertTo[Option[Boolean]], None)
             )
         }
-    }
+    }*/
 
     implicit object DataAccessRequestManageFormat extends JsonFormat[DataAccessRequestManage] {
         def write(darm: DataAccessRequestManage) = {

@@ -4,13 +4,9 @@ import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
 import org.broadinstitute.dsp.consent.requests.Requests
 import spray.json._
-import DefaultJsonProtocol._
-import org.broadinstitute.dsp.consent.models.PendingModels._
 import org.broadinstitute.dsp.consent.models.MatchModels._
 import org.broadinstitute.dsp.consent.models.ElectionModels._
 import org.broadinstitute.dsp.consent.models.JsonProtocols
-import org.broadinstitute.dsp.consent.services.{DarService}
-import scala.concurrent.duration._
 import io.netty.handler.codec.http.HttpResponseStatus._
 
 object ChairChains {
@@ -43,11 +39,11 @@ object ChairChains {
                 AccessReviewChains.submitVote(AccessReviewChains.electionFinalVotes, additionalHeaders)
             )
             .exec { session =>
-                implicit val matchFormat: JsonProtocols.MatchFormat.type = JsonProtocols.MatchFormat
+                implicit val matchFormat: JsonProtocols.matchFormat.type = JsonProtocols.matchFormat
                 try {
                     val matchStr: String = session(Requests.Match.findMatchResponse).as[String]
                     val matchObj: Match = matchStr.parseJson.convertTo[Match] 
-                    session.set("isMatch", matchObj.cMatch)
+                    session.set("isMatch", matchObj.`match`)
                 } catch {
                     case _: Throwable => session.set("isMatch", false)
                 }
@@ -57,7 +53,7 @@ object ChairChains {
             )
             .exec { session =>
                 implicit val electionFormat: JsonProtocols.electionFormat.type = JsonProtocols.electionFormat
-                
+
                 val accessElection: Election = session(AccessReviewChains.accessElection).as[Election]
                 
                 val newElection: Election = Election(

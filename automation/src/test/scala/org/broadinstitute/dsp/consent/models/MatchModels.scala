@@ -5,7 +5,7 @@ object MatchModels {
         id: Int,
         consent: String,
         purpose: String,
-        cMatch: Boolean,
+        `match`: Boolean,
         failed: Boolean,
         createDate: Option[Long] = None
     )
@@ -15,7 +15,7 @@ object MatchModels {
                 id = 0,
                 consent = "",
                 purpose = "",
-                cMatch = false,
+                `match` = false,
                 failed = false,
                 createDate = None
             )

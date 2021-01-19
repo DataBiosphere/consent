@@ -78,7 +78,7 @@ object ElectionModels {
         updateDate: Option[Long] = None,
         electionId: Option[Int] = None,
         rationale: Option[String] = None,
-        vType: Option[String] = None,
+        `type`: Option[String] = None,
         isReminderSent: Option[Boolean] = None,
         hasConcerns: Option[Boolean] = None
     )
