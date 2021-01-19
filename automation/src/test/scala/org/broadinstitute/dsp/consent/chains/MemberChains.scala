@@ -3,6 +3,7 @@ package org.broadinstitute.dsp.consent.chains
 import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
 import org.broadinstitute.dsp.consent.requests.Requests
+import org.broadinstitute.dsp.consent.{TestConfig}
 import spray.json._
 import DefaultJsonProtocol._
 import org.broadinstitute.dsp.consent.models.PendingModels._
@@ -16,7 +17,7 @@ object MemberChains {
         exec(
             Requests.User.me(OK.code, additionalHeaders)
         )
-        .pause(1)
+        .pause(TestConfig.defaultPause)
         .exec(
             Requests.PendingCases.getPendingDataRequestsByUserId(OK.code, "${dacUserId}", additionalHeaders)
         )

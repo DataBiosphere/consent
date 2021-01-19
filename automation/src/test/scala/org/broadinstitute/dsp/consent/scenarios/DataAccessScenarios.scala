@@ -16,11 +16,11 @@ class DataAccessScenarios extends Simulation with TestRunner {
                     exec(
                         Requests.User.me(OK.code, TestConfig.researcherHeader)
                     )
-                    .pause(1 second)
+                    .pause(TestConfig.defaultPause)
                     .exec(
                         DataSetChains.dataSetCatalogPickTwo(TestConfig.researcherHeader)
                     )
-                    .pause(1)
+                    .pause(TestConfig.defaultPause)
                     .exec(
                         DarChains.darApplicationPageLoad(TestConfig.researcherHeader)
                     )
@@ -39,11 +39,11 @@ class DataAccessScenarios extends Simulation with TestRunner {
                         exec(
                             AdminChains.loginToConsole(TestConfig.adminHeader)
                         )
-                        .pause(1)
+                        .pause(TestConfig.defaultPause)
                         .exec(
                             AdminChains.manageAccess(TestConfig.adminHeader)
                         )
-                        .pause(1)
+                        .pause(TestConfig.defaultPause)
                         .exec(
                             AdminChains.createElections(TestConfig.adminHeader)
                         )
@@ -56,7 +56,7 @@ class DataAccessScenarios extends Simulation with TestRunner {
                             exec(
                                 MemberChains.loginToConsole(TestConfig.memberHeader)
                             )
-                            .pause(1)
+                            .pause(TestConfig.defaultPause)
                             .exec(
                                 AccessReviewChains.voteOnPendingDars(TestConfig.memberHeader, AccessReviewChains.submitVote(AccessReviewChains.electionDacVotes, TestConfig.memberHeader))
                             )
@@ -69,7 +69,7 @@ class DataAccessScenarios extends Simulation with TestRunner {
                                 exec(
                                     ChairChains.loginToConsole(TestConfig.chairHeader)
                                 )
-                                .pause(1)
+                                .pause(TestConfig.defaultPause)
                                 .exec(
                                     AccessReviewChains.voteOnPendingDars(TestConfig.memberHeader, ChairChains.submitVote(TestConfig.chairHeader))
                                 )

@@ -2,6 +2,7 @@ package org.broadinstitute.dsp.consent.chains
 
 import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
+import org.broadinstitute.dsp.consent.{TestConfig}
 import org.broadinstitute.dsp.consent.requests.Requests
 import spray.json._
 import org.broadinstitute.dsp.consent.models.MatchModels._
@@ -14,7 +15,7 @@ object ChairChains {
         exec(
             Requests.User.me(OK.code, additionalHeaders)
         )
-        .pause(1)
+        .pause(TestConfig.defaultPause)
         .exec(
             Requests.PendingCases.chairConsole(OK.code, "${dacUserId}", additionalHeaders)
         )
@@ -31,7 +32,7 @@ object ChairChains {
             exec(
                 reviewLoad(additionalHeaders)
             )
-            .pause(1)
+            .pause(TestConfig.defaultPause)
             .exec(
                 AccessReviewChains.submitVote(AccessReviewChains.electionChairpersonVotes, additionalHeaders)
             )

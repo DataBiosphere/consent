@@ -3,6 +3,7 @@ package org.broadinstitute.dsp.consent.chains
 import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
 import org.broadinstitute.dsp.consent.requests.Requests
+import org.broadinstitute.dsp.consent.{TestConfig}
 import spray.json._
 import DefaultJsonProtocol._
 import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
@@ -17,7 +18,7 @@ object AdminChains {
         exec(
             Requests.User.me(OK.code, additionalHeaders)
         )
-        .pause(1)
+        .pause(TestConfig.defaultPause)
         .exec(
             Requests.Admin.initConsole(OK.code, additionalHeaders)
         )
