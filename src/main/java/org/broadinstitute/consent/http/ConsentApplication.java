@@ -98,7 +98,6 @@ import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchingServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
 import org.broadinstitute.consent.http.service.AuditService;
@@ -123,7 +122,6 @@ import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihAuthApi;
 import org.broadinstitute.consent.http.service.NihServiceAPI;
 import org.broadinstitute.consent.http.service.PendingCaseService;
-import org.broadinstitute.consent.http.service.TranslateServiceImpl;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -245,7 +243,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseDACUserAPI.initInstance(userDAO, userRoleDAO, userRolesHandler, userService);
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
-        TranslateServiceImpl.initInstance();
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
         OAuthAuthenticator.initInstance();
         OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
@@ -333,7 +330,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             @Override
             public void lifeCycleStopped(LifeCycle event) {
                 LOGGER.debug("**** ConsentApplication Server Stopped ****");
-                AbstractTranslateService.clearInstance();
                 AbstractConsentAPI.clearInstance();
                 AbstractElectionAPI.clearInstance();
                 AbstractVoteAPI.clearInstance();

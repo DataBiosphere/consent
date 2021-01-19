@@ -1651,32 +1651,6 @@ paths:
           description: No DAR can be found with the provided identifier
         500:
           description: Server Error
-    put:
-      summary: updateDataAccessRequest
-      description: |
-        DEPRECATED: Use PUT /api/dar/v2/{referenceId}
-        Updates the DAR identified by the id
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-        - name: dataAccessRequest
-          in: body
-          description: The fields that represent a DAR, json format.
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the updated DAR.
-        400:
-          description: Bad request.
-        403:
-          description: Forbidden
   /api/dar/cancel/{id}:
     put:
       summary: Cancel a Data Access Request
