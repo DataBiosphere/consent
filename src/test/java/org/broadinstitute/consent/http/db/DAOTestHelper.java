@@ -238,12 +238,15 @@ public class DAOTestHelper {
 
     protected Vote createDacVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
-        voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
         return voteDAO.findVoteById(voteId);
-
     }
 
     protected Vote createFinalVote(Integer userId, Integer electionId) {
+        Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+        return voteDAO.findVoteById(voteId);
+    }
+
+    protected Vote createPopulatedFinalVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
         voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
         return voteDAO.findVoteById(voteId);
@@ -251,11 +254,16 @@ public class DAOTestHelper {
 
     protected Vote createChairpersonVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
+        return voteDAO.findVoteById(voteId);
+    }
+
+    protected Vote createPopulatedChairpersonVote(Integer userId, Integer electionId) {
+        Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
         voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
         return voteDAO.findVoteById(voteId);
     }
 
-    protected Vote createDataOwnerVote(Integer userId, Integer electionId) {
+    protected Vote createPopulatedDataOwnerVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DATA_OWNER.getValue());
         voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
         return voteDAO.findVoteById(voteId);

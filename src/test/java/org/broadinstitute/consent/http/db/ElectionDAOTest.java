@@ -123,7 +123,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     DataSet d = createDataset();
     createAssociation(c.getConsentId(), d.getDataSetId());
     Election e = createAccessElection(c.getConsentId(), d.getDataSetId());
-    Vote v = createFinalVote(u.getDacUserId(), e.getElectionId());
+    Vote v = createPopulatedFinalVote(u.getDacUserId(), e.getElectionId());
 
     Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
     assertNotNull(election);
@@ -139,7 +139,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     DataSet d = createDataset();
     createAssociation(c.getConsentId(), d.getDataSetId());
     Election e = createRPElection(c.getConsentId(), d.getDataSetId());
-    Vote v = createChairpersonVote(u.getDacUserId(), e.getElectionId());
+    Vote v = createPopulatedChairpersonVote(u.getDacUserId(), e.getElectionId());
 
     Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
     assertNotNull(election);
@@ -155,7 +155,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     DataSet d = createDataset();
     createAssociation(c.getConsentId(), d.getDataSetId());
     Election e = createDataSetLElection(c.getConsentId(), d.getDataSetId());
-    Vote v = createDataOwnerVote(u.getDacUserId(), e.getElectionId());
+    Vote v = createPopulatedDataOwnerVote(u.getDacUserId(), e.getElectionId());
 
     Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
     assertNotNull(election);
@@ -171,7 +171,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     DataSet d = createDataset();
     createAssociation(c.getConsentId(), d.getDataSetId());
     Election e = createDULElection(c.getConsentId(), d.getDataSetId());
-    Vote v = createChairpersonVote(u.getDacUserId(), e.getElectionId());
+    Vote v = createPopulatedChairpersonVote(u.getDacUserId(), e.getElectionId());
 
     Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
     assertNotNull(election);
