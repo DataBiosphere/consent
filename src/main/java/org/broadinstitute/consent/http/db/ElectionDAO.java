@@ -95,10 +95,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
           + "FROM election e "
           + "LEFT JOIN vote v ON v.electionid = e.electionid AND "
           + "    CASE "
-          + "        WHEN LOWER(e.electiontype) = 'dataaccess' THEN LOWER(v.type) = 'final' "
-          + "        WHEN LOWER(e.electiontype) = 'dataset' THEN LOWER(v.type) = 'data_owner' "
-          + "        ELSE LOWER(v.type) = 'chairperson' "
-          + "    END "
+          + "        WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final' "
+          + "        WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
+          + "        ELSE 'chairperson' "
+          + "    END = LOWER(v.type)"
           + "WHERE e.electionid = :electionId LIMIT 1 ")
     Election findElectionWithFinalVoteById(@Bind("electionId") Integer electionId);
 
