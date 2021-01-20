@@ -88,7 +88,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Election getElectionWithFinalVoteByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
     @SqlQuery("SELECT distinct "
-          + "    e.electionid,  e.datasetid, v.vote finalvote, e.status, e.createdate, "
+          + "    e.electionid, e.datasetid, v.vote finalvote, e.status, e.createdate, "
           + "    e.referenceid, v.rationale finalrationale, v.createdate finalvotedate, "
           + "    e.lastupdate, e.finalaccessvote, e.electiontype,  e.datauseletter, e.dulname, "
           + "    e.archived, e.version "
