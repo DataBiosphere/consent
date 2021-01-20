@@ -91,15 +91,15 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
           + "    e.electionid,  e.datasetid, v.vote finalvote, e.status, e.createdate, "
           + "    e.referenceid, v.rationale finalrationale, v.createdate finalvotedate, "
           + "    e.lastupdate, e.finalaccessvote, e.electiontype,  e.datauseletter, e.dulname, "
-          + "    e.archived, e.version"
-          + "FROM election e"
+          + "    e.archived, e.version "
+          + "FROM election e "
           + "LEFT JOIN vote v ON v.electionid = e.electionid AND "
           + "    CASE "
-          + "        WHEN LOWER(e.electiontype) = 'dataaccess' THEN LOWER(v.type) = 'final'"
-          + "        WHEN LOWER(e.electiontype) = 'dataset' THEN LOWER(v.type) = 'data_owner'"
-          + "        ELSE LOWER(v.type) = 'chairperson'"
+          + "        WHEN LOWER(e.electiontype) = 'dataaccess' THEN LOWER(v.type) = 'final' "
+          + "        WHEN LOWER(e.electiontype) = 'dataset' THEN LOWER(v.type) = 'data_owner' "
+          + "        ELSE LOWER(v.type) = 'chairperson' "
           + "    END "
-          + "WHERE e.electionid = :electionId LIMIT 1")
+          + "WHERE e.electionid = :electionId LIMIT 1 ")
     Election findElectionWithFinalVoteById(@Bind("electionId") Integer electionId);
 
     @SqlQuery("select e.* from election e inner join vote v on v.electionId = e.electionId where  v.voteId = :voteId")
