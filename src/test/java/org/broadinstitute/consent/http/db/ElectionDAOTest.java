@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -116,7 +117,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
   @Test
   public void testFindAccessElectionWithFinalVoteById() {
-    User u = createUser();
+    User u = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Dac dac = createDac();
     Consent c = createConsent(dac.getDacId());
     DataSet d = createDataset();
@@ -132,7 +133,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
   @Test
   public void testRPFindElectionWithFinalVoteById() {
-    User u = createUser();
+    User u = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Dac dac = createDac();
     Consent c = createConsent(dac.getDacId());
     DataSet d = createDataset();
@@ -148,7 +149,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
   @Test
   public void testDataSetFindElectionWithFinalVoteById() {
-    User u = createUser();
+    User u = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
     Dac dac = createDac();
     Consent c = createConsent(dac.getDacId());
     DataSet d = createDataset();
@@ -164,7 +165,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
   @Test
   public void testDULFindElectionWithFinalVoteById() {
-    User u = createUser();
+    User u = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Dac dac = createDac();
     Consent c = createConsent(dac.getDacId());
     DataSet d = createDataset();
