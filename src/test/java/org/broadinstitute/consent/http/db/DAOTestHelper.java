@@ -217,7 +217,7 @@ public class DAOTestHelper {
         return electionDAO.findElectionById(electionId);
     }
 
-    protected Election createDataSetLElection(String referenceId, Integer datasetId) {
+    protected Election createDatasetElection(String referenceId, Integer datasetId) {
         Integer electionId = electionDAO.insertElection(
                 ElectionType.DATA_SET.getValue(),
                 ElectionStatus.OPEN.getValue(),

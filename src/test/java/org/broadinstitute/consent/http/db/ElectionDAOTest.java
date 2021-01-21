@@ -154,7 +154,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     Consent c = createConsent(dac.getDacId());
     DataSet d = createDataset();
     createAssociation(c.getConsentId(), d.getDataSetId());
-    Election e = createDataSetLElection(c.getConsentId(), d.getDataSetId());
+    Election e = createDatasetElection(c.getConsentId(), d.getDataSetId());
     Vote v = createPopulatedDataOwnerVote(u.getDacUserId(), e.getElectionId());
 
     Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
