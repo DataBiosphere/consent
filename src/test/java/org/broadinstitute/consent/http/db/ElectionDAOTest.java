@@ -148,7 +148,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDataSetFindElectionWithFinalVoteById() {
+  public void testDatasetFindElectionWithFinalVoteById() {
     User u = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
     Dac dac = createDac();
     Consent c = createConsent(dac.getDacId());
