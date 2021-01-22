@@ -32,9 +32,9 @@ public class MetricsResourceTest {
 
   @Test
   public void testGetDarMetricsData() {
-    when(service.generateDarDecisionMetrics()).thenReturn(Collections.emptyList());
+    when(service.generateDecisionMetrics("dar")).thenReturn(Collections.emptyList());
     initResource();
-    Response response = resource.getDarMetricsData();
+    Response response = resource.getMetricsData();
     assertEquals(200, response.getStatus());
     assertFalse(response.getEntity().toString().isEmpty());
     assertTrue(response.getEntity().toString().contains(DarDecisionMetrics.getHeaderRow("\t")));
@@ -42,11 +42,12 @@ public class MetricsResourceTest {
 
   @Test
   public void testGetDacMetricsData() {
-    when(service.generateDarDecisionMetrics()).thenReturn(Collections.emptyList());
+    when(service.generateDecisionMetrics("dac")).thenReturn(Collections.emptyList());
     initResource();
-    Response response = resource.getDacMetricsData();
+    Response response = resource.getMetricsData();
     assertEquals(200, response.getStatus());
     assertFalse(response.getEntity().toString().isEmpty());
-    assertTrue(response.getEntity().toString().contains(DacDecisionMetrics.getHeaderRow("\t")));
+    String headerRow = DacDecisionMetrics.getHeaderRow("\t");
+    assertTrue(response.getEntity().toString().contains(headerRow));
   }
 }
