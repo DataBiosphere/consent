@@ -8,6 +8,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.DacDecisionMetrics;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
+import org.broadinstitute.consent.http.models.DecisionMetrics;
 import org.broadinstitute.consent.http.service.MetricsService;
 
 @Path("/metrics")
@@ -23,10 +24,12 @@ public class MetricsResource extends Resource {
   @GET
   @Path("/dar/decision")
   @Produces(MediaType.TEXT_PLAIN)
-  public Response getDarMetricsData() {
+  public Response getMetricsData() {
     String joiner = "\t";
-    StringBuilder tsv = new StringBuilder(DarDecisionMetrics.getHeaderRow(joiner));
-    metricsService.generateDarDecisionMetrics().forEach(m -> tsv.append(m.toString(joiner)));
+    String header = DecisionMetrics.getHeaderRow(joiner);
+    StringBuilder tsv = new StringBuilder(header);
+
+    metricsService.generateDecisionMetrics().forEach(m -> tsv.append(m.toString(joiner)));
     return Response.ok(tsv.toString()).build();
   }
 
@@ -35,7 +38,8 @@ public class MetricsResource extends Resource {
   @Produces(MediaType.TEXT_PLAIN)
   public Response getDacMetricsData() {
     String joiner = "\t";
-    StringBuilder tsv = new StringBuilder(DacDecisionMetrics.getHeaderRow(joiner));
+    String header = DecisionMetrics.getHeaderRow(joiner);
+    StringBuilder tsv = new StringBuilder(header);
     metricsService.generateDacDecisionMetrics().forEach(m -> tsv.append(m.toString(joiner)));
     return Response.ok(tsv.toString()).build();
   }

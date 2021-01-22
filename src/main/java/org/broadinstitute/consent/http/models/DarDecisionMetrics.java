@@ -16,7 +16,7 @@ import java.util.Objects;
  * Approved: 01-02-2020 Date Denied: 01-02-2020 DAR ToT: 1 day DAC Decision: Yes/No Algorithm
  * Decision: Yes/No Structured Research Purpose Decision: Yes/No
  */
-public class DarDecisionMetrics {
+public class DarDecisionMetrics implements DecisionMetrics {
 
   private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private String darId;
@@ -50,7 +50,7 @@ public class DarDecisionMetrics {
     this.setSrpDecision(rpElection);
   }
 
-  public static String getHeaderRow(String joiner) {
+  public String getHeaderRow(String joiner) {
     return String.join(
         joiner,
         "DAR ID",

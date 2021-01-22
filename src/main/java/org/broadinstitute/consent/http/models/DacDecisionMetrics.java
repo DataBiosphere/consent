@@ -1,15 +1,16 @@
 package org.broadinstitute.consent.http.models;
 
+import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.time.DurationFormatUtils;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 
 /**
  * Generate a row of dac decision data.
  */
-public class DacDecisionMetrics {
+public class DacDecisionMetrics implements DecisionMetrics {
 
   private Dac dac;
   private List<DataSetDTO> datasets;
@@ -25,7 +26,7 @@ public class DacDecisionMetrics {
   private Integer percentAgreementAlgorithm;
   private Integer percentSRPAccurate;
 
-  public static String getHeaderRow(String joiner) {
+  public String getHeaderRow(String joiner) {
     return String.join(
         joiner,
         "DAC ID",
