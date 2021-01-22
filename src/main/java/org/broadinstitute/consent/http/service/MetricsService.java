@@ -29,9 +29,9 @@ public class MetricsService {
 
   public static final String JOINER = "\t";
 
-  public String getHeaderRow(String type) {
+  public String getHeaderRow(Type type) {
     switch (type) {
-      case "dar":
+      case DAR:
         return String.join(
             JOINER,
             "DAR ID",
@@ -45,7 +45,7 @@ public class MetricsService {
             "Algorithm Decision",
             "Structured Research Purpose Decision",
             "\n");
-      case "dac":
+      case DAC:
         return String.join(
             JOINER,
             "DAC ID",
@@ -64,7 +64,7 @@ public class MetricsService {
     }
   }
 
-  public List<? extends DecisionMetrics> generateDecisionMetrics(String type) {
+  public List<? extends DecisionMetrics> generateDecisionMetrics(Type type) {
     List<DataAccessRequest> dars = metricsDAO.findAllDars();
     List<String> referenceIds =
       dars.stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());

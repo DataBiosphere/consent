@@ -1,17 +1,17 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-
-import java.util.Collections;
-import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import javax.ws.rs.core.Response;
+import java.util.Collections;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
 public class MetricsResourceTest {
 
@@ -30,22 +30,22 @@ public class MetricsResourceTest {
 
   @Test
   public void testGetDarMetricsData() {
-    when(service.generateDecisionMetrics("dar")).thenReturn(Collections.emptyList());
+    when(service.generateDecisionMetrics(Type.DAR)).thenReturn(Collections.emptyList());
     initResource();
     Response response = resource.getDarMetricsData();
     assertEquals(200, response.getStatus());
     assertFalse(response.getEntity().toString().isEmpty());
-    assertTrue(response.getEntity().toString().contains(service.getHeaderRow("dar")));
+    assertTrue(response.getEntity().toString().contains(service.getHeaderRow(Type.DAR)));
   }
 
   @Test
   public void testGetDacMetricsData() {
-    when(service.generateDecisionMetrics("dac")).thenReturn(Collections.emptyList());
+    when(service.generateDecisionMetrics(Type.DAC)).thenReturn(Collections.emptyList());
     initResource();
     Response response = resource.getDarMetricsData();
     assertEquals(200, response.getStatus());
     assertFalse(response.getEntity().toString().isEmpty());
-    String headerRow = service.getHeaderRow("dac");
+    String headerRow = service.getHeaderRow(Type.DAC);
     assertTrue(response.getEntity().toString().contains(headerRow));
   }
 }
