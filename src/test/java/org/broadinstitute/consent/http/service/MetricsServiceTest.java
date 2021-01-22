@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DecisionMetrics;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -56,7 +57,7 @@ public class MetricsServiceTest {
     int datasetCount = RandomUtils.nextInt(1, 100);
     initializeMetricsDAOCalls(darCount, datasetCount);
     initService();
-    List<DarDecisionMetrics> metrics = service.generateDarDecisionMetrics();
+    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics("dar");
     assertFalse(metrics.isEmpty());
     assertEquals(darCount, metrics.size());
   }
@@ -68,7 +69,7 @@ public class MetricsServiceTest {
     initializeMetricsDAOCalls(darCount, datasetCount);
 
     initService();
-    List<DacDecisionMetrics> metrics = service.generateDacDecisionMetrics();
+    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics("dac");
     assertFalse(metrics.isEmpty());
   }
 

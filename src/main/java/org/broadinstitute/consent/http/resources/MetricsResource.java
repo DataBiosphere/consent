@@ -26,18 +26,13 @@ public class MetricsResource extends Resource {
   @GET
   @Path("/dar/decision")
   @Produces(MediaType.TEXT_PLAIN)
-  public Response getMetricsData() {
-    String joiner = "\t";
-    String header = DecisionMetrics.getHeaderRow(joiner);
+  public Response getDarMetricsData() {
+    String type = "dar"; // TODO: This should be an enum somewhere, not a string
+    String header = metricsService.getHeaderRow(type);
     StringBuilder tsv = new StringBuilder(header);
-    String type = "";
-    if (header.contains("DAR ID")) {
-      type = "dar";
-    } else {
-      type = "dac";
-    }
-    metricsService.generateDecisionMetrics(type).forEach(m -> tsv.append(m.toString(joiner)));
+    metricsService.generateDecisionMetrics(type).forEach(m -> tsv.append(m.toString(MetricsService.JOINER)));
     return Response.ok(tsv.toString()).build();
   }
 
+  // TODO: Bring back the /dac/decision endpoint here.
 }

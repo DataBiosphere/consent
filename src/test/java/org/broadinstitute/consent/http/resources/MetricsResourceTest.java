@@ -7,8 +7,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import javax.ws.rs.core.Response;
-import org.broadinstitute.consent.http.models.DacDecisionMetrics;
-import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,20 +32,20 @@ public class MetricsResourceTest {
   public void testGetDarMetricsData() {
     when(service.generateDecisionMetrics("dar")).thenReturn(Collections.emptyList());
     initResource();
-    Response response = resource.getMetricsData();
+    Response response = resource.getDarMetricsData();
     assertEquals(200, response.getStatus());
     assertFalse(response.getEntity().toString().isEmpty());
-    assertTrue(response.getEntity().toString().contains(DarDecisionMetrics.getHeaderRow("\t")));
+    assertTrue(response.getEntity().toString().contains(service.getHeaderRow("dar")));
   }
 
   @Test
   public void testGetDacMetricsData() {
     when(service.generateDecisionMetrics("dac")).thenReturn(Collections.emptyList());
     initResource();
-    Response response = resource.getMetricsData();
+    Response response = resource.getDarMetricsData();
     assertEquals(200, response.getStatus());
     assertFalse(response.getEntity().toString().isEmpty());
-    String headerRow = DacDecisionMetrics.getHeaderRow("\t");
+    String headerRow = service.getHeaderRow("dac");
     assertTrue(response.getEntity().toString().contains(headerRow));
   }
 }

@@ -4,5 +4,4 @@ public interface DecisionMetrics {
 
     public String toString(String joiner);
 
-    public String getHeaderRow(String joiner);
 }

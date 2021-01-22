@@ -27,6 +27,43 @@ public class MetricsService {
     this.metricsDAO = metricsDAO;
   }
 
+  public static final String JOINER = "\t";
+
+  public String getHeaderRow(String type) {
+    switch (type) {
+      case "dar":
+        return String.join(
+            JOINER,
+            "DAR ID",
+            "DAC ID",
+            "Dataset ID",
+            "Date Submitted",
+            "Date Approved",
+            "Date Denied",
+            "DAR ToT",
+            "Dac Decision",
+            "Algorithm Decision",
+            "Structured Research Purpose Decision",
+            "\n");
+      case "dac":
+        return String.join(
+            JOINER,
+            "DAC ID",
+            "# of DAC Members",
+            "# of DAC Chairs",
+            "# of Datasets",
+            "# of DARs Received",
+            "% of DARs Reviewed",
+            "Average DAR Turnaround Time",
+            "% Reveal DUOS Algorithm",
+            "% Agreement with DUOS Algorithm",
+            "% Structured Research Purpose Accurate",
+            "\n");
+      default:
+        return "\n";
+    }
+  }
+
   public List<? extends DecisionMetrics> generateDecisionMetrics(String type) {
     List<DataAccessRequest> dars = metricsDAO.findAllDars();
     List<String> referenceIds =

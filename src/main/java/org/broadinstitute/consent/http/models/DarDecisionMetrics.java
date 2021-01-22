@@ -50,22 +50,6 @@ public class DarDecisionMetrics implements DecisionMetrics {
     this.setSrpDecision(rpElection);
   }
 
-  public String getHeaderRow(String joiner) {
-    return String.join(
-        joiner,
-        "DAR ID",
-        "DAC ID",
-        "Dataset ID",
-        "Date Submitted",
-        "Date Approved",
-        "Date Denied",
-        "DAR ToT",
-        "Dac Decision",
-        "Algorithm Decision",
-        "Structured Research Purpose Decision",
-        "\n");
-  }
-
   public String toString(String joiner) {
     return String.join(
         joiner,

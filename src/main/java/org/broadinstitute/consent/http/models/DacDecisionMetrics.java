@@ -26,22 +26,6 @@ public class DacDecisionMetrics implements DecisionMetrics {
   private Integer percentAgreementAlgorithm;
   private Integer percentSRPAccurate;
 
-  public String getHeaderRow(String joiner) {
-    return String.join(
-        joiner,
-        "DAC ID",
-        "# of DAC Members",
-        "# of DAC Chairs",
-        "# of Datasets",
-        "# of DARs Received",
-        "% of DARs Reviewed",
-        "Average DAR Turnaround Time",
-        "% Reveal DUOS Algorithm",
-        "% Agreement with DUOS Algorithm",
-        "% Structured Research Purpose Accurate",
-        "\n");
-  }
-
   public String toString(String joiner) {
     return String.join(
         joiner,
