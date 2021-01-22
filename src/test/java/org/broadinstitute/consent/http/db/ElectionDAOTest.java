@@ -10,11 +10,14 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -113,16 +116,67 @@ public class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindElectionWithFinalVoteById() {
+  public void testFindAccessElectionWithFinalVoteById() {
+    User u = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Dac dac = createDac();
     Consent c = createConsent(dac.getDacId());
     DataSet d = createDataset();
     createAssociation(c.getConsentId(), d.getDataSetId());
     Election e = createAccessElection(c.getConsentId(), d.getDataSetId());
+    Vote v = createPopulatedFinalVote(u.getDacUserId(), e.getElectionId());
 
     Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
     assertNotNull(election);
     assertEquals(e.getElectionId(), election.getElectionId());
+    assertEquals(v.getVote(), election.getFinalVote());
+  }
+
+  @Test
+  public void testRPFindElectionWithFinalVoteById() {
+    User u = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    Dac dac = createDac();
+    Consent c = createConsent(dac.getDacId());
+    DataSet d = createDataset();
+    createAssociation(c.getConsentId(), d.getDataSetId());
+    Election e = createRPElection(c.getConsentId(), d.getDataSetId());
+    Vote v = createPopulatedChairpersonVote(u.getDacUserId(), e.getElectionId());
+
+    Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+    assertNotNull(election);
+    assertEquals(e.getElectionId(), election.getElectionId());
+    assertEquals(v.getVote(), election.getFinalVote());
+  }
+
+  @Test
+  public void testDatasetFindElectionWithFinalVoteById() {
+    User u = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
+    Dac dac = createDac();
+    Consent c = createConsent(dac.getDacId());
+    DataSet d = createDataset();
+    createAssociation(c.getConsentId(), d.getDataSetId());
+    Election e = createDatasetElection(c.getConsentId(), d.getDataSetId());
+    Vote v = createPopulatedDataOwnerVote(u.getDacUserId(), e.getElectionId());
+
+    Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+    assertNotNull(election);
+    assertEquals(e.getElectionId(), election.getElectionId());
+    assertEquals(v.getVote(), election.getFinalVote());
+  }
+
+  @Test
+  public void testDULFindElectionWithFinalVoteById() {
+    User u = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    Dac dac = createDac();
+    Consent c = createConsent(dac.getDacId());
+    DataSet d = createDataset();
+    createAssociation(c.getConsentId(), d.getDataSetId());
+    Election e = createDULElection(c.getConsentId(), d.getDataSetId());
+    Vote v = createPopulatedChairpersonVote(u.getDacUserId(), e.getElectionId());
+
+    Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+    assertNotNull(election);
+    assertEquals(e.getElectionId(), election.getElectionId());
+    assertEquals(v.getVote(), election.getFinalVote());
   }
 
   @Test

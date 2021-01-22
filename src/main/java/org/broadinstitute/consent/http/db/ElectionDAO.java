@@ -87,10 +87,19 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             + " where e.referenceId = :referenceId and lower(e.electionType) = lower(:type) and e.version = (select MAX(version) from election where referenceId = :referenceId)")
     Election getElectionWithFinalVoteByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
-    @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, "
-            + " e.lastUpdate, e.finalAccessVote, e.electionType,  e.dataUseLetter, e.dulName, e.archived, e.version  from election e"
-            + " left join vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' "
-            + " where  e.electionId = :electionId")
+    @SqlQuery("SELECT distinct "
+          + "    e.electionid, e.datasetid, v.vote finalvote, e.status, e.createdate, "
+          + "    e.referenceid, v.rationale finalrationale, v.createdate finalvotedate, "
+          + "    e.lastupdate, e.finalaccessvote, e.electiontype,  e.datauseletter, e.dulname, "
+          + "    e.archived, e.version "
+          + "FROM election e "
+          + "LEFT JOIN vote v ON v.electionid = e.electionid AND "
+          + "    CASE "
+          + "        WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final' "
+          + "        WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
+          + "        ELSE 'chairperson' "
+          + "    END = LOWER(v.type)"
+          + "WHERE e.electionid = :electionId LIMIT 1 ")
     Election findElectionWithFinalVoteById(@Bind("electionId") Integer electionId);
 
     @SqlQuery("select e.* from election e inner join vote v on v.electionId = e.electionId where  v.voteId = :voteId")
