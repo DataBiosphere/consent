@@ -1,12 +1,13 @@
 package org.broadinstitute.consent.http.models;
 
+import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.broadinstitute.consent.http.util.DatasetUtil;
+
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
-import org.apache.commons.lang3.time.DurationFormatUtils;
-import org.broadinstitute.consent.http.util.DatasetUtil;
 
 /**
  * Generate a row of dar decision data in the form of:
@@ -41,7 +42,7 @@ public class DarDecisionMetrics {
     this.setDacName(dac);
     this.setDatasetId(dataset);
     this.setDacDecision(accessElection);
-    this.setDateSubmitted(accessElection);
+    this.setDateSubmitted(dar);
     this.setDateApproved(accessElection);
     this.setDateDenied(accessElection);
     this.setTurnaroundTime(accessElection);
@@ -114,9 +115,9 @@ public class DarDecisionMetrics {
     return dateSubmitted;
   }
 
-  private void setDateSubmitted(Election election) {
-    if (Objects.nonNull(election)) {
-      this.dateSubmitted = election.getCreateDate();
+  private void setDateSubmitted(DataAccessRequest dar) {
+    if (Objects.nonNull(dar)) {
+      this.dateSubmitted = dar.getCreateDate();
     }
   }
 
