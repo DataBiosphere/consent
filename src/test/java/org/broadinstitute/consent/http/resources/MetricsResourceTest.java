@@ -44,7 +44,7 @@ public class MetricsResourceTest {
   public void testGetDacMetricsData() {
     when(service.generateDecisionMetrics(Type.DAC)).thenReturn(Collections.emptyList());
     initResource();
-    Response response = resource.getDarMetricsData();
+    Response response = resource.getDacMetricsData();
     assertEquals(200, response.getStatus());
     assertFalse(response.getEntity().toString().isEmpty());
     String headerRow = service.getHeaderRow(Type.DAC);
