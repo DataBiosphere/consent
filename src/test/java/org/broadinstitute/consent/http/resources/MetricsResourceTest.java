@@ -19,14 +19,15 @@ public class MetricsResourceTest {
 
   @Mock private MetricsService service;
 
-  @Mock private MetricsResource resource;
+  private MetricsResource resource;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
   }
 
-  private void initResource() {
+  @Before
+  public void initResource() {
     resource = new MetricsResource(service);
   }
 
