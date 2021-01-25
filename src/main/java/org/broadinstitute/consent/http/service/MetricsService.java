@@ -4,8 +4,17 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacDecisionMetrics;
+import org.broadinstitute.consent.http.models.DarDecisionMetrics;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Match;
+import org.broadinstitute.consent.http.models.DecisionMetrics;
 
 import java.util.List;
 import java.util.Objects;
@@ -15,6 +24,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MetricsService {
+
+  public static final String JOINER = "\t";
 
   private final DacService dacService;
   private final DataSetDAO dataSetDAO;
@@ -26,8 +37,6 @@ public class MetricsService {
     this.dataSetDAO = dataSetDAO;
     this.metricsDAO = metricsDAO;
   }
-
-  public static final String JOINER = "\t";
 
   public String getHeaderRow(Type type) {
     switch (type) {
@@ -138,7 +147,7 @@ public class MetricsService {
             match.orElse(null));
         })
       .collect(Collectors.toList());
-    if (type.equals("dar")) {
+    if (type == Type.DAR) {
       return darMetrics;
     } else {
       List<Dac> allDacs = dacService.findAllDacsWithMembers();

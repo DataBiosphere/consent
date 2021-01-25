@@ -101,7 +101,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
 
   private void setDateSubmitted(DataAccessRequest dar) {
     if (Objects.nonNull(dar)) {
-      this.dateSubmitted = dar.getCreateDate();
+      this.dateSubmitted = dar.getSubmissionDate();
     }
   }
 

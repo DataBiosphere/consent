@@ -24,16 +24,14 @@ public class MetricsResource extends Resource {
   @Path("/dar/decision")
   @Produces(MediaType.TEXT_PLAIN)
   public Response getDarMetricsData() {
-    Type type = Type.DAR;
-    return getMetricsData(type);
+    return getMetricsData(Type.DAR);
   }
 
   @GET
   @Path("/dac/decision")
   @Produces(MediaType.TEXT_PLAIN)
   public Response getDacMetricsData() {
-    Type type = Type.DAC;
-    return getMetricsData(type);
+    return getMetricsData(Type.DAC);
   }
 
   private Response getMetricsData(Type type) {

@@ -1,36 +1,25 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DacDecisionMetrics;
-import org.broadinstitute.consent.http.models.DarDecisionMetrics;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DecisionMetrics;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 public class MetricsServiceTest {
 
@@ -57,7 +46,7 @@ public class MetricsServiceTest {
     int datasetCount = RandomUtils.nextInt(1, 100);
     initializeMetricsDAOCalls(darCount, datasetCount);
     initService();
-    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics("dar");
+    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAR);
     assertFalse(metrics.isEmpty());
     assertEquals(darCount, metrics.size());
   }
@@ -69,7 +58,7 @@ public class MetricsServiceTest {
     initializeMetricsDAOCalls(darCount, datasetCount);
 
     initService();
-    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics("dac");
+    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAC);
     assertFalse(metrics.isEmpty());
   }
 

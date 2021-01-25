@@ -10,7 +10,9 @@ import org.mockito.MockitoAnnotations;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.when;
 
 public class MetricsResourceTest {
