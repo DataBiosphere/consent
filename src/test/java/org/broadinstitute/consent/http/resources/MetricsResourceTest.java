@@ -19,7 +19,7 @@ public class MetricsResourceTest {
 
   @Mock private MetricsService service;
 
-  private MetricsResource resource;
+  @Mock private MetricsResource resource;
 
   @Before
   public void setUp() {
