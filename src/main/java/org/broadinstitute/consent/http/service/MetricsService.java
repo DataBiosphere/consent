@@ -25,8 +25,6 @@ import java.util.stream.Collectors;
 
 public class MetricsService {
 
-  public static final String JOINER = "\t";
-
   private final DacService dacService;
   private final DataSetDAO dataSetDAO;
   private final MetricsDAO metricsDAO;
