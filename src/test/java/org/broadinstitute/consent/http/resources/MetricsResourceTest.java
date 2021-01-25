@@ -17,33 +17,9 @@ import static org.mockito.Mockito.when;
 
 public class MetricsResourceTest {
 
-  private String darHeader = String.join(
-    "\t",
-    "DAR ID",
-    "DAC ID",
-    "Dataset ID",
-    "Date Submitted",
-    "Date Approved",
-    "Date Denied",
-    "DAR ToT",
-    "Dac Decision",
-    "Algorithm Decision",
-    "Structured Research Purpose Decision",
-    "\n");
+  private String darHeader = "";
 
-  private String dacHeader = String.join(
-    "\t",
-    "DAC ID",
-    "# of DAC Members",
-    "# of DAC Chairs",
-    "# of Datasets",
-    "# of DARs Received",
-    "% of DARs Reviewed",
-    "Average DAR Turnaround Time",
-    "% Reveal DUOS Algorithm",
-    "% Agreement with DUOS Algorithm",
-    "% Structured Research Purpose Accurate",
-    "\n");
+  private String dacHeader = "";
 
   @Mock private MetricsService service;
 
