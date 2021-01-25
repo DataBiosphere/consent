@@ -17,6 +17,34 @@ import static org.mockito.Mockito.when;
 
 public class MetricsResourceTest {
 
+  private String darHeader = String.join(
+    "\t",
+    "DAR ID",
+    "DAC ID",
+    "Dataset ID",
+    "Date Submitted",
+    "Date Approved",
+    "Date Denied",
+    "DAR ToT",
+    "Dac Decision",
+    "Algorithm Decision",
+    "Structured Research Purpose Decision",
+    "\n");
+
+  private String dacHeader = String.join(
+    "\t",
+    "DAC ID",
+    "# of DAC Members",
+    "# of DAC Chairs",
+    "# of Datasets",
+    "# of DARs Received",
+    "% of DARs Reviewed",
+    "Average DAR Turnaround Time",
+    "% Reveal DUOS Algorithm",
+    "% Agreement with DUOS Algorithm",
+    "% Structured Research Purpose Accurate",
+    "\n");
+
   @Mock private MetricsService service;
 
   private MetricsResource resource;
@@ -26,14 +54,14 @@ public class MetricsResourceTest {
     MockitoAnnotations.initMocks(this);
   }
 
-  @Before
-  public void initResource() {
+  private void initResource() {
     resource = new MetricsResource(service);
   }
 
   @Test
   public void testGetDarMetricsData() {
     when(service.generateDecisionMetrics(Type.DAR)).thenReturn(Collections.emptyList());
+    when(service.getHeaderRow(Type.DAR)).thenReturn(darHeader);
     initResource();
     Response response = resource.getDarMetricsData();
     assertEquals(200, response.getStatus());
@@ -44,6 +72,7 @@ public class MetricsResourceTest {
   @Test
   public void testGetDacMetricsData() {
     when(service.generateDecisionMetrics(Type.DAC)).thenReturn(Collections.emptyList());
+    when(service.getHeaderRow(Type.DAC)).thenReturn(dacHeader);
     initResource();
     Response response = resource.getDacMetricsData();
     assertEquals(200, response.getStatus());
