@@ -1,21 +1,25 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-
-import java.util.Collections;
-import javax.ws.rs.core.Response;
-import org.broadinstitute.consent.http.models.DacDecisionMetrics;
-import org.broadinstitute.consent.http.models.DarDecisionMetrics;
+import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.core.Response;
+import java.util.Collections;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Mockito.when;
+
 public class MetricsResourceTest {
+
+  private final String darHeader = "DAR ID";
+
+  private final String dacHeader = "DAC ID";
 
   @Mock private MetricsService service;
 
@@ -32,21 +36,24 @@ public class MetricsResourceTest {
 
   @Test
   public void testGetDarMetricsData() {
-    when(service.generateDarDecisionMetrics()).thenReturn(Collections.emptyList());
+    when(service.generateDecisionMetrics(Type.DAR)).thenReturn(Collections.emptyList());
+    when(service.getHeaderRow(Type.DAR)).thenReturn(darHeader);
     initResource();
     Response response = resource.getDarMetricsData();
     assertEquals(200, response.getStatus());
     assertFalse(response.getEntity().toString().isEmpty());
-    assertTrue(response.getEntity().toString().contains(DarDecisionMetrics.getHeaderRow("\t")));
+    assertTrue(response.getEntity().toString().contains(service.getHeaderRow(Type.DAR)));
   }
 
   @Test
   public void testGetDacMetricsData() {
-    when(service.generateDarDecisionMetrics()).thenReturn(Collections.emptyList());
+    when(service.generateDecisionMetrics(Type.DAC)).thenReturn(Collections.emptyList());
+    when(service.getHeaderRow(Type.DAC)).thenReturn(dacHeader);
     initResource();
     Response response = resource.getDacMetricsData();
     assertEquals(200, response.getStatus());
     assertFalse(response.getEntity().toString().isEmpty());
-    assertTrue(response.getEntity().toString().contains(DacDecisionMetrics.getHeaderRow("\t")));
+    String headerRow = service.getHeaderRow(Type.DAC);
+    assertTrue(response.getEntity().toString().contains(headerRow));
   }
 }

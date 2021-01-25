@@ -1,12 +1,13 @@
 package org.broadinstitute.consent.http.models;
 
+import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.broadinstitute.consent.http.util.DatasetUtil;
+
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
-import org.apache.commons.lang3.time.DurationFormatUtils;
-import org.broadinstitute.consent.http.util.DatasetUtil;
 
 /**
  * Generate a row of dar decision data in the form of:
@@ -15,7 +16,7 @@ import org.broadinstitute.consent.http.util.DatasetUtil;
  * Approved: 01-02-2020 Date Denied: 01-02-2020 DAR ToT: 1 day DAC Decision: Yes/No Algorithm
  * Decision: Yes/No Structured Research Purpose Decision: Yes/No
  */
-public class DarDecisionMetrics {
+public class DarDecisionMetrics implements DecisionMetrics {
 
   private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private String darId;
@@ -30,6 +31,21 @@ public class DarDecisionMetrics {
   private String algorithmDecision;
   private String srpDecision;
 
+  private static final String JOINER = "\t";
+  public static final String headerRow = String.join(
+    JOINER,
+    "DAR ID",
+    "DAC ID",
+    "Dataset ID",
+    "Date Submitted",
+    "Date Approved",
+    "Date Denied",
+    "DAR ToT",
+    "Dac Decision",
+    "Algorithm Decision",
+    "Structured Research Purpose Decision",
+    "\n");
+
   public DarDecisionMetrics(
       DataAccessRequest dar,
       Dac dac,
@@ -41,28 +57,12 @@ public class DarDecisionMetrics {
     this.setDacName(dac);
     this.setDatasetId(dataset);
     this.setDacDecision(accessElection);
-    this.setDateSubmitted(accessElection);
+    this.setDateSubmitted(dar);
     this.setDateApproved(accessElection);
     this.setDateDenied(accessElection);
     this.setTurnaroundTime(accessElection);
     this.setAlgorithmDecision(match);
     this.setSrpDecision(rpElection);
-  }
-
-  public static String getHeaderRow(String joiner) {
-    return String.join(
-        joiner,
-        "DAR ID",
-        "DAC ID",
-        "Dataset ID",
-        "Date Submitted",
-        "Date Approved",
-        "Date Denied",
-        "DAR ToT",
-        "Dac Decision",
-        "Algorithm Decision",
-        "Structured Research Purpose Decision",
-        "\n");
   }
 
   public String toString(String joiner) {
@@ -114,9 +114,9 @@ public class DarDecisionMetrics {
     return dateSubmitted;
   }
 
-  private void setDateSubmitted(Election election) {
-    if (Objects.nonNull(election)) {
-      this.dateSubmitted = election.getCreateDate();
+  private void setDateSubmitted(DataAccessRequest dar) {
+    if (Objects.nonNull(dar)) {
+      this.dateSubmitted = dar.getSubmissionDate();
     }
   }
 
@@ -185,9 +185,9 @@ public class DarDecisionMetrics {
         submittedDate.setTime(this.getDateSubmitted());
         finalDate.setTime(finalVoteDate);
         Duration duration = Duration.between(submittedDate.toInstant(), finalDate.toInstant());
-        this.turnaroundTimeMillis = duration.toMillis();
+        this.turnaroundTimeMillis = (duration.toMillis() < 0) ? 0 : duration.toMillis();
         this.turnaroundTime =
-            DurationFormatUtils.formatDurationWords(duration.toMillis(), true, true);
+            DurationFormatUtils.formatDurationWords(this.turnaroundTimeMillis, true, true);
       }
     }
   }
