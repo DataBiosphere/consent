@@ -185,9 +185,9 @@ public class DarDecisionMetrics implements DecisionMetrics {
         submittedDate.setTime(this.getDateSubmitted());
         finalDate.setTime(finalVoteDate);
         Duration duration = Duration.between(submittedDate.toInstant(), finalDate.toInstant());
-        this.turnaroundTimeMillis = duration.toMillis();
+        this.turnaroundTimeMillis = (duration.toMillis() < 0) ? 0 : duration.toMillis();
         this.turnaroundTime =
-            DurationFormatUtils.formatDurationWords(duration.toMillis(), true, true);
+            DurationFormatUtils.formatDurationWords(this.turnaroundTimeMillis, true, true);
       }
     }
   }
