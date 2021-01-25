@@ -17,9 +17,9 @@ import static org.mockito.Mockito.when;
 
 public class MetricsResourceTest {
 
-  private String darHeader = "DAR ID";
+  private final String darHeader = "DAR ID";
 
-  private String dacHeader = "DAC ID";
+  private final String dacHeader = "DAC ID";
 
   @Mock private MetricsService service;
 

@@ -31,6 +31,21 @@ public class DarDecisionMetrics implements DecisionMetrics {
   private String algorithmDecision;
   private String srpDecision;
 
+  private static final String JOINER = "\t";
+  public static final String headerRow = String.join(
+    JOINER,
+    "DAR ID",
+    "DAC ID",
+    "Dataset ID",
+    "Date Submitted",
+    "Date Approved",
+    "Date Denied",
+    "DAR ToT",
+    "Dac Decision",
+    "Algorithm Decision",
+    "Structured Research Purpose Decision",
+    "\n");
+
   public DarDecisionMetrics(
       DataAccessRequest dar,
       Dac dac,

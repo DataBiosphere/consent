@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 public class MetricsResource extends Resource {
 
   private final MetricsService metricsService;
+  private static final String JOINER = "\t";
 
   @Inject
   public MetricsResource(MetricsService metricsService) {
@@ -37,7 +38,7 @@ public class MetricsResource extends Resource {
   private Response getMetricsData(Type type) {
     String header = metricsService.getHeaderRow(type);
     StringBuilder tsv = new StringBuilder(header);
-    metricsService.generateDecisionMetrics(type).forEach(m -> tsv.append(m.toString(MetricsService.JOINER)));
+    metricsService.generateDecisionMetrics(type).forEach(m -> tsv.append(m.toString(JOINER)));
     return Response.ok(tsv.toString()).build();
   }
 }
