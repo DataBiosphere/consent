@@ -267,9 +267,11 @@ public class SummaryService {
                         if (CollectionUtils.isNotEmpty(reviewedRPElections) && CollectionUtils.isNotEmpty(accessRPList)) {
                             agreementVote =  electionVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.AGREEMENT.getValue())).collect(singletonCollector());
                             AccessRP accessRP =  accessRPList.stream().filter(arp -> arp.getElectionAccessId().equals(election.getElectionId())).collect(singletonCollector());
-                            if (Objects.nonNull(accessRP)) {
-                                List<Vote> electionRPVotes = rpVotes.stream().filter(ev -> ev.getElectionId().equals(accessRP.getElectionRPId())).collect(Collectors.toList());
-                                chairPersonRPVote = electionRPVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
+                            if (Objects.nonNull(accessRP) && Objects.nonNull(rpVotes)) {
+                                chairPersonRPVote = rpVotes.stream()
+                                    .filter(v -> v.getElectionId().equals(accessRP.getElectionRPId()))
+                                    .filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue()))
+                                    .collect(singletonCollector());
                             }
                         }
                         User chairPerson =  users.stream().filter(du -> du.getDacUserId().equals(finalVote.getDacUserId())).collect(singletonCollector());
