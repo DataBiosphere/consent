@@ -61,7 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Path("api/dataset")
-public class DataSetResource extends Resource {
+public class DatasetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
     private final DataSetAPI api;
@@ -70,7 +70,7 @@ public class DataSetResource extends Resource {
     private final UserService userService;
 
     @Inject
-    public DataSetResource(DatasetService datasetService, UserService userService) {
+    public DatasetResource(DatasetService datasetService, UserService userService) {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.api = AbstractDataSetAPI.getInstance();
         this.datasetService = datasetService;
