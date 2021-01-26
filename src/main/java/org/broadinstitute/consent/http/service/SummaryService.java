@@ -110,7 +110,7 @@ public class SummaryService {
             reviewedElections = latestElections.stream().filter(le -> le.getStatus().equals(ElectionStatus.CLOSED.getValue())).collect(Collectors.toList());
         }
         if( !CollectionUtils.isEmpty(reviewedElections)){
-            List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
+            List<Integer> electionIds = reviewedElections.stream().map(Election::getElectionId).collect(Collectors.toList());
             List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
 
             List<Vote> agreementYesVotes = filterAgreementVotes(votes, Boolean.TRUE);
@@ -173,18 +173,18 @@ public class SummaryService {
                         collect(Collectors.toList());
                 List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), statuses);
                 if (!CollectionUtils.isEmpty(reviewedElections)) {
-                    List<String> consentIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
-                    List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
+                    List<String> consentIds = reviewedElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
+                    List<Integer> electionIds = reviewedElections.stream().map(Election::getElectionId).collect(Collectors.toList());
                     Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(electionIds);
                     setSummaryHeader(summaryWriter, maxNumberOfDACMembers);
                     Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
                     List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
-                    Collection<Integer> dacUserIds = votes.stream().map(v -> v.getDacUserId()).collect(Collectors.toSet());
+                    Collection<Integer> dacUserIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
                     Collection<User> users = userDAO.findUsers(dacUserIds);
                     for (Election election : reviewedElections) {
                         Consent electionConsent = consents.stream().filter(c -> c.getConsentId().equals(election.getReferenceId())).collect(singletonCollector());
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
-                        List<Integer> electionVotesUserIds = electionVotes.stream().map(e -> e.getDacUserId()).collect(Collectors.toList());
+                        List<Integer> electionVotesUserIds = electionVotes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
                         Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
                         List<Vote> electionDACVotes = electionVotes.stream().filter(ev -> ev.getType().equals("DAC")).collect(Collectors.toList());
                         Vote chairPersonVote =  electionVotes.stream().filter(ev -> ev.getType().equals(CHAIRPERSON)).collect(singletonCollector());
@@ -198,7 +198,7 @@ public class SummaryService {
                         summaryWriter.write( chairPerson.getDisplayName() + SEPARATOR);
                         summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
                         summaryWriter.write( nullToString(chairPersonVote.getRationale()) + SEPARATOR);
-                        if (electionDACVotes != null && electionDACVotes.size() > 0) {
+                        if (CollectionUtils.isNotEmpty(electionDACVotes)) {
                             for (Vote vote : electionDACVotes) {
                                 List<User> user = electionUsers.stream().filter(du -> du.getDacUserId().equals(vote.getDacUserId())).collect(Collectors.toList());
                                 summaryWriter.write( user.get(0).getDisplayName() + SEPARATOR);
@@ -216,8 +216,8 @@ public class SummaryService {
                 summaryWriter.flush();
             }
             return file;
-        } catch (Exception ignored) {
-            logger.error("There is an error trying to create statistics file, error: "+ ignored.getMessage());
+        } catch (Exception e) {
+            logger.error("There is an error trying to create statistics file, error: "+ e.getMessage());
         }
         return file;
     }
@@ -230,34 +230,34 @@ public class SummaryService {
                 List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue());
                 List<Election> reviewedRPElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue());
                 if (!CollectionUtils.isEmpty(reviewedElections)) {
-                    List<String> referenceIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
+                    List<String> referenceIds = reviewedElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
                     List<Document> dataAccessRequests = dataAccessRequestService.getDataAccessRequestsByReferenceIdsAsDocuments(referenceIds);
                     List<Integer> datasetIds = dataAccessRequests.stream().
                             map(dar -> DarUtil.getIntegerList(dar, DarConstants.DATASET_ID)).
                             flatMap(List::stream).
                             collect(Collectors.toList());
                     List<Association> associations = datasetDAO.getAssociationsForDataSetIdList(new ArrayList<>(datasetIds));
-                    List<String> associatedConsentIds =   associations.stream().map(a -> a.getConsentId()).collect(Collectors.toList());
+                    List<String> associatedConsentIds =   associations.stream().map(Association::getConsentId).collect(Collectors.toList());
                     List<Election> reviewedConsentElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
-                    List<Integer> darElectionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
-                    List<Integer> consentElectionIds = reviewedConsentElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
+                    List<Integer> darElectionIds = reviewedElections.stream().map(Election::getElectionId).collect(Collectors.toList());
+                    List<Integer> consentElectionIds = reviewedConsentElections.stream().map(Election::getElectionId).collect(Collectors.toList());
                     List<AccessRP> accessRPList = electionDAO.findAccessRPbyElectionAccessId(darElectionIds);
                     List<Vote> votes = voteDAO.findVotesByElectionIds(darElectionIds);
-                    List<Integer> rpElectionIds = reviewedRPElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
+                    List<Integer> rpElectionIds = reviewedRPElections.stream().map(Election::getElectionId).collect(Collectors.toList());
                     List<Vote> rpVotes;
                     if (CollectionUtils.isNotEmpty(rpElectionIds)) {
                         rpVotes = voteDAO.findVotesByElectionIds(rpElectionIds);
                     } else rpVotes = null;
                     List<Vote> consentVotes = voteDAO.findVotesByElectionIds(consentElectionIds);
                     List<Match> matchList = matchDAO.findMatchesPurposeId(referenceIds);
-                    Collection<Integer> dacUserIds = votes.stream().map(v -> v.getDacUserId()).collect(Collectors.toSet());
+                    Collection<Integer> dacUserIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
                     Collection<User> users = userDAO.findUsers(dacUserIds);
                     Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(darElectionIds);
                     setSummaryHeaderDataAccessRequest(summaryWriter, maxNumberOfDACMembers);
                     for (Election election : reviewedElections) {
 
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
-                        List<Integer> electionVotesUserIds = electionVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.DAC.getValue())).map(e -> e.getDacUserId()).collect(Collectors.toList());
+                        List<Integer> electionVotesUserIds = electionVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.DAC.getValue())).map(Vote::getDacUserId).collect(Collectors.toList());
                         Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
 
                         Vote finalVote =  electionVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue())).collect(singletonCollector());
@@ -403,8 +403,8 @@ public class SummaryService {
                 }
             }
             return file;
-        } catch (Exception ignored) {
-            logger.error("There is an error trying to create resume of dataset votes file, error: "+ ignored.getMessage());
+        } catch (Exception e) {
+            logger.error("There is an error trying to create resume of dataset votes file, error: "+ e.getMessage());
         }
         return file;
     }
@@ -549,7 +549,7 @@ public class SummaryService {
     public String delimiterCheck(String delimitatedString){
         if (StringUtils.isNotEmpty(delimitatedString)) {
             return TEXT_DELIMITER +
-                    delimitatedString.replaceAll(TEXT_DELIMITER,"\'") + TEXT_DELIMITER;
+                    delimitatedString.replaceAll(TEXT_DELIMITER, "'") + TEXT_DELIMITER;
         } else {
             return "";
         }

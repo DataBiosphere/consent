@@ -49,7 +49,7 @@ public class SummaryServiceTest {
     @Mock
     private DataAccessRequestService dataAccessRequestService;
 
-    SummaryService summaryService;
+    private SummaryService summaryService;
 
     @Before
     public void setUp() throws Exception {
