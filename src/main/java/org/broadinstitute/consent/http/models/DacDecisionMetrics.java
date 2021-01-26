@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.models;
 
-import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -21,7 +21,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
   private Integer darsReceived;
   private Integer percentDARsReviewed;
   private Double averageTurnaroundTimeMillis;
-  private String averageTurnaroundTime;
+  private Integer averageTurnaroundTime;
   private Integer percentRevealAlgorithm;
   private Integer percentAgreementAlgorithm;
   private Integer percentSRPAccurate;
@@ -43,18 +43,18 @@ public class DacDecisionMetrics implements DecisionMetrics {
 
   public String toString(String joiner) {
     return String.join(
-        joiner,
-        getValue(this.getDac().getName()),
-        getValue(getMemberCount()),
-        getValue(getChairCount()),
-        getValue(getDatasetCount()),
-        getValue(getDarsReceived()),
-        getValue(getPercentDARsReviewed()),
-        getValue(getAverageTurnaroundTime()),
-        getValue(getPercentRevealAlgorithm()),
-        getValue(getPercentAgreementAlgorithm()),
-        getValue(getPercentSRPAccurate()),
-        "\n");
+      joiner,
+      getValue(this.getDac().getName()),
+      getValue(getMemberCount()),
+      getValue(getChairCount()),
+      getValue(getDatasetCount()),
+      getValue(getDarsReceived()),
+      getValue(getPercentDARsReviewed()),
+      getValue(getAverageTurnaroundTime()),
+      getValue(getPercentRevealAlgorithm()),
+      getValue(getPercentAgreementAlgorithm()),
+      getValue(getPercentSRPAccurate()),
+      "\n");
   }
 
   public DacDecisionMetrics(Dac dac, List<DataSetDTO> datasets, List<DarDecisionMetrics> metrics) {
@@ -67,36 +67,36 @@ public class DacDecisionMetrics implements DecisionMetrics {
 
     this.setDarsReceived(metrics.size());
     List<DarDecisionMetrics> completedDarMetrics =
-        metrics.stream()
-            .filter(m -> Objects.nonNull(m.getDacDecision()))
-            .collect(Collectors.toList());
+      metrics.stream()
+        .filter(m -> Objects.nonNull(m.getDacDecision()))
+        .collect(Collectors.toList());
     if (!metrics.isEmpty()) {
       long percentReviewed = (long) completedDarMetrics.size() / (long) metrics.size() * 100;
       this.setPercentDARsReviewed((int) percentReviewed);
     }
     completedDarMetrics.stream()
-        .filter(m -> Objects.nonNull(m.getTurnaroundTimeMillis()))
-        .mapToLong(DarDecisionMetrics::getTurnaroundTimeMillis)
-        .average()
-        .ifPresent(this::setAverageTurnaroundTimeMillis);
+      .filter(m -> Objects.nonNull(m.getTurnaroundTimeMillis()))
+      .mapToLong(DarDecisionMetrics::getTurnaroundTimeMillis)
+      .average()
+      .ifPresent(this::setAverageTurnaroundTimeMillis);
     this.setAverageTurnaroundTime();
 
     List<DarDecisionMetrics> agreementMetrics =
-        completedDarMetrics.stream()
-            .filter(m -> Objects.nonNull(m.getAlgorithmDecision()))
-            .filter(m -> Objects.nonNull(m.getDacDecision()))
-            .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
-            .collect(Collectors.toList());
+      completedDarMetrics.stream()
+        .filter(m -> Objects.nonNull(m.getAlgorithmDecision()))
+        .filter(m -> Objects.nonNull(m.getDacDecision()))
+        .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
+        .collect(Collectors.toList());
 
     if (!completedDarMetrics.isEmpty()) {
       long percentAgreement = (long) agreementMetrics.size() / (long) completedDarMetrics.size();
       this.setPercentAgreementAlgorithm((int) percentAgreement);
 
       List<DarDecisionMetrics> srpMetrics =
-          completedDarMetrics.stream()
-              .filter(m -> Objects.nonNull(m.getSrpDecision()))
-              .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
-              .collect(Collectors.toList());
+        completedDarMetrics.stream()
+          .filter(m -> Objects.nonNull(m.getSrpDecision()))
+          .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
+          .collect(Collectors.toList());
       long percentSrp = (long) srpMetrics.size() / (long) completedDarMetrics.size();
       this.setPercentSRPAccurate((int) percentSrp);
     }
@@ -181,15 +181,19 @@ public class DacDecisionMetrics implements DecisionMetrics {
     this.averageTurnaroundTimeMillis = averageTurnaroundTimeMillis;
   }
 
-  public String getAverageTurnaroundTime() {
+  public Integer getAverageTurnaroundTime() {
     return averageTurnaroundTime;
   }
 
   private void setAverageTurnaroundTime() {
     if (Objects.nonNull(this.getAverageTurnaroundTimeMillis())) {
-      this.averageTurnaroundTime =
-          DurationFormatUtils.formatDurationWords(
-              this.getAverageTurnaroundTimeMillis().longValue(), true, true);
+      //this will only ever catch an exception if there is no final date, or an unreasonable amount of time between them
+      //in this case, the upward bound of Integer is displayed
+      try {
+        this.averageTurnaroundTime = Math.toIntExact(TimeUnit.MILLISECONDS.toDays(this.averageTurnaroundTimeMillis.longValue()));
+      } catch (ArithmeticException e) {
+        this.averageTurnaroundTime = 2147483647;
+      }
     }
   }
 
