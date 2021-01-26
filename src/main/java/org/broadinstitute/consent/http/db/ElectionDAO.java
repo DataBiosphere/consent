@@ -281,11 +281,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("SELECT v.electionId FROM vote v, election e where v.dacUserId = :dacUserId and e.electionId = v.electionId and v.vote is null AND lower(e.electionType) = 'dataset' AND lower(e.status) = 'open'")
     List<Integer> findDataSetOpenElectionIds(@Bind("dacUserId")Integer dacUserId);
 
-    @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, " +
-            "e.lastUpdate, e.finalAccessVote, e.electionType e.dataUseLetter, e.dulName, e.archived, e.version from election e inner join vote v  on v.electionId = e.electionId where lower(e.electionType) = 'dataaccess' "+
-            " and lower(v.type) = 'final'  and e.referenceId in (<darIds>) order by e.createDate asc")
-    List<Election> findRequestElectionsByReferenceIds(@BindList("darIds") List<String> darIds);
-
     @SqlUpdate("update election set archived = true, lastUpdate = :lastUpdate where electionId = :electionId ")
     void archiveElectionById(@Bind("electionId") Integer electionId, @Bind("lastUpdate") Date lastUpdate);
 
@@ -298,13 +293,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "where v.vote = true and lower(e.electionType) = 'dataaccess' and referenceId = :referenceId GROUP BY e.createDate")
     @UseRowMapper(DateMapper.class)
     Date findApprovalAccessElectionDate(@Bind("referenceId") String referenceId);
-
-    @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where e.status = 'Closed' group by referenceId) " +
-            "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
-            "AND e.referenceId = :referenceId " +
-            "inner join vote v on v.electionId = e.electionId and v.vote = true  and lower(v.type) = 'chairperson' ")
-    @UseRowMapper(SimpleElectionMapper.class)
-    Election findDULApprovedElectionByReferenceId(@Bind("referenceId") String referenceId);
 
     /**
      * Find the Dac for this election. Looks across associations to a dac via dataset and those

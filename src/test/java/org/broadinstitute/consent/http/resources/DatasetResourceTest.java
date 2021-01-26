@@ -91,7 +91,7 @@ public class DatasetResourceTest {
     @Mock
     private UriBuilder uriBuilder;
 
-    private DataSetResource resource;
+    private DatasetResource resource;
 
     @Before
     public void setUp() {
@@ -103,7 +103,7 @@ public class DatasetResourceTest {
     private void initResource() {
         when(AbstractDataSetAPI.getInstance()).thenReturn(api);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
-        resource = new DataSetResource(datasetService, userService);
+        resource = new DatasetResource(datasetService, userService);
     }
 
     @Test
