@@ -284,14 +284,18 @@
       <artifactId>jdbi3-guava</artifactId>
     </dependency>
 
-    <!--
-        Pulling in directly to evict older, transitive dependencies
-        See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/28254959
-    -->
+    <!-- Addressing OWASP warning: https://nvd.nist.gov/vuln/detail/CVE-2020-25649 -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.10.4</version>
+      <version>2.12.1</version>
+    </dependency>
+
+    <!-- Addressing OWASP warning: https://nvd.nist.gov/vuln/detail/CVE-2020-25649 -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.12.1</version>
     </dependency>
 
     <dependency>
@@ -392,6 +396,12 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-core</artifactId>
       <version>${dropwizard.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
