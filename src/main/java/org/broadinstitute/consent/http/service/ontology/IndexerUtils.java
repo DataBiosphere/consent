@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service.ontology;
 
+import static org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport.jsonHeader;
+
 import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -7,6 +9,8 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
 import org.broadinstitute.consent.http.models.ontology.Term;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.ResponseListener;
@@ -62,17 +66,19 @@ public class IndexerUtils {
 
     void checkIndex(RestClient client, String indexName) {
         try {
-            client.performRequest(
-                    "GET",
-                    ElasticSearchSupport.getIndexPath(indexName),
-                    ElasticSearchSupport.jsonHeader);
+            RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
+            builder.addHeader(jsonHeader.getName(), jsonHeader.getValue());
+            Request request = new Request("GET", ElasticSearchSupport.getIndexPath(indexName));
+            request.setOptions(builder.build());
+            client.performRequest(request);
         } catch (ResponseException re) {
             // Response exception indicates a status code such as 404 not found, so try creating it.
             try {
-                client.performRequest(
-                        "PUT",
-                        ElasticSearchSupport.getIndexPath(indexName),
-                        ElasticSearchSupport.jsonHeader);
+                RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
+                builder.addHeader(jsonHeader.getName(), jsonHeader.getValue());
+                Request request = new Request("PUT", ElasticSearchSupport.getIndexPath(indexName));
+                request.setOptions(builder.build());
+                client.performRequest(request);
             } catch (IOException ioe) {
                 logger.error("Exception creating index: " + indexName + ": " + ioe.getMessage());
             }
@@ -251,12 +257,12 @@ public class IndexerUtils {
                 HttpEntity entity = new NStringEntity(
                     term.toString(),
                     ContentType.APPLICATION_JSON);
-                client.performRequestAsync("PUT",
-                    ElasticSearchSupport.getTermIdPath(indexName, term.getId()),
-                    Collections.emptyMap(),
-                    entity,
-                    listener,
-                    ElasticSearchSupport.jsonHeader);
+                RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
+                builder.addHeader(jsonHeader.getName(), jsonHeader.getValue());
+                Request request = new Request("PUT", ElasticSearchSupport.getTermIdPath(indexName, term.getId()));
+                request.setOptions(builder.build());
+                request.setEntity(entity);
+                client.performRequestAsync(request, listener);
             }
             latch.await();
         }
@@ -283,12 +289,13 @@ public class IndexerUtils {
             "  }" +
             "}";
         String path = "/" + indexName + "/_update_by_query";
-        Response esResponse = client.performRequest(
-            "POST",
-            path,
-            Collections.emptyMap(),
-            new NStringEntity(query, ContentType.APPLICATION_JSON),
-            ElasticSearchSupport.jsonHeader);
+        RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
+        builder.addHeader(jsonHeader.getName(), jsonHeader.getValue());
+        Request request = new Request("POST", path);
+        request.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
+        request.setOptions(builder.build());
+        client.performRequest(request);
+        Response esResponse = client.performRequest(request);
         if (esResponse.getStatusLine().getStatusCode() != 200) {
             logger.error("Error in bulk deprecate response: " + esResponse.getStatusLine().getReasonPhrase());
             throw new InternalServerErrorException(esResponse.getStatusLine().getReasonPhrase());

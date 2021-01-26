@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.ontology;
 
+import java.nio.charset.Charset;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
@@ -27,7 +28,7 @@ public class ElasticSearchSupport {
     }
 
     public static String getTermIdPath(String index, String termId) throws UnsupportedEncodingException {
-        return "/" + index + "/ontology_term/" + URLEncoder.encode(termId, "UTF-8");
+        return "/" + index + "/ontology_term/" + URLEncoder.encode(termId, Charset.defaultCharset());
     }
 
     public static String getClusterHealthPath(String index) {

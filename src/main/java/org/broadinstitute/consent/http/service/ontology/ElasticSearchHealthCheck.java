@@ -1,11 +1,16 @@
 package org.broadinstitute.consent.http.service.ontology;
 
+import static org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport.jsonHeader;
+
 import com.codahale.metrics.health.HealthCheck;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.dropwizard.lifecycle.Managed;
+import java.nio.charset.Charset;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
@@ -17,8 +22,8 @@ import java.io.IOException;
 public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchHealthCheck.class);
-    private String index;
-    private RestClient client;
+    private final String index;
+    private final RestClient client;
 
     @Override
     public void start() throws Exception { }
@@ -38,14 +43,16 @@ public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
     @Override
     protected Result check() throws Exception {
         try {
-            Response esResponse = client.performRequest("GET",
-                ElasticSearchSupport.getClusterHealthPath(this.index),
-                ElasticSearchSupport.jsonHeader);
+            RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
+            builder.addHeader(jsonHeader.getName(), jsonHeader.getValue());
+            Request request = new Request("GET", ElasticSearchSupport.getClusterHealthPath(this.index));
+            request.setOptions(builder.build());
+            Response esResponse = client.performRequest(request);
             if (esResponse.getStatusLine().getStatusCode() != 200) {
                 logger.error("Invalid health check request: " + esResponse.getStatusLine().getReasonPhrase());
                 throw new InternalServerErrorException(esResponse.getStatusLine().getReasonPhrase());
             }
-            String stringResponse = IOUtils.toString(esResponse.getEntity().getContent());
+            String stringResponse = IOUtils.toString(esResponse.getEntity().getContent(), Charset.defaultCharset());
             JsonObject jsonResponse = JsonParser.parseString(stringResponse).getAsJsonObject();
             String status = jsonResponse.get("status").getAsString();
             if (status.equalsIgnoreCase("red")) {
