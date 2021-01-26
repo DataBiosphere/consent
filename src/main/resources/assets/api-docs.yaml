@@ -229,7 +229,7 @@ paths:
             type: string
         - name: associationType
           in: query
-          description: "Association's type, 'sample', 'sampleSet', or 'workspace'"
+          description: "Association's type, 'sample', or 'sampleSet'"
           required: true
           schema:
             type: string
@@ -3560,7 +3560,7 @@ components:
       properties:
         associationType:
           type: string
-          description: 'Defines the type of the association. Possible values: sample, sampleSet, workspace.'
+          description: 'Defines the type of the association. Possible values: sample, sampleSet.'
         elements:
           type: array
           items:

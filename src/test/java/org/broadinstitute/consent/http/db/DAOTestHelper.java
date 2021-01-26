@@ -205,6 +205,30 @@ public class DAOTestHelper {
         return electionDAO.findElectionById(electionId);
     }
 
+    protected Election createDULElection(String referenceId, Integer datasetId) {
+        Integer electionId = electionDAO.insertElection(
+                ElectionType.TRANSLATE_DUL.getValue(),
+                ElectionStatus.OPEN.getValue(),
+                new Date(),
+                referenceId,
+                datasetId
+        );
+        createdElectionIds.add(electionId);
+        return electionDAO.findElectionById(electionId);
+    }
+
+    protected Election createDatasetElection(String referenceId, Integer datasetId) {
+        Integer electionId = electionDAO.insertElection(
+                ElectionType.DATA_SET.getValue(),
+                ElectionStatus.OPEN.getValue(),
+                new Date(),
+                referenceId,
+                datasetId
+        );
+        createdElectionIds.add(electionId);
+        return electionDAO.findElectionById(electionId);
+    }
+
     protected void closeElection(Election election) {
         electionDAO.updateElectionById(
                 election.getElectionId(),
@@ -222,8 +246,26 @@ public class DAOTestHelper {
         return voteDAO.findVoteById(voteId);
     }
 
+    protected Vote createPopulatedFinalVote(Integer userId, Integer electionId) {
+        Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+        voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
+        return voteDAO.findVoteById(voteId);
+    }
+
     protected Vote createChairpersonVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
+        return voteDAO.findVoteById(voteId);
+    }
+
+    protected Vote createPopulatedChairpersonVote(Integer userId, Integer electionId) {
+        Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
+        voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
+        return voteDAO.findVoteById(voteId);
+    }
+
+    protected Vote createPopulatedDataOwnerVote(Integer userId, Integer electionId) {
+        Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DATA_OWNER.getValue());
+        voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
         return voteDAO.findVoteById(voteId);
     }
 
