@@ -40,7 +40,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
-import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.broadinstitute.consent.http.util.DatasetUtil;
@@ -63,11 +62,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private final DataSetDAO dataSetDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
     private final DataAccessRequestService dataAccessRequestService;
-    private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
     private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
     private static final Logger logger = LoggerFactory.getLogger("DatabaseElectionAPI");
-    private final String DATA_USE_LIMITATION = "Data Use Limitation";
-    private final String DATA_ACCESS_REQUEST = "Data Access Request";
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -387,39 +383,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public List<ElectionStatusDTO> describeElectionsByConsentId(String consentId) {
-       List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(consentId);
-       List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
-        getElectionStatusDTO(electionStatusDTOs, elections, DATA_USE_LIMITATION);
-        return electionStatusDTOs;
-    }
-
-    @Override
     public Election getConsentElectionByDARElectionId(Integer darElectionId){
         Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(darElectionId);
         return electionId != null ? electionDAO.findElectionById(electionId) : null;
-    }
-
-
-    @Override
-    public List<ElectionStatusDTO> describeElectionByDARs(List<Document> darList) {
-        List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
-        if(CollectionUtils.isNotEmpty(darList)){
-            List<String> darIds = new ArrayList<>();
-            darList.stream().forEach(dar -> {
-                darIds.add(dar.getString(DarConstants.REFERENCE_ID));
-                dar.put(DarConstants.REFERENCE_ID, dar.getString(DarConstants.REFERENCE_ID));
-            });
-            List<Election> elections = electionDAO.findRequestElectionsByReferenceIds(darIds);
-            getElectionStatusDTO(electionStatusDTOs, elections, DATA_ACCESS_REQUEST);
-        }
-        return electionStatusDTOs;
-    }
-
-    private void getElectionStatusDTO(List<ElectionStatusDTO> electionStatusDTOs, List<Election> elections, String type) {
-        if(CollectionUtils.isNotEmpty(elections)){
-            elections.stream().forEach(election -> electionStatusDTOs.add(new ElectionStatusDTO(election.getCreateDate(), election.getStatus(), type)));
-        }
     }
 
     @Override

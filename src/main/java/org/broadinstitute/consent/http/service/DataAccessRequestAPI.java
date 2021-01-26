@@ -32,8 +32,6 @@ public interface DataAccessRequestAPI {
 
     List<UseRestrictionDTO> getInvalidDataAccessRequest();
 
-    List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
-
     byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, User user, Boolean manualReview, String sDUR) throws IOException;
 
     String getStructuredDURForPdf(Document dar);

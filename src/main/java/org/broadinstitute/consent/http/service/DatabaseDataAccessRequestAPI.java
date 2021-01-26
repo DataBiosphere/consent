@@ -136,19 +136,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 collect(Collectors.toList());
     }
 
-    /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
-     *
-     * @param dataSetIds List<String>
-     * @return List<Document>
-     */
-    @Override
-    public List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds) {
-        return dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
-                filter(d -> !Collections.disjoint(dataSetIds, DarUtil.getIntegerList(d, DarConstants.DATASET_ID))).
-                collect(Collectors.toList());
-    }
-
     @Override
     public UseRestriction createStructuredResearchPurpose(Document document) {
         DataUse dataUse = converter.parseDataUsePurpose(document.toJson());
@@ -433,19 +420,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
            researcherPropertyDAO.insertAll(rpList);
         }
         return rpList;
-    }
-
-    private Election getConsentElection(Integer darElectionId, Document dar) {
-        Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(darElectionId);
-        Election election = electionDAO.findElectionById(electionId);
-        if (election == null) {
-            List<Integer> datasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-            if (CollectionUtils.isNotEmpty(datasetIds)) {
-                Consent consent = consentDAO.findConsentFromDatasetID(datasetIds.get(0));
-                election = electionDAO.findDULApprovedElectionByReferenceId(consent.getConsentId());
-            }
-        }
-        return election;
     }
 
 }

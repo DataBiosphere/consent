@@ -88,7 +88,6 @@ import org.broadinstitute.consent.http.resources.SwaggerResource;
 import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.WhitelistResource;
-import org.broadinstitute.consent.http.resources.WorkspaceResource;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
@@ -301,7 +300,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new MetricsResource(metricsService));
         env.jersey().register(new UserResource(userService, whitelistService));
         env.jersey().register(new ResearcherResource(researcherService, userService, whitelistService));
-        env.jersey().register(WorkspaceResource.class);
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
         env.jersey().register(new NihAccountResource(nihAuthApi, userService));
         env.jersey().register(new WhitelistResource(whitelistService));
