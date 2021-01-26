@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 
+import com.google.inject.Inject;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -47,35 +48,20 @@ import org.slf4j.LoggerFactory;
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.
  */
-public class DatabaseSummaryAPI extends AbstractSummaryAPI {
+public class SummaryService {
 
-    private VoteDAO voteDAO;
-    private ElectionDAO electionDAO;
-    private UserDAO userDAO;
-    private ConsentDAO consentDAO;
-    private DataSetDAO datasetDAO;
-    private MatchDAO matchDAO;
-    private DataAccessRequestService dataAccessRequestService;
+    private final VoteDAO voteDAO;
+    private final ElectionDAO electionDAO;
+    private final UserDAO userDAO;
+    private final ConsentDAO consentDAO;
+    private final DataSetDAO datasetDAO;
+    private final MatchDAO matchDAO;
+    private final DataAccessRequestService dataAccessRequestService;
     private static final String SEPARATOR = "\t";
     private static final String TEXT_DELIMITER = "\"";
     private static final String END_OF_LINE = System.lineSeparator();
     private static final String MANUAL_REVIEW = "Manual Review";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-
-    /**
-     * Initialize the singleton API instance using the provided DAO. This method
-     * should only be called once during application initialization (from the
-     * run() method). If called a second time it will throw an
-     * IllegalStateException. Note that this method is not synchronized, as it
-     * is not intended to be called more than once.
-     *
-     * @param dao The Data Access Object instance that the API should use to
-     *            read/write data.
-     */
-    public static void initInstance(DataAccessRequestService dataAccessRequestService, VoteDAO dao, ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO, DataSetDAO datasetDAO, MatchDAO matchDAO) {
-        SummaryAPIHolder.setInstance(new DatabaseSummaryAPI(dataAccessRequestService, dao, electionDAO, userDAO, consentDAO, datasetDAO, matchDAO));
-    }
 
     /**
      * The constructor is private to force use of the factory methods and
@@ -83,7 +69,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    protected DatabaseSummaryAPI(DataAccessRequestService dataAccessRequestService, VoteDAO dao, ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO , DataSetDAO datasetDAO, MatchDAO matchDAO) {
+    @Inject
+    public SummaryService(DataAccessRequestService dataAccessRequestService, VoteDAO dao,
+        ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO, DataSetDAO datasetDAO,
+        MatchDAO matchDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.voteDAO = dao;
         this.electionDAO = electionDAO;
@@ -93,12 +82,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         this.matchDAO = matchDAO;
     }
 
-    @Override
     public Summary describeConsentSummaryCases() {
         return getSummaryCases(ElectionType.TRANSLATE_DUL.getValue());
     }
 
-    @Override
     public Summary describeDataRequestSummaryCases(String electionType) {
         Summary summary;
         if(electionType.equals(ElectionType.DATA_ACCESS.getValue())){
@@ -109,8 +96,6 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return summary;
     }
 
-
-    @Override
     public List<Summary> describeMatchSummaryCases() {
         return getMatchSummaryCases();
     }
@@ -178,7 +163,6 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return summary;
     }
 
-    @Override
     public File describeConsentSummaryDetail() {
         File file = null;
         try {
@@ -238,7 +222,6 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return file;
     }
 
-    @Override
     public File describeDataAccessRequestSummaryDetail() {
         File file = null;
         try {
@@ -376,7 +359,6 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return file;
     }
 
-    @Override
     public File describeDataSetElectionsVotesForDar(String referenceId) {
         File file = null;
         try {
