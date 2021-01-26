@@ -48,5 +48,8 @@ docker build -f Dockerfile -t ${TEST_IMAGE} .
 docker run -v "${PWD}/target":/app/target ${TEST_IMAGE}
 TEST_EXIT_CODE=$?
 
+# Parse Tests
+docker run -v "${PWD}/scripts":/working -v "${PWD}/target":/working/target -w /working broadinstitute/dsp-toolbox python parse_results.py
+
 # exit with exit code of test script
 exit $TEST_EXIT_CODE
