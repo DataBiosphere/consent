@@ -18,7 +18,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
@@ -40,7 +39,6 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -66,7 +64,6 @@ import org.slf4j.LoggerFactory;
 public class DataSetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
-    private final String TSV_DELIMITER = "\t";
     private final DataSetAPI api;
     private final DatasetService datasetService;
     private final DataAccessRequestAPI dataAccessRequestAPI;
@@ -84,8 +81,8 @@ public class DataSetResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/v2")
-    @PermitAll
-    public Response createDataset(@Auth AuthUser user, @Context UriInfo info, String json) {
+    @RolesAllowed({ADMIN, CHAIRPERSON})
+    public Response createDataset(@Auth AuthUser authUser, @Context UriInfo info, String json) {
         DataSetDTO inputDataset = new Gson().fromJson(json, DataSetDTO.class);
         if (Objects.isNull(inputDataset)) {
             throw new BadRequestException("Dataset is required");
@@ -95,8 +92,9 @@ public class DataSetResource extends Resource {
         }
         List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
         if (invalidProperties.size() > 0) {
-            List<String> invalidKeys = invalidProperties.stream().map(p -> p.getPropertyName()).collect(
-                  Collectors.toList());
+            List<String> invalidKeys = invalidProperties.stream()
+                .map(DataSetPropertyDTO::getPropertyName)
+                .collect(Collectors.toList());
             throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
         }
         List<DataSetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
@@ -111,18 +109,17 @@ public class DataSetResource extends Resource {
         if (Objects.nonNull(datasetNameAlreadyUsed)) {
             throw new ClientErrorException("Dataset name: " + name + " is already in use", Status.CONFLICT);
         }
-        User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
+        User dacUser = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
         Integer userId = dacUser.getDacUserId();
 
         DataSetDTO createdDataset = null;
-        DataSetDTO createdDatasetWithConsent = null;
         Consent createdConsent = null;
         try {
             createdDataset = datasetService.createDataset(inputDataset, name, userId);
             createdDataset.setDataUse(inputDataset.getDataUse());
             createdDataset.setDacId(inputDataset.getDacId());
             createdConsent = datasetService.createConsentForDataset(createdDataset);
-            createdDatasetWithConsent = datasetService.getDatasetDTO(createdDataset.getDataSetId());
+            DataSetDTO createdDatasetWithConsent = datasetService.getDatasetDTO(createdDataset.getDataSetId());
             URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDatasetWithConsent.getDataSetId());
             return Response.created(uri).entity(createdDatasetWithConsent).build();
         }
@@ -138,8 +135,8 @@ public class DataSetResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{datasetId}")
-    @PermitAll
-    public Response updateDataset(@Auth AuthUser user, @Context UriInfo info, @PathParam("datasetId") Integer datasetId, String json) {
+    @RolesAllowed({ADMIN, CHAIRPERSON})
+    public Response updateDataset(@Auth AuthUser authUser, @Context UriInfo info, @PathParam("datasetId") Integer datasetId, String json) {
         DataSetDTO inputDataset = new Gson().fromJson(json, DataSetDTO.class);
         if (Objects.isNull(inputDataset)) {
             throw new BadRequestException("Dataset is required");
@@ -153,15 +150,16 @@ public class DataSetResource extends Resource {
         }
         List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
         if (invalidProperties.size() > 0) {
-            List<String> invalidKeys = invalidProperties.stream().map(p -> p.getPropertyName()).collect(
-                  Collectors.toList());
+            List<String> invalidKeys = invalidProperties.stream()
+                .map(DataSetPropertyDTO::getPropertyName)
+                .collect(Collectors.toList());
             throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
         }
         List<DataSetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
         if (duplicateProperties.size() > 0) {
             throw new BadRequestException("Dataset contains multiple values for the same property.");
         }
-        User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
+        User dacUser = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
         Integer userId = dacUser.getDacUserId();
         Optional<DataSet> updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
         if (updatedDataset.isPresent()) {
@@ -290,6 +288,7 @@ public class DataSetResource extends Resource {
         Collection<Dictionary> headers  =  api.describeDictionaryByReceiveOrder();
 
         StringBuilder sb = new StringBuilder();
+        String TSV_DELIMITER = "\t";
         for(Dictionary header : headers) {
             if (sb.length() > 0)
                 sb.append(TSV_DELIMITER);
