@@ -29,6 +29,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
   public static final String headerRow = String.join(
     JOINER,
     "DAC ID",
+    "DAC UID",
     "# of DAC Members",
     "# of DAC Chairs",
     "# of Datasets",
@@ -41,9 +42,11 @@ public class DacDecisionMetrics implements DecisionMetrics {
     "\n");
 
   public String toString(String joiner) {
+    String name = this.getDac().getName();
     return String.join(
       joiner,
-      getValue(this.getDac().getName()),
+      getValue(name),
+      getValue(getDacUID(name)),
       getValue(getMemberCount()),
       getValue(getChairCount()),
       getValue(getDatasetCount()),
