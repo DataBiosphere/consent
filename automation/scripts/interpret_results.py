@@ -3,6 +3,18 @@ import xmltodict, json
 import pprint
 import datetime
 
+"""
+This script parses gatling automated test results into a format expected by 
+https://github.com/broadinstitute/firecloud-automated-testing. Gatling does not
+print the "type" attribute that is desired on the failures, and therefore the failures do
+not get picked up and sent to BQ.
+
+TODO: This script will also serve as a way of parsing the results to measure the performance
+over time of these tests.
+
+Auther: @rfricke-asymmetrik
+"""
+
 pp = pprint.PrettyPrinter()
 
 def get_assertions_xml(test_dir, simulation):
