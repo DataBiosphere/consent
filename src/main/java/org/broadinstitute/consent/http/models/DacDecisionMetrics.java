@@ -4,7 +4,6 @@ import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -187,13 +186,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
 
   private void setAverageTurnaroundTime() {
     if (Objects.nonNull(this.getAverageTurnaroundTimeMillis())) {
-      //this will only ever catch an exception if there is no final date, or an unreasonable amount of time between them
-      //in this case, the upward bound of Integer is displayed
-      try {
-        this.averageTurnaroundTime = Math.toIntExact(TimeUnit.MILLISECONDS.toDays(this.averageTurnaroundTimeMillis.longValue()));
-      } catch (ArithmeticException e) {
-        this.averageTurnaroundTime = 2147483647;
-      }
+      this.convertMillisToDays(this.averageTurnaroundTimeMillis.longValue());
     }
   }
 

@@ -7,7 +7,6 @@ import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Generate a row of dar decision data in the form of:
@@ -186,13 +185,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
         finalDate.setTime(finalVoteDate);
         Duration duration = Duration.between(submittedDate.toInstant(), finalDate.toInstant());
         this.turnaroundTimeMillis = duration.toMillis();
-        //this will only ever catch an exception if there is no final date, or an unreasonable amount of time between them
-        //in this case, the upward bound of Integer is displayed
-        try {
-          this.turnaroundTime = Math.toIntExact(TimeUnit.MILLISECONDS.toDays(this.turnaroundTimeMillis));
-        } catch (ArithmeticException e) {
-          this.turnaroundTime = 2147483647;
-        }
+        this.turnaroundTime = this.convertMillisToDays(this.turnaroundTimeMillis);
       }
     }
   }
