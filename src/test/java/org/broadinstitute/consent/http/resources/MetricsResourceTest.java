@@ -30,7 +30,6 @@ public class MetricsResourceTest {
     MockitoAnnotations.initMocks(this);
   }
 
-  @Before
   public void initResource() {
     resource = new MetricsResource(service);
   }
