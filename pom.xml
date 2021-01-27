@@ -603,8 +603,8 @@
 
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
-      <artifactId>rest</artifactId>
-      <version>5.5.3</version>
+      <artifactId>elasticsearch-rest-client</artifactId>
+      <version>7.10.2</version>
     </dependency>
 
     <!-- Required for mocking ontology and elastic search responses -->
