@@ -45,9 +45,6 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Implementation class for VoteAPI on top of ElectionDAO database support.
- */
 public class SummaryService {
 
     private final VoteDAO voteDAO;
@@ -63,12 +60,6 @@ public class SummaryService {
     private static final String MANUAL_REVIEW = "Manual Review";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    /**
-     * The constructor is private to force use of the factory methods and
-     * enforce the singleton pattern.
-     *
-     * @param dao The Data Access Object used to read/write data.
-     */
     @Inject
     public SummaryService(DataAccessRequestService dataAccessRequestService, VoteDAO dao,
         ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO, DataSetDAO datasetDAO,
