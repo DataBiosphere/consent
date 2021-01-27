@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 
 import java.text.SimpleDateFormat;
@@ -25,7 +24,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
   private Date dateSubmitted;
   private Date dateApproved;
   private Date dateDenied;
-  private String turnaroundTime;
+  private Integer turnaroundTime;
   private Long turnaroundTimeMillis;
   private String dacDecision;
   private String algorithmDecision;
@@ -47,12 +46,12 @@ public class DarDecisionMetrics implements DecisionMetrics {
     "\n");
 
   public DarDecisionMetrics(
-      DataAccessRequest dar,
-      Dac dac,
-      DataSet dataset,
-      Election accessElection,
-      Election rpElection,
-      Match match) {
+    DataAccessRequest dar,
+    Dac dac,
+    DataSet dataset,
+    Election accessElection,
+    Election rpElection,
+    Match match) {
     this.setDarId(dar);
     this.setDacName(dac);
     this.setDatasetId(dataset);
@@ -67,18 +66,18 @@ public class DarDecisionMetrics implements DecisionMetrics {
 
   public String toString(String joiner) {
     return String.join(
-        joiner,
-        getValue(this.getDarId()),
-        getValue(getDacName()),
-        getValue(getDatasetId()),
-        getValue(getDateSubmitted()),
-        getValue(getDateApproved()),
-        getValue(getDateDenied()),
-        getValue(getTurnaroundTime()),
-        getValue(getDacDecision()),
-        getValue(getAlgorithmDecision()),
-        getValue(getSrpDecision()),
-        "\n");
+      joiner,
+      getValue(this.getDarId()),
+      getValue(getDacName()),
+      getValue(getDatasetId()),
+      getValue(getDateSubmitted()),
+      getValue(getDateApproved()),
+      getValue(getDateDenied()),
+      getValue(getTurnaroundTime().toString()),
+      getValue(getDacDecision()),
+      getValue(getAlgorithmDecision()),
+      getValue(getSrpDecision()),
+      "\n");
   }
 
   public String getDarId() {
@@ -162,7 +161,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
     }
   }
 
-  public String getTurnaroundTime() {
+  public Integer getTurnaroundTime() {
     return turnaroundTime;
   }
 
@@ -176,18 +175,17 @@ public class DarDecisionMetrics implements DecisionMetrics {
   private void setTurnaroundTime(Election election) {
     if (Objects.nonNull(election)) {
       Date finalVoteDate =
-          Objects.nonNull(election.getFinalVoteDate())
-              ? election.getFinalVoteDate()
-              : election.getLastUpdateDate();
+        Objects.nonNull(election.getFinalVoteDate())
+          ? election.getFinalVoteDate()
+          : election.getLastUpdateDate();
       if (Objects.nonNull(finalVoteDate)) {
         Calendar submittedDate = Calendar.getInstance();
         Calendar finalDate = Calendar.getInstance();
         submittedDate.setTime(this.getDateSubmitted());
         finalDate.setTime(finalVoteDate);
         Duration duration = Duration.between(submittedDate.toInstant(), finalDate.toInstant());
-        this.turnaroundTimeMillis = (duration.toMillis() < 0) ? 0 : duration.toMillis();
-        this.turnaroundTime =
-            DurationFormatUtils.formatDurationWords(this.turnaroundTimeMillis, true, true);
+        this.turnaroundTimeMillis = duration.toMillis();
+        this.turnaroundTime = this.convertMillisToDays(this.turnaroundTimeMillis);
       }
     }
   }
@@ -230,11 +228,11 @@ public class DarDecisionMetrics implements DecisionMetrics {
   private void setSrpDecision(Election election) {
     if (Objects.nonNull(election)) {
       Boolean rpVote =
-          Objects.nonNull(election.getFinalVote())
-              ? election.getFinalVote()
-              : Objects.nonNull(election.getFinalAccessVote())
-                  ? election.getFinalAccessVote()
-                  : null;
+        Objects.nonNull(election.getFinalVote())
+          ? election.getFinalVote()
+          : Objects.nonNull(election.getFinalAccessVote())
+          ? election.getFinalAccessVote()
+          : null;
       if (Objects.nonNull(rpVote)) {
         this.srpDecision = rpVote ? "Yes" : "No";
       }
