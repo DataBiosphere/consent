@@ -30,7 +30,7 @@ public class MetricsResourceTest {
     MockitoAnnotations.initMocks(this);
   }
 
-  public void initResource() {
+  private void initResource() {
     resource = new MetricsResource(service);
   }
 

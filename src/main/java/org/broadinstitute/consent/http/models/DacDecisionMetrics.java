@@ -186,7 +186,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
 
   private void setAverageTurnaroundTime() {
     if (Objects.nonNull(this.getAverageTurnaroundTimeMillis())) {
-      this.convertMillisToDays(this.averageTurnaroundTimeMillis.longValue());
+      this.averageTurnaroundTime = this.convertMillisToDays(this.averageTurnaroundTimeMillis.longValue());
     }
   }
 
