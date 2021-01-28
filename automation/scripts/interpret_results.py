@@ -9,7 +9,7 @@ https://github.com/broadinstitute/firecloud-automated-testing. Gatling does not
 print the "type" attribute that is desired on the failures, and therefore the failures do
 not get picked up and sent to BQ.
 
-TODO: This script will also serve as a way of parsing the results to measure the performance
+This script also serves as a way of parsing the results to measure the performance
 over time of these tests.
 
 Auther: @rfricke-asymmetrik
