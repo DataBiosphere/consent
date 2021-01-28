@@ -1,11 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
+import java.util.List;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
-
-import java.util.List;
 
 public interface ConsentAPI {
 
@@ -46,15 +44,11 @@ public interface ConsentAPI {
 
     List<UseRestrictionDTO> getInvalidConsents();
 
-    Consent getConsentFromObjectIdAndType(String objectId, String associationType);
-
     /**
      * Method to check if a workspace is already associated with a consentId
      * @param workspaceId
      * @return
      */
     boolean hasWorkspaceAssociation(String workspaceId);
-
-    Election retrieveElection(Integer electionId, String consentId);
 
 }
