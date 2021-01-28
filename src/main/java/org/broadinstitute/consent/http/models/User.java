@@ -4,16 +4,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.slf4j.LoggerFactory;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 public class User {
 
@@ -46,6 +47,9 @@ public class User {
 
     @JsonProperty
     private Boolean profileCompleted;
+
+    @JsonProperty
+    private Boolean viewedAlgoDecision = false;
 
     public User() {
     }
@@ -258,6 +262,14 @@ public class User {
             this.setRoles(new ArrayList<>());
         }
         this.getRoles().add(userRole);
+    }
+
+    public void setViewedAlgoDecision() {
+        this.viewedAlgoDecision = true;
+    }
+
+    public boolean getViewedAlgoDecision() {
+        return this.viewedAlgoDecision;
     }
 
     @Override

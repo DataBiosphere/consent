@@ -63,43 +63,28 @@ public class DacDecisionMetrics implements DecisionMetrics {
     this.setChairCount(dac);
     this.setMemberCount(dac);
     this.setDatasetCount(datasets);
-
     this.setDarsReceived(metrics.size());
+
     List<DarDecisionMetrics> completedDarMetrics =
       metrics.stream()
         .filter(m -> Objects.nonNull(m.getDacDecision()))
         .collect(Collectors.toList());
+
     if (!metrics.isEmpty()) {
-      long percentReviewed = (long) completedDarMetrics.size() / (long) metrics.size() * 100;
-      this.setPercentDARsReviewed((int) percentReviewed);
+      int percentReviewed = (int) (((double) completedDarMetrics.size() / (double) metrics.size()) * 100);
+      this.setPercentDARsReviewed(percentReviewed);
     }
+
     completedDarMetrics.stream()
       .filter(m -> Objects.nonNull(m.getTurnaroundTimeMillis()))
       .mapToLong(DarDecisionMetrics::getTurnaroundTimeMillis)
       .average()
       .ifPresent(this::setAverageTurnaroundTimeMillis);
+
     this.setAverageTurnaroundTime();
-
-    List<DarDecisionMetrics> agreementMetrics =
-      completedDarMetrics.stream()
-        .filter(m -> Objects.nonNull(m.getAlgorithmDecision()))
-        .filter(m -> Objects.nonNull(m.getDacDecision()))
-        .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
-        .collect(Collectors.toList());
-
-    if (!completedDarMetrics.isEmpty()) {
-      long percentAgreement = (long) agreementMetrics.size() / (long) completedDarMetrics.size();
-      this.setPercentAgreementAlgorithm((int) percentAgreement);
-
-      List<DarDecisionMetrics> srpMetrics =
-        completedDarMetrics.stream()
-          .filter(m -> Objects.nonNull(m.getSrpDecision()))
-          .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
-          .collect(Collectors.toList());
-      long percentSrp = (long) srpMetrics.size() / (long) completedDarMetrics.size();
-      this.setPercentSRPAccurate((int) percentSrp);
-    }
-    setPercentRevealAlgorithm(0); // Placeholder for "% Reveal DUOS Algorithm"
+    this.setPercentAgreementAlgorithm(completedDarMetrics);
+    this.setPercentSRPAccurate(completedDarMetrics);
+    this.setPercentRevealAlgorithm(dac.getChairpersons());
   }
 
   public Dac getDac() {
@@ -194,24 +179,49 @@ public class DacDecisionMetrics implements DecisionMetrics {
     return percentRevealAlgorithm;
   }
 
-  private void setPercentRevealAlgorithm(Integer percentRevealAlgorithm) {
-    this.percentRevealAlgorithm = percentRevealAlgorithm;
+  private void setPercentRevealAlgorithm(List<User> chairpersons) {
+    int total = chairpersons.size();
+    int viewedAlgoDecision = (int) chairpersons.stream().filter(u -> u.getViewedAlgoDecision()).count();
+    this.percentRevealAlgorithm = (int) (((double) viewedAlgoDecision / (double) total) * 100);
   }
 
   public Integer getPercentAgreementAlgorithm() {
     return percentAgreementAlgorithm;
   }
 
-  private void setPercentAgreementAlgorithm(Integer percentAgreementAlgorithm) {
-    this.percentAgreementAlgorithm = percentAgreementAlgorithm;
+  private void setPercentAgreementAlgorithm(List<DarDecisionMetrics> completedDarMetrics) {
+    if (!completedDarMetrics.isEmpty()) {
+      List<DarDecisionMetrics> agreementMetricsDenominator =
+        completedDarMetrics.stream()
+          .filter(m -> Objects.nonNull(m.getAlgorithmDecision()))
+          .collect(Collectors.toList());
+
+      List<DarDecisionMetrics> agreementMetricsNumerator =
+        agreementMetricsDenominator.stream()
+          .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
+          .collect(Collectors.toList());
+
+      int percentAgreement = (int) (((double) agreementMetricsNumerator.size() / (double) completedDarMetrics.size()) * 100);
+      this.percentAgreementAlgorithm = percentAgreement;
+    }
   }
 
   public Integer getPercentSRPAccurate() {
     return percentSRPAccurate;
   }
 
-  private void setPercentSRPAccurate(Integer percentSRPAccurate) {
-    this.percentSRPAccurate = percentSRPAccurate;
+  private void setPercentSRPAccurate(List<DarDecisionMetrics> completedDarMetrics) {
+    List<DarDecisionMetrics> srpMetricsDenominator =
+      completedDarMetrics.stream()
+        .filter(m -> Objects.nonNull(m.getSrpDecision()))
+        .collect(Collectors.toList());
+
+    List<DarDecisionMetrics> srpMetricsNumerator =
+      srpMetricsDenominator.stream()
+        .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
+        .collect(Collectors.toList());
+    int percentSrp = (int) (((double) srpMetricsNumerator.size() / (double) srpMetricsDenominator.size()) * 100);
+    this.percentSRPAccurate = percentSrp;
   }
 
   private String getValue(String str) {
