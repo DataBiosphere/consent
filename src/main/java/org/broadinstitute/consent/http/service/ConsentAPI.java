@@ -40,8 +40,6 @@ public interface ConsentAPI {
 
     String getConsentDulUrl(String consentId) throws UnknownIdentifierException;
 
-    Consent deleteConsentDul(String consentId) throws UnknownIdentifierException;
-
     List<UseRestrictionDTO> getInvalidConsents();
 
     /**

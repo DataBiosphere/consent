@@ -319,14 +319,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return consent.getDataUseLetter();
     }
 
-    @Override
-    public Consent deleteConsentDul(String consentId) throws UnknownIdentifierException {
-        Consent consent = retrieve(consentId);
-        consent.setDataUseLetter("");
-        update(consentId, updateConsentDates(consent));
-        return retrieve(consentId);
-    }
-
     // Helper methods for Consent Associations
     //
     // Check that the list of ConsentAssociations given as an agrument is valid, and throw BadRequestException
