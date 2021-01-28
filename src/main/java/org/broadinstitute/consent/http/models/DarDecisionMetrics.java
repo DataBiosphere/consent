@@ -43,6 +43,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
     "DAR ToT",
     "Dac Decision",
     "Algorithm Decision",
+    "Agreement Vote",
     "Structured Research Purpose Decision",
     "\n");
 
@@ -78,6 +79,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
       getValue(getTurnaroundTime().toString()),
       getValue(getDacDecision()),
       getValue(getAlgorithmDecision()),
+      getValue(getDacDecision().equals(getAlgorithmDecision()) ? "Yes" : "No"),
       getValue(getSrpDecision()),
       "\n");
   }
