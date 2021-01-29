@@ -2,16 +2,8 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.PendingCase;
-import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.PendingCaseService;
-import org.broadinstitute.consent.http.service.SummaryAPI;
-
+import java.io.File;
+import java.util.List;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
@@ -21,21 +13,27 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
-import java.io.File;
-import java.util.List;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.PendingCase;
+import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.PendingCaseService;
+import org.broadinstitute.consent.http.service.SummaryService;
 
 @Path("{api : (api/)?}consent/cases")
 public class ConsentCasesResource extends Resource {
 
     private final ElectionService electionService;
     private final PendingCaseService pendingCaseService;
-    private final SummaryAPI summaryApi;
+    private final SummaryService summaryService;
 
     @Inject
-    public ConsentCasesResource(ElectionService electionService, PendingCaseService pendingCaseService) {
+    public ConsentCasesResource(ElectionService electionService, PendingCaseService pendingCaseService, SummaryService summaryService) {
         this.electionService = electionService;
         this.pendingCaseService = pendingCaseService;
-        this.summaryApi = AbstractSummaryAPI.getInstance();
+        this.summaryService = summaryService;
     }
 
     @GET
@@ -50,7 +48,7 @@ public class ConsentCasesResource extends Resource {
     @Path("/summary")
     @PermitAll
     public Response getConsentSummaryCases(@Auth AuthUser authUser) {
-        Summary summary = summaryApi.describeConsentSummaryCases();
+        Summary summary = summaryService.describeConsentSummaryCases();
         return Response.ok().entity(summary).build();
     }
 
@@ -62,9 +60,9 @@ public class ConsentCasesResource extends Resource {
         ResponseBuilder response;
         File fileToSend = null;
         if (fileType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-            fileToSend = summaryApi.describeConsentSummaryDetail();
+            fileToSend = summaryService.describeConsentSummaryDetail();
         } else if (fileType.equals(ElectionType.DATA_ACCESS.getValue())) {
-            fileToSend = summaryApi.describeDataAccessRequestSummaryDetail();
+            fileToSend = summaryService.describeDataAccessRequestSummaryDetail();
         }
         if ((fileToSend != null)) {
             response = Response.ok(fileToSend);

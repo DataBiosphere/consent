@@ -1,21 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.SummaryAPI;
-import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.util.DarConstants;
-
+import java.io.File;
+import java.net.URI;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -30,11 +20,19 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-import java.io.File;
-import java.net.URI;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.SummaryService;
+import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.util.DarConstants;
 
 @Path("{api : (api/)?}dataRequest/{requestId}/election")
 public class DataRequestElectionResource extends Resource {
@@ -42,15 +40,16 @@ public class DataRequestElectionResource extends Resource {
     private final ElectionAPI api;
     private final EmailNotifierService emailNotifierService;
     private final DataAccessRequestAPI darApi;
-    private final SummaryAPI summaryAPI;
+    private final SummaryService summaryService;
     private final VoteService voteService;
 
     @Inject
-    public DataRequestElectionResource(EmailNotifierService emailNotifierService, VoteService voteService) {
+    public DataRequestElectionResource(EmailNotifierService emailNotifierService,
+        SummaryService summaryService, VoteService voteService) {
         this.api = AbstractElectionAPI.getInstance();
         this.emailNotifierService = emailNotifierService;
         this.darApi = AbstractDataAccessRequestAPI.getInstance();
-        this.summaryAPI = AbstractSummaryAPI.getInstance();
+        this.summaryService = summaryService;
         this.voteService = voteService;
     }
 
@@ -122,7 +121,7 @@ public class DataRequestElectionResource extends Resource {
     public Response describeDataSetVotes(@PathParam("requestId") String id) {
         Response.ResponseBuilder response;
         try {
-            File fileToSend = summaryAPI.describeDataSetElectionsVotesForDar(id);
+            File fileToSend = summaryService.describeDataSetElectionsVotesForDar(id);
             if ((fileToSend != null)) {
                 response = Response.ok(fileToSend);
             } else response = Response.ok();

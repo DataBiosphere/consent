@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 
+import com.google.inject.Inject;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -44,46 +45,25 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Implementation class for VoteAPI on top of ElectionDAO database support.
- */
-public class DatabaseSummaryAPI extends AbstractSummaryAPI {
+public class SummaryService {
 
-    private VoteDAO voteDAO;
-    private ElectionDAO electionDAO;
-    private UserDAO userDAO;
-    private ConsentDAO consentDAO;
-    private DataSetDAO datasetDAO;
-    private MatchDAO matchDAO;
-    private DataAccessRequestService dataAccessRequestService;
+    private final VoteDAO voteDAO;
+    private final ElectionDAO electionDAO;
+    private final UserDAO userDAO;
+    private final ConsentDAO consentDAO;
+    private final DataSetDAO datasetDAO;
+    private final MatchDAO matchDAO;
+    private final DataAccessRequestService dataAccessRequestService;
     private static final String SEPARATOR = "\t";
     private static final String TEXT_DELIMITER = "\"";
     private static final String END_OF_LINE = System.lineSeparator();
     private static final String MANUAL_REVIEW = "Manual Review";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-
-    /**
-     * Initialize the singleton API instance using the provided DAO. This method
-     * should only be called once during application initialization (from the
-     * run() method). If called a second time it will throw an
-     * IllegalStateException. Note that this method is not synchronized, as it
-     * is not intended to be called more than once.
-     *
-     * @param dao The Data Access Object instance that the API should use to
-     *            read/write data.
-     */
-    public static void initInstance(DataAccessRequestService dataAccessRequestService, VoteDAO dao, ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO, DataSetDAO datasetDAO, MatchDAO matchDAO) {
-        SummaryAPIHolder.setInstance(new DatabaseSummaryAPI(dataAccessRequestService, dao, electionDAO, userDAO, consentDAO, datasetDAO, matchDAO));
-    }
-
-    /**
-     * The constructor is private to force use of the factory methods and
-     * enforce the singleton pattern.
-     *
-     * @param dao The Data Access Object used to read/write data.
-     */
-    protected DatabaseSummaryAPI(DataAccessRequestService dataAccessRequestService, VoteDAO dao, ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO , DataSetDAO datasetDAO, MatchDAO matchDAO) {
+    @Inject
+    public SummaryService(DataAccessRequestService dataAccessRequestService, VoteDAO dao,
+        ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO, DataSetDAO datasetDAO,
+        MatchDAO matchDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.voteDAO = dao;
         this.electionDAO = electionDAO;
@@ -93,12 +73,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         this.matchDAO = matchDAO;
     }
 
-    @Override
     public Summary describeConsentSummaryCases() {
         return getSummaryCases(ElectionType.TRANSLATE_DUL.getValue());
     }
 
-    @Override
     public Summary describeDataRequestSummaryCases(String electionType) {
         Summary summary;
         if(electionType.equals(ElectionType.DATA_ACCESS.getValue())){
@@ -109,8 +87,6 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return summary;
     }
 
-
-    @Override
     public List<Summary> describeMatchSummaryCases() {
         return getMatchSummaryCases();
     }
@@ -125,7 +101,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
             reviewedElections = latestElections.stream().filter(le -> le.getStatus().equals(ElectionStatus.CLOSED.getValue())).collect(Collectors.toList());
         }
         if( !CollectionUtils.isEmpty(reviewedElections)){
-            List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
+            List<Integer> electionIds = reviewedElections.stream().map(Election::getElectionId).collect(Collectors.toList());
             List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
 
             List<Vote> agreementYesVotes = filterAgreementVotes(votes, Boolean.TRUE);
@@ -178,7 +154,6 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return summary;
     }
 
-    @Override
     public File describeConsentSummaryDetail() {
         File file = null;
         try {
@@ -189,18 +164,18 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         collect(Collectors.toList());
                 List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), statuses);
                 if (!CollectionUtils.isEmpty(reviewedElections)) {
-                    List<String> consentIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
-                    List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
+                    List<String> consentIds = reviewedElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
+                    List<Integer> electionIds = reviewedElections.stream().map(Election::getElectionId).collect(Collectors.toList());
                     Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(electionIds);
                     setSummaryHeader(summaryWriter, maxNumberOfDACMembers);
                     Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
                     List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
-                    Collection<Integer> dacUserIds = votes.stream().map(v -> v.getDacUserId()).collect(Collectors.toSet());
+                    Collection<Integer> dacUserIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
                     Collection<User> users = userDAO.findUsers(dacUserIds);
                     for (Election election : reviewedElections) {
                         Consent electionConsent = consents.stream().filter(c -> c.getConsentId().equals(election.getReferenceId())).collect(singletonCollector());
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
-                        List<Integer> electionVotesUserIds = electionVotes.stream().map(e -> e.getDacUserId()).collect(Collectors.toList());
+                        List<Integer> electionVotesUserIds = electionVotes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
                         Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
                         List<Vote> electionDACVotes = electionVotes.stream().filter(ev -> ev.getType().equals("DAC")).collect(Collectors.toList());
                         Vote chairPersonVote =  electionVotes.stream().filter(ev -> ev.getType().equals(CHAIRPERSON)).collect(singletonCollector());
@@ -214,7 +189,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         summaryWriter.write( chairPerson.getDisplayName() + SEPARATOR);
                         summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
                         summaryWriter.write( nullToString(chairPersonVote.getRationale()) + SEPARATOR);
-                        if (electionDACVotes != null && electionDACVotes.size() > 0) {
+                        if (CollectionUtils.isNotEmpty(electionDACVotes)) {
                             for (Vote vote : electionDACVotes) {
                                 List<User> user = electionUsers.stream().filter(du -> du.getDacUserId().equals(vote.getDacUserId())).collect(Collectors.toList());
                                 summaryWriter.write( user.get(0).getDisplayName() + SEPARATOR);
@@ -232,13 +207,12 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                 summaryWriter.flush();
             }
             return file;
-        } catch (Exception ignored) {
-            logger.error("There is an error trying to create statistics file, error: "+ ignored.getMessage());
+        } catch (Exception e) {
+            logger.error("There is an error trying to create statistics file, error: "+ e.getMessage());
         }
         return file;
     }
 
-    @Override
     public File describeDataAccessRequestSummaryDetail() {
         File file = null;
         try {
@@ -247,34 +221,34 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                 List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue());
                 List<Election> reviewedRPElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue());
                 if (!CollectionUtils.isEmpty(reviewedElections)) {
-                    List<String> referenceIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
+                    List<String> referenceIds = reviewedElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
                     List<Document> dataAccessRequests = dataAccessRequestService.getDataAccessRequestsByReferenceIdsAsDocuments(referenceIds);
                     List<Integer> datasetIds = dataAccessRequests.stream().
                             map(dar -> DarUtil.getIntegerList(dar, DarConstants.DATASET_ID)).
                             flatMap(List::stream).
                             collect(Collectors.toList());
                     List<Association> associations = datasetDAO.getAssociationsForDataSetIdList(new ArrayList<>(datasetIds));
-                    List<String> associatedConsentIds =   associations.stream().map(a -> a.getConsentId()).collect(Collectors.toList());
+                    List<String> associatedConsentIds =   associations.stream().map(Association::getConsentId).collect(Collectors.toList());
                     List<Election> reviewedConsentElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
-                    List<Integer> darElectionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
-                    List<Integer> consentElectionIds = reviewedConsentElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
+                    List<Integer> darElectionIds = reviewedElections.stream().map(Election::getElectionId).collect(Collectors.toList());
+                    List<Integer> consentElectionIds = reviewedConsentElections.stream().map(Election::getElectionId).collect(Collectors.toList());
                     List<AccessRP> accessRPList = electionDAO.findAccessRPbyElectionAccessId(darElectionIds);
                     List<Vote> votes = voteDAO.findVotesByElectionIds(darElectionIds);
-                    List<Integer> rpElectionIds = reviewedRPElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
+                    List<Integer> rpElectionIds = reviewedRPElections.stream().map(Election::getElectionId).collect(Collectors.toList());
                     List<Vote> rpVotes;
                     if (CollectionUtils.isNotEmpty(rpElectionIds)) {
                         rpVotes = voteDAO.findVotesByElectionIds(rpElectionIds);
                     } else rpVotes = null;
                     List<Vote> consentVotes = voteDAO.findVotesByElectionIds(consentElectionIds);
                     List<Match> matchList = matchDAO.findMatchesPurposeId(referenceIds);
-                    Collection<Integer> dacUserIds = votes.stream().map(v -> v.getDacUserId()).collect(Collectors.toSet());
+                    Collection<Integer> dacUserIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
                     Collection<User> users = userDAO.findUsers(dacUserIds);
                     Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(darElectionIds);
                     setSummaryHeaderDataAccessRequest(summaryWriter, maxNumberOfDACMembers);
                     for (Election election : reviewedElections) {
 
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
-                        List<Integer> electionVotesUserIds = electionVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.DAC.getValue())).map(e -> e.getDacUserId()).collect(Collectors.toList());
+                        List<Integer> electionVotesUserIds = electionVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.DAC.getValue())).map(Vote::getDacUserId).collect(Collectors.toList());
                         Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
 
                         Vote finalVote =  electionVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue())).collect(singletonCollector());
@@ -284,9 +258,11 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         if (CollectionUtils.isNotEmpty(reviewedRPElections) && CollectionUtils.isNotEmpty(accessRPList)) {
                             agreementVote =  electionVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.AGREEMENT.getValue())).collect(singletonCollector());
                             AccessRP accessRP =  accessRPList.stream().filter(arp -> arp.getElectionAccessId().equals(election.getElectionId())).collect(singletonCollector());
-                            if (Objects.nonNull(accessRP)) {
-                                List<Vote> electionRPVotes = rpVotes.stream().filter(ev -> ev.getElectionId().equals(accessRP.getElectionRPId())).collect(Collectors.toList());
-                                chairPersonRPVote = electionRPVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
+                            if (Objects.nonNull(accessRP) && Objects.nonNull(rpVotes)) {
+                                chairPersonRPVote = rpVotes.stream()
+                                    .filter(v -> v.getElectionId().equals(accessRP.getElectionRPId()))
+                                    .filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue()))
+                                    .collect(singletonCollector());
                             }
                         }
                         User chairPerson =  users.stream().filter(du -> du.getDacUserId().equals(finalVote.getDacUserId())).collect(singletonCollector());
@@ -376,7 +352,6 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return file;
     }
 
-    @Override
     public File describeDataSetElectionsVotesForDar(String referenceId) {
         File file = null;
         try {
@@ -421,8 +396,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                 }
             }
             return file;
-        } catch (Exception ignored) {
-            logger.error("There is an error trying to create resume of dataset votes file, error: "+ ignored.getMessage());
+        } catch (Exception e) {
+            logger.error("There is an error trying to create resume of dataset votes file, error: "+ e.getMessage());
         }
         return file;
     }
@@ -567,7 +542,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     public String delimiterCheck(String delimitatedString){
         if (StringUtils.isNotEmpty(delimitatedString)) {
             return TEXT_DELIMITER +
-                    delimitatedString.replaceAll(TEXT_DELIMITER,"\'") + TEXT_DELIMITER;
+                    delimitatedString.replaceAll(TEXT_DELIMITER, "'") + TEXT_DELIMITER;
         } else {
             return "";
         }
