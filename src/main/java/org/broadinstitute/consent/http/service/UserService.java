@@ -1,6 +1,15 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
@@ -12,12 +21,6 @@ import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class UserService {
 
@@ -124,10 +127,6 @@ public class UserService {
             }
         });
         userRoleDAO.insertUserRoles(roles, dacUserId);
-    }
-
-    public void addViewedAlgoDecision(User user) {
-        user.setViewedAlgoDecision();
     }
 
 }

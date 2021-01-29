@@ -84,7 +84,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
     this.setAverageTurnaroundTime();
     this.setPercentAgreementAlgorithm(completedDarMetrics);
     this.setPercentSRPAccurate(completedDarMetrics);
-    this.setPercentRevealAlgorithm(dac.getChairpersons());
+    this.setPercentRevealAlgorithm(null); //not implemented yet, will be empty column
   }
 
   public Dac getDac() {
@@ -179,10 +179,8 @@ public class DacDecisionMetrics implements DecisionMetrics {
     return percentRevealAlgorithm;
   }
 
-  private void setPercentRevealAlgorithm(List<User> chairpersons) {
-    int total = chairpersons.size();
-    int viewedAlgoDecision = (int) chairpersons.stream().filter(u -> u.getViewedAlgoDecision()).count();
-    this.percentRevealAlgorithm = (int) (((double) viewedAlgoDecision / (double) total) * 100);
+  private void setPercentRevealAlgorithm(Integer percentRevealAlgorithm) {
+    this.percentRevealAlgorithm = percentRevealAlgorithm;
   }
 
   public Integer getPercentAgreementAlgorithm() {
