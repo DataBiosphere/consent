@@ -58,62 +58,67 @@ def update_xml(assertions_xml, failures):
 def strip_chars(str):
     return str.replace('\n', '')
 
-def build_scenario_performance(simulation_lines):
+def build_scenario_performance(simulation_id, simulation_lines):
     scenario_performance_array = []
     request_array = []
-    scenario_performance = {}
+    scenario = {}
 
     for line in simulation_lines:
         line_split = line.split('\t')
         
         if line_split[0] == 'USER':
             if line_split[2] == 'START':
-                request_array = []
-                scenario_performance['start'] = float(strip_chars(line_split[3]))
+                start = float(strip_chars(line_split[3]))
+                scenario = {
+                    'scenario_id': line_split[1] + '|' + strip_chars(line_split[3]),
+                    'scenario': line_split[1],
+                    'start': start,
+                    'simulation_id': simulation_id
+                }
             elif line_split[2] == 'END':
-                scenario_performance['end'] = float(strip_chars(line_split[3]))
-                scenario_performance['requests'] = request_array
-                scenario_performance['time'] = scenario_performance['end'] - scenario_performance['start']
+                scenario['end'] = float(strip_chars(line_split[3]))
+                scenario['time'] = scenario['end'] - scenario['start']
 
-                scenario_matches = filter(lambda sp: sp['name'] == line_split[1],scenario_performance_array)
-                if len(scenario_matches) == 1:
-                    scn = scenario_matches[0]
-                    scn['users'].append(scenario_performance)
-                    scn['max'] = scn['max'] if scn['max'] >= scenario_performance['time'] else scenario_performance['time']
-                    scn['total'] += scenario_performance['time']
-                    scn['avg'] = scn['total'] / len(scn['users'])
-                    scn['min'] = scn['min'] if scn['min'] < scenario_performance['time'] else scenario_performance['time']
-                else:
-                    scenario_performance_array.append({
-                        'name': line_split[1],
-                        'max': scenario_performance['time'],
-                        'avg': scenario_performance['time'],
-                        'min': scenario_performance['time'],
-                        'total': scenario_performance['time'],
-                        'users': [scenario_performance]
-                    })
+                scenario_performance_array.append(scenario)
         elif line_split[0] == 'REQUEST':
             request_array.append({
-                'name': line_split[2],
+                'request_id': line_split[2] + '|' + strip_chars(line_split[3]),
+                'request': line_split[2],
+                'scenario_id': scenario['scenario_id'],
                 'start': float(strip_chars(line_split[3])),
                 'end': float(strip_chars(line_split[4])),
                 'time': float(strip_chars(line_split[4])) - float(strip_chars(line_split[3])),
                 'result': line_split[5]
             })
 
-    return scenario_performance_array
+    return {
+        'scenarios': scenario_performance_array,
+        'requests': request_array
+    }
 
 def build_json(assertions_json, simulation_lines):
-    assertions_json['scenarios'] = build_scenario_performance(simulation_lines)
     end_time = float(simulation_lines[len(simulation_lines) - 2].split('\t')[4])
-    assertions_json['end'] = end_time
-    assertions_json['time'] = end_time - assertions_json['start']
-    assertions_json.pop('assertions', None)
+    simulation = {
+        'simulation_id': assertions_json['simulationId'] + '|' + str(assertions_json['start']),
+        'simulation': assertions_json['simulationId'],
+        'end': end_time,
+        'time': end_time - assertions_json['start']
+    }
+    scenariosAndRequests = build_scenario_performance(simulation['simulation_id'], simulation_lines)
 
-    return assertions_json
+    return {
+        'simulation': simulation, 
+        'scenarios': scenariosAndRequests['scenarios'], 
+        'requests': scenariosAndRequests['requests']
+    }
 
 def parse_gatling_results(gatling_dir):
-    scenarios = {}
+    performance_data = {
+        'simulations_xml': [],
+        'simulations_json': [],
+        'scenarios': [],
+        'requests': []
+    }
     for file_path in os.listdir(os.path.join(gatling_dir, "gatling")):
         scenario_path = os.path.join(gatling_dir, "gatling", file_path)
         simulation_path = os.path.join(scenario_path, 'simulation.log')
@@ -128,25 +133,42 @@ def parse_gatling_results(gatling_dir):
 
         performance_json = build_json(assertion_json, simulation_log_lines)
 
-        scenarios[simulation] = {
-            'xml': xmltodict.unparse(assertions_xml, pretty=True),
-            'json': json.dumps(performance_json, indent=4)
-        }
-    return scenarios
+        performance_data['simulations_xml'].append({
+            'simulation': simulation,
+            'xml': xmltodict.unparse(assertions_xml, pretty=True)
+        })
+
+        performance_data['simulations_json'].append(performance_json['simulation'])
+        performance_data['scenarios'] = performance_data['scenarios'] + performance_json['scenarios']
+        performance_data['requests'] = performance_data['requests'] + performance_json['requests']
+
+    return performance_data
 
 if __name__ == '__main__':
     r = parse_gatling_results("target")
-    for scn in r:
-        sim_dir = os.path.join("target/test-reports", "TEST-" + scn + ".xml")
+    for scn in r['simulations_xml']:
+        sim_dir = os.path.join("target/test-reports", "TEST-" + scn['simulation'] + ".xml")
         with open(sim_dir, 'w') as wf:
-            wf.write(r[scn]['xml'])
+            wf.write(scn['xml'])
             wf.write('\n')
         
-        js_dir = os.path.join("target/test-reports", "TEST-" + scn + "-performance.json")
-        with open(js_dir, 'w') as jwf:
-            jwf.write(r[scn]['json'])
-            jwf.write('\n')
-        
         print(sim_dir)
-        print(js_dir)
+    
+    with open("target/test-reports/simulations.json", 'w') as swf:
+        swf.write(json.dumps(r['simulations_json'], indent=4))
+        swf.write('\n')
+
+        print("target/test-reports/simulations.json")
+    
+    with open("target/test-reports/scenarios.json", 'w') as swf:
+        swf.write(json.dumps(r['scenarios'], indent=4))
+        swf.write('\n')
+
+        print("target/test-reports/scenarios.json")
+    
+    with open("target/test-reports/requests.json", 'w') as swf:
+        swf.write(json.dumps(r['requests'], indent=4))
+        swf.write('\n')
+
+        print("target/test-reports/requests.json")
         
