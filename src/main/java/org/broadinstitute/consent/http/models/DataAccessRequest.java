@@ -11,10 +11,12 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -121,27 +123,36 @@ public class DataAccessRequest {
     this.updateDate = updateDate;
   }
 
-  public void setCountCollaborators(String type, ResultSet collaborators) {
+  public void setCountCollaborators(String type, Array collaborators) {
+
     ArrayList<String> group = new ArrayList();
+    group.add(this.getUserId().toString());
     try {
-      while (collaborators.next()) {
-        String user = collaborators.getString("uuid");
-        if (!group.contains(user) && !countLabCollaborators.contains(user) && !countInternalCollaborators.contains(user)) {
-          group.add(user);
-        }
-        if (type.equals("I")) {
-          this.countInternalCollaborators = group;
-        } else {
-          this.countLabCollaborators = group;
+      if (Objects.nonNull(collaborators)) {
+        ResultSet collab = collaborators.getResultSet();
+        while (collab.next()) {
+          String user = collab.getString("uuid");
+          if (!group.contains(user) && !countLabCollaborators.contains(user) && !countInternalCollaborators.contains(user)) {
+            group.add(user);
+          }
+          if (type.equals("I")) {
+            this.countInternalCollaborators = group;
+          } else {
+            this.countLabCollaborators = group;
+          }
         }
       }
-    } catch (SQLException throwables) {
-      throwables.printStackTrace();
+    } catch (SQLException throwable) {
+      throwable.printStackTrace();
     }
   }
 
   public Integer getCountUniqueCollaborators() {
-    return countInternalCollaborators.size() + countLabCollaborators.size();
+    if (Objects.nonNull(countInternalCollaborators) && Objects.nonNull(countLabCollaborators)) {
+      return countInternalCollaborators.size() + countLabCollaborators.size();
+    } else {
+      return 0;
+    }
   }
 
     /**

@@ -28,8 +28,8 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
         dar.setSortDate(resultSet.getTimestamp("sort_date"));
         dar.setSubmissionDate(resultSet.getTimestamp("submission_date"));
         dar.setUpdateDate(resultSet.getTimestamp("update_date"));
-        dar.setCountCollaborators("I", (ResultSet) resultSet.getObject("internalCollaborators"));
-        dar.setCountCollaborators("L", (ResultSet) resultSet.getObject("labCollaborators"));
+        dar.setCountCollaborators("I", resultSet.getArray("internalCollaborators"));
+        dar.setCountCollaborators("L", resultSet.getArray("labCollaborators"));
         String darDataString = resultSet.getObject("data", PGobject.class).getValue();
         if (Objects.nonNull(darDataString)) {
             // Handle nested quotes
