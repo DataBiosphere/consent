@@ -11,7 +11,10 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +44,10 @@ public class DataAccessRequest {
   @JsonProperty public Timestamp submissionDate;
 
   @JsonProperty public Timestamp updateDate;
+
+  @JsonProperty public ArrayList<String> countInternalCollaborators;
+
+  @JsonProperty public ArrayList<String> countLabCollaborators;
 
   public Integer getId() {
     return id;
@@ -114,7 +121,30 @@ public class DataAccessRequest {
     this.updateDate = updateDate;
   }
 
-  /**
+  public void setCountCollaborators(String type, ResultSet collaborators) {
+    ArrayList<String> group = new ArrayList();
+    try {
+      while (collaborators.next()) {
+        String user = collaborators.getString("uuid");
+        if (!group.contains(user) && !countLabCollaborators.contains(user) && !countInternalCollaborators.contains(user)) {
+          group.add(user);
+        }
+        if (type.equals("I")) {
+          this.countInternalCollaborators = group;
+        } else {
+          this.countLabCollaborators = group;
+        }
+      }
+    } catch (SQLException throwables) {
+      throwables.printStackTrace();
+    }
+  }
+
+  public Integer getCountUniqueCollaborators() {
+    return countInternalCollaborators.size() + countLabCollaborators.size();
+  }
+
+    /**
    * Merges the DAR and the DAR Data into a single Map Ignores a series of deprecated keys Null
    * values are ignored by default
    *

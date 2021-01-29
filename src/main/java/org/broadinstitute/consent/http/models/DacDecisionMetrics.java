@@ -19,6 +19,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
   private Integer datasetCount;
   private Integer darsReceived;
   private Integer percentDARsReviewed;
+  private Integer averageCountUniqueUser;
   private Double averageTurnaroundTimeMillis;
   private Integer averageTurnaroundTime;
   private Integer percentRevealAlgorithm;
@@ -35,6 +36,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
     "# of Datasets",
     "# of DARs Received",
     "% of DARs Reviewed",
+    "Average # Users on Approved DAR",
     "Average DAR Turnaround Time",
     "% Reveal DUOS Algorithm",
     "% Agreement with DUOS Algorithm",
@@ -52,6 +54,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
       getValue(getDatasetCount()),
       getValue(getDarsReceived()),
       getValue(getPercentDARsReviewed()),
+      getValue(getAverageCountUniqueUser().toString()),
       getValue(getAverageTurnaroundTime()),
       getValue(getPercentRevealAlgorithm()),
       getValue(getPercentAgreementAlgorithm()),
@@ -76,6 +79,14 @@ public class DacDecisionMetrics implements DecisionMetrics {
       long percentReviewed = (long) completedDarMetrics.size() / (long) metrics.size() * 100;
       this.setPercentDARsReviewed((int) percentReviewed);
     }
+
+    List<DarDecisionMetrics> approvedDarMetrics =
+      completedDarMetrics.stream()
+      .filter(m -> (m.getDacDecision()).equalsIgnoreCase("Yes"))
+      .collect(Collectors.toList());
+
+    this.setAverageCountUniqueUser(approvedDarMetrics);
+
     completedDarMetrics.stream()
       .filter(m -> Objects.nonNull(m.getTurnaroundTimeMillis()))
       .mapToLong(DarDecisionMetrics::getTurnaroundTimeMillis)
@@ -158,6 +169,20 @@ public class DacDecisionMetrics implements DecisionMetrics {
       this.datasetCount = datasets.size();
     }
   }
+
+  private void setAverageCountUniqueUser(List<DarDecisionMetrics> metrics) {
+    Integer totalUsers = 0;
+    Integer totalDars = 0;
+    for(DarDecisionMetrics m : metrics) {
+      totalDars++;
+      totalUsers = totalUsers + m.getCountUniqueUsers();
+    }
+    if (totalDars > 0) {
+      this.averageCountUniqueUser = totalUsers / totalDars;
+    }
+  }
+
+  public Integer getAverageCountUniqueUser() { return averageCountUniqueUser; }
 
   public Integer getDarsReceived() {
     return darsReceived;

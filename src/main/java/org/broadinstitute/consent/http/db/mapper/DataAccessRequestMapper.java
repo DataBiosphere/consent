@@ -1,9 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
 import com.google.gson.JsonSyntaxException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Objects;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -11,6 +8,10 @@ import org.jdbi.v3.core.statement.StatementContext;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Objects;
 
 public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, RowMapperHelper {
 
@@ -27,6 +28,8 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
         dar.setSortDate(resultSet.getTimestamp("sort_date"));
         dar.setSubmissionDate(resultSet.getTimestamp("submission_date"));
         dar.setUpdateDate(resultSet.getTimestamp("update_date"));
+        dar.setCountCollaborators("I", (ResultSet) resultSet.getObject("internalCollaborators"));
+        dar.setCountCollaborators("L", (ResultSet) resultSet.getObject("labCollaborators"));
         String darDataString = resultSet.getObject("data", PGobject.class).getValue();
         if (Objects.nonNull(darDataString)) {
             // Handle nested quotes
