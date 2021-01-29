@@ -16,7 +16,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,9 +46,7 @@ public class DataAccessRequest {
 
   @JsonProperty public Timestamp updateDate;
 
-  @JsonProperty public ArrayList<String> countInternalCollaborators;
-
-  @JsonProperty public ArrayList<String> countLabCollaborators;
+  @JsonProperty public ArrayList<String> countCollaborators = new ArrayList<>();
 
   public Integer getId() {
     return id;
@@ -123,33 +120,28 @@ public class DataAccessRequest {
     this.updateDate = updateDate;
   }
 
-  public void setCountCollaborators(String type, Array collaborators) {
-
-    ArrayList<String> group = new ArrayList();
+  public void setCountCollaborators(Array collaborators) {
+    ArrayList<String> group = new ArrayList<>();
     group.add(this.getUserId().toString());
     try {
       if (Objects.nonNull(collaborators)) {
         ResultSet collab = collaborators.getResultSet();
         while (collab.next()) {
           String user = collab.getString("uuid");
-          if (!group.contains(user) && !countLabCollaborators.contains(user) && !countInternalCollaborators.contains(user)) {
+          if (!group.contains(user) && !countCollaborators.contains(user)) {
             group.add(user);
           }
-          if (type.equals("I")) {
-            this.countInternalCollaborators = group;
-          } else {
-            this.countLabCollaborators = group;
-          }
         }
+        this.countCollaborators.addAll(group);
       }
     } catch (SQLException throwable) {
       throwable.printStackTrace();
     }
   }
 
-  public Integer getCountUniqueCollaborators() {
-    if (Objects.nonNull(countInternalCollaborators) && Objects.nonNull(countLabCollaborators)) {
-      return countInternalCollaborators.size() + countLabCollaborators.size();
+  public Integer getCountCollaborators() {
+    if (Objects.nonNull(countCollaborators)) {
+      return countCollaborators.size();
     } else {
       return 0;
     }

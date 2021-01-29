@@ -76,7 +76,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
       getValue(getDacName()),
       getValue(getDacUID(getDacName())),
       getValue(getDatasetId()),
-      getValue(getCountUniqueUsers().toString()),
+      getValue(getCountUniqueUsers()),
       getValue(getDateSubmitted()),
       getValue(getDateApproved()),
       getValue(getDateDenied()),
@@ -118,7 +118,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
   }
 
   private void setCountUniqueUser(DataAccessRequest dar) {
-    this.countUniqueUser = dar.getCountUniqueCollaborators();
+    this.countUniqueUser = dar.getCountCollaborators();
   }
 
   public Integer getCountUniqueUsers() { return countUniqueUser; }
@@ -256,6 +256,8 @@ public class DarDecisionMetrics implements DecisionMetrics {
   private String getValue(String str) {
     return Objects.nonNull(str) ? str : "";
   }
+
+  private String getValue(Integer i) { return Objects.nonNull(i) ? i.toString() : ""; }
 
   private String getValue(Date date) {
     return Objects.nonNull(date) ? sdf.format(date) : "";
