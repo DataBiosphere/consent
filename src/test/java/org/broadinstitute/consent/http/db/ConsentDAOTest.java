@@ -257,19 +257,6 @@ public class ConsentDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindConsentByAssociationAndObjectId() {
-        DataSet dataset = createDataset();
-        Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        List<String> associations = consentDAO.findAssociationsByType(consent.getConsentId(), ASSOCIATION_TYPE_TEST);
-        String objectId = associations.get(0);
-
-        Consent foundConsent = consentDAO.findConsentByAssociationAndObjectId(ASSOCIATION_TYPE_TEST, objectId);
-        assertNotNull(foundConsent);
-        assertEquals(consent.getConsentId(), foundConsent.getConsentId());
-    }
-
-    @Test
     public void testFindUnreviewedConsents() {
         Consent consent = createConsent(null);
 

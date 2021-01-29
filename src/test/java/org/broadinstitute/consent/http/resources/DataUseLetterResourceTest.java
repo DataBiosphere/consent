@@ -99,38 +99,6 @@ public class DataUseLetterResourceTest {
         assertNotNull(c);
     }
 
-    @Test
-    public void testUpdateAssociatedDUL() throws Exception {
-        File fileToUpload = File.createTempFile("temp","pdf");
-        fileToUpload.deleteOnExit();
-        Consent consent = setupConsent(fileToUpload.getName());
-        when(store.putStorageDocument(any(InputStream.class), eq("application/pdf"), anyString())).
-                thenReturn(consentDulPath(consent.getConsentId()));
-        when(ct.getFileName()).thenReturn("temp.pdf");
-        //noinspection ResultOfMethodCallIgnored
-        fileToUpload.createNewFile();
-        FormDataBodyPart bodyPart = new FormDataBodyPart();
-        bodyPart.setContentDisposition(ct);
-        bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
-        when(consentAPI.updateConsentDul(any(), any(), any())).thenReturn(consent);
-
-        initResource();
-        Consent c = resource.updateDUL(new FileInputStream(fileToUpload), bodyPart, consent.getConsentId(), "temp", user);
-        assertNotNull(c);
-        assertNotNull(c.getDulName());
-    }
-
-    @Test
-    public void testDeleteDUL() throws Exception {
-        Consent consent = setupConsent("dataUseLetterToDelete");
-        when(store.deleteStorageDocument(consent.getConsentId())).thenReturn(true);
-        when(consentAPI.deleteConsentDul(any())).thenReturn(consent);
-
-        initResource();
-        Consent c = resource.deleteDUL(consent.getConsentId());
-        assertNotNull(c);
-    }
-
     private Consent setupConsent(String dul) {
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         Consent consent = new Consent();
