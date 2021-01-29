@@ -39,7 +39,6 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.WhitelistService;
 
-
 @Path("{api : (api/)?}user")
 public class UserResource extends Resource {
 
