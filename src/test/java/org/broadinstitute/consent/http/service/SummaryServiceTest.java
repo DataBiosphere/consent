@@ -1,12 +1,25 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Objects;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -19,21 +32,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.Objects;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.when;
-
-public class DatabaseSummaryAPITest {
+public class SummaryServiceTest {
 
     @Mock
     private VoteDAO voteDAO;
@@ -50,12 +49,12 @@ public class DatabaseSummaryAPITest {
     @Mock
     private DataAccessRequestService dataAccessRequestService;
 
-    DatabaseSummaryAPI databaseSummaryAPI;
+    private SummaryService summaryService;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        databaseSummaryAPI = Mockito.spy(new DatabaseSummaryAPI(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO, dataSetDAO, matchDAO));
+        summaryService = Mockito.spy(new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO, dataSetDAO, matchDAO));
     }
 
     // In this tests we won't validate the resulting file, we will just validate the methods being called for each response given by the mocks is accurate.
@@ -63,11 +62,11 @@ public class DatabaseSummaryAPITest {
     @Test
     public void testDescribeDataRequestSummaryCases() throws Exception {
         String electionType = ElectionType.DATA_ACCESS.getValue();
-        databaseSummaryAPI.describeDataRequestSummaryCases(electionType);
-        Mockito.verify(databaseSummaryAPI).getAccessSummaryCases(electionType);
+        summaryService.describeDataRequestSummaryCases(electionType);
+        Mockito.verify(summaryService).getAccessSummaryCases(electionType);
         electionType = ElectionType.RP.getValue();
-        databaseSummaryAPI.describeDataRequestSummaryCases(electionType);
-        Mockito.verify(databaseSummaryAPI).getSummaryCases(electionType);
+        summaryService.describeDataRequestSummaryCases(electionType);
+        Mockito.verify(summaryService).getSummaryCases(electionType);
     }
 
     @Test
@@ -76,7 +75,7 @@ public class DatabaseSummaryAPITest {
         when(matchDAO.countMatchesByResult(Boolean.FALSE)).thenReturn(2);
 
         when(electionDAO.findLastElectionsWithFinalVoteByType(ElectionType.DATA_ACCESS.getValue())).thenReturn(electionsList(ElectionType.DATA_ACCESS.getValue(), "Open"));
-        List<Summary> matchSummaryList = databaseSummaryAPI.describeMatchSummaryCases();
+        List<Summary> matchSummaryList = summaryService.describeMatchSummaryCases();
         assertTrue("The list should have two elements: ", matchSummaryList.size() == 2);
         assertTrue("The list for matches should have two positive cases: ", matchSummaryList.get(0).getReviewedPositiveCases().equals(2));
         assertTrue("The list for matches should have two negative cases: ", matchSummaryList.get(0).getReviewedNegativeCases().equals(2));
@@ -90,7 +89,7 @@ public class DatabaseSummaryAPITest {
         when(electionDAO.findLastElectionsWithFinalVoteByType(ElectionType.DATA_ACCESS.getValue())).thenReturn(ListUtils.union(electionsList(ElectionType.DATA_ACCESS.getValue(), "Open"), electionsList(ElectionType.DATA_ACCESS.getValue(), "Closed")));
         when(voteDAO.findVotesByElectionIds(anyObject())).thenReturn(randomVotesList(123, VoteType.AGREEMENT.getValue()));
 
-        matchSummaryList = databaseSummaryAPI.describeMatchSummaryCases();
+        matchSummaryList = summaryService.describeMatchSummaryCases();
         assertTrue("The list should have two elements: ", matchSummaryList.size() == 2);
         assertTrue("The list for matches should have two positive cases: ", matchSummaryList.get(0).getReviewedPositiveCases().equals(2));
         assertTrue("The list for matches should have two negative cases: ", matchSummaryList.get(0).getReviewedNegativeCases().equals(2));
@@ -103,24 +102,24 @@ public class DatabaseSummaryAPITest {
     @Test(expected = IllegalStateException.class )
     public void testSingletonCollectorException() throws Exception {
         List<String> strings = Arrays.asList("One item", "Another item");
-        strings.stream().filter(s -> s.length() > 0).collect(DatabaseSummaryAPI.singletonCollector());
+        strings.stream().filter(s -> s.length() > 0).collect(SummaryService.singletonCollector());
     }
 
     @Test
     public void testSingletonCollector() throws Exception {
         List<String> strings = Arrays.asList("One item");
-        String string = strings.stream().filter(s -> s.length() > 0).collect(DatabaseSummaryAPI.singletonCollector());
+        String string = strings.stream().filter(s -> s.length() > 0).collect(SummaryService.singletonCollector());
         assertTrue("The returned element equals the only element in the list ", string.equals("One item"));
 
         strings = new ArrayList<>();
-        string = strings.stream().filter(s -> s.length() > 0).collect(DatabaseSummaryAPI.singletonCollector());
+        string = strings.stream().filter(s -> s.length() > 0).collect(SummaryService.singletonCollector());
         assertTrue("There are no elements, so the returned string should be null ", Objects.isNull(string));
     }
 
     @Test
     public void testFormatTimeToDate() throws Exception {
         Calendar myCalendar = new GregorianCalendar(2016, 2, 11);
-        String getAsString = databaseSummaryAPI.formatLongToDate(myCalendar.getTimeInMillis());
+        String getAsString = summaryService.formatLongToDate(myCalendar.getTimeInMillis());
         assertTrue(getAsString + " is the same date string for March 3, 2016 ", getAsString.equals("3/11/2016"));
     }
 
@@ -129,7 +128,7 @@ public class DatabaseSummaryAPITest {
         String testString = "\"Samples\" Restricted for use with \"cancer\" [DOID_162(CC)]\bFuture use \"\"\\\" for methods" +
                 " research (analytic/software/technology development) is prohibited [NMDS]\bNotes:\bFuture use as a" +
                 " control set for\"' diseases other\' than\" those specified is not prohibited\n\"";
-        int count = StringUtils.countMatches(databaseSummaryAPI.delimiterCheck(testString), "\"");
+        int count = StringUtils.countMatches(summaryService.delimiterCheck(testString), "\"");
         assertThat(count, is(2));
     }
 

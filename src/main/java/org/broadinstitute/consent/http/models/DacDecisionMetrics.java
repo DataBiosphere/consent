@@ -69,15 +69,16 @@ public class DacDecisionMetrics implements DecisionMetrics {
     this.setChairCount(dac);
     this.setMemberCount(dac);
     this.setDatasetCount(datasets);
-
     this.setDarsReceived(metrics.size());
+
     List<DarDecisionMetrics> completedDarMetrics =
       metrics.stream()
         .filter(m -> Objects.nonNull(m.getDacDecision()))
         .collect(Collectors.toList());
+
     if (!metrics.isEmpty()) {
-      long percentReviewed = (long) completedDarMetrics.size() / (long) metrics.size() * 100;
-      this.setPercentDARsReviewed((int) percentReviewed);
+      int percentReviewed = createPercentage(completedDarMetrics.size(), metrics.size());
+      this.setPercentDARsReviewed(percentReviewed);
     }
 
     List<DarDecisionMetrics> approvedDarMetrics =
@@ -92,28 +93,16 @@ public class DacDecisionMetrics implements DecisionMetrics {
       .mapToLong(DarDecisionMetrics::getTurnaroundTimeMillis)
       .average()
       .ifPresent(this::setAverageTurnaroundTimeMillis);
+
     this.setAverageTurnaroundTime();
+    this.setPercentAgreementAlgorithm(completedDarMetrics);
+    this.setPercentSRPAccurate(completedDarMetrics);
+    this.setPercentRevealAlgorithm(null); //not implemented yet, will be empty column
+  }
 
-    List<DarDecisionMetrics> agreementMetrics =
-      completedDarMetrics.stream()
-        .filter(m -> Objects.nonNull(m.getAlgorithmDecision()))
-        .filter(m -> Objects.nonNull(m.getDacDecision()))
-        .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
-        .collect(Collectors.toList());
+  public Integer createPercentage(int num, int denom) {
+    return (int) (((double) num / (double) denom) * 100);
 
-    if (!completedDarMetrics.isEmpty()) {
-      long percentAgreement = (long) agreementMetrics.size() / (long) completedDarMetrics.size();
-      this.setPercentAgreementAlgorithm((int) percentAgreement);
-
-      List<DarDecisionMetrics> srpMetrics =
-        completedDarMetrics.stream()
-          .filter(m -> Objects.nonNull(m.getSrpDecision()))
-          .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
-          .collect(Collectors.toList());
-      long percentSrp = (long) srpMetrics.size() / (long) completedDarMetrics.size();
-      this.setPercentSRPAccurate((int) percentSrp);
-    }
-    setPercentRevealAlgorithm(0); // Placeholder for "% Reveal DUOS Algorithm"
   }
 
   public Dac getDac() {
@@ -230,16 +219,39 @@ public class DacDecisionMetrics implements DecisionMetrics {
     return percentAgreementAlgorithm;
   }
 
-  private void setPercentAgreementAlgorithm(Integer percentAgreementAlgorithm) {
-    this.percentAgreementAlgorithm = percentAgreementAlgorithm;
+  private void setPercentAgreementAlgorithm(List<DarDecisionMetrics> completedDarMetrics) {
+    if (!completedDarMetrics.isEmpty()) {
+      List<DarDecisionMetrics> agreementMetricsDenominator =
+        completedDarMetrics.stream()
+          .filter(m -> Objects.nonNull(m.getAlgorithmDecision()))
+          .collect(Collectors.toList());
+
+      List<DarDecisionMetrics> agreementMetricsNumerator =
+        agreementMetricsDenominator.stream()
+          .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
+          .collect(Collectors.toList());
+
+      int percentAgreement = createPercentage(agreementMetricsNumerator.size(), agreementMetricsDenominator.size());
+      this.percentAgreementAlgorithm = percentAgreement;
+    }
   }
 
   public Integer getPercentSRPAccurate() {
     return percentSRPAccurate;
   }
 
-  private void setPercentSRPAccurate(Integer percentSRPAccurate) {
-    this.percentSRPAccurate = percentSRPAccurate;
+  private void setPercentSRPAccurate(List<DarDecisionMetrics> completedDarMetrics) {
+    List<DarDecisionMetrics> srpMetricsDenominator =
+      completedDarMetrics.stream()
+        .filter(m -> Objects.nonNull(m.getSrpDecision()))
+        .collect(Collectors.toList());
+
+    List<DarDecisionMetrics> srpMetricsNumerator =
+      srpMetricsDenominator.stream()
+        .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
+        .collect(Collectors.toList());
+    int percentSrp = createPercentage(srpMetricsNumerator.size(), srpMetricsDenominator.size());
+    this.percentSRPAccurate = percentSrp;
   }
 
   private String getValue(String str) {

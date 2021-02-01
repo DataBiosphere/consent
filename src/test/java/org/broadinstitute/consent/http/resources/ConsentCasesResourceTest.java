@@ -1,36 +1,26 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.PendingCaseService;
-import org.broadinstitute.consent.http.service.SummaryAPI;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import javax.ws.rs.core.Response;
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore("jdk.internal.reflect.*")
-@PrepareForTest({AbstractSummaryAPI.class})
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.PendingCaseService;
+import org.broadinstitute.consent.http.service.SummaryService;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 public class ConsentCasesResourceTest {
 
     @Mock
@@ -40,15 +30,13 @@ public class ConsentCasesResourceTest {
     PendingCaseService pendingCaseService;
 
     @Mock
-    SummaryAPI summaryApi;
+    SummaryService summaryService;
 
     private ConsentCasesResource resource;
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractSummaryAPI.class);
-        when(AbstractSummaryAPI.getInstance()).thenReturn(summaryApi);
     }
 
     @Test
@@ -63,7 +51,7 @@ public class ConsentCasesResourceTest {
 
     @Test
     public void testGetConsentSummaryCases() {
-        when(summaryApi.describeConsentSummaryCases()).thenReturn(new Summary());
+        when(summaryService.describeConsentSummaryCases()).thenReturn(new Summary());
         initResource();
         Response response = resource.getConsentSummaryCases(null);
         Assert.assertEquals(200, response.getStatus());
@@ -83,7 +71,7 @@ public class ConsentCasesResourceTest {
     @Test
     public void testGetConsentSummaryDetailFileDUL() throws Exception {
         File file = File.createTempFile("temp", ".txt");
-        when(summaryApi.describeConsentSummaryDetail()).thenReturn(file);
+        when(summaryService.describeConsentSummaryDetail()).thenReturn(file);
         initResource();
         Response response = resource.getConsentSummaryDetailFile(ElectionType.TRANSLATE_DUL.getValue(), null);
         Assert.assertEquals(200, response.getStatus());
@@ -94,7 +82,7 @@ public class ConsentCasesResourceTest {
     @Test
     public void testGetConsentSummaryDetailFileDataAccess() throws Exception {
         File file = File.createTempFile("temp", ".txt");
-        when(summaryApi.describeDataAccessRequestSummaryDetail()).thenReturn(file);
+        when(summaryService.describeDataAccessRequestSummaryDetail()).thenReturn(file);
         initResource();
         Response response = resource.getConsentSummaryDetailFile(ElectionType.DATA_ACCESS.getValue(), null);
         Assert.assertEquals(200, response.getStatus());
@@ -113,7 +101,7 @@ public class ConsentCasesResourceTest {
     }
 
     private void initResource() {
-        resource = new ConsentCasesResource(electionService, pendingCaseService);
+        resource = new ConsentCasesResource(electionService, pendingCaseService, summaryService);
     }
 
 }
