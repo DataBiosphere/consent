@@ -167,7 +167,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
       totalUsers = totalUsers + m.getCountUniqueUsers();
     }
     if (totalDars > 0) {
-      this.averageCountUniqueUser = totalUsers / totalDars;
+      this.averageCountUniqueUser = Math.toIntExact(Math.round((double) totalUsers / (double) totalDars));
     }
   }
 

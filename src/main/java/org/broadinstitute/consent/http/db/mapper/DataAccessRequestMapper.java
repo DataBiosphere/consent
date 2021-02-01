@@ -12,7 +12,6 @@ import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, RowMapperHelper {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());

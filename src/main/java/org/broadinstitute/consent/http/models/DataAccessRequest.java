@@ -118,11 +118,15 @@ public class DataAccessRequest {
 
   public Integer getCountCollaborators() {
     ArrayList<String> group = new ArrayList<>();
-    group.add(this.getUserId().toString());
+    if (Objects.nonNull(getUserId())) {
+      group.add(getUserId().toString());
+    }
+
     List<Collaborator> collabs = data.getInternalCollaborators();
-    collabs.addAll(data.getLabCollaborators());
 
     if (Objects.nonNull(collabs)) {
+      collabs.addAll(data.getLabCollaborators());
+
       for (Collaborator c: collabs) {
         String userID = c.getUuid();
         if (!group.contains(userID)) {
