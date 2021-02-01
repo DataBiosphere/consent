@@ -1,15 +1,32 @@
 package org.broadinstitute.consent.http.resources;
 
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.OK;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+
+import java.io.File;
+import java.net.URI;
+import java.util.Collections;
+import java.util.UUID;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.SummaryAPI;
+import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Assert;
@@ -24,33 +41,13 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.io.File;
-import java.net.URI;
-import java.util.Collections;
-import java.util.UUID;
-
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.OK;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-
 @SuppressWarnings("deprecation")
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
         AbstractElectionAPI.class,
         AbstractVoteAPI.class,
-        AbstractDataAccessRequestAPI.class,
-        AbstractSummaryAPI.class
+        AbstractDataAccessRequestAPI.class
 })
 public class DataRequestElectionResourceTest {
 
@@ -63,7 +60,7 @@ public class DataRequestElectionResourceTest {
     @Mock
     private DataAccessRequestAPI darApi;
     @Mock
-    private SummaryAPI summaryAPI;
+    private SummaryService summaryService;
     @Mock
     private UriInfo uriInfo;
     @Mock
@@ -79,11 +76,9 @@ public class DataRequestElectionResourceTest {
         PowerMockito.mockStatic(AbstractElectionAPI.class);
         PowerMockito.mockStatic(AbstractVoteAPI.class);
         PowerMockito.mockStatic(AbstractDataAccessRequestAPI.class);
-        PowerMockito.mockStatic(AbstractSummaryAPI.class);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(darApi);
-        when(AbstractSummaryAPI.getInstance()).thenReturn(summaryAPI);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
         String requestId = UUID.randomUUID().toString();
@@ -92,7 +87,7 @@ public class DataRequestElectionResourceTest {
     }
 
     private void initResource() {
-        resource = new DataRequestElectionResource(emailNotifierService, voteService);
+        resource = new DataRequestElectionResource(emailNotifierService, summaryService, voteService);
     }
 
     @Test
@@ -200,7 +195,7 @@ public class DataRequestElectionResourceTest {
     @Test
     public void testDescribeDataSetVotes() throws Exception {
         File file = File.createTempFile("test", "txt");
-        when(summaryAPI.describeDataSetElectionsVotesForDar(any())).thenReturn(file);
+        when(summaryService.describeDataSetElectionsVotesForDar(any())).thenReturn(file);
         initResource();
         Response response = resource.describeDataSetVotes(UUID.randomUUID().toString());
         Assert.assertEquals(OK.getStatusCode(), response.getStatus());
@@ -208,7 +203,7 @@ public class DataRequestElectionResourceTest {
 
     @Test
     public void testDescribeDataSetVotesNoFile() {
-        when(summaryAPI.describeDataSetElectionsVotesForDar(any())).thenReturn(null);
+        when(summaryService.describeDataSetElectionsVotesForDar(any())).thenReturn(null);
         initResource();
         Response response = resource.describeDataSetVotes(UUID.randomUUID().toString());
         Assert.assertEquals(OK.getStatusCode(), response.getStatus());

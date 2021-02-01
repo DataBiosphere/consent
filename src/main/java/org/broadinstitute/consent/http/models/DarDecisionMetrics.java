@@ -35,6 +35,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
     JOINER,
     "DAR ID",
     "DAC ID",
+    "DAC UID",
     "Dataset ID",
     "Date Submitted",
     "Date Approved",
@@ -42,6 +43,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
     "DAR ToT",
     "Dac Decision",
     "Algorithm Decision",
+    "Agreement Vote",
     "Structured Research Purpose Decision",
     "\n");
 
@@ -69,6 +71,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
       joiner,
       getValue(this.getDarId()),
       getValue(getDacName()),
+      getValue(getDacUID(getDacName())),
       getValue(getDatasetId()),
       getValue(getDateSubmitted()),
       getValue(getDateApproved()),
@@ -76,6 +79,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
       getValue(getTurnaroundTime().toString()),
       getValue(getDacDecision()),
       getValue(getAlgorithmDecision()),
+      getValue(getDacDecision().equals(getAlgorithmDecision()) ? "Yes" : "No"),
       getValue(getSrpDecision()),
       "\n");
   }

@@ -1,11 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
+import java.util.List;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
-
-import java.util.List;
 
 public interface ConsentAPI {
 
@@ -42,11 +40,7 @@ public interface ConsentAPI {
 
     String getConsentDulUrl(String consentId) throws UnknownIdentifierException;
 
-    Consent deleteConsentDul(String consentId) throws UnknownIdentifierException;
-
     List<UseRestrictionDTO> getInvalidConsents();
-
-    Consent getConsentFromObjectIdAndType(String objectId, String associationType);
 
     /**
      * Method to check if a workspace is already associated with a consentId
@@ -54,7 +48,5 @@ public interface ConsentAPI {
      * @return
      */
     boolean hasWorkspaceAssociation(String workspaceId);
-
-    Election retrieveElection(Integer electionId, String consentId);
 
 }

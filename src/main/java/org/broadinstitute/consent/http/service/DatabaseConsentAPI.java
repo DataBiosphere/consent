@@ -1,5 +1,17 @@
 package org.broadinstitute.consent.http.service;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AssociationDAO;
@@ -21,19 +33,6 @@ import org.jdbi.v3.core.generic.GenericType;
 import org.jdbi.v3.core.statement.PreparedBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Implementation class for ConsentAPI on top of ConsentDAO database support.
@@ -320,14 +319,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return consent.getDataUseLetter();
     }
 
-    @Override
-    public Consent deleteConsentDul(String consentId) throws UnknownIdentifierException {
-        Consent consent = retrieve(consentId);
-        consent.setDataUseLetter("");
-        update(consentId, updateConsentDates(consent));
-        return retrieve(consentId);
-    }
-
     // Helper methods for Consent Associations
     //
     // Check that the list of ConsentAssociations given as an agrument is valid, and throw BadRequestException
@@ -376,15 +367,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return !Objects.isNull(associationDAO.findAssociationIdByTypeAndObjectId(AssociationType.WORKSPACE.getValue(), workspaceId));
     }
 
-    @Override
-    public Consent getConsentFromObjectIdAndType(String objectId, String associationType) {
-        Consent consent = consentDAO.findConsentByAssociationAndObjectId(associationType, objectId);
-        if (consent == null) {
-            throw new NotFoundException("The specified id does not exists.");
-        }
-        return consent;
-    }
-
     private Consent updateConsentDates(Consent c) {
         Timestamp updateDate = new Timestamp(new Date().getTime());
         c.setLastUpdate(updateDate);
@@ -399,17 +381,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             throw new UnknownIdentifierException("Consent does not exist");
         }
         return consent;
-    }
-
-    @Override
-    public Election retrieveElection(Integer electionId, String consentId) {
-        Election election;
-        if (electionId != null) {
-            election = electionDAO.findElectionWithFinalVoteById(electionId);
-        } else {
-            election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
-        }
-        return election;
     }
 
 }

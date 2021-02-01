@@ -1,34 +1,24 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.PendingCaseService;
-import org.broadinstitute.consent.http.service.SummaryAPI;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import javax.ws.rs.ServerErrorException;
-import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
-
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore("jdk.internal.reflect.*")
-@PrepareForTest({AbstractSummaryAPI.class})
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.PendingCaseService;
+import org.broadinstitute.consent.http.service.SummaryService;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 public class DataRequestCasesResourceTest {
 
     @Mock
@@ -38,15 +28,13 @@ public class DataRequestCasesResourceTest {
     PendingCaseService pendingCaseService;
 
     @Mock
-    SummaryAPI summaryApi;
+    SummaryService summaryService;
 
     private DataRequestCasesResource resource;
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractSummaryAPI.class);
-        when(AbstractSummaryAPI.getInstance()).thenReturn(summaryApi);
     }
 
     @Test
@@ -79,7 +67,7 @@ public class DataRequestCasesResourceTest {
 
     @Test
     public void testGetDataRequestSummaryCases() {
-        when(summaryApi.describeDataRequestSummaryCases(any())).thenReturn(new Summary());
+        when(summaryService.describeDataRequestSummaryCases(any())).thenReturn(new Summary());
         initResource();
         Response response = resource.getDataRequestSummaryCases(null, null);
         Assert.assertEquals(200, response.getStatus());
@@ -89,7 +77,7 @@ public class DataRequestCasesResourceTest {
 
     @Test
     public void testGetMatchSummaryCases() {
-        when(summaryApi.describeMatchSummaryCases()).thenReturn(Collections.emptyList());
+        when(summaryService.describeMatchSummaryCases()).thenReturn(Collections.emptyList());
         initResource();
         Response response = resource.getMatchSummaryCases(null);
         Assert.assertEquals(200, response.getStatus());
@@ -108,7 +96,7 @@ public class DataRequestCasesResourceTest {
     }
 
     private void initResource() {
-        resource = new DataRequestCasesResource(electionService, pendingCaseService);
+        resource = new DataRequestCasesResource(electionService, pendingCaseService, summaryService);
     }
 
 }
