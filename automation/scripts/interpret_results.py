@@ -146,6 +146,9 @@ def parse_gatling_results(gatling_dir):
 
 if __name__ == '__main__':
     r = parse_gatling_results("target")
+
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
     for scn in r['simulations_xml']:
         sim_dir = os.path.join("target/test-reports", "TEST-" + scn['simulation'] + ".xml")
         with open(sim_dir, 'w') as wf:
@@ -154,24 +157,24 @@ if __name__ == '__main__':
         
         print(sim_dir)
     
-    with open("target/test-reports/simulations.json", 'w') as swf:
+    with open("target/test-reports/" + timestamp + "-simulations.json", 'w') as swf:
         for sim in r['simulations_json']:
             swf.write(json.dumps(sim))
             swf.write('\n')
 
-        print("target/test-reports/simulations.json")
+        print("target/test-reports/" + timestamp + "-simulations.json")
     
-    with open("target/test-reports/scenarios.json", 'w') as swf:
+    with open("target/test-reports/" + timestamp + "-scenarios.json", 'w') as swf:
         for sc in r['scenarios']:
             swf.write(json.dumps(sc))
             swf.write('\n')
 
-        print("target/test-reports/scenarios.json")
+        print("target/test-reports/" + timestamp + "-scenarios.json")
     
-    with open("target/test-reports/requests.json", 'w') as swf:
+    with open("target/test-reports/" + timestamp + "-requests.json", 'w') as swf:
         for rq in r['requests']:
             swf.write(json.dumps(rq))
             swf.write('\n')
 
-        print("target/test-reports/requests.json")
+        print("target/test-reports/" + timestamp + "-requests.json")
         
