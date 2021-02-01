@@ -121,11 +121,20 @@ public class DataAccessRequest {
     List<String> emails = null;
     if (Objects.nonNull(data)) {
       ArrayList<Collaborator> collabs = new ArrayList<>();
-      collabs.addAll(data.getInternalCollaborators());
-      collabs.addAll(data.getLabCollaborators());
-      emails = collabs.stream().map(collaborator -> collaborator.getEmail()).collect(Collectors.toList());
-      emails.add(data.getAcademicEmail());
-      emails.add(data.getPiEmail());
+      if (Objects.nonNull(data.getInternalCollaborators())) {
+        collabs.addAll(data.getInternalCollaborators());
+      }
+      if (Objects.nonNull(data.getLabCollaborators())) {
+        collabs.addAll(data.getLabCollaborators());
+      }
+      emails = collabs.stream().map(collaborator -> Objects.requireNonNull(collaborator).getEmail()).collect(Collectors.toList());
+
+      if (Objects.nonNull(data.getAcademicEmail())) {
+        emails.add(data.getAcademicEmail());
+      }
+      if (Objects.nonNull(data.getPiEmail())) {
+        emails.add(data.getPiEmail());
+      }
       emails = emails.stream().map(String::toLowerCase).distinct().collect(Collectors.toList());
     }
     return Objects.nonNull(emails) ? emails.size() : 0;
