@@ -11,13 +11,11 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-import java.sql.Array;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -45,8 +43,6 @@ public class DataAccessRequest {
   @JsonProperty public Timestamp submissionDate;
 
   @JsonProperty public Timestamp updateDate;
-
-  @JsonProperty public ArrayList<String> countCollaborators = new ArrayList<>();
 
   public Integer getId() {
     return id;
@@ -120,31 +116,21 @@ public class DataAccessRequest {
     this.updateDate = updateDate;
   }
 
-  public void setCountCollaborators(Array collaborators) {
+  public Integer getCountCollaborators() {
     ArrayList<String> group = new ArrayList<>();
     group.add(this.getUserId().toString());
-    try {
-      if (Objects.nonNull(collaborators)) {
-        ResultSet collab = collaborators.getResultSet();
-        while (collab.next()) {
-          String user = collab.getString("uuid");
-          if (!group.contains(user) && !countCollaborators.contains(user)) {
-            group.add(user);
-          }
-        }
-        this.countCollaborators.addAll(group);
-      }
-    } catch (SQLException throwable) {
-      throwable.printStackTrace();
-    }
-  }
+    List<Collaborator> collabs = data.getInternalCollaborators();
+    collabs.addAll(data.getLabCollaborators());
 
-  public Integer getCountCollaborators() {
-    if (Objects.nonNull(countCollaborators)) {
-      return countCollaborators.size();
-    } else {
-      return 0;
+    if (Objects.nonNull(collabs)) {
+      for (Collaborator c: collabs) {
+        String userID = c.getUuid();
+        if (!group.contains(userID)) {
+          group.add(userID);
+        }
+      }
     }
+    return group.size();
   }
 
     /**
