@@ -160,15 +160,11 @@ public class DacDecisionMetrics implements DecisionMetrics {
   }
 
   private void setAverageCountUniqueUser(List<DarDecisionMetrics> metrics) {
-    Integer totalUsers = 0;
-    Integer totalDars = 0;
-    for(DarDecisionMetrics m : metrics) {
-      totalDars++;
-      totalUsers = totalUsers + m.getCountUniqueUsers();
-    }
-    if (totalDars > 0) {
-      this.averageCountUniqueUser = Math.toIntExact(Math.round((double) totalUsers / (double) totalDars));
-    }
+    this.averageCountUniqueUser = (int) metrics.stream()
+      .map(DarDecisionMetrics::getCountUniqueUsers)
+      .mapToInt(Integer::intValue)
+      .average()
+      .orElse(0);
   }
 
   public Integer getAverageCountUniqueUser() { return averageCountUniqueUser; }

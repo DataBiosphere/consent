@@ -118,7 +118,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
   }
 
   private void setCountUniqueUser(DataAccessRequest dar) {
-    this.countUniqueUser = dar.getCountCollaborators();
+    this.countUniqueUser = dar.getCountUsers();
   }
 
   public Integer getCountUniqueUsers() { return countUniqueUser; }

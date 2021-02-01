@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequest {
@@ -116,25 +117,18 @@ public class DataAccessRequest {
     this.updateDate = updateDate;
   }
 
-  public Integer getCountCollaborators() {
-    ArrayList<String> group = new ArrayList<>();
-    if (Objects.nonNull(getUserId())) {
-      group.add(getUserId().toString());
-    }
-
-    List<Collaborator> collabs = data.getInternalCollaborators();
-
-    if (Objects.nonNull(collabs)) {
+  public Integer getCountUsers() {
+    List<String> emails = null;
+    if (Objects.nonNull(data)) {
+      ArrayList<Collaborator> collabs = new ArrayList<>();
+      collabs.addAll(data.getInternalCollaborators());
       collabs.addAll(data.getLabCollaborators());
-
-      for (Collaborator c: collabs) {
-        String userID = c.getUuid();
-        if (!group.contains(userID)) {
-          group.add(userID);
-        }
-      }
+      emails = collabs.stream().map(collaborator -> collaborator.getEmail()).collect(Collectors.toList());
+      emails.add(data.getAcademicEmail());
+      emails.add(data.getPiEmail());
+      emails = emails.stream().map(String::toLowerCase).distinct().collect(Collectors.toList());
     }
-    return group.size();
+    return Objects.nonNull(emails) ? emails.size() : 0;
   }
 
     /**
