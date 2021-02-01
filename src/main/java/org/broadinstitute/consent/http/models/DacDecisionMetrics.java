@@ -71,7 +71,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
         .collect(Collectors.toList());
 
     if (!metrics.isEmpty()) {
-      int percentReviewed = (int) (((double) completedDarMetrics.size() / (double) metrics.size()) * 100);
+      int percentReviewed = createPercentage(completedDarMetrics.size(), metrics.size());
       this.setPercentDARsReviewed(percentReviewed);
     }
 
@@ -85,6 +85,11 @@ public class DacDecisionMetrics implements DecisionMetrics {
     this.setPercentAgreementAlgorithm(completedDarMetrics);
     this.setPercentSRPAccurate(completedDarMetrics);
     this.setPercentRevealAlgorithm(null); //not implemented yet, will be empty column
+  }
+
+  public Integer createPercentage(int num, int denom) {
+    return (int) (((double) num / (double) denom) * 100);
+
   }
 
   public Dac getDac() {
@@ -199,7 +204,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
           .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
           .collect(Collectors.toList());
 
-      int percentAgreement = (int) (((double) agreementMetricsNumerator.size() / (double) completedDarMetrics.size()) * 100);
+      int percentAgreement = createPercentage(agreementMetricsNumerator.size(), agreementMetricsDenominator.size());
       this.percentAgreementAlgorithm = percentAgreement;
     }
   }
@@ -218,7 +223,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
       srpMetricsDenominator.stream()
         .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
         .collect(Collectors.toList());
-    int percentSrp = (int) (((double) srpMetricsNumerator.size() / (double) srpMetricsDenominator.size()) * 100);
+    int percentSrp = createPercentage(srpMetricsNumerator.size(), srpMetricsDenominator.size());
     this.percentSRPAccurate = percentSrp;
   }
 
