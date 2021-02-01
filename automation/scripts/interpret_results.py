@@ -155,20 +155,23 @@ if __name__ == '__main__':
         print(sim_dir)
     
     with open("target/test-reports/simulations.json", 'w') as swf:
-        swf.write(json.dumps(r['simulations_json'], indent=4))
-        swf.write('\n')
+        for sim in r['simulations_json']:
+            swf.write(json.dumps(sim))
+            swf.write('\n')
 
         print("target/test-reports/simulations.json")
     
     with open("target/test-reports/scenarios.json", 'w') as swf:
-        swf.write(json.dumps(r['scenarios'], indent=4))
-        swf.write('\n')
+        for sc in r['scenarios']:
+            swf.write(json.dumps(sc))
+            swf.write('\n')
 
         print("target/test-reports/scenarios.json")
     
     with open("target/test-reports/requests.json", 'w') as swf:
-        swf.write(json.dumps(r['requests'], indent=4))
-        swf.write('\n')
+        for rq in r['requests']:
+            swf.write(json.dumps(rq))
+            swf.write('\n')
 
         print("target/test-reports/requests.json")
         
