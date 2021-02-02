@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import com.google.common.collect.Streams;
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 
 import java.text.SimpleDateFormat;
@@ -21,6 +23,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
   private String darId;
   private String dacName;
   private String datasetId;
+  private Integer countUniqueUser;
   private Date dateSubmitted;
   private Date dateApproved;
   private Date dateDenied;
@@ -37,6 +40,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
     "DAC ID",
     "DAC UID",
     "Dataset ID",
+    "Count of Unique Users",
     "Date Submitted",
     "Date Approved",
     "Date Denied",
@@ -57,6 +61,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
     this.setDarId(dar);
     this.setDacName(dac);
     this.setDatasetId(dataset);
+    this.setCountUniqueUser(dar);
     this.setDacDecision(accessElection);
     this.setDateSubmitted(dar);
     this.setDateApproved(accessElection);
@@ -73,6 +78,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
       getValue(getDacName()),
       getValue(getDacUID(getDacName())),
       getValue(getDatasetId()),
+      getValue(getCountUniqueUsers()),
       getValue(getDateSubmitted()),
       getValue(getDateApproved()),
       getValue(getDateDenied()),
@@ -112,6 +118,24 @@ public class DarDecisionMetrics implements DecisionMetrics {
       this.datasetId = DatasetUtil.parseAlias(dataset.getAlias());
     }
   }
+
+  private void setCountUniqueUser(DataAccessRequest dar) {
+    this.countUniqueUser =
+      (Objects.nonNull(dar.getData())) ?
+        (int) Streams
+          .concat(
+            CollectionUtils.emptyIfNull(dar.getData().getLabCollaborators()).stream(),
+            CollectionUtils.emptyIfNull(dar.getData().getInternalCollaborators()).stream())
+          .filter(Objects::nonNull)
+          .map(Collaborator::getEmail)
+          .filter(Objects::nonNull)
+          .map(String::toLowerCase)
+          .distinct()
+          .count()
+        : 0;
+  }
+
+  public Integer getCountUniqueUsers() { return countUniqueUser; }
 
   public Date getDateSubmitted() {
     return dateSubmitted;

@@ -19,6 +19,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
   private Integer datasetCount;
   private Integer darsReceived;
   private Integer percentDARsReviewed;
+  private Integer averageCountUniqueUser;
   private Double averageTurnaroundTimeMillis;
   private Integer averageTurnaroundTime;
   private Integer percentRevealAlgorithm;
@@ -35,6 +36,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
     "# of Datasets",
     "# of DARs Received",
     "% of DARs Reviewed",
+    "Average # Users on Approved DAR",
     "Average DAR Turnaround Time",
     "% Reveal DUOS Algorithm",
     "% Agreement with DUOS Algorithm",
@@ -52,6 +54,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
       getValue(getDatasetCount()),
       getValue(getDarsReceived()),
       getValue(getPercentDARsReviewed()),
+      getValue(getAverageCountUniqueUser().toString()),
       getValue(getAverageTurnaroundTime()),
       getValue(getPercentRevealAlgorithm()),
       getValue(getPercentAgreementAlgorithm()),
@@ -77,6 +80,13 @@ public class DacDecisionMetrics implements DecisionMetrics {
       int percentReviewed = createPercentage(completedDarMetrics.size(), metrics.size());
       this.setPercentDARsReviewed(percentReviewed);
     }
+
+    List<DarDecisionMetrics> approvedDarMetrics =
+      completedDarMetrics.stream()
+      .filter(m -> (m.getDacDecision()).equalsIgnoreCase("Yes"))
+      .collect(Collectors.toList());
+
+    this.setAverageCountUniqueUser(approvedDarMetrics);
 
     completedDarMetrics.stream()
       .filter(m -> Objects.nonNull(m.getTurnaroundTimeMillis()))
@@ -148,6 +158,16 @@ public class DacDecisionMetrics implements DecisionMetrics {
       this.datasetCount = datasets.size();
     }
   }
+
+  private void setAverageCountUniqueUser(List<DarDecisionMetrics> metrics) {
+    this.averageCountUniqueUser = (int) metrics.stream()
+      .map(DarDecisionMetrics::getCountUniqueUsers)
+      .mapToInt(Integer::intValue)
+      .average()
+      .orElse(0);
+  }
+
+  public Integer getAverageCountUniqueUser() { return averageCountUniqueUser; }
 
   public Integer getDarsReceived() {
     return darsReceived;
