@@ -230,7 +230,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
    * @param election The election
    */
   private void setSrpDecision(Election election) {
-    if (Objects.nonNull(election)) {
+    if (Objects.nonNull(dacDecision) && Objects.nonNull(election)) {
       Boolean rpVote =
         Objects.nonNull(election.getFinalVote())
           ? election.getFinalVote()
