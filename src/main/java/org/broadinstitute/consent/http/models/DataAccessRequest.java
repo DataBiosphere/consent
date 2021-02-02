@@ -12,13 +12,10 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequest {
@@ -115,29 +112,6 @@ public class DataAccessRequest {
 
   public void setUpdateDate(Timestamp updateDate) {
     this.updateDate = updateDate;
-  }
-
-  public Integer getCountUsers() {
-    List<String> emails = null;
-    if (Objects.nonNull(data)) {
-      ArrayList<Collaborator> collabs = new ArrayList<>();
-      if (Objects.nonNull(data.getInternalCollaborators())) {
-        collabs.addAll(data.getInternalCollaborators());
-      }
-      if (Objects.nonNull(data.getLabCollaborators())) {
-        collabs.addAll(data.getLabCollaborators());
-      }
-      emails = collabs.stream().map(collaborator -> Objects.requireNonNull(collaborator).getEmail()).collect(Collectors.toList());
-
-      if (Objects.nonNull(data.getAcademicEmail())) {
-        emails.add(data.getAcademicEmail());
-      }
-      if (Objects.nonNull(data.getPiEmail())) {
-        emails.add(data.getPiEmail());
-      }
-      emails = emails.stream().map(String::toLowerCase).distinct().collect(Collectors.toList());
-    }
-    return Objects.nonNull(emails) ? emails.size() : 0;
   }
 
     /**

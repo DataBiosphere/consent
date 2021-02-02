@@ -4,9 +4,12 @@ import org.broadinstitute.consent.http.util.DatasetUtil;
 
 import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Generate a row of dar decision data in the form of:
@@ -118,7 +121,23 @@ public class DarDecisionMetrics implements DecisionMetrics {
   }
 
   private void setCountUniqueUser(DataAccessRequest dar) {
-    this.countUniqueUser = dar.getCountUsers();
+    List<String> emails = null;
+    if (Objects.nonNull(dar.data)) {
+      ArrayList<Collaborator> collabs = new ArrayList<>();
+      if (Objects.nonNull(dar.data.getInternalCollaborators())) {
+        collabs.addAll(dar.data.getInternalCollaborators());
+      }
+      if (Objects.nonNull(dar.data.getLabCollaborators())) {
+        collabs.addAll(dar.data.getLabCollaborators());
+      }
+      emails = collabs
+        .stream()
+        .filter(Objects::nonNull)
+        .map(Collaborator::getEmail)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+    }
+    this.countUniqueUser = Objects.nonNull(emails) ? emails.size() : 0;
   }
 
   public Integer getCountUniqueUsers() { return countUniqueUser; }
