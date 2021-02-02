@@ -113,6 +113,7 @@ public class DataAccessRequest {
   public void setUpdateDate(Timestamp updateDate) {
     this.updateDate = updateDate;
   }
+
   /**
    * Merges the DAR and the DAR Data into a single Map Ignores a series of deprecated keys Null
    * values are ignored by default
