@@ -4,8 +4,8 @@ import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetMapper;
+import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
 import org.broadinstitute.consent.http.db.mapper.MatchMapper;
-import org.broadinstitute.consent.http.db.mapper.SimpleElectionMapper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -26,13 +26,20 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
   List<DataAccessRequest> findAllDars();
 
   @SqlQuery(
-      " SELECT e.* FROM election e "
-          + " INNER JOIN "
-          + "   (SELECT e.referenceid, MAX(e.createdate) AS maxDate "
-          + "    FROM election e "
-          + "    GROUP BY e.referenceid ) electionView ON electionView.maxDate = e.createdate AND electionView.referenceid = e.referenceid "
-          + " WHERE e.referenceid in (<referenceIds>) ")
-  @UseRowMapper(SimpleElectionMapper.class)
+    " SELECT e.*, v.vote finalvote, v.rationale finalrationale, v.createdate finalvotedate "
+      + " FROM election e "
+      + " INNER JOIN "
+      + "   (SELECT e.referenceid, MAX(e.createdate) AS maxDate "
+      + "    FROM election e "
+      + "    GROUP BY e.referenceid ) electionView ON electionView.maxDate = e.createdate AND electionView.referenceid = e.referenceid "
+      + " LEFT JOIN vote v ON v.electionid = e.electionid AND "
+      + "    CASE "
+      + "        WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final' "
+      + "        WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
+      + "        ELSE 'chairperson' "
+      + "    END = LOWER(v.type)"
+      + " WHERE e.referenceid in (<referenceIds>) ")
+  @UseRowMapper(ElectionMapper.class)
   List<Election> findLastElectionsByReferenceIds(
       @BindList("referenceIds") List<String> referenceIds);
 

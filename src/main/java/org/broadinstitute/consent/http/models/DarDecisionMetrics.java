@@ -82,7 +82,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
       getValue(getDateSubmitted()),
       getValue(getDateApproved()),
       getValue(getDateDenied()),
-      getValue(getTurnaroundTime().toString()),
+      getValue(getTurnaroundTime()),
       getValue(getDacDecision()),
       getValue(getAlgorithmDecision()),
       getValue(getDacDecision().equals(getAlgorithmDecision()) ? "Yes" : "No"),
@@ -254,7 +254,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
    * @param election The election
    */
   private void setSrpDecision(Election election) {
-    if (Objects.nonNull(election)) {
+    if (Objects.nonNull(dacDecision) && Objects.nonNull(election)) {
       Boolean rpVote =
         Objects.nonNull(election.getFinalVote())
           ? election.getFinalVote()
@@ -271,7 +271,9 @@ public class DarDecisionMetrics implements DecisionMetrics {
     return Objects.nonNull(str) ? str : "";
   }
 
-  private String getValue(Integer i) { return Objects.nonNull(i) ? i.toString() : ""; }
+  private String getValue(Integer i) {
+    return Objects.nonNull(i) ? i.toString() : "";
+  }
 
   private String getValue(Date date) {
     return Objects.nonNull(date) ? sdf.format(date) : "";
