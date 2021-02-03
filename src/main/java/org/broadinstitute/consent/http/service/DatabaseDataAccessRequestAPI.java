@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
@@ -28,6 +29,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
@@ -186,20 +188,21 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
-     *
      * @return List<UseRestrictionDTO>
      */
     @Override
     public List<UseRestrictionDTO> getInvalidDataAccessRequest() {
-        List<Document> darList = dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
-                filter(d -> !d.getBoolean(DarConstants.VALID_RESTRICTION)).
-                collect(Collectors.toList());
-        List<UseRestrictionDTO> invalidRestrictions = new ArrayList<>();
-        darList.forEach(c->{
-            invalidRestrictions.add(new UseRestrictionDTO(c.get(DarConstants.DAR_CODE, String.class),new Gson().toJson(c.get(DarConstants.RESTRICTION, Map.class))));
-        });
-        return invalidRestrictions;
+        Gson gson = new Gson();
+        List<DataAccessRequest> invalidDars = dataAccessRequestService.findAllDataAccessRequests().stream()
+            .filter(d -> Objects.nonNull(d.getData()))
+            .filter(d -> Objects.nonNull(d.getData().getValidRestriction()))
+            .filter(d -> Objects.nonNull(d.getData().getDarCode()))
+            .filter(d -> Objects.nonNull(d.getData().getRestriction()))
+            .filter(d -> !d.getData().getValidRestriction())
+            .collect(Collectors.toList());
+        return invalidDars.stream()
+            .map(d -> new UseRestrictionDTO(d.getData().getDarCode(), gson.toJson(d.getData().getRestriction(), Map.class)))
+            .collect(Collectors.toList());
     }
 
     private void updateElection(Election access, Election rp) {
