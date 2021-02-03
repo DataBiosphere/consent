@@ -1677,6 +1677,15 @@ paths:
           description: Unable to find the Data Access Request with the provided id
         500:
           description: Internal error
+  /api/dar/invalid:
+    get:
+      summary: List Invalid Data Access Requests
+      description: Admin only endpoint to list Invalid Data Access Requests
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: List of Invalid Data Access Requests
   /api/dar/modalSummary/{id}:
     get:
       summary: getDataAcessRequestModalSummary
