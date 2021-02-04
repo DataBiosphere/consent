@@ -5,10 +5,8 @@ import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.ConsentManageMapper;
 import org.broadinstitute.consent.http.db.mapper.ConsentMapper;
-import org.broadinstitute.consent.http.db.mapper.UseRestrictionMapper;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
-import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -154,10 +152,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select ca.consentId from consentassociations ca  where ca.dataSetId IN (<dataSetIdList>) ")
     List<String> getAssociationConsentIdsFromDatasetIds(@BindList("dataSetIdList") List<Integer> dataSetIdList);
-
-    @UseRowMapper(UseRestrictionMapper.class)
-    @SqlQuery("select consentId, name, useRestriction from consents where valid_restriction = false ")
-    List<UseRestrictionDTO> findInvalidRestrictions();
 
     @SqlUpdate("update consents set updated = :updated where consentId = :referenceId")
     void updateConsentUpdateStatus(@Bind("referenceId") String referenceId,

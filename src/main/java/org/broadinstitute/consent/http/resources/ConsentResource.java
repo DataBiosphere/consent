@@ -83,17 +83,17 @@ public class ConsentResource extends Resource {
         }
     }
 
-    @Path("invalid")
-    @GET
-    @Produces("application/json")
-    @RolesAllowed({ADMIN})
-    public Response describeInvalidConsents() {
-        try {
-            return Response.ok(api.getInvalidConsents()).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
-        }
-    }
+//    @Path("invalid")
+//    @GET
+//    @Produces("application/json")
+//    @RolesAllowed({ADMIN})
+//    public Response describeInvalidConsents() {
+//        try {
+//            return Response.ok(api.getInvalidConsents()).build();
+//        } catch (Exception e) {
+//            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+//        }
+//    }
 
     @POST
     @Consumes("application/json")

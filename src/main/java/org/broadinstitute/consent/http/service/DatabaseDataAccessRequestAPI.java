@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.gson.Gson;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
@@ -35,7 +34,6 @@ import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
@@ -183,23 +181,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public boolean hasUseRestriction(String referenceId){
         return getField(referenceId, DarConstants.RESTRICTION) != null ? true : false;
-    }
-
-    /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
-     *
-     * @return List<UseRestrictionDTO>
-     */
-    @Override
-    public List<UseRestrictionDTO> getInvalidDataAccessRequest() {
-        List<Document> darList = dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
-                filter(d -> !d.getBoolean(DarConstants.VALID_RESTRICTION)).
-                collect(Collectors.toList());
-        List<UseRestrictionDTO> invalidRestrictions = new ArrayList<>();
-        darList.forEach(c->{
-            invalidRestrictions.add(new UseRestrictionDTO(c.get(DarConstants.DAR_CODE, String.class),new Gson().toJson(c.get(DarConstants.RESTRICTION, Map.class))));
-        });
-        return invalidRestrictions;
     }
 
     private void updateElection(Election access, Election rp) {

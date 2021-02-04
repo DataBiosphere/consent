@@ -94,19 +94,6 @@ public class DataAccessRequestResource extends Resource {
 
     @GET
     @Produces("application/json")
-    @Path("/invalid")
-    @RolesAllowed(ADMIN)
-    public Response getInvalidDataAccessRequest() {
-        try {
-            return Response.status(Response.Status.OK).entity(dataAccessRequestAPI.getInvalidDataAccessRequest()).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-
-    }
-
-    @GET
-    @Produces("application/json")
     @PermitAll
     public Response describeDataAccessRequests(@Auth AuthUser authUser) {
         List<Document> documents = dataAccessRequestService.describeDataAccessRequests(authUser);

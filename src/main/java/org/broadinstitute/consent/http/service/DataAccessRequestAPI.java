@@ -7,7 +7,6 @@ import java.util.Map;
 import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.bson.Document;
 
@@ -29,8 +28,6 @@ public interface DataAccessRequestAPI {
     List<User> getUserEmailAndCancelElection(String referenceId);
 
     boolean hasUseRestriction(String referenceId);
-
-    List<UseRestrictionDTO> getInvalidDataAccessRequest();
 
     byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, User user, Boolean manualReview, String sDUR) throws IOException;
 

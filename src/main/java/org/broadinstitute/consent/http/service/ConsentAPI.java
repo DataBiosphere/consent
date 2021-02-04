@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import java.util.List;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 
 public interface ConsentAPI {
 
@@ -39,8 +38,6 @@ public interface ConsentAPI {
     Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException;
 
     String getConsentDulUrl(String consentId) throws UnknownIdentifierException;
-
-    List<UseRestrictionDTO> getInvalidConsents();
 
     /**
      * Method to check if a workspace is already associated with a consentId
