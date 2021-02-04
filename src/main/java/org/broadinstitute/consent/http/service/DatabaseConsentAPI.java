@@ -95,7 +95,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         consentDAO.insertConsent(id, rec.getRequiresManualReview(),
                 rec.getUseRestriction().toString(), rec.getDataUse().toString(),
                 rec.getDataUseLetter(), rec.getName(), rec.getDulName(), createDate, createDate,
-                rec.getTranslatedUseRestriction(), true, rec.getGroupName(),
+                rec.getTranslatedUseRestriction(), rec.getGroupName(),
                 rec.getDacId());
         return consentDAO.findConsentById(id);
     }

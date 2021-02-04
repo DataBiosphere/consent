@@ -268,7 +268,7 @@ public class DatasetServiceTest {
         Consent consent = new Consent();
         when(consentDAO.findConsentById(anyString())).thenReturn(consent);
         when(useRestrictionConverter.parseUseRestriction(any())).thenReturn(useRestriction);
-        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         doNothing().when(consentDAO).insertConsentAssociation(any(), any(), any());
         initService();
 

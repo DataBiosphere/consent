@@ -282,7 +282,6 @@ public class DAOTestHelper {
                 new Date(),
                 new Date(),
                 "Everything",
-                true,
                 "Group",
                 dacId);
         createdConsentIds.add(consentId);
