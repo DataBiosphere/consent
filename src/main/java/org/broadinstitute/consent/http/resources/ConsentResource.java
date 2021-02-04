@@ -4,30 +4,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.enumeration.Actions;
-import org.broadinstitute.consent.http.enumeration.AuditTable;
-import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
-import org.broadinstitute.consent.http.service.AuditService;
-import org.broadinstitute.consent.http.service.ConsentAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.MatchAPI;
-import org.broadinstitute.consent.http.service.MatchProcessAPI;
-import org.broadinstitute.consent.http.service.UnknownIdentifierException;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
-import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
-import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
-
+import java.net.URI;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -44,13 +21,32 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
+import org.broadinstitute.consent.http.enumeration.Actions;
+import org.broadinstitute.consent.http.enumeration.AuditTable;
+import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.AbstractConsentAPI;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
+import org.broadinstitute.consent.http.service.AbstractMatchAPI;
+import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
+import org.broadinstitute.consent.http.service.AuditService;
+import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.MatchAPI;
+import org.broadinstitute.consent.http.service.MatchProcessAPI;
+import org.broadinstitute.consent.http.service.UnknownIdentifierException;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
+import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 
 @Path("{auth: (basic/|api/)?}consent")
 public class ConsentResource extends Resource {
 
     private final ConsentAPI api;
-    private final DACUserAPI dacUserAPI;
     private final AuditService auditService;
     private final MatchProcessAPI matchProcessAPI;
     private final MatchAPI matchAPI;
@@ -65,7 +61,6 @@ public class ConsentResource extends Resource {
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.matchAPI = AbstractMatchAPI.getInstance();
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
-        this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.userService = userService;
     }
@@ -82,18 +77,6 @@ public class ConsentResource extends Resource {
             return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s", id), Response.Status.NOT_FOUND.getStatusCode())).build();
         }
     }
-
-//    @Path("invalid")
-//    @GET
-//    @Produces("application/json")
-//    @RolesAllowed({ADMIN})
-//    public Response describeInvalidConsents() {
-//        try {
-//            return Response.ok(api.getInvalidConsents()).build();
-//        } catch (Exception e) {
-//            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
-//        }
-//    }
 
     @POST
     @Consumes("application/json")
