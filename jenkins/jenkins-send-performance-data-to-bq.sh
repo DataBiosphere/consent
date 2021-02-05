@@ -31,7 +31,7 @@ log "$(printf 'Executing script %s...\n' \
 
 # Set CLOUDSDK_CONFIG to unique temp directory
 export BUILD_TMP="${HOME}/${BUILD_TAG}"
-mkdir -p ${BUILD_TMP}
+mkdir -p "${BUILD_TMP}"
 export CLOUDSDK_CONFIG=${BUILD_TMP}
 echo "CLOUDSDK_CONFIG=${CLOUDSDK_CONFIG}"
 
@@ -54,7 +54,7 @@ request"
 
 for table in $listOfTables; do
     echo "Writing to $table..."
-    local_file_name=$(ls target/test-reports/ | grep $table.json | head -n 1)
+    local_file_name="$(ls target/test-reports/ | grep $table.json | head -n 1)"
     local_table_file_fqn="target/test-reports/$local_file_name"
     gcs_bucket_table_file_url="gs://${BUCKET:?}/${local_file_name:?}"
     bq_dst_table_fqn="${PROJECT:?}:${NAMESPACE:?}.${table:?}"
