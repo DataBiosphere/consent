@@ -19,8 +19,6 @@ public class DarConstants {
 
     public static final String DAR_CODE = "darCode";
 
-    public static final String VALID_RESTRICTION = "valid_restriction";
-
     public static final String RUS = "rus";
 
     public static final String DATA_ACCESS_REQUEST_ID = "data_access_request_id";
@@ -30,8 +28,6 @@ public class DarConstants {
     public static final String RESTRICTION = "restriction";
 
     public static final String TRANSLATED_RESTRICTION = "translatedUseRestriction";
-
-    public static final String PARTIAL_DAR_CODE = "partialDarCode";
 
     public static final String STATUS = "status";
 

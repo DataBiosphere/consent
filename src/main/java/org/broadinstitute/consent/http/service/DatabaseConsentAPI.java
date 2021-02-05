@@ -26,7 +26,6 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.generic.GenericType;
@@ -96,7 +95,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         consentDAO.insertConsent(id, rec.getRequiresManualReview(),
                 rec.getUseRestriction().toString(), rec.getDataUse().toString(),
                 rec.getDataUseLetter(), rec.getName(), rec.getDulName(), createDate, createDate,
-                rec.getTranslatedUseRestriction(), true, rec.getGroupName(),
+                rec.getTranslatedUseRestriction(), rec.getGroupName(),
                 rec.getDacId());
         return consentDAO.findConsentById(id);
     }
@@ -355,11 +354,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         }
         logger.debug(String.format("getAllAssociationsForConsent - returning '%s'", assoc_list.toString()));
         return assoc_list;
-    }
-
-    @Override
-    public List<UseRestrictionDTO> getInvalidConsents() {
-        return consentDAO.findInvalidRestrictions();
     }
 
     @Override

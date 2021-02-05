@@ -78,7 +78,7 @@ public class DatasetService {
             consentDAO.insertConsent(consentId, manualReview, useRestriction.toString(),
                   dataset.getDataUse().toString(),
                   null, name, null, createDate, createDate, null,
-                  true, groupName, dataset.getDacId());
+                  groupName, dataset.getDacId());
             String associationType = AssociationType.SAMPLESET.getValue();
             consentDAO.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
             return consentDAO.findConsentById(consentId);
