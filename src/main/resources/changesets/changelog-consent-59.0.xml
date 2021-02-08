@@ -1,0 +1,14 @@
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet dbms="postgresql" author="grushton" id="59.0">
+        <renameTable
+          oldTableName="researcher_property"
+          newTableName="user_property"
+        />
+    </changeSet>
+
+</databaseChangeLog>
