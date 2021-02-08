@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.List;
 
 @RegisterRowMapper(ResearcherPropertyMapper.class)
-public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyDAO> {
+public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
 
     String INSTITUTION = "institution";
     String ARE_YOU_PRINCIPAL_INVESTIGATOR = "isThePI";

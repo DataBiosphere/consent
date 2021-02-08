@@ -26,7 +26,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -81,7 +81,7 @@ public class ConsentModule extends AbstractModule {
     private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     private final DataSetAuditDAO datasetAuditDAO;
     private final MailServiceDAO mailServiceDAO;
-    private final ResearcherPropertyDAO researcherPropertyDAO;
+    private final UserPropertyDAO userPropertyDAO;
     private final WorkspaceAuditDAO workspaceAuditDAO;
     private final AssociationDAO associationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -115,7 +115,7 @@ public class ConsentModule extends AbstractModule {
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         this.datasetAuditDAO = this.jdbi.onDemand(DataSetAuditDAO.class);
         this.mailServiceDAO = this.jdbi.onDemand(MailServiceDAO.class);
-        this.researcherPropertyDAO = this.jdbi.onDemand(ResearcherPropertyDAO.class);
+        this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
         this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
         this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
@@ -400,8 +400,8 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    ResearcherPropertyDAO providesResearcherPropertyDAO() {
-        return researcherPropertyDAO;
+    UserPropertyDAO providesResearcherPropertyDAO() {
+        return userPropertyDAO;
     }
 
     @Provides

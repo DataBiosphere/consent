@@ -176,7 +176,7 @@ public class UserDAOTest extends DAOTestHelper {
         p.setPropertyKey(ResearcherFields.COMPLETED.getValue());
         p.setPropertyValue("true");
         p.setUserId(u.getDacUserId());
-        researcherPropertyDAO.insertAll(Collections.singletonList(p));
+        userPropertyDAO.insertAll(Collections.singletonList(p));
         List<User> users = new ArrayList<>(userDAO.findUsers());
         assertNotNull(users);
         assertFalse(users.isEmpty());

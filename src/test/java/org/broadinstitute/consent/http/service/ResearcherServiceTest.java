@@ -17,7 +17,7 @@ import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -46,7 +46,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 public class ResearcherServiceTest {
 
     @Mock
-    private ResearcherPropertyDAO researcherPropertyDAO;
+    private UserPropertyDAO userPropertyDAO;
 
     @Mock
     private UserDAO userDAO;
@@ -80,7 +80,7 @@ public class ResearcherServiceTest {
     }
 
     private void initService() {
-        service = new ResearcherPropertyHandler(researcherPropertyDAO, userDAO, emailNotifierService);
+        service = new ResearcherPropertyHandler(userPropertyDAO, userDAO, emailNotifierService);
     }
 
     @Test
@@ -93,7 +93,7 @@ public class ResearcherServiceTest {
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
-        when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(Collections.singletonList(prop));
+        when(userPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(Collections.singletonList(prop));
         initService();
 
         List<UserProperty> props = service.setProperties(propMap, authUser);
@@ -133,7 +133,7 @@ public class ResearcherServiceTest {
         }
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
-        when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
+        when(userPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
         initService();
 
         List<UserProperty> foundProps = service.updateProperties(propMap, authUser, true);
@@ -151,7 +151,7 @@ public class ResearcherServiceTest {
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
-        when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(Collections.singletonList(prop));
+        when(userPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(Collections.singletonList(prop));
         initService();
 
         List<UserProperty> props = service.updateProperties(propMap, authUser, false);
@@ -205,11 +205,11 @@ public class ResearcherServiceTest {
         propMap.put(ResearcherFields.COMPLETED.getValue(), Boolean.FALSE.toString());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
-        when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
-        when(researcherPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.FALSE.toString());
-        doNothing().when(researcherPropertyDAO).deletePropertiesByUserAndKey(any());
-        doNothing().when(researcherPropertyDAO).insertAll(any());
-        doNothing().when(researcherPropertyDAO).deleteAllPropertiesByUser(any());
+        when(userPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
+        when(userPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.FALSE.toString());
+        doNothing().when(userPropertyDAO).deletePropertiesByUserAndKey(any());
+        doNothing().when(userPropertyDAO).insertAll(any());
+        doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(any());
         when(dacUserAPI.updateUserStatus(any(), any())).thenReturn(user);
         doNothing().when(emailNotifierService).sendNewResearcherCreatedMessage(any(), any());
         initService();
@@ -234,11 +234,11 @@ public class ResearcherServiceTest {
         propMap.put(ResearcherFields.COMPLETED.getValue(), Boolean.TRUE.toString());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
-        when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
-        when(researcherPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.TRUE.toString());
-        doNothing().when(researcherPropertyDAO).deletePropertiesByUserAndKey(any());
-        doNothing().when(researcherPropertyDAO).insertAll(any());
-        doNothing().when(researcherPropertyDAO).deleteAllPropertiesByUser(any());
+        when(userPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
+        when(userPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.TRUE.toString());
+        doNothing().when(userPropertyDAO).deletePropertiesByUserAndKey(any());
+        doNothing().when(userPropertyDAO).insertAll(any());
+        doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(any());
         when(dacUserAPI.updateUserStatus(any(), any())).thenReturn(user);
         doNothing().when(emailNotifierService).sendNewResearcherCreatedMessage(any(), any());
         initService();

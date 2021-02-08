@@ -12,7 +12,7 @@ import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 public class ResearcherPropertyHandler implements ResearcherService {
 
-    private ResearcherPropertyDAO researcherPropertyDAO;
+    private UserPropertyDAO userPropertyDAO;
     private UserDAO userDAO;
     private final EmailNotifierService emailNotifierService;
     private DACUserAPI dacUserAPI = AbstractDACUserAPI.getInstance();
@@ -37,8 +37,8 @@ public class ResearcherPropertyHandler implements ResearcherService {
         return LoggerFactory.getLogger(this.getClass());
     }
 
-    public ResearcherPropertyHandler(ResearcherPropertyDAO researcherPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService) {
-        this.researcherPropertyDAO = researcherPropertyDAO;
+    public ResearcherPropertyHandler(UserPropertyDAO userPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService) {
+        this.userPropertyDAO = userPropertyDAO;
         this.userDAO = userDAO;
         this.emailNotifierService = emailNotifierService;
     }
@@ -61,7 +61,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
         if (validate) validateRequiredFields(researcherPropertiesMap);
         validateExistentFields(researcherPropertiesMap);
         Boolean isUpdatedProfileCompleted = Boolean.valueOf(researcherPropertiesMap.get(ResearcherFields.COMPLETED.getValue()));
-        String completed = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
+        String completed = userPropertyDAO.isProfileCompleted(user.getDacUserId());
         Boolean isProfileCompleted = Boolean.valueOf(completed);
         List<UserProperty> properties = getResearcherProperties(researcherPropertiesMap, user.getDacUserId());
         if (!isProfileCompleted && isUpdatedProfileCompleted) {
@@ -78,8 +78,8 @@ public class ResearcherPropertyHandler implements ResearcherService {
     }
 
     private void saveProperties(List<UserProperty> properties) {
-        researcherPropertyDAO.deletePropertiesByUserAndKey(properties);
-        researcherPropertyDAO.insertAll(properties);
+        userPropertyDAO.deletePropertiesByUserAndKey(properties);
+        userPropertyDAO.insertAll(properties);
     }
 
     @Override
@@ -90,12 +90,12 @@ public class ResearcherPropertyHandler implements ResearcherService {
 
     @Override
     public void deleteResearcherProperties(Integer userId) {
-        researcherPropertyDAO.deleteAllPropertiesByUser(userId);
+        userPropertyDAO.deleteAllPropertiesByUser(userId);
     }
 
     @Override
     public void deleteResearcherSpecificProperties(List<UserProperty> properties) {
-        researcherPropertyDAO.deletePropertiesByUserAndKey(properties);
+        userPropertyDAO.deletePropertiesByUserAndKey(properties);
     }
 
     @Override
@@ -152,7 +152,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
 
     private List<UserProperty> describeResearcherProperties(Integer userId) {
         validateUser(userId);
-        return researcherPropertyDAO.findResearcherPropertiesByUser(userId);
+        return userPropertyDAO.findResearcherPropertiesByUser(userId);
     }
 
     private void validateRequiredFields(Map<String, String> properties) {
@@ -189,11 +189,15 @@ public class ResearcherPropertyHandler implements ResearcherService {
             String eRACommonsID = researcherPropertiesMap.getOrDefault(ResearcherFields.ERA_COMMONS_ID.getValue(), "");
             String pubmedID = researcherPropertiesMap.getOrDefault(ResearcherFields.PUBMED_ID.getValue(), "");
             String scientificURL = researcherPropertiesMap.getOrDefault(ResearcherFields.SCIENTIFIC_URL.getValue(), "");
-            if (StringUtils.isNotEmpty(eRACommonsID) && StringUtils.isEmpty(researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.ERA_COMMONS_ID.getValue())) ||
-                    StringUtils.isNotEmpty(pubmedID) && StringUtils.isEmpty(researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.PUBMED_ID.getValue())) ||
-                    StringUtils.isNotEmpty(scientificURL) && StringUtils.isEmpty(researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.SCIENTIFIC_URL.getValue()))) {
+            if (StringUtils.isNotEmpty(eRACommonsID) && StringUtils.isEmpty(
+                userPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.ERA_COMMONS_ID.getValue())) ||
+                    StringUtils.isNotEmpty(pubmedID) && StringUtils.isEmpty(
+                        userPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.PUBMED_ID.getValue())) ||
+                    StringUtils.isNotEmpty(scientificURL) && StringUtils.isEmpty(
+                        userPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.SCIENTIFIC_URL.getValue()))) {
                 hasUpdatedFields = true;
-            } else if (CollectionUtils.isNotEmpty(researcherPropertyDAO.findResearcherProperties(userId, institutionName, isThePI, havePI, eRACommonsID, pubmedID, scientificURL))) {
+            } else if (CollectionUtils.isNotEmpty(userPropertyDAO
+                .findResearcherProperties(userId, institutionName, isThePI, havePI, eRACommonsID, pubmedID, scientificURL))) {
                 hasUpdatedFields = true;
             }
         }
@@ -201,7 +205,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
     }
 
     private void notifyAdmins(Integer userId, String action) {
-        String completed = researcherPropertyDAO.isProfileCompleted(userId);
+        String completed = userPropertyDAO.isProfileCompleted(userId);
         if (Boolean.parseBoolean(completed)) {
             try {
                 emailNotifierService.sendNewResearcherCreatedMessage(userId, action);

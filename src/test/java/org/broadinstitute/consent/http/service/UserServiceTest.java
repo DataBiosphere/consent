@@ -16,7 +16,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -34,7 +34,7 @@ public class UserServiceTest {
     private UserDAO userDAO;
 
     @Mock
-    private ResearcherPropertyDAO researcherPropertyDAO;
+    private UserPropertyDAO userPropertyDAO;
 
     @Mock
     private UserRoleDAO roleDAO;
@@ -50,7 +50,7 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, researcherPropertyDAO, roleDAO, voteDAO);
+        service = new UserService(userDAO, userPropertyDAO, roleDAO, voteDAO);
     }
 
     @Test
@@ -208,7 +208,7 @@ public class UserServiceTest {
     @Test
     public void testDeleteUser() {
         User u = generateUser();
-        doNothing().when(researcherPropertyDAO).deleteAllPropertiesByUser(any());
+        doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(any());
         when(userDAO.findUserByEmail(any())).thenReturn(u);
         initService();
 

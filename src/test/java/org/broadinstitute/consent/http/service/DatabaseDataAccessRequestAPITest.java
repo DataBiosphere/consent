@@ -14,7 +14,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
@@ -37,7 +37,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Mock
     private ConsentDAO consentDAO;
     @Mock
-    private ResearcherPropertyDAO researcherPropertyDAO;
+    private UserPropertyDAO userPropertyDAO;
     @Mock
     private VoteDAO voteDAO;
     @Mock
@@ -62,17 +62,18 @@ public class DatabaseDataAccessRequestAPITest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
+        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
+            userPropertyDAO);
     }
 
     @Test
     public void testUpdateResearcherWithLinkedInIdentification() {
-        when(researcherPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.LINKEDIN_PROFILE.getValue())).thenReturn(LINKEDIN_PROFILE);
-        when(researcherPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.ORCID.getValue())).thenReturn(ORCID);
-        when(researcherPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.RESEARCHER_GATE.getValue())).thenReturn(RESEARCHER_GATE);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.LINKEDIN_PROFILE.getValue())).thenReturn(LINKEDIN_PROFILE);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.ORCID.getValue())).thenReturn(ORCID);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.RESEARCHER_GATE.getValue())).thenReturn(RESEARCHER_GATE);
         Document dar = getDocument("https://www.linkedin.com/in/veronica/", ORCID, RESEARCHER_GATE);
         List<UserProperty> properties = databaseDataAccessRequestAPI.updateResearcherIdentification(dar);
-        verify(researcherPropertyDAO, times(1)).insertAll(any());
+        verify(userPropertyDAO, times(1)).insertAll(any());
         Assert.assertEquals(3, properties.size());
         properties.forEach(researcherProperty -> {
             if (researcherProperty.getPropertyKey().equals(ResearcherFields.LINKEDIN_PROFILE.getValue())) {
@@ -87,12 +88,12 @@ public class DatabaseDataAccessRequestAPITest {
 
     @Test
     public void testUpdateResearcherWithOrcIdAndNullLinkedInAndResearcherGateIdentification() {
-        when(researcherPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.LINKEDIN_PROFILE.getValue())).thenReturn(LINKEDIN_PROFILE);
-        when(researcherPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.ORCID.getValue())).thenReturn(ORCID);
-        when(researcherPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.RESEARCHER_GATE.getValue())).thenReturn(RESEARCHER_GATE);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.LINKEDIN_PROFILE.getValue())).thenReturn(LINKEDIN_PROFILE);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.ORCID.getValue())).thenReturn(ORCID);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.RESEARCHER_GATE.getValue())).thenReturn(RESEARCHER_GATE);
         Document dar = getDocument(null, "845246551313515", null);
         List<UserProperty> properties = databaseDataAccessRequestAPI.updateResearcherIdentification(dar);
-        verify(researcherPropertyDAO, times(1)).insertAll(anyObject());
+        verify(userPropertyDAO, times(1)).insertAll(anyObject());
         Assert.assertEquals(1, properties.size());
         Assert.assertEquals(properties.get(0).getPropertyKey(), ResearcherFields.ORCID.getValue());
         Assert.assertEquals("845246551313515", properties.get(0).getPropertyValue());
