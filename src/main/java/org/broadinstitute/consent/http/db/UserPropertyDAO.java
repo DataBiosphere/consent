@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.db.mapper.ResearcherPropertyMapper;
+import org.broadinstitute.consent.http.db.mapper.UserPropertyMapper;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -14,7 +14,7 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;
 
-@RegisterRowMapper(ResearcherPropertyMapper.class)
+@RegisterRowMapper(UserPropertyMapper.class)
 public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
 
     String INSTITUTION = "institution";

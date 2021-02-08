@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class ResearcherPropertyMapper implements RowMapper<UserProperty> {
+public class UserPropertyMapper implements RowMapper<UserProperty> {
 
   @Override
   public UserProperty map(ResultSet r, StatementContext statementContext)
