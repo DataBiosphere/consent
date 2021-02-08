@@ -17,7 +17,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
@@ -99,7 +99,7 @@ public class UserService {
         userDAO.deleteUserByEmail(email);
     }
 
-    public List<ResearcherProperty> findAllUserProperties(Integer userId) {
+    public List<UserProperty> findAllUserProperties(Integer userId) {
         return researcherPropertyDAO.findResearcherPropertiesByUser(userId);
     }
 

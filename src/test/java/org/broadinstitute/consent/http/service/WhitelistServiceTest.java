@@ -15,7 +15,7 @@ import javax.ws.rs.BadRequestException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.models.WhitelistHeaders;
@@ -89,8 +89,8 @@ public class WhitelistServiceTest {
         User user = new User();
         user.setDacUserId(1);
         user.setEmail("email");
-        List<ResearcherProperty> properties = new ArrayList<>();
-        properties.add(new ResearcherProperty(1, ResearcherFields.ERA_COMMONS_ID.getValue(), matchField));
+        List<UserProperty> properties = new ArrayList<>();
+        properties.add(new UserProperty(1, ResearcherFields.ERA_COMMONS_ID.getValue(), matchField));
 
         initServices(fileData);
         service.postWhitelist(fileData);
@@ -105,8 +105,8 @@ public class WhitelistServiceTest {
         User user = new User();
         user.setDacUserId(1);
         user.setEmail(matchField);
-        List<ResearcherProperty> properties = new ArrayList<>();
-        properties.add(new ResearcherProperty(1, ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue(), matchField));
+        List<UserProperty> properties = new ArrayList<>();
+        properties.add(new UserProperty(1, ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue(), matchField));
 
         initServices(fileData);
         service.postWhitelist(fileData);
@@ -121,10 +121,10 @@ public class WhitelistServiceTest {
         User user = new User();
         user.setDacUserId(1);
         user.setEmail(matchField);
-        List<ResearcherProperty> properties = new ArrayList<>();
-        properties.add(new ResearcherProperty(1, ResearcherFields.ERA_COMMONS_ID.getValue(), matchField));
-        properties.add(new ResearcherProperty(1, ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue(), matchField));
-        properties.add(new ResearcherProperty(1, ResearcherFields.INSTITUTION.getValue(), matchField));
+        List<UserProperty> properties = new ArrayList<>();
+        properties.add(new UserProperty(1, ResearcherFields.ERA_COMMONS_ID.getValue(), matchField));
+        properties.add(new UserProperty(1, ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue(), matchField));
+        properties.add(new UserProperty(1, ResearcherFields.INSTITUTION.getValue(), matchField));
 
         initServices(fileData);
         service.postWhitelist(fileData);

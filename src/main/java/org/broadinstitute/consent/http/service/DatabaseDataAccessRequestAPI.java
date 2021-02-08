@@ -30,7 +30,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -318,7 +318,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         Optional<User> optionalUser = Optional.ofNullable(user);
         String status = optionalUser.isPresent() ? user.getStatus() : "";
         String rationale = optionalUser.isPresent() ? user.getRationale() : "";
-        List<ResearcherProperty> researcherProperties = optionalUser.isPresent() ?
+        List<UserProperty> researcherProperties = optionalUser.isPresent() ?
                 researcherPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId()) :
                 Collections.emptyList();
         return darModalDetailsDTO
@@ -381,21 +381,21 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return accessIds;
     }
 
-    protected List<ResearcherProperty> updateResearcherIdentification(Document dataAccessRequest) {
+    protected List<UserProperty> updateResearcherIdentification(Document dataAccessRequest) {
         Integer userId = dataAccessRequest.getInteger(DarConstants.USER_ID);
         String linkedIn = dataAccessRequest.getString(ResearcherFields.LINKEDIN_PROFILE.getValue());
         String orcId = dataAccessRequest.getString(ResearcherFields.ORCID.getValue());
         String researcherGate = dataAccessRequest.getString(ResearcherFields.RESEARCHER_GATE.getValue());
-        List<ResearcherProperty> rpList = new ArrayList<>();
+        List<UserProperty> rpList = new ArrayList<>();
         researcherPropertyDAO.deletePropertyByUser(Arrays.asList(ResearcherFields.LINKEDIN_PROFILE.getValue(), ResearcherFields.ORCID.getValue(), ResearcherFields.RESEARCHER_GATE.getValue()), userId);
         if (StringUtils.isNotEmpty(linkedIn)) {
-          rpList.add(new ResearcherProperty(userId, ResearcherFields.LINKEDIN_PROFILE.getValue(), linkedIn));
+          rpList.add(new UserProperty(userId, ResearcherFields.LINKEDIN_PROFILE.getValue(), linkedIn));
         }
         if (StringUtils.isNotEmpty(orcId)) {
-          rpList.add(new ResearcherProperty(userId, ResearcherFields.ORCID.getValue(), orcId));
+          rpList.add(new UserProperty(userId, ResearcherFields.ORCID.getValue(), orcId));
         }
         if (StringUtils.isNotEmpty(researcherGate)) {
-           rpList.add(new ResearcherProperty(userId, ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate));
+           rpList.add(new UserProperty(userId, ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate));
         }
         if (CollectionUtils.isNotEmpty(rpList)) {
            researcherPropertyDAO.insertAll(rpList);

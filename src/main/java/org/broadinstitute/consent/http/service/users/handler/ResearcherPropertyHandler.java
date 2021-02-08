@@ -17,7 +17,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -44,18 +44,18 @@ public class ResearcherPropertyHandler implements ResearcherService {
     }
 
     @Override
-    public List<ResearcherProperty> setProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser) throws NotFoundException, IllegalArgumentException {
+    public List<UserProperty> setProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser) throws NotFoundException, IllegalArgumentException {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         validateExistentFields(researcherPropertiesMap);
-        List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, user.getDacUserId());
+        List<UserProperty> properties = getResearcherProperties(researcherPropertiesMap, user.getDacUserId());
         saveProperties(properties);
         notifyAdmins(user.getDacUserId(), ACTION_REGISTERED);
         return describeResearcherProperties(user.getDacUserId());
     }
 
     @Override
-    public List<ResearcherProperty> updateProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser, Boolean validate) throws NotFoundException, IllegalArgumentException {
+    public List<UserProperty> updateProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser, Boolean validate) throws NotFoundException, IllegalArgumentException {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         if (validate) validateRequiredFields(researcherPropertiesMap);
@@ -63,7 +63,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
         Boolean isUpdatedProfileCompleted = Boolean.valueOf(researcherPropertiesMap.get(ResearcherFields.COMPLETED.getValue()));
         String completed = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
         Boolean isProfileCompleted = Boolean.valueOf(completed);
-        List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, user.getDacUserId());
+        List<UserProperty> properties = getResearcherProperties(researcherPropertiesMap, user.getDacUserId());
         if (!isProfileCompleted && isUpdatedProfileCompleted) {
             saveProperties(properties);
             notifyAdmins(user.getDacUserId(), ACTION_REGISTERED);
@@ -77,15 +77,15 @@ public class ResearcherPropertyHandler implements ResearcherService {
         return describeResearcherProperties(user.getDacUserId());
     }
 
-    private void saveProperties(List<ResearcherProperty> properties) {
+    private void saveProperties(List<UserProperty> properties) {
         researcherPropertyDAO.deletePropertiesByUserAndKey(properties);
         researcherPropertyDAO.insertAll(properties);
     }
 
     @Override
     public Map<String, String> describeResearcherPropertiesMap(Integer userId) {
-        return describeResearcherProperties(userId).stream().collect(Collectors.toMap(ResearcherProperty::getPropertyKey,
-                ResearcherProperty::getPropertyValue));
+        return describeResearcherProperties(userId).stream().collect(Collectors.toMap(UserProperty::getPropertyKey,
+                UserProperty::getPropertyValue));
     }
 
     @Override
@@ -94,7 +94,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
     }
 
     @Override
-    public void deleteResearcherSpecificProperties(List<ResearcherProperty> properties) {
+    public void deleteResearcherSpecificProperties(List<UserProperty> properties) {
         researcherPropertyDAO.deletePropertiesByUserAndKey(properties);
     }
 
@@ -150,7 +150,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
         return user;
     }
 
-    private List<ResearcherProperty> describeResearcherProperties(Integer userId) {
+    private List<UserProperty> describeResearcherProperties(Integer userId) {
         validateUser(userId);
         return researcherPropertyDAO.findResearcherPropertiesByUser(userId);
     }
@@ -172,10 +172,10 @@ public class ResearcherPropertyHandler implements ResearcherService {
         });
     }
 
-    private List<ResearcherProperty> getResearcherProperties(Map<String, String> researcherPropertiesMap, Integer userId) {
-        List<ResearcherProperty> properties = new ArrayList<>();
+    private List<UserProperty> getResearcherProperties(Map<String, String> researcherPropertiesMap, Integer userId) {
+        List<UserProperty> properties = new ArrayList<>();
         researcherPropertiesMap.forEach((propertyKey, propertyValue) ->
-                properties.add(new ResearcherProperty(userId, propertyKey, propertyValue))
+                properties.add(new UserProperty(userId, propertyKey, propertyValue))
         );
         return properties;
     }

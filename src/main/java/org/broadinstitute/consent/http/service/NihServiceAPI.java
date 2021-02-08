@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 
 import javax.ws.rs.BadRequestException;
@@ -22,7 +22,7 @@ public class NihServiceAPI implements NihAuthApi {
     }
 
     @Override
-    public List<ResearcherProperty> authenticateNih(NIHUserAccount nihAccount, AuthUser user) {
+    public List<UserProperty> authenticateNih(NIHUserAccount nihAccount, AuthUser user) {
         if (StringUtils.isNotEmpty(nihAccount.getNihUsername()) && !nihAccount.getNihUsername().isEmpty()) {
             nihAccount.setEraExpiration(generateEraExpirationDates());
             nihAccount.setStatus(true);
@@ -34,10 +34,10 @@ public class NihServiceAPI implements NihAuthApi {
 
     @Override
     public void deleteNihAccountById(Integer userId) {
-        List<ResearcherProperty> properties = new ArrayList<>();
-        properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_EXPIRATION_DATE.getValue()));
-        properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_STATUS.getValue()));
-        properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_USERNAME.getValue()));
+        List<UserProperty> properties = new ArrayList<>();
+        properties.add(new UserProperty(userId, ResearcherFields.ERA_EXPIRATION_DATE.getValue()));
+        properties.add(new UserProperty(userId, ResearcherFields.ERA_STATUS.getValue()));
+        properties.add(new UserProperty(userId, ResearcherFields.ERA_USERNAME.getValue()));
         researcherService.deleteResearcherSpecificProperties(properties);
     }
 

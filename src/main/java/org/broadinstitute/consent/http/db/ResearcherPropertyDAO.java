@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.db.mapper.ResearcherPropertyMapper;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -26,19 +26,19 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
 
 
     @SqlQuery("select * from researcher_property where userId = :userId")
-    List<ResearcherProperty> findResearcherPropertiesByUser(@Bind("userId") Integer userId);
+    List<UserProperty> findResearcherPropertiesByUser(@Bind("userId") Integer userId);
 
     @SqlQuery("select propertyValue from researcher_property where userId = :userId and propertyKey = 'completed'")
     String isProfileCompleted(@Bind("userId") Integer userId);
 
     @SqlBatch("insert into researcher_property (userId, propertyKey, propertyValue) values (:userId, :propertyKey, :propertyValue)")
-    void insertAll(@BindBean Collection<ResearcherProperty> researcherProperties);
+    void insertAll(@BindBean Collection<UserProperty> researcherProperties);
 
     @SqlUpdate("delete from researcher_property where  userId = :userId")
     void deleteAllPropertiesByUser(@Bind("userId") Integer userId);
 
     @SqlBatch("delete from researcher_property where userId = :userId and propertyKey = :propertyKey")
-    void deletePropertiesByUserAndKey(@BindBean Collection<ResearcherProperty> researcherProperties);
+    void deletePropertiesByUserAndKey(@BindBean Collection<UserProperty> researcherProperties);
 
     @SqlUpdate("delete from researcher_property where  userId = :userId and propertyKey IN (<propertyKeyList>)")
     void deletePropertyByUser(@BindList("propertyKeyList") List<String> propertyKeyList, @Bind("userId") Integer userId);
@@ -51,12 +51,12 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
             "(propertyKey = '" + PUBMED_ID + "' AND  propertyValue != :pubmedID) OR " +
             "(propertyKey = '" + SCIENTIFIC_URL + "' AND  propertyValue != :scientificURL) " +
             " AND userId = :userId")
-    List<ResearcherProperty> findResearcherProperties(@Bind("userId") Integer userId, @Bind("institutionName") String institutionName,@Bind("isThePI") String isThePI,
+    List<UserProperty> findResearcherProperties(@Bind("userId") Integer userId, @Bind("institutionName") String institutionName,@Bind("isThePI") String isThePI,
                                                       @Bind("havePI") String havePI, @Bind("eRACommonsID") String eRACommonsID, @Bind("pubmedID") String pubmedID, @Bind("scientificURL") String scientificURL);
 
     @SqlQuery("select propertyValue from researcher_property  where  userId = :userId and propertyKey = :propertyKey")
     String findPropertyValueByPK(@Bind("userId") Integer userId, @Bind("propertyKey") String propertyKey);
 
     @SqlQuery("select * from researcher_property where userId  in (<userIds>)")
-    List<ResearcherProperty> findResearcherPropertiesByUserIds(@BindList("userIds") List<Integer> userIds);
+    List<UserProperty> findResearcherPropertiesByUserIds(@BindList("userIds") List<Integer> userIds);
 }

@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.WhitelistService;
@@ -54,7 +54,7 @@ public class ResearcherResource extends Resource {
     @PermitAll
     public Response registerProperties(@Auth AuthUser user, @Context UriInfo info, Map<String, String> researcherPropertiesMap) {
         try {
-            List<ResearcherProperty> props = researcherService.setProperties(researcherPropertiesMap, user);
+            List<UserProperty> props = researcherService.setProperties(researcherPropertiesMap, user);
             return Response.created(info.getRequestUriBuilder().build()).entity(props).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -66,7 +66,7 @@ public class ResearcherResource extends Resource {
     @PermitAll
     public Response updateProperties(@Auth AuthUser user, @QueryParam("validate") Boolean validate, Map<String, String> researcherProperties) {
         try {
-            List<ResearcherProperty> props = researcherService.updateProperties(researcherProperties, user, validate);
+            List<UserProperty> props = researcherService.updateProperties(researcherProperties, user, validate);
             return Response.ok(props).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -83,9 +83,9 @@ public class ResearcherResource extends Resource {
                     collect(Collectors.toList());
             validateAuthedRoleUser(authedRoles, findByAuthUser(authUser), userId);
             User user = userService.findUserById(userId);
-            List<ResearcherProperty> props = userService.findAllUserProperties(userId);
+            List<UserProperty> props = userService.findAllUserProperties(userId);
             Map<String, Object> propMap = props.stream().
-                collect(Collectors.toMap(ResearcherProperty::getPropertyKey, ResearcherProperty::getPropertyValue));
+                collect(Collectors.toMap(UserProperty::getPropertyKey, UserProperty::getPropertyValue));
             List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(user, props);
             propMap.put(ResearcherFields.LIBRARY_CARD_ENTRIES, entries);
             List<String> orgs = entries.stream().

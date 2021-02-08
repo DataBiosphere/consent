@@ -21,7 +21,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Assert;
 import org.junit.Test;
@@ -172,7 +172,7 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testFindUsersWithProfileCompleted() {
         User u = createUser();
-        ResearcherProperty p = new ResearcherProperty();
+        UserProperty p = new UserProperty();
         p.setPropertyKey(ResearcherFields.COMPLETED.getValue());
         p.setPropertyValue("true");
         p.setUserId(u.getDacUserId());

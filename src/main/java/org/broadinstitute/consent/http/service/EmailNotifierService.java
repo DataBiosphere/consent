@@ -39,7 +39,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -520,12 +520,13 @@ public class EmailNotifierService {
         List<String> academicEmails = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(users)) {
             List<Integer> userIds = users.stream().map(User::getDacUserId).collect(Collectors.toList());
-            List<ResearcherProperty> researcherProperties = researcherPropertyDAO.findResearcherPropertiesByUserIds(userIds);
-            Map<Integer, List<ResearcherProperty>> researcherPropertiesMap = researcherProperties.stream().collect(Collectors.groupingBy(ResearcherProperty::getUserId));
+            List<UserProperty> researcherProperties = researcherPropertyDAO.findResearcherPropertiesByUserIds(userIds);
+            Map<Integer, List<UserProperty>> researcherPropertiesMap = researcherProperties.stream().collect(Collectors.groupingBy(
+                UserProperty::getUserId));
             researcherPropertiesMap.forEach((userId, properties) -> {
-                Optional<ResearcherProperty> checkNotification = properties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.CHECK_NOTIFICATIONS.getValue())).findFirst();
+                Optional<UserProperty> checkNotification = properties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.CHECK_NOTIFICATIONS.getValue())).findFirst();
                 if (checkNotification.isPresent() && checkNotification.get().getPropertyValue().equals("true")) {
-                    Optional<ResearcherProperty> academicEmailRP = properties.stream().
+                    Optional<UserProperty> academicEmailRP = properties.stream().
                             filter(rp -> rp.getPropertyKey().equals(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue())).
                             findFirst();
                     academicEmailRP.ifPresent(rp -> academicEmails.add(rp.getPropertyValue()));

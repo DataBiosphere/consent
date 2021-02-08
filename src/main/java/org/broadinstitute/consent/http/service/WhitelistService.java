@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.util.WhitelistCache;
 import org.broadinstitute.consent.http.util.WhitelistParser;
@@ -67,7 +67,7 @@ public class WhitelistService {
                 entries.stream().noneMatch(e -> StringUtils.isBlank(e.getCommonsId()));
     }
 
-    public List<WhitelistEntry> findWhitelistEntriesForUser(User user, List<ResearcherProperty> props) {
+    public List<WhitelistEntry> findWhitelistEntriesForUser(User user, List<UserProperty> props) {
         List<WhitelistEntry> entries = new ArrayList<>();
         entries.addAll(cache.queryByEmail(user.getEmail()));
         entries.addAll(
