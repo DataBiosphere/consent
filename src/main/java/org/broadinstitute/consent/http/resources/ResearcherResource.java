@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
@@ -87,12 +87,12 @@ public class ResearcherResource extends Resource {
             Map<String, Object> propMap = props.stream().
                 collect(Collectors.toMap(UserProperty::getPropertyKey, UserProperty::getPropertyValue));
             List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(user, props);
-            propMap.put(ResearcherFields.LIBRARY_CARD_ENTRIES, entries);
+            propMap.put(UserFields.LIBRARY_CARD_ENTRIES, entries);
             List<String> orgs = entries.stream().
                     map(WhitelistEntry::getOrganization).
                     distinct().
                     collect(Collectors.toList());
-            propMap.put(ResearcherFields.LIBRARY_CARDS, orgs);
+            propMap.put(UserFields.LIBRARY_CARDS, orgs);
             return Response.ok(propMap).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

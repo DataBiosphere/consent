@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -35,9 +35,9 @@ public class NihServiceAPI implements NihAuthApi {
     @Override
     public void deleteNihAccountById(Integer userId) {
         List<UserProperty> properties = new ArrayList<>();
-        properties.add(new UserProperty(userId, ResearcherFields.ERA_EXPIRATION_DATE.getValue()));
-        properties.add(new UserProperty(userId, ResearcherFields.ERA_STATUS.getValue()));
-        properties.add(new UserProperty(userId, ResearcherFields.ERA_USERNAME.getValue()));
+        properties.add(new UserProperty(userId, UserFields.ERA_EXPIRATION_DATE.getValue()));
+        properties.add(new UserProperty(userId, UserFields.ERA_STATUS.getValue()));
+        properties.add(new UserProperty(userId, UserFields.ERA_USERNAME.getValue()));
         researcherService.deleteResearcherSpecificProperties(properties);
     }
 

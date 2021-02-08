@@ -17,7 +17,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -68,19 +68,19 @@ public class DatabaseDataAccessRequestAPITest {
 
     @Test
     public void testUpdateResearcherWithLinkedInIdentification() {
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.LINKEDIN_PROFILE.getValue())).thenReturn(LINKEDIN_PROFILE);
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.ORCID.getValue())).thenReturn(ORCID);
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.RESEARCHER_GATE.getValue())).thenReturn(RESEARCHER_GATE);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.LINKEDIN_PROFILE.getValue())).thenReturn(LINKEDIN_PROFILE);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.ORCID.getValue())).thenReturn(ORCID);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.RESEARCHER_GATE.getValue())).thenReturn(RESEARCHER_GATE);
         Document dar = getDocument("https://www.linkedin.com/in/veronica/", ORCID, RESEARCHER_GATE);
         List<UserProperty> properties = databaseDataAccessRequestAPI.updateResearcherIdentification(dar);
         verify(userPropertyDAO, times(1)).insertAll(any());
         Assert.assertEquals(3, properties.size());
         properties.forEach(researcherProperty -> {
-            if (researcherProperty.getPropertyKey().equals(ResearcherFields.LINKEDIN_PROFILE.getValue())) {
+            if (researcherProperty.getPropertyKey().equals(UserFields.LINKEDIN_PROFILE.getValue())) {
                 Assert.assertEquals("https://www.linkedin.com/in/veronica/", researcherProperty.getPropertyValue());
-            } else if (researcherProperty.getPropertyKey().equals(ResearcherFields.ORCID.getValue())) {
+            } else if (researcherProperty.getPropertyKey().equals(UserFields.ORCID.getValue())) {
                 Assert.assertEquals(researcherProperty.getPropertyValue(), ORCID);
-            } else if (researcherProperty.getPropertyKey().equals(ResearcherFields.RESEARCHER_GATE.getValue())) {
+            } else if (researcherProperty.getPropertyKey().equals(UserFields.RESEARCHER_GATE.getValue())) {
                 Assert.assertEquals(researcherProperty.getPropertyValue(), RESEARCHER_GATE);
             }
         });
@@ -88,14 +88,14 @@ public class DatabaseDataAccessRequestAPITest {
 
     @Test
     public void testUpdateResearcherWithOrcIdAndNullLinkedInAndResearcherGateIdentification() {
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.LINKEDIN_PROFILE.getValue())).thenReturn(LINKEDIN_PROFILE);
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.ORCID.getValue())).thenReturn(ORCID);
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.RESEARCHER_GATE.getValue())).thenReturn(RESEARCHER_GATE);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.LINKEDIN_PROFILE.getValue())).thenReturn(LINKEDIN_PROFILE);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.ORCID.getValue())).thenReturn(ORCID);
+        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.RESEARCHER_GATE.getValue())).thenReturn(RESEARCHER_GATE);
         Document dar = getDocument(null, "845246551313515", null);
         List<UserProperty> properties = databaseDataAccessRequestAPI.updateResearcherIdentification(dar);
         verify(userPropertyDAO, times(1)).insertAll(anyObject());
         Assert.assertEquals(1, properties.size());
-        Assert.assertEquals(properties.get(0).getPropertyKey(), ResearcherFields.ORCID.getValue());
+        Assert.assertEquals(properties.get(0).getPropertyKey(), UserFields.ORCID.getValue());
         Assert.assertEquals("845246551313515", properties.get(0).getPropertyValue());
     }
 
@@ -109,9 +109,9 @@ public class DatabaseDataAccessRequestAPITest {
     private Document getDocument(String linkedIn, String orcid, String researcherGate) {
         Document dar = new Document();
         dar.put(DarConstants.USER_ID, USER_ID);
-        dar.put(ResearcherFields.LINKEDIN_PROFILE.getValue(), linkedIn);
-        dar.put(ResearcherFields.ORCID.getValue(), orcid);
-        dar.put(ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate);
+        dar.put(UserFields.LINKEDIN_PROFILE.getValue(), linkedIn);
+        dar.put(UserFields.ORCID.getValue(), orcid);
+        dar.put(UserFields.RESEARCHER_GATE.getValue(), researcherGate);
         dar.put(DarConstants.INVESTIGATOR, randomString());
         dar.put(DarConstants.PI_EMAIL, randomString());
         dar.put(DarConstants.PROJECT_TITLE, randomString());
@@ -129,21 +129,21 @@ public class DatabaseDataAccessRequestAPITest {
 
     private Map<String, String> getResearcherProperties() {
         Map<String, String> researcherProperties = new HashMap<>();
-        researcherProperties.put(ResearcherFields.INSTITUTION.getValue(), randomString());
-        researcherProperties.put(ResearcherFields.DEPARTMENT.getValue(), randomString());
-        researcherProperties.put(ResearcherFields.STREET_ADDRESS_1.getValue(), randomString());
-        researcherProperties.put(ResearcherFields.CITY.getValue(), randomString());
-        researcherProperties.put(ResearcherFields.ZIP_POSTAL_CODE.getValue(), randomString());
-        researcherProperties.put(ResearcherFields.COUNTRY.getValue(), randomString());
-        researcherProperties.put(ResearcherFields.STATE.getValue(), randomString());
-        researcherProperties.put(ResearcherFields.STREET_ADDRESS_2.getValue(), randomString());
-        researcherProperties.put(ResearcherFields.DIVISION.getValue(), randomString());
+        researcherProperties.put(UserFields.INSTITUTION.getValue(), randomString());
+        researcherProperties.put(UserFields.DEPARTMENT.getValue(), randomString());
+        researcherProperties.put(UserFields.STREET_ADDRESS_1.getValue(), randomString());
+        researcherProperties.put(UserFields.CITY.getValue(), randomString());
+        researcherProperties.put(UserFields.ZIP_POSTAL_CODE.getValue(), randomString());
+        researcherProperties.put(UserFields.COUNTRY.getValue(), randomString());
+        researcherProperties.put(UserFields.STATE.getValue(), randomString());
+        researcherProperties.put(UserFields.STREET_ADDRESS_2.getValue(), randomString());
+        researcherProperties.put(UserFields.DIVISION.getValue(), randomString());
         researcherProperties.put(DarConstants.ACADEMIC_BUSINESS_EMAIL, randomString());
         researcherProperties.put(DarConstants.ERA_COMMONS_ID, randomString());
         researcherProperties.put(DarConstants.PUBMED_ID, randomString());
         researcherProperties.put(DarConstants.SCIENTIFIC_URL, randomString());
-        researcherProperties.put(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
-        researcherProperties.put(ResearcherFields.PROFILE_NAME.getValue(), randomString());
+        researcherProperties.put(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
+        researcherProperties.put(UserFields.PROFILE_NAME.getValue(), randomString());
         return researcherProperties;
     }
 

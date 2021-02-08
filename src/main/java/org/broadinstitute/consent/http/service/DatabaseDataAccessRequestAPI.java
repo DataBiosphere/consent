@@ -24,7 +24,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -387,19 +387,19 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     protected List<UserProperty> updateResearcherIdentification(Document dataAccessRequest) {
         Integer userId = dataAccessRequest.getInteger(DarConstants.USER_ID);
-        String linkedIn = dataAccessRequest.getString(ResearcherFields.LINKEDIN_PROFILE.getValue());
-        String orcId = dataAccessRequest.getString(ResearcherFields.ORCID.getValue());
-        String researcherGate = dataAccessRequest.getString(ResearcherFields.RESEARCHER_GATE.getValue());
+        String linkedIn = dataAccessRequest.getString(UserFields.LINKEDIN_PROFILE.getValue());
+        String orcId = dataAccessRequest.getString(UserFields.ORCID.getValue());
+        String researcherGate = dataAccessRequest.getString(UserFields.RESEARCHER_GATE.getValue());
         List<UserProperty> rpList = new ArrayList<>();
-        userPropertyDAO.deletePropertyByUser(Arrays.asList(ResearcherFields.LINKEDIN_PROFILE.getValue(), ResearcherFields.ORCID.getValue(), ResearcherFields.RESEARCHER_GATE.getValue()), userId);
+        userPropertyDAO.deletePropertyByUser(Arrays.asList(UserFields.LINKEDIN_PROFILE.getValue(), UserFields.ORCID.getValue(), UserFields.RESEARCHER_GATE.getValue()), userId);
         if (StringUtils.isNotEmpty(linkedIn)) {
-          rpList.add(new UserProperty(userId, ResearcherFields.LINKEDIN_PROFILE.getValue(), linkedIn));
+          rpList.add(new UserProperty(userId, UserFields.LINKEDIN_PROFILE.getValue(), linkedIn));
         }
         if (StringUtils.isNotEmpty(orcId)) {
-          rpList.add(new UserProperty(userId, ResearcherFields.ORCID.getValue(), orcId));
+          rpList.add(new UserProperty(userId, UserFields.ORCID.getValue(), orcId));
         }
         if (StringUtils.isNotEmpty(researcherGate)) {
-           rpList.add(new UserProperty(userId, ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate));
+           rpList.add(new UserProperty(userId, UserFields.RESEARCHER_GATE.getValue(), researcherGate));
         }
         if (CollectionUtils.isNotEmpty(rpList)) {
            userPropertyDAO.insertAll(rpList);

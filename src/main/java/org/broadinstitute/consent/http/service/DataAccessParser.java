@@ -11,7 +11,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -108,7 +108,7 @@ class DataAccessParser {
                     break;
                 }
                 case DarConstants.PI_EMAIL: {
-                    if(Boolean.parseBoolean(researcherProperties.get(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue()))){
+                    if(Boolean.parseBoolean(researcherProperties.get(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue()))){
                         field.setValue(getDefaultValue(researcherProperties.get(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
                     } else {
                         field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PI_EMAIL)));
@@ -117,7 +117,7 @@ class DataAccessParser {
                     break;
                 }
                 case DarConstants.INVESTIGATOR: {
-                    if(Boolean.parseBoolean(researcherProperties.get(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue()))){
+                    if(Boolean.parseBoolean(researcherProperties.get(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue()))){
                         field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PROFILE_NAME)));
                     } else {
                         field.setValue(getDefaultValue(dar.getString(DarConstants.INVESTIGATOR)));

@@ -29,7 +29,7 @@ import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.DataSetPIMailModel;
@@ -524,10 +524,11 @@ public class EmailNotifierService {
             Map<Integer, List<UserProperty>> researcherPropertiesMap = researcherProperties.stream().collect(Collectors.groupingBy(
                 UserProperty::getUserId));
             researcherPropertiesMap.forEach((userId, properties) -> {
-                Optional<UserProperty> checkNotification = properties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.CHECK_NOTIFICATIONS.getValue())).findFirst();
+                Optional<UserProperty> checkNotification = properties.stream().filter(rp -> rp.getPropertyKey().equals(
+                    UserFields.CHECK_NOTIFICATIONS.getValue())).findFirst();
                 if (checkNotification.isPresent() && checkNotification.get().getPropertyValue().equals("true")) {
                     Optional<UserProperty> academicEmailRP = properties.stream().
-                            filter(rp -> rp.getPropertyKey().equals(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue())).
+                            filter(rp -> rp.getPropertyKey().equals(UserFields.ACADEMIC_BUSINESS_EMAIL.getValue())).
                             findFirst();
                     academicEmailRP.ifPresent(rp -> academicEmails.add(rp.getPropertyValue()));
 
