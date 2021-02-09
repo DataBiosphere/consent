@@ -6,16 +6,23 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import java.util.Collections;
-import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacBuilder;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +34,9 @@ public class DacResourceTest {
     @Mock
     private DacService dacService;
 
+    @Mock
+    private UserService userService;
+
     private DacResource dacResource;
 
     private final AuthUser authUser = new AuthUser("test@test.com");
@@ -36,7 +46,7 @@ public class DacResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        dacResource = new DacResource(dacService);
+        dacResource = new DacResource(dacService, userService);
     }
 
     @Test
@@ -45,8 +55,8 @@ public class DacResourceTest {
 
         Response response = dacResource.findAll(authUser, Optional.of(true));
         Assert.assertEquals(200, response.getStatus());
-        List dacs = ((List) response.getEntity());
-        Assert.assertTrue(dacs.isEmpty());
+        JsonArray dacs = getListFromEntityString(response.getEntity().toString());
+        Assert.assertEquals(0, dacs.size());
     }
 
     @Test
@@ -59,7 +69,7 @@ public class DacResourceTest {
 
         Response response = dacResource.findAll(authUser, Optional.of(true));
         Assert.assertEquals(200, response.getStatus());
-        List dacs = ((List) response.getEntity());
+        JsonArray dacs = getListFromEntityString(response.getEntity().toString());
         Assert.assertEquals(1, dacs.size());
     }
 
@@ -69,8 +79,8 @@ public class DacResourceTest {
 
         Response response = dacResource.findAll(authUser, Optional.of(false));
         Assert.assertEquals(200, response.getStatus());
-        List dacs = ((List) response.getEntity());
-        Assert.assertTrue(dacs.isEmpty());
+        JsonArray dacs = getListFromEntityString(response.getEntity().toString());
+        Assert.assertEquals(0, dacs.size());
     }
 
     @Test
@@ -206,4 +216,187 @@ public class DacResourceTest {
         dacResource.deleteDac(1);
     }
 
+    @Test
+    public void testAddDacMemberAsAdmin() {
+        Dac dac = buildDac(null);
+        when(dacService.findById(any())).thenReturn(dac);
+        User admin = buildAdmin(authUser);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(admin);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.addDacMember(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    @Test
+    public void testAddDacMemberAsChairSuccess() {
+        User chair = buildChair(authUser);
+        Dac dac = buildDac(chair);
+        when(dacService.findById(any())).thenReturn(dac);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.addDacMember(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    @Test(expected = NotAuthorizedException.class)
+    public void testAddDacMemberAsChairFailure() {
+        User chair = buildChair(authUser);
+        Dac dac = buildDac(null);
+        when(dacService.findById(any())).thenReturn(dac);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.addDacMember(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    @Test
+    public void testRemoveDacMemberAsAdmin() {
+        Dac dac = buildDac(null);
+        when(dacService.findById(any())).thenReturn(dac);
+        User admin = buildAdmin(authUser);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(admin);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.removeDacMember(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    @Test
+    public void testRemoveDacMemberAsChairSuccess() {
+        User chair = buildChair(authUser);
+        Dac dac = buildDac(chair);
+        when(dacService.findById(any())).thenReturn(dac);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.removeDacMember(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    @Test(expected = NotAuthorizedException.class)
+    public void testRemoveDacMemberAsChairFailure() {
+        User chair = buildChair(authUser);
+        Dac dac = buildDac(null);
+        when(dacService.findById(any())).thenReturn(dac);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.removeDacMember(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    @Test
+    public void testAddDacChairAsAdmin() {
+        Dac dac = buildDac(null);
+        when(dacService.findById(any())).thenReturn(dac);
+        User admin = buildAdmin(authUser);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(admin);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.addDacChair(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    @Test
+    public void testAddDacChairAsChairSuccess() {
+        User chair = buildChair(authUser);
+        Dac dac = buildDac(chair);
+        when(dacService.findById(any())).thenReturn(dac);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.addDacChair(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    @Test(expected = NotAuthorizedException.class)
+    public void testAddDacChairAsChairFailure() {
+        User chair = buildChair(authUser);
+        Dac dac = buildDac(null);
+        when(dacService.findById(any())).thenReturn(dac);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.addDacChair(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    @Test
+    public void testRemoveDacChairAsAdmin() {
+        Dac dac = buildDac(null);
+        when(dacService.findById(any())).thenReturn(dac);
+        User admin = buildAdmin(authUser);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(admin);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.removeDacChair(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    @Test
+    public void testRemoveDacChairAsChairSuccess() {
+        User chair = buildChair(authUser);
+        Dac dac = buildDac(chair);
+        when(dacService.findById(any())).thenReturn(dac);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.removeDacChair(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    @Test(expected = NotAuthorizedException.class)
+    public void testRemoveDacChairAsChairFailure() {
+        User chair = buildChair(authUser);
+        Dac dac = buildDac(null);
+        when(dacService.findById(any())).thenReturn(dac);
+        User member = buildUser();
+        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
+
+        dacResource.removeDacChair(authUser, dac.getDacId(), member.getDacUserId());
+    }
+
+    private JsonArray getListFromEntityString(String str) {
+        return new Gson().fromJson(str, JsonArray.class);
+    }
+
+    private Dac buildDac(User chair) {
+        Dac dac = new DacBuilder()
+            .setDacId(RandomUtils.nextInt())
+            .setName("name")
+            .setDescription("description")
+            .build();
+        if (Objects.nonNull(chair)) {
+            dac.setChairpersons(Collections.singletonList(chair));
+        }
+        return dac;
+    }
+
+    private User buildAdmin(AuthUser authUser) {
+        User user = buildUser();
+        user.setDacUserId(RandomUtils.nextInt());
+        user.setEmail(authUser.getName());
+        UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+        user.setRoles(Collections.singletonList(admin));
+        return user;
+    }
+
+    private User buildChair(AuthUser authUser) {
+        User user = buildUser();
+        user.setDacUserId(RandomUtils.nextInt());
+        user.setEmail(authUser.getName());
+        UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        user.setRoles(Collections.singletonList(chair));
+        return user;
+    }
+
+    private User buildUser() {
+        User user = new User();
+        user.setDacUserId(RandomUtils.nextInt());
+        return user;
+    }
 }

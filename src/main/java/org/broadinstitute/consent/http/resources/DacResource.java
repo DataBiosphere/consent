@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
@@ -12,6 +13,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -20,22 +22,27 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/dac")
 public class DacResource extends Resource {
 
     private final DacService dacService;
+    private final UserService userService;
     private static final Logger logger = Logger.getLogger(DacResource.class.getName());
 
     @Inject
-    public DacResource(DacService dacService) {
+    public DacResource(DacService dacService, UserService userService) {
         this.dacService = dacService;
+        this.userService = userService;
     }
 
     @GET
@@ -123,6 +130,7 @@ public class DacResource extends Resource {
         Role role = dacService.getMemberRole();
         User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
+        checkUserRoleInDac(dac, authUser);
         try {
             User member = dacService.addDacMember(role, user, dac);
             return Response.ok().entity(member).build();
@@ -138,6 +146,7 @@ public class DacResource extends Resource {
         Role role = dacService.getMemberRole();
         User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
+        checkUserRoleInDac(dac, authUser);
         try {
             dacService.removeDacMember(role, user, dac);
             return Response.ok().build();
@@ -154,6 +163,7 @@ public class DacResource extends Resource {
         Role role = dacService.getChairpersonRole();
         User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
+        checkUserRoleInDac(dac, authUser);
         try {
             User member = dacService.addDacMember(role, user, dac);
             return Response.ok().entity(member).build();
@@ -169,6 +179,7 @@ public class DacResource extends Resource {
         Role role = dacService.getChairpersonRole();
         User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
+        checkUserRoleInDac(dac, authUser);
         try {
             dacService.removeDacMember(role, user, dac);
             return Response.ok().build();
@@ -240,4 +251,31 @@ public class DacResource extends Resource {
         }
     }
 
+    /**
+     * - Admins can make any modifications to any Dac chairs or members
+     * - Chairpersons can only make modifications to chairs and members in a DAC that they are a
+     * chairperson in.
+     *
+     * @param dac The Dac
+     * @param authUser The AuthUser
+     */
+    private void checkUserRoleInDac(Dac dac, AuthUser authUser) throws NotAuthorizedException {
+        User user = userService.findUserByEmail(authUser.getName());
+        Optional<UserRole> adminRole = user.getRoles().stream()
+            .filter(ur -> ur.getRoleId().equals(UserRoles.ADMIN.getRoleId()))
+            .findFirst();
+        if (adminRole.isPresent()) { return; }
+
+        NotAuthorizedException e = new NotAuthorizedException("User not authorized");
+        if (Objects.isNull(dac.getChairpersons()) || dac.getChairpersons().isEmpty()) {
+            throw e;
+        }
+
+        Optional<User> chair = dac.getChairpersons().stream()
+            .filter(u -> u.getDacUserId().equals(user.getDacUserId()))
+            .findFirst();
+        if (chair.isEmpty()) {
+            throw e;
+        }
+    }
 }
