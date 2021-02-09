@@ -42,7 +42,7 @@ public class DacResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, RESEARCHER})
     public Response findAll(@Auth AuthUser authUser, @QueryParam("withUsers") Optional<Boolean> withUsers) {
-        final Boolean includeUsers = withUsers.isPresent() ? withUsers.get() : true;
+        final Boolean includeUsers = withUsers.orElse(true);
         List<Dac> dacs = dacService.findDacsWithMembersOption(includeUsers);
         return Response.ok().entity(dacs).build();
     }
