@@ -30,13 +30,27 @@ public class UserDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindDACUserById() {
-        User user = createUserWithRole(UserRoles.ADMIN.getRoleId());
+        User user = createUserWithRole(UserRoles.ALUMNI.getRoleId());
         assertNotNull(user);
         assertFalse(user.getRoles().isEmpty());
-        assertEquals(UserRoles.ADMIN.getRoleId(), user.getRoles().get(0).getRoleId());
+
+        addUserRole(UserRoles.ADMIN.getRoleId(), user.getDacUserId());
+        addUserRole(UserRoles.RESEARCHER.getRoleId(), user.getDacUserId());
+        addUserRole(UserRoles.DATAOWNER.getRoleId(), user.getDacUserId());
+
         User user2 = userDAO.findUserById(user.getDacUserId());
         assertNotNull(user2);
         assertEquals(user.getEmail(), user2.getEmail());
+
+        // Assert roles are fetched correctly
+        assertTrue(user2.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.ALUMNI.getRoleId())));
+        assertTrue(user2.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.ADMIN.getRoleId())));
+        assertTrue(user2.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
+        assertTrue(user2.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.DATAOWNER.getRoleId())));
     }
 
     @Test

@@ -5,8 +5,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.UserMapper;
+import org.broadinstitute.consent.http.db.mapper.UserReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -14,17 +17,23 @@ import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 @RegisterRowMapper(UserMapper.class)
 public interface UserDAO extends Transactional<UserDAO> {
 
-    @UseRowMapper(UserWithRolesMapper.class)
-    @SqlQuery("select du.*, r.roleid, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +
-            " from dacuser du " +
-            " left join user_role ur on ur.user_id = du.dacuserid " +
-            " left join roles r on r.roleid = ur.role_id " +
-            " where du.dacuserid = :dacUserId")
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @SqlQuery("SELECT "
+        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
+        + "     u.email_preference, u.status, u.rationale, "
+        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+        + " FROM dacuser u "
+        + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
+        + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+        + " WHERE u.dacuserid = :dacUserId")
+    @UseRowReducer(UserReducer.class)
     User findUserById(@Bind("dacUserId") Integer dacUserId);
 
     @SqlQuery("select * from dacuser where dacUserId IN (<dacUserIds>)")

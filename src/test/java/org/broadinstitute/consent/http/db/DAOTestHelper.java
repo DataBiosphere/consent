@@ -312,9 +312,13 @@ public class DAOTestHelper {
                 "." +
                 RandomStringUtils.randomAlphabetic(i3);
         Integer userId = userDAO.insertUser(email, "display name", new Date());
-        userRoleDAO.insertSingleUserRole(roleId, userId);
+        addUserRole(roleId, userId);
         createdUserIds.add(userId);
         return userDAO.findUserById(userId);
+    }
+
+    protected void addUserRole(int roleId, int userId) {
+        userRoleDAO.insertSingleUserRole(roleId, userId);
     }
 
     protected User createUserWithRoleInDac(Integer roleId, Integer dacId) {
