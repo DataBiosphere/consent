@@ -117,9 +117,9 @@ public class DacResource extends Resource {
 
     @POST
     @Path("{dacId}/member/{userId}")
-    @RolesAllowed({ADMIN})
+    @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response addDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
-        checkMembership(dacId, userId);
+        checkUserInDac(dacId, userId);
         Role role = dacService.getMemberRole();
         User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
@@ -133,7 +133,7 @@ public class DacResource extends Resource {
 
     @DELETE
     @Path("{dacId}/member/{userId}")
-    @RolesAllowed({ADMIN})
+    @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response removeDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         Role role = dacService.getMemberRole();
         User user = findDacUser(userId);
@@ -148,9 +148,9 @@ public class DacResource extends Resource {
 
     @POST
     @Path("{dacId}/chair/{userId}")
-    @RolesAllowed({ADMIN})
+    @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response addDacChair(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
-        checkMembership(dacId, userId);
+        checkUserInDac(dacId, userId);
         Role role = dacService.getChairpersonRole();
         User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
@@ -164,7 +164,7 @@ public class DacResource extends Resource {
 
     @DELETE
     @Path("{dacId}/chair/{userId}")
-    @RolesAllowed({ADMIN})
+    @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response removeDacChair(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         Role role = dacService.getChairpersonRole();
         User user = findDacUser(userId);
@@ -222,7 +222,13 @@ public class DacResource extends Resource {
         return dac;
     }
 
-    private void checkMembership(Integer dacId, Integer userId) {
+    /**
+     * Validate that a user is not already a member of a DAC. If they are, throw a conflict
+     * exception.
+     * @param dacId The DAC Id
+     * @param userId The User Id
+     */
+    private void checkUserInDac(Integer dacId, Integer userId) {
         List<User> currentMembers = dacService.findMembersByDacId(dacId);
         Optional<User> isMember = currentMembers.
                 stream().
