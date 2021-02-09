@@ -126,7 +126,7 @@ public class DacResource extends Resource {
     @Path("{dacId}/member/{userId}")
     @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response addDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
-        checkUserInDac(dacId, userId);
+        checkUserExistsInDac(dacId, userId);
         Role role = dacService.getMemberRole();
         User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
@@ -159,7 +159,7 @@ public class DacResource extends Resource {
     @Path("{dacId}/chair/{userId}")
     @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response addDacChair(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
-        checkUserInDac(dacId, userId);
+        checkUserExistsInDac(dacId, userId);
         Role role = dacService.getChairpersonRole();
         User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
@@ -238,8 +238,9 @@ public class DacResource extends Resource {
      * exception.
      * @param dacId The DAC Id
      * @param userId The User Id
+     * @throws UnsupportedOperationException Conflicts
      */
-    private void checkUserInDac(Integer dacId, Integer userId) {
+    private void checkUserExistsInDac(Integer dacId, Integer userId) throws UnsupportedOperationException {
         List<User> currentMembers = dacService.findMembersByDacId(dacId);
         Optional<User> isMember = currentMembers.
                 stream().
@@ -258,13 +259,13 @@ public class DacResource extends Resource {
      *
      * @param dac The Dac
      * @param authUser The AuthUser
+     * @throws NotAuthorizedException Not authorized
      */
     private void checkUserRoleInDac(Dac dac, AuthUser authUser) throws NotAuthorizedException {
         User user = userService.findUserByEmail(authUser.getName());
-        Optional<UserRole> adminRole = user.getRoles().stream()
-            .filter(ur -> ur.getRoleId().equals(UserRoles.ADMIN.getRoleId()))
-            .findFirst();
-        if (adminRole.isPresent()) { return; }
+        if (user.getRoles().stream().anyMatch(ur -> ur.getRoleId().equals(UserRoles.ADMIN.getRoleId()))) {
+            return;
+        }
 
         NotAuthorizedException e = new NotAuthorizedException("User not authorized");
         if (Objects.isNull(dac.getChairpersons()) || dac.getChairpersons().isEmpty()) {
