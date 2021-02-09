@@ -66,7 +66,6 @@ public class UserService {
         if (user == null) {
             throw new NotFoundException("Unable to find user with email: " + email);
         }
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
         return user;
     }
 

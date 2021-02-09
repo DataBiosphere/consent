@@ -57,7 +57,17 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where  du.dacUserId IN (<dacUserIds>)")
     Set<User> findUsersWithRoles(@BindList("dacUserIds") Collection<Integer> dacUserIds);
 
-    @SqlQuery("select * from dacuser where email = :email")
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @SqlQuery("SELECT "
+        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
+        + "     u.email_preference, u.status, u.rationale, "
+        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+        + " FROM dacuser u "
+        + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
+        + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+        + " WHERE LOWER(u.email) = LOWER(:email)")
+    @UseRowReducer(UserReducer.class)
     User findUserByEmail(@Bind("email") String email);
 
     @SqlUpdate("insert into dacuser (email, displayName, createDate) values (:email, :displayName, :createDate)")

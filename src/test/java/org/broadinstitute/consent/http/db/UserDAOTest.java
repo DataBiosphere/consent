@@ -138,8 +138,23 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testFindDACUserByEmail() {
         User user = createUser();
+        addUserRole(UserRoles.ALUMNI.getRoleId(), user.getDacUserId());
+        addUserRole(UserRoles.ADMIN.getRoleId(), user.getDacUserId());
+        addUserRole(UserRoles.RESEARCHER.getRoleId(), user.getDacUserId());
+        addUserRole(UserRoles.DATAOWNER.getRoleId(), user.getDacUserId());
         User user1 = userDAO.findUserByEmail(user.getEmail());
         assertNotNull(user1);
+
+        // Assert roles are fetched correctly
+        assertTrue(user1.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.ALUMNI.getRoleId())));
+        assertTrue(user1.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.ADMIN.getRoleId())));
+        assertTrue(user1.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
+        assertTrue(user1.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.DATAOWNER.getRoleId())));
+
         User user2 = userDAO.findUserByEmail("no.one@nowhere.com");
         Assert.assertNull(user2);
     }
