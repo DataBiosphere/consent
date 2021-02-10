@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import java.sql.ResultSet;
 import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
