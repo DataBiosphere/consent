@@ -71,9 +71,6 @@ public class DacServiceTest {
     DataAccessRequestDAO dataAccessRequestDAO;
 
     @Mock
-    private UserService userService;
-
-    @Mock
     private VoteService voteService;
 
     @Before
@@ -82,7 +79,7 @@ public class DacServiceTest {
     }
 
     private void initService() {
-        service = new DacService(dacDAO, userDAO, dataSetDAO, electionDAO, dataAccessRequestDAO, userService, voteService);
+        service = new DacService(dacDAO, userDAO, dataSetDAO, electionDAO, dataAccessRequestDAO, voteService);
     }
 
     @Test
@@ -194,8 +191,8 @@ public class DacServiceTest {
     public void testAddDacMember() {
         User user = getDacUsers().get(0);
         Dac dac = getDacs().get(0);
-        when(userService.findUserById(any())).thenReturn(user);
-        when(userService.findUserById(any())).thenReturn(user);
+        when(userDAO.findUserById(any())).thenReturn(user);
+        when(userDAO.findUserById(any())).thenReturn(user);
         when(dacDAO.findUserRolesForUser(any())).thenReturn(getDacUsers().get(0).getRoles());
         List<Election> elections = getElections().stream().
                 peek(e -> e.setElectionType(ElectionType.DATA_ACCESS.getValue())).

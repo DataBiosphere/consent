@@ -46,19 +46,17 @@ public class DacService {
     private final DataSetDAO dataSetDAO;
     private final ElectionDAO electionDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
-    private final UserService userService;
     private final VoteService voteService;
 
     @Inject
     public DacService(DacDAO dacDAO, UserDAO userDAO, DataSetDAO dataSetDAO,
-                      ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, UserService userService,
+                      ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
                       VoteService voteService) {
         this.dacDAO = dacDAO;
         this.userDAO = userDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
-        this.userService = userService;
         this.voteService = voteService;
     }
 
@@ -161,7 +159,7 @@ public class DacService {
     }
 
     public User findUserById(Integer id) throws IllegalArgumentException {
-        return userService.findUserById(id);
+        return userDAO.findUserById(id);
     }
 
     public Set<DataSetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
@@ -203,7 +201,7 @@ public class DacService {
 
     public User addDacMember(Role role, User user, Dac dac) throws IllegalArgumentException {
         dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
-        User updatedUser = userService.findUserById(user.getDacUserId());
+        User updatedUser = userDAO.findUserById(user.getDacUserId());
         List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         for (Election e : elections) {
             IllegalArgumentException noTypeException = new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
@@ -218,7 +216,7 @@ public class DacService {
             boolean isManualReview = type.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
             voteService.createVotesForUser(updatedUser, e, type.get(), isManualReview);
         }
-        return userService.findUserById(updatedUser.getDacUserId());
+        return userDAO.findUserById(updatedUser.getDacUserId());
     }
 
     public void removeDacMember(Role role, User user, Dac dac) throws BadRequestException {
