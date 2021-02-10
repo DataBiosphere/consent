@@ -5,6 +5,11 @@ server:
   connector:
     type: http
     port: 8180
+  requestLog:
+    appenders:
+      - type: console
+        layout:
+          type: access-json
 database:
   driverClass: org.postgresql.Driver
   user: consent
@@ -22,6 +27,12 @@ googleStore:
 logging:
   # default logging level
   level: WARN
+  appenders:
+    - type: console
+      threshold: INFO
+      target: stdout
+      layout:
+        type: json
   # logger specific levels
   loggers:
     "org.broadinstitute.consent.http.cloudstore.GCSService": OFF
