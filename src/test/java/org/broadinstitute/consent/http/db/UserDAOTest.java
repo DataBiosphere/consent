@@ -121,10 +121,15 @@ public class UserDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindUsersWithRoles() {
-        User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        User chair = createUserWithRole(UserRoles.ADMIN.getRoleId());
+        addUserRole(UserRoles.DATAOWNER.getRoleId(), chair.getDacUserId());
         Collection<Integer> userIds = Collections.singletonList(chair.getDacUserId());
         Collection<User> users = userDAO.findUsersWithRoles(userIds);
         users.forEach(u -> assertFalse("User: " + u.getDacUserId() + " has no roles", u.getRoles().isEmpty()));
+        assertEquals(1, users.size());
+        User user = users.stream().findFirst().orElse(null);
+        assertNotNull(user);
+        assertEquals(2, user.getRoles().size());
     }
 
     @Test
