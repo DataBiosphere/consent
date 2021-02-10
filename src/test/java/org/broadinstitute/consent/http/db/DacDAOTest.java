@@ -21,26 +21,6 @@ import org.junit.Test;
 public class DacDAOTest extends DAOTestHelper {
 
     @Test
-    public void testCreate() {
-        // No-op ... tested in `createDac()`
-    }
-
-    @Test
-    public void testFindById() {
-        // No-op ... tested in `createDac()`
-    }
-
-    @Test
-    public void testDeleteDacMembers() {
-        // No-op ... tested in `tearDown()`
-    }
-
-    @Test
-    public void testDelete() {
-        // No-op ... tested in `tearDown()`
-    }
-
-    @Test
     public void testFindAll() {
         int count = 4;
         for (int i = 1; i <= count; i++) createDac();
@@ -163,11 +143,6 @@ public class DacDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testRemoveDacMember() {
-        // No-op ... tested in `tearDown()`
-    }
-
-    @Test
     public void testAddDacChair() {
         Dac dac = createDac();
         Integer roleId = UserRoles.CHAIRPERSON.getRoleId();
@@ -190,16 +165,6 @@ public class DacDAOTest extends DAOTestHelper {
         Assert.assertEquals(
                 member.getName().toLowerCase(),
                 UserRoles.MEMBER.getRoleName().toLowerCase());
-    }
-
-    @Test
-    public void testFindUserById() {
-        // No-op ... tested in `createUser()`
-    }
-
-    @Test
-    public void testFindUserRolesForUser() {
-        // No-op ... tested in `testAddDacChair()`
     }
 
     @Test
