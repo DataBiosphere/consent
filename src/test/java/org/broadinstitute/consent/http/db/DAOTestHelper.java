@@ -67,7 +67,7 @@ public class DAOTestHelper {
     protected static MatchDAO matchDAO;
     protected static MailMessageDAO mailMessageDAO;
     protected static MetricsDAO metricsDAO;
-    protected static ResearcherPropertyDAO researcherPropertyDAO;
+    protected static UserPropertyDAO userPropertyDAO;
 
     private static final List<Integer> createdDataSetIds = new ArrayList<>();
     private static final List<Integer> createdDacIds = new ArrayList<>();
@@ -122,7 +122,7 @@ public class DAOTestHelper {
         matchDAO = jdbi.onDemand(MatchDAO.class);
         mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
         metricsDAO = jdbi.onDemand(MetricsDAO.class);
-        researcherPropertyDAO = jdbi.onDemand(ResearcherPropertyDAO.class);
+        userPropertyDAO = jdbi.onDemand(UserPropertyDAO.class);
     }
 
     @AfterClass
@@ -152,7 +152,7 @@ public class DAOTestHelper {
             dacDAO.deleteDac(id);
         });
         createdUserIds.forEach(id -> {
-            researcherPropertyDAO.deleteAllPropertiesByUser(id);
+            userPropertyDAO.deleteAllPropertiesByUser(id);
             userRoleDAO.findRolesByUserId(id).
                     forEach(ur -> userRoleDAO.removeSingleUserRole(ur.getUserId(), ur.getRoleId()));
             userDAO.deleteUserById(id);

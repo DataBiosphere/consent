@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.enumeration;
 import java.util.ArrayList;
 import java.util.List;
 
-public enum ResearcherFields {
+public enum UserFields {
   PROFILE_NAME("profileName", false),
   ACADEMIC_BUSINESS_EMAIL("academicEmail", true),
   INSTITUTION("institution", true),
@@ -38,7 +38,7 @@ public enum ResearcherFields {
   private final String value;
   private final Boolean required;
 
-  ResearcherFields(String value, Boolean required) {
+  UserFields(String value, Boolean required) {
     this.value = value;
     this.required = required;
   }
@@ -51,9 +51,9 @@ public enum ResearcherFields {
     return required;
   }
 
-  public static List<ResearcherFields> getRequiredFields() {
-    List<ResearcherFields> requiredValues = new ArrayList<>();
-    for (ResearcherFields researcherField : ResearcherFields.values()) {
+  public static List<UserFields> getRequiredFields() {
+    List<UserFields> requiredValues = new ArrayList<>();
+    for (UserFields researcherField : UserFields.values()) {
       if (researcherField.getRequired()) {
         requiredValues.add(researcherField);
       }
@@ -62,7 +62,7 @@ public enum ResearcherFields {
   }
 
   public static Boolean containsValue(String value) {
-    for (ResearcherFields researcherField : ResearcherFields.values()) {
+    for (UserFields researcherField : UserFields.values()) {
       if (researcherField.getValue().equals(value)) {
         return true;
       }

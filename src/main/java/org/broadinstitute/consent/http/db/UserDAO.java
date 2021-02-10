@@ -103,7 +103,7 @@ public interface UserDAO extends Transactional<UserDAO> {
             " FROM dacuser du " +
             " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
             " LEFT JOIN roles r ON r.roleid = ur.role_id " +
-            " LEFT JOIN researcher_property p ON p.userid = du.dacuserid AND lower(propertykey) = 'completed' " +
+            " LEFT JOIN user_property p ON p.userid = du.dacuserid AND lower(propertykey) = 'completed' " +
             " ORDER BY createdate DESC ")
     Set<User> findUsers();
 

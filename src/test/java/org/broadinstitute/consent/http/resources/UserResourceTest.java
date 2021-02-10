@@ -21,10 +21,10 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
@@ -215,10 +215,10 @@ public class UserResourceTest {
     return user;
   }
 
-  private List<ResearcherProperty> createResearcherProperties() {
-    return Arrays.stream(ResearcherFields.values())
-        .filter(ResearcherFields::getRequired)
-        .map(f -> new ResearcherProperty(1, f.getValue(), f.getValue()))
+  private List<UserProperty> createResearcherProperties() {
+    return Arrays.stream(UserFields.values())
+        .filter(UserFields::getRequired)
+        .map(f -> new UserProperty(1, f.getValue(), f.getValue()))
         .collect(Collectors.toList());
   }
 

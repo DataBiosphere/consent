@@ -20,7 +20,7 @@ public class DAOContainer {
   private MailMessageDAO mailMessageDAO;
   private MailServiceDAO mailServiceDAO;
   private MatchDAO matchDAO;
-  private ResearcherPropertyDAO researcherPropertyDAO;
+  private UserPropertyDAO userPropertyDAO;
   private UserDAO userDAO;
   private UserRoleDAO userRoleDAO;
   private VoteDAO voteDAO;
@@ -133,13 +133,13 @@ public class DAOContainer {
     this.matchDAO = matchDAO;
   }
 
-  public ResearcherPropertyDAO getResearcherPropertyDAO() {
-    return researcherPropertyDAO;
+  public UserPropertyDAO getResearcherPropertyDAO() {
+    return userPropertyDAO;
   }
 
   public void setResearcherPropertyDAO(
-      ResearcherPropertyDAO researcherPropertyDAO) {
-    this.researcherPropertyDAO = researcherPropertyDAO;
+      UserPropertyDAO userPropertyDAO) {
+    this.userPropertyDAO = userPropertyDAO;
   }
 
   public UserDAO getUserDAO() {

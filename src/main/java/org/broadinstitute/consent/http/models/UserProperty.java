@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 
-public class ResearcherProperty {
+public class UserProperty {
 
     @JsonProperty
     private Integer propertyId;
@@ -20,23 +20,23 @@ public class ResearcherProperty {
     private String propertyValue;
 
 
-    public ResearcherProperty() {
+    public UserProperty() {
     }
 
-    public ResearcherProperty(Integer propertyId, Integer userId, String propertyKey, String propertyValue) {
+    public UserProperty(Integer propertyId, Integer userId, String propertyKey, String propertyValue) {
         this.propertyId = propertyId;
         this.userId = userId;
         this.propertyKey = propertyKey;
         this.propertyValue = propertyValue;
     }
 
-    public ResearcherProperty(Integer userId, String propertyKey, String propertyValue) {
+    public UserProperty(Integer userId, String propertyKey, String propertyValue) {
         this.userId = userId;
         this.propertyKey = propertyKey;
         this.propertyValue = propertyValue;
     }
 
-    public ResearcherProperty(Integer userId, String propertyKey) {
+    public UserProperty(Integer userId, String propertyKey) {
         this.userId = userId;
         this.propertyKey = propertyKey;
     }
