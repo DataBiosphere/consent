@@ -25,11 +25,11 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.DataSetPIMailModel;
@@ -39,7 +39,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -60,7 +60,7 @@ public class EmailNotifierService {
     private final ElectionDAO electionDAO;
     private final MailMessageDAO emailDAO;
     private final MailServiceDAO mailServiceDAO;
-    private final ResearcherPropertyDAO researcherPropertyDAO;
+    private final UserPropertyDAO userPropertyDAO;
     private final VoteDAO voteDAO;
     private final FreeMarkerTemplateHelper templateHelper;
     private final MailService mailService;
@@ -107,7 +107,7 @@ public class EmailNotifierService {
                                 VoteDAO voteDAO, ElectionDAO electionDAO, UserDAO userDAO,
                                 MailMessageDAO emailDAO, MailService mailService, MailServiceDAO mailServiceDAO,
                                 FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive,
-                                ResearcherPropertyDAO researcherPropertyDAO) {
+                                UserPropertyDAO userPropertyDAO) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestService = dataAccessRequestService;
         this.userDAO = userDAO;
@@ -119,7 +119,7 @@ public class EmailNotifierService {
         this.mailService = mailService;
         this.SERVER_URL = serverUrl;
         this.isServiceActive = serviceActive;
-        this.researcherPropertyDAO = researcherPropertyDAO;
+        this.userPropertyDAO = userPropertyDAO;
     }
 
     public void sendNewDARRequestMessage(String dataAccessRequestId, List<Integer> datasetIds) throws MessagingException, IOException, TemplateException {
@@ -520,13 +520,15 @@ public class EmailNotifierService {
         List<String> academicEmails = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(users)) {
             List<Integer> userIds = users.stream().map(User::getDacUserId).collect(Collectors.toList());
-            List<ResearcherProperty> researcherProperties = researcherPropertyDAO.findResearcherPropertiesByUserIds(userIds);
-            Map<Integer, List<ResearcherProperty>> researcherPropertiesMap = researcherProperties.stream().collect(Collectors.groupingBy(ResearcherProperty::getUserId));
+            List<UserProperty> researcherProperties = userPropertyDAO.findResearcherPropertiesByUserIds(userIds);
+            Map<Integer, List<UserProperty>> researcherPropertiesMap = researcherProperties.stream().collect(Collectors.groupingBy(
+                UserProperty::getUserId));
             researcherPropertiesMap.forEach((userId, properties) -> {
-                Optional<ResearcherProperty> checkNotification = properties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.CHECK_NOTIFICATIONS.getValue())).findFirst();
+                Optional<UserProperty> checkNotification = properties.stream().filter(rp -> rp.getPropertyKey().equals(
+                    UserFields.CHECK_NOTIFICATIONS.getValue())).findFirst();
                 if (checkNotification.isPresent() && checkNotification.get().getPropertyValue().equals("true")) {
-                    Optional<ResearcherProperty> academicEmailRP = properties.stream().
-                            filter(rp -> rp.getPropertyKey().equals(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue())).
+                    Optional<UserProperty> academicEmailRP = properties.stream().
+                            filter(rp -> rp.getPropertyKey().equals(UserFields.ACADEMIC_BUSINESS_EMAIL.getValue())).
                             findFirst();
                     academicEmailRP.ifPresent(rp -> academicEmails.add(rp.getPropertyValue()));
 

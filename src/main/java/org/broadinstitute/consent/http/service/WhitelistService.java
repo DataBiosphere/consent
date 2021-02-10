@@ -4,9 +4,9 @@ import com.google.api.client.http.GenericUrl;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.util.WhitelistCache;
 import org.broadinstitute.consent.http.util.WhitelistParser;
@@ -67,13 +67,13 @@ public class WhitelistService {
                 entries.stream().noneMatch(e -> StringUtils.isBlank(e.getCommonsId()));
     }
 
-    public List<WhitelistEntry> findWhitelistEntriesForUser(User user, List<ResearcherProperty> props) {
+    public List<WhitelistEntry> findWhitelistEntriesForUser(User user, List<UserProperty> props) {
         List<WhitelistEntry> entries = new ArrayList<>();
         entries.addAll(cache.queryByEmail(user.getEmail()));
         entries.addAll(
                 props.stream().
-                        filter(p -> p.getPropertyKey().equalsIgnoreCase(ResearcherFields.ERA_USERNAME.getValue()) ||
-                                p.getPropertyKey().equalsIgnoreCase(ResearcherFields.ERA_COMMONS_ID.getValue())).
+                        filter(p -> p.getPropertyKey().equalsIgnoreCase(UserFields.ERA_USERNAME.getValue()) ||
+                                p.getPropertyKey().equalsIgnoreCase(UserFields.ERA_COMMONS_ID.getValue())).
                         map(p -> cache.queryByCommonsId(p.getPropertyValue())).
                         flatMap(List::stream).
                         filter(Objects::nonNull).
@@ -81,7 +81,7 @@ public class WhitelistService {
                         collect(Collectors.toList()));
         entries.addAll(
                 props.stream().
-                        filter(p -> p.getPropertyKey().equalsIgnoreCase(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue())).
+                        filter(p -> p.getPropertyKey().equalsIgnoreCase(UserFields.ACADEMIC_BUSINESS_EMAIL.getValue())).
                         map(p -> cache.queryByEmail(p.getPropertyValue())).
                         flatMap(List::stream).
                         filter(Objects::nonNull).

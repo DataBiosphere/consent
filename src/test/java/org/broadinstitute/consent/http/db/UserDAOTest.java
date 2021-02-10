@@ -14,14 +14,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Assert;
 import org.junit.Test;
@@ -172,11 +172,11 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testFindUsersWithProfileCompleted() {
         User u = createUser();
-        ResearcherProperty p = new ResearcherProperty();
-        p.setPropertyKey(ResearcherFields.COMPLETED.getValue());
+        UserProperty p = new UserProperty();
+        p.setPropertyKey(UserFields.COMPLETED.getValue());
         p.setPropertyValue("true");
         p.setUserId(u.getDacUserId());
-        researcherPropertyDAO.insertAll(Collections.singletonList(p));
+        userPropertyDAO.insertAll(Collections.singletonList(p));
         List<User> users = new ArrayList<>(userDAO.findUsers());
         assertNotNull(users);
         assertFalse(users.isEmpty());

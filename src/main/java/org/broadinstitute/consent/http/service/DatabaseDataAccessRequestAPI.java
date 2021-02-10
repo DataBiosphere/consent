@@ -19,18 +19,18 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -56,7 +56,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final ConsentDAO consentDAO;
 
-    private final ResearcherPropertyDAO researcherPropertyDAO;
+    private final UserPropertyDAO userPropertyDAO;
 
     private final VoteDAO voteDAO;
 
@@ -77,15 +77,16 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      */
-    public static void initInstance(DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO));
+    public static void initInstance(DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, UserPropertyDAO userPropertyDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
+            userPropertyDAO));
     }
 
     /**
      * The constructor is private to force use of the factory methods and
      * enforce the singleton pattern.
      */
-    protected DatabaseDataAccessRequestAPI(DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+    protected DatabaseDataAccessRequestAPI(DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, UserPropertyDAO userPropertyDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.converter = converter;
         this.electionDAO = electionDAO;
@@ -94,7 +95,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         this.userDAO = userDAO;
         this.dataSetDAO = dataSetDAO;
         this.dataAccessReportsParser = new DataAccessReportsParser();
-        this.researcherPropertyDAO = researcherPropertyDAO;
+        this.userPropertyDAO = userPropertyDAO;
     }
 
     @Override
@@ -250,8 +251,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                         Integer datasetId = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID).get(0);
                         String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId);
                         Consent consent = consentDAO.findConsentById(consentId);
-                        String profileName = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
-                        String institution = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
+                        String profileName = userPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
+                        String institution = userPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
                         dataAccessReportsParser.addApprovedDARLine(darWriter, election, dar, profileName, institution, consent.getName(), consent.getTranslatedUseRestriction());
                     }
                 } catch (Exception e) {
@@ -299,9 +300,12 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             for(Document dar: darList){
                 Date approvalDate = electionDAO.findApprovalAccessElectionDate(dar.getString(DarConstants.REFERENCE_ID));
                 if (approvalDate != null) {
-                    String email = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.ACADEMIC_BUSINESS_EMAIL);
-                    String name = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
-                    String institution = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
+                    String email = userPropertyDAO
+                        .findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.ACADEMIC_BUSINESS_EMAIL);
+                    String name = userPropertyDAO
+                        .findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
+                    String institution = userPropertyDAO
+                        .findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
                     String darCode = dar.getString(DarConstants.DAR_CODE);
                     dataAccessReportsParser.addDataSetApprovedUsersLine(darWriter, email, name, institution, darCode, approvalDate);
                 }
@@ -318,8 +322,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         Optional<User> optionalUser = Optional.ofNullable(user);
         String status = optionalUser.isPresent() ? user.getStatus() : "";
         String rationale = optionalUser.isPresent() ? user.getRationale() : "";
-        List<ResearcherProperty> researcherProperties = optionalUser.isPresent() ?
-                researcherPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId()) :
+        List<UserProperty> researcherProperties = optionalUser.isPresent() ?
+                userPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId()) :
                 Collections.emptyList();
         return darModalDetailsDTO
             .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.getString(DarConstants.REFERENCE_ID))))
@@ -381,24 +385,24 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return accessIds;
     }
 
-    protected List<ResearcherProperty> updateResearcherIdentification(Document dataAccessRequest) {
+    protected List<UserProperty> updateResearcherIdentification(Document dataAccessRequest) {
         Integer userId = dataAccessRequest.getInteger(DarConstants.USER_ID);
-        String linkedIn = dataAccessRequest.getString(ResearcherFields.LINKEDIN_PROFILE.getValue());
-        String orcId = dataAccessRequest.getString(ResearcherFields.ORCID.getValue());
-        String researcherGate = dataAccessRequest.getString(ResearcherFields.RESEARCHER_GATE.getValue());
-        List<ResearcherProperty> rpList = new ArrayList<>();
-        researcherPropertyDAO.deletePropertyByUser(Arrays.asList(ResearcherFields.LINKEDIN_PROFILE.getValue(), ResearcherFields.ORCID.getValue(), ResearcherFields.RESEARCHER_GATE.getValue()), userId);
+        String linkedIn = dataAccessRequest.getString(UserFields.LINKEDIN_PROFILE.getValue());
+        String orcId = dataAccessRequest.getString(UserFields.ORCID.getValue());
+        String researcherGate = dataAccessRequest.getString(UserFields.RESEARCHER_GATE.getValue());
+        List<UserProperty> rpList = new ArrayList<>();
+        userPropertyDAO.deletePropertyByUser(Arrays.asList(UserFields.LINKEDIN_PROFILE.getValue(), UserFields.ORCID.getValue(), UserFields.RESEARCHER_GATE.getValue()), userId);
         if (StringUtils.isNotEmpty(linkedIn)) {
-          rpList.add(new ResearcherProperty(userId, ResearcherFields.LINKEDIN_PROFILE.getValue(), linkedIn));
+          rpList.add(new UserProperty(userId, UserFields.LINKEDIN_PROFILE.getValue(), linkedIn));
         }
         if (StringUtils.isNotEmpty(orcId)) {
-          rpList.add(new ResearcherProperty(userId, ResearcherFields.ORCID.getValue(), orcId));
+          rpList.add(new UserProperty(userId, UserFields.ORCID.getValue(), orcId));
         }
         if (StringUtils.isNotEmpty(researcherGate)) {
-           rpList.add(new ResearcherProperty(userId, ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate));
+           rpList.add(new UserProperty(userId, UserFields.RESEARCHER_GATE.getValue(), researcherGate));
         }
         if (CollectionUtils.isNotEmpty(rpList)) {
-           researcherPropertyDAO.insertAll(rpList);
+           userPropertyDAO.insertAll(rpList);
         }
         return rpList;
     }

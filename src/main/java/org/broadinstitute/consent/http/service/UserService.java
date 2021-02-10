@@ -12,27 +12,27 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 
 public class UserService {
 
-    private final ResearcherPropertyDAO researcherPropertyDAO;
+    private final UserPropertyDAO userPropertyDAO;
     private final UserDAO userDAO;
     private final UserRoleDAO userRoleDAO;
     private final VoteDAO voteDAO;
 
     @Inject
-    public UserService(UserDAO userDAO, ResearcherPropertyDAO researcherPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO) {
+    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO) {
         this.userDAO = userDAO;
-        this.researcherPropertyDAO = researcherPropertyDAO;
+        this.userPropertyDAO = userPropertyDAO;
         this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
     }
@@ -95,12 +95,12 @@ public class UserService {
             List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
             voteDAO.removeVotesByIds(voteIds);
         }
-        researcherPropertyDAO.deleteAllPropertiesByUser(user.getDacUserId());
+        userPropertyDAO.deleteAllPropertiesByUser(user.getDacUserId());
         userDAO.deleteUserByEmail(email);
     }
 
-    public List<ResearcherProperty> findAllUserProperties(Integer userId) {
-        return researcherPropertyDAO.findResearcherPropertiesByUser(userId);
+    public List<UserProperty> findAllUserProperties(Integer userId) {
+        return userPropertyDAO.findResearcherPropertiesByUser(userId);
     }
 
     private void validateRequiredFields(User user) {

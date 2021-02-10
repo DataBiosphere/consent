@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,9 +33,9 @@ public class NIHUserAccount {
 
     public Map<String, String> getNihMap() {
         Map<String, String> nihComponents = new HashMap<>();
-        nihComponents.put(ResearcherFields.ERA_STATUS.getValue(), Boolean.TRUE.toString());
-        nihComponents.put(ResearcherFields.ERA_USERNAME.getValue(), this.nihUsername);
-        nihComponents.put(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), this.eraExpiration);
+        nihComponents.put(UserFields.ERA_STATUS.getValue(), Boolean.TRUE.toString());
+        nihComponents.put(UserFields.ERA_USERNAME.getValue(), this.nihUsername);
+        nihComponents.put(UserFields.ERA_EXPIRATION_DATE.getValue(), this.eraExpiration);
         return nihComponents;
     }
 

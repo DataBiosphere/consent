@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -57,7 +57,7 @@ public class EmailNotifierServiceTest {
     private MailServiceDAO mailServiceDAO;
 
     @Mock
-    private ResearcherPropertyDAO researcherPropertyDAO;
+    private UserPropertyDAO userPropertyDAO;
 
     private final String defaultAccount = "duos-dev@broadinstitute.org";
 
@@ -81,7 +81,8 @@ public class EmailNotifierServiceTest {
         fmConfig.setTemplateDirectory("/freemarker");
         FreeMarkerTemplateHelper helper = new FreeMarkerTemplateHelper(fmConfig);
         service = new EmailNotifierService(consentDAO, dataAccessRequestService, voteDAO, electionDAO, userDAO,
-                emailDAO, mailService, mailServiceDAO, helper, serverUrl, serviceActive, researcherPropertyDAO);
+                emailDAO, mailService, mailServiceDAO, helper, serverUrl, serviceActive,
+            userPropertyDAO);
     }
 
     @Test

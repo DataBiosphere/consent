@@ -50,7 +50,7 @@ import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -210,7 +210,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final MailMessageDAO mailMessageDAO = injector.getProvider(MailMessageDAO.class).get();
         final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = injector.getProvider(ApprovalExpirationTimeDAO.class).get();
         final DataSetAuditDAO dataSetAuditDAO = injector.getProvider(DataSetAuditDAO.class).get();
-        final ResearcherPropertyDAO researcherPropertyDAO = injector.getProvider(ResearcherPropertyDAO.class).get();
+        final UserPropertyDAO userPropertyDAO = injector.getProvider(UserPropertyDAO.class).get();
         final AssociationDAO associationDAO = injector.getProvider(AssociationDAO.class).get();
 
         // Services
@@ -232,7 +232,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final WhitelistService whitelistService = injector.getProvider(WhitelistService.class).get();
         final AuditService auditService = injector.getProvider(AuditService.class).get();
         final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
-        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, useRestrictionConverter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
+        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, useRestrictionConverter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
+            userPropertyDAO);
         DatabaseConsentAPI.initInstance(auditService, jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, config.getDatasets());
@@ -263,7 +264,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
-        final ResearcherService researcherService = new ResearcherPropertyHandler(researcherPropertyDAO, userDAO, emailNotifierService);
+        final ResearcherService researcherService = new ResearcherPropertyHandler(userPropertyDAO, userDAO, emailNotifierService);
         final NihAuthApi nihAuthApi = new NihServiceAPI(researcherService);
 
         // Custom Error handling. Expand to include other codes when necessary

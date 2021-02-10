@@ -31,7 +31,7 @@ import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
@@ -168,7 +168,7 @@ public class UserResource extends Resource {
      * @return JsonObject version of the user with researcher properties and whitelist entries
      */
     private JsonObject constructUserJsonObject(User user) {
-        List<ResearcherProperty> props = userService.findAllUserProperties(user.getDacUserId());
+        List<UserProperty> props = userService.findAllUserProperties(user.getDacUserId());
         List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(user, props);
         JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
         JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();

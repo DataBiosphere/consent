@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -62,15 +62,15 @@ public class DataAccessParserTest {
                         false,
                         PDDocument.load(getTemplateResource()).getDocumentCatalog().getAcroForm(),
                         TRANSLATED_USE_RESTRICTION);
-        assertEquals(acroForm.getField(ResearcherFields.INSTITUTION.getValue()).getValueAsString(), INSTITUTION);
-        assertEquals(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString(), DEPARTMENT);
-        assertEquals(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString(), STREET_1);
-        assertEquals(acroForm.getField(ResearcherFields.CITY.getValue()).getValueAsString(), CITY);
-        assertEquals(acroForm.getField(ResearcherFields.ZIP_POSTAL_CODE.getValue()).getValueAsString(), POSTAL_CODE);
-        assertEquals(acroForm.getField(ResearcherFields.COUNTRY.getValue()).getValueAsString(), COUNTRY);
-        assertEquals(acroForm.getField(ResearcherFields.STATE.getValue()).getValueAsString(), STATE);
-        assertEquals(acroForm.getField(ResearcherFields.STREET_ADDRESS_2.getValue()).getValueAsString(), STREET_2);
-        assertEquals(acroForm.getField(ResearcherFields.DIVISION.getValue()).getValueAsString(), DIVISION);
+        assertEquals(acroForm.getField(UserFields.INSTITUTION.getValue()).getValueAsString(), INSTITUTION);
+        assertEquals(acroForm.getField(UserFields.DEPARTMENT.getValue()).getValueAsString(), DEPARTMENT);
+        assertEquals(acroForm.getField(UserFields.STREET_ADDRESS_1.getValue()).getValueAsString(), STREET_1);
+        assertEquals(acroForm.getField(UserFields.CITY.getValue()).getValueAsString(), CITY);
+        assertEquals(acroForm.getField(UserFields.ZIP_POSTAL_CODE.getValue()).getValueAsString(), POSTAL_CODE);
+        assertEquals(acroForm.getField(UserFields.COUNTRY.getValue()).getValueAsString(), COUNTRY);
+        assertEquals(acroForm.getField(UserFields.STATE.getValue()).getValueAsString(), STATE);
+        assertEquals(acroForm.getField(UserFields.STREET_ADDRESS_2.getValue()).getValueAsString(), STREET_2);
+        assertEquals(acroForm.getField(UserFields.DIVISION.getValue()).getValueAsString(), DIVISION);
         assertEquals(acroForm.getField(DarConstants.INVESTIGATOR).getValueAsString(), PROFILE_NAME);
         assertEquals(acroForm.getField(DarConstants.ACADEMIC_BUSINESS_EMAIL).getValueAsString(), ACADEMIC_BUSINESS_EMAIL);
         assertEquals(acroForm.getField(DarConstants.ERA_COMMONS_ID).getValueAsString(), ERA_COMMONS_ID);
@@ -100,9 +100,9 @@ public class DataAccessParserTest {
     @Test
     public void testInvalidFieldValue() throws Exception {
         Map<String, String> props = populateProps();
-        props.put(ResearcherFields.PROFILE_NAME.getValue(), PROFILE_NAME + "\u200B");
-        props.put(ResearcherFields.DEPARTMENT.getValue(), "\u0009" + DEPARTMENT);
-        props.put(ResearcherFields.STREET_ADDRESS_1.getValue(), "\u200B" + STREET_1 + "\u00A0");
+        props.put(UserFields.PROFILE_NAME.getValue(), PROFILE_NAME + "\u200B");
+        props.put(UserFields.DEPARTMENT.getValue(), "\u0009" + DEPARTMENT);
+        props.put(UserFields.STREET_ADDRESS_1.getValue(), "\u200B" + STREET_1 + "\u00A0");
         PDAcroForm acroForm = new DataAccessParser().
                 fillDARForm(
                         populateDocument(),
@@ -111,9 +111,9 @@ public class DataAccessParserTest {
                         false,
                         PDDocument.load(getTemplateResource()).getDocumentCatalog().getAcroForm(),
                         TRANSLATED_USE_RESTRICTION);
-        assertEquals(acroForm.getField(ResearcherFields.PROFILE_NAME.getValue()).getValueAsString(), PROFILE_NAME);
-        assertEquals(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString(), DEPARTMENT);
-        assertEquals(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString(), STREET_1);
+        assertEquals(acroForm.getField(UserFields.PROFILE_NAME.getValue()).getValueAsString(), PROFILE_NAME);
+        assertEquals(acroForm.getField(UserFields.DEPARTMENT.getValue()).getValueAsString(), DEPARTMENT);
+        assertEquals(acroForm.getField(UserFields.STREET_ADDRESS_1.getValue()).getValueAsString(), STREET_1);
     }
 
     private InputStream getTemplateResource() {
@@ -137,21 +137,21 @@ public class DataAccessParserTest {
 
     private Map<String, String> populateProps() {
         Map<String, String> props = new HashMap<>();
-        props.put(ResearcherFields.INSTITUTION.getValue(), INSTITUTION);
-        props.put(ResearcherFields.DEPARTMENT.getValue(), DEPARTMENT);
-        props.put(ResearcherFields.STREET_ADDRESS_1.getValue(), STREET_1);
-        props.put(ResearcherFields.CITY.getValue(), CITY);
-        props.put(ResearcherFields.ZIP_POSTAL_CODE.getValue(), POSTAL_CODE);
-        props.put(ResearcherFields.COUNTRY.getValue(), COUNTRY);
-        props.put(ResearcherFields.STATE.getValue(), STATE);
-        props.put(ResearcherFields.STREET_ADDRESS_2.getValue(), STREET_2);
-        props.put(ResearcherFields.DIVISION.getValue(), DIVISION);
+        props.put(UserFields.INSTITUTION.getValue(), INSTITUTION);
+        props.put(UserFields.DEPARTMENT.getValue(), DEPARTMENT);
+        props.put(UserFields.STREET_ADDRESS_1.getValue(), STREET_1);
+        props.put(UserFields.CITY.getValue(), CITY);
+        props.put(UserFields.ZIP_POSTAL_CODE.getValue(), POSTAL_CODE);
+        props.put(UserFields.COUNTRY.getValue(), COUNTRY);
+        props.put(UserFields.STATE.getValue(), STATE);
+        props.put(UserFields.STREET_ADDRESS_2.getValue(), STREET_2);
+        props.put(UserFields.DIVISION.getValue(), DIVISION);
         props.put(DarConstants.ACADEMIC_BUSINESS_EMAIL, ACADEMIC_BUSINESS_EMAIL);
         props.put(DarConstants.ERA_COMMONS_ID, ERA_COMMONS_ID);
         props.put(DarConstants.PUBMED_ID, PUBMED_ID);
         props.put(DarConstants.SCIENTIFIC_URL, SCIENTIFIC_URL);
-        props.put(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
-        props.put(ResearcherFields.PROFILE_NAME.getValue(), PROFILE_NAME);
+        props.put(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
+        props.put(UserFields.PROFILE_NAME.getValue(), PROFILE_NAME);
         return props;
     }
 
