@@ -11,6 +11,11 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
+/**
+ * This class works well for collections. When a query returns a single user, all
+ * rows are not iterated over regardless of the number of records returned by the query.
+ * See @UserReducer for mapping results on a single user.
+ */
 public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
 
   private final Map<Integer, User> users = new HashMap<>();
