@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
@@ -19,12 +20,20 @@ public class UserReducer implements LinkedHashMapRowReducer<Integer, User> {
             rowView.getColumn("dacuserid", Integer.class),
             id -> rowView.getRow(User.class));
     // Status is an enum type and we need to get the string value
-    if (Objects.nonNull(rowView.getColumn("status", Integer.class))) {
-      user.setStatus(getStatus(rowView));
+    try {
+      if (Objects.nonNull(rowView.getColumn("status", Integer.class))) {
+        user.setStatus(getStatus(rowView));
+      }
+    } catch (MappingException e) {
+      // Ignore any attempt to map a column that doesn't exist
     }
-    if (Objects.nonNull(rowView.getColumn("user_role_id", Integer.class))) {
-      UserRole ur = rowView.getRow(UserRole.class);
-      user.addRole(ur);
+    try {
+      if (Objects.nonNull(rowView.getColumn("user_role_id", Integer.class))) {
+        UserRole ur = rowView.getRow(UserRole.class);
+        user.addRole(ur);
+      }
+    } catch (MappingException e) {
+      // Ignore any attempt to map a column that doesn't exist
     }
   }
 
