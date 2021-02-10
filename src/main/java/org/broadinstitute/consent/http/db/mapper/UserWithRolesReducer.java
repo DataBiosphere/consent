@@ -12,7 +12,7 @@ import org.jdbi.v3.core.result.RowView;
 /**
  * This class works well for individual Users as well as collections.
  */
-public class UserReducer implements LinkedHashMapRowReducer<Integer, User> {
+public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, User> {
   @Override
   public void accumulate(Map<Integer, User> map, RowView rowView) {
     User user =

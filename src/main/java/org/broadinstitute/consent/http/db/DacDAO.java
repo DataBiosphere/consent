@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.db;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.RoleMapper;
-import org.broadinstitute.consent.http.db.mapper.UserReducer;
+import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.db.mapper.UserRoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.models.User;
@@ -71,7 +71,7 @@ public interface DacDAO extends Transactional<DacDAO> {
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
-    @UseRowReducer(UserReducer.class)
+    @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, "
@@ -84,7 +84,7 @@ public interface DacDAO extends Transactional<DacDAO> {
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
-    @UseRowReducer(UserReducer.class)
+    @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, "

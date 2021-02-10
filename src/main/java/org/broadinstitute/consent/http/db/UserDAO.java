@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import org.broadinstitute.consent.http.db.mapper.UserReducer;
+import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -23,7 +23,7 @@ public interface UserDAO extends Transactional<UserDAO> {
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
-    @UseRowReducer(UserReducer.class)
+    @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, "
@@ -35,13 +35,13 @@ public interface UserDAO extends Transactional<UserDAO> {
     User findUserById(@Bind("dacUserId") Integer dacUserId);
 
     @RegisterBeanMapper(value = User.class)
-    @UseRowReducer(UserReducer.class)
+    @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("select * from dacuser where dacUserId IN (<dacUserIds>)")
     Collection<User> findUsers(@BindList("dacUserIds") Collection<Integer> dacUserIds);
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
-    @UseRowReducer(UserReducer.class)
+    @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, "
@@ -69,7 +69,7 @@ public interface UserDAO extends Transactional<UserDAO> {
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
-    @UseRowReducer(UserReducer.class)
+    @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, "
@@ -125,7 +125,7 @@ public interface UserDAO extends Transactional<UserDAO> {
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
-    @UseRowReducer(UserReducer.class)
+    @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, "
