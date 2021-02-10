@@ -25,6 +25,7 @@ public interface UserDAO extends Transactional<UserDAO> {
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
+    @UseRowReducer(UserReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, "
@@ -33,7 +34,6 @@ public interface UserDAO extends Transactional<UserDAO> {
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
         + " LEFT JOIN roles r ON r.roleid = ur.role_id "
         + " WHERE u.dacuserid = :dacUserId")
-    @UseRowReducer(UserReducer.class)
     User findUserById(@Bind("dacUserId") Integer dacUserId);
 
     @SqlQuery("select * from dacuser where dacUserId IN (<dacUserIds>)")
@@ -59,6 +59,7 @@ public interface UserDAO extends Transactional<UserDAO> {
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
+    @UseRowReducer(UserReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, "
@@ -67,7 +68,6 @@ public interface UserDAO extends Transactional<UserDAO> {
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
         + " LEFT JOIN roles r ON r.roleid = ur.role_id "
         + " WHERE LOWER(u.email) = LOWER(:email)")
-    @UseRowReducer(UserReducer.class)
     User findUserByEmail(@Bind("email") String email);
 
     @SqlUpdate("insert into dacuser (email, displayName, createDate) values (:email, :displayName, :createDate)")
