@@ -88,13 +88,6 @@ public class ConsentVoteResource extends Resource {
         return api.describeVoteById(id, consentId);
     }
 
-    @GET
-    @Produces("application/json")
-    @PermitAll
-    public List<Vote> describeAllVotes(@PathParam("consentId") String consentId) {
-        return api.describeVotes(consentId);
-    }
-
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
