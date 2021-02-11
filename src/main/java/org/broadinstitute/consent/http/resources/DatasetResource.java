@@ -171,56 +171,6 @@ public class DatasetResource extends Resource {
         }
     }
 
-    @POST
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces("application/json")
-    @Path("/{userId}")
-    @RolesAllowed(ADMIN)
-    public Response createDataSet(
-            @FormDataParam("data") InputStream uploadedDataSet,
-            @FormDataParam("data") FormDataBodyPart part,
-            @PathParam("userId") Integer userId,
-            @DefaultValue("false") @QueryParam("overwrite") boolean overwrite) throws IOException {
-
-        List<DataSet> dataSets;
-        List<String> errors = new ArrayList<>();
-        if (part.getMediaType().getType().equals("text") &&
-                (part.getMediaType().getSubtype().equals("tab-separated-values")
-                        || part.getMediaType().getSubtype().equals("plain") )) {
-            File inputFile = null;
-            try {
-                inputFile = new File(UUID.randomUUID().toString());
-                FileUtils.copyInputStreamToFile(uploadedDataSet, inputFile);
-                ParseResult result;
-                if (overwrite) {
-                    result = api.overwrite(inputFile, userId);
-                } else{
-                    result = api.create(inputFile, userId);
-                }
-                dataSets = result.getDatasets();
-                errors = result.getErrors();
-
-                if (CollectionUtils.isNotEmpty(errors)) {
-                    // errors should be download as a file, not implemented yet
-                    return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
-                } else {
-                    // datasets should be download as a file ?, if so, not implemented yet
-                    return Response.ok(dataSets, MediaType.APPLICATION_JSON).build();
-                }
-            } catch (Exception e) {
-                logger().error("POSTing Data Set", e);
-                errors.add("A problem has occurred while uploading datasets - Contact Support");
-            } finally {
-                if (inputFile != null) {
-                    inputFile.delete();
-                }
-            }
-        }
-
-        errors.add("The file type is not the expected one. Please download the Dataset Spreadsheet Model from the 'Add Datasets' window.");
-        return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
-    }
-
     @GET
     @Produces("application/json")
     @PermitAll
