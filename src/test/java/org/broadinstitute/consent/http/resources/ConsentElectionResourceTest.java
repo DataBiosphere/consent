@@ -217,27 +217,6 @@ public class ConsentElectionResourceTest {
     }
 
     @Test
-    public void testDescribe() {
-        Election election = getElection();
-        when(electionAPI.describeConsentElection(anyString())).thenReturn(election);
-        initResource();
-
-        Response response = resource.describe(UUID.randomUUID().toString());
-        Assert.assertNotNull(response);
-        Assert.assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-    }
-
-    @Test
-    public void testDescribe_notFound() {
-        when(electionAPI.describeConsentElection(anyString())).thenThrow(new NotFoundException());
-        initResource();
-
-        Response response = resource.describe(UUID.randomUUID().toString());
-        Assert.assertNotNull(response);
-        Assert.assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
-    }
-
-    @Test
     public void testDeleteElection() {
         doNothing().when(electionAPI).deleteElection(anyString(), anyInt());
         initResource();

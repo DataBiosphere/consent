@@ -110,17 +110,6 @@ public class ConsentElectionResource extends Resource {
         return Response.created(uri).build();
     }
 
-    @GET
-    @Produces("application/json")
-    @PermitAll
-    public Response describe(@PathParam("consentId") String consentId) {
-        try {
-            return Response.status(Status.OK).entity(api.describeConsentElection(consentId)).build();
-        } catch (Exception e) {
-            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
-        }
-    }
-
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
