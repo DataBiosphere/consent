@@ -53,26 +53,6 @@ public class ConsentCasesResource extends Resource {
     }
 
     @GET
-    @Path("/summary/file")
-    @Produces("text/plain")
-    @PermitAll
-    public Response getConsentSummaryDetailFile(@QueryParam("fileType") String fileType, @Auth AuthUser authUser) {
-        ResponseBuilder response;
-        File fileToSend = null;
-        if (fileType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-            fileToSend = summaryService.describeConsentSummaryDetail();
-        } else if (fileType.equals(ElectionType.DATA_ACCESS.getValue())) {
-            fileToSend = summaryService.describeDataAccessRequestSummaryDetail();
-        }
-        if ((fileToSend != null)) {
-            response = Response.ok(fileToSend);
-        } else {
-            response = Response.ok();
-        }
-        return response.build();
-    }
-
-    @GET
     @Path("/closed")
     @Produces("application/json")
     @RolesAllowed({MEMBER, CHAIRPERSON, ALUMNI, ADMIN})
