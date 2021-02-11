@@ -117,17 +117,4 @@ public class ElectionResource extends Resource {
         }
     }
 
-    @GET
-    @Produces("application/json")
-    @Path("/consent/{requestElectionId}")
-    @PermitAll
-    public Response describeConsentElectionByDARElectionId(@PathParam("requestElectionId") Integer requestElectionId) {
-        try {
-            return  Response.status(Response.Status.OK).entity(api.getConsentElectionByDARElectionId(requestElectionId)).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
-        }
-    }
-
-
 }
