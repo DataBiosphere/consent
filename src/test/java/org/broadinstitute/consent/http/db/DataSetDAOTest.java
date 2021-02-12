@@ -3,8 +3,6 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -55,40 +53,6 @@ public class DataSetDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindDatasetsByDac() {
-        DataSet dataset = createDataset();
-        DataSet dataset2 = createDataset();
-        Dac dac = createDac();
-        Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-
-        Set<DataSetDTO> datasets = dataSetDAO.findDatasetsByDac(dac.getDacId());
-        assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DataSetDTO::getDataSetId).collect(Collectors.toList());
-        assertTrue(datasetIds.contains(dataset.getDataSetId()));
-        assertFalse(datasetIds.contains(dataset2.getDataSetId()));
-    }
-
-    @Test
-    public void testFindDatasetsWithDacsCase1() {
-        Set<DataSetDTO> datasets = dataSetDAO.findDatasetsWithDacs();
-        assertTrue(datasets.isEmpty());
-    }
-
-    @Test
-    public void testFindDatasetsWithDacsCase2() {
-        DataSet dataset = createDataset();
-        DataSet dataset2 = createDataset();
-        Dac dac = createDac();
-        Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        createAssociation(consent.getConsentId(), dataset2.getDataSetId());
-        Set<DataSetDTO> datasets = dataSetDAO.findDatasetsWithDacs();
-        assertFalse(datasets.isEmpty());
-        assertEquals(2, datasets.size());
-    }
-
-    @Test
     public void testFindDatasetAndDacIds() {
         DataSet dataset = createDataset();
         Dac dac = createDac();
@@ -100,60 +64,6 @@ public class DataSetDAOTest extends DAOTestHelper {
         assertEquals(1, pairs.size());
         assertEquals(pairs.get(0).getLeft(), dataset.getDataSetId());
         assertEquals(pairs.get(0).getRight(), dac.getDacId());
-    }
-
-    @Test
-    public void testFindDacForDataset() {
-        DataSet dataset = createDataset();
-        Dac dac = createDac();
-        Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-
-        Dac foundDac = dataSetDAO.findDacForDataset(dataset.getDataSetId());
-        assertNotNull(foundDac);
-        assertEquals(dac.getDacId(), foundDac.getDacId());
-    }
-
-
-    @Test
-    public void testFindDacForDatasetNotFound() {
-        DataSet dataset = createDataset();
-
-        Dac foundDac = dataSetDAO.findDacForDataset(dataset.getDataSetId());
-        assertNull(foundDac);
-    }
-
-    @Test
-    public void testFindDatasetsForConsentId_case0() {
-        Dac dac = createDac();
-        Consent c = createConsent(dac.getDacId());
-
-        Set<DataSet> datasets = dataSetDAO.findDatasetsForConsentId(c.getConsentId());
-        assertEquals(datasets.size(), 0);
-    }
-
-    @Test
-    public void testFindDatasetsForConsentId_case1() {
-        Dac dac = createDac();
-        Consent c = createConsent(dac.getDacId());
-        DataSet d = createDataset();
-        createAssociation(c.getConsentId(), d.getDataSetId());
-
-        Set<DataSet> datasets = dataSetDAO.findDatasetsForConsentId(c.getConsentId());
-        assertEquals(datasets.size(), 1);
-    }
-
-    @Test
-    public void testFindDatasetsForConsentId_case2() {
-        Dac dac = createDac();
-        Consent c = createConsent(dac.getDacId());
-        DataSet d = createDataset();
-        createAssociation(c.getConsentId(), d.getDataSetId());
-        DataSet d2 = createDataset();
-        createAssociation(c.getConsentId(), d2.getDataSetId());
-
-        Set<DataSet> datasets = dataSetDAO.findDatasetsForConsentId(c.getConsentId());
-        assertEquals(datasets.size(), 2);
     }
 
     @Test
