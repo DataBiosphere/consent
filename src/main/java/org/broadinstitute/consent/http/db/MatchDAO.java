@@ -31,9 +31,6 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     @SqlQuery("select * from match_entity where matchId = :id ")
     Match  findMatchById(@Bind("id") Integer id);
 
-    @SqlQuery("select * from match_entity where purpose  IN (<purposeId>)")
-    List<Match>  findMatchesPurposeId(@BindList("purposeId") List<String> purposeId);
-
     @SqlUpdate("insert into match_entity " +
             "(consent, purpose, matchEntity, failed, date) values " +
             "(:consentId, :purposeId, :match, :failed, :createDate)")
