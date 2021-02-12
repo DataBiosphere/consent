@@ -2443,44 +2443,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Dataset'
-    post:
-      summary: createDataSet
-      description: Creates the Datasets defined in the input .TSV /.txt file.
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-      parameters:
-        - name: data
-          in: formData
-          description: File that contains one ore more Datasets.
-          required: true
-          schema:
-            type: file
-        - name: overwrite
-          in: query
-          description: Describes if the API has to overwrite a DataSet that is already defined.
-          required: false
-          schema:
-            type: boolean
-      tags:
-        - Datasets
-      responses:
-        200:
-          description: An array of created Datasets
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Dataset'
-        400:
-          description: Array of the errors found with a brief description of each one.
-          content:
-            application/json:
-              schema:
-                type: string
+
   /api/dataset/v2:
     post:
       summary: Creates the Dataset from JSON
