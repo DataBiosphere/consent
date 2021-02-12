@@ -26,7 +26,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     private final DataSetDAO dsDAO;
     private final DatasetAssociationDAO dataSetAssociationDAO;
-    private final UserRoleDAO userRoleDAO;
     private final ConsentDAO consentDAO;
     private DataSetAuditDAO dataSetAuditDAO;
     private final String DELETE = "DELETE";;
@@ -42,7 +41,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private DatabaseDataSetAPI(DataSetDAO dsDAO, DatasetAssociationDAO dataSetAssociationDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
         this.dsDAO = dsDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
-        this.userRoleDAO = userRoleDAO;
         this.consentDAO = consentDAO;
         this.dataSetAuditDAO = dataSetAuditDAO;
     }
