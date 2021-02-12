@@ -1,25 +1,19 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
-
 import com.google.inject.Inject;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -29,19 +23,11 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.HeaderSummary;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.AccessRP;
-import org.broadinstitute.consent.http.models.Association;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.broadinstitute.consent.http.util.DatasetUtil;
-import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,25 +36,22 @@ public class SummaryService {
     private final VoteDAO voteDAO;
     private final ElectionDAO electionDAO;
     private final UserDAO userDAO;
-    private final ConsentDAO consentDAO;
     private final DataSetDAO datasetDAO;
     private final MatchDAO matchDAO;
     private final DataAccessRequestService dataAccessRequestService;
     private static final String SEPARATOR = "\t";
     private static final String TEXT_DELIMITER = "\"";
     private static final String END_OF_LINE = System.lineSeparator();
-    private static final String MANUAL_REVIEW = "Manual Review";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
     public SummaryService(DataAccessRequestService dataAccessRequestService, VoteDAO dao,
-        ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO, DataSetDAO datasetDAO,
+        ElectionDAO electionDAO, UserDAO userDAO, DataSetDAO datasetDAO,
         MatchDAO matchDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.voteDAO = dao;
         this.electionDAO = electionDAO;
         this.userDAO = userDAO;
-        this.consentDAO = consentDAO;
         this.datasetDAO = datasetDAO;
         this.matchDAO = matchDAO;
     }
@@ -231,29 +214,6 @@ public class SummaryService {
         }
     }
 
-    private void setSummaryHeader(FileWriter summaryWriter , Integer maxNumberOfDACMembers) throws IOException {
-        summaryWriter.write(
-                HeaderSummary.CONSENT.getValue() + SEPARATOR +
-                        HeaderSummary.VERSION.getValue() + SEPARATOR +
-                        HeaderSummary.STATUS.getValue() + SEPARATOR +
-                        HeaderSummary.ARCHIVED.getValue() + SEPARATOR +
-                        HeaderSummary.STRUCT_LIMITATIONS.getValue() + SEPARATOR +
-                        HeaderSummary.DATE.getValue() + SEPARATOR +
-                        HeaderSummary.CHAIRPERSON.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_DECISION.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_DECISION_RATIONALE.getValue() + SEPARATOR);
-        for (int i = 1; i < maxNumberOfDACMembers; i++) {
-            summaryWriter.write(
-                    HeaderSummary.USER.getValue() + SEPARATOR +
-                    HeaderSummary.VOTE.getValue() + SEPARATOR +
-                    HeaderSummary.RATIONALE.getValue() + SEPARATOR);
-        }
-        summaryWriter.write(
-                HeaderSummary.USER.getValue() + SEPARATOR +
-                HeaderSummary.VOTE.getValue() + SEPARATOR +
-                HeaderSummary.RATIONALE.getValue()+ END_OF_LINE);
-    }
-
     private void setDatasetElectionsHeader(FileWriter summaryWriter , Integer maxNumberOfVotes) throws IOException {
         summaryWriter.write(
                 HeaderSummary.DATA_REQUEST_ID.getValue() + SEPARATOR +
@@ -271,34 +231,6 @@ public class SummaryService {
         summaryWriter.write(END_OF_LINE);
     }
 
-    private void setSummaryHeaderDataAccessRequest(FileWriter summaryWriter , Integer maxNumberOfDACMembers) throws IOException {
-        summaryWriter.write(
-                HeaderSummary.DATA_REQUEST_ID.getValue() + SEPARATOR +
-                        HeaderSummary.DATE.getValue() + SEPARATOR +
-                        HeaderSummary.CHAIRPERSON.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_DECISION.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_DECISION_RATIONALE.getValue() + SEPARATOR +
-                        HeaderSummary.VAULT_DECISION.getValue() + SEPARATOR +
-                        HeaderSummary.VAULT_VS_DAC_AGREEMENT.getValue() + SEPARATOR +
-                        HeaderSummary.CHAIRPERSON_FEEDBACK.getValue() + SEPARATOR +
-                        HeaderSummary.RESEARCHER.getValue() + SEPARATOR +
-                        HeaderSummary.PROJECT_TITLE.getValue() + SEPARATOR +
-                        HeaderSummary.DATASET_ID.getValue() + SEPARATOR +
-                        HeaderSummary.DATA_ACCESS_SUBM_DATE.getValue() + SEPARATOR);
-        for (int i = 1; i <= maxNumberOfDACMembers; i++) {
-            summaryWriter.write(
-                    HeaderSummary.DAC_MEMBERS.getValue() + SEPARATOR);
-        }
-        summaryWriter.write(
-                HeaderSummary.REQUIRE_MANUAL_REVIEW.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_DECISION_DAR.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_RATIONALE_DAR.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_DECISION_RP.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_RATIONALE_RP.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_DECISION_DUL.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_RATIONALE_DUL.getValue() + END_OF_LINE);
-    }
-
     public static <T> Collector<T, ?, T> singletonCollector() {
         return Collectors.collectingAndThen(
                 Collectors.toList(),
@@ -312,24 +244,6 @@ public class SummaryService {
                     return list.get(0);
                 }
         );
-    }
-
-    private Document findAssociatedDAR(List<Document> dataAccessRequests, String referenceId) {
-        Optional<Document> documentOption = dataAccessRequests.stream().
-                filter(d -> d.getString(DarConstants.REFERENCE_ID).equalsIgnoreCase(referenceId)).
-                findFirst();
-        return documentOption.orElse(null);
-    }
-
-    private String booleanToString(Boolean b) {
-        if(b != null) {
-            return b ? "YES" : "NO";
-        }
-        return "-";
-    }
-
-    private String nullToString(String b) {
-        return b != null && !b.isEmpty()  ? b : "-";
     }
 
     public String formatLongToDate(long time) {
