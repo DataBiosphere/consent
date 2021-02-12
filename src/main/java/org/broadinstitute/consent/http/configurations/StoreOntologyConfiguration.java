@@ -1,14 +1,14 @@
 package org.broadinstitute.consent.http.configurations;
 
 
-import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 public class StoreOntologyConfiguration {
 
-    @NotEmpty
+    @NotNull
     public String bucketSubdirectory;
 
-    @NotEmpty
+    @NotNull
     public String configurationFileName;
 
     public String getBucketSubdirectory() {

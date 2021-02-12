@@ -1,15 +1,14 @@
 package org.broadinstitute.consent.http.configurations;
 
-import org.hibernate.validator.constraints.NotEmpty;
-
 import java.util.List;
+import javax.validation.constraints.NotNull;
 
 public class ElasticSearchConfiguration {
 
-    @NotEmpty
+    @NotNull
     private String indexName;
 
-    @NotEmpty
+    @NotNull
     private List<String> servers;
 
     public List<String> getServers() {
