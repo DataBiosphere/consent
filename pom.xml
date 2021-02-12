@@ -628,7 +628,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>7.10.2</version>
+      <version>7.11.0</version>
     </dependency>
 
     <!-- Required for mocking ontology and elastic search responses -->
