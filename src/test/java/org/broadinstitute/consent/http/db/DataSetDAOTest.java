@@ -103,6 +103,27 @@ public class DataSetDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindDacForDataset() {
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        Dac foundDac = dataSetDAO.findDacForDataset(dataset.getDataSetId());
+        assertNotNull(foundDac);
+        assertEquals(dac.getDacId(), foundDac.getDacId());
+    }
+
+
+    @Test
+    public void testFindDacForDatasetNotFound() {
+        DataSet dataset = createDataset();
+
+        Dac foundDac = dataSetDAO.findDacForDataset(dataset.getDataSetId());
+        assertNull(foundDac);
+    }
+
+    @Test
     public void testFindDatasetsForConsentId_case0() {
         Dac dac = createDac();
         Consent c = createConsent(dac.getDacId());
