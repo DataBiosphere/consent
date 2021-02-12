@@ -1,13 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.consent.http.db.mapper.AccessRPMapper;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DateMapper;
 import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.db.mapper.SimpleElectionMapper;
 import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
-import org.broadinstitute.consent.http.models.AccessRP;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -178,14 +176,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "left join vote v on v.electionId = e.electionId and lower(v.type) = 'final' ")
     List<Election> findLastElectionsWithFinalVoteByReferenceIdsAndType(@BindList("referenceIds") List<String> referenceIds, @Bind("type") String type);
 
-    @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, " +
-            "v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e " +
-            "inner join (select referenceId, MAX(createDate) maxDate from election e where lower(e.status) = lower(:status) group by referenceId) " +
-            "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
-            "AND e.referenceId in (<referenceIds>) " +
-            "left join vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' ")
-    List<Election> findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(@BindList("referenceIds") List<String> referenceIds, @Bind("status") String status);
-
     @SqlQuery("select distinct e.* " +
             "from election e " +
             "inner join (select referenceId, MAX(createDate) maxDate from election e where e.electionType = :type group by referenceId) " +
@@ -193,9 +183,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "AND e.referenceId = :referenceId ")
     @UseRowMapper(SimpleElectionMapper.class)
     List<Election> findLastElectionsByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
-
-    @SqlQuery("select count(*) from election e where lower(e.status) = 'open' and e.referenceId = :referenceId")
-    Integer verifyOpenElectionsForReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where lower(e.status) = lower(:status) group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
@@ -234,10 +221,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select consent_election_id from accesselection_consentelection where access_election_id = :electionAccessId ")
     Integer getElectionConsentIdByDARElectionId(@Bind("electionAccessId") Integer electionAccessId);
-
-    @RegisterRowMapper(AccessRPMapper.class)
-    @SqlQuery("select * from access_rp where electionAccessId in (<electionAccessIds>) ")
-    List<AccessRP> findAccessRPbyElectionAccessId(@BindList("electionAccessIds") List<Integer> electionAccessIds);
 
     @SqlUpdate("delete  from access_rp where electionAccessId = :electionAccessId")
     void deleteAccessRP(@Bind("electionAccessId") Integer electionAccessId);
