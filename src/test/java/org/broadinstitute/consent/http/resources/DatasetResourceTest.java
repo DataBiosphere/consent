@@ -7,12 +7,8 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
-import io.dropwizard.testing.ResourceHelpers;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +20,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -37,7 +32,6 @@ import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.ParseResult;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
@@ -58,11 +52,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
         AbstractDataAccessRequestAPI.class
 })
 public class DatasetResourceTest {
-
-    private final static String WRONG_EXT = "dataset/wrongExt.pdf";
-    private final static String MISSING_HEADER = "dataset/missingHeader.txt";
-    private final static String CORRECT_FILE = "dataset/correctFile.txt";
-    private final static String WRONG_IDENTIFIERS = "dataset/wrongIdentifiers.txt";
 
     @Mock
     private DataSetAPI api;
