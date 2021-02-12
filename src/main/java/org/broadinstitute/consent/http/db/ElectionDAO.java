@@ -194,9 +194,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     List<Election> findLastElectionsByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
-    @SqlQuery("select count(*) from election e where lower(e.status) = 'open' and e.referenceId = :referenceId")
-    Integer verifyOpenElectionsForReferenceId(@Bind("referenceId") String referenceId);
-
     @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where lower(e.status) = lower(:status) group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
             "AND e.referenceId = :referenceId ")
