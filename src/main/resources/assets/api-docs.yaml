@@ -396,26 +396,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Summary'
-  /api/consent/cases/summary/file:
-      get:
-        summary: Get Consent Summary Detail File
-        description: Returns a file with the detail of the reviewed cases whose type will be specified by fileType param.
-        parameters:
-         - name: fileType
-           in: query
-           description: DataAccess / TranslateDUL , defines the type of the reviewed cases info required.
-           required: true
-           schema:
-             type: string
-        tags:
-          - Summary File
-        responses:
-          200:
-            description: Export data to a txt file.
-            content:
-              text/plain:
-                schema:
-                  type: string
   /api/consent/cases/closed:
     get:
       summary: Describe Closed Elections
@@ -465,32 +445,6 @@ paths:
           description: There is an existing open election for the consent.
         404:
           description: The consent sent as a parameter does not exist.
-    get:
-       summary: Describe Consent Election
-       description: Returns the election for the consent sent as a parameter.
-       parameters:
-         - name: consentId
-           in: path
-           description: Consent ID.
-           required: true
-           schema:
-             type: string
-       tags:
-         - Election
-         - Consent
-       responses:
-         200:
-           description: Returns the election.
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/Election'
-         default:
-           description: "Error"
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/ErrorResponse'
   /api/consent/{consentId}/election/dac/{dacId}:
     post:
       summary: Create Consent Election For Dac
@@ -875,28 +829,6 @@ paths:
                 type: string
         404:
           description: The votes for the consent ID couldn't be found
-    get:
-      summary: describeAllVotes
-      description: Returns all the votes related to this consent.
-      parameters:
-        - name: consentId
-          in: path
-          description: The consent ID.
-          required: true
-          schema:
-            type: string
-      tags:
-        - Vote
-        - Consent
-      responses:
-        200:
-          description: Returns the list of found votes.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Vote'
   /api/dac:
     post:
       summary: Create a DAC
@@ -1158,33 +1090,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Dataset'
-        404:
-          description: No DAC found with the provided ID
-        500:
-          description: Internal Server Error
-  /api/dac/{dacId}/membership:
-    get:
-      summary: Get All Members of DAC
-      operationId: getDacMembership
-      description: List all members of a DAC, including Chairpersons and Members
-      parameters:
-        - name: dacId
-          in: path
-          description: The DAC ID
-          required: true
-          schema:
-            type: integer
-      tags:
-        - DAC
-      responses:
-        200:
-          description: The list of dac members
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
         404:
           description: No DAC found with the provided ID
         500:
