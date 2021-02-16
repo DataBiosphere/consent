@@ -1,18 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 
 public interface DataSetAPI {
-
-    ParseResult create(File dataSetFile, Integer userId);
-
-    ParseResult overwrite(File dataSetFile, Integer userId);
 
     List<DataSet> getDataSetsForConsent(String consentId);
 

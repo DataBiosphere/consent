@@ -4,17 +4,14 @@ import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -22,7 +19,6 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -38,7 +34,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.FileUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -52,10 +47,7 @@ import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.ParseResult;
 import org.broadinstitute.consent.http.service.UserService;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,56 +161,6 @@ public class DatasetResource extends Resource {
         else {
             return Response.noContent().build();
         }
-    }
-
-    @POST
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces("application/json")
-    @Path("/{userId}")
-    @RolesAllowed(ADMIN)
-    public Response createDataSet(
-            @FormDataParam("data") InputStream uploadedDataSet,
-            @FormDataParam("data") FormDataBodyPart part,
-            @PathParam("userId") Integer userId,
-            @DefaultValue("false") @QueryParam("overwrite") boolean overwrite) throws IOException {
-
-        List<DataSet> dataSets;
-        List<String> errors = new ArrayList<>();
-        if (part.getMediaType().getType().equals("text") &&
-                (part.getMediaType().getSubtype().equals("tab-separated-values")
-                        || part.getMediaType().getSubtype().equals("plain") )) {
-            File inputFile = null;
-            try {
-                inputFile = new File(UUID.randomUUID().toString());
-                FileUtils.copyInputStreamToFile(uploadedDataSet, inputFile);
-                ParseResult result;
-                if (overwrite) {
-                    result = api.overwrite(inputFile, userId);
-                } else{
-                    result = api.create(inputFile, userId);
-                }
-                dataSets = result.getDatasets();
-                errors = result.getErrors();
-
-                if (CollectionUtils.isNotEmpty(errors)) {
-                    // errors should be download as a file, not implemented yet
-                    return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
-                } else {
-                    // datasets should be download as a file ?, if so, not implemented yet
-                    return Response.ok(dataSets, MediaType.APPLICATION_JSON).build();
-                }
-            } catch (Exception e) {
-                logger().error("POSTing Data Set", e);
-                errors.add("A problem has occurred while uploading datasets - Contact Support");
-            } finally {
-                if (inputFile != null) {
-                    inputFile.delete();
-                }
-            }
-        }
-
-        errors.add("The file type is not the expected one. Please download the Dataset Spreadsheet Model from the 'Add Datasets' window.");
-        return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
     }
 
     @GET

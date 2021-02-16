@@ -4,19 +4,15 @@ import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
-import org.broadinstitute.consent.http.db.mapper.BatchMapper;
-import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.models.Association;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
@@ -53,9 +49,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     List<DataSet> findDataSetsByIdList(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
     @SqlQuery("select * from dataset where objectId = :objectId")
-    DataSet findDataSetByObjectId(@Bind("objectId") String objectId);
-
-    @SqlQuery("select * from dataset where objectId = :objectId")
     Integer findDataSetIdByObjectId(@Bind("objectId") String objectId);
 
     @SqlQuery("SELECT * FROM dataset WHERE dataSetId IN (<dataSetIdList>) AND needs_approval = true")
@@ -63,12 +56,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlBatch("insert into dataset (name, createDate, objectId, active, alias) values (:name, :createDate, :objectId, :active, :alias)")
     void insertAll(@BindBean Collection<DataSet> dataSets);
-
-    @SqlBatch("update dataset set name = :name, createDate = :createDate, active = :active, alias = :alias where dataSetId = :dataSetId")
-    void updateAll(@BindBean Collection<DataSet> dataSets);
-
-    @SqlBatch("update dataset set name = :name, active = :active, createDate = :createDate, alias = :alias where objectId = :objectId")
-    void updateAllByObjectId(@BindBean Collection<DataSet> dataSets);
 
     @SqlBatch("insert into datasetproperty (dataSetId, propertyKey, propertyValue, createDate )" +
             " values (:dataSetId, :propertyKey, :propertyValue, :createDate)")
@@ -155,13 +142,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             "where d.dataSetId in (<dataSetIdList>) order by d.dataSetId, k.receiveOrder")
     Set<DataSetDTO> findDataSetsByReceiveOrder(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
-
-    @SqlQuery("select *  from dataset where objectId in (<objectIdList>) ")
-    List<DataSet> searchDataSetsByObjectIdList(@BindList("objectIdList") List<String> objectIdList);
-
-    @SqlQuery("select ds.dataSetId  from dataset ds where ds.objectId in (<objectIdList>) ")
-    List<Integer> searchDataSetsIdsByObjectIdList(@BindList("objectIdList") List<String> objectIdList);
-
     @RegisterRowMapper(DictionaryMapper.class)
     @SqlQuery("SELECT * FROM dictionary d order by receiveOrder")
     List<Dictionary> getMappedFieldsOrderByReceiveOrder();
@@ -173,41 +153,18 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)")
     List<DataSet> getDataSetsForObjectIdList(@BindList("objectIdList") List<String> objectIdList);
 
-    @SqlQuery("SELECT * FROM dataset d WHERE d.name IN (<names>)")
-    List<DataSet> getDataSetsForNameList(@BindList("names") List<String> names);
-
     @SqlQuery("SELECT ds.* FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ca.consentId = :consentId")
     List<DataSet> getDataSetsForConsent(@Bind("consentId") String consentId);
-
-    @RegisterRowMapper(AssociationMapper.class)
-    @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.objectId IN (<objectIdList>)")
-    List<Association> getAssociationsForObjectIdList(@BindList("objectIdList") List<String> objectIdList);
 
     @RegisterRowMapper(AssociationMapper.class)
     @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId IN (<dataSetIdList>)")
     List<Association> getAssociationsForDataSetIdList(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
-    @SqlQuery("SELECT ca.associationId FROM consentassociations ca INNER JOIN dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.objectId = :objectId")
-    Integer getConsentAssociationByObjectId(@Bind("objectId") String objectId);
-
     @SqlQuery("SELECT ca.consentId FROM consentassociations ca INNER JOIN dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId = :dataSetId")
     String getAssociatedConsentIdByDataSetId(@Bind("dataSetId") Integer dataSetId);
 
-    @SqlQuery("SELECT dataSetId FROM dataset WHERE name = :name")
-    Integer getDatasetIdByName(@Bind("name") String name);
-
     @SqlQuery("SELECT * FROM dataset WHERE LOWER(name) = LOWER(:name)")
     DataSet getDatasetByName(@Bind("name") String name);
-
-    @SqlQuery("select *  from dataset where name in (<names>) ")
-    List<DataSet> searchDataSetsByNameList(@BindList("names") List<String> names);
-
-    @UseRowMapper(BatchMapper.class)
-    @SqlQuery("select dataSetId, name  from dataset where name in (<nameList>)")
-    List<Map<String,Integer>> searchByNameIdList(@BindList("nameList") List<String> nameList);
-
-    @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>) AND d.name is not null")
-    List<DataSet> getDataSetsWithValidNameForObjectIdList(@BindList("objectIdList") List<String> objectIdList);
 
     @SqlQuery("SELECT * FROM dataset WHERE datasetid in (<dataSetIds>) ")
     List<DataSet> findDatasetsByIdList(@BindList("dataSetIds") List<Integer> dataSetIds);
@@ -281,22 +238,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " inner join consents c on a.consentId = c.consentId " +
             " where c.dac_id is not null ")
     List<Pair<Integer, Integer>> findDatasetAndDacIds();
-
-    /**
-     * Find the Dac for this dataset.
-     *
-     * DACs -> Consents -> Consent Associations -> DataSets
-     *
-     * @param datasetId The dataset Id
-     * @return The DAC that corresponds to this dataset
-     */
-    @RegisterRowMapper(DacMapper.class)
-    @SqlQuery("select d.* from dac d " +
-            " inner join consents c on d.dac_id = c.dac_id " +
-            " inner join consentassociations a on a.consentId = c.consentId " +
-            " where a.dataSetId = :datasetId " +
-            " limit 1 ")
-    Dac findDacForDataset(@Bind("datasetId") Integer datasetId);
 
     @UseRowMapper(DataSetMapper.class)
     @SqlQuery("select d.* from dataset d " +
