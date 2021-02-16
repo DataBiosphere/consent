@@ -57,7 +57,6 @@ consent.accesselection_consentelection          0        168     1.2 kB         
                consent.researchpurpose          0          0                     0.738s
                      consent.user_role          0        100     1.9 kB          0.797s
                           consent.vote          0       2327   145.6 kB          0.884s
-                   consent.help_report          0         13     0.6 kB          0.513s
            consent.researcher_property          0        217     7.2 kB          0.614s
                          consent.roles          0          6     0.1 kB          0.698s
                  consent.user_role_bak          0         84     1.1 kB          0.788s
@@ -122,7 +121,6 @@ consent.accesselection_consentelection          0        177     1.3 kB         
                   consent.match_entity          0        148    12.9 kB          4.278s
                consent.researchpurpose          0          0                     4.184s
                      consent.user_role          0        107     2.1 kB          4.475s
-                   consent.help_report          0         13     0.6 kB          2.726s
                           consent.vote          0       2392   148.3 kB          4.671s
            consent.researcher_property          0        220     7.3 kB          3.268s
                          consent.roles          0          6     0.1 kB          3.338s
@@ -247,9 +245,6 @@ select count(*) from user_role
 count(*)
 107
 
-select count(*) from help_report
-count(*)
-13
 
 select count(*) from vote
 count(*)
