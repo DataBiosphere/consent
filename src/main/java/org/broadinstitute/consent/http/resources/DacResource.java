@@ -197,15 +197,6 @@ public class DacResource extends Resource {
         return Response.ok().entity(datasets).build();
     }
 
-    @GET
-    @Path("{dacId}/membership")
-    @Produces("application/json")
-    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
-    public Response findAllDacMembers(@PathParam("dacId") Integer dacId) {
-        findDacById(dacId);
-        List<User> members = dacService.findMembersByDacId(dacId);
-        return Response.ok().entity(members).build();
-    }
 
     @GET
     @Path("users/{term}")

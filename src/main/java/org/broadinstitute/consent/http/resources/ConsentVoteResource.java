@@ -24,7 +24,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.List;
 import java.util.logging.Logger;
 
 
@@ -86,13 +85,6 @@ public class ConsentVoteResource extends Resource {
     public Vote describe(@PathParam("consentId") String consentId,
                          @PathParam("id") Integer id) {
         return api.describeVoteById(id, consentId);
-    }
-
-    @GET
-    @Produces("application/json")
-    @PermitAll
-    public List<Vote> describeAllVotes(@PathParam("consentId") String consentId) {
-        return api.describeVotes(consentId);
     }
 
     @DELETE

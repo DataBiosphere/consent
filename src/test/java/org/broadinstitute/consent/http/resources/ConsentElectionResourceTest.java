@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -214,27 +213,6 @@ public class ConsentElectionResourceTest {
                 election);
         Assert.assertNotNull(response);
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
-    }
-
-    @Test
-    public void testDescribe() {
-        Election election = getElection();
-        when(electionAPI.describeConsentElection(anyString())).thenReturn(election);
-        initResource();
-
-        Response response = resource.describe(UUID.randomUUID().toString());
-        Assert.assertNotNull(response);
-        Assert.assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-    }
-
-    @Test
-    public void testDescribe_notFound() {
-        when(electionAPI.describeConsentElection(anyString())).thenThrow(new NotFoundException());
-        initResource();
-
-        Response response = resource.describe(UUID.randomUUID().toString());
-        Assert.assertNotNull(response);
-        Assert.assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
     @Test

@@ -136,20 +136,6 @@ public class ElectionResourceTest {
         Assert.assertEquals(ERROR, response.getStatus());
     }
 
-    @Test
-    public void testDescribeConsentElectionByDARElectionId() {
-        Response response = electionResource.describeConsentElectionByDARElectionId(randomInt());
-        Assert.assertEquals(OK, response.getStatus());
-    }
-
-    @Test
-    public void testDescribeConsentElectionByDARElectionIdError() {
-        when(electionAPI.getConsentElectionByDARElectionId(anyInt())).thenThrow(new NotFoundException());
-        electionResource = new ElectionResource(voteService);
-        Response response = electionResource.describeConsentElectionByDARElectionId(randomInt());
-        Assert.assertEquals(NOT_FOUND, response.getStatus());
-    }
-
     private static int randomInt() {
         return RandomUtils.nextInt(1, 10);
     }

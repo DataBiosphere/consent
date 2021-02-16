@@ -18,12 +18,10 @@ import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteService;
 
-import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -108,17 +106,6 @@ public class ConsentElectionResource extends Resource {
             return createExceptionResponse(e);
         }
         return Response.created(uri).build();
-    }
-
-    @GET
-    @Produces("application/json")
-    @PermitAll
-    public Response describe(@PathParam("consentId") String consentId) {
-        try {
-            return Response.status(Status.OK).entity(api.describeConsentElection(consentId)).build();
-        } catch (Exception e) {
-            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
-        }
     }
 
     @DELETE
