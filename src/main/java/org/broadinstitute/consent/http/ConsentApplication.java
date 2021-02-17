@@ -368,8 +368,17 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 config.getDataSourceFactory().getPassword()
         );
         Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
-        Liquibase liquibase = new Liquibase("changelog-master.xml", new ClassLoaderResourceAccessor(), database);
+        Liquibase liquibase = new Liquibase(liquibaseFile(), new ClassLoaderResourceAccessor(), database);
         liquibase.update(new Contexts(), new LabelExpression());
+    }
+
+    private String liquibaseFile() {
+        String changeLogFile = System.getenv("CONSENT_CHANGELOG_FILE");
+        if (changeLogFile == null || changeLogFile.trim().isEmpty()) {
+            changeLogFile = "changelog-master.xml";
+        }
+        LOGGER.info(changeLogFile);
+        return changeLogFile;
     }
 
 }

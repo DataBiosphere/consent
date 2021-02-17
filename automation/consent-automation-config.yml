@@ -1,0 +1,52 @@
+server:
+  type: simple
+  applicationContextPath: /
+  adminContextPath: /admin
+  connector:
+    type: http
+    port: 8000
+database:
+  driverClass: org.postgresql.Driver
+  user: consent
+  password: consent
+  url: jdbc:postgresql://consent-postgres:5432/consent
+  initialSize: 20
+  minSize: 20
+  maxSize: 128
+  validationQuery: SELECT 1
+googleStore:
+  password: password
+  bucket: bucket
+  endpoint: endpoint
+# Logging settings
+logging:
+  # default logging level
+  level: WARN
+  # logger specific levels
+  loggers:
+    "org.broadinstitute.consent.http.cloudstore.GCSService": OFF
+services:
+    ontologyURL: https://consent-ontology.dsde-dev.broadinstitute.org/
+    localURL: http://localhost:8000/#/
+mailConfiguration:
+  activateEmailNotifications: false
+  googleAccount: test@gmail.com
+  sendGridApiKey: test-key
+freeMarkerConfiguration:
+  templateDirectory: /freemarker
+  defaultEncoding: UTF-8
+googleAuthentication:
+  clientId: clientId
+basicAuthentication:
+  users:
+    - user: testuser
+      password: testpassword
+    - user: testuser2
+      password: testpassword2
+storeOntology:
+  bucketSubdirectory: bucket
+  configurationFileName: configuration
+elasticSearch:
+  servers:
+    - localhost
+  indexName: iName

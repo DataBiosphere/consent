@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  consent-postgres:
+    image: postgres:11.6-alpine
+    environment:
+      - POSTGRES_USER=consent
+      - POSTGRES_PASSWORD=consent
+      - POSTGRES_DB=consent
+    ports:
+      - 5432:5432
+  consent-api:
+    image: consent
+    depends_on: 
+      - consent-postgres
+    build:
+      context: ./
+      dockerfile: Dockerfile-automation
+    ports:
+      - 8000:8000
+    environment:
+      - CONSENT_CHANGELOG_FILE=test-data.xml
+    

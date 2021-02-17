@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+    <include file="changelog-master.xml" relativeToChangelogFile="true"/>
+
+    <!--insert dac 1-->
+    <changeSet author="rfricke" id="test">
+        <validCheckSum>ANY</validCheckSum>
+        <insert tableName="dac">
+            <column name="name" value="test1"/>
+            <column name="description" value="test dac 1"/>
+            <column name="create_date" value="2021-02-12 02:56:27.386"/>
+            <column name="update_date" value="2021-02-12 02:56:27.386"/>
+        </insert>
+    </changeSet>
+
+    <!--insert dac 1-->
+    <changeSet author="rfricke" id="test.1">
+        <validCheckSum>ANY</validCheckSum>
+        <insert tableName="dac">
+            <column name="name" value="test2"/>
+            <column name="description" value="test dac 2"/>
+            <column name="create_date" value="2021-02-12 02:56:27.386"/>
+            <column name="update_date" value="2021-02-12 02:56:27.386"/>
+        </insert>
+    </changeSet>
+
+    <!--insert admin user-->
+    <changeSet author="rfricke" id="test.2">
+        <validCheckSum>ANY</validCheckSum>
+        <insert tableName="dacuser">
+            <column name="email" value="duos-automation-admin@broad-duos-dev.iam.gserviceaccount.com"/>
+            <column name="displayname" value="DUOS Automation Admin"/>
+            <column name="createdate" value="2021-02-12 02:56:27.386"/>
+            <column name="email_preference" value="0"/>
+            <column name="status" value="0"/>
+        </insert>
+    </changeSet>
+
+    <!--insert admin user role-->
+    <changeSet dbms="postgresql" author="rfricke" id="test.3">
+        <sql>
+            INSERT INTO user_role (user_id, role_id)
+            SELECT dacuserid, roleid
+            FROM dacuser
+            INNER JOIN roles on roles.name = 'Admin'
+            WHERE dacuser.email = 'duos-automation-admin@broad-duos-dev.iam.gserviceaccount.com'
+        </sql>
+    </changeSet>
+
+    <!--insert chair user-->
+    <changeSet author="rfricke" id="test.4">
+        <validCheckSum>ANY</validCheckSum>
+        <insert tableName="dacuser">
+            <column name="email" value="duos-automation-chair@broad-duos-dev.iam.gserviceaccount.com"/>
+            <column name="displayname" value="DUOS Automation Chair"/>
+            <column name="createdate" value="2021-02-12 02:56:27.386"/>
+            <column name="email_preference" value="0"/>
+            <column name="status" value="0"/>
+        </insert>
+    </changeSet>
+
+    <!--insert chair user role-->
+    <changeSet dbms="postgresql" author="rfricke" id="test.5">
+        <sql>
+            INSERT INTO user_role (user_id, role_id, dac_id)
+            SELECT dacuserid, roleid, dac_id
+            FROM dacuser
+            INNER JOIN dac on dac.name like '%test%'
+            INNER JOIN roles on roles.name = 'Chairperson'
+            WHERE dacuser.email = 'duos-automation-chair@broad-duos-dev.iam.gserviceaccount.com'
+        </sql>
+    </changeSet>
+
+    <!--insert member user-->
+    <changeSet author="rfricke" id="test.6">
+        <validCheckSum>ANY</validCheckSum>
+        <insert tableName="dacuser">
+            <column name="email" value="duos-automation-member@broad-duos-dev.iam.gserviceaccount.com"/>
+            <column name="displayname" value="DUOS Automation Member"/>
+            <column name="createdate" value="2021-02-12 02:56:27.386"/>
+            <column name="email_preference" value="0"/>
+            <column name="status" value="0"/>
+        </insert>
+    </changeSet>
+
+    <!--insert member user role-->
+    <changeSet dbms="postgresql" author="rfricke" id="test.7">
+        <sql>
+            INSERT INTO user_role (user_id, role_id, dac_id)
+            SELECT dacuserid, roleid, dac_id
+            FROM dacuser
+            INNER JOIN dac on dac.name like '%test%'
+            INNER JOIN roles on roles.name = 'Member'
+            WHERE dacuser.email = 'duos-automation-member@broad-duos-dev.iam.gserviceaccount.com'
+        </sql>
+    </changeSet>
+
+    <!--insert researcher user-->
+    <changeSet author="rfricke" id="test.8">
+        <validCheckSum>ANY</validCheckSum>
+        <insert tableName="dacuser">
+            <column name="email" value="duos-automation-researcher@broad-duos-dev.iam.gserviceaccount.com"/>
+            <column name="displayname" value="DUOS Automation Researcher"/>
+            <column name="createdate" value="2021-02-12 02:56:27.386"/>
+            <column name="email_preference" value="0"/>
+            <column name="status" value="0"/>
+        </insert>
+    </changeSet>
+
+    <!--insert researcher user role-->
+    <changeSet dbms="postgresql" author="rfricke" id="test.9">
+        <sql>
+            INSERT INTO user_role (user_id, role_id)
+            SELECT dacuserid, roleid
+            FROM dacuser
+            INNER JOIN dac on dac.name like '%test%'
+            INNER JOIN roles on roles.name = 'Researcher'
+            WHERE dacuser.email = 'duos-automation-researcher@broad-duos-dev.iam.gserviceaccount.com'
+        </sql>
+    </changeSet>
+
+    <!--insert dataowner user-->
+    <changeSet author="rfricke" id="test.10">
+        <validCheckSum>ANY</validCheckSum>
+        <insert tableName="dacuser">
+            <column name="email" value="duos-automation-dataowner@broad-duos-dev.iam.gserviceaccount.com"/>
+            <column name="displayname" value="DUOS Automation DataOwner"/>
+            <column name="createdate" value="2021-02-12 02:56:27.386"/>
+            <column name="email_preference" value="0"/>
+            <column name="status" value="0"/>
+        </insert>
+    </changeSet>
+
+    <!--insert researcher user role-->
+    <changeSet dbms="postgresql" author="rfricke" id="test.11">
+        <sql>
+            INSERT INTO user_role (user_id, role_id, dac_id)
+            SELECT dacuserid, roleid, dac_id
+            FROM dacuser
+            INNER JOIN dac on dac.name like '%test%'
+            INNER JOIN roles on roles.name = 'DataOwner'
+            WHERE dacuser.email = 'duos-automation-dataowner@broad-duos-dev.iam.gserviceaccount.com'
+        </sql>
+    </changeSet>
+
+    <!--insert researcher user-->
+    <changeSet author="rfricke" id="test-dataset">
+        <sql>
+            INSERT INTO dataset (name, active, needs_approval)
+            SELECT 
+                dac.name, 
+                't', 
+                'f'
+            FROM dac
+        </sql>
+    </changeSet>
+
+    <!--insert datasetproperties-->
+    <changeSet author="rfricke" id="test-datasetproperty">
+        <sql>
+            INSERT INTO datasetproperty (datasetid, propertykey, propertyvalue, createdate)
+            SELECT 
+                datasetid, 
+                keyid, 
+                name as propertyvalue,
+                current_timestamp
+            FROM dataset
+            INNER JOIN dictionary on key = 'Dataset Name'
+        </sql>
+    </changeSet>
+
+    <!--insert consent-->
+    <changeSet author="rfricke" id="test-consent">
+        <sql>
+            INSERT INTO consents(consentid, requiresmanualreview, userestriction, active, name, datause, dac_id)
+            SELECT
+                concat('9e5a4135-e635-41a4-8663-042667ef4a7f', dataset.datasetid),
+                'f',
+                '{ "type": "everything" }',
+                't',
+                concat('Test consent ', dataset.datasetid),
+                '{"hmbResearch":true,"populationOriginsAncestry":true,"genomicPhenotypicData":"Yes"}',
+                dataset.datasetid
+            FROM dataset
+        </sql>
+    </changeSet>
+
+    <!--insert consentassociations-->
+    <changeSet author="rfricke" id="test-consentassociations">
+        <sql>
+            INSERT INTO consentassociations (consentid, associationtype, datasetid)
+            SELECT 
+                consentid, 
+                'Sample', 
+                dac_id
+            FROM consents
+        </sql>
+    </changeSet>
+</databaseChangeLog>
