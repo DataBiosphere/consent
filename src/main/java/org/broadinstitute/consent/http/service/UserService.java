@@ -50,9 +50,7 @@ public class UserService {
         }
         Integer dacUserID = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
         insertUserRoles(user.getRoles(), dacUserID);
-        User createdUser = userDAO.findUserById(dacUserID);
-        createdUser.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
-        return createdUser;
+        return userDAO.findUserById(dacUserID);
     }
 
     public User findUserById(Integer id) throws NotFoundException {
@@ -60,7 +58,6 @@ public class UserService {
         if (user == null) {
             throw new NotFoundException("Unable to find user with id: " + id);
         }
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
         return user;
     }
 
@@ -69,7 +66,6 @@ public class UserService {
         if (user == null) {
             throw new NotFoundException("Unable to find user with email: " + email);
         }
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
         return user;
     }
 

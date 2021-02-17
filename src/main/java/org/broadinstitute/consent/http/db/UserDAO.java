@@ -4,34 +4,53 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import org.broadinstitute.consent.http.db.mapper.UserMapper;
+import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.models.User;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
-@RegisterRowMapper(UserMapper.class)
+@SuppressWarnings("SqlDialectInspection")
 public interface UserDAO extends Transactional<UserDAO> {
 
-    @UseRowMapper(UserWithRolesMapper.class)
-    @SqlQuery("select du.*, r.roleid, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +
-            " from dacuser du " +
-            " left join user_role ur on ur.user_id = du.dacuserid " +
-            " left join roles r on r.roleid = ur.role_id " +
-            " where du.dacuserid = :dacUserId")
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery("SELECT "
+        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
+        + "     u.email_preference, u.status, u.rationale, "
+        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+        + " FROM dacuser u "
+        + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
+        + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+        + " WHERE u.dacuserid = :dacUserId")
     User findUserById(@Bind("dacUserId") Integer dacUserId);
 
+    @RegisterBeanMapper(value = User.class)
+    @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("select * from dacuser where dacUserId IN (<dacUserIds>)")
     Collection<User> findUsers(@BindList("dacUserIds") Collection<Integer> dacUserIds);
 
-    @SqlQuery("select du.* from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = :roleName")
-    List<User> describeUsersByRole(@Bind("roleName") String roleName);
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery("SELECT "
+        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
+        + "     u.email_preference, u.status, u.rationale, "
+        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+        + " FROM dacuser u "
+        + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
+        + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+        + " WHERE r.name = :name")
+    List<User> describeUsersByRole(@Bind("name") String name);
 
     @SqlQuery("select du.dacUserId from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where du.dacUserId = :dacUserId and r.name = 'Chairperson'")
     Integer checkChairpersonUser(@Bind("dacUserId") Integer dacUserId);
@@ -48,7 +67,17 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where  du.dacUserId IN (<dacUserIds>)")
     Set<User> findUsersWithRoles(@BindList("dacUserIds") Collection<Integer> dacUserIds);
 
-    @SqlQuery("select * from dacuser where email = :email")
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery("SELECT "
+        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
+        + "     u.email_preference, u.status, u.rationale, "
+        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+        + " FROM dacuser u "
+        + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
+        + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+        + " WHERE LOWER(u.email) = LOWER(:email)")
     User findUserByEmail(@Bind("email") String email);
 
     @SqlUpdate("insert into dacuser (email, displayName, createDate) values (:email, :displayName, :createDate)")
@@ -94,11 +123,18 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlUpdate("update dacuser set rationale = :rationale where dacUserId = :userId")
     void updateUserRationale(@Bind("rationale") String rationale, @Bind("userId") Integer userId);
 
-    @SqlQuery("select * from dacuser du "
-            + " inner join user_role ur on du.dacUserId = ur.user_id "
-            + " inner join roles r on ur.role_id = r.roleId "
-            + " where du.email = :email "
-            + " and r.roleId = :roleId")
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery("SELECT "
+        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
+        + "     u.email_preference, u.status, u.rationale, "
+        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+        + " FROM dacuser u "
+        + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
+        + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+        + " WHERE LOWER(u.email) = LOWER(:email) "
+        + " AND r.roleid = :roleId")
     User findUserByEmailAndRoleId(@Bind("email") String email, @Bind("roleId") Integer roleId);
 
     @UseRowMapper(UserWithRolesMapper.class)

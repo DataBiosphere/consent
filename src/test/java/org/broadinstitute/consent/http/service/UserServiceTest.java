@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -135,7 +135,7 @@ public class UserServiceTest {
         User user = service.findUserById(u.getDacUserId());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
-        assertTrue(u.getRoles().isEmpty());
+        assertNull(u.getRoles());
     }
 
     @Test
@@ -145,8 +145,8 @@ public class UserServiceTest {
                 generateRole(UserRoles.RESEARCHER.getRoleId()),
                 generateRole(UserRoles.MEMBER.getRoleId())
         );
+        u.setRoles(roleList);
         when(userDAO.findUserById(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(roleList);
         initService();
 
         User user = service.findUserById(u.getDacUserId());
@@ -175,7 +175,7 @@ public class UserServiceTest {
         User user = service.findUserByEmail(u.getEmail());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
-        assertTrue(u.getRoles().isEmpty());
+        assertNull(u.getRoles());
     }
 
     @Test
@@ -185,8 +185,8 @@ public class UserServiceTest {
                 generateRole(UserRoles.RESEARCHER.getRoleId()),
                 generateRole(UserRoles.MEMBER.getRoleId())
         );
+        u.setRoles(roleList);
         when(userDAO.findUserByEmail(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(roleList);
         initService();
 
         User user = service.findUserByEmail(u.getEmail());

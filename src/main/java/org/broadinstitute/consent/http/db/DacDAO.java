@@ -3,13 +3,14 @@ package org.broadinstitute.consent.http.db;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.RoleMapper;
-import org.broadinstitute.consent.http.db.mapper.UserMapper;
+import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.db.mapper.UserRoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -17,6 +18,7 @@ import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Date;
@@ -67,14 +69,31 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlUpdate("delete from dac where dac_id = :dacId")
     void deleteDac(@Bind("dacId") Integer dacId);
 
-    @UseRowMapper(UserMapper.class)
-    @SqlQuery("select du.* from dacuser du " +
-              "inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId")
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery("SELECT "
+        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
+        + "     u.email_preference, u.status, u.rationale, "
+        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+        + " FROM dacuser u "
+        + " INNER JOIN user_role ur ON ur.user_id = u.dacuserid "
+        + " INNER JOIN roles r ON r.roleid = ur.role_id "
+        + " WHERE ur.dac_id = :dacId ")
     List<User> findMembersByDacId(@Bind("dacId") Integer dacId);
 
-    @UseRowMapper(UserMapper.class)
-    @SqlQuery("select du.* from dacuser du " +
-              "inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId and ur.role_id = :roleId")
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery("SELECT "
+        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
+        + "     u.email_preference, u.status, u.rationale, "
+        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+        + " FROM dacuser u "
+        + " INNER JOIN user_role ur ON ur.user_id = u.dacuserid "
+        + " INNER JOIN roles r ON r.roleid = ur.role_id "
+        + " WHERE ur.dac_id = :dacId "
+        + " AND ur.role_id = :roleId ")
     List<User> findMembersByDacIdAndRoleId(@Bind("dacId") Integer dacId, @Bind("roleId") Integer roleId);
 
     @SqlUpdate("insert into user_role (role_id, user_id, dac_id) values (:roleId, :userId, :dacId)")
