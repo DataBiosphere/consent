@@ -18,6 +18,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration.Dynamic;
 import javax.ws.rs.client.Client;
@@ -374,10 +375,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     private String liquibaseFile() {
         String changeLogFile = System.getenv("CONSENT_CHANGELOG_FILE");
-        if (changeLogFile == null || changeLogFile.trim().isEmpty()) {
+        if (Objects.isNull(changeLogFile) || changeLogFile.trim().isEmpty()) {
             changeLogFile = "changelog-master.xml";
         }
-        LOGGER.info(changeLogFile);
+        LOGGER.info("Initializing db with: " + changeLogFile);
         return changeLogFile;
     }
 

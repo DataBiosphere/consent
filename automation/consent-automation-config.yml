@@ -7,8 +7,8 @@ server:
     port: 8000
 database:
   driverClass: org.postgresql.Driver
-  user: consent
-  password: consent
+  user: automation
+  password: automation
   url: jdbc:postgresql://consent-postgres:5432/consent
   initialSize: 20
   minSize: 20

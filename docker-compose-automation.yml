@@ -3,8 +3,8 @@ services:
   consent-postgres:
     image: postgres:11.6-alpine
     environment:
-      - POSTGRES_USER=consent
-      - POSTGRES_PASSWORD=consent
+      - POSTGRES_USER=automation
+      - POSTGRES_PASSWORD=automation
       - POSTGRES_DB=consent
     ports:
       - 5432:5432

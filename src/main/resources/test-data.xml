@@ -6,7 +6,6 @@
 
     <!--insert dac 1-->
     <changeSet author="rfricke" id="test">
-        <validCheckSum>ANY</validCheckSum>
         <insert tableName="dac">
             <column name="name" value="test1"/>
             <column name="description" value="test dac 1"/>
@@ -17,7 +16,6 @@
 
     <!--insert dac 1-->
     <changeSet author="rfricke" id="test.1">
-        <validCheckSum>ANY</validCheckSum>
         <insert tableName="dac">
             <column name="name" value="test2"/>
             <column name="description" value="test dac 2"/>
@@ -28,7 +26,6 @@
 
     <!--insert admin user-->
     <changeSet author="rfricke" id="test.2">
-        <validCheckSum>ANY</validCheckSum>
         <insert tableName="dacuser">
             <column name="email" value="duos-automation-admin@broad-duos-dev.iam.gserviceaccount.com"/>
             <column name="displayname" value="DUOS Automation Admin"/>
@@ -51,7 +48,6 @@
 
     <!--insert chair user-->
     <changeSet author="rfricke" id="test.4">
-        <validCheckSum>ANY</validCheckSum>
         <insert tableName="dacuser">
             <column name="email" value="duos-automation-chair@broad-duos-dev.iam.gserviceaccount.com"/>
             <column name="displayname" value="DUOS Automation Chair"/>
@@ -75,7 +71,6 @@
 
     <!--insert member user-->
     <changeSet author="rfricke" id="test.6">
-        <validCheckSum>ANY</validCheckSum>
         <insert tableName="dacuser">
             <column name="email" value="duos-automation-member@broad-duos-dev.iam.gserviceaccount.com"/>
             <column name="displayname" value="DUOS Automation Member"/>
@@ -99,7 +94,6 @@
 
     <!--insert researcher user-->
     <changeSet author="rfricke" id="test.8">
-        <validCheckSum>ANY</validCheckSum>
         <insert tableName="dacuser">
             <column name="email" value="duos-automation-researcher@broad-duos-dev.iam.gserviceaccount.com"/>
             <column name="displayname" value="DUOS Automation Researcher"/>
@@ -123,7 +117,6 @@
 
     <!--insert dataowner user-->
     <changeSet author="rfricke" id="test.10">
-        <validCheckSum>ANY</validCheckSum>
         <insert tableName="dacuser">
             <column name="email" value="duos-automation-dataowner@broad-duos-dev.iam.gserviceaccount.com"/>
             <column name="displayname" value="DUOS Automation DataOwner"/>
