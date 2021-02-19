@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.broadinstitute.consent.http.util.DatasetUtil;
 
 import java.util.Date;
 import java.util.Set;
@@ -43,6 +44,8 @@ public class DataSet {
     @JsonProperty
     private Integer alias;
 
+    private String aliasParsed;
+
     private Set<DataSetProperty> properties;
 
     public DataSet() {
@@ -58,6 +61,7 @@ public class DataSet {
         this.updateUserId = updateUserId;
         this.active = active;
         this.alias = alias;
+        this.aliasParsed = DatasetUtil.parseAlias(alias);
     }
 
     public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active, Integer alias) {
@@ -67,6 +71,7 @@ public class DataSet {
         this.createDate = createDate;
         this.active = active;
         this.alias = alias;
+        this.aliasParsed = DatasetUtil.parseAlias(alias);
     }
 
     public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active) {
@@ -168,4 +173,6 @@ public class DataSet {
     public void setAlias(Integer alias) {
         this.alias = alias;
     }
+
+    public String getAliasParsed() {return aliasParsed; }
 }
