@@ -13,8 +13,15 @@ mkdir -p target
 docker build -f Dockerfile -t ${TEST_IMAGE} .
 
 # Run Tests
-docker run -v "${PWD}/target":/app/target ${TEST_IMAGE}
-TEST_EXIT_CODE=$?
+docker-compose -f ../docker-compose-automation.yml up --build -d
+if docker run -v "${PWD}/target":/app/target --net consent_default -e CONSENT_API_URL='http://consent-api:8000/' ${TEST_IMAGE} 
+then
+    TEST_EXIT_CODE=$?
+    docker-compose -f ../docker-compose-automation.yml down
+else
+    TEST_EXIT_CODE=$?
+    docker-compose -f ../docker-compose-automation.yml down
+fi
 
 # Parse Tests
 docker run -v "${PWD}/scripts":/working -v "${PWD}/target":/working/target -w /working broadinstitute/dsp-toolbox python interpret_results.py

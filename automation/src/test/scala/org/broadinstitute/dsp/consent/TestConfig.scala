@@ -21,9 +21,19 @@ object TestConfig {
   val jsonHeader: Map[String, String] = Map("Accept" -> "application/json")
   val jsonBodyHeader: Map[String, String] = Map("Content-Type" -> "application/json")
 
+  lazy val baseUrl: String = {
+    val envBase: Option[String] = sys.env.get("CONSENT_API_URL")
+    
+    if (envBase == None) {
+      config.getString("consent.baseUrl")
+    } else {
+      envBase.getOrElse("")
+    }
+  }
+
   lazy val defaultHttpProtocol: HttpProtocolBuilder = {
     http
-      .baseUrl(config.getString("consent.baseUrl"))
+      .baseUrl(baseUrl)
       .userAgentHeader(defaultUserAgent)
   }
 
