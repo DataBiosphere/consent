@@ -156,7 +156,8 @@ public class DataSetDTO {
     }
 
     public void setAlias(Integer alias) {
-        this.alias = DataSet.parseAliasToIdentifier(alias); }
+        this.alias = DataSet.parseAliasToIdentifier(alias);
+    }
 
     public String getAlias(){
         return alias;
