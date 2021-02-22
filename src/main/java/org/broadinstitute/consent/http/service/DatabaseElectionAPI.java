@@ -42,7 +42,6 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
-import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -627,7 +626,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             List<DataSet> dataSets = dataSetDAO.findDatasetsByIdList(dataSetIdList);
             List<DatasetMailDTO> datasetsDetail = new ArrayList<>();
             dataSets.forEach(ds ->
-                datasetsDetail.add(new DatasetMailDTO(ds.getName(), DatasetUtil.parseAlias(ds.getAlias())))
+                datasetsDetail.add(new DatasetMailDTO(ds.getName(), ds.getDatasetIdentifier()))
             );
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
             emailNotifierService.sendResearcherDarApproved(dar.get(DarConstants.DAR_CODE, String.class),  dar.get(DarConstants.USER_ID, Integer.class), datasetsDetail, consent.getTranslatedUseRestriction());
@@ -655,7 +654,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 List<Integer> datasetIds = associationList.stream().
                         map(DatasetAssociation::getDatasetId).collect(Collectors.toList());
                 List<DatasetMailDTO> mailDTOS = dataSetDAO.findDatasetsByIdList(datasetIds).stream().
-                        map(d -> new DatasetMailDTO(d.getName(), DatasetUtil.parseAlias(d.getAlias()))).
+                        map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier())).
                         collect(Collectors.toList());
                 try {
                     String researcherEmail = Objects.nonNull(researcher) ?
