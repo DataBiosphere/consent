@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.models;
 
 import com.google.common.collect.Streams;
 import org.apache.commons.collections4.CollectionUtils;
-import org.broadinstitute.consent.http.util.DatasetUtil;
 
 import java.text.SimpleDateFormat;
 import java.time.Duration;
@@ -115,7 +114,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
 
   private void setDatasetId(DataSet dataset) {
     if (Objects.nonNull(dataset)) {
-      this.datasetId = DatasetUtil.parseAlias(dataset.getAlias());
+      this.datasetId = dataset.getDatasetIdentifier();
     }
   }
 

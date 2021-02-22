@@ -6,8 +6,9 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.util.DatasetUtil;
 
 
 public class DataSetDTO {
@@ -155,7 +156,7 @@ public class DataSetDTO {
     }
 
     public void setAlias(Integer alias) {
-        this.alias = DatasetUtil.parseAlias(alias);
+        this.alias = DataSet.parseAliasToIdentifier(alias);
     }
 
     public String getAlias(){
