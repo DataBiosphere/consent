@@ -6,10 +6,12 @@ public class DataSetPIMailModel {
 
     private String objectId;
     private String name;
+    private String datasetIdentifier;
 
-    public DataSetPIMailModel(String objectId, String name) {
+    public DataSetPIMailModel(String objectId, String name, String datasetIdentifier) {
         this.objectId = StringUtils.isEmpty(objectId) ? "--" : objectId;
         this.name = name;
+        this.datasetIdentifier = datasetIdentifier;
     }
 
     public String getObjectId() {
@@ -19,5 +21,7 @@ public class DataSetPIMailModel {
     public String getName() {
         return name;
     }
+
+    public String getDatasetIdentifier() {return datasetIdentifier; }
 
 }
