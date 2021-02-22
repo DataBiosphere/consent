@@ -2,10 +2,10 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
-import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
 import java.io.*;
 import java.util.ArrayList;
@@ -103,7 +103,7 @@ public class DataAccessReportsParser {
         List<Integer> dataSetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
         List<String> dataSetUUIds = new ArrayList<>();
         for(Integer id : dataSetIds) {
-            dataSetUUIds.add(DatasetUtil.parseAlias(id));
+            dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
         }
         String sDUL = StringUtils.isNotEmpty(translatedUseRestriction) ?  translatedUseRestriction.replace("\n", " ") : "";
         String translatedRestriction = StringUtils.isNotEmpty(dar.getString(DarConstants.TRANSLATED_RESTRICTION)) ? dar.getString(DarConstants.TRANSLATED_RESTRICTION).replace("<br>", " ") :  "";

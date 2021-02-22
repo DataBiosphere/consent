@@ -78,7 +78,7 @@ public class DataSet {
         this.active = active;
     }
 
-    private final String PREFIX = "DUOS-";
+    private static String PREFIX = "DUOS-";
 
     public DataSet(String objectId) {
         this.objectId = objectId;
@@ -172,6 +172,11 @@ public class DataSet {
         this.alias = alias;
     }
 
-    public String getDatasetIdentifier() {return PREFIX + StringUtils.leftPad(alias.toString(), 6, "0"); }
+    public String getDatasetIdentifier() {
+        return parseAliasToIdentifier(this.getAlias());
+    }
 
+    public static String parseAliasToIdentifier(Integer alias) {
+        return PREFIX + StringUtils.leftPad(alias.toString(), 6, "0");
+    }
 }
