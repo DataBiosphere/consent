@@ -78,7 +78,7 @@ public class DataSet {
         this.active = active;
     }
 
-    private final String PREFIX = "DUOS-";
+    private static String PREFIX = "DUOS-";
 
     public DataSet(String objectId) {
         this.objectId = objectId;
@@ -116,9 +116,13 @@ public class DataSet {
         this.createDate = createDate;
     }
 
-    public Integer getCreateUserId() { return createUserId; }
+    public Integer getCreateUserId() {
+        return createUserId;
+    }
 
-    public void setCreateUserId(Integer createUserId) { this.createUserId = createUserId; }
+    public void setCreateUserId(Integer createUserId) {
+        this.createUserId = createUserId;
+    }
 
     public Date getUpdateDate() {
         return updateDate;
@@ -128,9 +132,13 @@ public class DataSet {
         this.updateDate = updateDate;
     }
 
-    public Integer getUpdateUserId() { return updateUserId; }
+    public Integer getUpdateUserId() {
+        return updateUserId;
+    }
 
-    public void setUpdateUserId(Integer updateUserId) { this.updateUserId = updateUserId; }
+    public void setUpdateUserId(Integer updateUserId) {
+        this.updateUserId = updateUserId;
+    }
 
     public Set<DataSetProperty> getProperties() {
         return properties;
@@ -172,6 +180,11 @@ public class DataSet {
         this.alias = alias;
     }
 
-    public String getDatasetIdentifier() {return PREFIX + StringUtils.leftPad(alias.toString(), 6, "0"); }
+    public String getDatasetIdentifier() {
+        return parseAliasToIdentifier(this.getAlias());
+    }
 
+    public static String parseAliasToIdentifier(Integer alias) {
+        return PREFIX + StringUtils.leftPad(alias.toString(), 6, "0");
+    }
 }

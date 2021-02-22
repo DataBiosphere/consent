@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUse;
 
 
@@ -156,8 +156,7 @@ public class DataSetDTO {
     }
 
     public void setAlias(Integer alias) {
-        this.alias = "DUOS-" + StringUtils.leftPad(alias.toString(), 6, "0");
-    }
+        this.alias = DataSet.parseAliasToIdentifier(alias); }
 
     public String getAlias(){
         return alias;
