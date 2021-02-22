@@ -165,9 +165,9 @@ public class FreeMarkerTemplateHelperTest {
     private SummaryItem item2 = new SummaryItem("A sample item 2", "Sample item 2");
     private SummaryItem item3 = new SummaryItem("A sample item 3", "Sample item 3");
 
-    private DataSetPIMailModel piModel1 = new DataSetPIMailModel("DS-101", "Dataset 1");
-    private DataSetPIMailModel piModel2 = new DataSetPIMailModel("DS-102", "Dataset 2");
-    private DataSetPIMailModel piModel3 = new DataSetPIMailModel("DS-102", "Dataset 3");
+    private DataSetPIMailModel piModel1 = new DataSetPIMailModel("DS-101", "Dataset 1", "DUOS-000001");
+    private DataSetPIMailModel piModel2 = new DataSetPIMailModel("DS-102", "Dataset 2", "DUOS-000002");
+    private DataSetPIMailModel piModel3 = new DataSetPIMailModel("DS-102", "Dataset 3", "DUOS-000003");
 
     private List<DataSet> sampleDatasets(){
         return Arrays.asList(ds1, ds2, ds3);

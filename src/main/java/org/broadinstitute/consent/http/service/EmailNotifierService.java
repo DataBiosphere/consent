@@ -342,7 +342,7 @@ public class EmailNotifierService {
     private Writer getPIApprovalMessageTemplate(Document access, List<DataSet> dataSets, User user, int daysToApprove, String URL) throws IOException, TemplateException {
         List<DataSetPIMailModel> dsPIModelList = new ArrayList<>();
         for (DataSet ds: dataSets) {
-            dsPIModelList.add(new DataSetPIMailModel(ds.getObjectId(), ds.getName()));
+            dsPIModelList.add(new DataSetPIMailModel(ds.getObjectId(), ds.getName(), ds.getDatasetIdentifier()));
         }
 
         DARModalDetailsDTO details = new DARModalDetailsDTO()
