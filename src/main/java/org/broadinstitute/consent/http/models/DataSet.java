@@ -116,9 +116,13 @@ public class DataSet {
         this.createDate = createDate;
     }
 
-    public Integer getCreateUserId() { return createUserId; }
+    public Integer getCreateUserId() {
+        return createUserId;
+    }
 
-    public void setCreateUserId(Integer createUserId) { this.createUserId = createUserId; }
+    public void setCreateUserId(Integer createUserId) {
+        this.createUserId = createUserId;
+    }
 
     public Date getUpdateDate() {
         return updateDate;
@@ -128,9 +132,13 @@ public class DataSet {
         this.updateDate = updateDate;
     }
 
-    public Integer getUpdateUserId() { return updateUserId; }
+    public Integer getUpdateUserId() {
+        return updateUserId;
+    }
 
-    public void setUpdateUserId(Integer updateUserId) { this.updateUserId = updateUserId; }
+    public void setUpdateUserId(Integer updateUserId) {
+        this.updateUserId = updateUserId;
+    }
 
     public Set<DataSetProperty> getProperties() {
         return properties;
