@@ -101,7 +101,7 @@
                     <#list dsl>
                         <#items as ds>
                             <tr style="font-family: 'Roboto', sans-serif;">
-                                <td style="font-family: 'Roboto', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">${ds.aliasParsed}</td>
+                                <td style="font-family: 'Roboto', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">${ds.getDatasetIdentifier()}</td>
                                 <td style="font-family: 'Roboto', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">${ds.name}</td>
                             </tr>
                         </#items>

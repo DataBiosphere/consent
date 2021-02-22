@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 
 import java.util.Date;
@@ -44,9 +45,6 @@ public class DataSet {
     @JsonProperty
     private Integer alias;
 
-    @JsonProperty
-    private String aliasParsed;
-
     private Set<DataSetProperty> properties;
 
     public DataSet() {
@@ -62,7 +60,6 @@ public class DataSet {
         this.updateUserId = updateUserId;
         this.active = active;
         this.alias = alias;
-        this.aliasParsed = DatasetUtil.parseAlias(alias);
     }
 
     public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active, Integer alias) {
@@ -72,7 +69,6 @@ public class DataSet {
         this.createDate = createDate;
         this.active = active;
         this.alias = alias;
-        this.aliasParsed = DatasetUtil.parseAlias(alias);
     }
 
     public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active) {
@@ -82,6 +78,8 @@ public class DataSet {
         this.createDate = createDate;
         this.active = active;
     }
+
+    private final String PREFIX = "DUOS-";
 
     public DataSet(String objectId) {
         this.objectId = objectId;
@@ -175,9 +173,6 @@ public class DataSet {
         this.alias = alias;
     }
 
-    public String getAliasParsed() {return aliasParsed; }
+    public String getDatasetIdentifier() {return PREFIX + StringUtils.leftPad(alias.toString(), 6, "0"); }
 
-    public void setAliasParsed(String aliasParsed) {
-        this.aliasParsed = aliasParsed;
-    }
 }
