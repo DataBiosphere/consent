@@ -34,7 +34,6 @@ public class DataSetMapper implements RowMapper<DataSet>, RowMapperHelper {
       }
       dataset.setActive(r.getBoolean("active"));
       dataset.setAlias(r.getInt("alias"));
-      dataset.setAliasParsed(DatasetUtil.parseAlias(r.getInt("alias")));
 
       return dataset;
   }
