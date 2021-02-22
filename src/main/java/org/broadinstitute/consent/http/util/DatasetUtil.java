@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.util;
 
-import org.apache.commons.lang3.StringUtils;
 
 public class DatasetUtil {
 
@@ -8,7 +7,6 @@ public class DatasetUtil {
 
     public static String parseAlias(Integer aliasUid) {
         String alias;
-
         if(aliasUid < 10) {
             alias = PREFIX + "00000" + aliasUid;
         }
@@ -28,6 +26,7 @@ public class DatasetUtil {
             alias = PREFIX + aliasUid;
         }
         return alias;
+
     }
 
 }

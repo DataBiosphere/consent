@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.util.DatasetUtil;
 
 import java.util.Date;
 import java.util.Set;
