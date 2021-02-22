@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.util;
 
-
 public class DatasetUtil {
 
     private static final String PREFIX = "DUOS-";
