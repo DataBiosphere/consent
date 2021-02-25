@@ -7,7 +7,6 @@ import java.util.Map;
 import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.bson.Document;
 
 @Deprecated // Use DataAccessRequestService
@@ -18,8 +17,6 @@ public interface DataAccessRequestAPI {
     List<Document> describeDataAccessWithDataSetIdAndRestriction(List<Integer> dataSetIds);
 
     Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException;
-
-    UseRestriction createStructuredResearchPurpose(Document document);
 
     List<Document> describeDraftDataAccessRequestManage(Integer userId);
 

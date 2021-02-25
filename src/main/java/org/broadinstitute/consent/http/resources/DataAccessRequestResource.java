@@ -36,7 +36,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
@@ -46,8 +45,6 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 
 @Path("api/dar")
@@ -278,26 +275,6 @@ public class DataAccessRequestResource extends Resource {
             authUser, referenceId);
         try {
             return Response.ok("{\"hasUseRestriction\":" + dataAccessRequestAPI.hasUseRestriction(referenceId) + "}").build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
-        }
-    }
-
-    @PUT
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/restriction")
-    @PermitAll
-    public Response getUseRestrictionFromQuestions(Document dar) {
-        try {
-            boolean needsManualReview = DarUtil.requiresManualReview(dar);
-            if (!needsManualReview) {
-                UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
-                dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
-                return Response.ok(useRestriction).build();
-            } else {
-                return Response.ok("{\"useRestriction\":\"Manual Review\"}").build();
-            }
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }

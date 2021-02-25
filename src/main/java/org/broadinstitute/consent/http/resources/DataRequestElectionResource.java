@@ -63,7 +63,7 @@ public class DataRequestElectionResource extends Resource {
         Election accessElection = null;
         try {
             DataAccessRequest dar = darService.findByReferenceId(requestId);
-            boolean manualReview = DarUtil.darRequiresManualReview(dar);
+            boolean manualReview = DarUtil.requiresManualReview(dar);
             accessElection = api.createElection(rec, requestId, ElectionType.DATA_ACCESS);
             List<Vote> votes = voteService.createVotes(accessElection, ElectionType.DATA_ACCESS, manualReview);
             //create RP election

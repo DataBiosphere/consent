@@ -54,7 +54,7 @@ public class DataRequestReportsResource extends Resource {
         String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE);
         try {
             String sDUR = darApi.getStructuredDURForPdf(dar);
-            Boolean manualReview = DarUtil.darRequiresManualReview(dataAccessRequest);
+            Boolean manualReview = DarUtil.requiresManualReview(dataAccessRequest);
             return Response
                     .ok(darApi.createDARDocument(dar, researcherProperties, user, manualReview, sDUR), MediaType.APPLICATION_OCTET_STREAM)
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename =" + fileName + ".pdf")

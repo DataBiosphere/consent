@@ -19,8 +19,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -28,13 +28,11 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
@@ -133,12 +131,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 filter(d -> !Collections.disjoint(dataSetIds, DarUtil.getIntegerList(d, DarConstants.DATASET_ID))).
                 filter(d -> d.get(DarConstants.RESTRICTION) != null).
                 collect(Collectors.toList());
-    }
-
-    @Override
-    public UseRestriction createStructuredResearchPurpose(Document document) {
-        DataUse dataUse = converter.parseDataUsePurpose(document.toJson());
-        return converter.parseUseRestriction(dataUse);
     }
 
     @Override
