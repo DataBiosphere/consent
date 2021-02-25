@@ -4,8 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,9 +44,15 @@ public class DarManualReviewTest {
   }
 
   @Test
-  public void testManualReviewOtherText() {
+  public void testManualReviewOtherTextTrue() {
     dar.getData().setOtherText("true");
     assertTrue(dar.requiresManualReview());
+  }
+
+  @Test
+  public void testManualReviewOtherTextFalse() {
+    dar.getData().setOtherText("");
+    assertFalse(dar.requiresManualReview());
   }
 
   @Test
