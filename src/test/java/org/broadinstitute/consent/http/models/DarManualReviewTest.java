@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.util;
+package org.broadinstitute.consent.http.models;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
