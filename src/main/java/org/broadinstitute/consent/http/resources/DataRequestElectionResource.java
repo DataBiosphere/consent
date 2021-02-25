@@ -22,33 +22,33 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.util.DarConstants;
 
 @Path("{api : (api/)?}dataRequest/{requestId}/election")
 public class DataRequestElectionResource extends Resource {
 
+    private final DataAccessRequestService darService;
     private final ElectionAPI api;
     private final EmailNotifierService emailNotifierService;
-    private final DataAccessRequestAPI darApi;
     private final SummaryService summaryService;
     private final VoteService voteService;
 
     @Inject
-    public DataRequestElectionResource(EmailNotifierService emailNotifierService,
-        SummaryService summaryService, VoteService voteService) {
+    public DataRequestElectionResource(DataAccessRequestService darService,
+        EmailNotifierService emailNotifierService, SummaryService summaryService,
+        VoteService voteService) {
+        this.darService = darService;
         this.api = AbstractElectionAPI.getInstance();
         this.emailNotifierService = emailNotifierService;
-        this.darApi = AbstractDataAccessRequestAPI.getInstance();
         this.summaryService = summaryService;
         this.voteService = voteService;
     }
@@ -61,16 +61,13 @@ public class DataRequestElectionResource extends Resource {
         URI uri;
         Election accessElection = null;
         try {
+            DataAccessRequest dar = darService.findByReferenceId(requestId);
+            boolean manualReview = dar.requiresManualReview();
             accessElection = api.createElection(rec, requestId, ElectionType.DATA_ACCESS);
-            List<Vote> votes;
+            List<Vote> votes = voteService.createVotes(accessElection, ElectionType.DATA_ACCESS, manualReview);
             //create RP election
-            if (!Objects.isNull(darApi.getField(requestId, DarConstants.RESTRICTION))) {
-                votes = voteService.createVotes(accessElection, ElectionType.DATA_ACCESS, false);
-                Election rpElection = api.createElection(rec, requestId, ElectionType.RP);
-                voteService.createVotes(rpElection, ElectionType.RP, false);
-            } else {
-                votes = voteService.createVotes(accessElection, ElectionType.DATA_ACCESS, true);
-            }
+            Election rpElection = api.createElection(rec, requestId, ElectionType.RP);
+            voteService.createVotes(rpElection, ElectionType.RP, false);
             List<Vote> darVotes = votes.stream().
                     filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
                     collect(Collectors.toList());

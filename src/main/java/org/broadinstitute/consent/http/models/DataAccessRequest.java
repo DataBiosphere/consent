@@ -150,6 +150,23 @@ public class DataAccessRequest {
     return gson.fromJson(dar.toString(), darMapType);
   }
 
+  public boolean requiresManualReview() {
+    return
+        Objects.nonNull(this.getData()) && (
+            (Objects.nonNull(this.getData().getPoa()) && this.getData().getPoa()) ||
+                (Objects.nonNull(this.getData().getPopulation()) && this.getData().getPopulation()) ||
+                (Objects.nonNull(this.getData().getOther()) && this.getData().getOther()) ||
+                (Objects.nonNull(this.getData().getOtherText()) && !this.getData().getOtherText().strip().isEmpty()) ||
+                (Objects.nonNull(this.getData().getIllegalBehavior()) && this.getData().getIllegalBehavior()) ||
+                (Objects.nonNull(this.getData().getAddiction()) && this.getData().getAddiction()) ||
+                (Objects.nonNull(this.getData().getSexualDiseases()) && this.getData().getSexualDiseases()) ||
+                (Objects.nonNull(this.getData().getStigmatizedDiseases()) && this.getData().getStigmatizedDiseases()) ||
+                (Objects.nonNull(this.getData().getVulnerablePopulation()) && this.getData().getVulnerablePopulation()) ||
+                (Objects.nonNull(this.getData().getPopulationMigration()) && this.getData().getPopulationMigration()) ||
+                (Objects.nonNull(this.getData().getPsychiatricTraits()) && this.getData().getPsychiatricTraits()) ||
+                (Objects.nonNull(this.getData().getNotHealth()) && this.getData().getNotHealth())
+        );
+  }
   /**
    * Make a shallow copy of the dar. This is mostly a workaround for problems serializing dates
    * when calling Gson.toJson on `this`

@@ -1,15 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
-
+import java.util.Map;
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -18,10 +10,20 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Map;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
 
 @Path("{api : (api/)?}dataRequest")
 public class DataRequestReportsResource extends Resource {
+
+    private final DataAccessRequestService darService;
 
     private final DataAccessRequestAPI darApi;
 
@@ -30,7 +32,9 @@ public class DataRequestReportsResource extends Resource {
     private final UserService userService;
 
     @Inject
-    public DataRequestReportsResource(ResearcherService researcherService, UserService userService) {
+    public DataRequestReportsResource(DataAccessRequestService darService,
+        ResearcherService researcherService, UserService userService) {
+        this.darService = darService;
         this.darApi = AbstractDataAccessRequestAPI.getInstance();
         this.researcherService = researcherService;
         this.userService = userService;
@@ -42,12 +46,13 @@ public class DataRequestReportsResource extends Resource {
     @Path("/{requestId}/pdf")
     public Response downloadDataRequestPdfFile(@PathParam("requestId") String requestId) {
         Document dar = darApi.describeDataAccessRequestById(requestId);
+        DataAccessRequest dataAccessRequest = darService.findByReferenceId(requestId);
         Map<String, String> researcherProperties = researcherService.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
         User user = userService.findUserById(dar.getInteger(DarConstants.USER_ID));
         String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE);
         try {
             String sDUR = darApi.getStructuredDURForPdf(dar);
-            Boolean manualReview = DarUtil.requiresManualReview(dar);
+            Boolean manualReview = dataAccessRequest.requiresManualReview();
             return Response
                     .ok(darApi.createDARDocument(dar, researcherProperties, user, manualReview, sDUR), MediaType.APPLICATION_OCTET_STREAM)
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename =" + fileName + ".pdf")
