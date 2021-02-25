@@ -32,7 +32,6 @@ import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.util.DarUtil;
 
 @Path("{api : (api/)?}dataRequest/{requestId}/election")
 public class DataRequestElectionResource extends Resource {
@@ -63,7 +62,7 @@ public class DataRequestElectionResource extends Resource {
         Election accessElection = null;
         try {
             DataAccessRequest dar = darService.findByReferenceId(requestId);
-            boolean manualReview = DarUtil.requiresManualReview(dar);
+            boolean manualReview = dar.requiresManualReview();
             accessElection = api.createElection(rec, requestId, ElectionType.DATA_ACCESS);
             List<Vote> votes = voteService.createVotes(accessElection, ElectionType.DATA_ACCESS, manualReview);
             //create RP election

@@ -9,7 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockitoAnnotations;
 
-public class DarUtilTest {
+public class DarManualReviewTest {
 
   @Before
   public void setUp() {
@@ -19,10 +19,10 @@ public class DarUtilTest {
   @Test
   public void testManualReviewFalse() {
     DataAccessRequest dar = new DataAccessRequest();
-    assertFalse(DarUtil.requiresManualReview(dar));
+    assertFalse(dar.requiresManualReview());
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
-    assertFalse(DarUtil.requiresManualReview(dar));
+    assertFalse(dar.requiresManualReview());
   }
 
   @Test
@@ -31,7 +31,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setPoa(true);
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
   @Test
@@ -40,7 +40,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setPopulation(true);
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
   @Test
@@ -49,7 +49,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setOther(true);
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
   @Test
@@ -58,7 +58,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setOtherText("true");
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
   @Test
@@ -67,7 +67,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setIllegalBehavior(true);
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
   @Test
@@ -76,7 +76,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setAddiction(true);
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
   @Test
@@ -85,7 +85,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setSexualDiseases(true);
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
   @Test
@@ -94,7 +94,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setStigmatizedDiseases(true);
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
   @Test
@@ -103,7 +103,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setVulnerablePopulation(true);
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
   @Test
@@ -112,7 +112,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setPopulationMigration(true);
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
   @Test
@@ -121,7 +121,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setPsychiatricTraits(true);
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
   @Test
@@ -130,7 +130,7 @@ public class DarUtilTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setNotHealth(true);
     dar.setData(data);
-    assertTrue(DarUtil.requiresManualReview(dar));
+    assertTrue(dar.requiresManualReview());
   }
 
 }
