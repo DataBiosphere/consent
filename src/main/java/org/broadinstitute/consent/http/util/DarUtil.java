@@ -12,8 +12,10 @@ public class DarUtil {
     public static boolean requiresManualReview(DataAccessRequest dar) {
         return
             Objects.nonNull(dar.getData()) && (
+                (Objects.nonNull(dar.getData().getPoa()) && dar.getData().getPoa()) ||
                 (Objects.nonNull(dar.getData().getPopulation()) && dar.getData().getPopulation()) ||
                 (Objects.nonNull(dar.getData().getOther()) && dar.getData().getOther()) ||
+                (Objects.nonNull(dar.getData().getOtherText()) && !dar.getData().getOtherText().strip().isEmpty()) ||
                 (Objects.nonNull(dar.getData().getIllegalBehavior()) && dar.getData().getIllegalBehavior()) ||
                 (Objects.nonNull(dar.getData().getAddiction()) && dar.getData().getAddiction()) ||
                 (Objects.nonNull(dar.getData().getSexualDiseases()) && dar.getData().getSexualDiseases()) ||
