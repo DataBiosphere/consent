@@ -19,11 +19,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.SummaryService;
@@ -46,19 +46,18 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
         AbstractElectionAPI.class,
-        AbstractVoteAPI.class,
-        AbstractDataAccessRequestAPI.class
+        AbstractVoteAPI.class
 })
 public class DataRequestElectionResourceTest {
 
+    @Mock
+    private DataAccessRequestService darService;
     @Mock
     private ElectionAPI electionAPI;
     @Mock
     private VoteAPI voteAPI;
     @Mock
     private EmailNotifierService emailNotifierService;
-    @Mock
-    private DataAccessRequestAPI darApi;
     @Mock
     private SummaryService summaryService;
     @Mock
@@ -75,10 +74,8 @@ public class DataRequestElectionResourceTest {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(AbstractElectionAPI.class);
         PowerMockito.mockStatic(AbstractVoteAPI.class);
-        PowerMockito.mockStatic(AbstractDataAccessRequestAPI.class);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
-        when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(darApi);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
         String requestId = UUID.randomUUID().toString();
@@ -87,13 +84,13 @@ public class DataRequestElectionResourceTest {
     }
 
     private void initResource() {
-        resource = new DataRequestElectionResource(emailNotifierService, summaryService, voteService);
+        resource = new DataRequestElectionResource(darService, emailNotifierService, summaryService, voteService);
     }
 
     @Test
     public void testCreateDataRequestElection() throws Exception {
+        when(darService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
         when(electionAPI.createElection(any(), any(), any())).thenReturn(new Election());
-        when(darApi.getField(any(), any())).thenReturn(null);
         when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
         doNothing().when(emailNotifierService).sendNewCaseMessageToList(any(), any());
         initResource();
@@ -109,8 +106,8 @@ public class DataRequestElectionResourceTest {
     public void testCreateDataRequestElectionWithResearchPurpose() throws Exception {
         Election election = new Election();
         election.setElectionId(RandomUtils.nextInt(1, 100));
+        when(darService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
         when(electionAPI.createElection(any(), any(), any())).thenReturn(election);
-        when(darApi.getField(any(), any())).thenReturn(new Object());
         when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
         doNothing().when(emailNotifierService).sendNewCaseMessageToList(any(), any());
         initResource();
@@ -133,6 +130,7 @@ public class DataRequestElectionResourceTest {
     @Test
     public void testDataRequestElectionWithInvalidDataRequest() throws Exception {
         // should return 404 because the data request id does not exist
+        when(darService.findByReferenceId(any())).thenThrow(new NotFoundException());
         when(electionAPI.createElection(any(), any(), any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.createDataRequestElection(
@@ -146,6 +144,7 @@ public class DataRequestElectionResourceTest {
     @Test
     public void testCreateDataRequestElectionWithInvalidStatus() throws Exception {
         // should return 400 bad request because status is invalid
+        when(darService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
         when(electionAPI.createElection(any(), any(), any())).thenThrow(new IllegalArgumentException());
         initResource();
         Response response = resource.createDataRequestElection(
