@@ -263,23 +263,6 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
-    @GET
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/hasUseRestriction/{referenceId}")
-    @PermitAll
-    public Response hasUseRestriction(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
-        validateAuthedRoleUser(
-            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-                .collect(Collectors.toList()),
-            authUser, referenceId);
-        try {
-            return Response.ok("{\"hasUseRestriction\":true}").build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
-        }
-    }
-
     private Integer obtainUserId(Document dar) {
         try {
             return dar.getInteger("userId");
