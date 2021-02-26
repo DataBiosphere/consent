@@ -16,7 +16,9 @@ import javax.ws.rs.core.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
@@ -117,10 +119,6 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         if (dar == null) {
             logger.error("Data Access Request is null");
             throw new IllegalArgumentException("Data Access Request cannot be null");
-        }
-        if(!dar.containsKey(DarConstants.RESTRICTION)){
-            logger.error("Error finding single matchData Access Request: "+ dar.getString(DarConstants.DAR_CODE) + " does not have a proper Use Restriction.");
-            throw new Exception("Data Access Request: " + dar.getString(DarConstants.DAR_CODE) + " cannot be matched. Missing Use Restriction field.");
         }
         Match match = createMatch(consent.getConsentId(), dar.getString(DarConstants.REFERENCE_ID), false, false);
         RequestMatchingObject requestObject = createRequestObject(consent, dar);

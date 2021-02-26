@@ -1,15 +1,14 @@
 package org.broadinstitute.consent.http.service;
 
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
 

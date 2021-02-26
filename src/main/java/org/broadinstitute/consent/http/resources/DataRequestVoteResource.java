@@ -105,12 +105,8 @@ public class DataRequestVoteResource extends Resource {
             Vote vote = api.firstVoteUpdate(rec, id);
             Document access = accessRequestAPI.describeDataAccessRequestById(requestId);
             List<Integer> dataSets = DarUtil.getIntegerList(access, DarConstants.DATASET_ID);
-            if(access.containsKey(DarConstants.RESTRICTION)){
-                List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
-                if(vote.getVote() != null && votes.get(0).getVote() != null){
-                    electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
-                }
-            }else {
+            List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
+            if(vote.getVote() != null && votes.get(0).getVote() != null){
                 electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
             }
             createDataOwnerElection(requestId, vote, access, dataSets);

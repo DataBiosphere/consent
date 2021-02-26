@@ -274,7 +274,7 @@ public class DataAccessRequestResource extends Resource {
                 .collect(Collectors.toList()),
             authUser, referenceId);
         try {
-            return Response.ok("{\"hasUseRestriction\":" + dataAccessRequestAPI.hasUseRestriction(referenceId) + "}").build();
+            return Response.ok("{\"hasUseRestriction\":true}").build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
