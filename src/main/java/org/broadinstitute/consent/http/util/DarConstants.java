@@ -25,9 +25,6 @@ public class DarConstants {
 
     public static final String REFERENCE_ID = "referenceId";
 
-    @Deprecated
-    public static final String RESTRICTION = "restriction";
-
     public static final String TRANSLATED_RESTRICTION = "translatedUseRestriction";
 
     public static final String STATUS = "status";

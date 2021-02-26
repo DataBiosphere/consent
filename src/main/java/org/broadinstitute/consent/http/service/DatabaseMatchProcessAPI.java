@@ -1,21 +1,21 @@
 package org.broadinstitute.consent.http.service;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Match;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 
 public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
 
-    private MatchAPI matchAPI;
-    private MatchingServiceAPI matchingServiceAPI;
-    private ConsentDAO consentDAO;
-    private DataAccessRequestService dataAccessRequestService;
+    private final MatchAPI matchAPI;
+    private final MatchingServiceAPI matchingServiceAPI;
+    private final ConsentDAO consentDAO;
+    private final DataAccessRequestService dataAccessRequestService;
 
     public static void initInstance(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService) {
         MatchProcessAPIHolder.setInstance(new DatabaseMatchProcessAPI(consentDAO, dataAccessRequestService));
@@ -40,10 +40,10 @@ public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
     @Override
     public void processMatchesForPurpose(String purposeId) {
         removeMatchesForPurpose(purposeId);
-        Document rp = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(purposeId);
-        if (rp != null && rp.get(DarConstants.RESTRICTION) != null) {
-            Match match = matchingServiceAPI.findMatchForPurpose(purposeId);
-            saveMatch(Arrays.asList(match));
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(purposeId);
+        if (Objects.nonNull(dar)) {
+            Match match = matchingServiceAPI.findMatchForPurpose(dar.getReferenceId());
+            saveMatch(Collections.singletonList(match));
         }
 
     }
@@ -52,7 +52,7 @@ public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
     public void removeMatchesForPurpose(String purposeId) {
         List<Match> matches = matchAPI.findMatchByPurposeId(purposeId);
         if (CollectionUtils.isNotEmpty(matches)) {
-            matchAPI.deleteMatches(getIds(matches));
+            matchAPI.deleteMatches(matches.stream().map(Match::getId).collect(Collectors.toList()));
         }
     }
 
@@ -60,7 +60,7 @@ public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
     public void removeMatchesForConsent(String consentId) {
         List<Match> matches = matchAPI.findMatchByConsentId(consentId);
         if (CollectionUtils.isNotEmpty(matches)) {
-            matchAPI.deleteMatches(getIds(matches));
+            matchAPI.deleteMatches(matches.stream().map(Match::getId).collect(Collectors.toList()));
         }
 
     }
@@ -68,12 +68,6 @@ public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
 
     private void saveMatch(List<Match> matches) {
         matchAPI.createMatches(matches);
-    }
-
-    private List<Integer> getIds(List<Match> matches) {
-        List<Integer> ids = new ArrayList<>();
-        matches.stream().forEach((match) -> ids.add(match.getId()));
-        return ids;
     }
 
 }
