@@ -31,8 +31,8 @@ public class ElasticSearchSupport {
         return "/" + index + "/ontology_term/" + URLEncoder.encode(termId, Charset.defaultCharset());
     }
 
-    public static String getClusterHealthPath(String index) {
-        return "/_cluster/health/" + index;
+    public static String getClusterHealthPath() {
+        return "/_cluster/health";
     }
 
     public static Header jsonHeader = new BasicHeader("Content-Type", "application/json");
