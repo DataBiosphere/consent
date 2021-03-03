@@ -41,7 +41,7 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   void deleteInstitutionById(@Bind("institutionId") Integer institutionId);
 
   @SqlQuery("select * from institution where institution_id = :institutionId")
-  Institution findInstitutionById(@Bind("institutionId") Integer dacUserId);
+  Institution findInstitutionById(@Bind("institutionId") Integer institutionId);
 
   @SqlQuery("select * from institution")
   List<Institution> findAllInstitutions();
