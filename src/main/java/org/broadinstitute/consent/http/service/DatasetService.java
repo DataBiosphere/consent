@@ -148,6 +148,13 @@ public class DatasetService {
     public Optional<DataSet> updateDataset(DataSetDTO dataset, Integer datasetId, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
 
+        if (Objects.nonNull(dataset.getDacId())) {
+            Consent consent = consentDAO.findConsentFromDatasetID(datasetId);
+            if (Objects.nonNull(consent)) {
+                consentDAO.updateConsentDac(consent.getConsentId(), dataset.getDacId());
+            }
+        }
+
         DataSet old = getDatasetWithPropertiesById(datasetId);
         Set<DataSetProperty> oldProperties = old.getProperties();
 
