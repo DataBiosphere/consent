@@ -22,7 +22,6 @@ import java.io.IOException;
 public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchHealthCheck.class);
-    private final String index;
     private final RestClient client;
 
     @Override
@@ -36,7 +35,6 @@ public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
     }
 
     public ElasticSearchHealthCheck(ElasticSearchConfiguration config) {
-        this.index = config.getIndexName();
         this.client = ElasticSearchSupport.createRestClient(config);
     }
 
@@ -45,7 +43,7 @@ public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
         try {
             RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
             builder.addHeader(jsonHeader.getName(), jsonHeader.getValue());
-            Request request = new Request("GET", ElasticSearchSupport.getClusterHealthPath(this.index));
+            Request request = new Request("GET", ElasticSearchSupport.getClusterHealthPath());
             request.setOptions(builder.build());
             Response esResponse = client.performRequest(request);
             if (esResponse.getStatusLine().getStatusCode() != 200) {
