@@ -80,6 +80,9 @@ public class DatasetService {
                   null, name, null, createDate, createDate, null,
                   groupName, dataset.getDacId());
             String associationType = AssociationType.SAMPLESET.getValue();
+            if (Objects.nonNull(dataset.getDacId())) {
+                consentDAO.updateConsentDac(consentId, dataset.getDacId());
+            }
             consentDAO.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
             return consentDAO.findConsentById(consentId);
         } else {
