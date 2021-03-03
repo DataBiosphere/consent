@@ -46,7 +46,7 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 
-@Path("{api : (api/)?}dataRequest/{requestId}/vote")
+@Path("api/dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
     private final DACUserAPI dacUserAPI;
@@ -105,8 +105,10 @@ public class DataRequestVoteResource extends Resource {
             Vote vote = api.firstVoteUpdate(rec, id);
             Document access = accessRequestAPI.describeDataAccessRequestById(requestId);
             List<Integer> dataSets = DarUtil.getIntegerList(access, DarConstants.DATASET_ID);
-            List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
-            if(vote.getVote() != null && votes.get(0).getVote() != null){
+            List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ?
+                api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :
+                api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
+            if (vote.getVote() != null && votes.get(0).getVote() != null) {
                 electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
             }
             createDataOwnerElection(requestId, vote, access, dataSets);
