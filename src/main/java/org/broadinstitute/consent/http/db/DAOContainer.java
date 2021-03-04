@@ -25,6 +25,7 @@ public class DAOContainer {
   private UserRoleDAO userRoleDAO;
   private VoteDAO voteDAO;
   private WorkspaceAuditDAO workspaceAuditDAO;
+  private InstitutionDAO institutionDAO;
 
   public ApprovalExpirationTimeDAO getApprovalExpirationTimeDAO() {
     return approvalExpirationTimeDAO;
@@ -173,4 +174,8 @@ public class DAOContainer {
   public void setWorkspaceAuditDAO(WorkspaceAuditDAO workspaceAuditDAO) {
     this.workspaceAuditDAO = workspaceAuditDAO;
   }
+
+  public InstitutionDAO getInstitutionDAO() { return institutionDAO; }
+
+  public void setInstitutionDAO(InstitutionDAO institutionDAO) { this.institutionDAO = institutionDAO; }
 }

@@ -1,0 +1,49 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="61.0" author="raejohanek">
+        <createTable tableName="institution">
+            <column name="institution_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="institution_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="it_director_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="it_director_email" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_user" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="update_date" type="DATETIME"/>
+            <column name="update_user" type="bigint"/>
+        </createTable>
+        <createIndex tableName="institution" indexName="institution_name_index">
+            <column name="institution_name"></column>
+        </createIndex>
+        <addForeignKeyConstraint baseColumnNames="create_user" baseTableName="institution" constraintName="fkInstitutionCreateUser"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="dacuserid" referencedTableName="dacuser"
+                                 referencesUniqueColumn="false"/>
+        <addForeignKeyConstraint baseColumnNames="update_user" baseTableName="institution" constraintName="fkInstitutionUpdateUser"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="dacuserid" referencedTableName="dacuser"
+                                 referencesUniqueColumn="false"/>
+        <rollback>
+            <dropTable tableName="institution"/>
+            <dropIndex indexName="institution_name_index" tableName="institution"/>
+            <dropForeignKeyConstraint baseTableName="institution" constraintName="fkInstitutionCreateUser"/>
+            <dropForeignKeyConstraint baseTableName="institution" constraintName="fkInstitutionUpdateUser"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
