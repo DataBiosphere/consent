@@ -5,7 +5,6 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet id="61.0" author="raejohanek">
-        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="institution">
             <column name="institution_id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -28,29 +27,23 @@
             <column name="update_date" type="DATETIME"/>
             <column name="update_user" type="bigint"/>
         </createTable>
-    </changeSet>
-
-    <changeSet author="raejohanek" id="61.1">
-        <validCheckSum>ANY</validCheckSum>
         <createIndex tableName="institution" indexName="institution_name_index">
             <column name="institution_name"></column>
         </createIndex>
-    </changeSet>
-
-    <changeSet author="raejohanek" id="61.2">
-        <validCheckSum>ANY</validCheckSum>
         <addForeignKeyConstraint baseColumnNames="create_user" baseTableName="institution" constraintName="fkInstitutionCreateUser"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="false"/>
-    </changeSet>
-
-    <changeSet author="raejohanek" id="61.3">
-        <validCheckSum>ANY</validCheckSum>
         <addForeignKeyConstraint baseColumnNames="update_user" baseTableName="institution" constraintName="fkInstitutionUpdateUser"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="false"/>
+        <rollback>
+            <dropTable tableName="institution"/>
+            <dropIndex indexName="institution_name_index" tableName="institution"/>
+            <dropForeignKeyConstraint baseTableName="institution" constraintName="fkInstitutionCreateUser"/>
+            <dropForeignKeyConstraint baseTableName="institution" constraintName="fkInstitutionUpdateUser"/>
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>
