@@ -419,10 +419,13 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    InstitutionDAO providesInstitutionDAO() { return institutionDAO; }
+    InstitutionDAO providesInstitutionDAO() {
+        return institutionDAO;
+    }
 
     @Provides
-    InstitutionService providesInstitutionService() { return new InstitutionService(providesInstitutionDAO());
+    InstitutionService providesInstitutionService() {
+        return new InstitutionService(providesInstitutionDAO());
     }
 
     @Provides

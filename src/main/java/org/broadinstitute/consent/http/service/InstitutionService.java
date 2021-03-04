@@ -37,6 +37,7 @@ public class InstitutionService {
     return this.institutionDAO.findInstitutionById(id);
   }
 
-  public List<Institution> findAllInstitutions() { return this.institutionDAO.findAllInstitutions(); }
-
+  public List<Institution> findAllInstitutions() {
+    return this.institutionDAO.findAllInstitutions();
+  }
 }
