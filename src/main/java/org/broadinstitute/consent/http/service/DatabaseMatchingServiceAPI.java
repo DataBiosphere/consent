@@ -168,9 +168,9 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
             collect(Collectors.toList());
     }
 
-    private RequestMatchingObject createRequestObject(Consent consent, DataAccessRequest dar) throws Exception {
+    private RequestMatchingObject createRequestObject(Consent consent, DataAccessRequest dar) {
         DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
-        UseRestriction useRestriction = useRestrictionConverter.parseUseRestriction(dataUse);
-        return new RequestMatchingObject(consent.getUseRestriction(), useRestriction);
+        UseRestriction darUseRestriction = useRestrictionConverter.parseUseRestriction(dataUse);
+        return new RequestMatchingObject(consent.getUseRestriction(), darUseRestriction);
     }
 }
