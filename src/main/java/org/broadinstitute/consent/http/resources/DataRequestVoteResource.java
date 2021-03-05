@@ -46,7 +46,7 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 
-@Path("api/dataRequest/{requestId}/vote")
+@Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
     private final DACUserAPI dacUserAPI;
