@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -43,6 +44,7 @@ import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
@@ -85,6 +87,7 @@ public class ConsentModule extends AbstractModule {
     private final WorkspaceAuditDAO workspaceAuditDAO;
     private final AssociationDAO associationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
+    private final InstitutionDAO institutionDAO;
 
     public static final String DB_ENV = "postgresql";
 
@@ -119,6 +122,7 @@ public class ConsentModule extends AbstractModule {
         this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
         this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
+        this.institutionDAO = this.jdbi.onDemand((InstitutionDAO.class));
     }
 
     @Override
@@ -148,6 +152,7 @@ public class ConsentModule extends AbstractModule {
         container.setUserRoleDAO(providesUserRoleDAO());
         container.setVoteDAO(providesVoteDAO());
         container.setWorkspaceAuditDAO(providesWorkspaceAuditDAO());
+        container.setInstitutionDAO(providesInstitutionDAO());
         return container;
     }
 
@@ -411,6 +416,16 @@ public class ConsentModule extends AbstractModule {
     @Provides
     AssociationDAO providesAssociationDAO() {
         return associationDAO;
+    }
+
+    @Provides
+    InstitutionDAO providesInstitutionDAO() {
+        return institutionDAO;
+    }
+
+    @Provides
+    InstitutionService providesInstitutionService() {
+        return new InstitutionService(providesInstitutionDAO());
     }
 
     @Provides
