@@ -112,7 +112,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         return matches;
     }
 
-    private Match singleEntitiesMatch(Consent consent, DataAccessRequest dar) throws Exception {
+    private Match singleEntitiesMatch(Consent consent, DataAccessRequest dar) {
         if (consent == null) {
             logger.error("Consent is null");
             throw new IllegalArgumentException("Consent cannot be null");
