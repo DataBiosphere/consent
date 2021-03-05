@@ -162,10 +162,10 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         return consent;
     }
 
-    private List<DataAccessRequest> findRelatedDars(List<Integer> dataSetIds){
-        return dataAccessRequestDAO.findAllDataAccessRequests().stream().
-            filter(d -> !Collections.disjoint(dataSetIds, d.getData().getDatasetIds())).
-            collect(Collectors.toList());
+    private List<DataAccessRequest> findRelatedDars(List<Integer> dataSetIds) {
+        return dataAccessRequestDAO.findAllDataAccessRequests().stream()
+            .filter(d -> !Collections.disjoint(dataSetIds, d.getData().getDatasetIds()))
+            .collect(Collectors.toList());
     }
 
     private RequestMatchingObject createRequestObject(Consent consent, DataAccessRequest dar) {
