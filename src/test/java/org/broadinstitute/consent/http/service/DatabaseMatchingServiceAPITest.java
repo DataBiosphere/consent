@@ -50,7 +50,7 @@ public class DatabaseMatchingServiceAPITest {
     @Mock
     private DataAccessRequestAPI dataAccessAPI;
     @Mock
-    private DataSetAPI dsAPI;
+    private DatasetService datasetService;
 
     private static Consent sampleConsent1;
     private static Consent sampleConsent2;
@@ -93,7 +93,7 @@ public class DatabaseMatchingServiceAPITest {
         MockitoAnnotations.initMocks(this);
         setUpMockedResponses();
         when(config.getMatchURL()).thenReturn("http://ontology.org/match");
-        matchApi = new DatabaseMatchingServiceAPI(clientMock, config, consentAPI, dataAccessAPI, dsAPI);
+        matchApi = new DatabaseMatchingServiceAPI(clientMock, config, consentAPI, dataAccessAPI, datasetService);
 
         when(dataAccessAPI.describeDataAccessRequestById("NullDar")).thenReturn(null);
 
@@ -170,8 +170,8 @@ public class DatabaseMatchingServiceAPITest {
     public void testFindMatchesForConsent() throws IOException {
         DataSet ds = new DataSet(1, "SC-20660", "SC-20660", null, true);
         List<DataSet> dsList = Collections.singletonList(ds);
-        when(dsAPI.getDataSetsForConsent("CONS-1")).thenReturn(dsList);
-        when(dsAPI.getDataSetsForConsent("CONS-2")).thenReturn(dsList);
+        when(datasetService.getDataSetsForConsent("CONS-1")).thenReturn(dsList);
+        when(datasetService.getDataSetsForConsent("CONS-2")).thenReturn(dsList);
         when(dataAccessAPI.describeDataAccessWithDataSetIdAndRestriction(dsList.stream().map(DataSet::getDataSetId).collect(Collectors.toList()))).thenReturn(new ArrayList<>(Arrays.asList(getSampleDar())));
         List<Match> matches = matchApi.findMatchesForConsent("CONS-1");
         assertTrue(matches.size() == 1);

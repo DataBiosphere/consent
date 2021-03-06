@@ -22,9 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -54,6 +52,12 @@ public class DatasetServiceTest {
     private UserRoleDAO userRoleDAO;
 
     @Mock
+    private DataSetAuditDAO dataSetAuditDAO;
+
+    @Mock
+    private DatasetAssociationDAO datasetAssociationDAO;
+
+    @Mock
     private UseRestrictionConverter useRestrictionConverter;
 
     @Before
@@ -62,7 +66,7 @@ public class DatasetServiceTest {
     }
 
     private void initService() {
-        datasetService = new DatasetService(consentDAO, datasetDAO, userRoleDAO, useRestrictionConverter);
+        datasetService = new DatasetService(consentDAO, datasetDAO, userRoleDAO, dataSetAuditDAO, datasetAssociationDAO, useRestrictionConverter);
     }
 
     @Test

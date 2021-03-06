@@ -32,19 +32,19 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
     private ConsentAPI consentAPI;
     private DataAccessRequestAPI dataAccessAPI;
-    private DataSetAPI dsAPI;
+    private DatasetService datasetService;
     private WebTarget matchServiceTarget;
     private GenericType<ResponseMatchingObject> rmo = new GenericType<ResponseMatchingObject>(){};
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public static void initInstance(Client client, ServicesConfiguration config) {
-        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, config, AbstractConsentAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance(), AbstractDataSetAPI.getInstance()));
+    public static void initInstance(Client client, ServicesConfiguration config, DatasetService datasetService) {
+        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, config, AbstractConsentAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance(), datasetService));
     }
 
-    DatabaseMatchingServiceAPI(Client client, ServicesConfiguration config, ConsentAPI consentAPI, DataAccessRequestAPI darAPI, DataSetAPI dsAPI){
+    DatabaseMatchingServiceAPI(Client client, ServicesConfiguration config, ConsentAPI consentAPI, DataAccessRequestAPI darAPI, DatasetService datasetService){
         this.dataAccessAPI = darAPI;
         this.consentAPI = consentAPI;
-        this.dsAPI = dsAPI;
+        this.datasetService = datasetService;
         Integer timeout = 1000 * 60 * 3; // 3 minute timeout so ontology can properly do matching.
         client.property(ClientProperties.CONNECT_TIMEOUT, timeout);
         client.property(ClientProperties.READ_TIMEOUT, timeout);
@@ -90,7 +90,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     public List<Match> findMatchesForConsent(String consentId) {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
-        List<DataSet> dataSets = dsAPI.getDataSetsForConsent(consentId);
+        List<DataSet> dataSets = datasetService.getDataSetsForConsent(consentId);
         List<Document> dars = findRelatedDars(dataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList()));
         if (consent != null && !dars.isEmpty()) {
             Match match;
