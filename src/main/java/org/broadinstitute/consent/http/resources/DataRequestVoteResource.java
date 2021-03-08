@@ -4,8 +4,10 @@ import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
@@ -105,12 +107,17 @@ public class DataRequestVoteResource extends Resource {
             Vote vote = api.firstVoteUpdate(rec, id);
             Document access = accessRequestAPI.describeDataAccessRequestById(requestId);
             List<Integer> dataSets = DarUtil.getIntegerList(access, DarConstants.DATASET_ID);
-            if(access.containsKey(DarConstants.RESTRICTION)){
-                List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
-                if(vote.getVote() != null && votes.get(0).getVote() != null){
-                    electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
-                }
-            }else {
+            // Find any final or agreement votes for this election that have a populated vote:
+            List<Vote> votes = voteService
+                  .findVotesByElectionIds(Collections.singletonList(rec.getElectionId()))
+                  .stream()
+                  .filter(v ->
+                      v.getType().equalsIgnoreCase(VoteType.FINAL.getValue()) ||
+                      v.getType().equalsIgnoreCase(VoteType.AGREEMENT.getValue()))
+                  .filter(v -> Objects.nonNull(v.getVote()))
+                  .collect(Collectors.toList());
+            // If we have any votes with a populated vote, we can now update the election.
+            if (!votes.isEmpty()) {
                 electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
             }
             createDataOwnerElection(requestId, vote, access, dataSets);

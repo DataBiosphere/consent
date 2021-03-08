@@ -20,11 +20,7 @@ public interface DataAccessRequestAPI {
 
     List<Document> describeDraftDataAccessRequestManage(Integer userId);
 
-    Object getField(String requestId, String field);
-
     List<User> getUserEmailAndCancelElection(String referenceId);
-
-    boolean hasUseRestriction(String referenceId);
 
     byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, User user, Boolean manualReview, String sDUR) throws IOException;
 

@@ -127,10 +127,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      */
     @Override
     public List<Document> describeDataAccessWithDataSetIdAndRestriction(List<Integer> dataSetIds) {
-        return dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
-                filter(d -> !Collections.disjoint(dataSetIds, DarUtil.getIntegerList(d, DarConstants.DATASET_ID))).
-                filter(d -> d.get(DarConstants.RESTRICTION) != null).
-                collect(Collectors.toList());
+        return dataAccessRequestService.findAllDataAccessRequests().stream().
+            filter(d -> !Collections.disjoint(dataSetIds, d.getData().getDatasetIds())).
+            map(dataAccessRequestService::createDocumentFromDar).
+            collect(Collectors.toList());
     }
 
     @Override
@@ -163,17 +163,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             users =  userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
         }
         return users;
-    }
-
-    @Override
-    public Object getField(String requestId , String field){
-        Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(requestId);
-        return dar != null ? dar.get(field) : null;
-    }
-
-    @Override
-    public boolean hasUseRestriction(String referenceId){
-        return getField(referenceId, DarConstants.RESTRICTION) != null ? true : false;
     }
 
     private void updateElection(Election access, Election rp) {
