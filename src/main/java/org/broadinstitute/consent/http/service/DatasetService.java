@@ -80,6 +80,9 @@ public class DatasetService {
                   null, name, null, createDate, createDate, null,
                   groupName, dataset.getDacId());
             String associationType = AssociationType.SAMPLESET.getValue();
+            if (Objects.nonNull(dataset.getDacId())) {
+                consentDAO.updateConsentDac(consentId, dataset.getDacId());
+            }
             consentDAO.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
             return consentDAO.findConsentById(consentId);
         } else {
@@ -147,6 +150,13 @@ public class DatasetService {
 
     public Optional<DataSet> updateDataset(DataSetDTO dataset, Integer datasetId, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
+
+        if (Objects.nonNull(dataset.getDacId())) {
+            Consent consent = consentDAO.findConsentFromDatasetID(datasetId);
+            if (Objects.nonNull(consent)) {
+                consentDAO.updateConsentDac(consent.getConsentId(), dataset.getDacId());
+            }
+        }
 
         DataSet old = getDatasetWithPropertiesById(datasetId);
         Set<DataSetProperty> oldProperties = old.getProperties();

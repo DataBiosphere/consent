@@ -51,6 +51,16 @@ public class VoteService {
     }
 
     /**
+     * Find all votes for an election id.
+     *
+     * @param electionIds The election ids for the election.
+     * @return Collection of votes for the given reference id
+     */
+    public List<Vote> findVotesByElectionIds(List<Integer> electionIds) {
+        return voteDAO.findVotesByElectionIds(electionIds);
+    }
+
+    /**
      * Update votes such that they have the provided value and rationale.
      *
      * @param voteList  Collection of votes to advance
