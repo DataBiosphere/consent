@@ -102,4 +102,11 @@ public class Institution {
   public Integer getUpdateUser() {
     return updateUser;
   }
+
+  @Override
+  public boolean equals(Object institution) {
+    if (institution == this) return true;
+    if (institution == null || institution.getClass() != getClass()) return false;
+    return (((Institution)institution).getId() == getId());
+  }
 }
