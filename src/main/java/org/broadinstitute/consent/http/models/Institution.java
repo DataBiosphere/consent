@@ -13,6 +13,11 @@ public class Institution {
   private Date updateDate;
   private Integer updateUser;
 
+  //empty constructor sets all null values except create Date
+  public Institution() {
+    this.createDate = new Date();
+  }
+
   public Institution(Integer id, String name, String itDirectorName, String itDirectorEmail, Integer createUser, Date createDate) {
     this.id = id;
     this.name = name;
@@ -36,24 +41,36 @@ public class Institution {
     this.updateUser = updateUser;
   }
 
-  public void setName(String name, Integer updateUser) {
+  public void setId(Integer id) {
+    this.id = id;
+  }
+
+  public void setName(String name) {
     this.name = name;
-    this.updateInstitution(updateUser);
   }
 
-  public void setItDirectorEmail(String itDirectorEmail, Integer updateUser) {
+  public void setItDirectorEmail(String itDirectorEmail) {
     this.itDirectorEmail = itDirectorEmail;
-    this.updateInstitution(updateUser);
   }
 
-  public void setItDirectorName(String itDirectorName, Integer updateUser) {
+  public void setItDirectorName(String itDirectorName) {
     this.itDirectorName = itDirectorName;
-    this.updateInstitution(updateUser);
   }
 
-  private void updateInstitution(Integer updateUser) {
+  public void setCreateUser(Integer createUser) {
+    this.createUser = createUser;
+  }
+
+  public void setCreateDate(Date date) {
+    this.createDate = date;
+  }
+
+  public void setUpdateUser(Integer updateUser) {
     this.updateUser = updateUser;
-    this.updateDate = new Date();
+  }
+
+  public void setUpdateDate(Date updateDate) {
+    this.updateDate = updateDate;
   }
 
   public Integer getId() { return id; }
