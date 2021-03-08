@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
+import org.broadinstitute.consent.http.models.Institution;
 import static org.junit.Assert.fail;
 
 import io.dropwizard.jdbi3.JdbiFactory;
@@ -68,6 +69,7 @@ public class DAOTestHelper {
     protected static MailMessageDAO mailMessageDAO;
     protected static MetricsDAO metricsDAO;
     protected static UserPropertyDAO userPropertyDAO;
+    protected static InstitutionDAO institutionDAO;
 
     private static final List<Integer> createdDataSetIds = new ArrayList<>();
     private static final List<Integer> createdDacIds = new ArrayList<>();
@@ -75,6 +77,7 @@ public class DAOTestHelper {
     private static final List<Integer> createdElectionIds = new ArrayList<>();
     private static final List<Integer> createdUserIds = new ArrayList<>();
     private static final List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
+    private static final List<Integer> createdInstitutionIds = new ArrayList<>();
 
     String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
 
@@ -123,6 +126,7 @@ public class DAOTestHelper {
         mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
         metricsDAO = jdbi.onDemand(MetricsDAO.class);
         userPropertyDAO = jdbi.onDemand(UserPropertyDAO.class);
+        institutionDAO = jdbi.onDemand(InstitutionDAO.class);
     }
 
     @AfterClass
@@ -150,6 +154,9 @@ public class DAOTestHelper {
         createdDacIds.forEach(id -> {
             dacDAO.deleteDacMembers(id);
             dacDAO.deleteDac(id);
+        });
+        createdElectionIds.forEach(id -> {
+            institutionDAO.deleteInstitutionById(id);
         });
         createdUserIds.forEach(id -> {
             userPropertyDAO.deleteAllPropertiesByUser(id);
@@ -334,6 +341,18 @@ public class DAOTestHelper {
                 new Date());
         createdDacIds.add(id);
         return dacDAO.findById(id);
+    }
+
+    protected Institution createInstitution() {
+        Integer userId = createUser().getDacUserId();
+        Integer id = institutionDAO.insertInstitution(
+          "Test_" + RandomStringUtils.random(20, true, true),
+          "Test_" + RandomStringUtils.random(20, true, true),
+          "Test_" + RandomStringUtils.random(20, true, true),
+          userId,
+          new Date());
+        createdInstitutionIds.add(id);
+        return institutionDAO.findInstitutionById(id);
     }
 
     protected void createDatasetProperties(Integer datasetId) {
