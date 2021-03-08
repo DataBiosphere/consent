@@ -155,7 +155,7 @@ public class DAOTestHelper {
             dacDAO.deleteDacMembers(id);
             dacDAO.deleteDac(id);
         });
-        createdElectionIds.forEach(id -> {
+        createdInstitutionIds.forEach(id -> {
             institutionDAO.deleteInstitutionById(id);
         });
         createdUserIds.forEach(id -> {

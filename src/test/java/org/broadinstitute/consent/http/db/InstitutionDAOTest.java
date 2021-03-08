@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Institution;
 import org.junit.Assert;
 import org.junit.Test;
