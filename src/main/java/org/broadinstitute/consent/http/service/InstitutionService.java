@@ -41,7 +41,7 @@ public class InstitutionService {
                                     Integer updateUser,
                                     Date date) {
 institutionDAO.updateInstitutionById(
-id, institutionName, itDirectorName, itDirectorEmail, updateUser, new Date());
+id, institutionName, itDirectorName, itDirectorEmail, updateUser, date);
 }
 
   public void deleteInstitutionById(Integer id) {
