@@ -26,7 +26,7 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
     }
     institution.setName(resultSet.getString("institution_name"));
     institution.setItDirectorName(resultSet.getString("it_director_name"));
-    institution.setItDirectorName(resultSet.getString("it_director_email"));
+    institution.setItDirectorEmail(resultSet.getString("it_director_email"));
     institution.setCreateUser(resultSet.getInt("create_user"));
     institution.setCreateDate(resultSet.getDate("create_date"));
     institution.setUpdateUser(resultSet.getInt("update_user"));
