@@ -345,10 +345,15 @@ public class DAOTestHelper {
 
     protected Institution createInstitution() {
         Integer userId = createUser().getDacUserId();
+        String email = RandomStringUtils.randomAlphabetic(6) +
+                "@" +
+                RandomStringUtils.randomAlphabetic(6) +
+                "." +
+                RandomStringUtils.randomAlphabetic(3);
         Integer id = institutionDAO.insertInstitution(
           "Test_" + RandomStringUtils.random(20, true, true),
           "Test_" + RandomStringUtils.random(20, true, true),
-          "Test_" + RandomStringUtils.random(20, true, true),
+          email,
           userId,
           new Date());
         createdInstitutionIds.add(id);
