@@ -17,20 +17,35 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
   @Override
   public Institution map(ResultSet resultSet, StatementContext statementContext) throws SQLException {
     Institution institution;
+    int institutionId = resultSet.getInt("institution_id");
 
-    if (institutionMap.containsKey(resultSet.getInt("institution_id"))) {
-      institution = institutionMap.get(resultSet.getInt("institution_id"));
+    if (institutionMap.containsKey(institutionId)) {
+      institution = institutionMap.get(institutionId);
     } else {
       institution = new Institution();
-      institution.setId(resultSet.getInt("institution_id"));
+      institution.setId(institutionId);
     }
-    institution.setName(resultSet.getString("institution_name"));
-    institution.setItDirectorName(resultSet.getString("it_director_name"));
-    institution.setItDirectorEmail(resultSet.getString("it_director_email"));
-    institution.setCreateUser(resultSet.getInt("create_user"));
-    institution.setCreateDate(resultSet.getDate("create_date"));
-    institution.setUpdateUser(resultSet.getInt("update_user"));
-    institution.setUpdateDate(resultSet.getDate("update_date"));
+    if (hasColumn(resultSet, "institution_name")) {
+      institution.setName(resultSet.getString("institution_name"));
+    }
+    if (hasColumn(resultSet, "it_director_name")) {
+      institution.setItDirectorName(resultSet.getString("it_director_name"));
+    }
+    if (hasColumn(resultSet, "it_director_email")) {
+      institution.setItDirectorEmail(resultSet.getString("it_director_email"));
+    }
+    if (hasColumn(resultSet, "create_user")) {
+      institution.setCreateUser(resultSet.getInt("create_user"));
+    }
+    if (hasColumn(resultSet, "create_date")) {
+      institution.setCreateDate(resultSet.getDate("create_date"));
+    } 
+    if (hasColumn(resultSet, "update_user")) {
+      institution.setUpdateUser(resultSet.getInt("update_user"));
+    }
+    if (hasColumn(resultSet, "update_date")) {
+      institution.setUpdateDate(resultSet.getDate("update_date"));
+    }
     institutionMap.put(institution.getId(), institution);
     return institution;
   }
