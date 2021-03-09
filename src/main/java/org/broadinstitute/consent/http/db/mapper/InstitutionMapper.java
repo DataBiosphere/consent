@@ -18,11 +18,12 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
   public Institution map(ResultSet resultSet, StatementContext statementContext) throws SQLException {
     Institution institution;
 
-    if (institutionMap.containsKey(resultSet.getInt("institution_id"))) {
-      institution = institutionMap.get(resultSet.getInt("institution_id"));
+    int institutionId = resultSet.getInt("institution_id"));
+    if (institutionMap.containsKey(institutionId) {
+      institution = institutionMap.get(institutionId);
     } else {
       institution = new Institution();
-      institution.setId(resultSet.getInt("institution_id"));
+      institution.setId(institutionId);
     }
     institution.setName(resultSet.getString("institution_name"));
     institution.setItDirectorName(resultSet.getString("it_director_name"));
