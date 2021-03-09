@@ -107,6 +107,9 @@ public class Institution {
   public boolean equals(Object institution) {
     if (institution == this) return true;
     if (institution == null || institution.getClass() != getClass()) return false;
-    return (((Institution)institution).getId() == getId());
+    Institution other = (Institution) obj;
+    return new EqualsBuilder()
+          .append(id, other.getId())
+          .isEquals();
   }
 }
