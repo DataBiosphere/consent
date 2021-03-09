@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.models;
 
 import java.util.Date;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+
 public class Institution {
 
   private Integer id;
@@ -107,7 +109,7 @@ public class Institution {
   public boolean equals(Object institution) {
     if (institution == this) return true;
     if (institution == null || institution.getClass() != getClass()) return false;
-    Institution other = (Institution) obj;
+    Institution other = (Institution) institution;
     return new EqualsBuilder()
           .append(id, other.getId())
           .isEquals();

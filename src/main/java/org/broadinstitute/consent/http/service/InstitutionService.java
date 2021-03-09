@@ -16,13 +16,15 @@ public class InstitutionService {
     this.institutionDAO = institutionDAO;
   }
 
-  public Integer createInstitution(String name, String itDirectorName, String itDirectorEmail, Integer createUser) {
+  public Institution createInstitution(String name, String itDirectorName, String itDirectorEmail, Integer createUser) {
     Date date = new Date();
-    return institutionDAO.insertInstitution(name, itDirectorName, itDirectorEmail, createUser, date);
+    Integer id = institutionDAO.insertInstitution(name, itDirectorName, itDirectorEmail, createUser, date);
+    return this.findInstitutionById(id);
   }
 
-  public Integer createInstitution(String name, String itDirectorName, String itDirectorEmail, Integer createUser, Date date) {
-    return institutionDAO.insertInstitution(name, itDirectorName, itDirectorEmail, createUser, date);
+  public Institution createInstitution(String name, String itDirectorName, String itDirectorEmail, Integer createUser, Date date) {
+    Integer id = institutionDAO.insertInstitution(name, itDirectorName, itDirectorEmail, createUser, date);
+    return this.findInstitutionById(id);
   }
 
   public void updateInstitutionById(Integer id,
@@ -40,9 +42,9 @@ public class InstitutionService {
                                     String itDirectorEmail,
                                     Integer updateUser,
                                     Date date) {
-institutionDAO.updateInstitutionById(
-id, institutionName, itDirectorName, itDirectorEmail, updateUser, date);
-}
+    institutionDAO.updateInstitutionById(
+      id, institutionName, itDirectorName, itDirectorEmail, updateUser, date);
+  }
 
   public void deleteInstitutionById(Integer id) {
     institutionDAO.deleteInstitutionById(id);

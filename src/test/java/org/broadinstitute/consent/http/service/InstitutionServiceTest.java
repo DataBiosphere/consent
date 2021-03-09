@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.models.Institution;
 import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 import static org.mockito.Matchers.anyInt;
@@ -10,6 +12,8 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import org.mockito.Mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
+
 import org.mockito.MockitoAnnotations;
 
 import java.util.Collections;
@@ -37,19 +41,32 @@ public class InstitutionServiceTest {
   @Test
   public void testCreateInstitution() {
     initService();
-    when(institutionDAO.insertInstitution(anyString(), anyString(), anyString(), anyInt(), eq(new Date()))).thenReturn(getInstitutions().get(0).getId());
-    Integer instituteId = service.createInstitution(anyString(), anyString(), anyString(), anyInt(), eq(new Date()));
-    Assert.assertSame(getInstitutions().get(0).getId(), instituteId);
+    //mock findByInstitution (not insertInstitution) because that is the call that service.createInstitution returns
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(getInstitutions().get(0));
+    Institution institute = service.createInstitution(anyString(), anyString(), anyString(), anyInt(), eq(new Date()));
+    assertEquals(getInstitutions().get(0), institute);
   }
 
   @Test
   public void testUpdateInstitutionById() {
     initService();
-    Integer id = institutionDAO.insertInstitution(anyString(), anyString(), anyString(), anyInt(), eq(new Date()));
+    //doNothing is default for void methods, no need to mock InstitutionDAO.updateInstitutionById
     try {
-      service.updateInstitutionById(eq(id), eq("New Name"), anyString(), anyString(), anyInt(), eq(new Date()));
+      service.updateInstitutionById(anyInt(), eq("New Name"), anyString(), anyString(), anyInt(), eq(new Date()));
     } catch (Exception e) {
       Assert.fail("Update should not fail");
+    }
+  }
+
+  @Test
+  public void testUpdateInstitutionByIdFail() {
+    initService();
+    doThrow(new RuntimeException("Update method should pass on error from DAO")).when(institutionDAO).updateInstitutionById(anyInt(), anyString(), anyString(), anyString(), anyInt(), eq(new Date()));
+  
+    try {
+      service.updateInstitutionById(anyInt(), eq("New Name"), anyString(), anyString(), anyInt(), eq(new Date()));
+    } catch (Exception e) {
+      assertEquals(e.getMessage(), "Update method should pass on error from DAO");
     }
   }
 
@@ -66,8 +83,8 @@ public class InstitutionServiceTest {
   @Test
   public void testFindInstitutionById() {
     initService();
-    Integer id = institutionDAO.insertInstitution(anyString(), anyString(), anyString(), anyInt(), eq(new Date()));
-    Assert.assertEquals(institutionDAO.findInstitutionById(id), service.findInstitutionById(id));
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(getInstitutions().get(0));
+    assertEquals(getInstitutions().get(0), service.findInstitutionById(anyInt()));
   }
 
   @Test
@@ -75,7 +92,7 @@ public class InstitutionServiceTest {
     initService();
     when(institutionDAO.findAllInstitutions()).thenReturn(Collections.emptyList());
     initService();
-    Assert.assertTrue(service.findAllInstitutions().isEmpty());
+    assertTrue(service.findAllInstitutions().isEmpty());
   }
 
 
