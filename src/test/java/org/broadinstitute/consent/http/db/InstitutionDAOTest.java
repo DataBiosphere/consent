@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.models.Institution;
-import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import org.junit.Test;
 
 import java.util.Date;
@@ -13,8 +15,9 @@ public class InstitutionDAOTest extends DAOTestHelper {
   public void testInsertInstitution() {
     Institution institution = createInstitution();
     List<Institution> all = institutionDAO.findAllInstitutions();
-    Assert.assertTrue(all.contains(institution));
+    assertTrue(all.contains(institution));
   }
+
   @Test
   public void testUpdateInstitutionById() {
     Integer userId = createUser().getDacUserId();
@@ -22,9 +25,9 @@ public class InstitutionDAOTest extends DAOTestHelper {
     Institution institution = createInstitution();
     institutionDAO.updateInstitutionById(institution.getId(), newValue, newValue, newValue, userId, new Date());
     Institution updated = institutionDAO.findInstitutionById(institution.getId());
-    Assert.assertEquals(updated.getName(), newValue);
-    Assert.assertEquals(updated.getItDirectorName(), newValue);
-    Assert.assertEquals(updated.getItDirectorEmail(), newValue);
+    assertEquals(updated.getName(), newValue);
+    assertEquals(updated.getItDirectorName(), newValue);
+    assertEquals(updated.getItDirectorEmail(), newValue);
   }
 
   @Test
@@ -32,22 +35,28 @@ public class InstitutionDAOTest extends DAOTestHelper {
     Institution institution = createInstitution();
     Integer id = institution.getId();
     institutionDAO.deleteInstitutionById(id);
-    Assert.assertFalse(institutionDAO.findAllInstitutions().contains(institution));
+    assertNull(institutionDAO.findInstitutionById(id));
   }
 
   @Test
   public void testFindInstitutionById() {
     Institution institution = createInstitution();
     Integer id = institution.getId();
-    Assert.assertEquals(institutionDAO.findInstitutionById(id).getName(), institution.getName());
+    Institution institutionFromDAO = institutionDAO.findInstitutionById(id);
+    assertEquals(institutionFromDAO.getId(), institution.getId());
+    assertEquals(institutionFromDAO.getName(), institution.getName());
+    assertEquals(institutionFromDAO.getItDirectorName(), institution.getItDirectorName());
+    assertEquals(institutionFromDAO.getItDirectorEmail(), institution.getItDirectorEmail());
+    assertEquals(institutionFromDAO.getCreateUser(), institution.getCreateUser());
+    assertEquals(institutionFromDAO.getCreateDate(), institution.getCreateDate());
   }
 
   @Test
   public void testFindAllInstitutions() {
     List<Institution> instituteList = institutionDAO.findAllInstitutions();
-    Assert.assertEquals(0, instituteList.size());
+    assertEquals(0, instituteList.size());
     createInstitution();
     List<Institution> instituteListUpdated = institutionDAO.findAllInstitutions();
-    Assert.assertEquals(1, instituteListUpdated.size());
+    assertEquals(1, instituteListUpdated.size());
   }
 }
