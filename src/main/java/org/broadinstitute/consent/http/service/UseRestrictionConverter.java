@@ -16,7 +16,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.OntologyEntry;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,12 @@ public class UseRestrictionConverter {
         this.servicesConfiguration = config;
     }
 
+    /**
+     * This method, and its counterpart that processes a DataAccessRequest, translates DAR questions to a DataUse
+     *
+     * @param json String in json form
+     * @return DataUse
+     */
     @SuppressWarnings("unchecked")
     public DataUse parseDataUsePurpose(String json) {
         Map<String, Object> form = parseAsMap(json);
@@ -98,6 +106,78 @@ public class UseRestrictionConverter {
             dataUse.setHmbResearch(true);
         }
 
+        return dataUse;
+    }
+
+    /**
+     * This method, and its counterpart that processes a map, translates DAR questions to a DataUse
+     *
+     * @param dar Data Access Request
+     * @return DataUse
+     */
+    public DataUse parseDataUsePurpose(DataAccessRequest dar) {
+        DataUse dataUse = new DataUse();
+        if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
+            //
+            //    Research related entries
+            //
+            if (Objects.nonNull(dar.getData().getMethods())) {
+                dataUse.setMethodsResearch(true);
+            }
+            if (Objects.nonNull(dar.getData().getPopulation())) {
+                dataUse.setPopulationStructure(true);
+            }
+            if (Objects.nonNull(dar.getData().getControls())) {
+                dataUse.setControlSetOption("Yes");
+            }
+
+            //
+            //    Diseases related entries
+            //
+            if (Objects.nonNull(dar.getData().getOntologies())) {
+                List<String> ontologies = dar.getData().getOntologies()
+                    .stream().map(OntologyEntry::getId).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(ontologies)) {
+                    dataUse.setDiseaseRestrictions(ontologies);
+                }
+            }
+
+            //
+            //    gender, age and commercial status entries
+            //
+            if (Objects.nonNull(dar.getData().getForProfit())) {
+                dataUse.setCommercialUse(dar.getData().getForProfit());
+            }
+
+            // limited to one gender + children analysis
+            if (Objects.nonNull(dar.getData().getOneGender()) && Objects.nonNull(dar.getData().getGender())) {
+                boolean oneGenderOnly = dar.getData().getOneGender();
+                String selectedGender = dar.getData().getGender();
+                if (oneGenderOnly) {
+                    if (selectedGender.equalsIgnoreCase("M"))
+                        dataUse.setGender("Male");
+                    else if (selectedGender.equalsIgnoreCase("F"))
+                        dataUse.setGender("Female");
+                }
+            }
+            if (Objects.nonNull(dar.getData().getPediatric())) {
+                if (dar.getData().getPediatric()) {
+                    dataUse.setPediatric(true);
+                }
+            }
+
+            if (Objects.nonNull(dar.getData().getPoa())) {
+                if (dar.getData().getPoa()) {
+                    dataUse.setPopulationOriginsAncestry(true);
+                }
+            }
+
+            if (Objects.nonNull(dar.getData().getHmb())) {
+                if (dar.getData().getHmb()) {
+                    dataUse.setHmbResearch(true);
+                }
+            }
+        }
         return dataUse;
     }
 

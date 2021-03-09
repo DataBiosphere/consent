@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
@@ -200,6 +201,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ConsentDAO consentDAO = injector.getProvider(ConsentDAO.class).get();
         final ElectionDAO electionDAO = injector.getProvider(ElectionDAO.class).get();
         final VoteDAO voteDAO = injector.getProvider(VoteDAO.class).get();
+        final DataAccessRequestDAO dataAccessRequestDAO = injector.getProvider(DataAccessRequestDAO.class).get();
         final DataSetDAO dataSetDAO = injector.getProvider(DataSetDAO.class).get();
         final DatasetAssociationDAO dataSetAssociationDAO = injector.getProvider(
             DatasetAssociationDAO.class).get();
@@ -235,7 +237,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             userPropertyDAO);
         DatabaseConsentAPI.initInstance(auditService, jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
-        DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration(), datasetService);
+        DatabaseMatchingServiceAPI.initInstance(client, dataAccessRequestDAO, config.getServicesConfiguration(), datasetService, useRestrictionConverter);
         DatabaseMatchProcessAPI.initInstance(consentDAO, dataAccessRequestService);
         DatabaseDACUserAPI.initInstance(userDAO, userRoleDAO, userRolesHandler, userService);
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
