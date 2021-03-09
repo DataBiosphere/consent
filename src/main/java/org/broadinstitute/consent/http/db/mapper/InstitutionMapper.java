@@ -16,6 +16,7 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
 
   @Override
   public Institution map(ResultSet resultSet, StatementContext statementContext) throws SQLException {
+
     Institution institution;
     int institutionId = resultSet.getInt("institution_id");
 
