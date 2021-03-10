@@ -12,6 +12,8 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -22,7 +24,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataSetAuditDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -37,6 +43,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import scala.Int;
 
 public class DatasetServiceTest {
 
@@ -86,6 +93,73 @@ public class DatasetServiceTest {
         assertEquals(result.getDataSetId(), getDatasets().get(0).getDataSetId());
         assertNotNull(result.getProperties());
         assertFalse(result.getProperties().isEmpty());
+    }
+
+    @Test
+    public void testGetDatasetsForConsent() {
+        when(datasetDAO.getDataSetsForConsent(getDatasets().get(0).getConsentName()))
+                .thenReturn(getDatasets());
+        initService();
+
+        List<DataSet> setsForConsent = datasetService.getDataSetsForConsent("Test Consent 1");
+        assertNotNull(setsForConsent);
+        assertEquals(setsForConsent.size(), getDatasets().size());
+        assertEquals(setsForConsent.get(0).getDataSetId(), getDatasets().get(0).getDataSetId());
+    }
+
+    @Test
+    public void testDescribeDataSetsByReceiveOrder() {
+        when(datasetDAO.findDataSetsByReceiveOrder(Arrays.asList(1)))
+            .thenReturn(getDatasetDTOs().stream().collect(Collectors.toSet()));
+        initService();
+
+        Collection<DataSetDTO> dataSetsByReceiveOrder = datasetService.describeDataSetsByReceiveOrder(Arrays.asList(1));
+        assertNotNull(dataSetsByReceiveOrder);
+        assertEquals(dataSetsByReceiveOrder.size(), getDatasetDTOs().size());
+    }
+
+    @Test
+    public void testDescribeDictionaryByDisplayOrder() {
+        when(datasetDAO.getMappedFieldsOrderByDisplayOrder())
+                .thenReturn(getDictionaries().stream().collect(Collectors.toList()));
+        initService();
+
+        Collection<Dictionary> dictionaries = datasetService.describeDictionaryByDisplayOrder();
+        assertNotNull(dictionaries);
+        assertEquals(dictionaries.stream().findFirst().orElseThrow().getDisplayOrder(), getDictionaries().stream().findFirst().orElseThrow().getDisplayOrder());
+    }
+
+    @Test
+    public void testDescribeDictionaryByReceiveOrder() {
+        when(datasetDAO.getMappedFieldsOrderByReceiveOrder())
+                .thenReturn(getDictionaries().stream().collect(Collectors.toList()));
+        initService();
+
+        Collection<Dictionary> dictionaries = datasetService.describeDictionaryByReceiveOrder();
+        assertNotNull(dictionaries);
+        assertEquals(dictionaries.stream().findFirst().orElseThrow().getReceiveOrder(), getDictionaries().stream().findFirst().orElseThrow().getReceiveOrder());
+    }
+
+    @Test
+    public void testUpdateNeedsReviewDataSets(){
+        Integer dataSetId = 1;
+        when(datasetDAO.findDataSetById(dataSetId))
+                .thenReturn(getDatasets().get(0));
+        initService();
+
+        DataSet dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, true);
+        assertNotNull(dataSet);
+    }
+
+    @Test
+    public void testFindNeedsApprovalDataSetsByObjectId() {
+        when(datasetDAO.findNeedsApprovalDataSetByDataSetId(Arrays.asList(1)))
+                .thenReturn(getDatasets());
+        initService();
+
+        List<DataSet> dataSets = datasetService.findNeedsApprovalDataSetByObjectId(Arrays.asList(1));
+        assertNotNull(dataSets);
+        assertEquals(dataSets.stream().findFirst().orElseThrow().getDataSetId(), getDatasets().stream().findFirst().orElseThrow().getDataSetId());
     }
 
     @Test
@@ -350,6 +424,7 @@ public class DatasetServiceTest {
                 DataSet dataset = new DataSet();
                 dataset.setDataSetId(i);
                 dataset.setName("Test Dataset " + i);
+                dataset.setConsentName("Test Consent " + i);
                 dataset.setActive(true);
                 dataset.setNeedsApproval(false);
                 dataset.setProperties(Collections.emptySet());

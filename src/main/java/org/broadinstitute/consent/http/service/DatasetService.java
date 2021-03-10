@@ -8,7 +8,11 @@ import javax.ws.rs.NotFoundException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.DataSetAudit;
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DataSetAuditDAO;
+import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
@@ -31,7 +35,7 @@ public class DatasetService {
     private final DatasetAssociationDAO datasetAssociationDAO;
     private final UseRestrictionConverter converter;
     public static String datasetName = "Dataset Name";
-    private final String DELETE = "DELETE";;
+    private final String DELETE = "DELETE";
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataSetDAO dataSetDAO, UserRoleDAO userRoleDAO,
