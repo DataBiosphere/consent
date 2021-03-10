@@ -66,9 +66,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     void updateElectionStatus(@BindList("electionsId") List<Integer> electionsId,
                               @Bind("status") String status);
 
-    @SqlUpdate("update election set finalAccessVote = true where electionId = :electionId ")
-    void updateFinalAccessVote(@Bind("electionId") Integer electionId);
-
     @SqlUpdate("update election set status = '" + CANCELED + "' where referenceId in (<referenceId>) and lower(status) = 'open' and lower(electiontype) = lower(:electionType)")
     void bulkCancelOpenElectionByReferenceIdAndType(@Bind("electionType") String electionType,
                                                     @BindList("referenceId") List<String> referenceId);
