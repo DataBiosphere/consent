@@ -49,7 +49,7 @@ public class ConsentVoteResource extends Resource {
     public Response firstVoteUpdate(Vote rec,
                                     @PathParam("consentId") String consentId, @PathParam("id") Integer voteId){
         try {
-            Vote vote = api.firstVoteUpdate(rec, voteId);
+            Vote vote = api.updateVoteById(rec, voteId);
             if(electionAPI.validateCollectEmailCondition(vote)){
                 try {
                     emailNotifierService.sendCollectMessage(vote.getElectionId());

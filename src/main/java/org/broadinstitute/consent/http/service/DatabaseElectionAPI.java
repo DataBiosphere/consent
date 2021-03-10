@@ -171,12 +171,16 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");
         }
-        electionDAO.updateFinalAccessVote(electionId);
         List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);
         boolean isApproved = finalVotes.stream().
-                filter(Objects::nonNull).
-                filter(v -> Objects.nonNull(v.getVote())).
-                anyMatch(Vote::getVote);
+            filter(Objects::nonNull).
+            filter(v -> Objects.nonNull(v.getVote())).
+            anyMatch(Vote::getVote);
+        electionDAO.updateElectionById(
+            electionId,
+            ElectionStatus.CLOSED.getValue(),
+            new Date(),
+            isApproved);
         if (isApproved) {
             sendResearcherNotification(election.getReferenceId());
             sendDataCustodianNotification(election.getReferenceId());

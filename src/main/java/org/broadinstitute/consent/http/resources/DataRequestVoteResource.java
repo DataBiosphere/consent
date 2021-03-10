@@ -1,13 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
@@ -27,15 +26,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
@@ -44,15 +43,12 @@ import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
 
 @Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
     private final DACUserAPI dacUserAPI;
-    private final DataAccessRequestAPI accessRequestAPI;
+    private final DataAccessRequestService dataAccessRequestService;
     private final DataSetAPI dataSetAPI;
     private final DatasetAssociationService datasetAssociationService;
     private final ElectionAPI electionAPI;
@@ -63,11 +59,14 @@ public class DataRequestVoteResource extends Resource {
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
     @Inject
-    public DataRequestVoteResource(DatasetAssociationService datasetAssociationService,
-        EmailNotifierService emailNotifierService, VoteService voteService) {
+    public DataRequestVoteResource(
+        DataAccessRequestService dataAccessRequestService,
+        DatasetAssociationService datasetAssociationService,
+        EmailNotifierService emailNotifierService,
+        VoteService voteService) {
         this.emailNotifierService = emailNotifierService;
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
-        this.accessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
+        this.dataAccessRequestService = dataAccessRequestService;
         this.dataSetAPI = AbstractDataSetAPI.getInstance();
         this.datasetAssociationService = datasetAssociationService;
         this.electionAPI = AbstractElectionAPI.getInstance();
@@ -83,7 +82,7 @@ public class DataRequestVoteResource extends Resource {
                                           @PathParam("requestId") String requestId,
                                           @PathParam("id") Integer voteId) {
         try {
-            Vote vote = api.firstVoteUpdate(rec, voteId);
+            Vote vote = api.updateVoteById(rec, voteId);
             validateCollectDAREmail(vote);
             if(electionAPI.checkDataOwnerToCloseElection(vote.getElectionId())){
                 electionAPI.closeDataOwnerApprovalElection(vote.getElectionId());
@@ -101,27 +100,18 @@ public class DataRequestVoteResource extends Resource {
     @Produces("application/json")
     @Path("/{id}/final")
     @RolesAllowed(CHAIRPERSON)
-    public Response updateFinalAccessVote(Vote rec,
-                                                 @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
+    public Response updateFinalAccessVote(
+        @PathParam("requestId") String referenceId,
+        @PathParam("id") Integer id,
+        String json) {
         try {
-            Vote vote = api.firstVoteUpdate(rec, id);
-            Document access = accessRequestAPI.describeDataAccessRequestById(requestId);
-            List<Integer> dataSets = DarUtil.getIntegerList(access, DarConstants.DATASET_ID);
-            // Find any final or agreement votes for this election that have a populated vote:
-            List<Vote> votes = voteService
-                  .findVotesByElectionIds(Collections.singletonList(rec.getElectionId()))
-                  .stream()
-                  .filter(v ->
-                      v.getType().equalsIgnoreCase(VoteType.FINAL.getValue()) ||
-                      v.getType().equalsIgnoreCase(VoteType.AGREEMENT.getValue()))
-                  .filter(v -> Objects.nonNull(v.getVote()))
-                  .collect(Collectors.toList());
-            // If we have any votes with a populated vote, we can now update the election.
-            if (!votes.isEmpty()) {
-                electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
-            }
-            createDataOwnerElection(requestId, vote, access, dataSets);
-            return Response.ok(vote).build();
+            Vote voteRecord = new Gson().fromJson(json, Vote.class);
+            Vote updatedVote = api.updateVoteById(voteRecord, id);
+            electionAPI.updateFinalAccessVoteDataRequestElection(updatedVote.getElectionId());
+            DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+            List<Integer> dataSets = dar.getData().getDatasetIds();
+            createDataOwnerElection(referenceId, updatedVote, dar, dataSets);
+            return Response.ok(updatedVote).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -210,7 +200,7 @@ public class DataRequestVoteResource extends Resource {
         }
     }
 
-    private void createDataOwnerElection(String requestId, Vote vote, Document access, List<Integer> dataSets) throws MessagingException, IOException, TemplateException {
+    private void createDataOwnerElection(String requestId, Vote vote, DataAccessRequest dar, List<Integer> dataSets) throws MessagingException, IOException, TemplateException {
         Vote agreementVote = null;
         Vote finalVote = null;
         if(vote.getType().equals(VoteType.FINAL.getValue())){
@@ -233,7 +223,7 @@ public class DataRequestVoteResource extends Resource {
                 }
                 List<User> admins = dacUserAPI.describeAdminUsersThatWantToReceiveMails();
                 if(CollectionUtils.isNotEmpty(admins)) {
-                    emailNotifierService.sendAdminFlaggedDarApproved(access.getString(DarConstants.DAR_CODE), admins, dataOwnerDataSet);
+                    emailNotifierService.sendAdminFlaggedDarApproved(dar.getData().getDarCode(), admins, dataOwnerDataSet);
                 }
             }
         }
