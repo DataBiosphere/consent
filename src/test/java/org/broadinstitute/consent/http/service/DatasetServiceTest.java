@@ -140,10 +140,23 @@ public class DatasetServiceTest {
     }
 
     @Test
+    public void testDisableDataset() {
+        Integer dataSetId = 1;
+        when(datasetDAO.findDataSetById(dataSetId))
+                .thenReturn(getDatasets().get(0));
+        doNothing().when(datasetDAO).updateDataSetActive(any(), any());
+
+        initService();
+
+        datasetService.disableDataset(dataSetId, false);
+    }
+
+    @Test
     public void testUpdateNeedsReviewDataSets(){
         Integer dataSetId = 1;
         when(datasetDAO.findDataSetById(dataSetId))
                 .thenReturn(getDatasets().get(0));
+        doNothing().when(datasetDAO).updateDataSetNeedsApproval(any(), any());
         initService();
 
         DataSet dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, true);
@@ -159,6 +172,23 @@ public class DatasetServiceTest {
         List<DataSet> dataSets = datasetService.findNeedsApprovalDataSetByObjectId(Arrays.asList(1));
         assertNotNull(dataSets);
         assertEquals(dataSets.stream().findFirst().orElseThrow().getDataSetId(), getDatasets().stream().findFirst().orElseThrow().getDataSetId());
+    }
+
+    @Test
+    public void testDeleteDataset() {
+        Integer dataSetId = 1;
+        when(datasetDAO.findDataSetById(any()))
+                .thenReturn(getDatasets().get(0));
+        when(dataSetAuditDAO.insertDataSetAudit(any()))
+                .thenReturn(1);
+        doNothing().when(datasetAssociationDAO).delete(any());
+        doNothing().when(datasetDAO).deleteDataSetsProperties(any());
+        doNothing().when(datasetDAO).logicalDatasetDelete(any());
+        doNothing().when(consentDAO).deleteAssociationsByDataSetId(any());
+        doNothing().when(datasetDAO).deleteDataSets(any());
+
+        initService();
+        datasetService.deleteDataset(dataSetId, 1);
     }
 
     @Test
