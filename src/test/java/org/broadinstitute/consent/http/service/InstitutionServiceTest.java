@@ -58,16 +58,11 @@ public class InstitutionServiceTest {
     }
   }
 
-  @Test
+  @Test(expected = Throwable.class)
   public void testUpdateInstitutionByIdFail() {
     initService();
-    doThrow(new RuntimeException("Update method should pass on error from DAO")).when(institutionDAO).updateInstitutionById(anyInt(), anyString(), anyString(), anyString(), anyInt(), eq(new Date()));
-  
-    try {
-      service.updateInstitutionById(anyInt(), eq("New Name"), anyString(), anyString(), anyInt(), eq(new Date()));
-    } catch (Exception e) {
-      assertEquals(e.getMessage(), "Update method should pass on error from DAO");
-    }
+    doThrow(new Exception("Update method should pass on error from DAO")).when(institutionDAO).updateInstitutionById(anyInt(), anyString(), anyString(), anyString(), anyInt(), eq(new Date()));
+    service.updateInstitutionById(anyInt(), eq("New Name"), anyString(), anyString(), anyInt(), eq(new Date()));
   }
 
   @Test
