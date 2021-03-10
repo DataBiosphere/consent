@@ -17,7 +17,7 @@ public interface ElectionAPI {
 
     Election updateElectionById(Election rec, Integer electionId) throws IllegalArgumentException, NotFoundException;
 
-    Election updateFinalAccessVoteDataRequestElection(Integer electionId) throws Exception;
+    Election submitFinalAccessVoteDataRequestElection(Integer electionId) throws Exception;
 
     Election describeConsentElection(String consentId) throws NotFoundException;
 

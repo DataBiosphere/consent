@@ -166,7 +166,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public Election updateFinalAccessVoteDataRequestElection(Integer electionId) throws Exception {
+    public Election submitFinalAccessVoteDataRequestElection(Integer electionId) throws Exception {
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
         if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");

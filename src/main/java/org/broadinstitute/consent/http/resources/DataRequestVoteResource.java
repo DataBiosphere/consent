@@ -100,14 +100,14 @@ public class DataRequestVoteResource extends Resource {
     @Produces("application/json")
     @Path("/{id}/final")
     @RolesAllowed(CHAIRPERSON)
-    public Response updateFinalAccessVote(
+    public Response submitFinalAccessVote(
         @PathParam("requestId") String referenceId,
         @PathParam("id") Integer id,
         String json) {
         try {
             Vote voteRecord = new Gson().fromJson(json, Vote.class);
             Vote updatedVote = api.updateVoteById(voteRecord, id);
-            electionAPI.updateFinalAccessVoteDataRequestElection(updatedVote.getElectionId());
+            electionAPI.submitFinalAccessVoteDataRequestElection(updatedVote.getElectionId());
             DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
             List<Integer> dataSets = dar.getData().getDatasetIds();
             createDataOwnerElection(referenceId, updatedVote, dar, dataSets);
