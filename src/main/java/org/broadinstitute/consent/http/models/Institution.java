@@ -74,12 +74,21 @@ public class Institution {
     return createDate;
   }
 
+  public void setCreateDate(Date date) {
+    this.createDate = date;
+  }
+
   public Integer getCreateUser() {
     return createUser;
   }
 
   public Date getUpdateDate() {
     return updateDate;
+  }
+
+  public void setUpdateDate(Date date, Integer userId) {
+    this.updateDate = date;
+    this.updateUser = userId;
   }
 
   public Integer getUpdateUser() {
