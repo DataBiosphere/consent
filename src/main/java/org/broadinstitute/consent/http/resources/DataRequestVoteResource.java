@@ -44,7 +44,7 @@ import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 
-@Path("{api : (api/)?}dataRequest/{requestId}/vote")
+@Path("api/dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
     private final DACUserAPI dacUserAPI;
