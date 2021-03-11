@@ -172,6 +172,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             throw new NotFoundException("Election for specified id does not exist");
         }
         List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);
+        // The first final vote to be submitted is what determines the approval/denial of the election
         boolean isApproved = finalVotes.stream().
             filter(Objects::nonNull).
             filter(v -> Objects.nonNull(v.getVote())).
