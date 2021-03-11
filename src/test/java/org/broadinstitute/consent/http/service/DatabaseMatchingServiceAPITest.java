@@ -50,7 +50,7 @@ public class DatabaseMatchingServiceAPITest {
     @Mock
     private DataAccessRequestDAO dataAccessRequestDAO;
     @Mock
-    private DataSetAPI dsAPI;
+    private DatasetService datasetService;
 
     private static Consent sampleConsent1;
     private static Consent sampleConsent2;
@@ -105,7 +105,7 @@ public class DatabaseMatchingServiceAPITest {
         MockitoAnnotations.initMocks(this);
         setUpMockedResponses();
         when(config.getMatchURL()).thenReturn("http://ontology.org/match");
-        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentAPI, dsAPI, useRestrictionConverter);
+        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentAPI, datasetService, useRestrictionConverter);
         when(dataAccessRequestDAO.findByReferenceId("NullDar")).thenReturn(null);
         when(consentAPI.retrieve("NullConsent")).thenReturn(null);
         when(consentAPI.retrieve("AbsentConsent")).thenThrow(UnknownIdentifierException.class);
@@ -194,14 +194,14 @@ public class DatabaseMatchingServiceAPITest {
             .stream()
             .map(id -> {DataSet d = new DataSet(); d.setDataSetId(id); return d;} )
             .collect(Collectors.toList());
-        when(dsAPI.getDataSetsForConsent(consent.getConsentId())).thenReturn(dataSets);
+        when(datasetService.getDataSetsForConsent(consent.getConsentId())).thenReturn(dataSets);
         when(rmo.isResult()).thenReturn(true);
         when(response.readEntity(any(GenericType.class))).thenReturn(rmo);
         when(response.getStatus()).thenReturn(200);
         when(builder.post(any())).thenReturn(response);
         when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
         when(clientMock.target(config.getMatchURL())).thenReturn(target);
-        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentAPI, dsAPI, useRestrictionConverter);
+        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentAPI, datasetService, useRestrictionConverter);
     }
 
     private DataAccessRequest getSampleDataAccessRequest(String referenceId) {

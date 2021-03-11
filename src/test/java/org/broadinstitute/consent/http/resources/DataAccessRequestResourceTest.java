@@ -21,13 +21,11 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -51,7 +49,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
         AbstractConsentAPI.class,
         AbstractMatchProcessAPI.class,
         AbstractUseRestrictionValidatorAPI.class,
-        AbstractDataSetAPI.class,
         AbstractDACUserAPI.class,
         AbstractElectionAPI.class
 })
@@ -70,8 +67,6 @@ public class DataAccessRequestResourceTest {
     @Mock
     private DataAccessRequestAPI dataAccessRequestAPI;
     @Mock
-    private DataSetAPI dataSetAPI;
-    @Mock
     private UserService userService;
     @Mock
     private AuthUser authUser;
@@ -87,7 +82,6 @@ public class DataAccessRequestResourceTest {
         PowerMockito.mockStatic(AbstractConsentAPI.class);
         PowerMockito.mockStatic(AbstractMatchProcessAPI.class);
         PowerMockito.mockStatic(AbstractUseRestrictionValidatorAPI.class);
-        PowerMockito.mockStatic(AbstractDataSetAPI.class);
         PowerMockito.mockStatic(AbstractDACUserAPI.class);
         PowerMockito.mockStatic(AbstractElectionAPI.class);
     }
@@ -102,7 +96,6 @@ public class DataAccessRequestResourceTest {
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
         when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
-        when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(user.getDacUserId()).thenReturn(dar.getUserId());
@@ -124,7 +117,6 @@ public class DataAccessRequestResourceTest {
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
         when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
-        when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(user.getDacUserId()).thenReturn(dar.getUserId());
@@ -177,7 +169,6 @@ public class DataAccessRequestResourceTest {
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
         when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
-        when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(user.getDacUserId()).thenReturn(dar.getUserId() + 1);

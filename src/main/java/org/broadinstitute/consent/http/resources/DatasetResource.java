@@ -43,9 +43,7 @@ import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.json.JSONObject;
@@ -56,7 +54,6 @@ import org.slf4j.LoggerFactory;
 public class DatasetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
-    private final DataSetAPI api;
     private final DatasetService datasetService;
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private final UserService userService;
@@ -64,7 +61,6 @@ public class DatasetResource extends Resource {
     @Inject
     public DatasetResource(DatasetService datasetService, UserService userService) {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
-        this.api = AbstractDataSetAPI.getInstance();
         this.datasetService = datasetService;
         this.userService = userService;
     }
@@ -227,7 +223,7 @@ public class DatasetResource extends Resource {
 
         JSONObject json = new JSONObject();
 
-        Collection<Dictionary> headers  =  api.describeDictionaryByReceiveOrder();
+        Collection<Dictionary> headers  =  datasetService.describeDictionaryByReceiveOrder();
 
         StringBuilder sb = new StringBuilder();
         String TSV_DELIMITER = "\t";
@@ -243,7 +239,7 @@ public class DatasetResource extends Resource {
             return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
         }
 
-        Collection<DataSetDTO> rows = api.describeDataSetsByReceiveOrder(idList);
+        Collection<DataSetDTO> rows = datasetService.describeDataSetsByReceiveOrder(idList);
 
         for (DataSetDTO row : rows) {
             StringBuilder sbr = new StringBuilder();
@@ -273,7 +269,7 @@ public class DatasetResource extends Resource {
     public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer dataSetId, @Context UriInfo info) {
         try {
             User user = userService.findUserByEmail(authUser.getName());
-            api.deleteDataset(dataSetId, user.getDacUserId());
+            datasetService.deleteDataset(dataSetId, user.getDacUserId());
             return Response.ok().build();
         } catch (Exception e) {
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
@@ -285,7 +281,7 @@ public class DatasetResource extends Resource {
     @Path("/disable/{datasetObjectId}/{active}")
     @RolesAllowed(ADMIN)
     public Response disableDataSet(@PathParam("datasetObjectId") Integer dataSetId, @PathParam("active") Boolean active, @Context UriInfo info) {
-        api.disableDataset(dataSetId, active);
+        datasetService.disableDataset(dataSetId, active);
         return Response.ok().build();
     }
 
@@ -294,7 +290,7 @@ public class DatasetResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public Collection<Dictionary> describeDictionary(){
-        return api.describeDictionaryByDisplayOrder();
+        return datasetService.describeDictionaryByDisplayOrder();
     }
 
     @GET
@@ -314,7 +310,7 @@ public class DatasetResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
         try{
-            DataSet dataSet = api.updateNeedsReviewDataSets(dataSetId, needsApproval);
+            DataSet dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, needsApproval);
             return Response.ok().entity(dataSet).build();
         }catch (Exception e){
             return createExceptionResponse(e);
