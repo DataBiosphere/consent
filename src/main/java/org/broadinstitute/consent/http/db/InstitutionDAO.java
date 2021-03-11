@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
+import org.broadinstitute.consent.http.db.mapper.InstitutionMapper;
 import org.broadinstitute.consent.http.models.Institution;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -10,6 +12,7 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 
+@RegisterRowMapper(InstitutionMapper.class)
 public interface InstitutionDAO extends Transactional<InstitutionDAO> {
 
   @SqlUpdate("INSERT INTO institution " +

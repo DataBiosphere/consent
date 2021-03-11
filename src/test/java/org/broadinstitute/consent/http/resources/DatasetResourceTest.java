@@ -26,9 +26,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Before;
@@ -44,13 +42,9 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
-        AbstractDataSetAPI.class,
         AbstractDataAccessRequestAPI.class
 })
 public class DatasetResourceTest {
-
-    @Mock
-    private DataSetAPI api;
 
     @Mock
     private DataAccessRequestAPI dataAccessRequestAPI;
@@ -81,12 +75,10 @@ public class DatasetResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractDataSetAPI.class);
         PowerMockito.mockStatic(AbstractDataAccessRequestAPI.class);
     }
 
     private void initResource() {
-        when(AbstractDataSetAPI.getInstance()).thenReturn(api);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
         resource = new DatasetResource(datasetService, userService);
     }

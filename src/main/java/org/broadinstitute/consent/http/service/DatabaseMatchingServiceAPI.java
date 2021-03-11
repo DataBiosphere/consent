@@ -32,21 +32,21 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
     private final ConsentAPI consentAPI;
     private final DataAccessRequestDAO dataAccessRequestDAO;
-    private final DataSetAPI dsAPI;
+    private DatasetService datasetService;
     private final WebTarget matchServiceTarget;
     private final GenericType<ResponseMatchingObject> rmo = new GenericType<>(){};
     private final UseRestrictionConverter useRestrictionConverter;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public static void initInstance(Client client, DataAccessRequestDAO dataAccessRequestDAO,
-        ServicesConfiguration config, UseRestrictionConverter useRestrictionConverter) {
-        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, dataAccessRequestDAO, config, AbstractConsentAPI.getInstance(), AbstractDataSetAPI.getInstance(), useRestrictionConverter));
+        ServicesConfiguration config, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter) {
+        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, dataAccessRequestDAO, config, AbstractConsentAPI.getInstance(), datasetService, useRestrictionConverter));
     }
 
-    DatabaseMatchingServiceAPI(Client client, DataAccessRequestDAO dataAccessRequestDAO, ServicesConfiguration config, ConsentAPI consentAPI, DataSetAPI dsAPI, UseRestrictionConverter useRestrictionConverter){
+    DatabaseMatchingServiceAPI(Client client, DataAccessRequestDAO dataAccessRequestDAO, ServicesConfiguration config, ConsentAPI consentAPI, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter){
         this.consentAPI = consentAPI;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
-        this.dsAPI = dsAPI;
+        this.datasetService = datasetService;
         Integer timeout = 1000 * 60 * 3; // 3 minute timeout so ontology can properly do matching.
         client.property(ClientProperties.CONNECT_TIMEOUT, timeout);
         client.property(ClientProperties.READ_TIMEOUT, timeout);
@@ -93,7 +93,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     public List<Match> findMatchesForConsent(String consentId) {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
-        List<DataSet> dataSets = dsAPI.getDataSetsForConsent(consentId);
+        List<DataSet> dataSets = datasetService.getDataSetsForConsent(consentId);
         List<DataAccessRequest> dars = findRelatedDars(dataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList()));
         if (consent != null && !dars.isEmpty()) {
             Match match;
