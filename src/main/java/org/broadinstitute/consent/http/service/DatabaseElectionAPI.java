@@ -611,11 +611,21 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     private void updateFinalVote(Election rec, Integer electionId) {
         if (rec.getFinalVote() != null) {
-            Vote vote = voteDAO.findVoteByElectionIdAndType(electionId, VoteType.CHAIRPERSON.getValue());
-            vote.setVote(rec.getFinalVote());
-            vote.setCreateDate(rec.getFinalVoteDate());
-            vote.setRationale(rec.getFinalRationale());
-            voteDAO.updateVote(vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(), vote.getIsReminderSent(), vote.getElectionId(), vote.getCreateDate(), vote.getHasConcerns());
+            List<Vote> finalVotes = voteDAO.findVotesByElectionIdAndType(electionId, VoteType.FINAL.getValue());
+            Date finalVoteDate = rec.getFinalVoteDate();
+            if(finalVoteDate == null) {
+                finalVoteDate = new Date();
+            }
+            for (Vote vote : finalVotes) {
+                vote.setVote(rec.getFinalVote());
+                vote.setUpdateDate(finalVoteDate);
+                vote.setRationale(rec.getFinalRationale());
+                voteDAO.updateVote(
+                    vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(),
+                    vote.getIsReminderSent(), vote.getElectionId(), vote.getCreateDate(),
+                    vote.getHasConcerns()
+                );
+            }
         }
     }
 
