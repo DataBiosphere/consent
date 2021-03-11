@@ -178,7 +178,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             anyMatch(Vote::getVote);
         electionDAO.updateElectionById(
             electionId,
-            ElectionStatus.CLOSED.getValue(),
+            election.getStatus(),
             new Date(),
             isApproved);
         if (isApproved) {
