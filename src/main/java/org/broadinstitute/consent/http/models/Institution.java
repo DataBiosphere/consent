@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.models;
 
 import java.util.Date;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+
 public class Institution {
 
   private Integer id;
@@ -12,6 +14,11 @@ public class Institution {
   private Integer createUser;
   private Date updateDate;
   private Integer updateUser;
+
+  //empty constructor sets all null values except create Date
+  public Institution() {
+    this.createDate = new Date();
+  }
 
   public Institution(Integer id, String name, String itDirectorName, String itDirectorEmail, Integer createUser, Date createDate) {
     this.id = id;
@@ -36,24 +43,36 @@ public class Institution {
     this.updateUser = updateUser;
   }
 
-  public void setName(String name, Integer updateUser) {
+  public void setId(Integer id) {
+    this.id = id;
+  }
+
+  public void setName(String name) {
     this.name = name;
-    this.updateInstitution(updateUser);
   }
 
-  public void setItDirectorEmail(String itDirectorEmail, Integer updateUser) {
+  public void setItDirectorEmail(String itDirectorEmail) {
     this.itDirectorEmail = itDirectorEmail;
-    this.updateInstitution(updateUser);
   }
 
-  public void setItDirectorName(String itDirectorName, Integer updateUser) {
+  public void setItDirectorName(String itDirectorName) {
     this.itDirectorName = itDirectorName;
-    this.updateInstitution(updateUser);
   }
 
-  private void updateInstitution(Integer updateUser) {
+  public void setCreateUser(Integer createUser) {
+    this.createUser = createUser;
+  }
+
+  public void setCreateDate(Date date) {
+    this.createDate = date;
+  }
+
+  public void setUpdateUser(Integer updateUser) {
     this.updateUser = updateUser;
-    this.updateDate = new Date();
+  }
+
+  public void setUpdateDate(Date updateDate) {
+    this.updateDate = updateDate;
   }
 
   public Integer getId() { return id; }
@@ -84,5 +103,15 @@ public class Institution {
 
   public Integer getUpdateUser() {
     return updateUser;
+  }
+
+  @Override
+  public boolean equals(Object institution) {
+    if (institution == this) return true;
+    if (institution == null || institution.getClass() != getClass()) return false;
+    Institution other = (Institution) institution;
+    return new EqualsBuilder()
+          .append(id, other.getId())
+          .isEquals();
   }
 }
