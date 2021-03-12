@@ -1,14 +1,17 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,13 +47,25 @@ public class ConsentServiceTest {
     @Mock
     DataAccessRequestDAO dataAccessRequestDAO;
 
+    @Mock
+    AuditService auditService;
+
+    @Mock
+    DataSetDAO dataSetDAO;
+
+    @Mock
+    AssociationDAO associationDAO;
+
+    @Mock
+    Jdbi jdbi;
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
     }
 
     private void initService() {
-        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO);
+        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO, auditService, associationDAO, jdbi, dataSetDAO);
     }
 
     @Test

@@ -46,7 +46,7 @@ public class DatabaseMatchingServiceAPITest {
     @Mock
     private ServicesConfiguration config;
     @Mock
-    private ConsentAPI consentAPI;
+    private ConsentService consentService;
     @Mock
     private DataAccessRequestDAO dataAccessRequestDAO;
     @Mock
@@ -105,12 +105,12 @@ public class DatabaseMatchingServiceAPITest {
         MockitoAnnotations.initMocks(this);
         setUpMockedResponses();
         when(config.getMatchURL()).thenReturn("http://ontology.org/match");
-        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentAPI, datasetService, useRestrictionConverter);
+        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentService, datasetService, useRestrictionConverter);
         when(dataAccessRequestDAO.findByReferenceId("NullDar")).thenReturn(null);
-        when(consentAPI.retrieve("NullConsent")).thenReturn(null);
-        when(consentAPI.retrieve("AbsentConsent")).thenThrow(UnknownIdentifierException.class);
-        when(consentAPI.retrieve("CONS-2")).thenReturn(sampleConsent2);
-        when(consentAPI.getConsentFromDatasetID(1)).thenReturn(sampleConsent1);
+        when(consentService.retrieve("NullConsent")).thenReturn(null);
+        when(consentService.retrieve("AbsentConsent")).thenThrow(UnknownIdentifierException.class);
+        when(consentService.retrieve("CONS-2")).thenReturn(sampleConsent2);
+        when(consentService.getConsentFromDatasetID(1)).thenReturn(sampleConsent1);
     }
 
     private void setUpMockedResponses() {
@@ -187,7 +187,7 @@ public class DatabaseMatchingServiceAPITest {
         DataAccessRequest dar2 = getSampleDataAccessRequest("DAR-2");
         when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar2));
         when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar2);
-        when(consentAPI.retrieve(any())).thenReturn(consent);
+        when(consentService.retrieve(any())).thenReturn(consent);
         List<DataSet> dataSets = getSampleDataAccessRequest(referenceId)
             .getData()
             .getDatasetIds()
@@ -201,7 +201,7 @@ public class DatabaseMatchingServiceAPITest {
         when(builder.post(any())).thenReturn(response);
         when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
         when(clientMock.target(config.getMatchURL())).thenReturn(target);
-        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentAPI, datasetService, useRestrictionConverter);
+        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentService, datasetService, useRestrictionConverter);
     }
 
     private DataAccessRequest getSampleDataAccessRequest(String referenceId) {

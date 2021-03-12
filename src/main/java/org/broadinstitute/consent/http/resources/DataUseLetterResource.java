@@ -24,9 +24,8 @@ import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AuditService;
-import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -37,15 +36,15 @@ import org.slf4j.LoggerFactory;
 @Path("api/consent/{id}/dul")
 public class DataUseLetterResource extends Resource {
 
-    private final ConsentAPI api;
+    private final ConsentService consentService;
     private final GCSStore store;
     private final AuditService auditService;
     private final UserService userService;
 
     @Inject
-    public DataUseLetterResource(AuditService auditService, GCSStore store, UserService userService) {
+    public DataUseLetterResource(AuditService auditService, GCSStore store, UserService userService, ConsentService consentService) {
         this.auditService = auditService;
-        this.api = AbstractConsentAPI.getInstance();
+        this.consentService = consentService;
         this.store = store;
         this.userService = userService;
     }
@@ -55,7 +54,7 @@ public class DataUseLetterResource extends Resource {
     }
 
     private void deletePreviousStorageFile(String consentId) throws IOException, GeneralSecurityException, UnknownIdentifierException {
-        String prevFile = api.getConsentDulUrl(consentId);
+        String prevFile = consentService.getConsentDulUrl(consentId);
         if (StringUtils.isNotBlank(prevFile)) {
             try {
                 new GenericUrl(prevFile);
@@ -83,7 +82,7 @@ public class DataUseLetterResource extends Resource {
             deletePreviousStorageFile(consentId);
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
-            Consent consent = api.updateConsentDul(consentId, dulUrl, name);
+            Consent consent = consentService.updateConsentDul(consentId, dulUrl, name);
             User dacUser = userService.findUserByEmail(user.getName());
             auditService.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             return consent;

@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
-    private final ConsentAPI consentAPI;
+    private final ConsentService consentService;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private DatasetService datasetService;
     private final WebTarget matchServiceTarget;
@@ -39,12 +39,12 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public static void initInstance(Client client, DataAccessRequestDAO dataAccessRequestDAO,
-        ServicesConfiguration config, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter) {
-        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, dataAccessRequestDAO, config, AbstractConsentAPI.getInstance(), datasetService, useRestrictionConverter));
+        ServicesConfiguration config, ConsentService consentService, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter) {
+        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, dataAccessRequestDAO, config, consentService, datasetService, useRestrictionConverter));
     }
 
-    DatabaseMatchingServiceAPI(Client client, DataAccessRequestDAO dataAccessRequestDAO, ServicesConfiguration config, ConsentAPI consentAPI, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter){
-        this.consentAPI = consentAPI;
+    DatabaseMatchingServiceAPI(Client client, DataAccessRequestDAO dataAccessRequestDAO, ServicesConfiguration config, ConsentService consentService, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter){
+        this.consentService = consentService;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.datasetService = datasetService;
         Integer timeout = 1000 * 60 * 3; // 3 minute timeout so ontology can properly do matching.
@@ -147,7 +147,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     private Consent findConsent(String consentId){
         Consent consent = null;
         try {
-            consent = consentAPI.retrieve(consentId);
+            consent = consentService.retrieve(consentId);
         } catch (UnknownIdentifierException e) {
             logger.error("Consent for specified id does not exist.", e);
         }
@@ -157,7 +157,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     private Consent findRelatedConsent(List<Integer> dataSetIdList) {
         Consent consent =  null;
         if (CollectionUtils.isNotEmpty(dataSetIdList)) {
-            consent = consentAPI.getConsentFromDatasetID(dataSetIdList.get(0));
+            consent = consentService.getConsentFromDatasetID(dataSetIdList.get(0));
         }
         return consent;
     }

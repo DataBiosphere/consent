@@ -202,7 +202,11 @@ public class ConsentModule extends AbstractModule {
                 providesElectionDAO(),
                 providesVoteDAO(),
                 providesDacService(),
-                providesDataAccessRequestDAO());
+                providesDataAccessRequestDAO(),
+                providesAuditService(),
+                providesAssociationDAO(),
+                providesJdbi(),
+                providesDataSetDAO());
     }
 
     @Provides

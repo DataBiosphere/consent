@@ -11,8 +11,7 @@ import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -31,13 +30,12 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
-        AbstractConsentAPI.class,
         AbstractDACUserAPI.class
 })
 public class ConsentAssociationResourceTest {
 
     @Mock
-    private ConsentAPI api;
+    private ConsentService consentService;
 
     @Mock
     private DACUserAPI dacUserAPI;
@@ -50,23 +48,21 @@ public class ConsentAssociationResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractConsentAPI.class);
         PowerMockito.mockStatic(AbstractDACUserAPI.class);
-        when(AbstractConsentAPI.getInstance()).thenReturn(api);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
     }
 
     private void initResource() {
-        resource = new ConsentAssociationResource(userService);
+        resource = new ConsentAssociationResource(consentService, userService);
     }
 
     @Test
     public void testCreateAssociation() {
         User user = new User();
         user.setEmail("test");
-        when(api.hasWorkspaceAssociation(any())).thenReturn(false);
+        when(consentService.hasWorkspaceAssociation(any())).thenReturn(false);
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(api.createAssociation(any(), any(), any())).thenReturn(Collections.emptyList());
+        when(consentService.createAssociation(any(), any(), any())).thenReturn(Collections.emptyList());
         initResource();
         AuthUser authUser = new AuthUser(user.getEmail());
         String consentId = RandomStringUtils.random(25, true, true);
@@ -79,9 +75,9 @@ public class ConsentAssociationResourceTest {
     public void testUpdateAssociation() {
         User user = new User();
         user.setEmail("test");
-        when(api.hasWorkspaceAssociation(any())).thenReturn(false);
+        when(consentService.hasWorkspaceAssociation(any())).thenReturn(false);
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(api.createAssociation(any(), any(), any())).thenReturn(Collections.emptyList());
+        when(consentService.createAssociation(any(), any(), any())).thenReturn(Collections.emptyList());
         initResource();
         AuthUser authUser = new AuthUser(user.getEmail());
         String consentId = RandomStringUtils.random(25, true, true);
@@ -92,7 +88,7 @@ public class ConsentAssociationResourceTest {
 
     @Test
     public void testGetAssociation() {
-        when(api.getAssociation(any(), any(), any())).thenReturn(Collections.emptyList());
+        when(consentService.getAssociation(any(), any(), any())).thenReturn(Collections.emptyList());
         initResource();
         String consentId = RandomStringUtils.random(25, true, true);
         String associationType = AssociationType.SAMPLE.getValue();
