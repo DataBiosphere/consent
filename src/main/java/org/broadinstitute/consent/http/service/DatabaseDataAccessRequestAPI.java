@@ -281,15 +281,17 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         dataAccessReportsParser.setDataSetApprovedUsersHeader(darWriter);
         if (CollectionUtils.isNotEmpty(darList)){
             for(Document dar: darList){
-                Date approvalDate = electionDAO.findApprovalAccessElectionDate(dar.getString(DarConstants.REFERENCE_ID));
+                String referenceId = dar.getString(DarConstants.REFERENCE_ID);
+                DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(referenceId);
+                Date approvalDate = electionDAO.findApprovalAccessElectionDate(referenceId);
                 if (approvalDate != null) {
                     String email = userPropertyDAO
-                        .findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.ACADEMIC_BUSINESS_EMAIL);
+                        .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.ACADEMIC_BUSINESS_EMAIL);
                     String name = userPropertyDAO
-                        .findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
+                        .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.PROFILE_NAME);
                     String institution = userPropertyDAO
-                        .findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
-                    String darCode = dar.getString(DarConstants.DAR_CODE);
+                        .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.INSTITUTION);
+                    String darCode = dataAccessRequest.getData().getDarCode();
                     dataAccessReportsParser.addDataSetApprovedUsersLine(darWriter, email, name, institution, darCode, approvalDate);
                 }
             }
