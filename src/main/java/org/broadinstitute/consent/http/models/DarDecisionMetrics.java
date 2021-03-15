@@ -1,13 +1,12 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.common.collect.Streams;
-import org.apache.commons.collections4.CollectionUtils;
-
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
+import org.apache.commons.collections4.CollectionUtils;
 
 /**
  * Generate a row of dar decision data in the form of:
@@ -19,6 +18,8 @@ import java.util.Objects;
 public class DarDecisionMetrics implements DecisionMetrics {
 
   private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+  private static final String YES = "Yes";
+  private static final String NO = "No";
   private String darId;
   private String dacName;
   private String datasetId;
@@ -84,7 +85,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
       getValue(getTurnaroundTime()),
       getValue(getDacDecision()),
       getValue(getAlgorithmDecision()),
-      getValue(getDacDecision().equals(getAlgorithmDecision()) ? "Yes" : "No"),
+      getValue(getAgreementVote()),
       getValue(getSrpDecision()),
       "\n");
   }
@@ -227,7 +228,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
 
   private void setDacDecision(Election election) {
     if (Objects.nonNull(election) && election.getFinalAccessVote()) {
-      this.dacDecision = election.getFinalAccessVote() ? "Yes" : "No";
+      this.dacDecision = election.getFinalAccessVote() ? YES : NO;
     }
   }
 
@@ -237,8 +238,15 @@ public class DarDecisionMetrics implements DecisionMetrics {
 
   private void setAlgorithmDecision(Match match) {
     if (Objects.nonNull(match) && Objects.nonNull(match.getMatch())) {
-      this.algorithmDecision = match.getMatch() ? "Yes" : "No";
+      this.algorithmDecision = match.getMatch() ? YES : NO;
     }
+  }
+
+  private String getAgreementVote() {
+    if (Objects.nonNull(getDacDecision()) && Objects.nonNull(getAlgorithmDecision())) {
+      return getDacDecision().equalsIgnoreCase(getAlgorithmDecision()) ? YES : NO;
+    }
+    return null;
   }
 
   public String getSrpDecision() {
@@ -261,7 +269,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
           ? election.getFinalAccessVote()
           : null;
       if (Objects.nonNull(rpVote)) {
-        this.srpDecision = rpVote ? "Yes" : "No";
+        this.srpDecision = rpVote ? YES : NO;
       }
     }
   }
