@@ -7,8 +7,6 @@ public class DarConstants {
 
     public static final String OBJECT_ID = "objectId";
 
-    public static final String USER_ID = "userId";
-
     public static final String PROJECT_TITLE = "projectTitle";
 
     public static final String INVESTIGATOR = "investigator";
