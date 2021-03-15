@@ -1528,34 +1528,6 @@ paths:
       responses:
         200:
           description: Returns the DAR collection
-  /api/dar/{id}:
-    get:
-      summary: describe
-      description: |
-        DEPRECATED: Use GET /api/dar/v2/{referenceId}
-        Retrieves the DAR identified by the ID
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns a Data Access Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataAccessRequest'
-        400:
-          description: The provided ID is not a valid DAR identifier
-        404:
-          description: No DAR can be found with the provided identifier
-        500:
-          description: Server Error
   /api/dar/cancel/{id}:
     put:
       summary: Cancel a Data Access Request
