@@ -1,24 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.anyObject;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -30,8 +22,6 @@ import org.mockito.MockitoAnnotations;
 
 public class DatabaseDataAccessRequestAPITest {
 
-    @Mock
-    private UseRestrictionConverter converter;
     @Mock
     private ElectionDAO electionDAO;
     @Mock
@@ -62,7 +52,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
+        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
             userPropertyDAO);
     }
 

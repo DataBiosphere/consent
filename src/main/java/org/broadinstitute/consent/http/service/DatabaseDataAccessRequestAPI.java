@@ -47,8 +47,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final UseRestrictionConverter converter;
-
     private final ElectionDAO electionDAO;
 
     private final ConsentDAO consentDAO;
@@ -74,8 +72,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      */
-    public static void initInstance(DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, UserPropertyDAO userPropertyDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
+    public static void initInstance(DataAccessRequestService dataAccessRequestService, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, UserPropertyDAO userPropertyDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(dataAccessRequestService, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
             userPropertyDAO));
     }
 
@@ -83,9 +81,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * The constructor is private to force use of the factory methods and
      * enforce the singleton pattern.
      */
-    protected DatabaseDataAccessRequestAPI(DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, UserPropertyDAO userPropertyDAO) {
+    protected DatabaseDataAccessRequestAPI(DataAccessRequestService dataAccessRequestService, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, UserPropertyDAO userPropertyDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
-        this.converter = converter;
         this.electionDAO = electionDAO;
         this.consentDAO = consentDAO;
         this.voteDAO = voteDAO;

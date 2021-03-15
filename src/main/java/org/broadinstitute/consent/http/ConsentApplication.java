@@ -233,7 +233,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final WhitelistService whitelistService = injector.getProvider(WhitelistService.class).get();
         final AuditService auditService = injector.getProvider(AuditService.class).get();
         final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
-        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, useRestrictionConverter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
+        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
             userPropertyDAO);
         DatabaseConsentAPI.initInstance(auditService, jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
