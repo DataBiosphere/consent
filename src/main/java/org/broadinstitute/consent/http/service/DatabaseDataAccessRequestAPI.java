@@ -302,6 +302,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionAPI electionApi) {
+        DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(dar.getString(DarConstants.REFERENCE_ID));
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
         List<DataSet> datasets = populateDatasets(dar);
         Optional<User> optionalUser = Optional.ofNullable(user);
@@ -311,15 +312,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 userPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId()) :
                 Collections.emptyList();
         return darModalDetailsDTO
-            .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.getString(DarConstants.REFERENCE_ID))))
-            .setResearcherName(user, dar.getString(DarConstants.INVESTIGATOR))
+            .setNeedDOApproval(electionApi.darDatasetElectionStatus(dataAccessRequest.getReferenceId()))
+            .setResearcherName(user, dataAccessRequest.getData().getInvestigator())
             .setStatus(status)
             .setRationale(rationale)
-            .setUserId(dar.getInteger(DarConstants.USER_ID))
-            .setDarCode(dar.getString(DarConstants.DAR_CODE))
+            .setUserId(dataAccessRequest.getUserId())
+            .setDarCode(dataAccessRequest.getData().getDarCode())
             .setPrincipalInvestigator(dar.getString(DarConstants.INVESTIGATOR))
             .setInstitutionName(dar.getString(DarConstants.INSTITUTION))
-            .setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE))
+            .setProjectTitle(dataAccessRequest.getData().getProjectTitle())
             .setDepartment(dar.getString(DarConstants.DEPARTMENT))
             .setCity(dar.getString(DarConstants.CITY))
             .setCountry(dar.getString(DarConstants.COUNTRY))
