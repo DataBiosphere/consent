@@ -366,27 +366,4 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return accessIds;
     }
 
-    protected List<UserProperty> updateResearcherIdentification(Document dataAccessRequest) {
-        Integer userId = dataAccessRequest.getInteger(DarConstants.USER_ID);
-        String linkedIn = dataAccessRequest.getString(UserFields.LINKEDIN_PROFILE.getValue());
-        String orcId = dataAccessRequest.getString(UserFields.ORCID.getValue());
-        String researcherGate = dataAccessRequest.getString(UserFields.RESEARCHER_GATE.getValue());
-        List<UserProperty> rpList = new ArrayList<>();
-        userPropertyDAO.deletePropertyByUser(Arrays.asList(UserFields.LINKEDIN_PROFILE.getValue(), UserFields.ORCID.getValue(), UserFields.RESEARCHER_GATE.getValue()), userId);
-        if (StringUtils.isNotEmpty(linkedIn)) {
-          rpList.add(new UserProperty(userId, UserFields.LINKEDIN_PROFILE.getValue(), linkedIn));
-        }
-        if (StringUtils.isNotEmpty(orcId)) {
-          rpList.add(new UserProperty(userId, UserFields.ORCID.getValue(), orcId));
-        }
-        if (StringUtils.isNotEmpty(researcherGate)) {
-           rpList.add(new UserProperty(userId, UserFields.RESEARCHER_GATE.getValue(), researcherGate));
-        }
-        if (CollectionUtils.isNotEmpty(rpList)) {
-           userPropertyDAO.insertAll(rpList);
-        }
-        return rpList;
-    }
-
 }
-

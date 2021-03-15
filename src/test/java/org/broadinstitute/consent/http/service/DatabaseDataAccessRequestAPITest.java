@@ -67,39 +67,6 @@ public class DatabaseDataAccessRequestAPITest {
     }
 
     @Test
-    public void testUpdateResearcherWithLinkedInIdentification() {
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.LINKEDIN_PROFILE.getValue())).thenReturn(LINKEDIN_PROFILE);
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.ORCID.getValue())).thenReturn(ORCID);
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.RESEARCHER_GATE.getValue())).thenReturn(RESEARCHER_GATE);
-        Document dar = getDocument("https://www.linkedin.com/in/veronica/", ORCID, RESEARCHER_GATE);
-        List<UserProperty> properties = databaseDataAccessRequestAPI.updateResearcherIdentification(dar);
-        verify(userPropertyDAO, times(1)).insertAll(any());
-        Assert.assertEquals(3, properties.size());
-        properties.forEach(researcherProperty -> {
-            if (researcherProperty.getPropertyKey().equals(UserFields.LINKEDIN_PROFILE.getValue())) {
-                Assert.assertEquals("https://www.linkedin.com/in/veronica/", researcherProperty.getPropertyValue());
-            } else if (researcherProperty.getPropertyKey().equals(UserFields.ORCID.getValue())) {
-                Assert.assertEquals(researcherProperty.getPropertyValue(), ORCID);
-            } else if (researcherProperty.getPropertyKey().equals(UserFields.RESEARCHER_GATE.getValue())) {
-                Assert.assertEquals(researcherProperty.getPropertyValue(), RESEARCHER_GATE);
-            }
-        });
-    }
-
-    @Test
-    public void testUpdateResearcherWithOrcIdAndNullLinkedInAndResearcherGateIdentification() {
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.LINKEDIN_PROFILE.getValue())).thenReturn(LINKEDIN_PROFILE);
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.ORCID.getValue())).thenReturn(ORCID);
-        when(userPropertyDAO.findPropertyValueByPK(USER_ID, UserFields.RESEARCHER_GATE.getValue())).thenReturn(RESEARCHER_GATE);
-        Document dar = getDocument(null, "845246551313515", null);
-        List<UserProperty> properties = databaseDataAccessRequestAPI.updateResearcherIdentification(dar);
-        verify(userPropertyDAO, times(1)).insertAll(anyObject());
-        Assert.assertEquals(1, properties.size());
-        Assert.assertEquals(properties.get(0).getPropertyKey(), UserFields.ORCID.getValue());
-        Assert.assertEquals("845246551313515", properties.get(0).getPropertyValue());
-    }
-
-    @Test
     public void testCreateDARDocument() throws Exception {
         Document dar = getDocument(null, "845246551313515", null);
         byte[] doc = databaseDataAccessRequestAPI.createDARDocument(dar, getResearcherProperties(), new User(), true, TRANSLATED_USE_RESTRICTION);
@@ -108,7 +75,6 @@ public class DatabaseDataAccessRequestAPITest {
 
     private Document getDocument(String linkedIn, String orcid, String researcherGate) {
         Document dar = new Document();
-        dar.put(DarConstants.USER_ID, USER_ID);
         dar.put(UserFields.LINKEDIN_PROFILE.getValue(), linkedIn);
         dar.put(UserFields.ORCID.getValue(), orcid);
         dar.put(UserFields.RESEARCHER_GATE.getValue(), researcherGate);
