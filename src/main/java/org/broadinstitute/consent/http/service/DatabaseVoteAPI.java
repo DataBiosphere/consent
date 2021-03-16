@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -46,12 +47,14 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     }
 
     @Override
-    public Vote firstVoteUpdate(Vote rec,  Integer voteId) throws IllegalArgumentException {
+    public Vote updateVoteById(Vote rec,  Integer voteId) throws IllegalArgumentException {
         Vote vote = voteDAO.findVoteById(voteId);
-        if(vote == null) notFoundException(voteId);
+        if (vote == null) notFoundException(voteId);
         Integer electionId = setGeneralFields(rec, vote.getElectionId());
         String rationale = StringUtils.isEmpty(rec.getRationale()) ? null : rec.getRationale();
-        voteDAO.updateVote(rec.getVote(), rationale, null, voteId, false, electionId, new Date(), rec.getHasConcerns());
+        boolean reminder = Objects.nonNull(rec.getIsReminderSent()) ? rec.getIsReminderSent() : false;
+        Date createDate = Objects.nonNull(vote.getCreateDate()) ? vote.getCreateDate() : new Date();
+        voteDAO.updateVote(rec.getVote(), rationale, new Date(), voteId, reminder, electionId, createDate, rec.getHasConcerns());
         return voteDAO.findVoteById(voteId);
     }
 

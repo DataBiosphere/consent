@@ -166,17 +166,22 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public Election updateFinalAccessVoteDataRequestElection(Integer electionId) throws Exception {
+    public Election submitFinalAccessVoteDataRequestElection(Integer electionId) throws Exception {
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
         if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");
         }
-        electionDAO.updateFinalAccessVote(electionId);
         List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);
+        // The first final vote to be submitted is what determines the approval/denial of the election
         boolean isApproved = finalVotes.stream().
-                filter(Objects::nonNull).
-                filter(v -> Objects.nonNull(v.getVote())).
-                anyMatch(Vote::getVote);
+            filter(Objects::nonNull).
+            filter(v -> Objects.nonNull(v.getVote())).
+            anyMatch(Vote::getVote);
+        electionDAO.updateElectionById(
+            electionId,
+            election.getStatus(),
+            new Date(),
+            isApproved);
         if (isApproved) {
             sendResearcherNotification(election.getReferenceId());
             sendDataCustodianNotification(election.getReferenceId());

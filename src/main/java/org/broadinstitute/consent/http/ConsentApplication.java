@@ -236,7 +236,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseMatchingServiceAPI.initInstance(client, dataAccessRequestDAO, config.getServicesConfiguration(), consentDAO, electionDAO, datasetService, useRestrictionConverter);
         DatabaseMatchProcessAPI.initInstance(consentDAO, dataAccessRequestService);
-        DatabaseDACUserAPI.initInstance(userDAO, userRoleDAO, userRolesHandler, userService);
+        DatabaseDACUserAPI.initInstance(userDAO, userRoleDAO, userService);
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
@@ -284,7 +284,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ConsentVoteResource(emailNotifierService));
         env.jersey().register(new ConsentCasesResource(electionService, pendingCaseService, summaryService));
         env.jersey().register(new DataRequestElectionResource(dataAccessRequestService, emailNotifierService, summaryService, voteService));
-        env.jersey().register(new DataRequestVoteResource(datasetAssociationService, emailNotifierService, voteService, datasetService));
+        env.jersey().register(new DataRequestVoteResource(dataAccessRequestService, datasetAssociationService, emailNotifierService, voteService, datasetService));
         env.jersey().register(new DataUseLetterResource(auditService, googleStore, userService, consentService));
         env.jersey().register(new DataRequestCasesResource(electionService, pendingCaseService, summaryService));
         env.jersey().register(new DacResource(dacService, userService));
