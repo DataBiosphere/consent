@@ -1,8 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,9 +15,15 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
+
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.DataSetAudit;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DataSetAuditDAO;
+import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
@@ -35,16 +42,57 @@ public class DatasetService {
     private final ConsentDAO consentDAO;
     private final DataSetDAO dataSetDAO;
     private final UserRoleDAO userRoleDAO;
+    private final DataSetAuditDAO dataSetAuditDAO;
+    private final DatasetAssociationDAO datasetAssociationDAO;
     private final UseRestrictionConverter converter;
     public static String datasetName = "Dataset Name";
+    private final String DELETE = "DELETE";
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataSetDAO dataSetDAO, UserRoleDAO userRoleDAO,
+                          DataSetAuditDAO dataSetAuditDAO, DatasetAssociationDAO datasetAssociationDAO,
           UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;
         this.dataSetDAO = dataSetDAO;
         this.userRoleDAO = userRoleDAO;
+        this.dataSetAuditDAO = dataSetAuditDAO;
+        this.datasetAssociationDAO = datasetAssociationDAO;
         this.converter = converter;
+    }
+
+    public List<DataSet> getDataSetsForConsent(String consentId) {
+        return dataSetDAO.getDataSetsForConsent(consentId);
+    }
+
+    public Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
+        return dataSetDAO.findDataSetsByReceiveOrder(dataSetId);
+    }
+
+    public Collection<Dictionary> describeDictionaryByDisplayOrder() {
+        return dataSetDAO.getMappedFieldsOrderByDisplayOrder();
+    }
+
+    public Collection<Dictionary> describeDictionaryByReceiveOrder() {
+        return dataSetDAO.getMappedFieldsOrderByReceiveOrder();
+    }
+
+    public void disableDataset(Integer datasetId, Boolean active) {
+        DataSet dataset = dataSetDAO.findDataSetById(datasetId);
+        if (dataset != null) {
+            dataSetDAO.updateDataSetActive(dataset.getDataSetId(), active);
+        }
+    }
+
+    public DataSet updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval) {
+        if (dataSetDAO.findDataSetById(dataSetId) == null) {
+            throw new NotFoundException("DataSet doesn't exist");
+        }
+        dataSetDAO.updateDataSetNeedsApproval(dataSetId, needsApproval);
+        return dataSetDAO.findDataSetById(dataSetId);
+    }
+
+    public List<DataSet> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
+        return dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
     }
 
     /**
@@ -264,6 +312,35 @@ public class DatasetService {
         dataSetDAO.deleteDataSets(idList);
     }
 
+    public void deleteDataset(Integer dataSetId, Integer dacUserId) throws IllegalStateException {
+        try {
+            dataSetDAO.begin();
+            dataSetAuditDAO.begin();
+            DataSet dataset = dataSetDAO.findDataSetById(dataSetId);
+            Collection<Integer> dataSetsId = Collections.singletonList(dataset.getDataSetId());
+            if (checkDatasetExistence(dataset.getDataSetId())) {
+                DataSetAudit dsAudit = new DataSetAudit(dataset.getDataSetId(), dataset.getObjectId(), dataset.getName(), new Date(), true, dacUserId, DELETE);
+                dataSetAuditDAO.insertDataSetAudit(dsAudit);
+            }
+            datasetAssociationDAO.delete(dataset.getDataSetId());
+            dataSetDAO.deleteDataSetsProperties(dataSetsId);
+
+            if (StringUtils.isNotEmpty(dataset.getObjectId())) {
+                dataSetDAO.logicalDatasetDelete(dataset.getDataSetId());
+            } else {
+                consentDAO.deleteAssociationsByDataSetId(dataset.getDataSetId());
+                dataSetDAO.deleteDataSets(dataSetsId);
+            }
+
+            dataSetDAO.commit();
+            dataSetAuditDAO.commit();
+        } catch (Exception e) {
+            dataSetDAO.rollback();
+            dataSetAuditDAO.rollback();
+            throw new IllegalStateException(e.getMessage());
+        }
+    }
+
     public Set<DataSetDTO> describeDatasets(Integer dacUserId) {
         Set<DataSetDTO> datasets;
         if (userHasRole(UserRoles.ADMIN.getRoleName(), dacUserId)) {
@@ -323,5 +400,9 @@ public class DatasetService {
 
     private boolean userHasRole(String roleName, Integer dacUserId) {
         return userRoleDAO.findRoleByNameAndUser(roleName, dacUserId) != null;
+    }
+
+    private boolean checkDatasetExistence(Integer dataSetId) {
+        return dataSetDAO.findDataSetById(dataSetId) != null ? true : false;
     }
 }

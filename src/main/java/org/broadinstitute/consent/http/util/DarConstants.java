@@ -7,8 +7,6 @@ public class DarConstants {
 
     public static final String OBJECT_ID = "objectId";
 
-    public static final String USER_ID = "userId";
-
     public static final String PROJECT_TITLE = "projectTitle";
 
     public static final String INVESTIGATOR = "investigator";
@@ -24,8 +22,6 @@ public class DarConstants {
     public static final String DATA_ACCESS_REQUEST_ID = "data_access_request_id";
 
     public static final String REFERENCE_ID = "referenceId";
-
-    public static final String RESTRICTION = "restriction";
 
     public static final String TRANSLATED_RESTRICTION = "translatedUseRestriction";
 

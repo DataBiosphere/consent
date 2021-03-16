@@ -16,7 +16,7 @@
     <pdfbox.version>2.0.19</pdfbox.version>
     <owl.version>5.1.17</owl.version>
     <postgres.version>42.2.19</postgres.version>
-    <rdf4j-rio.version>3.6.0</rdf4j-rio.version>
+    <rdf4j-rio.version>3.6.1</rdf4j-rio.version>
     <swagger.ui.version>3.32.5</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
@@ -231,7 +231,7 @@
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
-        <version>6.1.1</version>
+        <version>6.1.2</version>
         <executions>
           <execution>
             <goals>
@@ -357,7 +357,7 @@
     <dependency>
       <groupId>org.dhatim</groupId>
       <artifactId>dropwizard-sentry</artifactId>
-      <version>2.0.12-1</version>
+      <version>2.0.20</version>
     </dependency>
 
     <!-- Support for JSON logging -->
@@ -519,7 +519,7 @@
     <dependency>
       <groupId>com.opencsv</groupId>
       <artifactId>opencsv</artifactId>
-      <version>5.3</version>
+      <version>5.4</version>
     </dependency>
 
     <dependency>
@@ -561,7 +561,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>1.113.12</version>
+      <version>1.113.14</version>
     </dependency>
 
     <dependency>
@@ -585,7 +585,7 @@
     <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
-      <version>4.2.3</version>
+      <version>5.0.1</version>
     </dependency>
 
     <dependency>
@@ -621,14 +621,14 @@
     <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
-      <version>20201115</version>
+      <version>20210307</version>
       <type>jar</type>
     </dependency>
 
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>7.11.1</version>
+      <version>7.11.2</version>
     </dependency>
 
     <!-- Required for mocking ontology and elastic search responses -->

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -25,33 +26,29 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
 
-@Path("{api : (api/)?}dataRequest/{requestId}/vote")
+@Path("api/dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
     private final DACUserAPI dacUserAPI;
-    private final DataAccessRequestAPI accessRequestAPI;
-    private final DataSetAPI dataSetAPI;
+    private final DataAccessRequestService dataAccessRequestService;
+    private final DatasetService datasetService;
     private final DatasetAssociationService datasetAssociationService;
     private final ElectionAPI electionAPI;
     private final EmailNotifierService emailNotifierService;
@@ -61,12 +58,16 @@ public class DataRequestVoteResource extends Resource {
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
     @Inject
-    public DataRequestVoteResource(DatasetAssociationService datasetAssociationService,
-        EmailNotifierService emailNotifierService, VoteService voteService) {
+    public DataRequestVoteResource(
+        DataAccessRequestService dataAccessRequestService,
+        DatasetAssociationService datasetAssociationService,
+        EmailNotifierService emailNotifierService,
+        VoteService voteService,
+        DatasetService datasetService) {
         this.emailNotifierService = emailNotifierService;
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
-        this.accessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
-        this.dataSetAPI = AbstractDataSetAPI.getInstance();
+        this.datasetService = datasetService;
+        this.dataAccessRequestService = dataAccessRequestService;
         this.datasetAssociationService = datasetAssociationService;
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.api = AbstractVoteAPI.getInstance();
@@ -81,7 +82,7 @@ public class DataRequestVoteResource extends Resource {
                                           @PathParam("requestId") String requestId,
                                           @PathParam("id") Integer voteId) {
         try {
-            Vote vote = api.firstVoteUpdate(rec, voteId);
+            Vote vote = api.updateVoteById(rec, voteId);
             validateCollectDAREmail(vote);
             if(electionAPI.checkDataOwnerToCloseElection(vote.getElectionId())){
                 electionAPI.closeDataOwnerApprovalElection(vote.getElectionId());
@@ -99,22 +100,17 @@ public class DataRequestVoteResource extends Resource {
     @Produces("application/json")
     @Path("/{id}/final")
     @RolesAllowed(CHAIRPERSON)
-    public Response updateFinalAccessVote(Vote rec,
-                                                 @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
+    public Response submitFinalAccessVote(
+        @PathParam("requestId") String referenceId,
+        @PathParam("id") Integer id,
+        String json) {
         try {
-            Vote vote = api.firstVoteUpdate(rec, id);
-            Document access = accessRequestAPI.describeDataAccessRequestById(requestId);
-            List<Integer> dataSets = DarUtil.getIntegerList(access, DarConstants.DATASET_ID);
-            if(access.containsKey(DarConstants.RESTRICTION)){
-                List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
-                if(vote.getVote() != null && votes.get(0).getVote() != null){
-                    electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
-                }
-            }else {
-                electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
-            }
-            createDataOwnerElection(requestId, vote, access, dataSets);
-            return Response.ok(vote).build();
+            Vote voteRecord = new Gson().fromJson(json, Vote.class);
+            Vote updatedVote = api.updateVoteById(voteRecord, id);
+            electionAPI.submitFinalAccessVoteDataRequestElection(updatedVote.getElectionId());
+            DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+            createDataOwnerElection(updatedVote, dar);
+            return Response.ok(updatedVote).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -203,7 +199,7 @@ public class DataRequestVoteResource extends Resource {
         }
     }
 
-    private void createDataOwnerElection(String requestId, Vote vote, Document access, List<Integer> dataSets) throws MessagingException, IOException, TemplateException {
+    private void createDataOwnerElection(Vote vote, DataAccessRequest dar) throws MessagingException, IOException, TemplateException {
         Vote agreementVote = null;
         Vote finalVote = null;
         if(vote.getType().equals(VoteType.FINAL.getValue())){
@@ -216,17 +212,17 @@ public class DataRequestVoteResource extends Resource {
             agreementVote = vote;
         }
         if((finalVote != null && finalVote.getVote() != null && finalVote.getVote()) && (agreementVote == null || (agreementVote != null && agreementVote.getVote() != null))){
-            List<DataSet> needsApprovedDataSets = dataSetAPI.findNeedsApprovalDataSetByObjectId(dataSets);
+            List<DataSet> needsApprovedDataSets = datasetService.findNeedsApprovalDataSetByObjectId(dar.getData().getDatasetIds());
             List<Integer> dataSetIds = needsApprovedDataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(needsApprovedDataSets)){
                 Map<User, List<DataSet>> dataOwnerDataSet = datasetAssociationService.findDataOwnersWithAssociatedDataSets(dataSetIds);
-                List<Election> elections = electionAPI.createDataSetElections(requestId, dataOwnerDataSet);
+                List<Election> elections = electionAPI.createDataSetElections(dar.getReferenceId(), dataOwnerDataSet);
                 if(CollectionUtils.isNotEmpty(elections)){
                     elections.forEach(voteService::createDataOwnersReviewVotes);
                 }
                 List<User> admins = dacUserAPI.describeAdminUsersThatWantToReceiveMails();
                 if(CollectionUtils.isNotEmpty(admins)) {
-                    emailNotifierService.sendAdminFlaggedDarApproved(access.getString(DarConstants.DAR_CODE), admins, dataOwnerDataSet);
+                    emailNotifierService.sendAdminFlaggedDarApproved(dar.getData().getDarCode(), admins, dataOwnerDataSet);
                 }
             }
         }

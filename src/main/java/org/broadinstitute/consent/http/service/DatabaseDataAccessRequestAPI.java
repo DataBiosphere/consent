@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -24,9 +23,9 @@ import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -47,8 +46,6 @@ import org.slf4j.LoggerFactory;
 public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    private final UseRestrictionConverter converter;
 
     private final ElectionDAO electionDAO;
 
@@ -75,8 +72,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      */
-    public static void initInstance(DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, UserPropertyDAO userPropertyDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
+    public static void initInstance(DataAccessRequestService dataAccessRequestService, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, UserPropertyDAO userPropertyDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(dataAccessRequestService, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
             userPropertyDAO));
     }
 
@@ -84,9 +81,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * The constructor is private to force use of the factory methods and
      * enforce the singleton pattern.
      */
-    protected DatabaseDataAccessRequestAPI(DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, UserPropertyDAO userPropertyDAO) {
+    protected DatabaseDataAccessRequestAPI(DataAccessRequestService dataAccessRequestService, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, UserPropertyDAO userPropertyDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
-        this.converter = converter;
         this.electionDAO = electionDAO;
         this.consentDAO = consentDAO;
         this.voteDAO = voteDAO;
@@ -127,10 +123,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      */
     @Override
     public List<Document> describeDataAccessWithDataSetIdAndRestriction(List<Integer> dataSetIds) {
-        return dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
-                filter(d -> !Collections.disjoint(dataSetIds, DarUtil.getIntegerList(d, DarConstants.DATASET_ID))).
-                filter(d -> d.get(DarConstants.RESTRICTION) != null).
-                collect(Collectors.toList());
+        return dataAccessRequestService.findAllDataAccessRequests().stream().
+            filter(d -> !Collections.disjoint(dataSetIds, d.getData().getDatasetIds())).
+            map(dataAccessRequestService::createDocumentFromDar).
+            collect(Collectors.toList());
     }
 
     @Override
@@ -163,17 +159,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             users =  userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
         }
         return users;
-    }
-
-    @Override
-    public Object getField(String requestId , String field){
-        Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(requestId);
-        return dar != null ? dar.get(field) : null;
-    }
-
-    @Override
-    public boolean hasUseRestriction(String referenceId){
-        return getField(referenceId, DarConstants.RESTRICTION) != null ? true : false;
     }
 
     private void updateElection(Election access, Election rp) {
@@ -238,13 +223,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         if (CollectionUtils.isNotEmpty(elections)) {
             for (Election election : elections) {
                 Document dar = describeDataAccessRequestById(election.getReferenceId());
+                DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(election.getReferenceId());
                 try {
                     if (dar != null) {
-                        Integer datasetId = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID).get(0);
+                        Integer datasetId = dataAccessRequest.getData().getDatasetIds().get(0);
                         String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId);
                         Consent consent = consentDAO.findConsentById(consentId);
-                        String profileName = userPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
-                        String institution = userPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
+                        String profileName = userPropertyDAO.findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.PROFILE_NAME);
+                        String institution = userPropertyDAO.findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.INSTITUTION);
                         dataAccessReportsParser.addApprovedDARLine(darWriter, election, dar, profileName, institution, consent.getName(), consent.getTranslatedUseRestriction());
                     }
                 } catch (Exception e) {
@@ -290,15 +276,17 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         dataAccessReportsParser.setDataSetApprovedUsersHeader(darWriter);
         if (CollectionUtils.isNotEmpty(darList)){
             for(Document dar: darList){
-                Date approvalDate = electionDAO.findApprovalAccessElectionDate(dar.getString(DarConstants.REFERENCE_ID));
+                String referenceId = dar.getString(DarConstants.REFERENCE_ID);
+                DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(referenceId);
+                Date approvalDate = electionDAO.findApprovalAccessElectionDate(referenceId);
                 if (approvalDate != null) {
                     String email = userPropertyDAO
-                        .findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.ACADEMIC_BUSINESS_EMAIL);
+                        .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.ACADEMIC_BUSINESS_EMAIL);
                     String name = userPropertyDAO
-                        .findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
+                        .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.PROFILE_NAME);
                     String institution = userPropertyDAO
-                        .findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
-                    String darCode = dar.getString(DarConstants.DAR_CODE);
+                        .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.INSTITUTION);
+                    String darCode = dataAccessRequest.getData().getDarCode();
                     dataAccessReportsParser.addDataSetApprovedUsersLine(darWriter, email, name, institution, darCode, approvalDate);
                 }
             }
@@ -309,6 +297,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionAPI electionApi) {
+        DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(dar.getString(DarConstants.REFERENCE_ID));
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
         List<DataSet> datasets = populateDatasets(dar);
         Optional<User> optionalUser = Optional.ofNullable(user);
@@ -318,15 +307,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 userPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId()) :
                 Collections.emptyList();
         return darModalDetailsDTO
-            .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.getString(DarConstants.REFERENCE_ID))))
-            .setResearcherName(user, dar.getString(DarConstants.INVESTIGATOR))
+            .setNeedDOApproval(electionApi.darDatasetElectionStatus(dataAccessRequest.getReferenceId()))
+            .setResearcherName(user, dataAccessRequest.getData().getInvestigator())
             .setStatus(status)
             .setRationale(rationale)
-            .setUserId(dar.getInteger(DarConstants.USER_ID))
-            .setDarCode(dar.getString(DarConstants.DAR_CODE))
+            .setUserId(dataAccessRequest.getUserId())
+            .setDarCode(dataAccessRequest.getData().getDarCode())
             .setPrincipalInvestigator(dar.getString(DarConstants.INVESTIGATOR))
             .setInstitutionName(dar.getString(DarConstants.INSTITUTION))
-            .setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE))
+            .setProjectTitle(dataAccessRequest.getData().getProjectTitle())
             .setDepartment(dar.getString(DarConstants.DEPARTMENT))
             .setCity(dar.getString(DarConstants.CITY))
             .setCountry(dar.getString(DarConstants.COUNTRY))
@@ -377,27 +366,4 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return accessIds;
     }
 
-    protected List<UserProperty> updateResearcherIdentification(Document dataAccessRequest) {
-        Integer userId = dataAccessRequest.getInteger(DarConstants.USER_ID);
-        String linkedIn = dataAccessRequest.getString(UserFields.LINKEDIN_PROFILE.getValue());
-        String orcId = dataAccessRequest.getString(UserFields.ORCID.getValue());
-        String researcherGate = dataAccessRequest.getString(UserFields.RESEARCHER_GATE.getValue());
-        List<UserProperty> rpList = new ArrayList<>();
-        userPropertyDAO.deletePropertyByUser(Arrays.asList(UserFields.LINKEDIN_PROFILE.getValue(), UserFields.ORCID.getValue(), UserFields.RESEARCHER_GATE.getValue()), userId);
-        if (StringUtils.isNotEmpty(linkedIn)) {
-          rpList.add(new UserProperty(userId, UserFields.LINKEDIN_PROFILE.getValue(), linkedIn));
-        }
-        if (StringUtils.isNotEmpty(orcId)) {
-          rpList.add(new UserProperty(userId, UserFields.ORCID.getValue(), orcId));
-        }
-        if (StringUtils.isNotEmpty(researcherGate)) {
-           rpList.add(new UserProperty(userId, UserFields.RESEARCHER_GATE.getValue(), researcherGate));
-        }
-        if (CollectionUtils.isNotEmpty(rpList)) {
-           userPropertyDAO.insertAll(rpList);
-        }
-        return rpList;
-    }
-
 }
-

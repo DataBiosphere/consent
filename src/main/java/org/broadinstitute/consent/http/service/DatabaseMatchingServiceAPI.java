@@ -2,9 +2,9 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.ws.rs.client.Client;
@@ -15,40 +15,43 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
 import org.broadinstitute.consent.http.models.matching.ResponseMatchingObject;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
 import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
-    private ConsentAPI consentAPI;
-    private DataAccessRequestAPI dataAccessAPI;
-    private DataSetAPI dsAPI;
-    private WebTarget matchServiceTarget;
-    private GenericType<ResponseMatchingObject> rmo = new GenericType<ResponseMatchingObject>(){};
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final ConsentAPI consentAPI;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
+    private DatasetService datasetService;
+    private final WebTarget matchServiceTarget;
+    private final GenericType<ResponseMatchingObject> rmo = new GenericType<>(){};
+    private final UseRestrictionConverter useRestrictionConverter;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public static void initInstance(Client client, ServicesConfiguration config) {
-        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, config, AbstractConsentAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance(), AbstractDataSetAPI.getInstance()));
+    public static void initInstance(Client client, DataAccessRequestDAO dataAccessRequestDAO,
+        ServicesConfiguration config, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter) {
+        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, dataAccessRequestDAO, config, AbstractConsentAPI.getInstance(), datasetService, useRestrictionConverter));
     }
 
-    DatabaseMatchingServiceAPI(Client client, ServicesConfiguration config, ConsentAPI consentAPI, DataAccessRequestAPI darAPI, DataSetAPI dsAPI){
-        this.dataAccessAPI = darAPI;
+    DatabaseMatchingServiceAPI(Client client, DataAccessRequestDAO dataAccessRequestDAO, ServicesConfiguration config, ConsentAPI consentAPI, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter){
         this.consentAPI = consentAPI;
-        this.dsAPI = dsAPI;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
+        this.datasetService = datasetService;
         Integer timeout = 1000 * 60 * 3; // 3 minute timeout so ontology can properly do matching.
         client.property(ClientProperties.CONNECT_TIMEOUT, timeout);
         client.property(ClientProperties.READ_TIMEOUT, timeout);
         matchServiceTarget = client.target(config.getMatchURL());
+        this.useRestrictionConverter = useRestrictionConverter;
     }
 
     @Override
@@ -56,7 +59,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         Match match = null;
         try {
             Consent consent = findConsent(consentId);
-            Document dar = dataAccessAPI.describeDataAccessRequestById(purposeId);
+            DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
             if(consent != null || dar != null) {
                 match = singleEntitiesMatch(consent, dar);
             }
@@ -70,9 +73,9 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     @Override
     public Match findMatchForPurpose(String purposeId){
         Match match = null;
-        Document dar = dataAccessAPI.describeDataAccessRequestById(purposeId);
+        DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
         if (Objects.nonNull(dar)) {
-            List<Integer> dataSetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+            List<Integer> dataSetIdList = dar.getData().getDatasetIds();
             Consent consent = findRelatedConsent(dataSetIdList);
             if (Objects.nonNull(consent)) {
                 try {
@@ -90,11 +93,11 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     public List<Match> findMatchesForConsent(String consentId) {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
-        List<DataSet> dataSets = dsAPI.getDataSetsForConsent(consentId);
-        List<Document> dars = findRelatedDars(dataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList()));
+        List<DataSet> dataSets = datasetService.getDataSetsForConsent(consentId);
+        List<DataAccessRequest> dars = findRelatedDars(dataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList()));
         if (consent != null && !dars.isEmpty()) {
             Match match;
-            for (Document dar : dars) {
+            for (DataAccessRequest dar : dars) {
                 try {
                     match = singleEntitiesMatch(consent, dar);
                     if(match != null){
@@ -102,14 +105,14 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
                     }
                 } catch (Exception e) {
                     logger.error("Error finding  matches for consent.", e);
-                    matches.add(createMatch(consentId, dar.getString(DarConstants.REFERENCE_ID), true, false));
+                    matches.add(createMatch(consentId, dar.getReferenceId(), true, false));
                 }
             }
         }
         return matches;
     }
 
-    private Match singleEntitiesMatch(Consent consent, Document dar) throws Exception {
+    private Match singleEntitiesMatch(Consent consent, DataAccessRequest dar) {
         if (consent == null) {
             logger.error("Consent is null");
             throw new IllegalArgumentException("Consent cannot be null");
@@ -118,11 +121,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
             logger.error("Data Access Request is null");
             throw new IllegalArgumentException("Data Access Request cannot be null");
         }
-        if(!dar.containsKey(DarConstants.RESTRICTION)){
-            logger.error("Error finding single matchData Access Request: "+ dar.getString(DarConstants.DAR_CODE) + " does not have a proper Use Restriction.");
-            throw new Exception("Data Access Request: " + dar.getString(DarConstants.DAR_CODE) + " cannot be matched. Missing Use Restriction field.");
-        }
-        Match match = createMatch(consent.getConsentId(), dar.getString(DarConstants.REFERENCE_ID), false, false);
+        Match match = createMatch(consent.getConsentId(), dar.getReferenceId(), false, false);
         RequestMatchingObject requestObject = createRequestObject(consent, dar);
         String json = new Gson().toJson(requestObject);
         Response res = matchServiceTarget.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
@@ -163,12 +162,15 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         return consent;
     }
 
-    private List<Document> findRelatedDars(List<Integer> dataSetIds){
-        return dataAccessAPI.describeDataAccessWithDataSetIdAndRestriction(dataSetIds);
+    private List<DataAccessRequest> findRelatedDars(List<Integer> dataSetIds) {
+        return dataAccessRequestDAO.findAllDataAccessRequests().stream()
+            .filter(d -> !Collections.disjoint(dataSetIds, d.getData().getDatasetIds()))
+            .collect(Collectors.toList());
     }
 
-    private RequestMatchingObject createRequestObject(Consent consent, Document dar) throws Exception {
-        String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
-        return new RequestMatchingObject(consent.getUseRestriction(), UseRestriction.parse(restriction));
+    private RequestMatchingObject createRequestObject(Consent consent, DataAccessRequest dar) {
+        DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
+        UseRestriction darUseRestriction = useRestrictionConverter.parseUseRestriction(dataUse);
+        return new RequestMatchingObject(consent.getUseRestriction(), darUseRestriction);
     }
 }

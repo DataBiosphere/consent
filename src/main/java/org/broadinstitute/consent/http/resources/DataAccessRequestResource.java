@@ -98,32 +98,6 @@ public class DataAccessRequestResource extends Resource {
     }
 
     @GET
-    @Path("/{id}")
-    @Produces("application/json")
-    @PermitAll
-    @Deprecated // Use DataAccessRequestResourceVersion2
-    public Response describe(@Auth AuthUser authUser, @PathParam("id") String id) {
-        validateAuthedRoleUser(
-            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-                .collect(Collectors.toList()),
-            authUser, id);
-        try {
-            Document document = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
-            if (document != null) {
-                return Response.status(Response.Status.OK).entity(document).build();
-            }
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new Error(
-                                    "Unable to find Data Access Request with id: " + id,
-                                    Response.Status.NOT_FOUND.getStatusCode()))
-                    .build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
-    @GET
     @Path("/find/{id}")
     @Produces("application/json")
     @PermitAll
@@ -260,23 +234,6 @@ public class DataAccessRequestResource extends Resource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error("The Data Access Request was cancelled but the DAC/Admin couldn't be notified. Contact Support. ", Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
-        }
-    }
-
-    @GET
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/hasUseRestriction/{referenceId}")
-    @PermitAll
-    public Response hasUseRestriction(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
-        validateAuthedRoleUser(
-            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-                .collect(Collectors.toList()),
-            authUser, referenceId);
-        try {
-            return Response.ok("{\"hasUseRestriction\":" + dataAccessRequestAPI.hasUseRestriction(referenceId) + "}").build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 

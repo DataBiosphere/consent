@@ -148,7 +148,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         } else if (rec.getStatus().equals(ElectionStatus.CLOSED.getValue()) || rec.getStatus().equals(ElectionStatus.FINAL.getValue())) {
             rec.setFinalVoteDate(new Date());
         }
-        updateFinalVote(rec, electionId);
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
         if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");
@@ -166,17 +165,22 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public Election updateFinalAccessVoteDataRequestElection(Integer electionId) throws Exception {
+    public Election submitFinalAccessVoteDataRequestElection(Integer electionId) throws Exception {
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
         if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");
         }
-        electionDAO.updateFinalAccessVote(electionId);
         List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);
+        // The first final vote to be submitted is what determines the approval/denial of the election
         boolean isApproved = finalVotes.stream().
-                filter(Objects::nonNull).
-                filter(v -> Objects.nonNull(v.getVote())).
-                anyMatch(Vote::getVote);
+            filter(Objects::nonNull).
+            filter(v -> Objects.nonNull(v.getVote())).
+            anyMatch(Vote::getVote);
+        electionDAO.updateElectionById(
+            electionId,
+            election.getStatus(),
+            new Date(),
+            isApproved);
         if (isApproved) {
             sendResearcherNotification(election.getReferenceId());
             sendDataCustodianNotification(election.getReferenceId());
@@ -608,28 +612,17 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
     }
 
-
-    private void updateFinalVote(Election rec, Integer electionId) {
-        if (rec.getFinalVote() != null) {
-            Vote vote = voteDAO.findVoteByElectionIdAndType(electionId, VoteType.CHAIRPERSON.getValue());
-            vote.setVote(rec.getFinalVote());
-            vote.setCreateDate(rec.getFinalVoteDate());
-            vote.setRationale(rec.getFinalRationale());
-            voteDAO.updateVote(vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(), vote.getIsReminderSent(), vote.getElectionId(), vote.getCreateDate(), vote.getHasConcerns());
-        }
-    }
-
     private void sendResearcherNotification(String referenceId) throws Exception {
-        Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
-        List<Integer> dataSetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-        if(CollectionUtils.isNotEmpty(dataSetIdList)) {
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+        List<Integer> dataSetIdList = dar.getData().getDatasetIds();
+        if (CollectionUtils.isNotEmpty(dataSetIdList)) {
             List<DataSet> dataSets = dataSetDAO.findDatasetsByIdList(dataSetIdList);
             List<DatasetMailDTO> datasetsDetail = new ArrayList<>();
             dataSets.forEach(ds ->
                 datasetsDetail.add(new DatasetMailDTO(ds.getName(), ds.getDatasetIdentifier()))
             );
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
-            emailNotifierService.sendResearcherDarApproved(dar.get(DarConstants.DAR_CODE, String.class),  dar.get(DarConstants.USER_ID, Integer.class), datasetsDetail, consent.getTranslatedUseRestriction());
+            emailNotifierService.sendResearcherDarApproved(dar.getData().getDarCode(),  dar.getUserId(), datasetsDetail, consent.getTranslatedUseRestriction());
         }
     }
 

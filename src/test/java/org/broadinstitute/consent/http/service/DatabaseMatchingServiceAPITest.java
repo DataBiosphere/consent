@@ -1,17 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -23,7 +22,10 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.grammar.And;
@@ -32,8 +34,6 @@ import org.broadinstitute.consent.http.models.grammar.Not;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
 import org.broadinstitute.consent.http.models.matching.ResponseMatchingObject;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -48,9 +48,9 @@ public class DatabaseMatchingServiceAPITest {
     @Mock
     private ConsentAPI consentAPI;
     @Mock
-    private DataAccessRequestAPI dataAccessAPI;
+    private DataAccessRequestDAO dataAccessRequestDAO;
     @Mock
-    private DataSetAPI dsAPI;
+    private DatasetService datasetService;
 
     private static Consent sampleConsent1;
     private static Consent sampleConsent2;
@@ -60,10 +60,23 @@ public class DatabaseMatchingServiceAPITest {
     private static ResponseMatchingObject resmo2;
 
     private static DatabaseMatchingServiceAPI matchApi;
-    private static Client clientMock;
+
+
+    @Mock
+    private Client clientMock;
+    @Mock
+    private WebTarget target;
+    @Mock
+    private Invocation.Builder builder;
+    @Mock
+    private Response response;
+    @Mock
+    private ResponseMatchingObject rmo;
+    @Mock
+    private UseRestrictionConverter useRestrictionConverter;
 
     @BeforeClass
-    public static void setUpClass() throws IOException {
+    public static void setUpClass() {
         UseRestriction sampleUseRestriction1 = new And(
                 new Not(new Named("http://purl.obolibrary.org/obo/DUO_0000015")),
                 new Not(new Named("http://purl.obolibrary.org/obo/DUO_0000011")),
@@ -89,25 +102,18 @@ public class DatabaseMatchingServiceAPITest {
 
     @Before
     public void setUp() throws UnknownIdentifierException, IOException {
-
         MockitoAnnotations.initMocks(this);
         setUpMockedResponses();
         when(config.getMatchURL()).thenReturn("http://ontology.org/match");
-        matchApi = new DatabaseMatchingServiceAPI(clientMock, config, consentAPI, dataAccessAPI, dsAPI);
-
-        when(dataAccessAPI.describeDataAccessRequestById("NullDar")).thenReturn(null);
-
+        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentAPI, datasetService, useRestrictionConverter);
+        when(dataAccessRequestDAO.findByReferenceId("NullDar")).thenReturn(null);
         when(consentAPI.retrieve("NullConsent")).thenReturn(null);
         when(consentAPI.retrieve("AbsentConsent")).thenThrow(UnknownIdentifierException.class);
-
-        when(dataAccessAPI.describeDataAccessRequestById("DAR-2")).thenReturn(getSampleDar());
-        when(dataAccessAPI.describeDataAccessRequestFieldsById("DAR-2", Arrays.asList(DarConstants.DATASET_ID))).thenReturn(getSampleDar());        when(consentAPI.retrieve("CONS-1")).thenReturn(sampleConsent1);
         when(consentAPI.retrieve("CONS-2")).thenReturn(sampleConsent2);
-
         when(consentAPI.getConsentFromDatasetID(1)).thenReturn(sampleConsent1);
     }
 
-    private void setUpMockedResponses() throws IOException {
+    private void setUpMockedResponses() {
 
         final Invocation.Builder builderMock = Mockito.mock(Invocation.Builder.class);
         final WebTarget webTargetMock = Mockito.mock(WebTarget.class);
@@ -138,107 +144,75 @@ public class DatabaseMatchingServiceAPITest {
     }
 
     @Test
-    public void testFindSingleMatch() throws UnknownIdentifierException, IOException {
-        when(dataAccessAPI.describeDataAccessRequestById("DAR-2")).thenReturn(getSampleDar());
-        when(consentAPI.retrieve("CONS-1")).thenReturn(sampleConsent1);
+    public void testFindSingleMatch() throws Exception {
+        initSingleMatchMocks("DAR-2", sampleConsent1);
         Match match = matchApi.findSingleMatch("CONS-1", "DAR-2");
-        assertTrue(!Objects.isNull(match));
+        assertNotNull(match);
         assertTrue(match.getMatch());
-        assertTrue(!match.getFailed());
-        match = matchApi.findSingleMatch("CONS-2", "DAR-2");
-        assertTrue(Objects.isNull(match));
+        assertFalse(match.getFailed());
     }
 
     @Test
-    public void testFindSingleMatchNoPurpose() throws UnknownIdentifierException, IOException {
-        when(consentAPI.retrieve("CONS-1")).thenReturn(sampleConsent1);
+    public void testFindSingleMatchNoPurpose() throws Exception {
+        initSingleMatchMocks("DAR-2", sampleConsent1);
+
         Match match = matchApi.findSingleMatch("CONS-1", "DAR-2");
-        assertTrue(!Objects.isNull(match));
+        assertNotNull(match);
         assertTrue(match.getMatch());
-        assertTrue(!match.getFailed());
+        assertFalse(match.getFailed());
 
     }
 
     @Test
-    public void testFindMatchForPurpose() {
+    public void testFindMatchForPurpose() throws Exception {
+        initSingleMatchMocks("DAR-2", sampleConsent1);
+
         Match match = matchApi.findMatchForPurpose("DAR-2");
         assertTrue(match.getMatch());
-        assertTrue(!match.getFailed());
+        assertFalse(match.getFailed());
     }
 
     @Test
-    public void testFindMatchesForConsent() throws IOException {
-        DataSet ds = new DataSet(1, "SC-20660", "SC-20660", null, true);
-        List<DataSet> dsList = Collections.singletonList(ds);
-        when(dsAPI.getDataSetsForConsent("CONS-1")).thenReturn(dsList);
-        when(dsAPI.getDataSetsForConsent("CONS-2")).thenReturn(dsList);
-        when(dataAccessAPI.describeDataAccessWithDataSetIdAndRestriction(dsList.stream().map(DataSet::getDataSetId).collect(Collectors.toList()))).thenReturn(new ArrayList<>(Arrays.asList(getSampleDar())));
-        List<Match> matches = matchApi.findMatchesForConsent("CONS-1");
-        assertTrue(matches.size() == 1);
-        assertTrue(!matches.get(0).getFailed());
+    public void testFindMatchesForConsent() throws Exception {
+        initSingleMatchMocks("DAR-2", sampleConsent1);
+        List<Match> matches = matchApi.findMatchesForConsent(sampleConsent1.getConsentId());
+
+        assertEquals(1, matches.size());
+        assertFalse(matches.get(0).getFailed());
         assertTrue(matches.get(0).getMatch());
-        matches = matchApi.findMatchesForConsent("CONS-2");
-        assertTrue(matches.size() == 1);
-        assertTrue(matches.get(0).getFailed());
-        assertTrue(!matches.get(0).getMatch());
-        when(dataAccessAPI.describeDataAccessWithDataSetIdAndRestriction(dsList.stream().map(DataSet::getDataSetId).collect(Collectors.toList()))).thenReturn(new ArrayList<>());
-        matches = matchApi.findMatchesForConsent("CONS-1");
-        assertTrue(matches.size() == 0);
     }
 
-    private static Document getSampleDar() throws IOException {
-        Document document = new Document();
-        document.putAll(jsonAsMap(sampleDar1));
-        return document;
+    @SuppressWarnings("unchecked")
+    private void initSingleMatchMocks(String referenceId, Consent consent) throws Exception {
+        DataAccessRequest dar2 = getSampleDataAccessRequest("DAR-2");
+        when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar2));
+        when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar2);
+        when(consentAPI.retrieve(any())).thenReturn(consent);
+        List<DataSet> dataSets = getSampleDataAccessRequest(referenceId)
+            .getData()
+            .getDatasetIds()
+            .stream()
+            .map(id -> {DataSet d = new DataSet(); d.setDataSetId(id); return d;} )
+            .collect(Collectors.toList());
+        when(datasetService.getDataSetsForConsent(consent.getConsentId())).thenReturn(dataSets);
+        when(rmo.isResult()).thenReturn(true);
+        when(response.readEntity(any(GenericType.class))).thenReturn(rmo);
+        when(response.getStatus()).thenReturn(200);
+        when(builder.post(any())).thenReturn(response);
+        when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
+        when(clientMock.target(config.getMatchURL())).thenReturn(target);
+        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentAPI, datasetService, useRestrictionConverter);
     }
 
-    private static Map<String, Object> jsonAsMap(String jsonSource) throws IOException {
-        return new ObjectMapper().readValue(jsonSource, Map.class);
+    private DataAccessRequest getSampleDataAccessRequest(String referenceId) {
+        DataAccessRequest dar = new DataAccessRequest();
+        dar.setReferenceId(referenceId);
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setReferenceId(referenceId);
+        data.setHmb(true);
+        data.setDatasetIds(Collections.singletonList(1));
+        dar.setData(data);
+        return dar;
     }
-
-    private static String sampleDar1 = "{\n" +
-            "\t\"_id\": \"5771763734064d282c6600ed\",\n" +
-            "\t\"investigator\": \"frernp\",\n" +
-            "\t\"institution\": \"npn\",\n" +
-            "\t\"department\": \"pon\",\n" +
-            "\t\"division\": \"opn\",\n" +
-            "\t\"address1\": \"pn\",\n" +
-            "\t\"address2\": \"n\",\n" +
-            "\t\"city\": \"pon\",\n" +
-            "\t\"state\": \"pon\",\n" +
-            "\t\"zipcode\": \"p\",\n" +
-            "\t\"country\": \"np\",\n" +
-            "\t\"projectTitle\": \"np\",\n" +
-            "\t\"rus\": \"csvv\",\n" +
-            "\t\"non_tech_rus\": \"vfvdvfdf\",\n" +
-            "\t\"diseases\": true,\n" +
-            "\t\"forProfit\": false,\n" +
-            "\t\"onegender\": false,\n" +
-            "\t\"pediatric\": false,\n" +
-            "\t\"illegalbehave\": false,\n" +
-            "\t\"addiction\": false,\n" +
-            "\t\"sexualdiseases\": false,\n" +
-            "\t\"stigmatizediseases\": false,\n" +
-            "\t\"vulnerablepop\": false,\n" +
-            "\t\"popmigration\": false,\n" +
-            "\t\"psychtraits\": false,\n" +
-            "\t\"nothealth\": false,\n" +
-            "\t\"userId\": 3333,\n" +
-            "\t\"restriction\": {\n" +
-            "\t\t\"type\": \"and\",\n" +
-            "\t\t\"operands\": [{\n" +
-            "\t\t\t\"type\": \"named\",\n" +
-            "\t\t\t\"name\": \"http://purl.obolibrary.org/obo/DUO_0000018\"\n" +
-            "\t\t}]\n" +
-            "\t},\n" +
-            "\t\"datasetId\": [1],\n" +
-            "\t\"datasetIds\": [1],\n" +
-            "\t\"datasetDetail\": [{\n" +
-            "\t\t\"datasetId\": 1,\n" +
-            "\t\t\"name\": \"UHN_AsaWW (University of Toronto)-Carcinoid\"\n" +
-            "\t}],\n" +
-            "\t\"dar_code\": \"DAR-6\",\n" +
-            "\t\"valid_restriction\": true\n" +
-            "}";
 
 }

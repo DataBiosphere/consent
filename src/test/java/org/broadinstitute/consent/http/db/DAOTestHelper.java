@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.core.Jdbi;
@@ -68,6 +69,7 @@ public class DAOTestHelper {
     protected static MailMessageDAO mailMessageDAO;
     protected static MetricsDAO metricsDAO;
     protected static UserPropertyDAO userPropertyDAO;
+    protected static InstitutionDAO institutionDAO;
 
     private static final List<Integer> createdDataSetIds = new ArrayList<>();
     private static final List<Integer> createdDacIds = new ArrayList<>();
@@ -75,6 +77,7 @@ public class DAOTestHelper {
     private static final List<Integer> createdElectionIds = new ArrayList<>();
     private static final List<Integer> createdUserIds = new ArrayList<>();
     private static final List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
+    private static final List<Integer> createdInstitutionIds = new ArrayList<>();
 
     String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
 
@@ -123,6 +126,7 @@ public class DAOTestHelper {
         mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
         metricsDAO = jdbi.onDemand(MetricsDAO.class);
         userPropertyDAO = jdbi.onDemand(UserPropertyDAO.class);
+        institutionDAO = jdbi.onDemand(InstitutionDAO.class);
     }
 
     @AfterClass
@@ -150,6 +154,9 @@ public class DAOTestHelper {
         createdDacIds.forEach(id -> {
             dacDAO.deleteDacMembers(id);
             dacDAO.deleteDac(id);
+        });
+        createdInstitutionIds.forEach(id -> {
+            institutionDAO.deleteInstitutionById(id);
         });
         createdUserIds.forEach(id -> {
             userPropertyDAO.deleteAllPropertiesByUser(id);
@@ -336,6 +343,23 @@ public class DAOTestHelper {
         return dacDAO.findById(id);
     }
 
+    protected Institution createInstitution() {
+        Integer userId = createUser().getDacUserId();
+        String email = RandomStringUtils.randomAlphabetic(6) +
+                "@" +
+                RandomStringUtils.randomAlphabetic(6) +
+                "." +
+                RandomStringUtils.randomAlphabetic(3);
+        Integer id = institutionDAO.insertInstitution(
+          "Test_" + RandomStringUtils.random(20, true, true),
+          "Test_" + RandomStringUtils.random(20, true, true),
+          email,
+          userId,
+          new Date());
+        createdInstitutionIds.add(id);
+        return institutionDAO.findInstitutionById(id);
+    }
+
     protected void createDatasetProperties(Integer datasetId) {
         List<DataSetProperty> list = new ArrayList<>();
         DataSetProperty dsp = new DataSetProperty();
@@ -394,7 +418,16 @@ public class DAOTestHelper {
                     Charset.defaultCharset());
             data = DataAccessRequestData.fromString(darDataString);
             String referenceId = UUID.randomUUID().toString();
-            dataAccessRequestDAO.insertDraft(referenceId, data);
+            dataAccessRequestDAO.insertVersion2(
+                referenceId,
+                1,
+                new Date(),
+                new Date(),
+                new Date(),
+                new Date(),
+                data
+            );
+            dataAccessRequestDAO.updateDraftByReferenceId(referenceId, true);
             createdDataAccessRequestReferenceIds.add(referenceId);
             return dataAccessRequestDAO.findByReferenceId(referenceId);
         } catch (IOException e) {

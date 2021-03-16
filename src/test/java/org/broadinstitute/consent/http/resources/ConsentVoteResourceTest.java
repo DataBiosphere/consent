@@ -66,7 +66,7 @@ public class ConsentVoteResourceTest {
         vote.setVoteId(RandomUtils.nextInt(100, 1000));
         vote.setVote(false);
         vote.setRationale("Test");
-        when(voteAPI.firstVoteUpdate(any(), any())).thenReturn(vote);
+        when(voteAPI.updateVoteById(any(), any())).thenReturn(vote);
         when(electionAPI.validateCollectEmailCondition(any())).thenReturn(true);
         doNothing().when(emailNotifierService).sendCollectMessage(any());
         initResource();
