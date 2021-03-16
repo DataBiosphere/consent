@@ -8,7 +8,7 @@ import java.util.List;
 @Deprecated // Use VoteService
 public interface VoteAPI {
 
-    Vote firstVoteUpdate(Vote rec,  Integer voteId) throws IllegalArgumentException;
+    Vote updateVoteById(Vote rec,  Integer voteId) throws IllegalArgumentException;
 
     Vote updateVote(Vote rec, Integer voteId, String referenceId) throws IllegalArgumentException;
 
