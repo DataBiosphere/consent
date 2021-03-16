@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
-import org.broadinstitute.consent.http.models.Institution;
 import static org.junit.Assert.fail;
 
 import io.dropwizard.jdbi3.JdbiFactory;
@@ -34,6 +33,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.core.Jdbi;
@@ -418,7 +418,16 @@ public class DAOTestHelper {
                     Charset.defaultCharset());
             data = DataAccessRequestData.fromString(darDataString);
             String referenceId = UUID.randomUUID().toString();
-            dataAccessRequestDAO.insertDraft(referenceId, data);
+            dataAccessRequestDAO.insertVersion2(
+                referenceId,
+                1,
+                new Date(),
+                new Date(),
+                new Date(),
+                new Date(),
+                data
+            );
+            dataAccessRequestDAO.updateDraftByReferenceId(referenceId, true);
             createdDataAccessRequestReferenceIds.add(referenceId);
             return dataAccessRequestDAO.findByReferenceId(referenceId);
         } catch (IOException e) {
