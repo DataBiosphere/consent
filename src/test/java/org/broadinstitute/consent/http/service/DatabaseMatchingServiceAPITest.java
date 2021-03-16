@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
@@ -22,11 +23,16 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.grammar.And;
 import org.broadinstitute.consent.http.models.grammar.Named;
@@ -46,7 +52,9 @@ public class DatabaseMatchingServiceAPITest {
     @Mock
     private ServicesConfiguration config;
     @Mock
-    private ConsentService consentService;
+    private ConsentDAO consentDAO;
+    @Mock
+    private ElectionDAO electionDAO;
     @Mock
     private DataAccessRequestDAO dataAccessRequestDAO;
     @Mock
@@ -54,6 +62,8 @@ public class DatabaseMatchingServiceAPITest {
 
     private static Consent sampleConsent1;
     private static Consent sampleConsent2;
+    private static Election sampleElection1;
+    private static Election sampleElection2;
     private static RequestMatchingObject reqmo1;
     private static RequestMatchingObject reqmo2;
     private static ResponseMatchingObject resmo1;
@@ -94,6 +104,13 @@ public class DatabaseMatchingServiceAPITest {
         sampleConsent2 = new Consent(false, sampleUseRestriction2, "A data use letter", "sampleConsent1", null, null, null, "Group Name Test");
         sampleConsent2.setConsentId("CONS-2");
 
+        sampleElection1 = new Election(1, ElectionType.TRANSLATE_DUL.getValue(),
+                ElectionStatus.OPEN.getValue(), new Date(),
+                "CONS-1", new Date(), false, 1);
+        sampleElection2 = new Election(1, ElectionType.TRANSLATE_DUL.getValue(),
+                ElectionStatus.OPEN.getValue(), new Date(),
+                "CONS-2", new Date(), false, 1);
+
         reqmo1 = new RequestMatchingObject(sampleConsent1.getUseRestriction(), sampleUsePurpose1);
         resmo1 = new ResponseMatchingObject(true, reqmo1);
         reqmo2 = new RequestMatchingObject(sampleConsent2.getUseRestriction(), sampleUsePurpose1);
@@ -105,12 +122,14 @@ public class DatabaseMatchingServiceAPITest {
         MockitoAnnotations.initMocks(this);
         setUpMockedResponses();
         when(config.getMatchURL()).thenReturn("http://ontology.org/match");
-        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentService, datasetService, useRestrictionConverter);
+        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentDAO, electionDAO, datasetService, useRestrictionConverter);
         when(dataAccessRequestDAO.findByReferenceId("NullDar")).thenReturn(null);
-        when(consentService.retrieve("NullConsent")).thenReturn(null);
-        when(consentService.retrieve("AbsentConsent")).thenThrow(UnknownIdentifierException.class);
-        when(consentService.retrieve("CONS-2")).thenReturn(sampleConsent2);
-        when(consentService.getConsentFromDatasetID(1)).thenReturn(sampleConsent1);
+        when(consentDAO.findConsentById("NullConsent")).thenReturn(null);
+        when(consentDAO.findConsentById("AbsentConsent")).thenThrow(UnknownIdentifierException.class);
+        when(consentDAO.findConsentById("CONS-2")).thenReturn(sampleConsent2);
+        when(electionDAO.findLastElectionByReferenceIdAndType("CONS-1", ElectionType.TRANSLATE_DUL.getValue())).thenReturn(sampleElection1);
+        when(electionDAO.findLastElectionByReferenceIdAndType("CONS-2", ElectionType.TRANSLATE_DUL.getValue())).thenReturn(sampleElection2);
+        when(consentDAO.findConsentFromDatasetID(1)).thenReturn(sampleConsent1);
     }
 
     private void setUpMockedResponses() {
@@ -187,7 +206,7 @@ public class DatabaseMatchingServiceAPITest {
         DataAccessRequest dar2 = getSampleDataAccessRequest("DAR-2");
         when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar2));
         when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar2);
-        when(consentService.retrieve(any())).thenReturn(consent);
+        when(consentDAO.findConsentById(any())).thenReturn(consent);
         List<DataSet> dataSets = getSampleDataAccessRequest(referenceId)
             .getData()
             .getDatasetIds()
@@ -201,7 +220,7 @@ public class DatabaseMatchingServiceAPITest {
         when(builder.post(any())).thenReturn(response);
         when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
         when(clientMock.target(config.getMatchURL())).thenReturn(target);
-        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentService, datasetService, useRestrictionConverter);
+        matchApi = new DatabaseMatchingServiceAPI(clientMock, dataAccessRequestDAO, config, consentDAO, electionDAO, datasetService, useRestrictionConverter);
     }
 
     private DataAccessRequest getSampleDataAccessRequest(String referenceId) {

@@ -15,11 +15,15 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
@@ -30,7 +34,8 @@ import org.slf4j.LoggerFactory;
 
 public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
-    private final ConsentService consentService;
+    private final ConsentDAO consentDAO;
+    private final ElectionDAO electionDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private DatasetService datasetService;
     private final WebTarget matchServiceTarget;
@@ -39,13 +44,14 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public static void initInstance(Client client, DataAccessRequestDAO dataAccessRequestDAO,
-        ServicesConfiguration config, ConsentService consentService, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter) {
-        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, dataAccessRequestDAO, config, consentService, datasetService, useRestrictionConverter));
+                                    ServicesConfiguration config, ConsentDAO consentDAO, ElectionDAO electionDAO, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter) {
+        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, dataAccessRequestDAO, config, consentDAO, electionDAO, datasetService, useRestrictionConverter));
     }
 
-    DatabaseMatchingServiceAPI(Client client, DataAccessRequestDAO dataAccessRequestDAO, ServicesConfiguration config, ConsentService consentService, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter){
-        this.consentService = consentService;
+    DatabaseMatchingServiceAPI(Client client, DataAccessRequestDAO dataAccessRequestDAO, ServicesConfiguration config, ConsentDAO consentDAO, ElectionDAO electionDAO, DatasetService datasetService, UseRestrictionConverter useRestrictionConverter){
+        this.consentDAO = consentDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
+        this.electionDAO = electionDAO;
         this.datasetService = datasetService;
         Integer timeout = 1000 * 60 * 3; // 3 minute timeout so ontology can properly do matching.
         client.property(ClientProperties.CONNECT_TIMEOUT, timeout);
@@ -147,7 +153,16 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     private Consent findConsent(String consentId){
         Consent consent = null;
         try {
-            consent = consentService.retrieve(consentId);
+            consent = consentDAO.findConsentById(consentId);
+            if (consent == null) {
+                throw new UnknownIdentifierException(String.format("Could not find consent with id %s", consentId));
+            }
+
+            Election election = electionDAO.findLastElectionByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
+            if (election != null) {
+                consent.setLastElectionStatus(election.getStatus());
+                consent.setLastElectionArchived(election.getArchived());
+            }
         } catch (UnknownIdentifierException e) {
             logger.error("Consent for specified id does not exist.", e);
         }
@@ -157,7 +172,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     private Consent findRelatedConsent(List<Integer> dataSetIdList) {
         Consent consent =  null;
         if (CollectionUtils.isNotEmpty(dataSetIdList)) {
-            consent = consentService.getConsentFromDatasetID(dataSetIdList.get(0));
+            consent = consentDAO.findConsentFromDatasetID(dataSetIdList.get(0));
         }
         return consent;
     }
