@@ -98,32 +98,6 @@ public class DataAccessRequestResource extends Resource {
     }
 
     @GET
-    @Path("/{id}")
-    @Produces("application/json")
-    @PermitAll
-    @Deprecated // Use DataAccessRequestResourceVersion2
-    public Response describe(@Auth AuthUser authUser, @PathParam("id") String id) {
-        validateAuthedRoleUser(
-            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-                .collect(Collectors.toList()),
-            authUser, id);
-        try {
-            Document document = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
-            if (document != null) {
-                return Response.status(Response.Status.OK).entity(document).build();
-            }
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new Error(
-                                    "Unable to find Data Access Request with id: " + id,
-                                    Response.Status.NOT_FOUND.getStatusCode()))
-                    .build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
-    @GET
     @Path("/find/{id}")
     @Produces("application/json")
     @PermitAll
