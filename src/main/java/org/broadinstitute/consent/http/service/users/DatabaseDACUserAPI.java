@@ -25,11 +25,10 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     protected final UserDAO userDAO;
     protected final UserRoleDAO userRoleDAO;
-    private final UserRolesHandler rolesHandler;
     private final UserService userService;
 
-    public static void initInstance(UserDAO userDao, UserRoleDAO userRoleDAO, UserRolesHandler rolesHandler, UserService userService) {
-        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, rolesHandler, userService));
+    public static void initInstance(UserDAO userDao, UserRoleDAO userRoleDAO, UserService userService) {
+        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, userService));
     }
 
     protected Logger logger() {
@@ -42,10 +41,9 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDAO The Data Access Object used to read/write data.
      */
-    DatabaseDACUserAPI(UserDAO userDAO, UserRoleDAO userRoleDAO, UserRolesHandler rolesHandler, UserService userService) {
+    DatabaseDACUserAPI(UserDAO userDAO, UserRoleDAO userRoleDAO, UserService userService) {
         this.userDAO = userDAO;
         this.userRoleDAO = userRoleDAO;
-        this.rolesHandler = rolesHandler;
         this.userService = userService;
     }
 
@@ -82,7 +80,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         validateExistentUserById(id);
         // validate required fields are not null or empty
         validateRequiredFields(updatedUser);
-        rolesHandler.updateRoles(updatedUser);
         try {
             userDAO.updateUser(updatedUser.getEmail(), updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
         } catch (UnableToExecuteStatementException e) {
