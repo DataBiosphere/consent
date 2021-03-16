@@ -55,8 +55,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       "SELECT id, reference_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
           + "  WHERE ( (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
           + "          OR draft = true ) "
-          + "  AND ((data #>> '{}')::jsonb->>'userId')::numeric = :userId "
-          + "  ORDER BY ((data #>> '{}')::jsonb->>'sortDate')::numeric DESC")
+          + "  AND user_id = :userId "
+          + "  ORDER BY sort_date DESC")
   List<DataAccessRequest> findAllDraftsByUserId(@Bind("userId") Integer userId);
 
   /**

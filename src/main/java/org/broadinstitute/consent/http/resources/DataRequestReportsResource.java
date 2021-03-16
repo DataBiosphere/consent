@@ -47,9 +47,9 @@ public class DataRequestReportsResource extends Resource {
     public Response downloadDataRequestPdfFile(@PathParam("requestId") String requestId) {
         Document dar = darApi.describeDataAccessRequestById(requestId);
         DataAccessRequest dataAccessRequest = darService.findByReferenceId(requestId);
-        Map<String, String> researcherProperties = researcherService.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
-        User user = userService.findUserById(dar.getInteger(DarConstants.USER_ID));
-        String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE);
+        Map<String, String> researcherProperties = researcherService.describeResearcherPropertiesForDAR(dataAccessRequest.getUserId());
+        User user = userService.findUserById(dataAccessRequest.getUserId());
+        String fileName = "FullDARApplication-" + dataAccessRequest.getData().getDarCode();
         try {
             String sDUR = darApi.getStructuredDURForPdf(dar);
             Boolean manualReview = dataAccessRequest.requiresManualReview();

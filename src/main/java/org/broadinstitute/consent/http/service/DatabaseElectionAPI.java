@@ -625,16 +625,16 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private void sendResearcherNotification(String referenceId) throws Exception {
-        Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
-        List<Integer> dataSetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-        if(CollectionUtils.isNotEmpty(dataSetIdList)) {
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+        List<Integer> dataSetIdList = dar.getData().getDatasetIds();
+        if (CollectionUtils.isNotEmpty(dataSetIdList)) {
             List<DataSet> dataSets = dataSetDAO.findDatasetsByIdList(dataSetIdList);
             List<DatasetMailDTO> datasetsDetail = new ArrayList<>();
             dataSets.forEach(ds ->
                 datasetsDetail.add(new DatasetMailDTO(ds.getName(), ds.getDatasetIdentifier()))
             );
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
-            emailNotifierService.sendResearcherDarApproved(dar.get(DarConstants.DAR_CODE, String.class),  dar.get(DarConstants.USER_ID, Integer.class), datasetsDetail, consent.getTranslatedUseRestriction());
+            emailNotifierService.sendResearcherDarApproved(dar.getData().getDarCode(),  dar.getUserId(), datasetsDetail, consent.getTranslatedUseRestriction());
         }
     }
 
