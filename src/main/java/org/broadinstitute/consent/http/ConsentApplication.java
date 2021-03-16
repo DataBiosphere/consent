@@ -239,7 +239,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseMatchingServiceAPI.initInstance(client, dataAccessRequestDAO, config.getServicesConfiguration(), datasetService, useRestrictionConverter);
         DatabaseMatchProcessAPI.initInstance(consentDAO, dataAccessRequestService);
-        DatabaseDACUserAPI.initInstance(userDAO, userRoleDAO, userRolesHandler, userService);
+        DatabaseDACUserAPI.initInstance(userDAO, userRoleDAO, userService);
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());

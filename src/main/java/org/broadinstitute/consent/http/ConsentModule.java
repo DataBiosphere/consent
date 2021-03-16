@@ -18,17 +18,17 @@ import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
@@ -52,7 +52,6 @@ import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.WhitelistService;
-import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.broadinstitute.consent.http.util.WhitelistCache;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
@@ -352,16 +351,6 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UserRoleDAO providesUserRoleDAO() {
         return userRoleDAO;
-    }
-
-    @Provides
-    UserRolesHandler providesUserRolesHandler() {
-        return new UserRolesHandler(
-                providesUserDAO(),
-                providesDataAccessRequestService(),
-                providesElectionDAO(),
-                providesUserRoleDAO(),
-                providesVoteDAO());
     }
 
     @Provides
