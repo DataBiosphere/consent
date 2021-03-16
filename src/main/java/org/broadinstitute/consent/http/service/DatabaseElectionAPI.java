@@ -148,7 +148,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         } else if (rec.getStatus().equals(ElectionStatus.CLOSED.getValue()) || rec.getStatus().equals(ElectionStatus.FINAL.getValue())) {
             rec.setFinalVoteDate(new Date());
         }
-        updateFinalVote(rec, electionId);
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
         if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");
@@ -605,27 +604,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         if (CollectionUtils.isNotEmpty(ids)) {
             electionDAO.updateElectionStatus(ids, status);
-        }
-    }
-
-
-    private void updateFinalVote(Election rec, Integer electionId) {
-        if (rec.getFinalVote() != null) {
-            List<Vote> finalVotes = voteDAO.findVotesByElectionIdAndType(electionId, VoteType.FINAL.getValue());
-            Date finalVoteDate = rec.getFinalVoteDate();
-            if(finalVoteDate == null) {
-                finalVoteDate = new Date();
-            }
-            for (Vote vote : finalVotes) {
-                vote.setVote(rec.getFinalVote());
-                vote.setUpdateDate(finalVoteDate);
-                vote.setRationale(rec.getFinalRationale());
-                voteDAO.updateVote(
-                    vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(),
-                    vote.getIsReminderSent(), vote.getElectionId(), vote.getCreateDate(),
-                    vote.getHasConcerns()
-                );
-            }
         }
     }
 
