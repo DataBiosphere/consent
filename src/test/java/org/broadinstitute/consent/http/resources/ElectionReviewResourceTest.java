@@ -8,11 +8,10 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReview;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
-import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
@@ -38,7 +37,6 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
-        AbstractConsentAPI.class,
         AbstractDataAccessRequestAPI.class,
         AbstractElectionAPI.class,
         AbstractReviewResultsAPI.class
@@ -46,7 +44,7 @@ import static org.mockito.Mockito.when;
 public class ElectionReviewResourceTest {
 
     @Mock
-    private ConsentAPI consentAPI;
+    private ConsentService consentService;
     @Mock
     private DataAccessRequestAPI accessRequestAPI;
     @Mock
@@ -61,18 +59,16 @@ public class ElectionReviewResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractConsentAPI.class);
         PowerMockito.mockStatic(AbstractDataAccessRequestAPI.class);
         PowerMockito.mockStatic(AbstractElectionAPI.class);
         PowerMockito.mockStatic(AbstractReviewResultsAPI.class);
     }
 
     private void initResource() {
-        when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(accessRequestAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(AbstractReviewResultsAPI.getInstance()).thenReturn(reviewResultsAPI);
-        resource = new ElectionReviewResource(darService);
+        resource = new ElectionReviewResource(darService, consentService);
     }
 
     @Test
@@ -114,7 +110,7 @@ public class ElectionReviewResourceTest {
         data.setDatasetIds(Collections.singletonList(1));
         dar.setData(data);
         when(darService.findByReferenceId(any())).thenReturn(dar);
-        when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
+        when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(reviewResultsAPI.describeElectionReviewByElectionId(any(), any())).thenReturn(new ElectionReview());
         when(reviewResultsAPI.describeAgreementVote(any())).thenReturn(Collections.singletonList(new Vote()));
         initResource();

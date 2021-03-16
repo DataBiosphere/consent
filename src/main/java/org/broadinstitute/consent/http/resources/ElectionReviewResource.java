@@ -7,10 +7,9 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReview;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
-import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.ReviewResultsAPI;
@@ -31,14 +30,14 @@ public class ElectionReviewResource extends Resource {
 
     private final ReviewResultsAPI api;
     private final ElectionAPI electionAPI;
-    private final ConsentAPI consentAPI;
+    private final ConsentService consentService;
     private final DataAccessRequestService darService;
 
     @Inject
-    public ElectionReviewResource(DataAccessRequestService darService) {
+    public ElectionReviewResource(DataAccessRequestService darService, ConsentService consentService) {
         this.api = AbstractReviewResultsAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
-        this.consentAPI = AbstractConsentAPI.getInstance();
+        this.consentService = consentService;
         this.darService = darService;
     }
 
@@ -77,7 +76,7 @@ public class ElectionReviewResource extends Resource {
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData()) && Objects.nonNull(dar.getData().getDatasetIds())) {
             dataSetId.addAll(dar.getData().getDatasetIds());
         }
-        Consent consent = consentAPI.getConsentFromDatasetID(dataSetId.get(0));
+        Consent consent = consentService.getConsentFromDatasetID(dataSetId.get(0));
         ElectionReview accessElectionReview = api.describeElectionReviewByElectionId(electionId, isFinalAccess);
         List<Vote> agreementVote = api.describeAgreementVote(electionId);
         accessElectionReview.setConsent(consent);

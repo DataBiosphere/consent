@@ -29,12 +29,11 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AuditService;
-import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.MatchAPI;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
@@ -46,7 +45,7 @@ import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorA
 @Path("{auth: (basic/|api/)?}consent")
 public class ConsentResource extends Resource {
 
-    private final ConsentAPI api;
+    private final ConsentService consentService;
     private final AuditService auditService;
     private final MatchProcessAPI matchProcessAPI;
     private final MatchAPI matchAPI;
@@ -55,9 +54,9 @@ public class ConsentResource extends Resource {
     private final UserService userService;
 
     @Inject
-    public ConsentResource(AuditService auditService, UserService userService) {
+    public ConsentResource(AuditService auditService, UserService userService, ConsentService consentService) {
         this.auditService = auditService;
-        this.api = AbstractConsentAPI.getInstance();
+        this.consentService = consentService;
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.matchAPI = AbstractMatchAPI.getInstance();
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
@@ -93,7 +92,7 @@ public class ConsentResource extends Resource {
             if (rec.getDataUseLetter() != null) {
                 checkValidDUL(rec);
             }
-            Consent consent = api.create(rec);
+            Consent consent = consentService.create(rec);
             auditService.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), dacUser.getEmail());
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
             matchProcessAPI.processMatchesForConsent(consent.consentId);
@@ -121,7 +120,7 @@ public class ConsentResource extends Resource {
                 checkValidDUL(updated);
             }
             User dacUser = userService.findUserByEmail(user.getName());
-            updated = api.update(id, updated);
+            updated = consentService.update(id, updated);
             auditService.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             matchProcessAPI.processMatchesForConsent(id);
             return Response.ok(updated).build();
@@ -137,7 +136,7 @@ public class ConsentResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response delete(@PathParam("id") String consentId) {
         try {
-            api.delete(consentId);
+            consentService.delete(consentId);
             return Response.ok().build();
         }
         catch (Exception e) {
@@ -164,7 +163,7 @@ public class ConsentResource extends Resource {
     @PermitAll
     public Response getByName(@QueryParam("name") String name, @Context UriInfo info) {
         try {
-            Consent consent = api.getByName(name);
+            Consent consent = consentService.getByName(name);
             Election election = electionAPI.describeConsentElection(consent.consentId);
             if (election.getFinalVote() != null && election.getFinalVote()) {
                 return Response.ok(consent).build();
@@ -182,7 +181,7 @@ public class ConsentResource extends Resource {
 
 
     private Consent populateFromApi(String id) throws UnknownIdentifierException {
-        return api.retrieve(id);
+        return consentService.retrieve(id);
     }
 
     private void checkValidDUL(Consent rec) {

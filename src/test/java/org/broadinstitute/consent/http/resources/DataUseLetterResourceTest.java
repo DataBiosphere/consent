@@ -7,9 +7,8 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AuditService;
-import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -41,7 +40,6 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
-        AbstractConsentAPI.class,
         AbstractDACUserAPI.class
 })
 public class DataUseLetterResourceTest {
@@ -51,7 +49,7 @@ public class DataUseLetterResourceTest {
     @Mock
     private GCSStore store;
     @Mock
-    private ConsentAPI consentAPI;
+    private ConsentService consentService;
     @Mock
     private DACUserAPI dacUserAPI;
     @Mock
@@ -65,7 +63,6 @@ public class DataUseLetterResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractConsentAPI.class);
         PowerMockito.mockStatic(AbstractDACUserAPI.class);
     }
 
@@ -74,9 +71,8 @@ public class DataUseLetterResourceTest {
         user.setEmail(this.user.getName());
         user.setDacUserId(1);
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
-        resource = new DataUseLetterResource(auditService, store, userService);
+        resource = new DataUseLetterResource(auditService, store, userService, consentService);
     }
 
     @Test
@@ -92,7 +88,7 @@ public class DataUseLetterResourceTest {
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
         bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
-        when(consentAPI.updateConsentDul(any(), any(), any())).thenReturn(consent);
+        when(consentService.updateConsentDul(any(), any(), any())).thenReturn(consent);
 
         initResource();
         Consent c = resource.createDUL(new FileInputStream(fileToUpload), bodyPart, consent.getConsentId(), "temp.pdf", user);
