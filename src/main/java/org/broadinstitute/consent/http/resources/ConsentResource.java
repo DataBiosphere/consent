@@ -10,7 +10,6 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -26,15 +25,12 @@ import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
-import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.MatchAPI;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
@@ -50,7 +46,6 @@ public class ConsentResource extends Resource {
     private final MatchProcessAPI matchProcessAPI;
     private final MatchAPI matchAPI;
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
-    private final ElectionAPI electionAPI;
     private final UserService userService;
 
     @Inject
@@ -60,7 +55,6 @@ public class ConsentResource extends Resource {
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.matchAPI = AbstractMatchAPI.getInstance();
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
-        this.electionAPI = AbstractElectionAPI.getInstance();
         this.userService = userService;
     }
 
