@@ -829,6 +829,28 @@ paths:
                 type: string
         404:
           description: The votes for the consent ID couldn't be found
+  /api/consent/{name}:
+    get:
+      summary: Get Consent by Name
+      description: Returns the consent identified by the Name.
+      parameters:
+        - name: name
+          in: path
+          description: Consent Name
+          required: true
+          schema:
+            type: string
+      tags:
+        - Consent
+      responses:
+        200:
+          description: Returns the requested consent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consent'
+        404:
+          description: The consent associated with the name couldn't be found.
   /api/dac:
     post:
       summary: Create a DAC
