@@ -78,7 +78,8 @@ public class InstitutionResource extends Resource {
   public Response createInstitution(@Auth AuthUser authUser, String institution) {
     try{
       User user = userService.findUserByEmail(authUser.getName());
-      Institution newInsitution = institutionService.createInstitution(institution, user);
+      Institution payload = new Gson().fromJson(institution, Institution.class);
+      Institution newInsitution = institutionService.createInstitution(payload, user.getDacUserId());
       String jsonResponse = new Gson().toJson(newInsitution);
       return Response.ok().entity(jsonResponse).build();
     } catch(Exception e) {
@@ -95,7 +96,8 @@ public class InstitutionResource extends Resource {
     try{
       User user = userService.findUserByEmail(authUser.getName());
       Integer id = Integer.parseInt(paramId);
-      Institution updatedInstitution = institutionService.updateInstitutionById(institution, id, user);
+      Institution payload = new Gson().fromJson(institution, Institution.class);
+      Institution updatedInstitution = institutionService.updateInstitutionById(payload, id, user.getDacUserId());
       String jsonResponse = new Gson().toJson(updatedInstitution);
       return Response.ok().entity(jsonResponse).build();
     } catch(Exception e) {
