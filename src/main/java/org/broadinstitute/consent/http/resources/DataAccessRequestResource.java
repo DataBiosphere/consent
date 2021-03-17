@@ -303,7 +303,7 @@ public class DataAccessRequestResource extends Resource {
             super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
         } else {
             logger.warning("DataAccessRequest '" + referenceId + "' has an invalid userId" );
-            super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getData().getUserId());
+            super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
         }
     }
 }

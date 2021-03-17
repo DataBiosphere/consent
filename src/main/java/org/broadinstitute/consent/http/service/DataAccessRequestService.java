@@ -156,8 +156,8 @@ public class DataAccessRequestService {
             filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, authUser);
         } else {
             filteredAccessList = allDars.stream().
-                    filter(d -> d.getData().getUserId() != null).
-                    filter(d -> d.getData().getUserId().equals(userId)).
+                    filter(d -> d.getUserId() != null).
+                    filter(d -> d.getUserId().equals(userId)).
                     collect(Collectors.toList());
         }
         filteredAccessList.sort(sortTimeComparator());
@@ -452,7 +452,7 @@ public class DataAccessRequestService {
             } else {
                 darManage.setElectionStatus(UN_REVIEWED);
             }
-            darManage.setOwnerUser(getOwnerUser(dar.getData().getUserId()).orElse(null));
+            darManage.setOwnerUser(getOwnerUser(dar.getUserId()).orElse(null));
             if (darManage.getOwnerUser() == null) {
                 logger.error("DAR: " + darManage.getFrontEndId() + " has an invalid owner");
             }
@@ -483,7 +483,6 @@ public class DataAccessRequestService {
         List<DataAccessRequest> newDARList = new ArrayList<>();
         DataAccessRequestData darData = dataAccessRequest.getData();
         darData.setPartialDarCode(null);
-        darData.setUserId(user.getDacUserId());
         if (Objects.isNull(darData.getCreateDate())) {
             darData.setCreateDate(nowTime);
         }
