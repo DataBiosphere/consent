@@ -13,7 +13,6 @@
     <java.version>11</java.version>
     <liquibase.version>4.3.1</liquibase.version>
     <dropwizard.version>2.0.20</dropwizard.version>
-    <pdfbox.version>2.0.19</pdfbox.version>
     <owl.version>5.1.17</owl.version>
     <postgres.version>42.2.19</postgres.version>
     <rdf4j-rio.version>3.6.1</rdf4j-rio.version>
@@ -769,12 +768,6 @@
       <groupId>cglib</groupId>
       <artifactId>cglib-nodep</artifactId>
       <version>3.3.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.pdfbox</groupId>
-      <artifactId>pdfbox</artifactId>
-      <version>${pdfbox.version}</version>
     </dependency>
 
   </dependencies>
