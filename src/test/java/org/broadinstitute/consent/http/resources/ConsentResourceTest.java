@@ -46,8 +46,7 @@ import static org.mockito.Mockito.when;
         AbstractDACUserAPI.class,
         AbstractMatchProcessAPI.class,
         AbstractMatchAPI.class,
-        AbstractUseRestrictionValidatorAPI.class,
-        AbstractElectionAPI.class,
+        AbstractUseRestrictionValidatorAPI.class
 })
 public class ConsentResourceTest {
 
@@ -64,8 +63,6 @@ public class ConsentResourceTest {
     @Mock
     private UseRestrictionValidatorAPI useRestrictionValidatorAPI;
     @Mock
-    private ElectionAPI electionAPI;
-    @Mock
     private UserService userService;
     @Mock
     UriInfo info;
@@ -81,7 +78,6 @@ public class ConsentResourceTest {
         PowerMockito.mockStatic(AbstractMatchProcessAPI.class);
         PowerMockito.mockStatic(AbstractMatchAPI.class);
         PowerMockito.mockStatic(AbstractUseRestrictionValidatorAPI.class);
-        PowerMockito.mockStatic(AbstractElectionAPI.class);
     }
 
     private void initResource() {
@@ -92,7 +88,6 @@ public class ConsentResourceTest {
         when(AbstractMatchProcessAPI.getInstance()).thenReturn(matchProcessAPI);
         when(AbstractMatchAPI.getInstance()).thenReturn(matchAPI);
         when(AbstractUseRestrictionValidatorAPI.getInstance()).thenReturn(useRestrictionValidatorAPI);
-        when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         resource = new ConsentResource(auditService, userService, consentService);
     }
 
