@@ -1,20 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -58,8 +54,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private final UserDAO userDAO;
 
     private final DataSetDAO dataSetDAO;
-
-    private static final String PATH = "template/RequestApplication.pdf";
 
     private final DataAccessReportsParser dataAccessReportsParser;
 
@@ -170,48 +164,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             rp.setStatus(ElectionStatus.CANCELED.getValue());
             electionDAO.updateElectionStatus(new ArrayList<>(Collections.singletonList(rp.getElectionId())), rp.getStatus());
         }
-    }
-
-    @Override
-    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, User user, Boolean manualReview, String sDUR) throws IOException {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        PDDocument darDOC = new PDDocument();
-        try {
-            ClassLoader classLoader = getClass().getClassLoader();
-            InputStream is = classLoader.getResourceAsStream(PATH);
-            darDOC = PDDocument.load(is);
-            new DataAccessParser().fillDARForm(dar, researcherProperties, user, manualReview, darDOC.getDocumentCatalog().getAcroForm(), sDUR);
-            darDOC.save(output);
-            return output.toByteArray();
-        } finally {
-            output.close();
-            darDOC.close();
-        }
-
-    }
-
-    /**
-     * Description: this method returns the correct structured Data Use Restriction for an election.
-     * If there is no Access Election with the corresponding DAR reference Id, it will return Consent
-     * Election's sDUR associated with its DatasetId.
-     *
-     * If there is a valid Access Election, we find the consent associated to it by the electionId
-     * and try to get the sDUR from there.
-     *
-     * If there is no Access Election relationship to be found, we treat the reference id (a loose
-     * reference to an ID) as a consent id and look up the Consent Election's sDUR.
-     *
-     * Finally, if for some reason there's no Election related to a given Consent we use DUR in
-     * consents table, we look for the DUR on the consent itself.
-     *
-     * @param dar Mongo document correponding to a specific its reference Id
-     * @return sDUR Structured Data Use Restriction
-     */
-    @Override
-    public String getStructuredDURForPdf(Document dar) {
-        List<Integer> dataSetId = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-        String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(dataSetId.get(0));
-        return consentDAO.findConsentById(consentId).getTranslatedUseRestriction();
     }
 
     @Override

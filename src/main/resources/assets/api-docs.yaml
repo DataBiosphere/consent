@@ -1933,29 +1933,6 @@ paths:
                 type: string
         404:
           description: The DAR or the election couldn't be found.
-  /api/dataRequest/{requestId}/pdf:
-    get:
-      summary: DAR in PDF format
-      description: Returns the PDF for the requested DAR
-      parameters:
-        - name: requestId
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the requested DAR in PDF form
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-        404:
-          description: The election or the DAR couldn't be found.
   /api/consent/{id}/dul:
     get:
       summary: getDUL
