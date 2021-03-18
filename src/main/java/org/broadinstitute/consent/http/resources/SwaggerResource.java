@@ -123,6 +123,7 @@ public class SwaggerResource {
             "url: \"https://petstore.swagger.io/v2/swagger.json\",",
             "        docExpansion: 'none',\n"
                 + "        displayRequestDuration: true,\n"
+                + "        tryItOutEnabled: true,\n"
                 + "        operationsSorter: 'alpha',\n"
                 + "        apisSorter: 'alpha',\n"
                 + "        tagsSorter: 'alpha',\n"

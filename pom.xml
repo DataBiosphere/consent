@@ -16,7 +16,7 @@
     <owl.version>5.1.17</owl.version>
     <postgres.version>42.2.19</postgres.version>
     <rdf4j-rio.version>3.6.1</rdf4j-rio.version>
-    <swagger.ui.version>3.32.5</swagger.ui.version>
+    <swagger.ui.version>3.45.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
