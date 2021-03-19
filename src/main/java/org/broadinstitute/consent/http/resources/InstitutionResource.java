@@ -7,7 +7,6 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.List;
-import java.util.logging.Logger;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -29,7 +28,6 @@ import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/institutions")
 public class InstitutionResource extends Resource {
-  private static final Logger logger = Logger.getLogger(InstitutionResource.class.getName());
   private final UserService userService;
   private final InstitutionService institutionService;
 
@@ -132,7 +130,7 @@ public class InstitutionResource extends Resource {
       @Override
       public boolean shouldSkipField(FieldAttributes field) {
         String fieldName = field.getName();
-        if (!isAdmin && (fieldName == "createDate" || fieldName == "updateDate")) {
+        if (!isAdmin && (fieldName != "id" && fieldName != "name")) {
           return true;
         } else {
           return false;

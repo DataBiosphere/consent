@@ -2,11 +2,16 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.BlobId;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -58,20 +63,51 @@ public class InstitutionResourceTest {
   @Mock private UriBuilder builder;
   @Mock private User mockUser;
 
-  private InstitutionResource institutionResource;
+  private InstitutionResource resource;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
+    resource = new InstitutionResource(userService, institutionService);
+  }
+
+  private Institution initInsitutionModel() {
     Institution mockInstitution = new Institution();
     mockInstitution.setName("Test Name");
-    when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
-    when(institutionService.createInstitution(Mockito.any(Institution.class), anyInt())).thenReturn(mockInstitution);
-    when(institutionService.updateInstitutionById(Mockito.any(Institution.class), anyInt(), anyInt())).thenReturn(mockInstitution);
-    when(institutionService.findAllInstitutions()).thenReturn(Collections.emptyList());
-    institutionResource = new InstitutionResource(userService, institutionService);
+    return mockInstitution;
+  }
+
+  private void initResource() {
+    resource = new InstitutionResource(userService, institutionService);
   }
 
   @Test
-  public void testGetInsitutions() {}
+  public void testGetInsitutionsForAdmin() {
+    List<Institution> institutions = new ArrayList<Institution>();
+    Institution mockInstitution = initInsitutionModel();
+    mockInstitution.setCreateDate(new Date());
+    mockInstitution.setCreateUser(1);
+    mockInstitution.setUpdateDate(new Date());
+    mockInstitution.setUpdateUser(1);
+    mockInstitution.setId(1);
+    institutions.add(mockInstitution);
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.findAllInstitutions()).thenReturn(institutions);
+    initResource();
+    try{
+      Response adminResponse = resource.getInstitutions(authUser);
+      String json = adminResponse.getEntity().toString();
+      Type institutionType = new TypeToken<List<Institution>>(){}.getType();
+      List<Institution> institutionsResponse = new Gson().fromJson(json, institutionType);
+      Institution targetInstitution = institutionsResponse.get(0);
+      assertEquals(adminResponse.getStatus(), 200);
+      assertEquals(targetInstitution.getName(), mockInstitution.getName());
+      assertEquals(targetInstitution.getCreateUser(), mockInstitution.getCreateUser());
+      assertEquals(targetInstitution.getUpdateUser(), mockInstitution.getUpdateUser());
+      assertEquals(targetInstitution.getCreateDate().toString(), mockInstitution.getCreateDate().toString());
+      assertEquals(targetInstitution.getUpdateDate().toString(), mockInstitution.getUpdateDate().toString());
+    } catch(Exception e) {
+      Assert.fail(e.getMessage());
+    }
+  }
 }
