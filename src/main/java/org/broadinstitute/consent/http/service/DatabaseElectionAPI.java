@@ -220,9 +220,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public Election describeDataRequestElection(String requestId) {
-        Election election = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(requestId, ElectionType.DATA_ACCESS.getValue());
+        Election election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(requestId, ElectionType.DATA_ACCESS.getValue());
         if (election == null) {
-            election = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(requestId, ElectionType.RP.getValue());
+            election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(requestId, ElectionType.RP.getValue());
         }
         if (election == null) {
             throw new NotFoundException();
