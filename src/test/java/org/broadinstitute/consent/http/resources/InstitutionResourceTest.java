@@ -74,7 +74,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testGetInsitutionsForAdmin() {
+  public void testGetInstitutionsForAdmin() {
     List<Institution> institutions = new ArrayList<Institution>();
     Institution mockInstitution = institutionSetup();
     institutions.add(mockInstitution);
@@ -116,7 +116,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void getInsitutionAdmin() {
+  public void getInstitutionAdmin() {
     Institution mockInstitution = institutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
@@ -137,7 +137,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void getInsitutionNonAdmin() {
+  public void getInstitutionNonAdmin() {
     Institution mockInstitution = institutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(researcherUser);
     when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
