@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.models.Institution;
 import java.util.Date;
@@ -55,7 +56,7 @@ public class InstitutionService {
   }
 
   public Institution findInstitutionById(Integer id) {
-    return this.institutionDAO.findInstitutionById(id);
+    return institutionDAO.findInstitutionById(id);
   }
 
   public List<Institution> findAllInstitutions() {

@@ -20,6 +20,8 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.InstitutionService;
 
+import org.broadinstitute.consent.http.util.InstitutionUtil;
+
 import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -31,6 +33,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 public class InstitutionResourceTest {
   private final AuthUser authUser = new AuthUser("test@test.com");
@@ -44,6 +47,7 @@ public class InstitutionResourceTest {
   @Mock private UriInfo info;
   @Mock private UriBuilder builder;
   @Mock private User mockUser;
+  @Spy InstitutionUtil institutionUtil = new InstitutionUtil();
 
   private InstitutionResource resource;
 
@@ -60,7 +64,7 @@ public class InstitutionResourceTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    resource = new InstitutionResource(userService, institutionService);
+    resource = new InstitutionResource(userService, institutionService, institutionUtil);
   }
 
   private Institution initInsitutionModel() {
@@ -70,7 +74,7 @@ public class InstitutionResourceTest {
   }
 
   private void initResource() {
-    resource = new InstitutionResource(userService, institutionService);
+    resource = new InstitutionResource(userService, institutionService, institutionUtil);
   }
 
   @Test
