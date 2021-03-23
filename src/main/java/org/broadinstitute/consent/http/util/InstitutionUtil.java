@@ -6,7 +6,6 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
@@ -16,7 +15,6 @@ public class InstitutionUtil {
 
   private final GsonBuilder gson;
 
-  @Inject
   public InstitutionUtil() {
     this.gson = new GsonBuilder();
   }
