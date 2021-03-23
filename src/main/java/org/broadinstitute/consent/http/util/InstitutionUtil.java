@@ -6,13 +6,20 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Inject;
 
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 
 public class InstitutionUtil {
-  public InstitutionUtil(){}
+
+  private final GsonBuilder gson;
+
+  @Inject
+  public InstitutionUtil() {
+    this.gson = new GsonBuilder();
+  }
 
   // Gson builder and exclusion strategy helpers
   // Opting to not null values, null has the implication of an absence of value
@@ -20,7 +27,7 @@ public class InstitutionUtil {
 
   public Gson getGsonBuilder(Boolean isAdmin) {
     ExclusionStrategy strategy = getSerializationExclusionStrategy(isAdmin);
-    return new GsonBuilder().addSerializationExclusionStrategy(strategy).create();
+    return gson.addSerializationExclusionStrategy(strategy).create();
   }
 
   public Boolean checkIfAdmin(User user) {
