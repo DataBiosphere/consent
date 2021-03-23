@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.InstitutionService;
+import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
@@ -355,6 +356,19 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UserRoleDAO providesUserRoleDAO() {
         return userRoleDAO;
+    }
+
+    @Provides
+    MatchService providesMatchService() {
+        return new MatchService(
+                providesClient(),
+                config.getServicesConfiguration(),
+                providesConsentDAO(),
+                providesMatchDAO(),
+                providesElectionDAO(),
+                providesDataAccessRequestDAO(),
+                providesDataSetDAO(),
+                providesUseRestrictionConverter());
     }
 
     @Provides

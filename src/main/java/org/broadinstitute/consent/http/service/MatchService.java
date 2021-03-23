@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 public class MatchService {
     private final MatchDAO matchDAO;
     private final ConsentDAO consentDAO;
-    private DataAccessRequestAPI accessAPI;
     private final ElectionDAO electionDAO;
     private final UseRestrictionConverter useRestrictionConverter;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -57,7 +56,6 @@ public class MatchService {
                         UseRestrictionConverter useRestrictionConverter) {
         this.matchDAO = matchDAO;
         this.consentDAO = consentDAO;
-        this.accessAPI = AbstractDataAccessRequestAPI.getInstance();
         this.electionDAO = electionDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.useRestrictionConverter = useRestrictionConverter;
@@ -216,7 +214,7 @@ public class MatchService {
     }
 
     private void validatePurpose(String purposeId) {
-        if (accessAPI.describeDataAccessRequestById(purposeId) == null) {
+        if (dataAccessRequestDAO.findByReferenceId(purposeId) == null) {
             throw new IllegalArgumentException("Purpose for the specified id does not exist");
         }
     }
