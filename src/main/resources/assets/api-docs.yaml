@@ -2895,6 +2895,69 @@ paths:
           description: Email successfully sent
         500:
           description: Server error.
+
+  /api/institutions:
+    get:
+      summary: Institution INDEX resource
+      description: Fetches all institutions
+      responses: 
+        200:
+          description: Returns all institutions. If no results are found, an empty array is returned. 
+            Admin will see all details while non-Admins will only see a subset.
+        500:
+          description: Internal Server Error
+    post:
+      summary: Insitution CREATE resource
+      description: Creates new institution record based on json payload
+      responses:
+        200:
+          description: Creates and returns newly created record.
+        500:
+          description: Internal Server Error
+  /api/institutions/{id}:
+    get:
+      summary: Institution GET
+      description: Fetches Institution based on id param
+      parameters:
+        - name: id
+          in: path
+          description: Institution ID
+          required: true
+          schema:
+            type: String
+      responses:
+        200:
+          description: Returns target institution.
+            Admin will see all details while non-Admins will only see a subset.
+        500: Internal Server Error
+    put:
+      summary: Insitution UPDATE
+      description: Updates institution based on id and json payload
+      parameters:
+        - name: id
+          in: path
+          description: Institution ID
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Updates and returns target institution
+        500: Internal Server Error
+    delete:
+      summary: Institution DELETE
+      description: Deletes institution based on id
+      parameters:
+        - name: id
+          in: path
+          description: Institution ID
+          required: True
+          schema: 
+            type: string
+      responses:
+        200:
+          description: Updates and returns target institution
+        500: Internal Server Error
   /api/match/{consentId}/{purposeId}:
     get:
       summary: getMatches
@@ -4214,6 +4277,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+    Institution:
+      type: Object
+      properties:
+          id: 
+            type: integer
+            description: Id of Institution,
+          name:
+            type: string
+            description: Name of institution
+          createUser:
+            type: integer
+            description: Id of user who created the Institution record
+          createDate:
+            type: string
+            format: Date
+            description: Institution's creation date
+          updateUser:
+            type: integer
+            description: Id of user who last updated the Insitution record
+          updateDate:
+            type: string
+            format: Date
+            description: Institution's last update date
     User:
       type: object
       properties:
