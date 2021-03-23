@@ -37,10 +37,9 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.MatchProcessAPI;
+import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -54,7 +53,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   private final DataAccessRequestService dataAccessRequestService;
   private final EmailNotifierService emailNotifierService;
   private final GCSService gcsService;
-  private final MatchProcessAPI matchProcessAPI;
+  private final MatchService matchService;
   private final UserService userService;
 
   @Inject
@@ -62,12 +61,13 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequestService dataAccessRequestService,
       EmailNotifierService emailNotifierService,
       GCSService gcsService,
-      UserService userService) {
+      UserService userService,
+      MatchService matchService) {
     this.dataAccessRequestService = dataAccessRequestService;
     this.emailNotifierService = emailNotifierService;
-    this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
     this.gcsService = gcsService;
     this.userService = userService;
+    this.matchService = matchService;
   }
 
   @POST
@@ -83,7 +83,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
           dataAccessRequestService.createDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().build();
       for (DataAccessRequest r : results) {
-        matchProcessAPI.processMatchesForPurpose(r.getReferenceId());
+        matchService.processMatchesForPurpose(r.getReferenceId());
         emailNotifierService.sendNewDARRequestMessage(
             r.getData().getDarCode(), r.getData().getDatasetIds());
       }
@@ -141,7 +141,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       originalDar.setData(data);
       DataAccessRequest updatedDar =
           dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
-      matchProcessAPI.processMatchesForPurpose(referenceId);
+      matchService.processMatchesForPurpose(referenceId);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
