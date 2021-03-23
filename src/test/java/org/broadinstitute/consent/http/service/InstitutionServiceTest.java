@@ -10,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.mockito.Matchers.anyInt;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import static org.mockito.Mockito.when;
 
@@ -55,7 +54,6 @@ public class InstitutionServiceTest {
     } catch(Exception e) {
       Assert.fail("Institution POST should not fail");
     }
-    Mockito.reset(institutionDAO);
   }
 
   @Test
@@ -87,7 +85,6 @@ public class InstitutionServiceTest {
     } catch (Exception e) {
       Assert.fail("Institution PUT should not fail");
     }
-    Mockito.reset(institutionDAO);
   }
 
   @Test
