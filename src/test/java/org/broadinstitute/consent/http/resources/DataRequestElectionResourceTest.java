@@ -21,10 +21,9 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.VoteAPI;
@@ -45,7 +44,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
-        AbstractElectionAPI.class,
         AbstractVoteAPI.class
 })
 public class DataRequestElectionResourceTest {
@@ -53,7 +51,7 @@ public class DataRequestElectionResourceTest {
     @Mock
     private DataAccessRequestService darService;
     @Mock
-    private ElectionAPI electionAPI;
+    private ElectionService electionService;
     @Mock
     private VoteAPI voteAPI;
     @Mock
@@ -72,9 +70,7 @@ public class DataRequestElectionResourceTest {
     @Before
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractElectionAPI.class);
         PowerMockito.mockStatic(AbstractVoteAPI.class);
-        when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
@@ -84,13 +80,13 @@ public class DataRequestElectionResourceTest {
     }
 
     private void initResource() {
-        resource = new DataRequestElectionResource(darService, emailNotifierService, summaryService, voteService);
+        resource = new DataRequestElectionResource(darService, emailNotifierService, summaryService, voteService, electionService);
     }
 
     @Test
     public void testCreateDataRequestElection() throws Exception {
         when(darService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
-        when(electionAPI.createElection(any(), any(), any())).thenReturn(new Election());
+        when(electionService.createElection(any(), any(), any())).thenReturn(new Election());
         when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
         doNothing().when(emailNotifierService).sendNewCaseMessageToList(any(), any());
         initResource();
@@ -107,7 +103,7 @@ public class DataRequestElectionResourceTest {
         Election election = new Election();
         election.setElectionId(RandomUtils.nextInt(1, 100));
         when(darService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
-        when(electionAPI.createElection(any(), any(), any())).thenReturn(election);
+        when(electionService.createElection(any(), any(), any())).thenReturn(election);
         when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
         doNothing().when(emailNotifierService).sendNewCaseMessageToList(any(), any());
         initResource();
@@ -121,7 +117,7 @@ public class DataRequestElectionResourceTest {
 
     @Test
     public void retrieveElectionWithInvalidDataRequestId() {
-        when(electionAPI.describeDataRequestElection(any())).thenThrow(new NotFoundException());
+        when(electionService.describeDataRequestElection(any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.describe(UUID.randomUUID().toString());
         Assert.assertEquals(NOT_FOUND.getStatusCode(), response.getStatus());
@@ -131,7 +127,7 @@ public class DataRequestElectionResourceTest {
     public void testDataRequestElectionWithInvalidDataRequest() throws Exception {
         // should return 404 because the data request id does not exist
         when(darService.findByReferenceId(any())).thenThrow(new NotFoundException());
-        when(electionAPI.createElection(any(), any(), any())).thenThrow(new NotFoundException());
+        when(electionService.createElection(any(), any(), any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.createDataRequestElection(
                 uriInfo,
@@ -145,7 +141,7 @@ public class DataRequestElectionResourceTest {
     public void testCreateDataRequestElectionWithInvalidStatus() throws Exception {
         // should return 400 bad request because status is invalid
         when(darService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
-        when(electionAPI.createElection(any(), any(), any())).thenThrow(new IllegalArgumentException());
+        when(electionService.createElection(any(), any(), any())).thenThrow(new IllegalArgumentException());
         initResource();
         Response response = resource.createDataRequestElection(
                 uriInfo,
@@ -157,7 +153,7 @@ public class DataRequestElectionResourceTest {
 
     @Test
     public void testDeleteElection() {
-        doNothing().when(electionAPI).deleteElection(any(), any());
+        doNothing().when(electionService).deleteElection(any(), any());
         initResource();
         Response response = resource.deleteElection(
                 UUID.randomUUID().toString(),
@@ -169,7 +165,7 @@ public class DataRequestElectionResourceTest {
 
     @Test
     public void testDeleteElectionNotFound() {
-        doThrow(new NotFoundException()).when(electionAPI).deleteElection(any(), any());
+        doThrow(new NotFoundException()).when(electionService).deleteElection(any(), any());
         initResource();
         Response response = resource.deleteElection(
                 UUID.randomUUID().toString(),
@@ -181,7 +177,7 @@ public class DataRequestElectionResourceTest {
 
     @Test
     public void testDeleteElectionBadRequest() {
-        doThrow(new IllegalArgumentException()).when(electionAPI).deleteElection(any(), any());
+        doThrow(new IllegalArgumentException()).when(electionService).deleteElection(any(), any());
         initResource();
         Response response = resource.deleteElection(
                 UUID.randomUUID().toString(),

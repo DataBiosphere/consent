@@ -252,7 +252,13 @@ public class ConsentModule extends AbstractModule {
         return new ElectionService(
                 providesConsentDAO(),
                 providesElectionDAO(),
+                providesVoteDAO(),
+                providesUserDAO(),
+                providesDataSetDAO(),
+                providesDatasetAssociationDAO(),
+                providesMailMessageDAO(),
                 providesDacService(),
+                providesEmailNotifierService(),
                 providesDataAccessRequestService());
     }
 

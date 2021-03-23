@@ -7,11 +7,10 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReview;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.ReviewResultsAPI;
 
 import javax.annotation.security.PermitAll;
@@ -29,14 +28,14 @@ import java.util.Objects;
 public class ElectionReviewResource extends Resource {
 
     private final ReviewResultsAPI api;
-    private final ElectionAPI electionAPI;
+    private final ElectionService electionService;
     private final ConsentService consentService;
     private final DataAccessRequestService darService;
 
     @Inject
-    public ElectionReviewResource(DataAccessRequestService darService, ConsentService consentService) {
+    public ElectionReviewResource(DataAccessRequestService darService, ConsentService consentService, ElectionService electionService) {
         this.api = AbstractReviewResultsAPI.getInstance();
-        this.electionAPI = AbstractElectionAPI.getInstance();
+        this.electionService = electionService;
         this.consentService = consentService;
         this.darService = darService;
     }
@@ -69,8 +68,8 @@ public class ElectionReviewResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
     public ElectionReview getAccessElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
-        Election election = electionAPI.describeElectionById(electionId);
-        Election consentElection = electionAPI.getConsentElectionByDARElectionId(election.getElectionId());
+        Election election = electionService.describeElectionById(electionId);
+        Election consentElection = electionService.getConsentElectionByDARElectionId(election.getElectionId());
         DataAccessRequest dar = darService.findByReferenceId(election.getReferenceId());
         List<Integer> dataSetId = new ArrayList<>();
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData()) && Objects.nonNull(dar.getData().getDatasetIds())) {
@@ -90,7 +89,7 @@ public class ElectionReviewResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
     public ElectionReview getRPElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
-        Integer rpElectionId = electionAPI.findRPElectionByElectionAccessId(electionId);
+        Integer rpElectionId = electionService.findRPElectionByElectionAccessId(electionId);
         if (Objects.nonNull(rpElectionId)) {
             return api.describeElectionReviewByElectionId(rpElectionId, isFinalAccess);
         } else return null;

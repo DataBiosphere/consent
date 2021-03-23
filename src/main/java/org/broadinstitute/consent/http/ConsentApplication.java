@@ -91,7 +91,6 @@ import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.WhitelistResource;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchingServiceAPI;
@@ -103,7 +102,6 @@ import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
 import org.broadinstitute.consent.http.service.DatabaseMatchAPI;
 import org.broadinstitute.consent.http.service.DatabaseMatchProcessAPI;
 import org.broadinstitute.consent.http.service.DatabaseMatchingServiceAPI;
@@ -243,8 +241,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         OAuthAuthenticator.initInstance();
         OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
 
-        DatabaseElectionAPI.initInstance(consentDAO, userDAO, dataAccessRequestService, dataSetAssociationDAO,
-                dataSetDAO, electionDAO, emailNotifierService, mailMessageDAO, voteDAO);
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
 
@@ -274,23 +270,23 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // Register standard application resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
         env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, gcsService, userService));
-        env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService, consentService));
+        env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService, consentService, electionService));
         env.jersey().register(new DatasetResource(datasetService, userService));
         env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
         env.jersey().register(new ConsentResource(auditService, userService, consentService));
         env.jersey().register(new ConsentAssociationResource(consentService, userService));
-        env.jersey().register(new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService));
+        env.jersey().register(new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService));
         env.jersey().register(new ConsentManageResource(consentService));
-        env.jersey().register(new ConsentVoteResource(emailNotifierService));
+        env.jersey().register(new ConsentVoteResource(emailNotifierService, electionService));
         env.jersey().register(new ConsentCasesResource(electionService, pendingCaseService, summaryService));
-        env.jersey().register(new DataRequestElectionResource(dataAccessRequestService, emailNotifierService, summaryService, voteService));
-        env.jersey().register(new DataRequestVoteResource(dataAccessRequestService, datasetAssociationService, emailNotifierService, voteService, datasetService));
+        env.jersey().register(new DataRequestElectionResource(dataAccessRequestService, emailNotifierService, summaryService, voteService, electionService));
+        env.jersey().register(new DataRequestVoteResource(dataAccessRequestService, datasetAssociationService, emailNotifierService, voteService, datasetService, electionService));
         env.jersey().register(new DataUseLetterResource(auditService, googleStore, userService, consentService));
         env.jersey().register(new DataRequestCasesResource(electionService, pendingCaseService, summaryService));
         env.jersey().register(new DacResource(dacService, userService));
         env.jersey().register(new DACUserResource(userService));
-        env.jersey().register(new ElectionReviewResource(dataAccessRequestService, consentService));
-        env.jersey().register(new ElectionResource(voteService));
+        env.jersey().register(new ElectionReviewResource(dataAccessRequestService, consentService, electionService));
+        env.jersey().register(new ElectionResource(voteService, electionService));
         env.jersey().register(new EmailNotifierResource(emailNotifierService));
         env.jersey().register(new ApprovalExpirationTimeResource(approvalExpirationTimeService, userService));
         env.jersey().register(MatchResource.class);
@@ -325,7 +321,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             @Override
             public void lifeCycleStopped(LifeCycle event) {
                 LOGGER.debug("**** ConsentApplication Server Stopped ****");
-                AbstractElectionAPI.clearInstance();
                 AbstractVoteAPI.clearInstance();
                 AbstractDACUserAPI.clearInstance();
                 AbstractReviewResultsAPI.clearInstance();

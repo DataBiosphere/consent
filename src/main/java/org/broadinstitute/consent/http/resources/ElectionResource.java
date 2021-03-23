@@ -4,8 +4,7 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.VoteService;
 
 import javax.annotation.security.PermitAll;
@@ -26,14 +25,14 @@ import java.util.stream.Collectors;
 @Path("{api : (api/)?}election/")
 public class ElectionResource extends Resource {
 
-    private final ElectionAPI api;
+    private final ElectionService electionService;
 
     private final VoteService voteService;
 
     @Inject
-    public ElectionResource(VoteService voteService) {
-        this.api = AbstractElectionAPI.getInstance();
+    public ElectionResource(VoteService voteService, ElectionService electionService) {
         this.voteService = voteService;
+        this.electionService = electionService;
     }
 
     @POST
@@ -53,8 +52,8 @@ public class ElectionResource extends Resource {
                     map(Vote::getElectionId).
                     collect(Collectors.toList());
             electionIds.forEach(id -> {
-                if (api.checkDataOwnerToCloseElection(id)) {
-                    api.closeDataOwnerApprovalElection(id);
+                if (electionService.checkDataOwnerToCloseElection(id)) {
+                    electionService.closeDataOwnerApprovalElection(id);
                 }
             });
             return Response.ok().build();
@@ -70,7 +69,7 @@ public class ElectionResource extends Resource {
     @RolesAllowed({ADMIN, DATAOWNER, CHAIRPERSON, MEMBER})
     public Response updateElection(Election rec, @PathParam("id") Integer id) {
         try {
-            return Response.ok().entity(api.updateElectionById(rec, id)).build();
+            return Response.ok().entity(electionService.updateElectionById(rec, id)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -83,7 +82,7 @@ public class ElectionResource extends Resource {
     @PermitAll
     public Response describeElectionById(@PathParam("id") Integer id) {
         try {
-            return Response.ok().entity(api.describeElectionById(id)).build();
+            return Response.ok().entity(electionService.describeElectionById(id)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -97,7 +96,7 @@ public class ElectionResource extends Resource {
     @PermitAll
     public Response describeElectionByVoteId(@PathParam("voteId") Integer id) {
         try {
-            return Response.ok().entity(api.describeElectionByVoteId(id)).build();
+            return Response.ok().entity(electionService.describeElectionByVoteId(id)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -110,7 +109,7 @@ public class ElectionResource extends Resource {
     @PermitAll
     public Response isDataSetElectionOpen(@Context UriInfo info) {
         try {
-            return Response.ok().entity("{ \"open\" : " + api.isDataSetElectionOpen() + " }").build();
+            return Response.ok().entity("{ \"open\" : " + electionService.isDataSetElectionOpen() + " }").build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

@@ -29,11 +29,10 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
-import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.VoteAPI;
@@ -52,7 +51,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @SuppressWarnings("deprecation")
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore("jdk.internal.reflect.*")
-@PrepareForTest({AbstractElectionAPI.class, AbstractVoteAPI.class})
+@PrepareForTest({AbstractVoteAPI.class})
 public class ConsentElectionResourceTest {
 
     @Mock
@@ -62,7 +61,7 @@ public class ConsentElectionResourceTest {
     DacService dacService;
 
     @Mock
-    ElectionAPI electionAPI;
+    ElectionService electionService;
 
     @Mock
     VoteAPI voteAPI;
@@ -87,14 +86,13 @@ public class ConsentElectionResourceTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        PowerMockito.mockStatic(AbstractElectionAPI.class);
         PowerMockito.mockStatic(AbstractVoteAPI.class);
 
         when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
         when(info.getRequestUriBuilder()).thenReturn(builder);
 
         Election election = getElection();
-        when(electionAPI.createElection(any(Election.class), anyString(), any(ElectionType.class))).thenReturn(election);
+        when(electionService.createElection(any(Election.class), anyString(), any(ElectionType.class))).thenReturn(election);
         when(voteService.createVotes(any(Election.class), any(ElectionType.class), anyBoolean())).thenReturn(getVotesForElection(election.getElectionId()));
         doNothing().when(emailNotifierService).sendNewCaseMessageToList(anyList(), any(Election.class));
     }
@@ -112,7 +110,7 @@ public class ConsentElectionResourceTest {
     @Test
     public void testCreateConsentElection_failure() throws Exception {
         Election election = getElection();
-        when(electionAPI.createElection(any(Election.class), anyString(), any(ElectionType.class))).thenThrow(new IllegalArgumentException());
+        when(electionService.createElection(any(Election.class), anyString(), any(ElectionType.class))).thenThrow(new IllegalArgumentException());
         initResource();
 
         Response response = resource.createConsentElection(user, info, UUID.randomUUID().toString(), election);
@@ -217,7 +215,7 @@ public class ConsentElectionResourceTest {
 
     @Test
     public void testDeleteElection() {
-        doNothing().when(electionAPI).deleteElection(anyString(), anyInt());
+        doNothing().when(electionService).deleteElection(anyString(), anyInt());
         initResource();
 
         Response response = resource.deleteElection(UUID.randomUUID().toString(), info, RandomUtils.nextInt(1, 10));
@@ -226,9 +224,8 @@ public class ConsentElectionResourceTest {
     }
 
     private void initResource() {
-        when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
-        resource = new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService);
+        resource = new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService);
     }
 
     private Consent getConsent(Integer dacId) {

@@ -31,12 +31,11 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -50,7 +49,7 @@ public class DataRequestVoteResource extends Resource {
     private final DataAccessRequestService dataAccessRequestService;
     private final DatasetService datasetService;
     private final DatasetAssociationService datasetAssociationService;
-    private final ElectionAPI electionAPI;
+    private final ElectionService electionService;
     private final EmailNotifierService emailNotifierService;
     private final VoteAPI api;
     private final VoteService voteService;
@@ -63,14 +62,15 @@ public class DataRequestVoteResource extends Resource {
         DatasetAssociationService datasetAssociationService,
         EmailNotifierService emailNotifierService,
         VoteService voteService,
-        DatasetService datasetService) {
+        DatasetService datasetService,
+        ElectionService electionService) {
         this.emailNotifierService = emailNotifierService;
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.datasetService = datasetService;
         this.dataAccessRequestService = dataAccessRequestService;
         this.datasetAssociationService = datasetAssociationService;
-        this.electionAPI = AbstractElectionAPI.getInstance();
         this.api = AbstractVoteAPI.getInstance();
+        this.electionService = electionService;
         this.voteService = voteService;
     }
 
@@ -84,8 +84,8 @@ public class DataRequestVoteResource extends Resource {
         try {
             Vote vote = api.updateVoteById(rec, voteId);
             validateCollectDAREmail(vote);
-            if(electionAPI.checkDataOwnerToCloseElection(vote.getElectionId())){
-                electionAPI.closeDataOwnerApprovalElection(vote.getElectionId());
+            if(electionService.checkDataOwnerToCloseElection(vote.getElectionId())){
+                electionService.closeDataOwnerApprovalElection(vote.getElectionId());
             }
             URI uri = info.getRequestUriBuilder().path("{id}").build(vote.getVoteId());
             return Response.ok(uri).build();
@@ -107,7 +107,7 @@ public class DataRequestVoteResource extends Resource {
         try {
             Vote voteRecord = new Gson().fromJson(json, Vote.class);
             Vote updatedVote = api.updateVoteById(voteRecord, id);
-            electionAPI.submitFinalAccessVoteDataRequestElection(updatedVote.getElectionId());
+            electionService.submitFinalAccessVoteDataRequestElection(updatedVote.getElectionId());
             DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
             createDataOwnerElection(updatedVote, dar);
             return Response.ok(updatedVote).build();
@@ -126,8 +126,8 @@ public class DataRequestVoteResource extends Resource {
                                           @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
             Vote vote = api.updateVote(rec, id, requestId);
-            if(electionAPI.checkDataOwnerToCloseElection(vote.getElectionId())){
-                electionAPI.closeDataOwnerApprovalElection(vote.getElectionId());
+            if(electionService.checkDataOwnerToCloseElection(vote.getElectionId())){
+                electionService.closeDataOwnerApprovalElection(vote.getElectionId());
             }
             return Response.ok(vote).build();
         } catch (Exception e) {
@@ -216,7 +216,7 @@ public class DataRequestVoteResource extends Resource {
             List<Integer> dataSetIds = needsApprovedDataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(needsApprovedDataSets)){
                 Map<User, List<DataSet>> dataOwnerDataSet = datasetAssociationService.findDataOwnersWithAssociatedDataSets(dataSetIds);
-                List<Election> elections = electionAPI.createDataSetElections(dar.getReferenceId(), dataOwnerDataSet);
+                List<Election> elections = electionService.createDataSetElections(dar.getReferenceId(), dataOwnerDataSet);
                 if(CollectionUtils.isNotEmpty(elections)){
                     elections.forEach(voteService::createDataOwnersReviewVotes);
                 }
@@ -229,7 +229,7 @@ public class DataRequestVoteResource extends Resource {
     }
 
     private void validateCollectDAREmail(Vote vote) {
-        if(!vote.getType().equals(VoteType.DATA_OWNER.getValue()) && electionAPI.validateCollectDAREmailCondition(vote)){
+        if(!vote.getType().equals(VoteType.DATA_OWNER.getValue()) && electionService.validateCollectDAREmailCondition(vote)){
             try {
                 emailNotifierService.sendCollectMessage(vote.getElectionId());
             } catch (MessagingException | IOException | TemplateException e) {

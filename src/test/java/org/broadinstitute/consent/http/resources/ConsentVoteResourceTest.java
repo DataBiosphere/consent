@@ -4,9 +4,8 @@ package org.broadinstitute.consent.http.resources;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.junit.Before;
@@ -31,15 +30,14 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
-        AbstractVoteAPI.class,
-        AbstractElectionAPI.class
+        AbstractVoteAPI.class
 })
 public class ConsentVoteResourceTest {
 
     @Mock
     private VoteAPI voteAPI;
     @Mock
-    private ElectionAPI electionAPI;
+    private ElectionService electionService;
     @Mock
     private EmailNotifierService emailNotifierService;
 
@@ -49,13 +47,11 @@ public class ConsentVoteResourceTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(AbstractVoteAPI.class);
-        PowerMockito.mockStatic(AbstractElectionAPI.class);
     }
 
     private void initResource() {
         when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
-        when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new ConsentVoteResource(emailNotifierService);
+        resource = new ConsentVoteResource(emailNotifierService, electionService);
     }
 
     @Test
@@ -67,7 +63,7 @@ public class ConsentVoteResourceTest {
         vote.setVote(false);
         vote.setRationale("Test");
         when(voteAPI.updateVoteById(any(), any())).thenReturn(vote);
-        when(electionAPI.validateCollectEmailCondition(any())).thenReturn(true);
+        when(electionService.validateCollectEmailCondition(any())).thenReturn(true);
         doNothing().when(emailNotifierService).sendCollectMessage(any());
         initResource();
 
