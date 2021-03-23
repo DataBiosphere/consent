@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.slf4j.LoggerFactory;
+import net.gcardone.junidecode.Junidecode;
 
 public class User {
 
@@ -181,8 +182,8 @@ public class User {
         this.dacUserId = dacUserId;
     }
 
-    public String getEmail() {
-        return email;
+    public String getEmail() { 
+        return Junidecode.unidecode(email); 
     }
 
     public void setEmail(String email) {
