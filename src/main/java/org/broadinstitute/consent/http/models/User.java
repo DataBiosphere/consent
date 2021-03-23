@@ -183,7 +183,7 @@ public class User {
     }
 
     public String getEmail() { 
-        return Junidecode.unidecode(email); 
+        return  (email != null) ? Junidecode.unidecode(email) : null; 
     }
 
     public void setEmail(String email) {
