@@ -10,7 +10,6 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -26,10 +25,8 @@ import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
@@ -46,7 +43,6 @@ public class ConsentResource extends Resource {
     private final AuditService auditService;
     private final MatchService matchService;
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
-    private final ElectionAPI electionAPI;
     private final UserService userService;
 
     @Inject
@@ -54,7 +50,6 @@ public class ConsentResource extends Resource {
         this.auditService = auditService;
         this.consentService = consentService;
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
-        this.electionAPI = AbstractElectionAPI.getInstance();
         this.userService = userService;
         this.matchService = matchService;
     }
@@ -159,18 +154,9 @@ public class ConsentResource extends Resource {
     public Response getByName(@QueryParam("name") String name, @Context UriInfo info) {
         try {
             Consent consent = consentService.getByName(name);
-            Election election = electionAPI.describeConsentElection(consent.consentId);
-            if (election.getFinalVote() != null && election.getFinalVote()) {
-                return Response.ok(consent).build();
-            } else {
-                // electionAPI.describeConsentElection will throw NotFoundException if no election exists, and we catch
-                // that below. Here, we have an existing-but-failed election. Let's send it to the same catch clause.
-                throw new NotFoundException();
-            }
+            return Response.ok(consent).build();
         } catch (UnknownIdentifierException ex) {
             return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Consent with a name of '%s' was not found.", name), Response.Status.NOT_FOUND.getStatusCode())).build();
-        } catch (NotFoundException nfe) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(String.format("Consent with a name of '%s' is not approved.", name), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 

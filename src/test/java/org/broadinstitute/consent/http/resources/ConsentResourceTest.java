@@ -41,8 +41,7 @@ import static org.mockito.Mockito.when;
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
         AbstractDACUserAPI.class,
-        AbstractUseRestrictionValidatorAPI.class,
-        AbstractElectionAPI.class,
+        AbstractUseRestrictionValidatorAPI.class
 })
 public class ConsentResourceTest {
 
@@ -57,8 +56,6 @@ public class ConsentResourceTest {
     @Mock
     private UseRestrictionValidatorAPI useRestrictionValidatorAPI;
     @Mock
-    private ElectionAPI electionAPI;
-    @Mock
     private UserService userService;
     @Mock
     UriInfo info;
@@ -72,7 +69,6 @@ public class ConsentResourceTest {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(AbstractDACUserAPI.class);
         PowerMockito.mockStatic(AbstractUseRestrictionValidatorAPI.class);
-        PowerMockito.mockStatic(AbstractElectionAPI.class);
     }
 
     private void initResource() {
