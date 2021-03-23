@@ -77,7 +77,6 @@ public class ConsentResourceTest {
         when(info.getRequestUriBuilder()).thenReturn(builder);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractUseRestrictionValidatorAPI.getInstance()).thenReturn(useRestrictionValidatorAPI);
-        when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         resource = new ConsentResource(auditService, userService, consentService, matchService);
     }
 
