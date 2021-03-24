@@ -31,10 +31,9 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.MatchProcessAPI;
+import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.Before;
@@ -49,11 +48,10 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore("jdk.internal.reflect.*")
-@PrepareForTest({AbstractMatchProcessAPI.class})
 public class DataAccessRequestResourceVersion2Test {
 
   @Mock private DataAccessRequestService dataAccessRequestService;
-  @Mock private MatchProcessAPI matchProcessAPI;
+  @Mock private MatchService matchService;
   @Mock private EmailNotifierService emailNotifierService;
   @Mock private GCSService gcsService;
   @Mock private UserService userService;
@@ -70,7 +68,6 @@ public class DataAccessRequestResourceVersion2Test {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    PowerMockito.mockStatic(AbstractMatchProcessAPI.class);
   }
 
   private void initResource() {
@@ -78,10 +75,9 @@ public class DataAccessRequestResourceVersion2Test {
       when(builder.path(anyString())).thenReturn(builder);
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
-      when(AbstractMatchProcessAPI.getInstance()).thenReturn(matchProcessAPI);
       resource =
           new DataAccessRequestResourceVersion2(
-              dataAccessRequestService, emailNotifierService, gcsService, userService);
+              dataAccessRequestService, emailNotifierService, gcsService, userService, matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -93,7 +89,7 @@ public class DataAccessRequestResourceVersion2Test {
       when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.createDataAccessRequest(any(), any()))
           .thenReturn(Collections.emptyList());
-      doNothing().when(matchProcessAPI).processMatchesForPurpose(any());
+      doNothing().when(matchService).processMatchesForPurpose(any());
       doNothing().when(emailNotifierService).sendNewDARRequestMessage(any(), any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
@@ -128,7 +124,7 @@ public class DataAccessRequestResourceVersion2Test {
       when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
       when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
-      doNothing().when(matchProcessAPI).processMatchesForPurpose(any());
+      doNothing().when(matchService).processMatchesForPurpose(any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -145,7 +141,7 @@ public class DataAccessRequestResourceVersion2Test {
       when(userService.findUserByEmail(any())).thenReturn(invalidUser);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
       when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
-      doNothing().when(matchProcessAPI).processMatchesForPurpose(any());
+      doNothing().when(matchService).processMatchesForPurpose(any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
