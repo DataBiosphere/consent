@@ -133,8 +133,8 @@ public class User {
     }
 
     private void setEmail(User u) {
-        if (!StringUtils.isEmpty(u.getEmail())) {
-            this.setEmail(u.getEmail());
+        if (!StringUtils.isEmpty(u.getEmail()) && u.getEmail() != null) {
+            this.setEmail(Junidecode.unidecode(u.getEmail()));
         }
     }
 
