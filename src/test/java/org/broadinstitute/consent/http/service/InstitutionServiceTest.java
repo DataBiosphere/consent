@@ -47,31 +47,12 @@ public class InstitutionServiceTest {
   public void testCreateInstitutionSuccess() {
     Institution mockInstitution = initMockModel();
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
-    try{
-      initService();
-      Institution institution = service.createInstitution(mockInstitution, 1);
-      assertNotNull(institution);
-    } catch(Exception e) {
-      Assert.fail("Institution POST should not fail");
-    }
-  }
-
-  @Test
-  public void testCreateInstitutionIdFail() {
-    String expectedMessage = "Cannot pass a value for ID when creating a new Institution";
-    try{
-      initService();
-      Institution mockInstitution = initMockModel();
-      mockInstitution.setId(1);
-      service.createInstitution(mockInstitution, 1);
-      Assert.fail("Institution record should NOT have been created");
-    } catch(Exception e) {
-      assertEquals(e.getMessage(), expectedMessage);
-    }
+    initService();
+    Institution institution = service.createInstitution(mockInstitution, 1);
+    assertNotNull(institution);
   }
 
   //NOTE: would like to add a test for name duplication, but exception will differ depending on whether name column has the UNIQUE keyword applied
-
   @Test
   public void testUpdateInstitutionById() {
     Institution mockInstitution = initMockModel();
@@ -79,18 +60,15 @@ public class InstitutionServiceTest {
     initService();
     mockInstitution.setUpdateDate(new Date());
     //doNothing is default for void methods, no need to mock InstitutionDAO.updateInstitutionById
-    try {
-      Institution updatedInstitution = service.updateInstitutionById(mockInstitution, 1, 1);
-      assertNotNull(updatedInstitution);
-    } catch (Exception e) {
-      Assert.fail("Institution PUT should not fail");
-    }
+    Institution updatedInstitution = service.updateInstitutionById(mockInstitution, 1, 1);
+    assertNotNull(updatedInstitution);
   }
 
   @Test
   public void testUpdateInstitutionBlankNameFail() {
-    initService();
     Institution mockInstitution = initMockModel();
+    initService();
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
     mockInstitution.setName("");
     String exceptionMessage = "Institution name cannot be null or empty";
     try{
@@ -103,11 +81,12 @@ public class InstitutionServiceTest {
 
   @Test
   public void testUpdateInstitutionNullNameFail() {
-    initService();
     Institution mockInstitution = initMockModel();
-    mockInstitution.setName(null);
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
+    initService();
     String exceptionMessage = "Institution name cannot be null or empty";
     try{
+      mockInstitution.setName(null);
       service.updateInstitutionById(mockInstitution, 1,1);
       Assert.fail("Institution PUT should not succeed with a null name");
     } catch(Exception e) {

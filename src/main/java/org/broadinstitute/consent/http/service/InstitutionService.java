@@ -4,8 +4,11 @@ import com.google.inject.Inject;
 
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.models.Institution;
+
 import java.util.Date;
 import java.util.List;
+
+import javax.ws.rs.NotFoundException;
 
 public class InstitutionService {
 
@@ -16,38 +19,34 @@ public class InstitutionService {
     this.institutionDAO = institutionDAO;
   };
 
-  //NOTE: if NAME column has the UNIQUE attribute in Postgres, can we trust that to throw errors in Java?
   public Institution createInstitution(Institution institution, Integer userId) {
-      //NOTE: should an error be thrown if id is NOT null? Data may be valid, but id present indicates non-normal request
-      if(institution.getId() != null) {
-        throw new IllegalArgumentException("Cannot pass a value for ID when creating a new Institution");
-      }
       checkForEmptyName(institution); 
       Date createTimestamp = new Date();
-      institution.setCreateDate(createTimestamp);
-      institution.setCreateUser(userId);
       Integer id = institutionDAO.insertInstitution(
         institution.getName(),
         institution.getItDirectorName(),
         institution.getItDirectorEmail(),
-        institution.getCreateUser(),
-        institution.getCreateDate()
+        userId,
+        createTimestamp
       );
       return institutionDAO.findInstitutionById(id);
   }
 
   public Institution updateInstitutionById(Institution institutionPayload, Integer id, Integer userId) {
-    institutionPayload.setId(id);
-    institutionPayload.setUpdateDate(new Date());
-    institutionPayload.setUpdateUser(userId);
+    Institution targetInstitution = institutionDAO.findInstitutionById(id);
+    if(targetInstitution == null) {
+      throw new NotFoundException("Record does not exist");
+    }
     checkForEmptyName(institutionPayload);
+    Date updateDate = new Date();
     institutionDAO.updateInstitutionById(
-      institutionPayload.getId(), 
+      id, 
       institutionPayload.getName(), 
-      institutionPayload.getItDirectorName(), 
       institutionPayload.getItDirectorEmail(), 
-      institutionPayload.getUpdateUser(),
-      institutionPayload.getUpdateDate());
+      institutionPayload.getItDirectorName(), 
+      userId, 
+      updateDate
+    );
     return institutionDAO.findInstitutionById(id);
   }
 
@@ -56,6 +55,10 @@ public class InstitutionService {
   }
 
   public Institution findInstitutionById(Integer id) {
+    Institution institution = institutionDAO.findInstitutionById(id);
+    if(institution == null) {
+      throw new NotFoundException("Institution not found");
+    }
     return institutionDAO.findInstitutionById(id);
   }
 

@@ -2910,7 +2910,7 @@ paths:
       summary: Insitution CREATE resource
       description: Creates new institution record based on json payload
       responses:
-        200:
+        201:
           description: Creates and returns newly created record.
         500:
           description: Internal Server Error
@@ -2929,7 +2929,10 @@ paths:
         200:
           description: Returns target institution.
             Admin will see all details while non-Admins will only see a subset.
-        500: Internal Server Error
+        500: 
+          description: Internal Server Error
+        404: 
+          description: "Institution not found"
     put:
       summary: Insitution UPDATE
       description: Updates institution based on id and json payload
@@ -2941,9 +2944,12 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        200: 
           description: Updates and returns target institution
-        500: Internal Server Error
+        500: 
+          description: Internal Server Error
+        404:
+          description: Institution not found
     delete:
       summary: Institution DELETE
       description: Deletes institution based on id
@@ -2955,8 +2961,8 @@ paths:
           schema: 
             type: string
       responses:
-        200:
-          description: Updates and returns target institution
+        204: 
+          description: Deletes target institution (no return entity)
         500: Internal Server Error
   /api/match/{consentId}/{purposeId}:
     get:

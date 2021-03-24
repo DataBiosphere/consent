@@ -140,7 +140,6 @@ import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
-import org.broadinstitute.consent.http.util.InstitutionUtil;
 import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
 import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
@@ -255,9 +254,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
 
-        //Response Formatters
-        final InstitutionUtil institutionUtil = injector.getProvider(InstitutionUtil.class).get();
-
         // Health Checks
         env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(gcsService));
         env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
@@ -302,7 +298,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ElectionReviewResource(dataAccessRequestService));
         env.jersey().register(new ElectionResource(voteService));
         env.jersey().register(new EmailNotifierResource(emailNotifierService));
-        env.jersey().register(new InstitutionResource(userService, institutionService, institutionUtil));
+        env.jersey().register(new InstitutionResource(userService, institutionService));
         env.jersey().register(new ApprovalExpirationTimeResource(approvalExpirationTimeService, userService));
         env.jersey().register(MatchResource.class);
         env.jersey().register(new MetricsResource(metricsService));

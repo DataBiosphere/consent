@@ -26,13 +26,12 @@ import org.broadinstitute.consent.http.util.InstitutionUtil;
 public class InstitutionResource extends Resource {
   private final UserService userService;
   private final InstitutionService institutionService;
-  private final InstitutionUtil institutionUtil;
+  private final InstitutionUtil institutionUtil = new InstitutionUtil();
 
   @Inject
-  public InstitutionResource(UserService userService, InstitutionService institutionService, InstitutionUtil institutionUtil) {
+  public InstitutionResource(UserService userService, InstitutionService institutionService) {
     this.userService = userService;
     this.institutionService = institutionService;
-    this.institutionUtil = institutionUtil;
   }
 
   @GET
@@ -54,12 +53,11 @@ public class InstitutionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @PermitAll
-  public Response getInstitution(@Auth AuthUser authUser, @PathParam("id") String paramId) {
+  public Response getInstitution(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     try{
       User user = userService.findUserByEmail(authUser.getName());
       Boolean isAdmin = institutionUtil.checkIfAdmin(user);
       Gson gson = institutionUtil.getGsonBuilder(isAdmin);
-      Integer id = Integer.parseInt(paramId);
       Institution institution = institutionService.findInstitutionById(id);
       return Response.ok().entity(gson.toJson(institution)).build();
     } catch(Exception e) {
@@ -75,9 +73,8 @@ public class InstitutionResource extends Resource {
     try{
       User user = userService.findUserByEmail(authUser.getName());
       Institution payload = new Gson().fromJson(institution, Institution.class);
-      Institution newInsitution = institutionService.createInstitution(payload, user.getDacUserId());
-      String jsonResponse = new Gson().toJson(newInsitution);
-      return Response.ok().entity(jsonResponse).build();
+      Institution newInstitution = institutionService.createInstitution(payload, user.getDacUserId());
+      return Response.ok().entity(newInstitution).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
     }
@@ -88,14 +85,12 @@ public class InstitutionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @RolesAllowed(ADMIN)
-  public Response updateInstitution(@Auth AuthUser authUser, @PathParam("id") String paramId, String institution) {
+  public Response updateInstitution(@Auth AuthUser authUser, @PathParam("id") Integer id, String institution) {
     try{
       User user = userService.findUserByEmail(authUser.getName());
-      Integer id = Integer.parseInt(paramId);
       Institution payload = new Gson().fromJson(institution, Institution.class);
       Institution updatedInstitution = institutionService.updateInstitutionById(payload, id, user.getDacUserId());
-      String jsonResponse = new Gson().toJson(updatedInstitution);
-      return Response.ok().entity(jsonResponse).build();
+      return Response.ok().entity(updatedInstitution).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
     }
@@ -105,11 +100,10 @@ public class InstitutionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @RolesAllowed(ADMIN)
-  public Response deleteInstitution(@Auth AuthUser authUser, @PathParam("id") String paramId) {
+  public Response deleteInstitution(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     try {
-      Integer id = Integer.parseInt(paramId);
       institutionService.deleteInstitutionById(id);
-      return Response.ok().build();
+      return Response.status(204).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
     }
