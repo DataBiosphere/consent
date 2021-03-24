@@ -26,7 +26,7 @@ public class InstitutionUtilTest {
 
   private InstitutionUtil util;
 
-  private Institution initMockInsitution() {
+  private Institution initMockInstitution() {
     Institution mockInstitution = new Institution();
     mockInstitution.setName("Test Name");
     mockInstitution.setCreateDate(new Date());
@@ -52,7 +52,7 @@ public class InstitutionUtilTest {
 
   @Test
   public void testGsonBuilderAdmin() {
-    Institution mockInstitution = initMockInsitution();
+    Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(true);
     String json = builder.toJson(mockInstitution);
     Institution deserialized = new Gson().fromJson(json, Institution.class);
@@ -66,7 +66,7 @@ public class InstitutionUtilTest {
 
   @Test
   public void testGsonBuilderNonAdmin() {
-    Institution mockInstitution = initMockInsitution();
+    Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(false);
     String json = builder.toJson(mockInstitution);
     assertEquals("{\"id\":1,\"name\":\"Test Name\"}", json);

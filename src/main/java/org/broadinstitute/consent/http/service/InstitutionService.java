@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.Institution;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import javax.ws.rs.NotFoundException;
 
@@ -21,6 +22,7 @@ public class InstitutionService {
 
   public Institution createInstitution(Institution institution, Integer userId) {
       checkForEmptyName(institution); 
+      checkUserId(userId);
       Date createTimestamp = new Date();
       Integer id = institutionDAO.insertInstitution(
         institution.getName(),
@@ -34,9 +36,8 @@ public class InstitutionService {
 
   public Institution updateInstitutionById(Institution institutionPayload, Integer id, Integer userId) {
     Institution targetInstitution = institutionDAO.findInstitutionById(id);
-    if(targetInstitution == null) {
-      throw new NotFoundException("Record does not exist");
-    }
+    isInstitutionNull(targetInstitution);
+    checkUserId(userId);
     checkForEmptyName(institutionPayload);
     Date updateDate = new Date();
     institutionDAO.updateInstitutionById(
@@ -51,14 +52,14 @@ public class InstitutionService {
   }
 
   public void deleteInstitutionById(Integer id) {
+    Institution institution = institutionDAO.findInstitutionById(id);
+    isInstitutionNull(institution);
     institutionDAO.deleteInstitutionById(id);
   }
 
   public Institution findInstitutionById(Integer id) {
     Institution institution = institutionDAO.findInstitutionById(id);
-    if(institution == null) {
-      throw new NotFoundException("Institution not found");
-    }
+    isInstitutionNull(institution);
     return institutionDAO.findInstitutionById(id);
   }
 
@@ -68,8 +69,20 @@ public class InstitutionService {
 
   private void checkForEmptyName(Institution institution) {
     String name = institution.getName();
-    if(name == null || name.isBlank()) {
+    if(Objects.isNull(name) || name.isBlank()) {
       throw new IllegalArgumentException("Institution name cannot be null or empty");
     }
   };
+
+  private void checkUserId(Integer userId) {
+    if(Objects.isNull(userId)) {
+      throw new IllegalArgumentException("User ID is a required parameter");
+    }
+  }
+
+  private void isInstitutionNull(Institution institution) {
+    if(Objects.isNull(institution)) {
+      throw new NotFoundException("Institution not found");
+    }
+  }
 }

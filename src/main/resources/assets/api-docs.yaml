@@ -2907,13 +2907,15 @@ paths:
         500:
           description: Internal Server Error
     post:
-      summary: Insitution CREATE resource
+      summary: Institution CREATE resource
       description: Creates new institution record based on json payload
       responses:
         201:
           description: Creates and returns newly created record.
         500:
           description: Internal Server Error
+        400:
+          description: "Bad request"
   /api/institutions/{id}:
     get:
       summary: Institution GET
@@ -2934,7 +2936,7 @@ paths:
         404: 
           description: "Institution not found"
     put:
-      summary: Insitution UPDATE
+      summary: Institution UPDATE
       description: Updates institution based on id and json payload
       parameters:
         - name: id
@@ -2950,6 +2952,8 @@ paths:
           description: Internal Server Error
         404:
           description: Institution not found
+        400:
+          description: Bad request
     delete:
       summary: Institution DELETE
       description: Deletes institution based on id
@@ -2963,7 +2967,10 @@ paths:
       responses:
         204: 
           description: Deletes target institution (no return entity)
-        500: Internal Server Error
+        500: 
+          description: Internal Server Error
+        404:
+          description: "Institution not found"
   /api/match/{consentId}/{purposeId}:
     get:
       summary: getMatches
@@ -4301,7 +4308,7 @@ components:
             description: Institution's creation date
           updateUser:
             type: integer
-            description: Id of user who last updated the Insitution record
+            description: Id of user who last updated the Institution record
           updateDate:
             type: string
             format: Date

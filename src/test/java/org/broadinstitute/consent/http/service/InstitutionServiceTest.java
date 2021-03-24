@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.ws.rs.NotFoundException;
+
 public class InstitutionServiceTest {
 
   private InstitutionService service;
@@ -52,6 +54,32 @@ public class InstitutionServiceTest {
     assertNotNull(institution);
   }
 
+  @Test
+  public void testCreateInstitutionBlankName() {
+    Institution mockInstitution = initMockModel();
+    mockInstitution.setName("");
+    initService();
+    try{
+      service.createInstitution(mockInstitution, 1);
+      Assert.fail("Institution CREATE should not succeed with an empty name");
+    } catch(Exception e) {
+      assertEquals("Institution name cannot be null or empty", e.getMessage());
+    }
+  }
+
+  @Test
+  public void testCreateInstitutionNullName() {
+    Institution mockInstitution = initMockModel();
+    mockInstitution.setName(null);
+    initService();
+    try {
+      service.createInstitution(mockInstitution, 1);
+      Assert.fail("Institution CREATE should not succeed with an empty name");
+    } catch (Exception e) {
+      assertEquals("Institution name cannot be null or empty", e.getMessage());
+    }
+  }
+
   //NOTE: would like to add a test for name duplication, but exception will differ depending on whether name column has the UNIQUE keyword applied
   @Test
   public void testUpdateInstitutionById() {
@@ -62,6 +90,21 @@ public class InstitutionServiceTest {
     //doNothing is default for void methods, no need to mock InstitutionDAO.updateInstitutionById
     Institution updatedInstitution = service.updateInstitutionById(mockInstitution, 1, 1);
     assertNotNull(updatedInstitution);
+  }
+
+  @Test
+  public void testUpdateInstitutionByIdNotFound() {
+    Exception error = new NotFoundException("Institution not found");
+    Institution mockInstitution = initMockModel();
+    when(institutionDAO.findInstitutionById(anyInt())).thenThrow(error);
+    initService();
+    try{
+      service.updateInstitutionById(mockInstitution, 1, 1);
+      Assert.fail("UPDATE should not succeed");
+    } catch(Exception e) {
+      assertEquals(error.getMessage(), e.getMessage());
+    }
+    
   }
 
   @Test
@@ -96,7 +139,9 @@ public class InstitutionServiceTest {
 
   @Test
   public void testDeleteInstitutionById() {
+    Institution mockInstitution = initMockModel();
     initService();
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
     try {
       service.deleteInstitutionById(1);
     } catch (Exception e) {
@@ -105,10 +150,35 @@ public class InstitutionServiceTest {
   }
 
   @Test
+  public void testDeleteInstitutionByIdFail() {
+    initService();
+    Exception error = new NotFoundException("Institution not found");
+    when(institutionDAO.findInstitutionById(anyInt())).thenThrow(error);
+    try{
+      service.deleteInstitutionById(1);
+      Assert.fail("DELETE - Error should have been thrown");
+    } catch(Exception e) {
+      assertEquals(error.getMessage(), e.getMessage());
+    }
+  }
+
+  @Test
   public void testFindInstitutionById() {
     initService();
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(getInstitutions().get(0));
     assertEquals(getInstitutions().get(0), service.findInstitutionById(anyInt()));
+  }
+
+  @Test
+  public void testFindInstitutionByIdFail() {
+    initService();
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(null);
+    try{
+      service.findInstitutionById(1);
+      Assert.fail("Institution GET should not succeed");
+    } catch(Exception e) {
+      assertEquals("Institution not found", e.getMessage());
+    }
   }
 
   @Test

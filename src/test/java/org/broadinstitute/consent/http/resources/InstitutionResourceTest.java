@@ -29,6 +29,7 @@ import org.junit.Test;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -95,7 +96,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void getInstitutionAdmin() {
+  public void testGetInstitutionAdmin() {
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
@@ -107,7 +108,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void getInstitutionNonAdmin() {
+  public void testGetInstitutionNonAdmin() {
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(researcherUser);
     when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
@@ -119,7 +120,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void getInstitutionFail() {
+  public void testGetInstitutionFail() {
     Exception error = new NotFoundException("Institution not found");
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.findInstitutionById(anyInt())).thenThrow(error);
@@ -127,6 +128,7 @@ public class InstitutionResourceTest {
     Response response = resource.getInstitution(authUser, 1);
     assertEquals(404, response.getStatus());
   }
+  
 
   @Test
   public void testCreateInstitution() {
@@ -142,6 +144,28 @@ public class InstitutionResourceTest {
   }
 
   @Test
+  public void testCreateInstitutionNullName() {
+    Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
+    Institution mockInstitution = mockInstitutionSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
+    initResource();
+    Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void testCreateInstitutionBlankName() {
+    Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
+    Institution mockInstitution = mockInstitutionSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
+    initResource();
+    Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
   public void testUpdateInstitution() {
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
@@ -153,7 +177,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testUpdateInstitutionFail() {
+  public void testUpdateInstitutionNotFound() {
     Exception error = new NotFoundException("Institution not found");
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
@@ -164,10 +188,43 @@ public class InstitutionResourceTest {
   }
 
   @Test
+  public void testUpdateInstiutionNullName() {
+    Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
+    Institution mockInstitution = mockInstitutionSetup();
+    mockInstitution.setName(null);
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
+    initResource();
+    Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
+    assertEquals(400, response.getStatus());
+  }
+  @Test
+  public void testUpdateInstiutionBlankName() {
+    Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
+    Institution mockInstitution = mockInstitutionSetup();
+    mockInstitution.setName("");
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
+    initResource();
+    Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
   public void testDeleteInstitution() { 
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     initResource();
     Response response = resource.deleteInstitution(authUser, 1);
     assertEquals(204, response.getStatus());
-  }  
+  }
+  
+  @Test
+  public void testDeleteInstitutionNotFound() {
+    Exception error = new NotFoundException("Institution not found");
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    doThrow(error).when(institutionService).deleteInstitutionById(anyInt());
+    initResource();
+    Response response = resource.deleteInstitution(authUser, 1);
+    assertEquals(404, response.getStatus());
+  }
 }
