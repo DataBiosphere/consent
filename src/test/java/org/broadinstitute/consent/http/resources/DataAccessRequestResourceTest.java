@@ -20,12 +20,12 @@ import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -44,7 +44,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
         AbstractDataAccessRequestAPI.class,
-        AbstractMatchProcessAPI.class,
         AbstractUseRestrictionValidatorAPI.class,
         AbstractDACUserAPI.class
 })
@@ -65,6 +64,8 @@ public class DataAccessRequestResourceTest {
     @Mock
     private UserService userService;
     @Mock
+    private MatchService matchService;
+    @Mock
     private AuthUser authUser;
     @Mock
     private User user;
@@ -75,7 +76,6 @@ public class DataAccessRequestResourceTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(AbstractDataAccessRequestAPI.class);
-        PowerMockito.mockStatic(AbstractMatchProcessAPI.class);
         PowerMockito.mockStatic(AbstractUseRestrictionValidatorAPI.class);
         PowerMockito.mockStatic(AbstractDACUserAPI.class);
     }

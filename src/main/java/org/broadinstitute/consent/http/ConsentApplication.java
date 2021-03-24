@@ -91,9 +91,6 @@ import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.WhitelistResource;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchingServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
@@ -102,15 +99,13 @@ import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DatabaseMatchAPI;
-import org.broadinstitute.consent.http.service.DatabaseMatchProcessAPI;
-import org.broadinstitute.consent.http.service.DatabaseMatchingServiceAPI;
 import org.broadinstitute.consent.http.service.DatabaseReviewResultsAPI;
 import org.broadinstitute.consent.http.service.DatabaseVoteAPI;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihAuthApi;
 import org.broadinstitute.consent.http.service.NihServiceAPI;
@@ -231,15 +226,13 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
         DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
             userPropertyDAO);
-        DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
-        DatabaseMatchingServiceAPI.initInstance(client, dataAccessRequestDAO, config.getServicesConfiguration(), consentDAO, electionDAO, datasetService, useRestrictionConverter);
-        DatabaseMatchProcessAPI.initInstance(consentDAO, dataAccessRequestService);
         DatabaseDACUserAPI.initInstance(userDAO, userRoleDAO, userService);
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
         OAuthAuthenticator.initInstance();
         OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
+        final MatchService matchService = injector.getProvider(MatchService.class).get();
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
@@ -269,11 +262,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Register standard application resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
-        env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, gcsService, userService));
+        env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, gcsService, userService, matchService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService, consentService, electionService));
         env.jersey().register(new DatasetResource(datasetService, userService));
         env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
-        env.jersey().register(new ConsentResource(auditService, userService, consentService));
+        env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService));
         env.jersey().register(new ConsentAssociationResource(consentService, userService));
         env.jersey().register(new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService));
         env.jersey().register(new ConsentManageResource(consentService));
@@ -325,9 +318,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractDACUserAPI.clearInstance();
                 AbstractReviewResultsAPI.clearInstance();
                 AbstractDataAccessRequestAPI.clearInstance();
-                AbstractMatchingServiceAPI.clearInstance();
-                AbstractMatchAPI.clearInstance();
-                AbstractMatchProcessAPI.clearInstance();
                 AbstractUseRestrictionValidatorAPI.clearInstance();
                 AbstractOAuthAuthenticator.clearInstance();
                 super.lifeCycleStopped(event);

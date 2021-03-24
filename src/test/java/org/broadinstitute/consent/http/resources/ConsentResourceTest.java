@@ -4,12 +4,9 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.broadinstitute.consent.http.service.AbstractMatchAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
-import org.broadinstitute.consent.http.service.MatchAPI;
-import org.broadinstitute.consent.http.service.MatchProcessAPI;
+import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -42,8 +39,6 @@ import static org.mockito.Mockito.when;
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
         AbstractDACUserAPI.class,
-        AbstractMatchProcessAPI.class,
-        AbstractMatchAPI.class,
         AbstractUseRestrictionValidatorAPI.class
 })
 public class ConsentResourceTest {
@@ -55,9 +50,7 @@ public class ConsentResourceTest {
     @Mock
     private ConsentService consentService;
     @Mock
-    private MatchProcessAPI matchProcessAPI;
-    @Mock
-    private MatchAPI matchAPI;
+    private MatchService matchService;
     @Mock
     private UseRestrictionValidatorAPI useRestrictionValidatorAPI;
     @Mock
@@ -73,8 +66,6 @@ public class ConsentResourceTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(AbstractDACUserAPI.class);
-        PowerMockito.mockStatic(AbstractMatchProcessAPI.class);
-        PowerMockito.mockStatic(AbstractMatchAPI.class);
         PowerMockito.mockStatic(AbstractUseRestrictionValidatorAPI.class);
     }
 
@@ -83,10 +74,8 @@ public class ConsentResourceTest {
         when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
         when(info.getRequestUriBuilder()).thenReturn(builder);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
-        when(AbstractMatchProcessAPI.getInstance()).thenReturn(matchProcessAPI);
-        when(AbstractMatchAPI.getInstance()).thenReturn(matchAPI);
         when(AbstractUseRestrictionValidatorAPI.getInstance()).thenReturn(useRestrictionValidatorAPI);
-        resource = new ConsentResource(auditService, userService, consentService);
+        resource = new ConsentResource(auditService, userService, consentService, matchService);
     }
 
     @Test
@@ -102,7 +91,7 @@ public class ConsentResourceTest {
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         when(consentService.create(any())).thenReturn(consent);
         doNothing().when(auditService).saveConsentAudit(any(), any(), any(), any());
-        doNothing().when(matchProcessAPI).processMatchesForConsent(any());
+        doNothing().when(matchService).processMatchesForConsent(any());
 
         initResource();
 
@@ -125,7 +114,7 @@ public class ConsentResourceTest {
         when(consentService.retrieve(any())).thenReturn(consent);
         when(consentService.update(any(), any())).thenReturn(consent);
         doNothing().when(auditService).saveConsentAudit(any(), any(), any(), any());
-        doNothing().when(matchProcessAPI).processMatchesForConsent(any());
+        doNothing().when(matchService).processMatchesForConsent(any());
 
         initResource();
 
