@@ -7,8 +7,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -36,13 +35,13 @@ import java.util.List;
 @Path("{auth: (basic/|api/)?}consent/{id}/association")
 public class ConsentAssociationResource extends Resource {
 
-    private final ConsentAPI api;
+    private final ConsentService consentService;
     private final DACUserAPI dacUserAPI;
     private final UserService userService;
 
     @Inject
-    public ConsentAssociationResource(UserService userService) {
-        this.api = AbstractConsentAPI.getInstance();
+    public ConsentAssociationResource(ConsentService consentService, UserService userService) {
+        this.consentService = consentService;
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.userService = userService;
     }
@@ -55,13 +54,13 @@ public class ConsentAssociationResource extends Resource {
         try {
             String msg = String.format("POSTing association to id '%s' with body '%s'", consentId, body.toString());
             for (ConsentAssociation association : body) {
-                if(association.getAssociationType().equals(AssociationType.WORKSPACE.getValue()) && api.hasWorkspaceAssociation(association.getElements().get(0))){
+                if(association.getAssociationType().equals(AssociationType.WORKSPACE.getValue()) && consentService.hasWorkspaceAssociation(association.getElements().get(0))){
                     return Response.status(Response.Status.CONFLICT).entity(new Error("Workspace associations can only be created once.", Response.Status.CONFLICT.getStatusCode())).build();
                 }
             }
             logger().debug(msg);
             User dacUser = userService.findUserByEmail(user.getName());
-            List<ConsentAssociation> result = api.createAssociation(consentId, body, dacUser.getEmail());
+            List<ConsentAssociation> result = consentService.createAssociation(consentId, body, dacUser.getEmail());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         }catch (Exception e) {
@@ -86,7 +85,7 @@ public class ConsentAssociationResource extends Resource {
                 }
             }
             logger().debug(msg);
-            List<ConsentAssociation> result = api.updateAssociation(consentId, body, user.getName());
+            List<ConsentAssociation> result = consentService.updateAssociation(consentId, body, user.getName());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         }catch (Exception e) {
@@ -103,7 +102,7 @@ public class ConsentAssociationResource extends Resource {
             logger().debug(msg);
             if (atype == null && objectId != null)
                 return Response.status(Response.Status.BAD_REQUEST).build();
-            List<ConsentAssociation> result = api.getAssociation(consentId, atype, objectId);
+            List<ConsentAssociation> result = consentService.getAssociation(consentId, atype, objectId);
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         } catch (Exception e) {
@@ -120,7 +119,7 @@ public class ConsentAssociationResource extends Resource {
             logger().debug(msg);
             if (atype == null && objectId != null)
                 return Response.status(Response.Status.BAD_REQUEST).build();
-            List<ConsentAssociation> result = api.deleteAssociation(consentId, atype, objectId);
+            List<ConsentAssociation> result = consentService.deleteAssociation(consentId, atype, objectId);
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         }catch (Exception e) {

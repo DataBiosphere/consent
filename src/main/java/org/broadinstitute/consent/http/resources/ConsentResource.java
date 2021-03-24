@@ -10,7 +10,6 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -26,18 +25,12 @@ import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AuditService;
-import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.MatchAPI;
-import org.broadinstitute.consent.http.service.MatchProcessAPI;
+import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
@@ -46,23 +39,19 @@ import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorA
 @Path("{auth: (basic/|api/)?}consent")
 public class ConsentResource extends Resource {
 
-    private final ConsentAPI api;
+    private final ConsentService consentService;
     private final AuditService auditService;
-    private final MatchProcessAPI matchProcessAPI;
-    private final MatchAPI matchAPI;
+    private final MatchService matchService;
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
-    private final ElectionAPI electionAPI;
     private final UserService userService;
 
     @Inject
-    public ConsentResource(AuditService auditService, UserService userService) {
+    public ConsentResource(AuditService auditService, UserService userService, ConsentService consentService, MatchService matchService) {
         this.auditService = auditService;
-        this.api = AbstractConsentAPI.getInstance();
-        this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
-        this.matchAPI = AbstractMatchAPI.getInstance();
+        this.consentService = consentService;
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
-        this.electionAPI = AbstractElectionAPI.getInstance();
         this.userService = userService;
+        this.matchService = matchService;
     }
 
     @Path("{id}")
@@ -93,10 +82,10 @@ public class ConsentResource extends Resource {
             if (rec.getDataUseLetter() != null) {
                 checkValidDUL(rec);
             }
-            Consent consent = api.create(rec);
+            Consent consent = consentService.create(rec);
             auditService.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), dacUser.getEmail());
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
-            matchProcessAPI.processMatchesForConsent(consent.consentId);
+            matchService.processMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
         }  catch (Exception e) {
             return createExceptionResponse(e);
@@ -121,9 +110,9 @@ public class ConsentResource extends Resource {
                 checkValidDUL(updated);
             }
             User dacUser = userService.findUserByEmail(user.getName());
-            updated = api.update(id, updated);
+            updated = consentService.update(id, updated);
             auditService.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
-            matchProcessAPI.processMatchesForConsent(id);
+            matchService.processMatchesForConsent(id);
             return Response.ok(updated).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -137,7 +126,7 @@ public class ConsentResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response delete(@PathParam("id") String consentId) {
         try {
-            api.delete(consentId);
+            consentService.delete(consentId);
             return Response.ok().build();
         }
         catch (Exception e) {
@@ -152,7 +141,7 @@ public class ConsentResource extends Resource {
     @PermitAll
     public Response getMatches(@PathParam("id") String purposeId, @Context UriInfo info) {
         try {
-            return Response.status(Response.Status.OK).entity(matchAPI.findMatchByConsentId(purposeId)).build();
+            return Response.status(Response.Status.OK).entity(matchService.findMatchByConsentId(purposeId)).build();
         } catch (Exception e) {
             return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
         }
@@ -164,25 +153,16 @@ public class ConsentResource extends Resource {
     @PermitAll
     public Response getByName(@QueryParam("name") String name, @Context UriInfo info) {
         try {
-            Consent consent = api.getByName(name);
-            Election election = electionAPI.describeConsentElection(consent.consentId);
-            if (election.getFinalVote() != null && election.getFinalVote()) {
-                return Response.ok(consent).build();
-            } else {
-                // electionAPI.describeConsentElection will throw NotFoundException if no election exists, and we catch
-                // that below. Here, we have an existing-but-failed election. Let's send it to the same catch clause.
-                throw new NotFoundException();
-            }
+            Consent consent = consentService.getByName(name);
+            return Response.ok(consent).build();
         } catch (UnknownIdentifierException ex) {
             return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Consent with a name of '%s' was not found.", name), Response.Status.NOT_FOUND.getStatusCode())).build();
-        } catch (NotFoundException nfe) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(String.format("Consent with a name of '%s' is not approved.", name), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 
 
     private Consent populateFromApi(String id) throws UnknownIdentifierException {
-        return api.retrieve(id);
+        return consentService.retrieve(id);
     }
 
     private void checkValidDUL(Consent rec) {

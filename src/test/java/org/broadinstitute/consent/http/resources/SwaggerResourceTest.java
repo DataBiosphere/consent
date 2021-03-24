@@ -1,17 +1,14 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_CSS;
+
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_CSS;
-import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_JS;
-import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_PNG;
 
 public class SwaggerResourceTest {
 
@@ -43,30 +40,6 @@ public class SwaggerResourceTest {
     }
 
     @Test
-    public void testJavascriptBundle() {
-        Response response = swaggerResource.content("swagger-ui-bundle.js");
-        Assert.assertTrue(checkJavascript(response));
-    }
-
-    @Test
-    public void testJavascriptPreset() {
-        Response response = swaggerResource.content("swagger-ui-standalone-preset.js");
-        Assert.assertTrue(checkJavascript(response));
-    }
-
-    @Test
-    public void testFavicon16() {
-        Response response = swaggerResource.content("favicon-16x16.png");
-        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_PNG));
-    }
-
-    @Test
-    public void testFavicon32() {
-        Response response = swaggerResource.content("favicon-32x32.png");
-        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_PNG));
-    }
-
-    @Test
     public void testNotFound() {
         Response response = swaggerResource.content("foo/bar.txt");
         Assert.assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
@@ -84,9 +57,4 @@ public class SwaggerResourceTest {
         return headerObject.toString().contains(header);
     }
 
-    private boolean checkJavascript(Response response) {
-        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_JS));
-        String content = response.getEntity().toString().trim();
-        return content.startsWith("!function(");
-    }
 }

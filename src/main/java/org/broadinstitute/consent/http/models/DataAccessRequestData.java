@@ -47,7 +47,6 @@ public class DataAccessRequestData {
     private String projectTitle;
     private Boolean checkCollaborator;
     private String researcher;
-    private Integer userId;
     private String isThePi;
     private String havePi;
     private String piEmail;
@@ -257,14 +256,6 @@ public class DataAccessRequestData {
 
     public void setResearcher(String researcher) {
         this.researcher = researcher;
-    }
-
-    public Integer getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Integer userId) {
-        this.userId = userId;
     }
 
     public String getIsThePi() {

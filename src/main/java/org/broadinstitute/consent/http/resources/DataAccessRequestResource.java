@@ -36,10 +36,9 @@ import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
@@ -53,17 +52,17 @@ public class DataAccessRequestResource extends Resource {
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
     private final DataAccessRequestService dataAccessRequestService;
     private final DataAccessRequestAPI dataAccessRequestAPI;
-    private final ConsentAPI consentAPI;
+    private final ConsentService consentService;
     private final EmailNotifierService emailNotifierService;
     private final ElectionAPI electionAPI;
     private final UserService userService;
 
     @Inject
-    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, UserService userService) {
+    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, UserService userService, ConsentService consentService) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.emailNotifierService = emailNotifierService;
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
-        this.consentAPI = AbstractConsentAPI.getInstance();
+        this.consentService = consentService;
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.userService = userService;
     }
@@ -134,7 +133,7 @@ public class DataAccessRequestResource extends Resource {
         Optional<Integer> dataSetId = getDatasetIdForDarId(id);
         Consent c;
         if (dataSetId.isPresent()) {
-            c = consentAPI.getConsentFromDatasetID(dataSetId.get());
+            c = consentService.getConsentFromDatasetID(dataSetId.get());
             if (c == null) {
                 throw new NotFoundException("Unable to find the consent related to the datasetId present in the DAR.");
             }
@@ -304,7 +303,7 @@ public class DataAccessRequestResource extends Resource {
             super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
         } else {
             logger.warning("DataAccessRequest '" + referenceId + "' has an invalid userId" );
-            super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getData().getUserId());
+            super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
         }
     }
 }

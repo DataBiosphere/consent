@@ -11,13 +11,12 @@
 
   <properties>
     <java.version>11</java.version>
-    <liquibase.version>4.3.1</liquibase.version>
+    <liquibase.version>4.3.2</liquibase.version>
     <dropwizard.version>2.0.20</dropwizard.version>
-    <pdfbox.version>2.0.19</pdfbox.version>
     <owl.version>5.1.17</owl.version>
     <postgres.version>42.2.19</postgres.version>
     <rdf4j-rio.version>3.6.1</rdf4j-rio.version>
-    <swagger.ui.version>3.32.5</swagger.ui.version>
+    <swagger.ui.version>3.45.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -231,7 +230,7 @@
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
-        <version>6.1.2</version>
+        <version>6.1.3</version>
         <executions>
           <execution>
             <goals>
@@ -769,12 +768,6 @@
       <groupId>cglib</groupId>
       <artifactId>cglib-nodep</artifactId>
       <version>3.3.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.pdfbox</groupId>
-      <artifactId>pdfbox</artifactId>
-      <version>${pdfbox.version}</version>
     </dependency>
 
   </dependencies>

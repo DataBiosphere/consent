@@ -56,13 +56,6 @@ public class DatabaseDataAccessRequestAPITest {
             userPropertyDAO);
     }
 
-    @Test
-    public void testCreateDARDocument() throws Exception {
-        Document dar = getDocument(null, "845246551313515", null);
-        byte[] doc = databaseDataAccessRequestAPI.createDARDocument(dar, getResearcherProperties(), new User(), true, TRANSLATED_USE_RESTRICTION);
-        Assert.assertNotNull(doc);
-    }
-
     private Document getDocument(String linkedIn, String orcid, String researcherGate) {
         Document dar = new Document();
         dar.put(UserFields.LINKEDIN_PROFILE.getValue(), linkedIn);

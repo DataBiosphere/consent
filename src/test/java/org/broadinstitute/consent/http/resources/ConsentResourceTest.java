@@ -4,15 +4,11 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AuditService;
-import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.MatchAPI;
-import org.broadinstitute.consent.http.service.MatchProcessAPI;
+import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -44,29 +40,21 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
-        AbstractConsentAPI.class,
         AbstractDACUserAPI.class,
-        AbstractMatchProcessAPI.class,
-        AbstractMatchAPI.class,
-        AbstractUseRestrictionValidatorAPI.class,
-        AbstractElectionAPI.class,
+        AbstractUseRestrictionValidatorAPI.class
 })
 public class ConsentResourceTest {
 
-    @Mock
-    private ConsentAPI api;
     @Mock
     private DACUserAPI dacUserAPI;
     @Mock
     private AuditService auditService;
     @Mock
-    private MatchProcessAPI matchProcessAPI;
+    private ConsentService consentService;
     @Mock
-    private MatchAPI matchAPI;
+    private MatchService matchService;
     @Mock
     private UseRestrictionValidatorAPI useRestrictionValidatorAPI;
-    @Mock
-    private ElectionAPI electionAPI;
     @Mock
     private UserService userService;
     @Mock
@@ -79,25 +67,17 @@ public class ConsentResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractConsentAPI.class);
         PowerMockito.mockStatic(AbstractDACUserAPI.class);
-        PowerMockito.mockStatic(AbstractMatchProcessAPI.class);
-        PowerMockito.mockStatic(AbstractMatchAPI.class);
         PowerMockito.mockStatic(AbstractUseRestrictionValidatorAPI.class);
-        PowerMockito.mockStatic(AbstractElectionAPI.class);
     }
 
     private void initResource() {
         when(builder.path(anyString())).thenReturn(builder);
         when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
         when(info.getRequestUriBuilder()).thenReturn(builder);
-        when(AbstractConsentAPI.getInstance()).thenReturn(api);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
-        when(AbstractMatchProcessAPI.getInstance()).thenReturn(matchProcessAPI);
-        when(AbstractMatchAPI.getInstance()).thenReturn(matchAPI);
         when(AbstractUseRestrictionValidatorAPI.getInstance()).thenReturn(useRestrictionValidatorAPI);
-        when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new ConsentResource(auditService, userService);
+        resource = new ConsentResource(auditService, userService, consentService, matchService);
     }
 
     @Test
@@ -111,9 +91,9 @@ public class ConsentResourceTest {
 
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
-        when(api.create(any())).thenReturn(consent);
+        when(consentService.create(any())).thenReturn(consent);
         doNothing().when(auditService).saveConsentAudit(any(), any(), any(), any());
-        doNothing().when(matchProcessAPI).processMatchesForConsent(any());
+        doNothing().when(matchService).processMatchesForConsent(any());
 
         initResource();
 
@@ -133,10 +113,10 @@ public class ConsentResourceTest {
 
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
-        when(api.retrieve(any())).thenReturn(consent);
-        when(api.update(any(), any())).thenReturn(consent);
+        when(consentService.retrieve(any())).thenReturn(consent);
+        when(consentService.update(any(), any())).thenReturn(consent);
         doNothing().when(auditService).saveConsentAudit(any(), any(), any(), any());
-        doNothing().when(matchProcessAPI).processMatchesForConsent(any());
+        doNothing().when(matchService).processMatchesForConsent(any());
 
         initResource();
 
@@ -146,7 +126,7 @@ public class ConsentResourceTest {
 
     @Test
     public void testDeleteConsent() {
-        doNothing().when(api).delete(any());
+        doNothing().when(consentService).delete(any());
         initResource();
 
         Response response = resource.delete(UUID.randomUUID().toString());
@@ -175,7 +155,7 @@ public class ConsentResourceTest {
         AuthUser user = new AuthUser(dacUser.getEmail());
         Consent consent = new Consent();
         consent.setConsentId(UUID.randomUUID().toString());
-        when(api.retrieve(any())).thenReturn(consent);
+        when(consentService.retrieve(any())).thenReturn(consent);
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         initResource();
@@ -193,7 +173,7 @@ public class ConsentResourceTest {
         consent.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
         consent.setConsentId(UUID.randomUUID().toString());
         consent.setDataUseLetter(UUID.randomUUID().toString());
-        when(api.retrieve(any())).thenReturn(consent);
+        when(consentService.retrieve(any())).thenReturn(consent);
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         initResource();
@@ -210,7 +190,7 @@ public class ConsentResourceTest {
         Consent consent = new Consent();
         consent.setConsentId(UUID.randomUUID().toString());
         consent.setDataUseLetter(UUID.randomUUID().toString());
-        when(api.retrieve(any())).thenReturn(consent);
+        when(consentService.retrieve(any())).thenReturn(consent);
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         initResource();

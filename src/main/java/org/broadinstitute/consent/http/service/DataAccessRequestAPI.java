@@ -22,10 +22,6 @@ public interface DataAccessRequestAPI {
 
     List<User> getUserEmailAndCancelElection(String referenceId);
 
-    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, User user, Boolean manualReview, String sDUR) throws IOException;
-
-    String getStructuredDURForPdf(Document dar);
-
     File createApprovedDARDocument() throws NotFoundException, IOException;
 
     File createReviewedDARDocument() throws NotFoundException, IOException;

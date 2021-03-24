@@ -40,30 +40,6 @@ public class DataRequestReportsResource extends Resource {
         this.userService = userService;
     }
 
-    @GET
-    @PermitAll
-    @Produces("application/pdf")
-    @Path("/{requestId}/pdf")
-    public Response downloadDataRequestPdfFile(@PathParam("requestId") String requestId) {
-        Document dar = darApi.describeDataAccessRequestById(requestId);
-        DataAccessRequest dataAccessRequest = darService.findByReferenceId(requestId);
-        Map<String, String> researcherProperties = researcherService.describeResearcherPropertiesForDAR(dataAccessRequest.getUserId());
-        User user = userService.findUserById(dataAccessRequest.getUserId());
-        String fileName = "FullDARApplication-" + dataAccessRequest.getData().getDarCode();
-        try {
-            String sDUR = darApi.getStructuredDURForPdf(dar);
-            Boolean manualReview = dataAccessRequest.requiresManualReview();
-            return Response
-                    .ok(darApi.createDARDocument(dar, researcherProperties, user, manualReview, sDUR), MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename =" + fileName + ".pdf")
-                    .header(HttpHeaders.ACCEPT, "application/pdf")
-                    .header("Access-Control-Expose-Headers", HttpHeaders.CONTENT_DISPOSITION)
-                    .build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
     // TODO: Undocumented
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
