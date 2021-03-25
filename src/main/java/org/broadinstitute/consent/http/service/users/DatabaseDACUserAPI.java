@@ -81,7 +81,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         // validate required fields are not null or empty
         validateRequiredFields(updatedUser);
         try {
-            userDAO.updateUser(updatedUser.getEmail(), updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
+            userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }

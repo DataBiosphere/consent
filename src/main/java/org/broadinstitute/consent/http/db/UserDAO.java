@@ -86,9 +86,8 @@ public interface UserDAO extends Transactional<UserDAO> {
                           @Bind("displayName") String displayName,
                           @Bind("createDate") Date createDate);
 
-    @SqlUpdate("update dacuser set email=:email, displayName=:displayName, additional_email=:additionalEmail where dacUserId=:id")
-    void updateUser(@Bind("email") String email,
-                       @Bind("displayName") String displayName,
+    @SqlUpdate("update dacuser set displayName=:displayName, additional_email=:additionalEmail where dacUserId=:id")
+    void updateUser(@Bind("displayName") String displayName,
                        @Bind("id") Integer id,
                        @Bind("additionalEmail") String additionalEmail);
 
