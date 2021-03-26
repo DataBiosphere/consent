@@ -70,7 +70,6 @@ public class InstitutionServiceTest {
     service.createInstitution(mockInstitution, 1);
   }
 
-  //NOTE: would like to add a test for name duplication, but exception will differ depending on whether name column has the UNIQUE keyword applied
   @Test
   public void testUpdateInstitutionById() {
     Institution mockInstitution = initMockModel();
