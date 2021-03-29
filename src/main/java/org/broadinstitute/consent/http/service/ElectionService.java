@@ -207,17 +207,6 @@ public class ElectionService {
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
-    public Election describeConsentElection(String consentId) {
-        if (consentDAO.checkConsentById(consentId) == null) {
-            throw new NotFoundException("Invalid ConsentId");
-        }
-        Election election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
-        if (election == null) {
-            throw new NotFoundException("Election was not found");
-        }
-        return election;
-    }
-
     public void deleteElection(String referenceId, Integer id) {
         Election election = electionDAO.findElectionById(id);
         if (Objects.isNull(election)) {
