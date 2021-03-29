@@ -11,7 +11,7 @@
 
   <properties>
     <java.version>11</java.version>
-    <liquibase.version>4.3.1</liquibase.version>
+    <liquibase.version>4.3.2</liquibase.version>
     <dropwizard.version>2.0.20</dropwizard.version>
     <owl.version>5.1.17</owl.version>
     <postgres.version>42.2.19</postgres.version>
@@ -249,13 +249,20 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.18.0</version>
+        <version>3.18.1</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
 
   <dependencies>
+
+    <dependency>
+      <groupId>net.gcardone.junidecode</groupId>
+      <artifactId>junidecode</artifactId>
+      <version>0.4.1</version>
+    </dependency>
+
 
     <dependency>
       <groupId>org.owasp</groupId>
