@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.WhitelistService;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
+import org.broadinstitute.consent.http.service.ResearcherService;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;

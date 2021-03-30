@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.WhitelistService;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
+import org.broadinstitute.consent.http.service.ResearcherService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

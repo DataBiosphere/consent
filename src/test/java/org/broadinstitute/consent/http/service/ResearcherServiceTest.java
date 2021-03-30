@@ -25,8 +25,6 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherPropertyHandler;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -80,7 +78,7 @@ public class ResearcherServiceTest {
     }
 
     private void initService() {
-        service = new ResearcherPropertyHandler(userPropertyDAO, userDAO, emailNotifierService);
+        service = new ResearcherService(userPropertyDAO, userDAO, emailNotifierService);
     }
 
     @Test
