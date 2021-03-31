@@ -3,9 +3,8 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteAPI;
 
@@ -32,14 +31,14 @@ public class ConsentVoteResource extends Resource {
 
     private final EmailNotifierService emailNotifierService;
     private final VoteAPI api;
-    private final ElectionAPI electionAPI;
+    private final ElectionService electionService;
     private static final Logger logger = Logger.getLogger(ConsentVoteResource.class.getName());
 
     @Inject
-    public ConsentVoteResource(EmailNotifierService emailNotifierService) {
+    public ConsentVoteResource(EmailNotifierService emailNotifierService, ElectionService electionService) {
         this.emailNotifierService = emailNotifierService;
         this.api = AbstractVoteAPI.getInstance();
-        this.electionAPI = AbstractElectionAPI.getInstance();
+        this.electionService = electionService;
     }
 
     @POST
@@ -50,7 +49,7 @@ public class ConsentVoteResource extends Resource {
                                     @PathParam("consentId") String consentId, @PathParam("id") Integer voteId){
         try {
             Vote vote = api.updateVoteById(rec, voteId);
-            if(electionAPI.validateCollectEmailCondition(vote)){
+            if(electionService.validateCollectEmailCondition(vote)){
                 try {
                     emailNotifierService.sendCollectMessage(vote.getElectionId());
                 } catch (MessagingException | IOException | TemplateException e) {

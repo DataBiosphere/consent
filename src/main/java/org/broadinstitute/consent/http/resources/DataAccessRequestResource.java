@@ -37,11 +37,10 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.bson.Document;
@@ -54,16 +53,16 @@ public class DataAccessRequestResource extends Resource {
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private final ConsentService consentService;
     private final EmailNotifierService emailNotifierService;
-    private final ElectionAPI electionAPI;
+    private final ElectionService electionService;
     private final UserService userService;
 
     @Inject
-    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, UserService userService, ConsentService consentService) {
+    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, UserService userService, ConsentService consentService, ElectionService electionService) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.emailNotifierService = emailNotifierService;
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentService = consentService;
-        this.electionAPI = AbstractElectionAPI.getInstance();
+        this.electionService = electionService;
         this.userService = userService;
     }
 
@@ -84,7 +83,7 @@ public class DataAccessRequestResource extends Resource {
         } catch (NotFoundException e) {
             logger.severe("Unable to find userId: " + userId + " for data access request id: " + id);
         }
-        DARModalDetailsDTO detailsDTO = dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionAPI);
+        DARModalDetailsDTO detailsDTO = dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionService);
         return Response.ok().entity(detailsDTO).build();
     }
 

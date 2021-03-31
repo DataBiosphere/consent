@@ -11,10 +11,9 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
-import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteService;
 
@@ -46,16 +45,16 @@ public class ConsentElectionResource extends Resource {
     private final DacService dacService;
     private final EmailNotifierService emailNotifierService;
     private final VoteService voteService;
-    private final ElectionAPI api;
+    private final ElectionService electionService;
 
     @Inject
     public ConsentElectionResource(ConsentService consentService, DacService dacService,
-                                   EmailNotifierService emailNotifierService, VoteService voteService) {
+                                   EmailNotifierService emailNotifierService, VoteService voteService, ElectionService electionService) {
         this.consentService = consentService;
         this.dacService = dacService;
         this.emailNotifierService = emailNotifierService;
         this.voteService = voteService;
-        this.api = AbstractElectionAPI.getInstance();
+        this.electionService = electionService;
     }
 
     @POST
@@ -114,7 +113,7 @@ public class ConsentElectionResource extends Resource {
     @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response deleteElection(@PathParam("consentId") String consentId, @Context UriInfo info, @PathParam("id") Integer id) {
         try {
-            api.deleteElection(consentId, id);
+            electionService.deleteElection(consentId, id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
         } catch (Exception e) {
             return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
@@ -128,7 +127,7 @@ public class ConsentElectionResource extends Resource {
                 stream().
                 findFirst();
         dataset.ifPresent(dataSet -> election.setDataSetId(dataSet.getDataSetId()));
-        Election newElection = api.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
+        Election newElection = electionService.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
         List<Vote> votes = voteService.createVotes(newElection, ElectionType.TRANSLATE_DUL, false);
         List<Vote> dulVotes = votes.stream().
                 filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
