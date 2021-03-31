@@ -49,7 +49,7 @@ paths:
         201:
           description: Successfully created
         400:
-          description: Bad request
+          description: Bad Request
   /api/approvalExpirationTime/{id}:
     get:
       summary: Get the approval expiration time
@@ -95,7 +95,7 @@ paths:
         200:
           description: Successfully updated
         400:
-          description: Bad request
+          description: Bad Request
     delete:
       summary: Delete approval expiration time
       description: Delete approval expiration time
@@ -719,7 +719,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Vote'
         400:
-          description: 'Bad request, malformed entity, etc'
+          description: 'Bad Request, malformed entity, etc'
         404:
           description: The association type wasn't send, or the application couldn't find any consents that matched the search criteria.
     put:
@@ -753,7 +753,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Vote'
         400:
-          description: Bad request, malformed entity, etc.
+          description: Bad Request, malformed entity, etc.
     get:
       summary: describe
       description: Returns the required vote.
@@ -1901,7 +1901,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Election'
         400:
-          description: Bad request.
+          description: Bad Request.
         404:
           description: The DAR couldn't be found.
   /api/dataRequest/{requestId}/election/{id}:
@@ -2872,6 +2872,82 @@ paths:
           description: Email successfully sent
         500:
           description: Server error.
+
+  /api/institutions:
+    get:
+      summary: Institution INDEX resource
+      description: Fetches all institutions
+      responses: 
+        200:
+          description: Returns all institutions. If no results are found, an empty array is returned. 
+            Admin will see all details while non-Admins will only see a subset.
+        500:
+          description: Internal Server Error
+    post:
+      summary: Institution CREATE resource
+      description: Creates new institution record based on json payload
+      responses:
+        201:
+          description: Creates and returns newly created record.
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /api/institutions/{id}:
+    get:
+      summary: Institution GET
+      description: Fetches Institution based on id param
+      parameters:
+        - name: id
+          in: path
+          description: Institution ID
+          required: true
+          schema:
+            type: String
+      responses:
+        200:
+          description: Returns target institution.
+            Admin will see all details while non-Admins will only see a subset.
+        404: 
+          description: Institution not found
+        500: 
+          description: Internal Server Error
+    put:
+      summary: Institution UPDATE
+      description: Updates institution based on id and json payload
+      parameters:
+        - name: id
+          in: path
+          description: Institution ID
+          required: true
+          schema:
+            type: string
+      responses:
+        200: 
+          description: Updates and returns target institution
+        400:
+          description: Bad Request
+        404:
+          description: Institution not found
+        500: 
+          description: Internal Server Error
+    delete:
+      summary: Institution DELETE
+      description: Deletes institution based on id
+      parameters:
+        - name: id
+          in: path
+          description: Institution ID
+          required: True
+          schema: 
+            type: string
+      responses:
+        204: 
+          description: Deletes target institution (no return entity)
+        404:
+          description: Institution not found
+        500: 
+          description: Internal Server Error
   /api/match/{consentId}/{purposeId}:
     get:
       summary: getMatches
@@ -4191,6 +4267,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+    Institution:
+      type: Object
+      properties:
+          id: 
+            type: integer
+            description: Id of Institution,
+          name:
+            type: string
+            description: Name of institution
+          createUser:
+            type: integer
+            description: Id of user who created the Institution record
+          createDate:
+            type: string
+            format: Date
+            description: Institution's creation date
+          updateUser:
+            type: integer
+            description: Id of user who last updated the Institution record
+          updateDate:
+            type: string
+            format: Date
+            description: Institution's last update date
     User:
       type: object
       properties:
