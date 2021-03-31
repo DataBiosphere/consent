@@ -9,13 +9,8 @@ import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -29,8 +24,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("FieldCanBeLocal")
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore("jdk.internal.reflect.*")
 public class ElectionResourceTest {
 
     private final int OK = HttpStatusCodes.STATUS_CODE_OK;
