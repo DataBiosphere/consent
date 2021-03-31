@@ -248,7 +248,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionAPI electionApi) {
+    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionService electionService) {
         DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(dar.getString(DarConstants.REFERENCE_ID));
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
         List<DataSet> datasets = populateDatasets(dar);
@@ -259,7 +259,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 userPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId()) :
                 Collections.emptyList();
         return darModalDetailsDTO
-            .setNeedDOApproval(electionApi.darDatasetElectionStatus(dataAccessRequest.getReferenceId()))
+            .setNeedDOApproval(electionService.darDatasetElectionStatus(dataAccessRequest.getReferenceId()))
             .setResearcherName(user, dataAccessRequest.getData().getInvestigator())
             .setStatus(status)
             .setRationale(rationale)

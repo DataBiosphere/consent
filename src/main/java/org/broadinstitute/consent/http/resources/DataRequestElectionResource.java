@@ -26,9 +26,8 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -37,20 +36,20 @@ import org.broadinstitute.consent.http.service.VoteService;
 public class DataRequestElectionResource extends Resource {
 
     private final DataAccessRequestService darService;
-    private final ElectionAPI api;
+    private final ElectionService electionService;
     private final EmailNotifierService emailNotifierService;
     private final SummaryService summaryService;
     private final VoteService voteService;
 
     @Inject
     public DataRequestElectionResource(DataAccessRequestService darService,
-        EmailNotifierService emailNotifierService, SummaryService summaryService,
-        VoteService voteService) {
+                                       EmailNotifierService emailNotifierService, SummaryService summaryService,
+                                       VoteService voteService, ElectionService electionService) {
         this.darService = darService;
-        this.api = AbstractElectionAPI.getInstance();
         this.emailNotifierService = emailNotifierService;
         this.summaryService = summaryService;
         this.voteService = voteService;
+        this.electionService = electionService;
     }
 
     @POST
@@ -63,10 +62,10 @@ public class DataRequestElectionResource extends Resource {
         try {
             DataAccessRequest dar = darService.findByReferenceId(requestId);
             boolean manualReview = dar.requiresManualReview();
-            accessElection = api.createElection(rec, requestId, ElectionType.DATA_ACCESS);
+            accessElection = electionService.createElection(rec, requestId, ElectionType.DATA_ACCESS);
             List<Vote> votes = voteService.createVotes(accessElection, ElectionType.DATA_ACCESS, manualReview);
             //create RP election
-            Election rpElection = api.createElection(rec, requestId, ElectionType.RP);
+            Election rpElection = electionService.createElection(rec, requestId, ElectionType.RP);
             voteService.createVotes(rpElection, ElectionType.RP, false);
             List<Vote> darVotes = votes.stream().
                     filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
@@ -76,7 +75,7 @@ public class DataRequestElectionResource extends Resource {
         } catch (Exception e) {
             try {
                 if (Objects.nonNull(accessElection)) {
-                    api.deleteElection(requestId, accessElection.getElectionId());
+                    electionService.deleteElection(requestId, accessElection.getElectionId());
                 }
             } catch (Exception e2) {
                 logger().warn("Error deleting created access election: ", e2);
@@ -92,7 +91,7 @@ public class DataRequestElectionResource extends Resource {
     @PermitAll
     public Response describe(@PathParam("requestId") String requestId) {
         try {
-            return Response.status(Status.OK).entity(api.describeDataRequestElection(requestId)).build();
+            return Response.status(Status.OK).entity(electionService.describeDataRequestElection(requestId)).build();
         } catch (Exception e) {
             return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         }
@@ -104,7 +103,7 @@ public class DataRequestElectionResource extends Resource {
     @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response deleteElection(@PathParam("requestId") String requestId, @PathParam("id") Integer id, @Context UriInfo info) {
         try {
-            api.deleteElection(requestId, id);
+            electionService.deleteElection(requestId, id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
         } catch (Exception e) {
             return createExceptionResponse(e);
