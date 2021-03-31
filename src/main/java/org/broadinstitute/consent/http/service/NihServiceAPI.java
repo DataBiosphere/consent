@@ -5,7 +5,6 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 
 import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;

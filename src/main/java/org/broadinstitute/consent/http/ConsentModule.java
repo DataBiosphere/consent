@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
+import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
@@ -448,6 +449,15 @@ public class ConsentModule extends AbstractModule {
                 providesResearcherPropertyDAO(),
                 providesUserRoleDAO(),
                 providesVoteDAO());
+    }
+
+    @Provides
+    ResearcherService providesResearcherService() {
+        return new ResearcherService(
+                providesResearcherPropertyDAO(),
+                providesUserDAO(),
+                providesEmailNotifierService()
+        );
     }
 
     @Provides

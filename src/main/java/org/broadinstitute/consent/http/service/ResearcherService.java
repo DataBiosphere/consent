@@ -1,6 +1,24 @@
-package org.broadinstitute.consent.http.service.users.handler;
+package org.broadinstitute.consent.http.service;
 
+import com.google.inject.Inject;
 import freemarker.template.TemplateException;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
+import org.broadinstitute.consent.http.enumeration.UserFields;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.resources.DACUserResource;
+import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.mail.MessagingException;
+import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,42 +26,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.enumeration.UserFields;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class ResearcherPropertyHandler implements ResearcherService {
 
+public class ResearcherService {
     private UserPropertyDAO userPropertyDAO;
     private UserDAO userDAO;
     private final EmailNotifierService emailNotifierService;
-    private DACUserAPI dacUserAPI = AbstractDACUserAPI.getInstance();
     private static final String ACTION_REGISTERED = "registered";
 
     protected Logger logger() {
         return LoggerFactory.getLogger(this.getClass());
     }
 
-    public ResearcherPropertyHandler(UserPropertyDAO userPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService) {
+    @Inject
+    public ResearcherService(UserPropertyDAO userPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService) {
         this.userPropertyDAO = userPropertyDAO;
         this.userDAO = userDAO;
         this.emailNotifierService = emailNotifierService;
     }
 
-    @Override
     public List<UserProperty> setProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser) throws NotFoundException, IllegalArgumentException {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
@@ -54,7 +55,6 @@ public class ResearcherPropertyHandler implements ResearcherService {
         return describeResearcherProperties(user.getDacUserId());
     }
 
-    @Override
     public List<UserProperty> updateProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser, Boolean validate) throws NotFoundException, IllegalArgumentException {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
@@ -70,6 +70,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
         } else if (hasUpdatedFields(user.getDacUserId(), researcherPropertiesMap, isUpdatedProfileCompleted)) {
             deleteResearcherProperties(user.getDacUserId());
             saveProperties(properties);
+            DACUserAPI dacUserAPI = AbstractDACUserAPI.getInstance();
             dacUserAPI.updateUserStatus(RoleStatus.PENDING.toString(), user.getDacUserId());
         } else {
             saveProperties(properties);
@@ -82,23 +83,19 @@ public class ResearcherPropertyHandler implements ResearcherService {
         userPropertyDAO.insertAll(properties);
     }
 
-    @Override
     public Map<String, String> describeResearcherPropertiesMap(Integer userId) {
         return describeResearcherProperties(userId).stream().collect(Collectors.toMap(UserProperty::getPropertyKey,
                 UserProperty::getPropertyValue));
     }
 
-    @Override
     public void deleteResearcherProperties(Integer userId) {
         userPropertyDAO.deleteAllPropertiesByUser(userId);
     }
 
-    @Override
     public void deleteResearcherSpecificProperties(List<UserProperty> properties) {
         userPropertyDAO.deletePropertiesByUserAndKey(properties);
     }
 
-    @Override
     public Map<String, String> describeResearcherPropertiesForDAR(Integer userId) {
         Map<String, String> properties = describeResearcherPropertiesMap(userId);
         return getResearcherPropertiesForDAR(properties, userId);
@@ -111,21 +108,21 @@ public class ResearcherPropertyHandler implements ResearcherService {
         rpForDAR.put(UserFields.DEPARTMENT.getValue(), properties.getOrDefault(UserFields.DEPARTMENT.getValue(), null));
         rpForDAR.put(UserFields.STREET_ADDRESS_1.getValue(), properties.getOrDefault(UserFields.STREET_ADDRESS_1.getValue(), null));
         rpForDAR.put(
-            UserFields.CITY.getValue(), properties.getOrDefault(UserFields.CITY.getValue(), null));
+                UserFields.CITY.getValue(), properties.getOrDefault(UserFields.CITY.getValue(), null));
         rpForDAR.put(UserFields.ZIP_POSTAL_CODE.getValue(), properties.getOrDefault(UserFields.ZIP_POSTAL_CODE.getValue(), null));
         rpForDAR.put(UserFields.COUNTRY.getValue(), properties.getOrDefault(UserFields.COUNTRY.getValue(), null));
         rpForDAR.put(
-            UserFields.STATE.getValue(), properties.getOrDefault(UserFields.STATE.getValue(), null));
+                UserFields.STATE.getValue(), properties.getOrDefault(UserFields.STATE.getValue(), null));
         rpForDAR.put(UserFields.STREET_ADDRESS_2.getValue(), properties.getOrDefault(UserFields.STREET_ADDRESS_2.getValue(), null));
         rpForDAR.put(UserFields.DIVISION.getValue(), properties.getOrDefault(UserFields.DIVISION.getValue(), null));
         rpForDAR.put(UserFields.ERA_COMMONS_ID.getValue(), properties.getOrDefault(UserFields.ERA_COMMONS_ID.getValue(), null));
         rpForDAR.put(UserFields.PUBMED_ID.getValue(), properties.getOrDefault(UserFields.PUBMED_ID.getValue(), null));
         rpForDAR.put(UserFields.PROFILE_NAME.getValue(), properties.getOrDefault(UserFields.PROFILE_NAME.getValue(), null));
         rpForDAR.put(
-            UserFields.ACADEMIC_BUSINESS_EMAIL.getValue(), properties.getOrDefault(UserFields.ACADEMIC_BUSINESS_EMAIL.getValue(), null));
+                UserFields.ACADEMIC_BUSINESS_EMAIL.getValue(), properties.getOrDefault(UserFields.ACADEMIC_BUSINESS_EMAIL.getValue(), null));
         rpForDAR.put(UserFields.SCIENTIFIC_URL.getValue(), properties.getOrDefault(UserFields.SCIENTIFIC_URL.getValue(), null));
         rpForDAR.put(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), properties.getOrDefault(
-            UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), null));
+                UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), null));
         rpForDAR.put(UserFields.PI_NAME.getValue(), properties.getOrDefault(UserFields.PI_NAME.getValue(), null));
         rpForDAR.put(UserFields.PI_EMAIL.getValue(), properties.getOrDefault(UserFields.PI_EMAIL.getValue(), null));
         rpForDAR.put(UserFields.COMPLETED.getValue(), properties.getOrDefault(UserFields.COMPLETED.getValue(), null));
@@ -133,7 +130,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
         rpForDAR.put(UserFields.LINKEDIN_PROFILE.getValue(), properties.getOrDefault(UserFields.LINKEDIN_PROFILE.getValue(), null));
         rpForDAR.put(UserFields.RESEARCHER_GATE.getValue(), properties.getOrDefault(UserFields.RESEARCHER_GATE.getValue(), null));
         rpForDAR.put(
-            UserFields.ORCID.getValue(), properties.getOrDefault(UserFields.ORCID.getValue(), null));
+                UserFields.ORCID.getValue(), properties.getOrDefault(UserFields.ORCID.getValue(), null));
         rpForDAR.put(UserFields.CHECK_NOTIFICATIONS.getValue(), properties.getOrDefault(UserFields.CHECK_NOTIFICATIONS.getValue(), null));
         rpForDAR.put(UserFields.ERA_EXPIRATION_DATE.getValue(), properties.getOrDefault(UserFields.ERA_EXPIRATION_DATE.getValue(), null));
         rpForDAR.put(UserFields.ERA_USERNAME.getValue(), properties.getOrDefault(UserFields.ERA_USERNAME.getValue(), null));
@@ -195,14 +192,14 @@ public class ResearcherPropertyHandler implements ResearcherService {
             String pubmedID = researcherPropertiesMap.getOrDefault(UserFields.PUBMED_ID.getValue(), "");
             String scientificURL = researcherPropertiesMap.getOrDefault(UserFields.SCIENTIFIC_URL.getValue(), "");
             if (StringUtils.isNotEmpty(eRACommonsID) && StringUtils.isEmpty(
-                userPropertyDAO.findPropertyValueByPK(userId, UserFields.ERA_COMMONS_ID.getValue())) ||
+                    userPropertyDAO.findPropertyValueByPK(userId, UserFields.ERA_COMMONS_ID.getValue())) ||
                     StringUtils.isNotEmpty(pubmedID) && StringUtils.isEmpty(
-                        userPropertyDAO.findPropertyValueByPK(userId, UserFields.PUBMED_ID.getValue())) ||
+                            userPropertyDAO.findPropertyValueByPK(userId, UserFields.PUBMED_ID.getValue())) ||
                     StringUtils.isNotEmpty(scientificURL) && StringUtils.isEmpty(
-                        userPropertyDAO.findPropertyValueByPK(userId, UserFields.SCIENTIFIC_URL.getValue()))) {
+                            userPropertyDAO.findPropertyValueByPK(userId, UserFields.SCIENTIFIC_URL.getValue()))) {
                 hasUpdatedFields = true;
             } else if (CollectionUtils.isNotEmpty(userPropertyDAO
-                .findResearcherProperties(userId, institutionName, isThePI, havePI, eRACommonsID, pubmedID, scientificURL))) {
+                    .findResearcherProperties(userId, institutionName, isThePI, havePI, eRACommonsID, pubmedID, scientificURL))) {
                 hasUpdatedFields = true;
             }
         }

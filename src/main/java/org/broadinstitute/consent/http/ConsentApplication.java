@@ -123,8 +123,7 @@ import org.broadinstitute.consent.http.service.ontology.OntologyHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherPropertyHandler;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
+import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
@@ -246,11 +245,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 = new StoreOntologyService(googleStore,
                 config.getStoreOntologyConfiguration().getBucketSubdirectory(),
                 config.getStoreOntologyConfiguration().getConfigurationFileName());
+        final ResearcherService researcherService = injector.getProvider(ResearcherService.class).get();
 
 
         final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
-        final ResearcherService researcherService = new ResearcherPropertyHandler(userPropertyDAO, userDAO, emailNotifierService);
         final NihAuthApi nihAuthApi = new NihServiceAPI(researcherService);
 
         // Custom Error handling. Expand to include other codes when necessary
