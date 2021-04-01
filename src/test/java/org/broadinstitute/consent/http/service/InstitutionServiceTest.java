@@ -4,15 +4,14 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.models.Institution;
 import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import org.mockito.Mock;
+
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doThrow;
 
 import org.mockito.MockitoAnnotations;
 
@@ -21,6 +20,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import javax.ws.rs.NotFoundException;
 
 public class InstitutionServiceTest {
 
@@ -38,41 +39,91 @@ public class InstitutionServiceTest {
     service = new InstitutionService(institutionDAO);
   }
 
+  private Institution initMockModel() {
+    Institution mockInstitution = new Institution();
+    mockInstitution.setName("Test Name");
+    return mockInstitution;
+  }
+
   @Test
-  public void testCreateInstitution() {
+  public void testCreateInstitutionSuccess() {
+    Institution mockInstitution = initMockModel();
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
     initService();
-    //mock findByInstitution (not insertInstitution) because that is the call that service.createInstitution returns
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(getInstitutions().get(0));
-    Institution institute = service.createInstitution(anyString(), anyString(), anyString(), anyInt(), eq(new Date()));
-    assertEquals(getInstitutions().get(0), institute);
+    Institution institution = service.createInstitution(mockInstitution, 1);
+    assertNotNull(institution);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateInstitutionBlankName() {
+    Institution mockInstitution = initMockModel();
+    mockInstitution.setName("");
+    initService();
+    service.createInstitution(mockInstitution, 1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateInstitutionNullName() {
+    Institution mockInstitution = initMockModel();
+    mockInstitution.setName(null);
+    initService();
+    service.createInstitution(mockInstitution, 1);
   }
 
   @Test
   public void testUpdateInstitutionById() {
+    Institution mockInstitution = initMockModel();
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
     initService();
+    mockInstitution.setUpdateDate(new Date());
     //doNothing is default for void methods, no need to mock InstitutionDAO.updateInstitutionById
-    try {
-      service.updateInstitutionById(anyInt(), eq("New Name"), anyString(), anyString(), anyInt(), eq(new Date()));
-    } catch (Exception e) {
-      Assert.fail("Update should not fail");
-    }
+    Institution updatedInstitution = service.updateInstitutionById(mockInstitution, 1, 1);
+    assertNotNull(updatedInstitution);
   }
 
-  @Test(expected = Throwable.class)
-  public void testUpdateInstitutionByIdFail() {
+  @Test(expected = NotFoundException.class)
+  public void testUpdateInstitutionByIdNotFound() {
+    Institution mockInstitution = initMockModel();
+    when(institutionDAO.findInstitutionById(anyInt())).thenThrow(new NotFoundException());
     initService();
-    doThrow(new Exception("Update method should pass on error from DAO")).when(institutionDAO).updateInstitutionById(anyInt(), anyString(), anyString(), anyString(), anyInt(), eq(new Date()));
-    service.updateInstitutionById(anyInt(), eq("New Name"), anyString(), anyString(), anyInt(), eq(new Date()));
+    service.updateInstitutionById(mockInstitution, 1, 1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testUpdateInstitutionBlankNameFail() {
+    Institution mockInstitution = initMockModel();
+    mockInstitution.setName("");
+    initService();
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
+    service.updateInstitutionById(mockInstitution, 1,1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testUpdateInstitutionNullNameFail() {
+    Institution mockInstitution = initMockModel();
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
+    initService();
+    mockInstitution.setName(null);
+    service.updateInstitutionById(mockInstitution, 1,1);
   }
 
   @Test
   public void testDeleteInstitutionById() {
+    Institution mockInstitution = initMockModel();
     initService();
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
     try {
-        service.deleteInstitutionById(1);
+      service.deleteInstitutionById(1);
     } catch (Exception e) {
-        Assert.fail("Delete should not fail");
+      Assert.fail("Institution DELETE should not fail");
     }
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testDeleteInstitutionByIdFail() {
+    initService();
+    when(institutionDAO.findInstitutionById(anyInt())).thenThrow(new NotFoundException());
+    service.deleteInstitutionById(1);  
   }
 
   @Test
@@ -82,11 +133,17 @@ public class InstitutionServiceTest {
     assertEquals(getInstitutions().get(0), service.findInstitutionById(anyInt()));
   }
 
+  @Test(expected = NotFoundException.class)
+  public void testFindInstitutionByIdFail() {
+    initService();
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(null);
+    service.findInstitutionById(1);
+  }
+
   @Test
   public void testFindAllInstitutions() {
     initService();
     when(institutionDAO.findAllInstitutions()).thenReturn(Collections.emptyList());
-    initService();
     assertTrue(service.findAllInstitutions().isEmpty());
   }
 
