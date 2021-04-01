@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.service.MatchService;
 
 import javax.annotation.security.PermitAll;
@@ -10,11 +11,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 
-@Path("{api : (api/)?}match")
+@Path("api/match")
 public class MatchResource extends Resource {
 
     private final MatchService service;
 
+    @Inject
     public MatchResource(MatchService matchService) {
         this.service = matchService;
     }
