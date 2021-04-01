@@ -29,29 +29,18 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
-import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-@SuppressWarnings("deprecation")
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore("jdk.internal.reflect.*")
-@PrepareForTest({AbstractVoteAPI.class})
 public class ConsentElectionResourceTest {
 
     @Mock
@@ -64,13 +53,10 @@ public class ConsentElectionResourceTest {
     ElectionService electionService;
 
     @Mock
-    VoteAPI voteAPI;
+    VoteService voteService;
 
     @Mock
     EmailNotifierService emailNotifierService;
-
-    @Mock
-    VoteService voteService;
 
     @Mock
     UriInfo info;
@@ -85,8 +71,6 @@ public class ConsentElectionResourceTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-
-        PowerMockito.mockStatic(AbstractVoteAPI.class);
 
         when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
         when(info.getRequestUriBuilder()).thenReturn(builder);
@@ -224,7 +208,6 @@ public class ConsentElectionResourceTest {
     }
 
     private void initResource() {
-        when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
         resource = new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService);
     }
 

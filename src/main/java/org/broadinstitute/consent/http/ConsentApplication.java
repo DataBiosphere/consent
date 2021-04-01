@@ -93,7 +93,6 @@ import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.WhitelistResource;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
@@ -101,7 +100,6 @@ import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DatabaseReviewResultsAPI;
-import org.broadinstitute.consent.http.service.DatabaseVoteAPI;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
@@ -228,7 +226,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO,
             userPropertyDAO);
         DatabaseDACUserAPI.initInstance(userDAO, userRoleDAO, userService);
-        DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
         OAuthAuthenticator.initInstance();
@@ -271,7 +268,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ConsentAssociationResource(consentService, userService));
         env.jersey().register(new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService));
         env.jersey().register(new ConsentManageResource(consentService));
-        env.jersey().register(new ConsentVoteResource(emailNotifierService, electionService));
+        env.jersey().register(new ConsentVoteResource(emailNotifierService, electionService, voteService));
         env.jersey().register(new ConsentCasesResource(electionService, pendingCaseService, summaryService));
         env.jersey().register(new DataRequestElectionResource(dataAccessRequestService, emailNotifierService, summaryService, voteService, electionService));
         env.jersey().register(new DataRequestVoteResource(dataAccessRequestService, datasetAssociationService, emailNotifierService, voteService, datasetService, electionService));
@@ -316,7 +313,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             @Override
             public void lifeCycleStopped(LifeCycle event) {
                 LOGGER.debug("**** ConsentApplication Server Stopped ****");
-                AbstractVoteAPI.clearInstance();
                 AbstractDACUserAPI.clearInstance();
                 AbstractReviewResultsAPI.clearInstance();
                 AbstractDataAccessRequestAPI.clearInstance();
