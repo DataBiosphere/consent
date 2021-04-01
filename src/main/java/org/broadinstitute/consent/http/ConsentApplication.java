@@ -285,7 +285,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new EmailNotifierResource(emailNotifierService));
         env.jersey().register(new InstitutionResource(userService, institutionService));
         env.jersey().register(new ApprovalExpirationTimeResource(approvalExpirationTimeService, userService));
-        env.jersey().register(MatchResource.class);
+        env.jersey().register(new MatchResource(matchService));
         env.jersey().register(new MetricsResource(metricsService));
         env.jersey().register(new UserResource(userService, whitelistService));
         env.jersey().register(new ResearcherResource(researcherService, userService, whitelistService));
