@@ -47,6 +47,7 @@ import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
+import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.SummaryService;
@@ -458,6 +459,11 @@ public class ConsentModule extends AbstractModule {
                 providesUserDAO(),
                 providesEmailNotifierService()
         );
+    }
+
+    @Provides
+    NihService providesNihService() {
+        return new NihService(providesResearcherService());
     }
 
     @Provides

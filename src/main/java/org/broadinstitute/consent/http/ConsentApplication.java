@@ -107,8 +107,7 @@ import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
-import org.broadinstitute.consent.http.service.NihAuthApi;
-import org.broadinstitute.consent.http.service.NihServiceAPI;
+import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
@@ -246,11 +245,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 config.getStoreOntologyConfiguration().getBucketSubdirectory(),
                 config.getStoreOntologyConfiguration().getConfigurationFileName());
         final ResearcherService researcherService = injector.getProvider(ResearcherService.class).get();
+        final NihService nihService = injector.getProvider(NihService.class).get();
 
 
         final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
-        final NihAuthApi nihAuthApi = new NihServiceAPI(researcherService);
 
         // Custom Error handling. Expand to include other codes when necessary
         final ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
@@ -286,7 +285,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new UserResource(userService, whitelistService));
         env.jersey().register(new ResearcherResource(researcherService, userService, whitelistService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
-        env.jersey().register(new NihAccountResource(nihAuthApi, userService));
+        env.jersey().register(new NihAccountResource(nihService, userService));
         env.jersey().register(new WhitelistResource(whitelistService));
         env.jersey().register(injector.getInstance(VersionResource.class));
 
