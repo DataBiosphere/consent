@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.UserProperty;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -24,9 +25,10 @@ public class NihServiceTest extends TestCase {
     private ResearcherService researcherService;
 
     private NihService service;
-    private static NIHUserAccount nihUserAccount;
-    private static AuthUser authUser;
+    private NIHUserAccount nihUserAccount;
+    private AuthUser authUser;
 
+    @Before
     public void setUp() throws Exception {
         nihUserAccount = new NIHUserAccount("nih username", new ArrayList(), new Date().toString(), true);
         authUser = new AuthUser("test@test.com");
