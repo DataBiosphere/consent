@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -12,16 +13,16 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-public class NihServiceAPI implements NihAuthApi {
+public class NihService {
 
     private ResearcherService researcherService;
 
-    public NihServiceAPI(ResearcherService researcherService) {
+    @Inject
+    public NihService(ResearcherService researcherService) {
         this.researcherService = researcherService;
     }
 
-    @Override
-    public List<UserProperty> authenticateNih(NIHUserAccount nihAccount, AuthUser user) {
+    public List<UserProperty> authenticateNih(NIHUserAccount nihAccount, AuthUser user) throws BadRequestException {
         if (StringUtils.isNotEmpty(nihAccount.getNihUsername()) && !nihAccount.getNihUsername().isEmpty()) {
             nihAccount.setEraExpiration(generateEraExpirationDates());
             nihAccount.setStatus(true);
@@ -31,7 +32,6 @@ public class NihServiceAPI implements NihAuthApi {
         }
     }
 
-    @Override
     public void deleteNihAccountById(Integer userId) {
         List<UserProperty> properties = new ArrayList<>();
         properties.add(new UserProperty(userId, UserFields.ERA_EXPIRATION_DATE.getValue()));
