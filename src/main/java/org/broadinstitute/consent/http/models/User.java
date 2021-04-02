@@ -48,6 +48,9 @@ public class User {
     @JsonProperty
     private Boolean profileCompleted;
 
+    @JsonProperty
+    private List<UserProperty> properties;
+
     public User() {
     }
 
@@ -255,10 +258,25 @@ public class User {
     }
 
     public void addRole(UserRole userRole) {
-        if (this.getRoles() == null) {
+        if (Objects.isNull(this.getRoles())) {
             this.setRoles(new ArrayList<>());
         }
         this.getRoles().add(userRole);
+    }
+
+    public List<UserProperty> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(List<UserProperty> properties) {
+        this.properties = properties;
+    }
+
+    public void addProperty(UserProperty property) {
+        if (Objects.isNull(this.getProperties())) {
+            this.setProperties(new ArrayList<>());
+        }
+        this.getProperties().add(property);
     }
 
     @Override

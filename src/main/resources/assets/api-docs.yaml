@@ -1181,7 +1181,7 @@ paths:
         Updates the user identified by the ID. Requires the authenticated user to have the same id
         as that of the user being updated except in the admin case - admins can update information
         for other users. A user's email cannot be updated. Role changes are not allowed for Chairperson
-        and Member roles using this endpoint. All Chairperson and Member changes (additions or removals) 
+        and Member roles using this endpoint. All Chairperson and Member changes (additions or removals)
         are ignored. See [DAC](/#!/DAC) endpoints for **POST/DELETE** endpoints for
         **/api/dac/{dacId}/chair/{userId}** and **/api/dac/{dacId}/member/{userId}** calls.
       parameters:
@@ -1668,10 +1668,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/DataAccessRequestManage'
-        400:
-          description: |
-            If optional user id is provided, it must be that of the authenticated user. Non-admin
-            and non-DAC users can only see their own Data Access Requests.
+        500:
+          description: Server error.
   /api/dar/cases/unreviewed:
       get:
         summary: getTotalUnReviewedDAR
@@ -2877,9 +2875,9 @@ paths:
     get:
       summary: Institution INDEX resource
       description: Fetches all institutions
-      responses: 
+      responses:
         200:
-          description: Returns all institutions. If no results are found, an empty array is returned. 
+          description: Returns all institutions. If no results are found, an empty array is returned.
             Admin will see all details while non-Admins will only see a subset.
         500:
           description: Internal Server Error
@@ -2908,9 +2906,9 @@ paths:
         200:
           description: Returns target institution.
             Admin will see all details while non-Admins will only see a subset.
-        404: 
+        404:
           description: Institution not found
-        500: 
+        500:
           description: Internal Server Error
     put:
       summary: Institution UPDATE
@@ -2923,13 +2921,13 @@ paths:
           schema:
             type: string
       responses:
-        200: 
+        200:
           description: Updates and returns target institution
         400:
           description: Bad Request
         404:
           description: Institution not found
-        500: 
+        500:
           description: Internal Server Error
     delete:
       summary: Institution DELETE
@@ -2939,14 +2937,14 @@ paths:
           in: path
           description: Institution ID
           required: True
-          schema: 
+          schema:
             type: string
       responses:
-        204: 
+        204:
           description: Deletes target institution (no return entity)
         404:
           description: Institution not found
-        500: 
+        500:
           description: Internal Server Error
   /api/match/{consentId}/{purposeId}:
     get:
@@ -3987,98 +3985,140 @@ components:
     DataAccessRequestManage:
       type: object
       properties:
+        dar:
+          type: object
+          description: The Data Access Request
+        election:
+          type: object
+          description: The Election
+        votes:
+          type: array
+          description: The Votes for the Election
+        dac:
+          type: object
+          description: The DAC for the Election
+        researcher:
+          type: object
+          description: The Researcher for the Data Access Request
         referenceId:
           type: string
           description: The reference ID that identifies the case
+          deprecated: true
         logged:
           type: string
           description: Describes the logged votes vs. total votes required.
+          deprecated: true
         alreadyVoted:
           type: boolean
           description: Describes if the user already voted on this case
+          deprecated: true
         isReminderSent:
           type: boolean
           description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
+          deprecated: true
         isFinalVote:
           type: boolean
           description: If the user is chairperson, this will be false if the final vote is not logged yet, true otherwise.
+          deprecated: true
         status:
           type: string
           description: Status of the vote. Pending or editable.
+          deprecated: true
         voteId:
           type: integer
           format: int32
           description: Describes the id of the users vote, related to this particular pending case.
+          deprecated: true
         totalVotes:
           type: integer
           format: int32
           description: Describes the total votes(users) required to vote for this election.
+          deprecated: true
         votesLogged:
           type: integer
           format: int32
           description: Votes already logged in this pending case. Equal to the total of users that voted minus the ones that didnt.
+          deprecated: true
         rpElectionId:
           type: integer
           format: int32
           description: Describes the id of the research purpose election related to this pending case, if it exists
+          deprecated: true
         rpVoteId:
           type: integer
           format: int32
           description: Describes the id of the research purpose vote, related to this particular pending case, if it exists
+          deprecated: true
         electionStatus:
           type: string
           description: The status of the election.
+          deprecated: true
         rus:
           type: string
           description: The rus of the Data Access Request.
+          deprecated: true
         dataRequestId:
           type: string
           description: The ID of the Data Access Request.
+          deprecated: true
         projectTitle:
           type: string
           description: The title of the project, in the Data Access Request
+          deprecated: true
         frontEndId:
           type: string
           description: The front end ID for the case
+          deprecated: true
         electionId:
           type: integer
           format: int32
           description: The ID of the election related to the DAR.
+          deprecated: true
         createDate:
           type: string
           format: date-time
           description: The Date the election was created.
+          deprecated: true
         sortDate:
           type: string
           format: date
           description: The datetime the election was created/updated (the last one).
+          deprecated: true
         electionVote:
           type: boolean
           description: Result of the election
+          deprecated: true
         isCanceled:
           type: boolean
           description: The DAR is canceled
+          deprecated: true
         needsApproval:
           type: boolean
           description: The DAR requires Data Owners approval
+          deprecated: true
         dataSetElectionResult:
           type: string
           description: Result of the Data Owners elections.
+          deprecated: true
         datasetId:
           type: integer
           format: int32
           description: The ID of the dataset for this DAR.
+          deprecated: true
         dacId:
           type: integer
           format: int32
           description: The ID of the DAC for this DAR's dataset.
+          deprecated: true
         errors:
           type: array
           items:
             type: string
           description: List of any structural errors with this DAR
+          deprecated: true
         ownerUser:
           description: The owner of the DAR
+          deprecated: true
           type: object
           items:
             $ref: '#/components/schemas/User'
@@ -4270,7 +4310,7 @@ components:
     Institution:
       type: Object
       properties:
-          id: 
+          id:
             type: integer
             description: Id of Institution,
           name:
