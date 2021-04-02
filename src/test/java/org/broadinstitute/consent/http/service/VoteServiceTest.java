@@ -33,7 +33,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.checkerframework.common.value.qual.StaticallyExecutable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
