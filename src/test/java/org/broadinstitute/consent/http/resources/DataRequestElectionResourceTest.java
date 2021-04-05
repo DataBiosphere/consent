@@ -21,39 +21,24 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.SummaryService;
-import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-@SuppressWarnings("deprecation")
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore("jdk.internal.reflect.*")
-@PrepareForTest({
-        AbstractVoteAPI.class
-})
 public class DataRequestElectionResourceTest {
 
     @Mock
     private DataAccessRequestService darService;
     @Mock
     private ElectionService electionService;
-    @Mock
-    private VoteAPI voteAPI;
     @Mock
     private EmailNotifierService emailNotifierService;
     @Mock
@@ -70,8 +55,6 @@ public class DataRequestElectionResourceTest {
     @Before
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractVoteAPI.class);
-        when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
         String requestId = UUID.randomUUID().toString();
