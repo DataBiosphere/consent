@@ -31,13 +31,11 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -51,7 +49,6 @@ public class DataRequestVoteResource extends Resource {
     private final DatasetAssociationService datasetAssociationService;
     private final ElectionService electionService;
     private final EmailNotifierService emailNotifierService;
-    private final VoteAPI api;
     private final VoteService voteService;
 
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
@@ -69,7 +66,6 @@ public class DataRequestVoteResource extends Resource {
         this.datasetService = datasetService;
         this.dataAccessRequestService = dataAccessRequestService;
         this.datasetAssociationService = datasetAssociationService;
-        this.api = AbstractVoteAPI.getInstance();
         this.electionService = electionService;
         this.voteService = voteService;
     }
@@ -82,7 +78,7 @@ public class DataRequestVoteResource extends Resource {
                                           @PathParam("requestId") String requestId,
                                           @PathParam("id") Integer voteId) {
         try {
-            Vote vote = api.updateVoteById(rec, voteId);
+            Vote vote = voteService.updateVoteById(rec, voteId);
             validateCollectDAREmail(vote);
             if(electionService.checkDataOwnerToCloseElection(vote.getElectionId())){
                 electionService.closeDataOwnerApprovalElection(vote.getElectionId());
@@ -106,7 +102,7 @@ public class DataRequestVoteResource extends Resource {
         String json) {
         try {
             Vote voteRecord = new Gson().fromJson(json, Vote.class);
-            Vote updatedVote = api.updateVoteById(voteRecord, id);
+            Vote updatedVote = voteService.updateVoteById(voteRecord, id);
             electionService.submitFinalAccessVoteDataRequestElection(updatedVote.getElectionId());
             DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
             createDataOwnerElection(updatedVote, dar);
@@ -125,7 +121,7 @@ public class DataRequestVoteResource extends Resource {
     public Response updateDataRequestVote(Vote rec,
                                           @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
-            Vote vote = api.updateVote(rec, id, requestId);
+            Vote vote = voteService.updateVote(rec, id, requestId);
             if(electionService.checkDataOwnerToCloseElection(vote.getElectionId())){
                 electionService.closeDataOwnerApprovalElection(vote.getElectionId());
             }
@@ -142,7 +138,7 @@ public class DataRequestVoteResource extends Resource {
     @PermitAll
     public Vote describe(@PathParam("requestId") String requestId,
                          @PathParam("id") Integer id) {
-        return api.describeVoteById(id, requestId);
+        return voteService.describeVoteById(id, requestId);
     }
 
     @GET
@@ -159,7 +155,7 @@ public class DataRequestVoteResource extends Resource {
     @PermitAll
     public Response describeDataOwnerVote(@PathParam("requestId") String requestId, @PathParam("dataOwnerId") Integer dataOwnerId){
         try{
-            return Response.ok(api.describeDataOwnerVote(requestId,dataOwnerId)).build();
+            return Response.ok(voteService.describeDataOwnerVote(requestId,dataOwnerId)).build();
         }catch (Exception e){
             return createExceptionResponse(e);
         }
@@ -169,7 +165,7 @@ public class DataRequestVoteResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public List<Vote> describeAllVotes(@PathParam("requestId") String requestId) {
-        return api.describeVotes(requestId);
+        return voteService.describeVotes(requestId);
     }
 
     @DELETE
@@ -178,7 +174,7 @@ public class DataRequestVoteResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response deleteVote(@PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
-            api.deleteVote(id, requestId);
+            voteService.deleteVote(id, requestId);
             return Response.status(Response.Status.OK).entity("Vote was deleted").build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -192,7 +188,7 @@ public class DataRequestVoteResource extends Resource {
         try {
             if (requestId == null)
                 return Response.status(Response.Status.BAD_REQUEST).build();
-            api.deleteVotes(requestId);
+            voteService.deleteVotes(requestId);
             return Response.ok().entity("Votes for specified id have been deleted").build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -203,11 +199,11 @@ public class DataRequestVoteResource extends Resource {
         Vote agreementVote = null;
         Vote finalVote = null;
         if(vote.getType().equals(VoteType.FINAL.getValue())){
-            List<Vote> agreement = api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId());
+            List<Vote> agreement = voteService.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId());
             agreementVote = CollectionUtils.isNotEmpty(agreement) ? agreement.get(0) : null;
             finalVote = vote;
         }else if(vote.getType().equals(VoteType.AGREEMENT.getValue())){
-            List<Vote> finalVotes = api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
+            List<Vote> finalVotes = voteService.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
             finalVote = CollectionUtils.isNotEmpty(finalVotes) ? finalVotes.get(0) : null;
             agreementVote = vote;
         }
