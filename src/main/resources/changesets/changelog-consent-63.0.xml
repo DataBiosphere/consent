@@ -8,9 +8,6 @@
       <dropNotNullConstraint tableName="institution" columnName="it_director_name" columnDataType="varchar(255)"/>
       <dropNotNullConstraint tableName="institution" columnName="it_director_email" columnDataType="varchar(255)"/>
       <addDefaultValue tableName="institution" columnName="create_date" columnDataType="DATETIME" defaultValueComputed="CURRENT_TIMESTAMP"/>
-      <addColumn tableName="dacuser">
-        <column name="institution_id" position="4" type="bigint"/>
-      </addColumn>
     </changeSet>
 
 </databaseChangeLog>
