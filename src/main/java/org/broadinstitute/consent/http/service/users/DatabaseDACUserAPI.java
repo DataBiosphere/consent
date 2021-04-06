@@ -1,9 +1,6 @@
 package org.broadinstitute.consent.http.service.users;
 
 
-import java.util.List;
-import java.util.Map;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -15,6 +12,11 @@ import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.NotFoundException;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @deprecated Use UserService
@@ -77,9 +79,15 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     public User updateDACUserById(Map<String, User> dac, Integer id) throws IllegalArgumentException, NotFoundException {
         User updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
         // validate user exists
-        validateExistentUserById(id);
+        User existingUser = userDAO.findUserById(id);
+        if (Objects.isNull(existingUser)) {
+            throw new NotFoundException("The user for the specified id does not exist");
+        }
         // validate required fields are not null or empty
-        validateRequiredFields(updatedUser);
+        updatedUser.setEmail(existingUser.getEmail());
+        if (StringUtils.isEmpty(updatedUser.getDisplayName())) {
+            updatedUser.setDisplayName(existingUser.getDisplayName());
+        }
         try {
             userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
         } catch (UnableToExecuteStatementException e) {
@@ -98,15 +106,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     private void validateExistentUserById(Integer id) {
         if (userDAO.findUserById(id) == null) {
             throw new NotFoundException("The user for the specified id does not exist");
-        }
-    }
-
-    private void validateRequiredFields(User newDac) {
-        if (StringUtils.isEmpty(newDac.getDisplayName())) {
-            throw new IllegalArgumentException("Display Name can't be null. The user needs a name to display.");
-        }
-        if (StringUtils.isEmpty(newDac.getEmail())) {
-            throw new IllegalArgumentException("The user needs a valid email to be able to login.");
         }
     }
 
