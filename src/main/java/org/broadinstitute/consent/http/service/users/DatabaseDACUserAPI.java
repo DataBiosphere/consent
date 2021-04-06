@@ -84,7 +84,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             throw new NotFoundException("The user for the specified id does not exist");
         }
         // validate required fields are not null or empty
-        updatedUser.setEmail(existingUser.getEmail());
         if (StringUtils.isEmpty(updatedUser.getDisplayName())) {
             updatedUser.setDisplayName(existingUser.getDisplayName());
         }
