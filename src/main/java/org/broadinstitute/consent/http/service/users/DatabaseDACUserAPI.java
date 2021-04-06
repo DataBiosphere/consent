@@ -3,11 +3,9 @@ package org.broadinstitute.consent.http.service.users;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
@@ -26,11 +24,9 @@ import java.util.Objects;
 public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     protected final UserDAO userDAO;
-    protected final UserRoleDAO userRoleDAO;
-    private final UserService userService;
 
-    public static void initInstance(UserDAO userDao, UserRoleDAO userRoleDAO, UserService userService) {
-        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, userService));
+    public static void initInstance(UserDAO userDao) {
+        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao));
     }
 
     protected Logger logger() {
@@ -43,10 +39,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDAO The Data Access Object used to read/write data.
      */
-    DatabaseDACUserAPI(UserDAO userDAO, UserRoleDAO userRoleDAO, UserService userService) {
+    DatabaseDACUserAPI(UserDAO userDAO) {
         this.userDAO = userDAO;
-        this.userRoleDAO = userRoleDAO;
-        this.userService = userService;
     }
 
     @Override
@@ -62,7 +56,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             throw new IllegalArgumentException(status + " is not a valid status.");
         }
         userDAO.updateUserStatus(statusId, userId);
-        return userService.findUserById(userId);
+        return userDAO.findUserById(userId);
     }
 
     @Override
@@ -72,7 +66,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             throw new IllegalArgumentException("Rationale is required.");
         }
         userDAO.updateUserRationale(rationale, userId);
-        return userService.findUserById(userId);
+        return userDAO.findUserById(userId);
     }
 
     @Override
@@ -92,7 +86,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
-        return userService.findUserById(id);
+        return userDAO.findUserById(id);
     }
 
     @Override
