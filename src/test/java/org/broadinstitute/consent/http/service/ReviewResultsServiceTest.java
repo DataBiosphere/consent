@@ -21,7 +21,7 @@ import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
-public class DatabaseReviewResultsAPITest {
+public class ReviewResultsServiceTest {
 
     @Mock
     private ElectionDAO electionDAO;
@@ -30,7 +30,7 @@ public class DatabaseReviewResultsAPITest {
     @Mock
     private ConsentDAO consentDAO;
 
-    private DatabaseReviewResultsAPI databaseReviewResultsAPI;
+    private ReviewResultsService service;
 
     private Election sampleElection = new Election();
     private DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
@@ -41,10 +41,13 @@ public class DatabaseReviewResultsAPITest {
             setName("Consent 1").
             build();
 
+    private void initService() {
+        service = new ReviewResultsService(electionDAO, voteDAO, consentDAO);
+    }
+
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
-        databaseReviewResultsAPI = new DatabaseReviewResultsAPI(electionDAO, voteDAO, consentDAO);
         when(voteDAO.findVoteByTypeAndElectionId(anyInt(), anyString())).thenReturn(randomVotesList());
         when(voteDAO.findElectionReviewVotesByElectionId(anyInt())).thenReturn(randomReviewVotesList());
         when(voteDAO.findElectionReviewVotesByElectionId(anyInt(), anyString())).thenReturn(randomReviewVotesList());
@@ -56,30 +59,34 @@ public class DatabaseReviewResultsAPITest {
 
     @Test
     public void testDescribeLastElectionReviewByReferenceIdAndType() throws Exception {
-        ElectionReview review = databaseReviewResultsAPI.describeLastElectionReviewByReferenceIdAndType("anyString", "anyType");
+        initService();
+        ElectionReview review = service.describeLastElectionReviewByReferenceIdAndType("anyString", "anyType");
         assertTrue("Consent should be equal to mocked response ", review.getConsent().equals(consent));
         assertTrue("Sample Election should be equal to mocked response ", review.getElection().equals(sampleElection));
     }
 
     @Test
     public void testOpenElections() throws Exception {
+        initService();
         when(electionDAO.verifyOpenElections()).thenReturn(1);
-        assertTrue("There are open elections", databaseReviewResultsAPI.openElections());
+        assertTrue("There are open elections", service.openElections());
         when(electionDAO.verifyOpenElections()).thenReturn(0);
-        assertFalse("There aren't open elections", databaseReviewResultsAPI.openElections());
+        assertFalse("There aren't open elections", service.openElections());
     }
 
     @Test
     public void testDescribeElectionReviewByReferenceId() throws Exception {
-        ElectionReview review = databaseReviewResultsAPI.describeElectionReviewByReferenceId("anyString");
+        initService();
+        ElectionReview review = service.describeElectionReviewByReferenceId("anyString");
         assertTrue("Consent should be equal to mocked response ", review.getConsent().equals(consent));
         assertTrue("Sample Election should be equal to mocked response ", review.getElection().equals(sampleElection));
     }
 
     @Test
     public void testDescribeElectionReviewByElectionId() throws Exception {
+        initService();
         sampleElection.setElectionId(123);
-        ElectionReview review = databaseReviewResultsAPI.describeElectionReviewByElectionId(1, false);
+        ElectionReview review = service.describeElectionReviewByElectionId(1, false);
         assertTrue("Consent should be equal to mocked response ", review.getConsent().equals(consent));
         assertTrue("Sample Election should be equal to mocked response ", review.getElection().equals(sampleElection));
 
@@ -87,7 +94,8 @@ public class DatabaseReviewResultsAPITest {
 
     @Test
     public void testDescribeAgreementVote() throws Exception {
-        assertTrue("The method should return 4 votes ",databaseReviewResultsAPI.describeAgreementVote(1).size() == 4);
+        initService();
+        assertTrue("The method should return 4 votes ",service.describeAgreementVote(1).size() == 4);
     }
 
     /* Mocked Data */

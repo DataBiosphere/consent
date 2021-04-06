@@ -7,11 +7,10 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReview;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.ReviewResultsAPI;
+import org.broadinstitute.consent.http.service.ReviewResultsService;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -27,14 +26,14 @@ import java.util.Objects;
 @Path("api/electionReview")
 public class ElectionReviewResource extends Resource {
 
-    private final ReviewResultsAPI api;
+    private final ReviewResultsService service;
     private final ElectionService electionService;
     private final ConsentService consentService;
     private final DataAccessRequestService darService;
 
     @Inject
-    public ElectionReviewResource(DataAccessRequestService darService, ConsentService consentService, ElectionService electionService) {
-        this.api = AbstractReviewResultsAPI.getInstance();
+    public ElectionReviewResource(DataAccessRequestService darService, ConsentService consentService, ElectionService electionService, ReviewResultsService reviewResultsService) {
+        this.service = reviewResultsService;
         this.electionService = electionService;
         this.consentService = consentService;
         this.darService = darService;
@@ -44,7 +43,7 @@ public class ElectionReviewResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
     public ElectionReview getCollectElectionReview(@QueryParam("referenceId") String referenceId, @QueryParam("type") String type) {
-        return api.describeLastElectionReviewByReferenceIdAndType(referenceId, type);
+        return service.describeLastElectionReviewByReferenceIdAndType(referenceId, type);
     }
 
     @GET
@@ -52,7 +51,7 @@ public class ElectionReviewResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public String openElections() {
-        return ("{ \"open\" : " + api.openElections() + " }");
+        return ("{ \"open\" : " + service.openElections() + " }");
     }
 
     @GET
@@ -60,7 +59,7 @@ public class ElectionReviewResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
     public ElectionReview getElectionReviewByElectionId(@PathParam("electionId") Integer electionId) {
-        return api.describeElectionReviewByElectionId(electionId, null);
+        return service.describeElectionReviewByElectionId(electionId, null);
     }
 
     @GET
@@ -76,8 +75,8 @@ public class ElectionReviewResource extends Resource {
             dataSetId.addAll(dar.getData().getDatasetIds());
         }
         Consent consent = consentService.getConsentFromDatasetID(dataSetId.get(0));
-        ElectionReview accessElectionReview = api.describeElectionReviewByElectionId(electionId, isFinalAccess);
-        List<Vote> agreementVote = api.describeAgreementVote(electionId);
+        ElectionReview accessElectionReview = service.describeElectionReviewByElectionId(electionId, isFinalAccess);
+        List<Vote> agreementVote = service.describeAgreementVote(electionId);
         accessElectionReview.setConsent(consent);
         accessElectionReview.setVoteAgreement(CollectionUtils.isNotEmpty(agreementVote) ? agreementVote.get(0) : null);
         accessElectionReview.setAssociatedConsent(consent, consentElection);
@@ -91,7 +90,7 @@ public class ElectionReviewResource extends Resource {
     public ElectionReview getRPElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
         Integer rpElectionId = electionService.findRPElectionByElectionAccessId(electionId);
         if (Objects.nonNull(rpElectionId)) {
-            return api.describeElectionReviewByElectionId(rpElectionId, isFinalAccess);
+            return service.describeElectionReviewByElectionId(rpElectionId, isFinalAccess);
         } else return null;
     }
 
@@ -100,7 +99,7 @@ public class ElectionReviewResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
     public ElectionReview getElectionReviewByReferenceId(@PathParam("referenceId") String referenceId) {
-        return api.describeElectionReviewByReferenceId(referenceId);
+        return service.describeElectionReviewByReferenceId(referenceId);
     }
 
 }

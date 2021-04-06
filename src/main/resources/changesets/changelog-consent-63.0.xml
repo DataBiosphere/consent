@@ -1,0 +1,13 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="63.0" author="raejohanek">
+      <dropNotNullConstraint tableName="institution" columnName="it_director_name" columnDataType="varchar(255)"/>
+      <dropNotNullConstraint tableName="institution" columnName="it_director_email" columnDataType="varchar(255)"/>
+      <addDefaultValue tableName="institution" columnName="create_date" columnDataType="DATETIME" defaultValueComputed="CURRENT_TIMESTAMP"/>
+    </changeSet>
+
+</databaseChangeLog>

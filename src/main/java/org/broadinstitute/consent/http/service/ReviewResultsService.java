@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -15,30 +16,23 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
-
+public class ReviewResultsService {
     private ElectionDAO electionDAO;
     private VoteDAO voteDAO;
     private ConsentDAO consentDAO;
 
-    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, ConsentDAO consentDAO) {
-        ReviewResultsAPIHolder.setInstance(new DatabaseReviewResultsAPI(electionDAO, voteDAO, consentDAO));
-
-    }
-
-    protected DatabaseReviewResultsAPI(ElectionDAO electionDAO, VoteDAO voteDAO, ConsentDAO consentDAO) {
+    @Inject
+    public ReviewResultsService(ElectionDAO electionDAO, VoteDAO voteDAO, ConsentDAO consentDAO) {
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.consentDAO = consentDAO;
     }
 
-    @Override
     public ElectionReview describeLastElectionReviewByReferenceIdAndType(String referenceId, String type) {
         Election election = electionDAO.findLastElectionByReferenceIdAndType(referenceId, type);
         return getElectionReview(referenceId, election);
     }
 
-    @Override
     public Boolean openElections() {
         Boolean openElections = false;
         if(electionDAO.verifyOpenElections() != null && electionDAO.verifyOpenElections() > 0){
@@ -47,7 +41,6 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         return openElections;
     }
 
-    @Override
     public ElectionReview describeElectionReviewByElectionId(Integer electionId, Boolean isFinalAccess) {
         ElectionReview review = null;
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
@@ -62,7 +55,6 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         return review;
     }
 
-    @Override
     public ElectionReview describeElectionReviewByReferenceId(String referenceId){
         List<String> statuses = Stream.of(ElectionStatus.CLOSED.getValue(), ElectionStatus.FINAL.getValue()).
                 map(String::toLowerCase).
@@ -71,7 +63,6 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         return getElectionReview(referenceId, election);
     }
 
-    @Override
     public List<Vote> describeAgreementVote(Integer electionId) {
         return voteDAO.findVoteByTypeAndElectionId(electionId, VoteType.AGREEMENT.getValue());
     }
@@ -88,7 +79,4 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         }
         return review;
     }
-
-
-
 }

@@ -14,7 +14,7 @@
       <!--standardize institution names in user_property table so that all institution names exist in the institution table
        and thus all dacusers can have institution ids assigned to them-->
       <sql>
-      update user_property AS p SET propertyValue = 'Boehringer Ingelheim' WHERE p.propertyValue = 'Boehringer Ingelheim Pharma GmbH & Co KG';
+      update user_property AS p SET propertyValue = 'Boehringer Ingelheim' WHERE p.propertyValue = 'Boehringer Ingelheim Pharma GmbH &amp; Co KG';
       update user_property AS p SET propertyValue = 'BostonGene' WHERE p.propertyValue = 'BostonGene Corp';
       update user_property AS p SET propertyValue = 'Brazilian National Cancer Institute (INCA)' WHERE p.propertyValue = 'Brazilian National Cancer Institute';
       UPDATE user_property AS p SET propertyValue = 'Brigham and Women's Hospital' WHERE p.propertyValue in ('Brigham and Women's hospital', 'Brigham and Women's Hospital / Harvard Medical School', 'The Brigham and Women's Hospital' );
@@ -35,14 +35,14 @@
       UPDATE user_property AS p SET propertyValue = 'National Institutes of Health (NIH)' WHERE p.propertyValue in ('National Institute of Health','NIH');
       UPDATE user_property AS p SET propertyValue = 'National Cancer Institute (NCI)' WHERE p.propertyValue in ('National Cancer Institute', 'NCI/NIH', 'NIH-NCI', 'National Cancer Institute (part of the National Institutes of Health)');
       UPDATE user_property AS p SET propertyValue = 'Novartis Institutes for Biomedical Research' WHERE p.propertyValue in ('Novartis', 'Novartis Institutes for BioMedical Research');
-      UPDATE user_property AS p SET propertyValue = 'Oregon Health and Science University' WHERE p.propertyValue in ('OHSU', 'Oregon Health & Science University');
+      UPDATE user_property AS p SET propertyValue = 'Oregon Health and Science University' WHERE p.propertyValue in ('OHSU', 'Oregon Health &amp; Science University');
       UPDATE user_property AS p SET propertyValue = 'Peking University' WHERE p.propertyValue = 'PEKING UNIVERSITY';
       UPDATE user_property AS p SET propertyValue = 'Pfizer Inc.' WHERE p.propertyValue = 'Pfizer Inc.';
       UPDATE user_property AS p SET propertyValue = 'REAN Cloud' WHERE p.propertyValue = 'Rean Cloud';
       UPDATE user_property AS p SET propertyValue = 'Singapore Immunology Network, Agency for Science, Technology and Research' WHERE p.propertyValue = 'Singapore Immunology Network (SIgN), A*STAR';
       UPDATE user_property AS p SET propertyValue = 'Southern Medical University' WHERE p.propertyValue = 'SMU';
       UPDATE user_property AS p SET propertyValue = 'St. Jude Children's Research Hospital' WHERE p.propertyValue = 'St Jude Children's Research Hospital';
-      UPDATE user_property AS p SET propertyValue = 'The Broad Institute of MIT and Harvard' WHERE p.propertyValue in ('Broad Institute of MIT & Harvard', 'Broad Institute of MIT and Harvard', 'broad institute', 'Broad Institute', 'Broad', 'The Broad Institute');
+      UPDATE user_property AS p SET propertyValue = 'The Broad Institute of MIT and Harvard' WHERE p.propertyValue in ('Broad Institute of MIT &amp; Harvard', 'Broad Institute of MIT and Harvard', 'broad institute', 'Broad Institute', 'Broad', 'The Broad Institute');
       UPDATE user_property AS p SET propertyValue = 'The Children's Hospital of Philadelphia' WHERE p.propertyValue = 'Children's Hospital of Philadelphia';
       UPDATE user_property AS p SET propertyValue = 'The University of Hong Kong' WHERE p.propertyValue in ('the University of Hong Kong', 'University of Hong Kong');
       UPDATE user_property AS p SET propertyValue = 'The University of Queensland' WHERE p.propertyValue = 'University of Queensland';
