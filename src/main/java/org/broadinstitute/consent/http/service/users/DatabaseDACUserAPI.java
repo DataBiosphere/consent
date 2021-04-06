@@ -92,9 +92,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
-        User user = userService.findUserByEmail(updatedUser.getEmail());
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
-        return user;
+        return userService.findUserById(id);
     }
 
     @Override
