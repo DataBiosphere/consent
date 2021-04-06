@@ -14,9 +14,9 @@
       <!--standardize institution names in user_property table so that all institution names exist in the institution table
        and thus all dacusers can have institution ids assigned to them-->
       <sql>
-      update user_property AS p SET propertyValue = 'Boehringer Ingelheim' WHERE p.propertyValue = 'Boehringer Ingelheim Pharma GmbH &amp; Co KG';
-      update user_property AS p SET propertyValue = 'BostonGene' WHERE p.propertyValue = 'BostonGene Corp';
-      update user_property AS p SET propertyValue = 'Brazilian National Cancer Institute (INCA)' WHERE p.propertyValue = 'Brazilian National Cancer Institute';
+      UPDATE user_property AS p SET propertyValue = 'Boehringer Ingelheim' WHERE p.propertyValue = 'Boehringer Ingelheim Pharma GmbH &amp; Co KG';
+      UPDATE user_property AS p SET propertyValue = 'BostonGene' WHERE p.propertyValue = 'BostonGene Corp';
+      UPDATE user_property AS p SET propertyValue = 'Brazilian National Cancer Institute (INCA)' WHERE p.propertyValue = 'Brazilian National Cancer Institute';
       UPDATE user_property AS p SET propertyValue = 'Brigham and Women's Hospital' WHERE p.propertyValue in ('Brigham and Women's hospital', 'Brigham and Women's Hospital / Harvard Medical School', 'The Brigham and Women's Hospital' );
       UPDATE user_property AS p SET propertyValue = 'Cartography Biosciences, Inc.' WHERE p.propertyValue in ('Cartography Biosciences', 'CARTOGRAPHY BIOSCIENCES, INC');
       UPDATE user_property AS p SET propertyValue = 'Cedars-Sinai Medical Center' WHERE p.propertyValue in '(Cedars Sinai', 'CEDARS-SINAI MEDICAL CENTER');
