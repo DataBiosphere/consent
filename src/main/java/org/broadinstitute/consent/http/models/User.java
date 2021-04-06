@@ -255,7 +255,7 @@ public class User {
     }
 
     public void addRole(UserRole userRole) {
-        if (this.getRoles() == null) {
+        if (Objects.isNull(this.getRoles())) {
             this.setRoles(new ArrayList<>());
         }
         this.getRoles().add(userRole);

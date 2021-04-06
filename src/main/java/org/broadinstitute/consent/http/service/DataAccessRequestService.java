@@ -382,11 +382,17 @@ public class DataAccessRequestService {
             .map(DataAccessRequestData::getDatasetIds).flatMap(List::stream).collect(toList());
         // Batch call 3
         Set<Dac> dacs = datasetIds.isEmpty() ? Collections.emptySet() : dacDAO.findDacsForDatasetIds(datasetIds);
+        // Batch call 4
+        List<Integer> userIds = dataAccessRequests.stream().map(DataAccessRequest::getUserId).collect(toList());
+        Collection<User> researchers = userDAO.findUsers(userIds);
+        Map<Integer, User> researcherMap = researchers.stream()
+                .collect(Collectors.toMap(User::getDacUserId, Function.identity()));
 
         return dataAccessRequests.stream()
             .filter(Objects::nonNull)
             .map(dar -> {
                 DataAccessRequestManage darManage = new DataAccessRequestManage();
+                darManage.setResearcher(researcherMap.get(dar.getUserId()));
                 darManage.setDar(dar);
                 darManage.setElection(referenceIdToElectionMap.get(dar.getReferenceId()));
                 darManage.setVotes(referenceIdToVoteMap.get(dar.getReferenceId()));
