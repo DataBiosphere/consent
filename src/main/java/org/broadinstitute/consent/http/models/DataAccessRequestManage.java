@@ -16,6 +16,7 @@ public class DataAccessRequestManage {
     private Election election;
     private List<Vote> votes;
     private Dac dac;
+    private User researcher;
 
     @Deprecated
     private String referenceId;
@@ -106,6 +107,14 @@ public class DataAccessRequestManage {
 
     public void setDac(Dac dac) {
         this.dac = dac;
+    }
+
+    public User getResearcher() {
+        return researcher;
+    }
+
+    public void setResearcher(User researcher) {
+        this.researcher = researcher;
     }
 
     public String getReferenceId() {

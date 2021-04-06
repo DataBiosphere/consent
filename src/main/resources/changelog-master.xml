@@ -64,5 +64,8 @@
     <include file="changesets/changelog-consent-59.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-60.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-61.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-62.0.xml" relativeToChangelogFile="true" />
+    <include file="changesets/changelog-consent-62.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-63.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-64.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-65.0.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
