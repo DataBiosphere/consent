@@ -7,12 +7,17 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.NotFoundException;
+
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -22,6 +27,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -30,6 +36,8 @@ import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -196,6 +204,50 @@ public class DataAccessRequestServiceTest {
         data.setReferenceId(dar.getReferenceId());
         dar.setData(data);
         return dar;
+    }
+
+    private Document getDocument(String linkedIn, String orcid, String researcherGate) {
+        Document dar = new Document();
+        dar.put(UserFields.LINKEDIN_PROFILE.getValue(), linkedIn);
+        dar.put(UserFields.ORCID.getValue(), orcid);
+        dar.put(UserFields.RESEARCHER_GATE.getValue(), researcherGate);
+        dar.put(DarConstants.INVESTIGATOR, randomString());
+        dar.put(DarConstants.PI_EMAIL, randomString());
+        dar.put(DarConstants.PROJECT_TITLE, randomString());
+        dar.put(DarConstants.DATASET_DETAIL, new ArrayList<Document>());
+        dar.put(DarConstants.RUS, randomString());
+        dar.put(DarConstants.NON_TECH_RUS, randomString());
+        dar.put(DarConstants.METHODS, true);
+        dar.put(DarConstants.CONTROLS, true);
+        dar.put(DarConstants.OTHER, true);
+        dar.put(DarConstants.POA, true);
+        dar.put(DarConstants.HMB, true);
+        dar.put(DarConstants.OTHER_TEXT, randomString());
+        return dar;
+    }
+
+    private Map<String, String> getResearcherProperties() {
+        Map<String, String> researcherProperties = new HashMap<>();
+        researcherProperties.put(UserFields.INSTITUTION.getValue(), randomString());
+        researcherProperties.put(UserFields.DEPARTMENT.getValue(), randomString());
+        researcherProperties.put(UserFields.STREET_ADDRESS_1.getValue(), randomString());
+        researcherProperties.put(UserFields.CITY.getValue(), randomString());
+        researcherProperties.put(UserFields.ZIP_POSTAL_CODE.getValue(), randomString());
+        researcherProperties.put(UserFields.COUNTRY.getValue(), randomString());
+        researcherProperties.put(UserFields.STATE.getValue(), randomString());
+        researcherProperties.put(UserFields.STREET_ADDRESS_2.getValue(), randomString());
+        researcherProperties.put(UserFields.DIVISION.getValue(), randomString());
+        researcherProperties.put(DarConstants.ACADEMIC_BUSINESS_EMAIL, randomString());
+        researcherProperties.put(DarConstants.ERA_COMMONS_ID, randomString());
+        researcherProperties.put(DarConstants.PUBMED_ID, randomString());
+        researcherProperties.put(DarConstants.SCIENTIFIC_URL, randomString());
+        researcherProperties.put(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
+        researcherProperties.put(UserFields.PROFILE_NAME.getValue(), randomString());
+        return researcherProperties;
+    }
+
+    private String randomString() {
+        return RandomStringUtils.random(10, true, false);
     }
 
 }
