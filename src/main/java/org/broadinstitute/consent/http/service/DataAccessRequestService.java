@@ -384,7 +384,7 @@ public class DataAccessRequestService {
         Set<Dac> dacs = datasetIds.isEmpty() ? Collections.emptySet() : dacDAO.findDacsForDatasetIds(datasetIds);
         // Batch call 4
         List<Integer> userIds = dataAccessRequests.stream().map(DataAccessRequest::getUserId).collect(toList());
-        Collection<User> researchers = userDAO.findUsersWithRolesAndProperties(userIds);
+        Collection<User> researchers = userDAO.findUsers(userIds);
         Map<Integer, User> researcherMap = researchers.stream()
                 .collect(Collectors.toMap(User::getDacUserId, Function.identity()));
 

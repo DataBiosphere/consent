@@ -4,12 +4,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-
-import org.broadinstitute.consent.http.db.mapper.UserWithRolesAndPropsReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -41,23 +38,6 @@ public interface UserDAO extends Transactional<UserDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("select * from dacuser where dacUserId IN (<dacUserIds>)")
     Collection<User> findUsers(@BindList("dacUserIds") Collection<Integer> dacUserIds);
-
-    @RegisterBeanMapper(value = User.class)
-    @RegisterBeanMapper(value = UserRole.class)
-    @RegisterBeanMapper(value = UserProperty.class)
-    @UseRowReducer(UserWithRolesAndPropsReducer.class)
-    @SqlQuery("SELECT "
-            + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-            + "     u.email_preference, u.status, u.rationale, "
-            + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name, "
-            // Don't fetch p.userid here as it conflicts with ur.user_id and is the same value
-            + "     p.propertyid, p.propertyvalue, p.propertykey "
-            + " FROM dacuser u "
-            + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
-            + " LEFT JOIN roles r ON r.roleid = ur.role_id "
-            + " LEFT JOIN user_property p ON p.userid = u.dacuserid "
-            + " WHERE u.dacuserid IN (<dacUserIds>) ")
-    Collection<User> findUsersWithRolesAndProperties(@BindList("dacUserIds") Collection<Integer> dacUserIds);
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
