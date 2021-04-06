@@ -48,8 +48,8 @@ public class ResearcherService {
     public List<UserProperty> setProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser) throws NotFoundException, IllegalArgumentException {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
-        validateExistentFields(researcherPropertiesMap);
-        List<UserProperty> properties = getResearcherProperties(researcherPropertiesMap, user.getDacUserId());
+        Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
+        List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getDacUserId());
         saveProperties(properties);
         notifyAdmins(user.getDacUserId(), ACTION_REGISTERED);
         return describeResearcherProperties(user.getDacUserId());
@@ -59,15 +59,15 @@ public class ResearcherService {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         if (validate) validateRequiredFields(researcherPropertiesMap);
-        validateExistentFields(researcherPropertiesMap);
-        Boolean isUpdatedProfileCompleted = Boolean.valueOf(researcherPropertiesMap.get(UserFields.COMPLETED.getValue()));
+        Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
+        Boolean isUpdatedProfileCompleted = Boolean.valueOf(validatedProperties.get(UserFields.COMPLETED.getValue()));
         String completed = userPropertyDAO.isProfileCompleted(user.getDacUserId());
         Boolean isProfileCompleted = Boolean.valueOf(completed);
-        List<UserProperty> properties = getResearcherProperties(researcherPropertiesMap, user.getDacUserId());
+        List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getDacUserId());
         if (!isProfileCompleted && isUpdatedProfileCompleted) {
             saveProperties(properties);
             notifyAdmins(user.getDacUserId(), ACTION_REGISTERED);
-        } else if (hasUpdatedFields(user.getDacUserId(), researcherPropertiesMap, isUpdatedProfileCompleted)) {
+        } else if (hasUpdatedFields(user.getDacUserId(), validatedProperties, isUpdatedProfileCompleted)) {
             deleteResearcherProperties(user.getDacUserId());
             saveProperties(properties);
             DACUserAPI dacUserAPI = AbstractDACUserAPI.getInstance();
@@ -166,12 +166,14 @@ public class ResearcherService {
         });
     }
 
-    private void validateExistentFields(Map<String, String> properties) {
+    private Map<String, String> validateExistentFields(Map<String, String> properties) {
+        Map<String, String> newProps = new HashMap<>();
         properties.forEach((propertyKey, propertyValue) -> {
-            if (!UserFields.containsValue(propertyKey)) {
-                throw new IllegalArgumentException(propertyKey + " is not a valid property.");
+            if (UserFields.containsValue(propertyKey)) {
+                newProps.put(propertyKey, propertyValue);
             }
         });
+        return newProps;
     }
 
     private List<UserProperty> getResearcherProperties(Map<String, String> researcherPropertiesMap, Integer userId) {
