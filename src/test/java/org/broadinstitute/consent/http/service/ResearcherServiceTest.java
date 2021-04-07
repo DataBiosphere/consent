@@ -107,17 +107,6 @@ public class ResearcherServiceTest {
         service.setProperties(new HashMap<>(), authUser);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testSetPropertiesIllegalArgument() {
-        Map<String, String> propMap = new HashMap<>();
-        propMap.put(RandomStringUtils.random(10, true, false), RandomStringUtils.random(10, true, false));
-        when(userDAO.findUserByEmail(any())).thenReturn(user);
-        when(userDAO.findUserById(any())).thenReturn(user);
-        initService();
-
-        service.setProperties(propMap, authUser);
-    }
-
     @Test
     public void testUpdatePropertiesWithValidation() {
         List<UserProperty> props = new ArrayList<>();

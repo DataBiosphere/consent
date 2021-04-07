@@ -222,7 +222,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
         final ReviewResultsService reviewResultsService = injector.getProvider(ReviewResultsService.class).get();
 
-        DatabaseDACUserAPI.initInstance(userDAO, userRoleDAO, userService);
+        DatabaseDACUserAPI.initInstance(userDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
         OAuthAuthenticator.initInstance();
         OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());

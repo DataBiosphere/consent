@@ -2875,6 +2875,8 @@ paths:
     get:
       summary: Institution INDEX resource
       description: Fetches all institutions
+      tags:
+        - Institutions
       responses:
         200:
           description: Returns all institutions. If no results are found, an empty array is returned.
@@ -2884,6 +2886,8 @@ paths:
     post:
       summary: Institution CREATE resource
       description: Creates new institution record based on json payload
+      tags:
+        - Institutions
       responses:
         201:
           description: Creates and returns newly created record.
@@ -2895,6 +2899,8 @@ paths:
     get:
       summary: Institution GET
       description: Fetches Institution based on id param
+      tags:
+        - Institutions
       parameters:
         - name: id
           in: path
@@ -2913,6 +2919,8 @@ paths:
     put:
       summary: Institution UPDATE
       description: Updates institution based on id and json payload
+      tags:
+        - Institutions
       parameters:
         - name: id
           in: path
@@ -2932,6 +2940,8 @@ paths:
     delete:
       summary: Institution DELETE
       description: Deletes institution based on id
+      tags:
+        - Institutions
       parameters:
         - name: id
           in: path
