@@ -586,21 +586,6 @@ public class DataAccessRequestService {
         return result;
     }
 
-    /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
-     *
-     * Find DARS related to the datasets sent as a parameter. Only dars with the use restriction
-     * field present will be returned. DARs that require Manual Review wont be matched.
-     * @param dataSetIds
-     * @return A list of Data Access Requests.
-     */
-    public List<Document> describeDataAccessWithDataSetIdAndRestriction(List<Integer> dataSetIds) {
-        return findAllDataAccessRequests().stream().
-                filter(d -> !Collections.disjoint(dataSetIds, d.getData().getDatasetIds())).
-                map(d -> createDocumentFromDar(d)).
-                collect(Collectors.toList());
-    }
-
     public List<Document> describeDraftDataAccessRequestManage(Integer userId) {
         List<Document> accessList = userId == null
                 ? findAllDraftDataAccessRequestsAsDocuments()
