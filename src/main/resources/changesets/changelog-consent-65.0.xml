@@ -65,13 +65,18 @@
       </sql>
 
       <sql>
-      update dacuser AS u SET institution_id = (
+        UPDATE dacuser AS u
+        SET institution_id = (
           SELECT institution_id FROM institution WHERE institution_name = (
-              SELECT p.propertyvalue FROM user_property p
-              WHERE p.propertykey = 'institution' AND p.userid = u.dacuserid
+            SELECT p.propertyvalue FROM user_property p
+            WHERE p.propertykey = 'institution' AND p.userid = u.dacuserid
           )
-        )
+        );
       </sql>
+
+      <rollback>
+        UPDATE dacuser SET institution_id = null;
+      </rollback>
 
     </changeSet>
 </databaseChangeLog>
