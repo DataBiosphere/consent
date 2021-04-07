@@ -1,20 +1,20 @@
 package org.broadinstitute.consent.http.service.users;
 
 
-import java.util.List;
-import java.util.Map;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.NotFoundException;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @deprecated Use UserService
@@ -24,11 +24,9 @@ import org.slf4j.LoggerFactory;
 public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     protected final UserDAO userDAO;
-    protected final UserRoleDAO userRoleDAO;
-    private final UserService userService;
 
-    public static void initInstance(UserDAO userDao, UserRoleDAO userRoleDAO, UserService userService) {
-        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, userService));
+    public static void initInstance(UserDAO userDao) {
+        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao));
     }
 
     protected Logger logger() {
@@ -41,10 +39,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDAO The Data Access Object used to read/write data.
      */
-    DatabaseDACUserAPI(UserDAO userDAO, UserRoleDAO userRoleDAO, UserService userService) {
+    DatabaseDACUserAPI(UserDAO userDAO) {
         this.userDAO = userDAO;
-        this.userRoleDAO = userRoleDAO;
-        this.userService = userService;
     }
 
     @Override
@@ -60,7 +56,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             throw new IllegalArgumentException(status + " is not a valid status.");
         }
         userDAO.updateUserStatus(statusId, userId);
-        return userService.findUserById(userId);
+        return userDAO.findUserById(userId);
     }
 
     @Override
@@ -70,24 +66,27 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             throw new IllegalArgumentException("Rationale is required.");
         }
         userDAO.updateUserRationale(rationale, userId);
-        return userService.findUserById(userId);
+        return userDAO.findUserById(userId);
     }
 
     @Override
     public User updateDACUserById(Map<String, User> dac, Integer id) throws IllegalArgumentException, NotFoundException {
         User updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
         // validate user exists
-        validateExistentUserById(id);
+        User existingUser = userDAO.findUserById(id);
+        if (Objects.isNull(existingUser)) {
+            throw new NotFoundException("The user for the specified id does not exist");
+        }
         // validate required fields are not null or empty
-        validateRequiredFields(updatedUser);
+        if (StringUtils.isEmpty(updatedUser.getDisplayName())) {
+            updatedUser.setDisplayName(existingUser.getDisplayName());
+        }
         try {
             userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
-        User user = userService.findUserByEmail(updatedUser.getEmail());
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
-        return user;
+        return userDAO.findUserById(id);
     }
 
     @Override
@@ -98,15 +97,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     private void validateExistentUserById(Integer id) {
         if (userDAO.findUserById(id) == null) {
             throw new NotFoundException("The user for the specified id does not exist");
-        }
-    }
-
-    private void validateRequiredFields(User newDac) {
-        if (StringUtils.isEmpty(newDac.getDisplayName())) {
-            throw new IllegalArgumentException("Display Name can't be null. The user needs a name to display.");
-        }
-        if (StringUtils.isEmpty(newDac.getEmail())) {
-            throw new IllegalArgumentException("The user needs a valid email to be able to login.");
         }
     }
 
