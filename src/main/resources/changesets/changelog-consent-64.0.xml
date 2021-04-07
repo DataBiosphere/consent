@@ -9,10 +9,8 @@
       <sql>
         INSERT INTO institution (institution_name, create_user) (SELECT 'A-T Children''s Project', dacuserid from dacuser WHERE email = 'jlawson@broadinstitute.org');
         INSERT INTO institution (institution_name, create_user) (SELECT 'Academic Medical Center', dacuserid from dacuser WHERE email = 'jlawson@broadinstitute.org');
-        INSERT INTO institution (institution_name, create_user) (SELECT 'adsfdsf', dacuserid from dacuser WHERE email = 'jlawson@broadinstitute.org');
         INSERT INTO institution (institution_name, create_user) (SELECT 'Allen Institute for Immunology', dacuserid from dacuser WHERE email = 'jlawson@broadinstitute.org');
         INSERT INTO institution (institution_name, create_user) (SELECT 'Arsenal Health', dacuserid from dacuser WHERE email = 'jlawson@broadinstitute.org');
-        INSERT INTO institution (institution_name, create_user) (SELECT 'b', dacuserid from dacuser WHERE email = 'jlawson@broadinstitute.org');
         INSERT INTO institution (institution_name, create_user) (SELECT 'Baylor College of Medicine', dacuserid from dacuser WHERE email = 'jlawson@broadinstitute.org');
         INSERT INTO institution (institution_name, create_user) (SELECT 'Ben-Gurion University of the Negev', dacuserid from dacuser WHERE email = 'jlawson@broadinstitute.org');
         INSERT INTO institution (institution_name, create_user) (SELECT 'Bernard J. Dunn School of Pharmacy, Shenandoah University', dacuserid from dacuser WHERE email = 'jlawson@broadinstitute.org');
