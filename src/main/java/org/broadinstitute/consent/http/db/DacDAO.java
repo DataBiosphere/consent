@@ -27,7 +27,10 @@ import java.util.List;
 @RegisterRowMapper(DacMapper.class)
 public interface DacDAO extends Transactional<DacDAO> {
 
-    @SqlQuery("select * from dac")
+    @SqlQuery("SELECT distinct d.*, a.datasetid " +
+    " FROM dac d " +
+    " LEFT JOIN consents c ON d.dac_id = c.dac_id " +
+    " LEFT JOIN consentassociations a ON a.consentid = c.consentid ")
     List<Dac> findAll();
 
     @SqlQuery("select distinct d.* from dac d " +
