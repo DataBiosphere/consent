@@ -36,9 +36,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
@@ -50,7 +48,6 @@ public class DataAccessRequestResource extends Resource {
 
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
     private final DataAccessRequestService dataAccessRequestService;
-    private final DataAccessRequestAPI dataAccessRequestAPI;
     private final ConsentService consentService;
     private final EmailNotifierService emailNotifierService;
     private final ElectionService electionService;
@@ -60,7 +57,6 @@ public class DataAccessRequestResource extends Resource {
     public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, UserService userService, ConsentService consentService, ElectionService electionService) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.emailNotifierService = emailNotifierService;
-        this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentService = consentService;
         this.electionService = electionService;
         this.userService = userService;
@@ -83,7 +79,7 @@ public class DataAccessRequestResource extends Resource {
         } catch (NotFoundException e) {
             logger.severe("Unable to find userId: " + userId + " for data access request id: " + id);
         }
-        DARModalDetailsDTO detailsDTO = dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionService);
+        DARModalDetailsDTO detailsDTO = dataAccessRequestService.DARModalDetailsDTOBuilder(dar, user, electionService);
         return Response.ok().entity(detailsDTO).build();
     }
 
@@ -106,7 +102,7 @@ public class DataAccessRequestResource extends Resource {
             authUser, id);
         if (CollectionUtils.isNotEmpty(fields)) {
             List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
-            return dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, fieldValues);
+            return dataAccessRequestService.describeDataAccessRequestFieldsById(id, fieldValues);
         } else {
             return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
         }
@@ -209,7 +205,7 @@ public class DataAccessRequestResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response describeDraftManageDataAccessRequests(@Auth AuthUser authUser) {
         User user = findUserByEmail(authUser.getName());
-        List<Document> partials = dataAccessRequestAPI.describeDraftDataAccessRequestManage(user.getDacUserId());
+        List<Document> partials = dataAccessRequestService.describeDraftDataAccessRequestManage(user.getDacUserId());
         return Response.ok().entity(partials).build();
     }
 
@@ -222,7 +218,7 @@ public class DataAccessRequestResource extends Resource {
     public Response cancelDataAccessRequest(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
         validateAuthedRoleUser(Collections.emptyList(), authUser, referenceId);
         try {
-            List<User> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
+            List<User> usersToNotify = dataAccessRequestService.getUserEmailAndCancelElection(referenceId);
             DataAccessRequest dar = dataAccessRequestService.cancelDataAccessRequest(referenceId);
             if (CollectionUtils.isNotEmpty(usersToNotify)) {
                 emailNotifierService.sendCancelDARRequestMessage(usersToNotify, dar.getData().getDarCode());

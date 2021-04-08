@@ -27,14 +27,9 @@ import org.bson.Document;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -60,11 +55,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore("jdk.internal.reflect.*")
-@PrepareForTest({
-        AbstractDataAccessRequestAPI.class
-})
 public class MatchServiceTest {
     @Mock
     ConsentDAO consentDAO;
@@ -79,7 +69,7 @@ public class MatchServiceTest {
     @Mock
     private MatchDAO matchDAO;
     @Mock
-    private DataAccessRequestAPI dataAccessRequestAPI;
+    private DataAccessRequestService dataAccessRequestService;
 
     private MatchService service;
 
@@ -153,8 +143,6 @@ public class MatchServiceTest {
     @Before
     public void setUp() throws UnknownIdentifierException, IOException {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractDataAccessRequestAPI.class);
-        when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
         setUpMockedResponses();
         when(config.getMatchURL()).thenReturn("http://ontology.org/match");
         when(dataAccessRequestDAO.findByReferenceId("NullDar")).thenReturn(null);
@@ -347,7 +335,7 @@ public class MatchServiceTest {
         document.put(DarConstants.CREATE_DATE, dar2.getCreateDate());
         document.put(DarConstants.SORT_DATE, dar2.getSortDate());
 
-        when(dataAccessRequestAPI.describeDataAccessRequestById(referenceId)).thenReturn(document);
+        when(dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId)).thenReturn(document);
         when(matchDAO.findMatchById(any())).thenReturn(sampleMatch1);
     }
 

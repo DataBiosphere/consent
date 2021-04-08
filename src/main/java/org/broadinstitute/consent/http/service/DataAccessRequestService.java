@@ -5,6 +5,10 @@ import static java.util.stream.Collectors.toList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +28,7 @@ import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -33,9 +38,11 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -47,7 +54,9 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
@@ -68,9 +77,11 @@ public class DataAccessRequestService {
     private final MatchDAO matchDAO;
     private final UserDAO userDAO;
     private final VoteDAO voteDAO;
+    private final UserPropertyDAO userPropertyDAO;
 
     private final DacService dacService;
     private final UserService userService;
+    private final DataAccessReportsParser dataAccessReportsParser;
 
     private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private static final String UN_REVIEWED = "un-reviewed";
@@ -93,6 +104,8 @@ public class DataAccessRequestService {
         this.voteDAO = container.getVoteDAO();
         this.dacService = dacService;
         this.userService = userService;
+        this.userPropertyDAO = container.getResearcherPropertyDAO();
+        this.dataAccessReportsParser = new DataAccessReportsParser();
     }
 
     /**
@@ -556,6 +569,209 @@ public class DataAccessRequestService {
             now,
             dar.getData());
         return findByReferenceId(dar.getReferenceId());
+    }
+
+    public Document describeDataAccessRequestFieldsById(String id, List<String> fields) {
+        Document dar = getDataAccessRequestByReferenceIdAsDocument(id);
+        Document result = new Document();
+        for (String field : fields) {
+            if (field.equals(DarConstants.DATASET_ID)){
+                List<String> dataSets = dar.get(field, List.class);
+                result.append(field, dataSets);
+            } else{
+                String content = (String) dar.getOrDefault(field.replaceAll("\\s", ""), "Not found");
+                result.append(field, content);
+            }
+        }
+        return result;
+    }
+
+    public List<Document> describeDraftDataAccessRequestManage(Integer userId) {
+        List<Document> accessList = userId == null
+                ? findAllDraftDataAccessRequestsAsDocuments()
+                : findAllDraftDataAccessRequestDocumentsByUser(userId);
+        List<Document> darManage = new ArrayList<>();
+        List<String> accessRequestIds = getRequestIds(accessList);
+        if (CollectionUtils.isNotEmpty(accessRequestIds)){
+            for(Document doc: accessList){
+                doc.append("dataRequestId", doc.get(DarConstants.REFERENCE_ID).toString());
+                darManage.add(doc);
+            }
+        }
+        return darManage;
+    }
+
+    public List<User> getUserEmailAndCancelElection(String referenceId) {
+        Election access = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.DATA_ACCESS.getValue());
+        Election rp = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.RP.getValue());
+        updateElection(access, rp);
+        List<User> users = new ArrayList<>();
+        if (access != null){
+            List<Vote> votes = voteDAO.findDACVotesByElectionId(access.getElectionId());
+            List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
+            users.addAll(userDAO.findUsers(userIds));
+        } else {
+            users =  userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
+        }
+        return users;
+    }
+
+    private void updateElection(Election access, Election rp) {
+        if (access != null) {
+            access.setStatus(ElectionStatus.CANCELED.getValue());
+            electionDAO.updateElectionStatus(new ArrayList<>(Collections.singletonList(access.getElectionId())), access.getStatus());
+        }
+        if (rp != null){
+            rp.setStatus(ElectionStatus.CANCELED.getValue());
+            electionDAO.updateElectionStatus(new ArrayList<>(Collections.singletonList(rp.getElectionId())), rp.getStatus());
+        }
+    }
+
+    public File createApprovedDARDocument() throws IOException {
+        List<Election> elections = electionDAO.findDataAccessClosedElectionsByFinalResult(true);
+        File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
+        FileWriter darWriter = new FileWriter(file);
+        dataAccessReportsParser.setApprovedDARHeader(darWriter);
+        if (CollectionUtils.isNotEmpty(elections)) {
+            for (Election election : elections) {
+                Document dar = getDataAccessRequestByReferenceIdAsDocument(election.getReferenceId());
+                DataAccessRequest dataAccessRequest = findByReferenceId(election.getReferenceId());
+                try {
+                    if (dar != null) {
+                        Integer datasetId = dataAccessRequest.getData().getDatasetIds().get(0);
+                        String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId);
+                        Consent consent = consentDAO.findConsentById(consentId);
+                        String profileName = userPropertyDAO.findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.PROFILE_NAME);
+                        String institution = userPropertyDAO.findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.INSTITUTION);
+                        dataAccessReportsParser.addApprovedDARLine(darWriter, election, dar, profileName, institution, consent.getName(), consent.getTranslatedUseRestriction());
+                    }
+                } catch (Exception e) {
+                    logger.error("Exception generating Approved DAR Document", e);
+                }
+            }
+        }
+        darWriter.flush();
+        return file;
+    }
+
+    public File createReviewedDARDocument() throws IOException {
+        List<Election> approvedElections = electionDAO.findDataAccessClosedElectionsByFinalResult(true);
+        List<Election> disaprovedElections = electionDAO.findDataAccessClosedElectionsByFinalResult(false);
+        List<Election> elections = new ArrayList<>();
+        elections.addAll(approvedElections);
+        elections.addAll(disaprovedElections);
+        File file = File.createTempFile("ReviewedDataAccessRequests", ".tsv");
+        FileWriter darWriter = new FileWriter(file);
+        dataAccessReportsParser.setReviewedDARHeader(darWriter);
+        if (CollectionUtils.isNotEmpty(elections)) {
+            for (Election election : elections) {
+                Document dar = getDataAccessRequestByReferenceIdAsDocument(election.getReferenceId());
+                if (dar != null) {
+                    Integer datasetId = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID).get(0);
+                    String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId);
+                    Consent consent = consentDAO.findConsentById(consentId);
+                    dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar, consent.getName(), consent.getTranslatedUseRestriction());
+                }
+            }
+        }
+        darWriter.flush();
+        return file;
+    }
+
+    public File createDataSetApprovedUsersDocument(Integer dataSetId) throws IOException {
+        File file = File.createTempFile("DatasetApprovedUsers", ".tsv");
+        FileWriter darWriter = new FileWriter(file);
+        List<Document> darList = describeDataAccessByDataSetId(dataSetId);
+        dataAccessReportsParser.setDataSetApprovedUsersHeader(darWriter);
+        if (CollectionUtils.isNotEmpty(darList)){
+            for(Document dar: darList){
+                String referenceId = dar.getString(DarConstants.REFERENCE_ID);
+                DataAccessRequest dataAccessRequest = findByReferenceId(referenceId);
+                Date approvalDate = electionDAO.findApprovalAccessElectionDate(referenceId);
+                if (approvalDate != null) {
+                    String email = userPropertyDAO
+                            .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.ACADEMIC_BUSINESS_EMAIL);
+                    String name = userPropertyDAO
+                            .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.PROFILE_NAME);
+                    String institution = userPropertyDAO
+                            .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.INSTITUTION);
+                    String darCode = dataAccessRequest.getData().getDarCode();
+                    dataAccessReportsParser.addDataSetApprovedUsersLine(darWriter, email, name, institution, darCode, approvalDate);
+                }
+            }
+        }
+        darWriter.flush();
+        return file;
+    }
+
+    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionService electionService) {
+        DataAccessRequest dataAccessRequest = findByReferenceId(dar.getString(DarConstants.REFERENCE_ID));
+        DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
+        List<DataSet> datasets = populateDatasets(dar);
+        Optional<User> optionalUser = Optional.ofNullable(user);
+        String status = optionalUser.isPresent() ? user.getStatus() : "";
+        String rationale = optionalUser.isPresent() ? user.getRationale() : "";
+        List<UserProperty> researcherProperties = optionalUser.isPresent() ?
+                userPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId()) :
+                Collections.emptyList();
+        return darModalDetailsDTO
+                .setNeedDOApproval(electionService.darDatasetElectionStatus(dataAccessRequest.getReferenceId()))
+                .setResearcherName(user, dataAccessRequest.getData().getInvestigator())
+                .setStatus(status)
+                .setRationale(rationale)
+                .setUserId(dataAccessRequest.getUserId())
+                .setDarCode(dataAccessRequest.getData().getDarCode())
+                .setPrincipalInvestigator(dar.getString(DarConstants.INVESTIGATOR))
+                .setInstitutionName(dar.getString(DarConstants.INSTITUTION))
+                .setProjectTitle(dataAccessRequest.getData().getProjectTitle())
+                .setDepartment(dar.getString(DarConstants.DEPARTMENT))
+                .setCity(dar.getString(DarConstants.CITY))
+                .setCountry(dar.getString(DarConstants.COUNTRY))
+                .setNihUsername(dar.getString(DarConstants.NIH_USERNAME))
+                .setHaveNihUsername(StringUtils.isNotEmpty(dar.getString(DarConstants.NIH_USERNAME)))
+                .setIsThereDiseases(false)
+                .setIsTherePurposeStatements(false)
+                .setResearchType(dar)
+                .setDiseases(dar)
+                .setPurposeStatements(dar)
+                .setDatasets(datasets)
+                .setResearcherProperties(researcherProperties)
+                .setRus(dar.getString(DarConstants.RUS));
+    }
+
+    private List<DataSet> populateDatasets(Document dar) {
+        List<DataSet> datasets = new ArrayList<>();
+        try {
+            List<Integer> datasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+            if (!datasetIds.isEmpty()) {
+                datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
+            }
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+        }
+        return datasets;
+    }
+
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
+     * @param dataSetId Dataset Id
+     * @return List<Document>
+     */
+    private List<Document> describeDataAccessByDataSetId(Integer dataSetId) {
+        return getAllDataAccessRequestsAsDocuments().stream().
+                filter(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID).contains(dataSetId)).
+                collect(Collectors.toList());
+    }
+
+    private List<String> getRequestIds(List<Document> access) {
+        List<String> accessIds = new ArrayList<>();
+        if (access != null) {
+            access.forEach(document ->
+                    accessIds.add(document.getString(DarConstants.REFERENCE_ID))
+            );
+        }
+        return accessIds;
     }
 
     /**
