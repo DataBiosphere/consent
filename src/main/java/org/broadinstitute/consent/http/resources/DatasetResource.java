@@ -42,8 +42,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.json.JSONObject;
@@ -55,14 +54,14 @@ public class DatasetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
     private final DatasetService datasetService;
-    private final DataAccessRequestAPI dataAccessRequestAPI;
     private final UserService userService;
+    private final DataAccessRequestService darService;
 
     @Inject
-    public DatasetResource(DatasetService datasetService, UserService userService) {
-        this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
+    public DatasetResource(DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
         this.datasetService = datasetService;
         this.userService = userService;
+        this.darService = darService;
     }
 
     @POST
@@ -323,7 +322,7 @@ public class DatasetResource extends Resource {
     @Path("/{datasetId}/approved/users")
     public Response downloadDatasetApprovedUsers(@PathParam("datasetId") Integer datasetId) {
         try {
-            return Response.ok(dataAccessRequestAPI.createDataSetApprovedUsersDocument(datasetId))
+            return Response.ok(darService.createDataSetApprovedUsersDocument(datasetId))
                     .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + "DatasetApprovedUsers.tsv")
                     .build();
         } catch (Exception e) {

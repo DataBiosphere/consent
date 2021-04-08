@@ -10,8 +10,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.ResearcherService;
@@ -21,8 +19,6 @@ public class DataRequestReportsResource extends Resource {
 
     private final DataAccessRequestService darService;
 
-    private final DataAccessRequestAPI darApi;
-
     private final ResearcherService researcherService;
 
     private final UserService userService;
@@ -31,7 +27,6 @@ public class DataRequestReportsResource extends Resource {
     public DataRequestReportsResource(DataAccessRequestService darService,
         ResearcherService researcherService, UserService userService) {
         this.darService = darService;
-        this.darApi = AbstractDataAccessRequestAPI.getInstance();
         this.researcherService = researcherService;
         this.userService = userService;
     }
@@ -43,7 +38,7 @@ public class DataRequestReportsResource extends Resource {
     @Path("/approved")
     public Response downloadApprovedDARs() {
         try {
-            return Response.ok(darApi.createApprovedDARDocument())
+            return Response.ok(darService.createApprovedDARDocument())
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename =" + "ApprovedDataAccessRequests.tsv")
                     .build();
         } catch (Exception e) {
@@ -58,7 +53,7 @@ public class DataRequestReportsResource extends Resource {
     @Path("/reviewed")
     public Response downloadReviewedDARs() {
         try {
-            return Response.ok(darApi.createReviewedDARDocument())
+            return Response.ok(darService.createReviewedDARDocument())
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename =" + "ReviewedDataAccessRequests.tsv")
                     .build();
         } catch (Exception e) {

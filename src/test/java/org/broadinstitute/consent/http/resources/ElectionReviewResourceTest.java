@@ -8,9 +8,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReview;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.ReviewResultsService;
@@ -31,18 +29,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings("deprecation")
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore("jdk.internal.reflect.*")
-@PrepareForTest({
-        AbstractDataAccessRequestAPI.class
-})
 public class ElectionReviewResourceTest {
 
     @Mock
     private ConsentService consentService;
-    @Mock
-    private DataAccessRequestAPI accessRequestAPI;
     @Mock
     private ElectionService electionService;
     @Mock
@@ -55,11 +45,9 @@ public class ElectionReviewResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractDataAccessRequestAPI.class);
     }
 
     private void initResource() {
-        when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(accessRequestAPI);
         resource = new ElectionReviewResource(darService, consentService, electionService, reviewResultsService);
     }
 
