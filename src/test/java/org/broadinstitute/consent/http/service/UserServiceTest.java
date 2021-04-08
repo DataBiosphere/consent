@@ -26,7 +26,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
-import org.checkerframework.common.value.qual.StaticallyExecutable;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
