@@ -11,9 +11,6 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.resources.DACUserResource;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +29,7 @@ public class ResearcherService {
     private UserPropertyDAO userPropertyDAO;
     private UserDAO userDAO;
     private final EmailNotifierService emailNotifierService;
+    private final UserService userService;
     private static final String ACTION_REGISTERED = "registered";
 
     protected Logger logger() {
@@ -39,10 +37,11 @@ public class ResearcherService {
     }
 
     @Inject
-    public ResearcherService(UserPropertyDAO userPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService) {
+    public ResearcherService(UserPropertyDAO userPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService, UserService userService) {
         this.userPropertyDAO = userPropertyDAO;
         this.userDAO = userDAO;
         this.emailNotifierService = emailNotifierService;
+        this.userService = userService;
     }
 
     public List<UserProperty> setProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser) throws NotFoundException, IllegalArgumentException {
@@ -70,8 +69,7 @@ public class ResearcherService {
         } else if (hasUpdatedFields(user.getDacUserId(), validatedProperties, isUpdatedProfileCompleted)) {
             deleteResearcherProperties(user.getDacUserId());
             saveProperties(properties);
-            DACUserAPI dacUserAPI = AbstractDACUserAPI.getInstance();
-            dacUserAPI.updateUserStatus(RoleStatus.PENDING.toString(), user.getDacUserId());
+            userService.updateUserStatus(RoleStatus.PENDING.toString(), user.getDacUserId());
         } else {
             saveProperties(properties);
         }

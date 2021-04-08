@@ -8,8 +8,6 @@ import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 import org.junit.Before;
@@ -38,13 +36,10 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({
-        AbstractDACUserAPI.class,
         AbstractUseRestrictionValidatorAPI.class
 })
 public class ConsentResourceTest {
 
-    @Mock
-    private DACUserAPI dacUserAPI;
     @Mock
     private AuditService auditService;
     @Mock
@@ -65,7 +60,6 @@ public class ConsentResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractDACUserAPI.class);
         PowerMockito.mockStatic(AbstractUseRestrictionValidatorAPI.class);
     }
 
@@ -73,7 +67,6 @@ public class ConsentResourceTest {
         when(builder.path(anyString())).thenReturn(builder);
         when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
         when(info.getRequestUriBuilder()).thenReturn(builder);
-        when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractUseRestrictionValidatorAPI.getInstance()).thenReturn(useRestrictionValidatorAPI);
         resource = new ConsentResource(auditService, userService, consentService, matchService);
     }
