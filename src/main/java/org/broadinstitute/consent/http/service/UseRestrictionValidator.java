@@ -1,5 +1,6 @@
-package org.broadinstitute.consent.http.service.validate;
+package org.broadinstitute.consent.http.service;
 
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.validate.ValidateResponse;
 import org.glassfish.jersey.client.ClientProperties;
@@ -9,16 +10,12 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
-public class UseRestrictionValidator extends AbstractUseRestrictionValidatorAPI{
-
+public class UseRestrictionValidator {
     private Client client;
     private String validateUrl;
 
-    public static void initInstance(Client client, ServicesConfiguration config) {
-        AbstractUseRestrictionValidatorAPI.UseRestrictionValidatorAPIHolder.setInstance(new UseRestrictionValidator(client, config));
-    }
-
-    private UseRestrictionValidator(Client client, ServicesConfiguration config){
+    @Inject
+    public UseRestrictionValidator(Client client, ServicesConfiguration config) {
         this.client = ClientBuilder.newClient();
         client.property(ClientProperties.CONNECT_TIMEOUT, 10000);
         client.property(ClientProperties.READ_TIMEOUT,    10000);
@@ -37,7 +34,6 @@ public class UseRestrictionValidator extends AbstractUseRestrictionValidatorAPI{
         }
     }
 
-    @Override
     public void setClient(Client client) {
         this.client = client;
     }

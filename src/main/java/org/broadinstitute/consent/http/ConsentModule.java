@@ -53,6 +53,7 @@ import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.ReviewResultsService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.WhitelistService;
@@ -172,6 +173,11 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UseRestrictionConverter providesUseRestrictionConverter() {
         return new UseRestrictionConverter(providesClient(), config.getServicesConfiguration());
+    }
+
+    @Provides
+    UseRestrictionValidator providesUseRestrictionValidator() {
+        return new UseRestrictionValidator(providesClient(), config.getServicesConfiguration());
     }
 
     @Provides
