@@ -322,7 +322,7 @@ public class DatasetResource extends Resource {
             Integer dacUserId = dacUser.getDacUserId();
             List<Map<String, String>> datasets = datasetService.autoCompleteDatasets(partial, dacUserId);
             return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
-        } catch (NotFoundException e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
