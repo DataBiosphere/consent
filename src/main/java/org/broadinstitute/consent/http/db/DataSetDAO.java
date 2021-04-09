@@ -1,18 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
-import java.sql.Timestamp;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
-import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
@@ -28,6 +21,12 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
+
+import java.sql.Timestamp;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 @RegisterRowMapper(DataSetMapper.class)
 public interface DataSetDAO extends Transactional<DataSetDAO> {
@@ -88,10 +87,10 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
-          "INNER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
-          "INNER JOIN dictionary k ON k.keyid = dp.propertykey " +
-          "INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
-          "INNER JOIN consents c ON c.consentid = ca.consentid " +
+          "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey " +
+          "LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid " +
           "INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
           "INNER JOIN dacuser u ON ur.user_id = u.dacuserid " +
           "WHERE u.dacuserid = :dacUserId AND d.name IS NOT NULL " +
@@ -101,10 +100,10 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
-          "INNER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
-          "INNER JOIN dictionary k ON k.keyid = dp.propertykey " +
-          "INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
-          "INNER JOIN consents c ON c.consentid = ca.consentid " +
+          "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey " +
+          "LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid " +
           "WHERE d.name IS NOT NULL AND d.active = true " +
           "ORDER BY d.datasetid, k.displayorder")
     Set<DataSetDTO> findActiveDatasets();
@@ -112,10 +111,10 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
-          "INNER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
-          "INNER JOIN dictionary k ON k.keyid = dp.propertykey " +
-          "INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
-          "INNER JOIN consents c ON c.consentid = ca.consentid " +
+          "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey " +
+          "LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid " +
           "ORDER BY d.datasetid, k.displayorder")
     Set<DataSetDTO> findAllDatasets();
 
@@ -156,10 +155,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("SELECT ds.* FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ca.consentId = :consentId")
     List<DataSet> getDataSetsForConsent(@Bind("consentId") String consentId);
 
-    @RegisterRowMapper(AssociationMapper.class)
-    @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId IN (<dataSetIdList>)")
-    List<Association> getAssociationsForDataSetIdList(@BindList("dataSetIdList") List<Integer> dataSetIdList);
-
     @SqlQuery("SELECT ca.consentId FROM consentassociations ca INNER JOIN dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId = :dataSetId")
     String getAssociatedConsentIdByDataSetId(@Bind("dataSetId") Integer dataSetId);
 
@@ -178,11 +173,12 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
      * @param email User email
      * @return List of datasets that are visible to the user via DACs.
      */
-    @SqlQuery(" select d.* from dataset d " +
-            " inner join consentassociations a on d.dataSetId = a.dataSetId " +
-            " inner join consents c on a.consentId = c.consentId " +
-            " inner join user_role ur on ur.dac_id = c.dac_id " +
-            " inner join dacuser u on ur.user_id = u.dacUserId and u.email = :email ")
+    @SqlQuery(" SELECT d.* " +
+            " FROM dataset d " +
+            " LEFT OUTER JOIN consentassociations a ON d.dataSetId = a.dataSetId " +
+            " LEFT OUTER JOIN consents c ON a.consentId = c.consentId " +
+            " INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
+            " INNER JOIN dacuser u ON ur.user_id = u.dacUserId and u.email = :email ")
     List<DataSet> findDataSetsByAuthUserEmail(@Bind("email") String email);
 
     /**
