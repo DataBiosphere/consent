@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.DataSetAudit;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
@@ -10,6 +11,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -40,6 +42,7 @@ public class DatasetService {
     public static final String DATASET_NAME_KEY = "Dataset Name";
     public static final String CONSENT_NAME_PREFIX = "DUOS-DS-CG-";
     private final ConsentDAO consentDAO;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DataSetDAO dataSetDAO;
     private final UserRoleDAO userRoleDAO;
     private final DataSetAuditDAO dataSetAuditDAO;
@@ -49,10 +52,11 @@ public class DatasetService {
     private final String DELETE = "DELETE";
 
     @Inject
-    public DatasetService(ConsentDAO consentDAO, DataSetDAO dataSetDAO, UserRoleDAO userRoleDAO,
-                          DataSetAuditDAO dataSetAuditDAO, DatasetAssociationDAO datasetAssociationDAO,
-          UseRestrictionConverter converter) {
+    public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DataSetDAO dataSetDAO,
+                          UserRoleDAO userRoleDAO, DataSetAuditDAO dataSetAuditDAO,
+                          DatasetAssociationDAO datasetAssociationDAO, UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.dataSetDAO = dataSetDAO;
         this.userRoleDAO = userRoleDAO;
         this.dataSetAuditDAO = dataSetAuditDAO;
@@ -333,6 +337,14 @@ public class DatasetService {
     }
 
     public Set<DataSetDTO> describeDatasets(Integer dacUserId) {
+        List<DataAccessRequestData> darDatas = dataAccessRequestDAO.findAllDataAccessRequestDatas();
+        List<Integer> datasetIdsInUse = darDatas
+                .stream()
+                .map(DataAccessRequestData::getDatasetIds)
+                .filter(Objects::nonNull)
+                .filter(l -> !l.isEmpty())
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
         Set<DataSetDTO> datasets;
         if (userHasRole(UserRoles.ADMIN.getRoleName(), dacUserId)) {
             datasets = dataSetDAO.findAllDatasets();
@@ -347,7 +359,9 @@ public class DatasetService {
                 return moreDatasets;
             }
         }
-        return datasets;
+        return datasets.stream()
+                .peek(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())))
+                .collect(Collectors.toSet());
     }
 
     public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
