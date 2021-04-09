@@ -63,6 +63,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("delete from datasetproperty where dataSetId = :dataSetId")
     void deleteDataSetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
+    @SqlUpdate("DELETE FROM datasetproperty WHERE datasetid = :datasetId")
+    void deleteDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
+
     @SqlUpdate("UPDATE datasetproperty SET propertyvalue = :propertyValue WHERE datasetid = :datasetId AND propertykey = :propertyKey")
     void updateDatasetProperty(@Bind("datasetId") Integer datasetId, @Bind("propertyKey") Integer propertyKey, @Bind("propertyValue") String propertyValue);
 
@@ -71,6 +74,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlBatch("delete from dataset where dataSetId = :dataSetId")
     void deleteDataSets(@Bind("dataSetId") Collection<Integer> dataSetsIds);
+
+    @SqlUpdate("DELETE FROM dataset WHERE datasetid = :datasetId")
+    void deleteDatasetById(@Bind("datasetId") Integer datasetId);
 
     @SqlUpdate("UPDATE dataset SET active = null, name = null, createdate = null, needs_approval = 0 WHERE datasetid = :dataSetId")
     void logicalDatasetDelete(@Bind("dataSetId") Integer dataSetId);
