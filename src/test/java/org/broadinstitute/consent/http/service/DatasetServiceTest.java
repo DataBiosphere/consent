@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
@@ -52,6 +53,9 @@ public class DatasetServiceTest {
     private ConsentDAO consentDAO;
 
     @Mock
+    DataAccessRequestDAO dataAccessRequestDAO;
+
+    @Mock
     private DataSetDAO datasetDAO;
 
     @Mock
@@ -72,7 +76,7 @@ public class DatasetServiceTest {
     }
 
     private void initService() {
-        datasetService = new DatasetService(consentDAO, datasetDAO, userRoleDAO, dataSetAuditDAO, datasetAssociationDAO, useRestrictionConverter);
+        datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, userRoleDAO, dataSetAuditDAO, datasetAssociationDAO, useRestrictionConverter);
     }
 
     @Test
