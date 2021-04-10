@@ -74,8 +74,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlUpdate("DELETE FROM dataset_user_association WHERE datasetid = :datasetId")
     void deleteUserAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
 
-    @SqlUpdate("DELETE FROM consentassociations WHERE datasetid = :dataSetId")
-    void deleteConsentAssociationsByDataSetId(@Bind("dataSetId") Integer dataSetId);
+    @SqlUpdate("DELETE FROM consentassociations WHERE datasetid = :datasetId")
+    void deleteConsentAssociationsByDataSetId(@Bind("datasetId") Integer datasetId);
 
     @SqlUpdate("UPDATE datasetproperty SET propertyvalue = :propertyValue WHERE datasetid = :datasetId AND propertykey = :propertyKey")
     void updateDatasetProperty(@Bind("datasetId") Integer datasetId, @Bind("propertyKey") Integer propertyKey, @Bind("propertyValue") String propertyValue);
