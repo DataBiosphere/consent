@@ -318,7 +318,7 @@ public class DatasetService {
             String dsAuditName = Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
             DataSetAudit dsAudit = new DataSetAudit(datasetId, dataset.getObjectId(), dsAuditName, new Date(), dataset.getActive(), userId, Actions.DELETE.getValue().toUpperCase());
             try {
-                datasetDAO.inTransaction(h -> {
+                datasetDAO.useTransaction(h -> {
                     try {
                         h.insertDataSetAudit(dsAudit);
                         h.deleteUserAssociationsByDatasetId(datasetId);
@@ -329,7 +329,6 @@ public class DatasetService {
                         h.rollback();
                         throw e;
                     }
-                    return true;
                 });
             } catch (Exception e) {
                 logger.error(e.getMessage());
