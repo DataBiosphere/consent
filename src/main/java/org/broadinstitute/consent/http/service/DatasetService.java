@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import liquibase.pro.packaged.E;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
