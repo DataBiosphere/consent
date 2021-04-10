@@ -113,7 +113,7 @@ public class DatasetResource extends Resource {
         catch (Exception e) {
             if (Objects.isNull(createdConsent) && Objects.nonNull(createdDataset)) {
                 try {
-                    datasetService.deleteDataset(createdDataset.getDataSetId());
+                    datasetService.deleteDataset(createdDataset.getDataSetId(), userId);
                 } catch (Exception e2) {
                     return createExceptionResponse(e2);
                 }
