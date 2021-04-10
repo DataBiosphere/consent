@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import liquibase.pro.packaged.E;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -305,10 +306,19 @@ public class DatasetService {
         return Collections.emptyList();
     }
 
-    public void deleteDataset(Integer datasetId) {
-        List<Integer> idList = Collections.singletonList(datasetId);
-        datasetDAO.deleteDataSetsProperties(idList);
-        datasetDAO.deleteDataSets(idList);
+    public void deleteDataset(Integer datasetId) throws Exception {
+        try {datasetDAO.useTransaction(h -> {
+            try {
+                deleteDatasetAndAssociations(h, datasetId);
+            } catch (Exception e) {
+                h.rollback();
+                throw e;
+            }
+        });
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            throw e;
+        }
     }
 
     public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
@@ -321,10 +331,7 @@ public class DatasetService {
                 datasetDAO.useTransaction(h -> {
                     try {
                         h.insertDataSetAudit(dsAudit);
-                        h.deleteUserAssociationsByDatasetId(datasetId);
-                        h.deleteDatasetPropertiesByDatasetId(datasetId);
-                        h.deleteConsentAssociationsByDataSetId(datasetId);
-                        h.deleteDatasetById(datasetId);
+                        deleteDatasetAndAssociations(h, datasetId);
                     } catch (Exception e) {
                         h.rollback();
                         throw e;
@@ -335,6 +342,20 @@ public class DatasetService {
                 throw e;
             }
         }
+    }
+
+    /**
+     * Helper method to allow for wrapping a series of deletes intended to be run in a
+     * transaction block.
+     *
+     * @param dao The DAO
+     * @param datasetId The dataset id
+     */
+    private void deleteDatasetAndAssociations(DatasetDAO dao, Integer datasetId) {
+        dao.deleteUserAssociationsByDatasetId(datasetId);
+        dao.deleteDatasetPropertiesByDatasetId(datasetId);
+        dao.deleteConsentAssociationsByDataSetId(datasetId);
+        dao.deleteDatasetById(datasetId);
     }
 
     public Set<DataSetDTO> describeDatasets(Integer dacUserId) {
