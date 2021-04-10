@@ -108,8 +108,7 @@ public class DatasetService {
               .findFirst();
         // Typically, this is a construct from ORSP consisting of dataset name and some form of investigator code.
         // In our world, we'll use that dataset name if provided, or the alias.
-        String groupName =
-              nameProp.isPresent() ? nameProp.get().getPropertyValue() : dataset.getAlias();
+        String groupName = nameProp.isPresent() ? nameProp.get().getPropertyValue() : dataset.getAlias();
         String name = CONSENT_NAME_PREFIX + dataset.getDataSetId();
         Date createDate = new Date();
         if (Objects.nonNull(dataset.getDataUse())) {
@@ -122,21 +121,24 @@ public class DatasetService {
              * translated use restriction
              */
             UseRestriction useRestriction = converter.parseUseRestriction(dataset.getDataUse());
-            consentDAO.insertConsent(consentId, manualReview, useRestriction.toString(),
-                  dataset.getDataUse().toString(),
-                  null, name, null, createDate, createDate, null,
-                  groupName, dataset.getDacId());
-            String associationType = AssociationType.SAMPLESET.getValue();
-            if (Objects.nonNull(dataset.getDacId())) {
-                consentDAO.updateConsentDac(consentId, dataset.getDacId());
-            }
-            consentDAO.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
+            consentDAO.useTransaction(h -> {
+                try {
+                    h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, null, groupName, dataset.getDacId());
+                    if (Objects.nonNull(dataset.getDacId())) {
+                        h.updateConsentDac(consentId, dataset.getDacId());
+                    }
+                    String associationType = AssociationType.SAMPLESET.getValue();
+                    h.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
+                } catch (Exception e) {
+                    h.rollback();
+                    logger.error("Exception creating consent: " + e.getMessage());
+                    throw e;
+                }
+            });
             return consentDAO.findConsentById(consentId);
         } else {
-            throw new IllegalArgumentException(
-                  "Dataset is missing Data Use information. Consent could not be created.");
+            throw new IllegalArgumentException("Dataset is missing Data Use information. Consent could not be created.");
         }
-
     }
 
     private boolean isConsentDataUseManualReview(DataUse dataUse) {
@@ -173,7 +175,9 @@ public class DatasetService {
                 h.updateDatasetNeedsApproval(id, dataset.getNeedsApproval());
                 return id;
             } catch (Exception e) {
-                h.rollback();
+                if (Objects.nonNull(h)) {
+                    h.rollback();
+                }
                 logger.error("Exception creating dataset with consent: " + e.getMessage());
                 throw e;
             }
