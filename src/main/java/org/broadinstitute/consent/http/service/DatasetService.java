@@ -51,8 +51,7 @@ public class DatasetService {
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
-                          UserRoleDAO userRoleDAO,
-                          UseRestrictionConverter converter) {
+                          UserRoleDAO userRoleDAO, UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.datasetDAO = dataSetDAO;
