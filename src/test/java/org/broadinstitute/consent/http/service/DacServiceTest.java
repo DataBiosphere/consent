@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 import javax.ws.rs.BadRequestException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -62,7 +62,7 @@ public class DacServiceTest {
     private UserDAO userDAO;
 
     @Mock
-    private DataSetDAO dataSetDAO;
+    private DatasetDAO dataSetDAO;
 
     @Mock
     private ElectionDAO electionDAO;

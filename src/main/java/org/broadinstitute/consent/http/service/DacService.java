@@ -19,7 +19,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -43,13 +43,13 @@ public class DacService {
 
     private final DacDAO dacDAO;
     private final UserDAO userDAO;
-    private final DataSetDAO dataSetDAO;
+    private final DatasetDAO dataSetDAO;
     private final ElectionDAO electionDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final VoteService voteService;
 
     @Inject
-    public DacService(DacDAO dacDAO, UserDAO userDAO, DataSetDAO dataSetDAO,
+    public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
                       ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
                       VoteService voteService) {
         this.dacDAO = dacDAO;

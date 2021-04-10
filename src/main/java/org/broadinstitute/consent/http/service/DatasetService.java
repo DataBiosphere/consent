@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
@@ -44,13 +44,13 @@ public class DatasetService {
     public static final String CONSENT_NAME_PREFIX = "DUOS-DS-CG-";
     private final ConsentDAO consentDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
-    private final DataSetDAO datasetDAO;
+    private final DatasetDAO datasetDAO;
     private final UserRoleDAO userRoleDAO;
     private final UseRestrictionConverter converter;
     public static String datasetName = "Dataset Name";
 
     @Inject
-    public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DataSetDAO dataSetDAO,
+    public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
                           UserRoleDAO userRoleDAO,
                           UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;

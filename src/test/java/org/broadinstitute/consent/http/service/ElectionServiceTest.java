@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -68,7 +68,7 @@ public class ElectionServiceTest {
     @Mock
     private UserDAO userDAO;
     @Mock
-    private DataSetDAO dataSetDAO;
+    private DatasetDAO dataSetDAO;
     @Mock
     private DatasetAssociationDAO datasetAssociationDAO;
     @Mock

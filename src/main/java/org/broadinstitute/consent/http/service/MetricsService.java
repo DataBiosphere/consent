@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Type;
@@ -26,11 +26,11 @@ import java.util.stream.Collectors;
 public class MetricsService {
 
   private final DacService dacService;
-  private final DataSetDAO dataSetDAO;
+  private final DatasetDAO dataSetDAO;
   private final MetricsDAO metricsDAO;
 
   @Inject
-  public MetricsService(DacService dacService, DataSetDAO dataSetDAO, MetricsDAO metricsDAO) {
+  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, MetricsDAO metricsDAO) {
     this.dacService = dacService;
     this.dataSetDAO = dataSetDAO;
     this.metricsDAO = metricsDAO;

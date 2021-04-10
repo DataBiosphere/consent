@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
@@ -54,7 +54,7 @@ public class DatasetServiceTest {
     DataAccessRequestDAO dataAccessRequestDAO;
 
     @Mock
-    private DataSetDAO datasetDAO;
+    private DatasetDAO datasetDAO;
 
     @Mock
     private UserRoleDAO userRoleDAO;

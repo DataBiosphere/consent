@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 @RegisterRowMapper(DataSetMapper.class)
-public interface DataSetDAO extends Transactional<DataSetDAO> {
+public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     String CHAIRPERSON = Resource.CHAIRPERSON;
 

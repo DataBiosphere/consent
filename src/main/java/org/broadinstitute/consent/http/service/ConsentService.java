@@ -20,7 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.Actions;
@@ -50,7 +50,7 @@ public class ConsentService {
     private final AssociationDAO associationDAO;
     private final Jdbi jdbi;
     private final Logger logger;
-    private final DataSetDAO dataSetDAO;
+    private final DatasetDAO dataSetDAO;
 
     private ConsentDAO consentDAO;
     private ElectionDAO electionDAO;
@@ -60,7 +60,7 @@ public class ConsentService {
 
     @Inject
     public ConsentService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
-                          DataAccessRequestDAO dataAccessRequestDAO, AuditService auditService, AssociationDAO associationDAO, Jdbi jdbi, DataSetDAO dataSetDAO) {
+                          DataAccessRequestDAO dataAccessRequestDAO, AuditService auditService, AssociationDAO associationDAO, Jdbi jdbi, DatasetDAO dataSetDAO) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;

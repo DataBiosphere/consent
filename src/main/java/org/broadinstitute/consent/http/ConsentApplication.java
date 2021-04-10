@@ -46,7 +46,7 @@ import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -185,7 +185,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ElectionDAO electionDAO = injector.getProvider(ElectionDAO.class).get();
         final VoteDAO voteDAO = injector.getProvider(VoteDAO.class).get();
         final DataAccessRequestDAO dataAccessRequestDAO = injector.getProvider(DataAccessRequestDAO.class).get();
-        final DataSetDAO dataSetDAO = injector.getProvider(DataSetDAO.class).get();
+        final DatasetDAO dataSetDAO = injector.getProvider(DatasetDAO.class).get();
         final DatasetAssociationDAO dataSetAssociationDAO = injector.getProvider(
             DatasetAssociationDAO.class).get();
         final UserDAO userDAO = injector.getProvider(UserDAO.class).get();

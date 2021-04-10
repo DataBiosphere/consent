@@ -60,7 +60,7 @@ public class DAOTestHelper {
     protected static CounterDAO counterDAO;
     protected static DacDAO dacDAO;
     protected static UserDAO userDAO;
-    protected static DataSetDAO dataSetDAO;
+    protected static DatasetDAO dataSetDAO;
     protected static ElectionDAO electionDAO;
     protected static UserRoleDAO userRoleDAO;
     protected static VoteDAO voteDAO;
@@ -117,7 +117,7 @@ public class DAOTestHelper {
         counterDAO = jdbi.onDemand(CounterDAO.class);
         dacDAO = jdbi.onDemand(DacDAO.class);
         userDAO = jdbi.onDemand(UserDAO.class);
-        dataSetDAO = jdbi.onDemand(DataSetDAO.class);
+        dataSetDAO = jdbi.onDemand(DatasetDAO.class);
         electionDAO = jdbi.onDemand(ElectionDAO.class);
         userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
         voteDAO = jdbi.onDemand(VoteDAO.class);
