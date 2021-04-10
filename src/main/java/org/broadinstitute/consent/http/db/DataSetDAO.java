@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataSetAudit;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -66,6 +67,16 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlUpdate("DELETE FROM datasetproperty WHERE datasetid = :datasetId")
     void deleteDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
+    @SqlUpdate("INSERT INTO dataset_audit (datasetid, changeaction, modifiedbyuser, modificationdate, objectid, name, active) VALUES (:dataSetId, :action, :user, :date, :objectId, :name, :active )")
+    @GetGeneratedKeys
+    Integer insertDataSetAudit(@BindBean DataSetAudit dataSets);
+
+    @SqlUpdate("DELETE FROM dataset_user_association WHERE datasetid = :datasetId")
+    void deleteUserAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
+
+    @SqlUpdate("DELETE FROM consentassociations WHERE datasetid = :dataSetId")
+    void deleteConsentAssociationsByDataSetId(@Bind("dataSetId") Integer dataSetId);
+
     @SqlUpdate("UPDATE datasetproperty SET propertyvalue = :propertyValue WHERE datasetid = :datasetId AND propertykey = :propertyKey")
     void updateDatasetProperty(@Bind("datasetId") Integer datasetId, @Bind("propertyKey") Integer propertyKey, @Bind("propertyValue") String propertyValue);
 
@@ -77,9 +88,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlUpdate("DELETE FROM dataset WHERE datasetid = :datasetId")
     void deleteDatasetById(@Bind("datasetId") Integer datasetId);
-
-    @SqlUpdate("UPDATE dataset SET active = null, name = null, createdate = null, needs_approval = 0 WHERE datasetid = :dataSetId")
-    void logicalDatasetDelete(@Bind("dataSetId") Integer dataSetId);
 
     @SqlUpdate("update dataset set active = :active where dataSetId = :dataSetId")
     void updateDataSetActive(@Bind("dataSetId") Integer dataSetId, @Bind("active") Boolean active);

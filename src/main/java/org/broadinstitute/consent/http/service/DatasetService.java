@@ -1,24 +1,24 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.DataSetAudit;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataSetAudit;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
@@ -39,64 +39,60 @@ import java.util.stream.Collectors;
 
 public class DatasetService {
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     public static final String DATASET_NAME_KEY = "Dataset Name";
     public static final String CONSENT_NAME_PREFIX = "DUOS-DS-CG-";
     private final ConsentDAO consentDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
-    private final DataSetDAO dataSetDAO;
+    private final DataSetDAO datasetDAO;
     private final UserRoleDAO userRoleDAO;
-    private final DataSetAuditDAO dataSetAuditDAO;
-    private final DatasetAssociationDAO datasetAssociationDAO;
     private final UseRestrictionConverter converter;
     public static String datasetName = "Dataset Name";
-    private final String DELETE = "DELETE";
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DataSetDAO dataSetDAO,
-                          UserRoleDAO userRoleDAO, DataSetAuditDAO dataSetAuditDAO,
-                          DatasetAssociationDAO datasetAssociationDAO, UseRestrictionConverter converter) {
+                          UserRoleDAO userRoleDAO,
+                          UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
-        this.dataSetDAO = dataSetDAO;
+        this.datasetDAO = dataSetDAO;
         this.userRoleDAO = userRoleDAO;
-        this.dataSetAuditDAO = dataSetAuditDAO;
-        this.datasetAssociationDAO = datasetAssociationDAO;
         this.converter = converter;
     }
 
     public List<DataSet> getDataSetsForConsent(String consentId) {
-        return dataSetDAO.getDataSetsForConsent(consentId);
+        return datasetDAO.getDataSetsForConsent(consentId);
     }
 
     public Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
-        return dataSetDAO.findDataSetsByReceiveOrder(dataSetId);
+        return datasetDAO.findDataSetsByReceiveOrder(dataSetId);
     }
 
     public Collection<Dictionary> describeDictionaryByDisplayOrder() {
-        return dataSetDAO.getMappedFieldsOrderByDisplayOrder();
+        return datasetDAO.getMappedFieldsOrderByDisplayOrder();
     }
 
     public Collection<Dictionary> describeDictionaryByReceiveOrder() {
-        return dataSetDAO.getMappedFieldsOrderByReceiveOrder();
+        return datasetDAO.getMappedFieldsOrderByReceiveOrder();
     }
 
     public void disableDataset(Integer datasetId, Boolean active) {
-        DataSet dataset = dataSetDAO.findDataSetById(datasetId);
+        DataSet dataset = datasetDAO.findDataSetById(datasetId);
         if (dataset != null) {
-            dataSetDAO.updateDataSetActive(dataset.getDataSetId(), active);
+            datasetDAO.updateDataSetActive(dataset.getDataSetId(), active);
         }
     }
 
     public DataSet updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval) {
-        if (dataSetDAO.findDataSetById(dataSetId) == null) {
+        if (datasetDAO.findDataSetById(dataSetId) == null) {
             throw new NotFoundException("DataSet doesn't exist");
         }
-        dataSetDAO.updateDataSetNeedsApproval(dataSetId, needsApproval);
-        return dataSetDAO.findDataSetById(dataSetId);
+        datasetDAO.updateDataSetNeedsApproval(dataSetId, needsApproval);
+        return datasetDAO.findDataSetById(dataSetId);
     }
 
     public List<DataSet> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
-        return dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
+        return datasetDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
     }
 
     /**
@@ -167,34 +163,34 @@ public class DatasetService {
 
     public DataSetDTO createDataset(DataSetDTO dataset, String name, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
-        int lastAlias = dataSetDAO.findLastAlias();
+        int lastAlias = datasetDAO.findLastAlias();
         int alias = lastAlias + 1;
 
-        Integer id = dataSetDAO
+        Integer id = datasetDAO
               .insertDatasetV2(name, now, userId, dataset.getObjectId(), dataset.getActive(),
                     alias);
 
         List<DataSetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
-        dataSetDAO.insertDataSetsProperties(propertyList);
-        dataSetDAO.updateDataSetNeedsApproval(id, dataset.getNeedsApproval());
+        datasetDAO.insertDataSetsProperties(propertyList);
+        datasetDAO.updateDataSetNeedsApproval(id, dataset.getNeedsApproval());
         return getDatasetDTO(id);
     }
 
     public DataSet getDatasetByName(String name) {
         String lowercaseName = name.toLowerCase();
-        return dataSetDAO.getDatasetByName(lowercaseName);
+        return datasetDAO.getDatasetByName(lowercaseName);
     }
 
     public DataSet findDatasetById(Integer id) {
-        return dataSetDAO.findDataSetById(id);
+        return datasetDAO.findDataSetById(id);
     }
 
     public Set<DataSetProperty> getDatasetProperties(Integer datasetId) {
-        return dataSetDAO.findDatasetPropertiesByDatasetId(datasetId);
+        return datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
     }
 
     public DataSet getDatasetWithPropertiesById(Integer datasetId) {
-        DataSet dataset = dataSetDAO.findDataSetById(datasetId);
+        DataSet dataset = datasetDAO.findDataSetById(datasetId);
         Set<DataSetProperty> properties = getDatasetProperties(datasetId);
         dataset.setProperties(properties);
         return dataset;
@@ -238,23 +234,23 @@ public class DatasetService {
         }
 
         updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
-        dataSetDAO.updateDataSetNeedsApproval(datasetId, dataset.getNeedsApproval());
-        dataSetDAO.updateDatasetUpdateUserAndDate(datasetId, now, userId);
+        datasetDAO.updateDataSetNeedsApproval(datasetId, dataset.getNeedsApproval());
+        datasetDAO.updateDatasetUpdateUserAndDate(datasetId, now, userId);
         DataSet updatedDataset = getDatasetWithPropertiesById(datasetId);
         return Optional.of(updatedDataset);
     }
 
     private void updateDatasetProperties(List<DataSetProperty> updateProperties,
           List<DataSetProperty> deleteProperties, List<DataSetProperty> addProperties) {
-        updateProperties.forEach(p -> dataSetDAO
+        updateProperties.forEach(p -> datasetDAO
               .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue()));
         deleteProperties.forEach(
-              p -> dataSetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
-        dataSetDAO.insertDataSetsProperties(addProperties);
+              p -> datasetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
+        datasetDAO.insertDataSetsProperties(addProperties);
     }
 
     public DataSetDTO getDatasetDTO(Integer datasetId) {
-        Set<DataSetDTO> dataset = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
+        Set<DataSetDTO> dataset = datasetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
         DataSetDTO result = new DataSetDTO();
         for (DataSetDTO d : dataset) {
             result = d;
@@ -266,7 +262,7 @@ public class DatasetService {
     public List<DataSetProperty> processDatasetProperties(Integer datasetId,
           List<DataSetPropertyDTO> properties) {
         Date now = new Date();
-        List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
+        List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
         List<String> keys = dictionaries.stream().map(Dictionary::getKey)
               .collect(Collectors.toList());
 
@@ -282,7 +278,7 @@ public class DatasetService {
     }
 
     public List<DataSetPropertyDTO> findInvalidProperties(List<DataSetPropertyDTO> properties) {
-        List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
+        List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
         List<String> keys = dictionaries.stream().map(Dictionary::getKey)
               .collect(Collectors.toList());
 
@@ -312,27 +308,34 @@ public class DatasetService {
 
     public void deleteDataset(Integer datasetId) {
         List<Integer> idList = Collections.singletonList(datasetId);
-        dataSetDAO.deleteDataSetsProperties(idList);
-        dataSetDAO.deleteDataSets(idList);
+        datasetDAO.deleteDataSetsProperties(idList);
+        datasetDAO.deleteDataSets(idList);
     }
 
-    public void deleteDataset(Integer datasetId, Integer userId) throws IllegalStateException {
-        try {
-            DataSet dataset = dataSetDAO.findDataSetById(datasetId);
-            if (Objects.nonNull(dataset)) {
-                DataSetAudit dsAudit = new DataSetAudit(datasetId, dataset.getObjectId(), dataset.getName(), new Date(), true, userId, DELETE);
-                dataSetAuditDAO.insertDataSetAudit(dsAudit);
-                datasetAssociationDAO.delete(datasetId);
-                dataSetDAO.deleteDatasetPropertiesByDatasetId(datasetId);
-                if (StringUtils.isNotEmpty(dataset.getObjectId())) {
-                    dataSetDAO.logicalDatasetDelete(datasetId);
-                } else {
-                    consentDAO.deleteAssociationsByDataSetId(datasetId);
-                    dataSetDAO.deleteDatasetById(datasetId);
-                }
+    public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
+        DataSet dataset = datasetDAO.findDataSetById(datasetId);
+        if (Objects.nonNull(dataset)) {
+            // Some legacy dataset names can be null
+            String dsAuditName = Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
+            DataSetAudit dsAudit = new DataSetAudit(datasetId, dataset.getObjectId(), dsAuditName, new Date(), dataset.getActive(), userId, Actions.DELETE.getValue().toUpperCase());
+            try {
+                datasetDAO.inTransaction(h -> {
+                    try {
+                        h.insertDataSetAudit(dsAudit);
+                        h.deleteUserAssociationsByDatasetId(datasetId);
+                        h.deleteDatasetPropertiesByDatasetId(datasetId);
+                        h.deleteConsentAssociationsByDataSetId(datasetId);
+                        h.deleteDatasetById(datasetId);
+                    } catch (Exception e) {
+                        h.rollback();
+                        throw e;
+                    }
+                    return true;
+                });
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+                throw e;
             }
-        } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage());
         }
     }
 
@@ -347,12 +350,12 @@ public class DatasetService {
                 .collect(Collectors.toList());
         Set<DataSetDTO> datasets;
         if (userHasRole(UserRoles.ADMIN.getRoleName(), dacUserId)) {
-            datasets = dataSetDAO.findAllDatasets();
+            datasets = datasetDAO.findAllDatasets();
         }
         else {
             datasets = getAllActiveDatasets();
             if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacUserId)) {
-                Set<DataSetDTO> chairSpecificDatasets = dataSetDAO.findDatasetsByUser(dacUserId);
+                Set<DataSetDTO> chairSpecificDatasets = datasetDAO.findDatasetsByUser(dacUserId);
                 Set<DataSetDTO> moreDatasets = new HashSet<>();
                 moreDatasets.addAll(datasets);
                 moreDatasets.addAll(chairSpecificDatasets);
@@ -400,7 +403,7 @@ public class DatasetService {
     }
 
     public Set<DataSetDTO> getAllActiveDatasets() {
-        return dataSetDAO.findActiveDatasets();
+        return datasetDAO.findActiveDatasets();
     }
 
     private boolean userHasRole(String roleName, Integer dacUserId) {

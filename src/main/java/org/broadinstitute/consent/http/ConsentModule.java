@@ -18,7 +18,6 @@ import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -84,7 +83,6 @@ public class ConsentModule extends AbstractModule {
     private final MailMessageDAO mailMessageDAO;
     private final MetricsDAO metricsDAO;
     private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
-    private final DataSetAuditDAO datasetAuditDAO;
     private final MailServiceDAO mailServiceDAO;
     private final UserPropertyDAO userPropertyDAO;
     private final WorkspaceAuditDAO workspaceAuditDAO;
@@ -119,7 +117,6 @@ public class ConsentModule extends AbstractModule {
         this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
         this.metricsDAO = this.jdbi.onDemand(MetricsDAO.class);
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
-        this.datasetAuditDAO = this.jdbi.onDemand(DataSetAuditDAO.class);
         this.mailServiceDAO = this.jdbi.onDemand(MailServiceDAO.class);
         this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
         this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
@@ -144,7 +141,6 @@ public class ConsentModule extends AbstractModule {
         container.setDacDAO(providesDacDAO());
         container.setDataAccessRequestDAO(providesDataAccessRequestDAO());
         container.setDatasetAssociationDAO(providesDatasetAssociationDAO());
-        container.setDatasetAuditDAO(providesDataSetAuditDAO());
         container.setDatasetDAO(providesDataSetDAO());
         container.setElectionDAO(providesElectionDAO());
         container.setMailMessageDAO(providesMailMessageDAO());
@@ -243,8 +239,6 @@ public class ConsentModule extends AbstractModule {
                 providesDataAccessRequestDAO(),
                 providesDataSetDAO(),
                 providesUserRoleDAO(),
-                providesDataSetAuditDAO(),
-                providesDatasetAssociationDAO(),
                 providesUseRestrictionConverter());
     }
 
@@ -414,11 +408,6 @@ public class ConsentModule extends AbstractModule {
     @Provides
     ApprovalExpirationTimeDAO providesApprovalExpirationTimeDAO() {
         return approvalExpirationTimeDAO;
-    }
-
-    @Provides
-    DataSetAuditDAO providesDataSetAuditDAO() {
-        return datasetAuditDAO;
     }
 
     @Provides

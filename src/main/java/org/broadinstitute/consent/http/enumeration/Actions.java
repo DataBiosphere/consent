@@ -1,18 +1,19 @@
 package org.broadinstitute.consent.http.enumeration;
 
-
 public enum Actions {
+  ADD("add"),
+  CREATE("create"),
+  DELETE("delete"),
+  REMOVE("remove"),
+  REPLACE("replace");
 
-    REPLACE("replace"), ADD("add"), REMOVE("remove"), CREATE("create");
+  private final String value;
 
-    private String value;
+  Actions(String value) {
+    this.value = value;
+  }
 
-    Actions(String value) {
-        this.value = value;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
+  public String getValue() {
+    return value;
+  }
 }
