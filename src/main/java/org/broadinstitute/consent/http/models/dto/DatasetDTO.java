@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUse;
 
 
-public class DataSetDTO {
+public class DatasetDTO {
 
     @JsonProperty
     private Integer dacId;
@@ -64,7 +64,7 @@ public class DataSetDTO {
     @JsonProperty
     public DataUse dataUse;
 
-    public DataSetDTO() {
+    public DatasetDTO() {
     }
 
     public Integer getDacId() {
@@ -75,7 +75,7 @@ public class DataSetDTO {
         this.dacId = dacId;
     }
 
-    public DataSetDTO(List<DataSetPropertyDTO> properties) {
+    public DatasetDTO(List<DataSetPropertyDTO> properties) {
         this.properties= properties;
     }
 
@@ -206,7 +206,7 @@ public class DataSetDTO {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        DataSetDTO that = (DataSetDTO) o;
+        DatasetDTO that = (DatasetDTO) o;
         return dataSetId.equals(that.dataSetId);
     }
 

@@ -40,7 +40,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -171,7 +171,7 @@ public class DacServiceTest {
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(getDacs());
         initService();
 
-        Set<DataSetDTO> dataSets = service.findDatasetsByDacId(getUser(), 1);
+        Set<DatasetDTO> dataSets = service.findDatasetsByDacId(getUser(), 1);
         Assert.assertNotNull(dataSets);
         Assert.assertEquals(1, dataSets.size());
     }
@@ -823,10 +823,10 @@ public class DacServiceTest {
     /**
      * @return A list of 5 datasets with ids
      */
-    private List<DataSetDTO> getDatasetDTOs() {
+    private List<DatasetDTO> getDatasetDTOs() {
         return IntStream.range(1, 5).
                 mapToObj(i -> {
-                    DataSetDTO dataSet = new DataSetDTO();
+                    DatasetDTO dataSet = new DatasetDTO();
                     dataSet.setDataSetId(i);
                     return dataSet;
                 }).collect(Collectors.toList());
