@@ -161,6 +161,9 @@ public class DatasetService {
     }
 
     public DatasetDTO createDatasetWithConsent(DatasetDTO dataset, String name, Integer userId) throws Exception {
+        if (Objects.nonNull(getDatasetByName(name))) {
+            throw new IllegalArgumentException("Dataset name: " + name + " is already in use");
+        }
         Timestamp now = new Timestamp(new Date().getTime());
         Integer createdDatasetId = datasetDAO.inTransaction(h -> {
             try {
