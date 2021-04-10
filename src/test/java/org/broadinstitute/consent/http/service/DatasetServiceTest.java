@@ -73,19 +73,18 @@ public class DatasetServiceTest {
 
     @Test
     public void testCreateDataset() throws Exception {
-        int datasetId = 1;
         DatasetDTO test = getDatasetDTO();
-        when(datasetDAO.insertDatasetV2(anyString(), any(), anyInt(), anyString(), anyBoolean()))
-            .thenReturn(datasetId);
-        when(datasetDAO.findDataSetById(datasetId)).thenReturn(getDatasets().get(0));
-        when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
-        when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId)).thenReturn(Collections.singleton(test));
+        DataSet mockDataset = getDatasets().get(0);
+        when(datasetDAO.insertDatasetV2(anyString(), any(), anyInt(), anyString(), anyBoolean())).thenReturn(mockDataset.getDataSetId());
+        when(datasetDAO.findDataSetById(any())).thenReturn(mockDataset);
+        when(datasetDAO.findDatasetPropertiesByDatasetId(any())).thenReturn(getDatasetProperties());
+        when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(Collections.singleton(test));
         initService();
 
         DatasetDTO result = datasetService.createDatasetWithConsent(getDatasetDTO(), "Test Dataset 1", 1);
 
         assertNotNull(result);
-        assertEquals(result.getDataSetId(), getDatasets().get(0).getDataSetId());
+        assertEquals(mockDataset.getDataSetId(), result.getDataSetId());
         assertNotNull(result.getProperties());
         assertFalse(result.getProperties().isEmpty());
     }
@@ -381,6 +380,7 @@ public class DatasetServiceTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCreateConsentForDatasetNullDataUse() {
         DatasetDTO dataSetDTO = getDatasetDTO();
+        dataSetDTO.setDataUse(null);
         Consent consent = new Consent();
         when(consentDAO.findConsentById(anyString())).thenReturn(consent);
         initService();
@@ -490,6 +490,9 @@ public class DatasetServiceTest {
         datasetDTO.setObjectId("Test ObjectId");
         datasetDTO.setActive(true);
         datasetDTO.setProperties(getDatasetPropertiesDTO());
+        DataUse dataUse = new DataUse();
+        dataUse.setGeneralUse(true);
+        datasetDTO.setDataUse(dataUse);
         return datasetDTO;
     }
 
