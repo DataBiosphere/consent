@@ -214,17 +214,17 @@ public class DatasetService {
 
         List<DataSetProperty> propertiesToAdd = updateDatasetProperties.stream()
               .filter(p -> oldProperties.stream()
-                    .noneMatch(op -> op.getPropertyKey() == p.getPropertyKey()))
+                    .noneMatch(op -> op.getPropertyKey().equals(p.getPropertyKey())))
               .collect(Collectors.toList());
 
         List<DataSetProperty> propertiesToUpdate = updateDatasetProperties.stream()
               .filter(p -> oldProperties.stream()
-                    .noneMatch(op -> p.equals(op)))
+                    .noneMatch(p::equals))
               .collect(Collectors.toList());
 
         List<DataSetProperty> propertiesToDelete = oldProperties.stream()
               .filter(op -> updateDatasetProperties.stream()
-                    .noneMatch(p -> p.getPropertyKey() == op.getPropertyKey())
+                    .noneMatch(p -> p.getPropertyKey().equals(op.getPropertyKey()))
               ).collect(Collectors.toList());
 
         if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() && propertiesToDelete
@@ -398,7 +398,7 @@ public class DatasetService {
                           .anyMatch(
                                 p -> p.getPropertyValue().toLowerCase().contains(lowercasePartial))
               )).collect(Collectors.toSet());
-        List<Map<String, String>> result = filteredDatasetsContainingPartial.stream().map(ds ->
+        return filteredDatasetsContainingPartial.stream().map(ds ->
               {
                   HashMap<String, String> map = new HashMap<>();
                   List<DataSetPropertyDTO> properties = ds.getProperties();
@@ -417,7 +417,6 @@ public class DatasetService {
                   return map;
               }
         ).collect(Collectors.toList());
-        return result;
     }
 
     public Set<DataSetDTO> getAllActiveDatasets() {
