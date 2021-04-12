@@ -124,8 +124,6 @@ import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
 import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.eclipse.jetty.util.component.AbstractLifeCycle;
-import org.eclipse.jetty.util.component.LifeCycle;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
@@ -293,18 +291,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));
         env.jersey().register(new StatusResource(env.healthChecks()));
         env.jersey().register(new DataRequestReportsResource(dataAccessRequestService, researcherService, userService));
-        // Register a listener to catch an application stop and clear out the API instance created above.
-        // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
-        // repeatedly start and stop the application, all within the same JVM, causing the run() method to be
-        // called multiple times.
-        env.lifecycle().addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
-
-            @Override
-            public void lifeCycleStopped(LifeCycle event) {
-                LOGGER.debug("**** ConsentApplication Server Stopped ****");
-                super.lifeCycleStopped(event);
-            }
-        });
     }
 
     @Override
