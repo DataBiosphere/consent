@@ -249,7 +249,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.18.1</version>
+        <version>3.19.0</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -544,7 +544,7 @@
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
-      <version>1.31.3</version>
+      <version>1.31.4</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.guava</groupId>

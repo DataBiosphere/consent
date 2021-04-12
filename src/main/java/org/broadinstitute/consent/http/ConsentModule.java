@@ -55,6 +55,7 @@ import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.ReviewResultsService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.WhitelistService;
@@ -182,6 +183,11 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
+    UseRestrictionValidator providesUseRestrictionValidator() {
+        return new UseRestrictionValidator(providesClient(), config.getServicesConfiguration());
+    }
+
+    @Provides
     ApprovalExpirationTimeService providesApprovalExpirationTimeService() {
         return new ApprovalExpirationTimeService(
             providesApprovalExpirationTimeDAO(),
@@ -245,7 +251,14 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     DatasetService providesDatasetService() {
-        return new DatasetService(providesConsentDAO(), providesDataSetDAO(), providesUserRoleDAO(), providesDataSetAuditDAO(), providesDatasetAssociationDAO(), providesUseRestrictionConverter());
+        return new DatasetService(
+                providesConsentDAO(),
+                providesDataAccessRequestDAO(),
+                providesDataSetDAO(),
+                providesUserRoleDAO(),
+                providesDataSetAuditDAO(),
+                providesDatasetAssociationDAO(),
+                providesUseRestrictionConverter());
     }
 
     @Provides
