@@ -121,7 +121,11 @@ public class SwaggerResource {
     return content
         .replace(
             "url: \"https://petstore.swagger.io/v2/swagger.json\",",
-            "        docExpansion: 'none',\n"
+            "   syntaxHighlight: {\n"
+                + "          activated: false,\n"
+                + "          theme: \"agate\"\n"
+                + "        },\n"
+                + "        docExpansion: 'none',\n"
                 + "        displayRequestDuration: true,\n"
                 + "        tryItOutEnabled: true,\n"
                 + "        operationsSorter: 'alpha',\n"
@@ -132,7 +136,9 @@ public class SwaggerResource {
         .replace(
             "window.ui = ui",
             "ui.initOAuth({\n"
-                + "        clientId: '" + config.getClientId() + "',\n"
+                + "        clientId: '"
+                + config.getClientId()
+                + "',\n"
                 + "        clientSecret: '',\n"
                 + "        realm: 'Broad Institute',\n"
                 + "        appName: 'Consent',\n"
