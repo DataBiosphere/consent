@@ -136,9 +136,7 @@ public class SwaggerResource {
         .replace(
             "window.ui = ui",
             "ui.initOAuth({\n"
-                + "        clientId: '"
-                + config.getClientId()
-                + "',\n"
+                + "        clientId: '" + config.getClientId() + "',\n"
                 + "        clientSecret: '',\n"
                 + "        realm: 'Broad Institute',\n"
                 + "        appName: 'Consent',\n"
