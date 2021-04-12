@@ -12,7 +12,7 @@ import javax.ws.rs.core.Response;
 
 public class UseRestrictionValidator {
     private Client client;
-    private String validateUrl;
+    private final String validateUrl;
 
     @Inject
     public UseRestrictionValidator(Client client, ServicesConfiguration config) {
