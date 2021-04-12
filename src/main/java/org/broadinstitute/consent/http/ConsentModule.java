@@ -8,6 +8,8 @@ import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
 import javax.ws.rs.client.Client;
+
+import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -172,6 +174,11 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UseRestrictionConverter providesUseRestrictionConverter() {
         return new UseRestrictionConverter(providesClient(), config.getServicesConfiguration());
+    }
+
+    @Provides
+    OAuthAuthenticator providesOAuthAuthenicator() {
+        return new OAuthAuthenticator(providesClient());
     }
 
     @Provides

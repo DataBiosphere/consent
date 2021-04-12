@@ -2,7 +2,9 @@ package org.broadinstitute.consent.http.authentication;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
 import io.dropwizard.auth.AuthenticationException;
+import io.dropwizard.auth.Authenticator;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,21 +16,15 @@ import java.util.HashMap;
 import java.util.Optional;
 
 
-public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
+public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
 
     private static final String TOKEN_INFO_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=";
     private static final String USER_INFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo?access_token=";
     private static final Logger logger = LoggerFactory.getLogger(OAuthAuthenticator.class);
     private Client client;
 
-    public static void initInstance() {
-        AuthenticatorAPIHolder.setInstance(new OAuthAuthenticator());
-    }
-
-    private OAuthAuthenticator() {
-    }
-
-    public void setClient(Client client) {
+    @Inject
+    public OAuthAuthenticator(Client client) {
         this.client = client;
     }
 

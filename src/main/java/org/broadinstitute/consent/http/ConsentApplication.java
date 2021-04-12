@@ -31,7 +31,6 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.authentication.AbstractOAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.BasicAuthenticator;
 import org.broadinstitute.consent.http.authentication.BasicCustomAuthFilter;
 import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
@@ -220,9 +219,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
         final ReviewResultsService reviewResultsService = injector.getProvider(ReviewResultsService.class).get();
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
-        OAuthAuthenticator.initInstance();
-        OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
         final MatchService matchService = injector.getProvider(MatchService.class).get();
+        final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
@@ -290,7 +288,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         List<AuthFilter> filters = Lists.newArrayList(
                 defaultAuthFilter,
                 new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())),
-                new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), userRoleDAO));
+                new OAuthCustomAuthFilter(authenticator, userRoleDAO));
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));
@@ -306,7 +304,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             public void lifeCycleStopped(LifeCycle event) {
                 LOGGER.debug("**** ConsentApplication Server Stopped ****");
                 AbstractUseRestrictionValidatorAPI.clearInstance();
-                AbstractOAuthAuthenticator.clearInstance();
                 super.lifeCycleStopped(event);
             }
         });
