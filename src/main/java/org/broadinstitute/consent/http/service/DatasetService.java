@@ -1,5 +1,27 @@
 package org.broadinstitute.consent.http.service;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.DataSetAudit;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DataSetAuditDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.enumeration.AssociationType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+
+import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,32 +36,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
-
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.DataSetAudit;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.DataSetAuditDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
-import org.broadinstitute.consent.http.enumeration.AssociationType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DataSetProperty;
-import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 
 public class DatasetService {
 
     public static final String DATASET_NAME_KEY = "Dataset Name";
     public static final String CONSENT_NAME_PREFIX = "DUOS-DS-CG-";
     private final ConsentDAO consentDAO;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DataSetDAO dataSetDAO;
     private final UserRoleDAO userRoleDAO;
     private final DataSetAuditDAO dataSetAuditDAO;
@@ -49,10 +52,11 @@ public class DatasetService {
     private final String DELETE = "DELETE";
 
     @Inject
-    public DatasetService(ConsentDAO consentDAO, DataSetDAO dataSetDAO, UserRoleDAO userRoleDAO,
-                          DataSetAuditDAO dataSetAuditDAO, DatasetAssociationDAO datasetAssociationDAO,
-          UseRestrictionConverter converter) {
+    public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DataSetDAO dataSetDAO,
+                          UserRoleDAO userRoleDAO, DataSetAuditDAO dataSetAuditDAO,
+                          DatasetAssociationDAO datasetAssociationDAO, UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.dataSetDAO = dataSetDAO;
         this.userRoleDAO = userRoleDAO;
         this.dataSetAuditDAO = dataSetAuditDAO;
@@ -312,36 +316,35 @@ public class DatasetService {
         dataSetDAO.deleteDataSets(idList);
     }
 
-    public void deleteDataset(Integer dataSetId, Integer dacUserId) throws IllegalStateException {
+    public void deleteDataset(Integer datasetId, Integer userId) throws IllegalStateException {
         try {
-            dataSetDAO.begin();
-            dataSetAuditDAO.begin();
-            DataSet dataset = dataSetDAO.findDataSetById(dataSetId);
-            Collection<Integer> dataSetsId = Collections.singletonList(dataset.getDataSetId());
-            if (checkDatasetExistence(dataset.getDataSetId())) {
-                DataSetAudit dsAudit = new DataSetAudit(dataset.getDataSetId(), dataset.getObjectId(), dataset.getName(), new Date(), true, dacUserId, DELETE);
+            DataSet dataset = dataSetDAO.findDataSetById(datasetId);
+            if (Objects.nonNull(dataset)) {
+                DataSetAudit dsAudit = new DataSetAudit(datasetId, dataset.getObjectId(), dataset.getName(), new Date(), true, userId, DELETE);
                 dataSetAuditDAO.insertDataSetAudit(dsAudit);
+                datasetAssociationDAO.delete(datasetId);
+                dataSetDAO.deleteDatasetPropertiesByDatasetId(datasetId);
+                if (StringUtils.isNotEmpty(dataset.getObjectId())) {
+                    dataSetDAO.logicalDatasetDelete(datasetId);
+                } else {
+                    consentDAO.deleteAssociationsByDataSetId(datasetId);
+                    dataSetDAO.deleteDatasetById(datasetId);
+                }
             }
-            datasetAssociationDAO.delete(dataset.getDataSetId());
-            dataSetDAO.deleteDataSetsProperties(dataSetsId);
-
-            if (StringUtils.isNotEmpty(dataset.getObjectId())) {
-                dataSetDAO.logicalDatasetDelete(dataset.getDataSetId());
-            } else {
-                consentDAO.deleteAssociationsByDataSetId(dataset.getDataSetId());
-                dataSetDAO.deleteDataSets(dataSetsId);
-            }
-
-            dataSetDAO.commit();
-            dataSetAuditDAO.commit();
         } catch (Exception e) {
-            dataSetDAO.rollback();
-            dataSetAuditDAO.rollback();
             throw new IllegalStateException(e.getMessage());
         }
     }
 
     public Set<DataSetDTO> describeDatasets(Integer dacUserId) {
+        List<DataAccessRequestData> darDatas = dataAccessRequestDAO.findAllDataAccessRequestDatas();
+        List<Integer> datasetIdsInUse = darDatas
+                .stream()
+                .map(DataAccessRequestData::getDatasetIds)
+                .filter(Objects::nonNull)
+                .filter(l -> !l.isEmpty())
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
         Set<DataSetDTO> datasets;
         if (userHasRole(UserRoles.ADMIN.getRoleName(), dacUserId)) {
             datasets = dataSetDAO.findAllDatasets();
@@ -356,7 +359,9 @@ public class DatasetService {
                 return moreDatasets;
             }
         }
-        return datasets;
+        return datasets.stream()
+                .peek(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())))
+                .collect(Collectors.toSet());
     }
 
     public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
@@ -400,9 +405,5 @@ public class DatasetService {
 
     private boolean userHasRole(String roleName, Integer dacUserId) {
         return userRoleDAO.findRoleByNameAndUser(roleName, dacUserId) != null;
-    }
-
-    private boolean checkDatasetExistence(Integer dataSetId) {
-        return dataSetDAO.findDataSetById(dataSetId) != null ? true : false;
     }
 }
