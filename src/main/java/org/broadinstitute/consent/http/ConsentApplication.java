@@ -108,6 +108,7 @@ import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.ReviewResultsService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.WhitelistService;
@@ -119,8 +120,6 @@ import org.broadinstitute.consent.http.service.ontology.OntologyHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
-import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
-import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
 import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
@@ -219,7 +218,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final AuditService auditService = injector.getProvider(AuditService.class).get();
         final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
         final ReviewResultsService reviewResultsService = injector.getProvider(ReviewResultsService.class).get();
-        UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
+        final UseRestrictionValidator useRestrictionValidator = injector.getProvider(UseRestrictionValidator.class).get();
+
         OAuthAuthenticator.initInstance();
         OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
         final MatchService matchService = injector.getProvider(MatchService.class).get();
@@ -256,7 +256,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService, consentService, electionService));
         env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService));
         env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
-        env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService));
+        env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService, useRestrictionValidator));
         env.jersey().register(new ConsentAssociationResource(consentService, userService));
         env.jersey().register(new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService));
         env.jersey().register(new ConsentManageResource(consentService));
@@ -305,7 +305,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             @Override
             public void lifeCycleStopped(LifeCycle event) {
                 LOGGER.debug("**** ConsentApplication Server Stopped ****");
-                AbstractUseRestrictionValidatorAPI.clearInstance();
                 AbstractOAuthAuthenticator.clearInstance();
                 super.lifeCycleStopped(event);
             }
