@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -40,7 +40,7 @@ public class PendingCaseService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ConsentDAO consentDAO;
     private final DataAccessRequestService dataAccessRequestService;
-    private final DataSetDAO dataSetDAO;
+    private final DatasetDAO dataSetDAO;
     private final ElectionDAO electionDAO;
 
     private final VoteDAO voteDAO;
@@ -50,7 +50,7 @@ public class PendingCaseService {
 
     @Inject
     public PendingCaseService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
-                              DataSetDAO dataSetDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
+                              DatasetDAO dataSetDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
                               UserService userService, VoteService voteService) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestService = dataAccessRequestService;

@@ -34,7 +34,7 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -71,7 +71,7 @@ public class DataAccessRequestService {
     private final ConsentDAO consentDAO;
     private final CounterService counterService;
     private final DacDAO dacDAO;
-    private final DataSetDAO dataSetDAO;
+    private final DatasetDAO dataSetDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final ElectionDAO electionDAO;
     private final MatchDAO matchDAO;

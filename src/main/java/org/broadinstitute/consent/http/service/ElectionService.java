@@ -5,7 +5,7 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -57,7 +57,7 @@ public class ElectionService {
     private ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
     private final UserDAO userDAO;
-    private final DataSetDAO dataSetDAO;
+    private final DatasetDAO dataSetDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
     private DacService dacService;
     private DataAccessRequestService dataAccessRequestService;
@@ -67,7 +67,7 @@ public class ElectionService {
 
     @Inject
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
-                           DataSetDAO dataSetDAO, DatasetAssociationDAO datasetAssociationDAO, MailMessageDAO mailMessageDAO,
+                           DatasetDAO dataSetDAO, DatasetAssociationDAO datasetAssociationDAO, MailMessageDAO mailMessageDAO,
                            DacService dacService, EmailNotifierService emailNotifierService,
                            DataAccessRequestService dataAccessRequestService) {
         this.consentDAO = consentDAO;

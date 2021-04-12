@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -59,7 +59,7 @@ public class MatchServiceTest {
     @Mock
     ConsentDAO consentDAO;
     @Mock
-    DataSetDAO dataSetDAO;
+    DatasetDAO dataSetDAO;
     @Mock
     private ServicesConfiguration config;
     @Mock

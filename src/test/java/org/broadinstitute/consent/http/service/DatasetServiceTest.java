@@ -1,34 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
-import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetAuditDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
@@ -45,6 +19,30 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+
 public class DatasetServiceTest {
 
     private DatasetService datasetService;
@@ -56,16 +54,10 @@ public class DatasetServiceTest {
     DataAccessRequestDAO dataAccessRequestDAO;
 
     @Mock
-    private DataSetDAO datasetDAO;
+    private DatasetDAO datasetDAO;
 
     @Mock
     private UserRoleDAO userRoleDAO;
-
-    @Mock
-    private DataSetAuditDAO dataSetAuditDAO;
-
-    @Mock
-    private DatasetAssociationDAO datasetAssociationDAO;
 
     @Mock
     private UseRestrictionConverter useRestrictionConverter;
@@ -76,7 +68,7 @@ public class DatasetServiceTest {
     }
 
     private void initService() {
-        datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, userRoleDAO, dataSetAuditDAO, datasetAssociationDAO, useRestrictionConverter);
+        datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, userRoleDAO, useRestrictionConverter);
     }
 
     @Test
@@ -179,16 +171,15 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void testDeleteDataset() {
+    public void testDeleteDataset() throws Exception {
         Integer dataSetId = 1;
         when(datasetDAO.findDataSetById(any()))
                 .thenReturn(getDatasets().get(0));
-        when(dataSetAuditDAO.insertDataSetAudit(any()))
+        when(datasetDAO.insertDataSetAudit(any()))
                 .thenReturn(1);
-        doNothing().when(datasetAssociationDAO).delete(any());
+        doNothing().when(datasetDAO).deleteUserAssociationsByDatasetId(any());
         doNothing().when(datasetDAO).deleteDataSetsProperties(any());
-        doNothing().when(datasetDAO).logicalDatasetDelete(any());
-        doNothing().when(consentDAO).deleteAssociationsByDataSetId(any());
+        doNothing().when(datasetDAO).deleteConsentAssociationsByDataSetId(any());
         doNothing().when(datasetDAO).deleteDataSets(any());
 
         initService();

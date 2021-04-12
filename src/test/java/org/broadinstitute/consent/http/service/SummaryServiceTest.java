@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Objects;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -40,7 +40,7 @@ public class SummaryServiceTest {
     @Mock
     private UserDAO userDAO;
     @Mock
-    private DataSetDAO dataSetDAO;
+    private DatasetDAO dataSetDAO;
     @Mock
     private MatchDAO matchDAO;
     @Mock

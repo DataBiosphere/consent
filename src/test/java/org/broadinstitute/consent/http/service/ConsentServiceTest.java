@@ -1,12 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
-import liquibase.pro.packaged.D;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
@@ -31,7 +30,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -67,7 +65,7 @@ public class ConsentServiceTest {
     AuditService auditService;
 
     @Mock
-    DataSetDAO dataSetDAO;
+    DatasetDAO dataSetDAO;
 
     @Mock
     AssociationDAO associationDAO;

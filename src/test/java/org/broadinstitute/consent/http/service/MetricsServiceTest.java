@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
@@ -32,7 +32,7 @@ public class MetricsServiceTest {
 
   @Mock private DacService dacService;
 
-  @Mock private DataSetDAO dataSetDAO;
+  @Mock private DatasetDAO dataSetDAO;
 
   @Mock private MetricsDAO metricsDAO;
 

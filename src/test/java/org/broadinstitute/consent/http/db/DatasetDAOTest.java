@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class DataSetDAOTest extends DAOTestHelper {
+public class DatasetDAOTest extends DAOTestHelper {
 
     // User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
     @Test

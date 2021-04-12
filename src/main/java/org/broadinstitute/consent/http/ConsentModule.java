@@ -18,8 +18,7 @@ import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetAuditDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -76,7 +75,7 @@ public class ConsentModule extends AbstractModule {
     private final CounterDAO counterDAO;
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
-    private final DataSetDAO datasetDAO;
+    private final DatasetDAO datasetDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
     private final DacDAO dacDAO;
     private final UserDAO userDAO;
@@ -85,7 +84,6 @@ public class ConsentModule extends AbstractModule {
     private final MailMessageDAO mailMessageDAO;
     private final MetricsDAO metricsDAO;
     private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
-    private final DataSetAuditDAO datasetAuditDAO;
     private final MailServiceDAO mailServiceDAO;
     private final UserPropertyDAO userPropertyDAO;
     private final WorkspaceAuditDAO workspaceAuditDAO;
@@ -111,7 +109,7 @@ public class ConsentModule extends AbstractModule {
         this.counterDAO = this.jdbi.onDemand(CounterDAO.class);
         this.electionDAO = this.jdbi.onDemand(ElectionDAO.class);
         this.voteDAO = this.jdbi.onDemand(VoteDAO.class);
-        this.datasetDAO = this.jdbi.onDemand(DataSetDAO.class);
+        this.datasetDAO = this.jdbi.onDemand(DatasetDAO.class);
         this.datasetAssociationDAO = this.jdbi.onDemand(DatasetAssociationDAO.class);
         this.dacDAO = this.jdbi.onDemand(DacDAO.class);
         this.userDAO = this.jdbi.onDemand(UserDAO.class);
@@ -120,7 +118,6 @@ public class ConsentModule extends AbstractModule {
         this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
         this.metricsDAO = this.jdbi.onDemand(MetricsDAO.class);
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
-        this.datasetAuditDAO = this.jdbi.onDemand(DataSetAuditDAO.class);
         this.mailServiceDAO = this.jdbi.onDemand(MailServiceDAO.class);
         this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
         this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
@@ -145,7 +142,6 @@ public class ConsentModule extends AbstractModule {
         container.setDacDAO(providesDacDAO());
         container.setDataAccessRequestDAO(providesDataAccessRequestDAO());
         container.setDatasetAssociationDAO(providesDatasetAssociationDAO());
-        container.setDatasetAuditDAO(providesDataSetAuditDAO());
         container.setDatasetDAO(providesDataSetDAO());
         container.setElectionDAO(providesElectionDAO());
         container.setMailMessageDAO(providesMailMessageDAO());
@@ -249,8 +245,6 @@ public class ConsentModule extends AbstractModule {
                 providesDataAccessRequestDAO(),
                 providesDataSetDAO(),
                 providesUserRoleDAO(),
-                providesDataSetAuditDAO(),
-                providesDatasetAssociationDAO(),
                 providesUseRestrictionConverter());
     }
 
@@ -345,7 +339,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    DataSetDAO providesDataSetDAO() {
+    DatasetDAO providesDataSetDAO() {
         return datasetDAO;
     }
 
@@ -420,11 +414,6 @@ public class ConsentModule extends AbstractModule {
     @Provides
     ApprovalExpirationTimeDAO providesApprovalExpirationTimeDAO() {
         return approvalExpirationTimeDAO;
-    }
-
-    @Provides
-    DataSetAuditDAO providesDataSetAuditDAO() {
-        return datasetAuditDAO;
     }
 
     @Provides

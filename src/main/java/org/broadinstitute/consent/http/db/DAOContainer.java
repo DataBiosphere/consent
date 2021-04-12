@@ -14,8 +14,7 @@ public class DAOContainer {
   private DacDAO dacDAO;
   private DataAccessRequestDAO dataAccessRequestDAO;
   private DatasetAssociationDAO datasetAssociationDAO;
-  private DataSetAuditDAO datasetAuditDAO;
-  private DataSetDAO datasetDAO;
+  private DatasetDAO datasetDAO;
   private ElectionDAO electionDAO;
   private MailMessageDAO mailMessageDAO;
   private MailServiceDAO mailServiceDAO;
@@ -86,19 +85,11 @@ public class DAOContainer {
     this.datasetAssociationDAO = datasetAssociationDAO;
   }
 
-  public DataSetAuditDAO getDatasetAuditDAO() {
-    return datasetAuditDAO;
-  }
-
-  public void setDatasetAuditDAO(DataSetAuditDAO datasetAuditDAO) {
-    this.datasetAuditDAO = datasetAuditDAO;
-  }
-
-  public DataSetDAO getDatasetDAO() {
+  public DatasetDAO getDatasetDAO() {
     return datasetDAO;
   }
 
-  public void setDatasetDAO(DataSetDAO datasetDAO) {
+  public void setDatasetDAO(DatasetDAO datasetDAO) {
     this.datasetDAO = datasetDAO;
   }
 

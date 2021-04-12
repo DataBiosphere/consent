@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -27,13 +27,13 @@ public class DatasetAssociationService {
 
     private final DatasetAssociationDAO dsAssociationDAO;
     private final UserDAO userDAO;
-    private final DataSetDAO dsDAO;
+    private final DatasetDAO dsDAO;
     private final UserRoleDAO userRoleDAO;
 
     @Inject
     public DatasetAssociationService(
-        DatasetAssociationDAO dsAssociationDAO, UserDAO userDAO,
-        DataSetDAO dsDAO, UserRoleDAO userRoleDAO) {
+            DatasetAssociationDAO dsAssociationDAO, UserDAO userDAO,
+            DatasetDAO dsDAO, UserRoleDAO userRoleDAO) {
         this.dsAssociationDAO = dsAssociationDAO;
         this.userDAO = userDAO;
         this.dsDAO = dsDAO;
