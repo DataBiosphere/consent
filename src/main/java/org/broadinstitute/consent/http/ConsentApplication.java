@@ -31,7 +31,6 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.authentication.AbstractOAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.BasicAuthenticator;
 import org.broadinstitute.consent.http.authentication.BasicCustomAuthFilter;
 import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
@@ -124,8 +123,6 @@ import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
 import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.eclipse.jetty.util.component.AbstractLifeCycle;
-import org.eclipse.jetty.util.component.LifeCycle;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
@@ -217,10 +214,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
         final ReviewResultsService reviewResultsService = injector.getProvider(ReviewResultsService.class).get();
         final UseRestrictionValidator useRestrictionValidator = injector.getProvider(UseRestrictionValidator.class).get();
-
-        OAuthAuthenticator.initInstance();
-        OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
         final MatchService matchService = injector.getProvider(MatchService.class).get();
+        final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
@@ -288,25 +283,12 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         List<AuthFilter> filters = Lists.newArrayList(
                 defaultAuthFilter,
                 new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())),
-                new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), userRoleDAO));
+                new OAuthCustomAuthFilter(authenticator, userRoleDAO));
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));
         env.jersey().register(new StatusResource(env.healthChecks()));
         env.jersey().register(new DataRequestReportsResource(dataAccessRequestService, researcherService, userService));
-        // Register a listener to catch an application stop and clear out the API instance created above.
-        // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
-        // repeatedly start and stop the application, all within the same JVM, causing the run() method to be
-        // called multiple times.
-        env.lifecycle().addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
-
-            @Override
-            public void lifeCycleStopped(LifeCycle event) {
-                LOGGER.debug("**** ConsentApplication Server Stopped ****");
-                AbstractOAuthAuthenticator.clearInstance();
-                super.lifeCycleStopped(event);
-            }
-        });
     }
 
     @Override
