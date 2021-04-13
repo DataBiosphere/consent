@@ -1630,13 +1630,6 @@ paths:
           If the user is requesting these as an admin, all are returned. As a DAC member, only those
           assigned to the DAC are returned. As a general user, only those created by the user are
           returned.
-        parameters:
-          - name: userId
-            in: query
-            description: Optional user id to filter Data Access Requests by
-            required: false
-            schema:
-              type: integer
         tags:
           - Data Access Request
         responses:
