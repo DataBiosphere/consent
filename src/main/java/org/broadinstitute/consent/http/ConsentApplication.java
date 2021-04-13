@@ -239,6 +239,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(injector.getInstance(VersionResource.class));
 
         // Authentication filters
+        final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<AuthUser>()
                 .setAuthenticator(new DefaultAuthenticator())
                 .setRealm(" ")
@@ -246,7 +247,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         List<AuthFilter> filters = Lists.newArrayList(
                 defaultAuthFilter,
                 new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())),
-                new OAuthCustomAuthFilter(authenticator, injector.getProvider(UserRoleDAO.class).get()));
+                new OAuthCustomAuthFilter(authenticator, userRoleDAO));
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));
