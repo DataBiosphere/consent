@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.models.DecisionMetrics;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -77,8 +77,8 @@ public class MetricsServiceTest {
     when(metricsDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
     Dac dac = generateDac();
     when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
-    List<DataSetDTO> datasetDTOs = generateDatasetDTO(datasetCount);
-    when(dataSetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOs));
+    List<DatasetDTO> datasetDTOS = generateDatasetDTO(datasetCount);
+    when(dataSetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOS));
   }
 
   private Dac generateDac() {
@@ -105,12 +105,12 @@ public class MetricsServiceTest {
     return dac;
   }
 
-  private List<DataSetDTO> generateDatasetDTO(int datasetCount) {
+  private List<DatasetDTO> generateDatasetDTO(int datasetCount) {
     Dac dac = generateDac();
     return generateDatasets(datasetCount).stream()
         .map(
             ds -> {
-              DataSetDTO dto = new DataSetDTO();
+              DatasetDTO dto = new DatasetDTO();
               dto.setDacId(dac.getDacId());
               dto.setAlias(ds.getAlias());
               dto.setDataSetId(ds.getDataSetId());

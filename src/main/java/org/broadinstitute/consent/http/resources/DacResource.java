@@ -27,7 +27,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UserService;
 
@@ -193,7 +193,7 @@ public class DacResource extends Resource {
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
     public Response findAllDacDatasets(@Auth AuthUser user, @PathParam("dacId") Integer dacId) {
         findDacById(dacId);
-        Set<DataSetDTO> datasets = dacService.findDatasetsByDacId(user, dacId);
+        Set<DatasetDTO> datasets = dacService.findDatasetsByDacId(user, dacId);
         return Response.ok().entity(datasets).build();
     }
 

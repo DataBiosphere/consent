@@ -5,7 +5,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Type;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacDecisionMetrics;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
@@ -125,7 +125,7 @@ public class MetricsService {
       return darMetrics;
     } else {
       List<Dac> allDacs = dacService.findAllDacsWithMembers();
-      Set<DataSetDTO> datasetsDacs = dataSetDAO.findDatasetsWithDacs();
+      Set<DatasetDTO> datasetsDacs = dataSetDAO.findDatasetsWithDacs();
       return allDacs.stream()
         .map(
           dac -> {
@@ -134,7 +134,7 @@ public class MetricsService {
                 .filter(m -> Objects.nonNull(m.getDacName()))
                 .filter(m -> m.getDacName().equalsIgnoreCase(dac.getName()))
                 .collect(Collectors.toList());
-            List<DataSetDTO> dacFilteredDatasets =
+            List<DatasetDTO> dacFilteredDatasets =
               datasetsDacs.stream()
                 .filter(ds -> ds.getDacId().equals(dac.getDacId()))
                 .collect(Collectors.toList());

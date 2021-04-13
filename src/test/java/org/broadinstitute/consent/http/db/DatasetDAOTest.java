@@ -12,7 +12,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
 
 import java.sql.Timestamp;
@@ -114,9 +114,9 @@ public class DatasetDAOTest extends DAOTestHelper {
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
-        Set<DataSetDTO> datasets = dataSetDAO.findAllDatasets();
+        Set<DatasetDTO> datasets = dataSetDAO.findAllDatasets();
         assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DataSetDTO::getDataSetId).collect(Collectors.toList());
+        List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 
@@ -126,9 +126,9 @@ public class DatasetDAOTest extends DAOTestHelper {
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
-        Set<DataSetDTO> datasets = dataSetDAO.findActiveDatasets();
+        Set<DatasetDTO> datasets = dataSetDAO.findActiveDatasets();
         assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DataSetDTO::getDataSetId).collect(Collectors.toList());
+        List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 
@@ -141,9 +141,9 @@ public class DatasetDAOTest extends DAOTestHelper {
         User user = createUser();
         createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), dac.getDacId());
 
-        Set<DataSetDTO> datasets = dataSetDAO.findDatasetsByUser(user.getDacUserId());
+        Set<DatasetDTO> datasets = dataSetDAO.findDatasetsByUser(user.getDacUserId());
         assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DataSetDTO::getDataSetId).collect(Collectors.toList());
+        List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 

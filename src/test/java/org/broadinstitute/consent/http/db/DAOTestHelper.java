@@ -368,7 +368,7 @@ public class DAOTestHelper {
         dsp.setPropertyValue("Test_PropertyValue");
         dsp.setCreateDate(new Date());
         list.add(dsp);
-        dataSetDAO.insertDataSetsProperties(list);
+        dataSetDAO.insertDatasetProperties(list);
     }
 
     protected DataSet createDataset() {

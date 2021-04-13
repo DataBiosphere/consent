@@ -14,7 +14,7 @@ import org.broadinstitute.consent.http.models.DataSetAudit;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.slf4j.Logger;
@@ -63,7 +63,7 @@ public class DatasetService {
         return datasetDAO.getDataSetsForConsent(consentId);
     }
 
-    public Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
+    public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
         return datasetDAO.findDataSetsByReceiveOrder(dataSetId);
     }
 
@@ -86,7 +86,7 @@ public class DatasetService {
         if (datasetDAO.findDataSetById(dataSetId) == null) {
             throw new NotFoundException("DataSet doesn't exist");
         }
-        datasetDAO.updateDataSetNeedsApproval(dataSetId, needsApproval);
+        datasetDAO.updateDatasetNeedsApproval(dataSetId, needsApproval);
         return datasetDAO.findDataSetById(dataSetId);
     }
 
@@ -100,7 +100,7 @@ public class DatasetService {
      * @param dataset The DataSetDTO
      * @return The created Consent
      */
-    public Consent createConsentForDataset(DataSetDTO dataset) {
+    public Consent createConsentForDataset(DatasetDTO dataset) {
         String consentId = UUID.randomUUID().toString();
         Optional<DataSetPropertyDTO> nameProp = dataset.getProperties()
               .stream()
@@ -108,8 +108,7 @@ public class DatasetService {
               .findFirst();
         // Typically, this is a construct from ORSP consisting of dataset name and some form of investigator code.
         // In our world, we'll use that dataset name if provided, or the alias.
-        String groupName =
-              nameProp.isPresent() ? nameProp.get().getPropertyValue() : dataset.getAlias();
+        String groupName = nameProp.isPresent() ? nameProp.get().getPropertyValue() : dataset.getAlias();
         String name = CONSENT_NAME_PREFIX + dataset.getDataSetId();
         Date createDate = new Date();
         if (Objects.nonNull(dataset.getDataUse())) {
@@ -122,21 +121,24 @@ public class DatasetService {
              * translated use restriction
              */
             UseRestriction useRestriction = converter.parseUseRestriction(dataset.getDataUse());
-            consentDAO.insertConsent(consentId, manualReview, useRestriction.toString(),
-                  dataset.getDataUse().toString(),
-                  null, name, null, createDate, createDate, null,
-                  groupName, dataset.getDacId());
-            String associationType = AssociationType.SAMPLESET.getValue();
-            if (Objects.nonNull(dataset.getDacId())) {
-                consentDAO.updateConsentDac(consentId, dataset.getDacId());
-            }
-            consentDAO.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
+            consentDAO.useTransaction(h -> {
+                try {
+                    h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, null, groupName, dataset.getDacId());
+                    if (Objects.nonNull(dataset.getDacId())) {
+                        h.updateConsentDac(consentId, dataset.getDacId());
+                    }
+                    String associationType = AssociationType.SAMPLESET.getValue();
+                    h.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
+                } catch (Exception e) {
+                    h.rollback();
+                    logger.error("Exception creating consent: " + e.getMessage());
+                    throw e;
+                }
+            });
             return consentDAO.findConsentById(consentId);
         } else {
-            throw new IllegalArgumentException(
-                  "Dataset is missing Data Use information. Consent could not be created.");
+            throw new IllegalArgumentException("Dataset is missing Data Use information. Consent could not be created.");
         }
-
     }
 
     private boolean isConsentDataUseManualReview(DataUse dataUse) {
@@ -160,19 +162,35 @@ public class DatasetService {
                     .getVulnerablePopulations());
     }
 
-    public DataSetDTO createDataset(DataSetDTO dataset, String name, Integer userId) {
+    public DatasetDTO createDatasetWithConsent(DatasetDTO dataset, String name, Integer userId) throws Exception {
+        if (Objects.nonNull(getDatasetByName(name))) {
+            throw new IllegalArgumentException("Dataset name: " + name + " is already in use");
+        }
         Timestamp now = new Timestamp(new Date().getTime());
-        int lastAlias = datasetDAO.findLastAlias();
-        int alias = lastAlias + 1;
-
-        Integer id = datasetDAO
-              .insertDatasetV2(name, now, userId, dataset.getObjectId(), dataset.getActive(),
-                    alias);
-
-        List<DataSetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
-        datasetDAO.insertDataSetsProperties(propertyList);
-        datasetDAO.updateDataSetNeedsApproval(id, dataset.getNeedsApproval());
-        return getDatasetDTO(id);
+        Integer createdDatasetId = datasetDAO.inTransaction(h -> {
+            try {
+                Integer id = h.insertDatasetV2(name, now, userId, dataset.getObjectId(), dataset.getActive());
+                List<DataSetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
+                h.insertDatasetProperties(propertyList);
+                h.updateDatasetNeedsApproval(id, dataset.getNeedsApproval());
+                return id;
+            } catch (Exception e) {
+                if (Objects.nonNull(h)) {
+                    h.rollback();
+                }
+                logger.error("Exception creating dataset with consent: " + e.getMessage());
+                throw e;
+            }
+        });
+        dataset.setDataSetId(createdDatasetId);
+        try {
+            createConsentForDataset(dataset);
+        } catch (Exception e) {
+            logger.error("Exception creating consent for dataset: " + e.getMessage());
+            deleteDataset(createdDatasetId, userId);
+            throw e;
+        }
+        return getDatasetDTO(createdDatasetId);
     }
 
     public DataSet getDatasetByName(String name) {
@@ -195,7 +213,7 @@ public class DatasetService {
         return dataset;
     }
 
-    public Optional<DataSet> updateDataset(DataSetDTO dataset, Integer datasetId, Integer userId) {
+    public Optional<DataSet> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
 
         if (Objects.nonNull(dataset.getDacId())) {
@@ -233,7 +251,7 @@ public class DatasetService {
         }
 
         updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
-        datasetDAO.updateDataSetNeedsApproval(datasetId, dataset.getNeedsApproval());
+        datasetDAO.updateDatasetNeedsApproval(datasetId, dataset.getNeedsApproval());
         datasetDAO.updateDatasetUpdateUserAndDate(datasetId, now, userId);
         DataSet updatedDataset = getDatasetWithPropertiesById(datasetId);
         return Optional.of(updatedDataset);
@@ -245,13 +263,13 @@ public class DatasetService {
               .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue()));
         deleteProperties.forEach(
               p -> datasetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
-        datasetDAO.insertDataSetsProperties(addProperties);
+        datasetDAO.insertDatasetProperties(addProperties);
     }
 
-    public DataSetDTO getDatasetDTO(Integer datasetId) {
-        Set<DataSetDTO> dataset = datasetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
-        DataSetDTO result = new DataSetDTO();
-        for (DataSetDTO d : dataset) {
+    public DatasetDTO getDatasetDTO(Integer datasetId) {
+        Set<DatasetDTO> dataset = datasetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
+        DatasetDTO result = new DatasetDTO();
+        for (DatasetDTO d : dataset) {
             result = d;
         }
         return result;
@@ -331,7 +349,7 @@ public class DatasetService {
         }
     }
 
-    public Set<DataSetDTO> describeDatasets(Integer dacUserId) {
+    public Set<DatasetDTO> describeDatasets(Integer dacUserId) {
         List<DataAccessRequestData> darDatas = dataAccessRequestDAO.findAllDataAccessRequestDatas();
         List<Integer> datasetIdsInUse = darDatas
                 .stream()
@@ -340,15 +358,15 @@ public class DatasetService {
                 .filter(l -> !l.isEmpty())
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
-        Set<DataSetDTO> datasets;
+        Set<DatasetDTO> datasets;
         if (userHasRole(UserRoles.ADMIN.getRoleName(), dacUserId)) {
             datasets = datasetDAO.findAllDatasets();
         }
         else {
             datasets = getAllActiveDatasets();
             if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacUserId)) {
-                Set<DataSetDTO> chairSpecificDatasets = datasetDAO.findDatasetsByUser(dacUserId);
-                Set<DataSetDTO> moreDatasets = new HashSet<>();
+                Set<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetsByUser(dacUserId);
+                Set<DatasetDTO> moreDatasets = new HashSet<>();
                 moreDatasets.addAll(datasets);
                 moreDatasets.addAll(chairSpecificDatasets);
                 return moreDatasets;
@@ -360,9 +378,9 @@ public class DatasetService {
     }
 
     public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
-        Set<DataSetDTO> datasets = describeDatasets(dacUserId);
+        Set<DatasetDTO> datasets = describeDatasets(dacUserId);
         String lowercasePartial = partial.toLowerCase();
-        Set<DataSetDTO> filteredDatasetsContainingPartial = datasets.stream().filter(ds ->
+        Set<DatasetDTO> filteredDatasetsContainingPartial = datasets.stream().filter(ds ->
               (ds.getProperties().stream()
                     .anyMatch(
                           p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
@@ -393,7 +411,7 @@ public class DatasetService {
         ).collect(Collectors.toList());
     }
 
-    public Set<DataSetDTO> getAllActiveDatasets() {
+    public Set<DatasetDTO> getAllActiveDatasets() {
         return datasetDAO.findActiveDatasets();
     }
 

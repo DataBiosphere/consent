@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 
 import java.util.List;
 import java.util.Objects;
@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class DacDecisionMetrics implements DecisionMetrics {
 
   private Dac dac;
-  private List<DataSetDTO> datasets;
+  private List<DatasetDTO> datasets;
   private List<DarDecisionMetrics> metrics;
   private Integer chairCount;
   private Integer memberCount;
@@ -62,7 +62,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
       "\n");
   }
 
-  public DacDecisionMetrics(Dac dac, List<DataSetDTO> datasets, List<DarDecisionMetrics> metrics) {
+  public DacDecisionMetrics(Dac dac, List<DatasetDTO> datasets, List<DarDecisionMetrics> metrics) {
     this.setDac(dac);
     this.setDatasets(datasets);
     this.setMetrics(metrics);
@@ -113,11 +113,11 @@ public class DacDecisionMetrics implements DecisionMetrics {
     this.dac = dac;
   }
 
-  public List<DataSetDTO> getDatasets() {
+  public List<DatasetDTO> getDatasets() {
     return datasets;
   }
 
-  private void setDatasets(List<DataSetDTO> datasets) {
+  private void setDatasets(List<DatasetDTO> datasets) {
     this.datasets = datasets;
   }
 
@@ -153,7 +153,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
     return datasetCount;
   }
 
-  private void setDatasetCount(List<DataSetDTO> datasets) {
+  private void setDatasetCount(List<DatasetDTO> datasets) {
     if (Objects.nonNull(datasets) && !datasets.isEmpty()) {
       this.datasetCount = datasets.size();
     }
