@@ -144,16 +144,16 @@ public class DataAccessRequestResource extends Resource {
     @Path("/manage")
     @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
     @Deprecated // Use describeManageDataAccessRequestsV2
-    public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId, @Auth AuthUser authUser) {
+    public Response describeManageDataAccessRequests(@Auth AuthUser authUser) {
         // If a user id is provided, ensure that is the current user.
-        if (userId != null) {
+        try{
             User user = userService.findUserByEmail(authUser.getName());
-            if (!user.getDacUserId().equals(userId)) {
-                throw new BadRequestException("Unable to query for other users' information.");
-            }
+            Integer userId = user.getDacUserId();
+            List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManage(userId, authUser);
+            return Response.ok().entity(dars).build();
+        } catch(Exception e) {
+            return createExceptionResponse(e);
         }
-        List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManage(userId, authUser);
-        return Response.ok().entity(dars).build();
     }
 
     @GET
