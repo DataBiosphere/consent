@@ -23,8 +23,8 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 public class ResearcherResourceTest {

@@ -15,7 +15,7 @@ import javax.ws.rs.core.UriInfo;
 import java.security.Principal;
 import java.util.Optional;
 
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 
 public class BasicCustomAuthFilterTest {
@@ -45,7 +45,7 @@ public class BasicCustomAuthFilterTest {
     @Test
     public void testFilterSuccessful() throws Exception {
         authUser = Optional.of(new AuthUser("Testing principal"));
-        when(authenticator.authenticate(anyObject())).thenReturn(authUser);
+        when(authenticator.authenticate(notNull())).thenReturn(authUser);
         when(uriInfo.getPath()).thenReturn("basic/something");
         filter.filter(requestContext);
     }

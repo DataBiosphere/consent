@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.cloudstore;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -135,6 +135,12 @@ public class GCSServiceTest {
 
     @Test
     public void testDeleteDocument() {
+        String fileName = RandomStringUtils.random(10, true, false);
+        String fileContent = "content";
+        Blob blob = mock(Blob.class);
+        BlobId blobId = BlobId.of("bucket", fileName);
+        when(blob.getContent()).thenReturn((fileContent).getBytes());
+        when(blob.getBlobId()).thenReturn(blobId);
         when(storage.get(any(BlobId.class))).thenReturn(blob);
         when(storage.delete(any(BlobId.class))).thenReturn(true);
         initStore();
