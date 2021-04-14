@@ -361,6 +361,8 @@ public class DataAccessRequestService {
             throw new NotFoundException("Unable to find Data Access Request with the provided id: " + referenceId);
         }
         DataAccessRequestData darData = dar.getData();
+        List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
+        List<Election> openElections = elections.stream().filter(e -> e.getStatus() == "Open").collect(Collectors.toCollection(ArrayList::new));
         darData.setStatus(ElectionStatus.CANCELED.getValue());
         updateByReferenceId(referenceId, darData);
         return findByReferenceId(referenceId);
