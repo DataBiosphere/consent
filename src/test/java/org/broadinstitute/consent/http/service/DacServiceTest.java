@@ -266,8 +266,8 @@ public class DacServiceTest {
         initService();
 
         service.removeDacMember(role, chair, dac);
-        verify(dacDAO, times(0));
-        verify(voteService, times(0));
+        verify(dacDAO, times(0)).removeDacMember(anyInt());
+        verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
     }
 
     @Test
