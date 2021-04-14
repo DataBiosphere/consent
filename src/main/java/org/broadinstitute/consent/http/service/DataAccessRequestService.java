@@ -362,9 +362,10 @@ public class DataAccessRequestService {
         }
         DataAccessRequestData darData = dar.getData();
         List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
-        List<Election> openElections = elections.stream().filter(e -> e.getStatus() == "Open").collect(Collectors.toCollection(ArrayList::new));
+        List<Integer> openElectionIds = elections.stream().filter(e -> e.getStatus() == ElectionStatus.OPEN.getValue()).map(Election::getElectionId).collect(Collectors.toCollection(ArrayList::new));
         darData.setStatus(ElectionStatus.CANCELED.getValue());
         updateByReferenceId(referenceId, darData);
+        electionDAO.updateElectionStatus(openElectionIds, ElectionStatus.CANCELED.getValue());
         return findByReferenceId(referenceId);
     }
 
