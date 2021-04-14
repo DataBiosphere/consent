@@ -143,7 +143,11 @@ public class DataAccessRequestService {
      */
     public List<DataAccessRequestManage> describeDataAccessRequestManageV2(AuthUser authUser) {
         List<DataAccessRequest> allDars = findAllDataAccessRequests();
-        List<DataAccessRequest> filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, authUser);
+        List<DataAccessRequest> filteredAccessList = 
+        dacService.filterDataAccessRequestsByDac(allDars, authUser)
+          .stream()
+          .filter(dar -> dar.getData().getStatus() != "Canceled")
+          .collect(Collectors.toList());
         filteredAccessList.sort(sortTimeComparator());
         if (CollectionUtils.isNotEmpty(filteredAccessList)) {
             return createAccessRequestManageV2(filteredAccessList);
@@ -361,11 +365,8 @@ public class DataAccessRequestService {
             throw new NotFoundException("Unable to find Data Access Request with the provided id: " + referenceId);
         }
         DataAccessRequestData darData = dar.getData();
-        List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
-        List<Integer> openElectionIds = elections.stream().filter(e -> e.getStatus() == ElectionStatus.OPEN.getValue()).map(Election::getElectionId).collect(Collectors.toCollection(ArrayList::new));
         darData.setStatus(ElectionStatus.CANCELED.getValue());
         updateByReferenceId(referenceId, darData);
-        electionDAO.updateElectionStatus(openElectionIds, ElectionStatus.CANCELED.getValue());
         return findByReferenceId(referenceId);
     }
 
