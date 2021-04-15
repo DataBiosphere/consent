@@ -3,10 +3,12 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Entity representing a Data Access Committee
@@ -34,6 +36,8 @@ public class Dac {
 
     @JsonProperty
     private List<User> members;
+
+    private List<DataSetDTO> datasets;
 
     private List<Integer> electionIds = new ArrayList<>();
 
@@ -112,5 +116,12 @@ public class Dac {
 
     public void addDatasetId(Integer datasetId) {
         this.datasetIds.add(datasetId);
+    }
+
+    public void addDatasetDTO(DataSetDTO dto) {
+        if ( Objects.isNull(datasets)) {
+            datasets = new ArrayList<>();
+        }
+        datasets.add(dto);
     }
 }
