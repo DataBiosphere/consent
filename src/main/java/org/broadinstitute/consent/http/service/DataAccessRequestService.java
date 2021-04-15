@@ -145,8 +145,7 @@ public class DataAccessRequestService {
         List<DataAccessRequest> allDars = findAllDataAccessRequests();
         List<DataAccessRequest> filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, authUser);
         List<DataAccessRequest> openDarList = filteredAccessList.stream().filter(dar -> {
-            DataAccessRequestData data = dar.getData();
-            return (Objects.isNull(data) ? true : (Objects.isNull(data.getStatus())));
+            return !ElectionStatus.CANCELED.getValue().equals(dar.getData().getStatus());
         }).collect(Collectors.toList());
         openDarList.sort(sortTimeComparator());
         if (CollectionUtils.isNotEmpty(openDarList)) {
