@@ -68,7 +68,7 @@ object NihChains {
                         val nihUser: NihUserAccount = NihUserAccount(
                             linkedNihUsername = user.email.getOrElse(""), 
                             datasetPermissions = None, 
-                            linkExpireTime = NihService.nextDate.toString, 
+                            linkExpireTime = NihService.nextDate().toString,
                             status = true
                         )
                         session.set("nihUserBody", nihUser.toJson.compactPrint)
