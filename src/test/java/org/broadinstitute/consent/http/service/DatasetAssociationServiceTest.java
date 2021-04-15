@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,8 +25,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.anyObject;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.notNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -55,14 +57,14 @@ public class DatasetAssociationServiceTest {
     @Test
     public void testGetAndVerifyUsersUserNotDataOwner() {
         when(dsDAO.findDataSetById(any())).thenReturn(ds1);
-        when(userDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
+        when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
         doNothing().when(userRoleDAO).insertSingleUserRole(any(), any());
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 
     @Test
     public void testGetAndVerifyUsersInvalidUsersList() throws Exception {
-        when(userDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
+        when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
         thrown.expect(BadRequestException.class);
         thrown.expectMessage("Invalid UserId list.");
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2, 3, 4));
@@ -70,7 +72,7 @@ public class DatasetAssociationServiceTest {
 
     @Test
     public void testCreateDatasetUsersAssociation() throws Exception {
-        when(userDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
+        when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
         when(dsDAO.findDataSetById(1)).thenReturn(ds1);
         when(dsAssociationDAO.getDatasetAssociation(1)).thenReturn(Arrays.asList(dsAssociation1, dsAssociation2));
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
@@ -78,7 +80,7 @@ public class DatasetAssociationServiceTest {
 
     @Test
     public void testCreateDatasetUsersAssociationNotFoundException() throws Exception {
-        when(userDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
+        when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
         when(dsDAO.findDataSetById(1)).thenReturn(null);
         thrown.expect(NotFoundException.class);
         thrown.expectMessage("Invalid DatasetId");
@@ -87,10 +89,10 @@ public class DatasetAssociationServiceTest {
 
     @Test(expected = BatchUpdateException.class)
     public void testCreateDatasetUsersAssociationBadRequestException() throws Exception {
-        when(userDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
+        when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
         when(dsDAO.findDataSetById(1)).thenReturn(ds1);
 
-        Mockito.doThrow(BatchUpdateException.class).when(dsAssociationDAO).insertDatasetUserAssociation(anyObject());
+        doAnswer(invocationOnMock -> { throw new BatchUpdateException(); }).when(dsAssociationDAO).insertDatasetUserAssociation(any());
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 

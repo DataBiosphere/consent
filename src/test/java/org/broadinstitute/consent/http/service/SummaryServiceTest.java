@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -84,7 +84,7 @@ public class SummaryServiceTest {
 
         //This modifies the result for closed cases
         when(electionDAO.findLastElectionsWithFinalVoteByType(ElectionType.DATA_ACCESS.getValue())).thenReturn(ListUtils.union(electionsList(ElectionType.DATA_ACCESS.getValue(), "Open"), electionsList(ElectionType.DATA_ACCESS.getValue(), "Closed")));
-        when(voteDAO.findVotesByElectionIds(anyObject())).thenReturn(randomVotesList(123, VoteType.AGREEMENT.getValue()));
+        when(voteDAO.findVotesByElectionIds(notNull())).thenReturn(randomVotesList(123, VoteType.AGREEMENT.getValue()));
 
         matchSummaryList = summaryService.describeMatchSummaryCases();
         assertTrue("The list should have two elements: ", matchSummaryList.size() == 2);

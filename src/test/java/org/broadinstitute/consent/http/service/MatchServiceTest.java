@@ -51,9 +51,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
 
 public class MatchServiceTest {
     @Mock
@@ -147,7 +148,7 @@ public class MatchServiceTest {
         when(config.getMatchURL()).thenReturn("http://ontology.org/match");
         when(dataAccessRequestDAO.findByReferenceId("NullDar")).thenReturn(null);
         when(consentDAO.findConsentById("NullConsent")).thenReturn(null);
-        when(consentDAO.findConsentById("AbsentConsent")).thenThrow(UnknownIdentifierException.class);
+        doAnswer(invocationOnMock -> { throw new UnknownIdentifierException("AbsentConsent"); }).when(consentDAO).findConsentById("AbsentConsent");
         when(consentDAO.findConsentById("CONS-2")).thenReturn(sampleConsent2);
         when(electionDAO.findLastElectionByReferenceIdAndType("CONS-1", ElectionType.TRANSLATE_DUL.getValue())).thenReturn(sampleElection1);
         when(electionDAO.findLastElectionByReferenceIdAndType("CONS-2", ElectionType.TRANSLATE_DUL.getValue())).thenReturn(sampleElection2);
@@ -168,7 +169,7 @@ public class MatchServiceTest {
         Mockito.when(noMatchResponseMock.readEntity((GenericType<Object>) any())).thenReturn(resmo2);
 
         Mockito.when(builderMock.post(Entity.json(new Gson().toJson(reqmo1)))).thenReturn(okResponseMock);
-        Mockito.when(builderMock.post(Entity.json(new Gson().toJson(reqmo2)))).thenThrow(TimeoutException.class);
+        doAnswer(invocationOnMock -> { throw new TimeoutException(); }).when(builderMock).post(Entity.json(new Gson().toJson(reqmo2)));
 
         Mockito.when(webTargetMock.request(MediaType.APPLICATION_JSON)).thenReturn(builderMock);
         clientMock = Mockito.mock(Client.class);

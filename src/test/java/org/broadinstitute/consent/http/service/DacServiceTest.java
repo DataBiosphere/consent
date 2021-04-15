@@ -1,14 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -267,8 +266,8 @@ public class DacServiceTest {
         initService();
 
         service.removeDacMember(role, chair, dac);
-        verifyZeroInteractions(dacDAO);
-        verifyZeroInteractions(voteService);
+        verify(dacDAO, times(0)).removeDacMember(anyInt());
+        verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
     }
 
     @Test

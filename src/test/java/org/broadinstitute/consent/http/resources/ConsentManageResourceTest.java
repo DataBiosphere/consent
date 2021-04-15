@@ -13,7 +13,7 @@ import org.mockito.MockitoAnnotations;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
 
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.notNull;
 
 public class ConsentManageResourceTest {
 
@@ -26,9 +26,9 @@ public class ConsentManageResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        Mockito.when(consentService.describeConsentManage(anyObject())).
+        Mockito.when(consentService.describeConsentManage(notNull())).
                 thenReturn(Collections.emptyList());
-        Mockito.when(consentService.getUnReviewedConsents(anyObject())).
+        Mockito.when(consentService.getUnReviewedConsents(notNull())).
                 thenReturn(1);
         authUser = new AuthUser("Test@gmail.com");
         resource = new ConsentManageResource(consentService);

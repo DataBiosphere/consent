@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -59,7 +59,7 @@ public class ConsentCasesResourceTest {
 
     @Test
     public void testDescribeClosedElections() {
-        when(electionService.describeClosedElectionsByType(anyString(), anyObject())).thenReturn(Collections.emptyList());
+        when(electionService.describeClosedElectionsByType(anyString(), notNull())).thenReturn(Collections.emptyList());
         initResource();
         Response response = resource.describeClosedElections(null);
         Assert.assertEquals(200, response.getStatus());

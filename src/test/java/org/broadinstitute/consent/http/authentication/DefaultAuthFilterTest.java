@@ -17,7 +17,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Optional;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 
 public class DefaultAuthFilterTest {
@@ -63,7 +63,7 @@ public class DefaultAuthFilterTest {
     @Test
     public void testBasicUrl() throws Exception {
         principal = Optional.of("Testing principal");
-        when(authenticator.authenticate(anyObject())).thenReturn(principal);
+        when(authenticator.authenticate(notNull())).thenReturn(principal);
         when(uriInfo.getPath()).thenReturn("basic/something");
         filter.filter(requestContext);
     }
@@ -71,7 +71,7 @@ public class DefaultAuthFilterTest {
     @Test
     public void testApiUrl() throws Exception{
         principal = Optional.of("Testing principal");
-        when(authenticator.authenticate(anyObject())).thenReturn(principal);
+        when(authenticator.authenticate(notNull())).thenReturn(principal);
         when(uriInfo.getPath()).thenReturn("api/something");
         filter.filter(requestContext);
     }

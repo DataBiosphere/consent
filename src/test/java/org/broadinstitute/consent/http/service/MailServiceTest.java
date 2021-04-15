@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 
 import java.io.Writer;

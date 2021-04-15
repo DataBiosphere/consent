@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
 
@@ -190,7 +190,7 @@ public class ResearcherServiceTest {
         List<UserProperty> foundProps = service.updateProperties(propMap, authUser, true);
         Assert.assertFalse(foundProps.isEmpty());
         Assert.assertEquals(props.size(), foundProps.size());
-        verifyZeroInteractions(emailNotifierService);
+        verify(emailNotifierService, times(0)).sendNewResearcherCreatedMessage(any(), any());
     }
 
     @Test

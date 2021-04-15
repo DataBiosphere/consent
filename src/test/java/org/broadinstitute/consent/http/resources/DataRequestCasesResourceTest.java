@@ -1,8 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -49,7 +50,7 @@ public class DataRequestCasesResourceTest {
 
     @Test
     public void testGetDataOwnerPendingCases() {
-        when(pendingCaseService.describeDataOwnerPendingCases(anyInt(), anyObject())).thenReturn(Collections.emptyList());
+        when(pendingCaseService.describeDataOwnerPendingCases(anyInt(), notNull())).thenReturn(Collections.emptyList());
         initResource();
         Response response = resource.getDataOwnerPendingCases(null, null);
         Assert.assertEquals(200, response.getStatus());
@@ -59,7 +60,7 @@ public class DataRequestCasesResourceTest {
 
     @Test
     public void testGetDataOwnerPendingCasesError() {
-        when(pendingCaseService.describeDataOwnerPendingCases(anyInt(), anyObject())).thenThrow(new ServerErrorException(500));
+        when(pendingCaseService.describeDataOwnerPendingCases(isNull(), isNull())).thenThrow(new ServerErrorException(500));
         initResource();
         Response response = resource.getDataOwnerPendingCases(null, null);
         Assert.assertEquals(500, response.getStatus());
