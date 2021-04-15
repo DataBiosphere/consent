@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.notNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -91,7 +92,7 @@ public class DatasetAssociationServiceTest {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
         when(dsDAO.findDataSetById(1)).thenReturn(ds1);
 
-        Mockito.doAnswer(invocationOnMock -> { throw new BatchUpdateException(); }).when(dsAssociationDAO).insertDatasetUserAssociation(any());
+        doAnswer(invocationOnMock -> { throw new BatchUpdateException(); }).when(dsAssociationDAO).insertDatasetUserAssociation(any());
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 
