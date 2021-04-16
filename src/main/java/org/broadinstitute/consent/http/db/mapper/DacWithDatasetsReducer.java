@@ -14,10 +14,11 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
 
   @Override
   public void accumulate(Map<Integer, Dac> container, RowView rowView) {
-    Dac dac =
-        container.computeIfAbsent(
-            rowView.getColumn("dac_id", Integer.class), id -> rowView.getRow(Dac.class));
     try {
+      Dac dac =
+        container.computeIfAbsent(
+            rowView.getColumn("dac_id", Integer.class), 
+            id -> rowView.getRow(Dac.class));
       if (Objects.nonNull(rowView.getColumn("datasetid", Integer.class))) {
         DataSetDTO dto = rowView.getRow(DataSetDTO.class);
         try {
@@ -30,6 +31,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
               dto.addProperty(propDTO);
             }
            } catch (MappingException e) {
+             e.printStackTrace();
             // Ignore any attempt to map a column that doesn't exist
            }
     
@@ -38,6 +40,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
         }
       }
     } catch (MappingException e) {
+      e.printStackTrace();
       // Ignore any attempt to map a column that doesn't exist
     }
   }
