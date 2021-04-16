@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -19,6 +20,18 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
     try {
       if (Objects.nonNull(rowView.getColumn("datasetid", Integer.class))) {
         DataSetDTO dto = rowView.getRow(DataSetDTO.class);
+        try {
+           if (Objects.nonNull(rowView.getColumn("propertyname", String.class))
+           && Objects.nonNull(rowView.getColumn("propertyvalue", String.class))) {
+             DataSetPropertyDTO propDTO =
+             new DataSetPropertyDTO(
+              rowView.getColumn("propertyname", String.class), 
+              rowView.getColumn("propertyvalue", String.class));
+              dto.addProperty(propDTO);
+            }
+           } catch (MappingException e) {
+            // Ignore any attempt to map a column that doesn't exist
+           }
     
         if (Objects.nonNull(dto)) {
           dac.addDatasetDTO(dto);

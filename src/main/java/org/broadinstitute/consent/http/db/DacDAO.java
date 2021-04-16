@@ -35,14 +35,19 @@ public interface DacDAO extends Transactional<DacDAO> {
     @RegisterBeanMapper(value = Dac.class)
     @RegisterBeanMapper(value = DataSetDTO.class)
     @UseRowReducer(DacWithDatasetsReducer.class)
-    @SqlQuery("SELECT dac.*, " +
-    "d.datasetid, d.name, DATE(d.createdate), d.objectid, d.active, d.needs_approval, d.alias, d.create_user_id, d.update_date, d.update_user_id, " +
-    "ca.consentid, " +
-    "c.translateduserestriction, c.datause " +
-    "FROM dac " +
-    "LEFT OUTER JOIN consents c on c.dac_id = dac.dac_id " +
-    "LEFT OUTER JOIN consentassociations ca on ca.consentid = c.consentid " + 
-    "LEFT OUTER JOIN dataset d on ca.datasetid = d.datasetid ")
+    @SqlQuery("SELECT " +
+                " dac.*, " +
+                " d.datasetid, d.name, DATE(d.createdate), d.objectid, d.active, d.needs_approval, " +
+                " d.alias, d.create_user_id, d.update_date, d.update_user_id, " +
+                " k.key as propertyname, "  +
+                " p.propertyvalue, " +
+                " ca.consentid, c.translateduserestriction, c.datause " +
+                " FROM dac " +
+                " LEFT OUTER JOIN consents c on c.dac_id = dac.dac_id " +
+                " LEFT OUTER JOIN consentassociations ca on ca.consentid = c.consentid " +
+                " left outer join dataset d on ca.datasetid = d.datasetid  " +
+                " LEFT OUTER JOIN datasetproperty p on p.datasetid = d.datasetid " +
+                " LEFT OUTER JOIN dictionary k on k.keyid = p.propertykey ")
     List<Dac> findAll();
 
     @SqlQuery("select distinct d.* from dac d " +
