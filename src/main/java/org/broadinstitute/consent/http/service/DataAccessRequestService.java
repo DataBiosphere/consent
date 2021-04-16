@@ -144,9 +144,12 @@ public class DataAccessRequestService {
     public List<DataAccessRequestManage> describeDataAccessRequestManageV2(AuthUser authUser) {
         List<DataAccessRequest> allDars = findAllDataAccessRequests();
         List<DataAccessRequest> filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, authUser);
-        filteredAccessList.sort(sortTimeComparator());
-        if (CollectionUtils.isNotEmpty(filteredAccessList)) {
-            return createAccessRequestManageV2(filteredAccessList);
+        List<DataAccessRequest> openDarList = filteredAccessList.stream().filter(dar -> {
+            return !ElectionStatus.CANCELED.getValue().equals(dar.getData().getStatus());
+        }).collect(Collectors.toList());
+        openDarList.sort(sortTimeComparator());
+        if (CollectionUtils.isNotEmpty(openDarList)) {
+            return createAccessRequestManageV2(openDarList);
         }
         return Collections.emptyList();
     }
