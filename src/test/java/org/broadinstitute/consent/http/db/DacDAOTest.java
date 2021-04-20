@@ -23,8 +23,12 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testFindAll() {
         int count = 4;
-        for (int i = 1; i <= count; i++) createDac();
-
+        for (int i = 1; i <= count; i++) {
+            Dac d = createDac();
+            DataSet ds = createDataset();
+            Consent c = createConsent(d.getDacId());
+            createAssociation(c.getConsentId(), ds.getDataSetId());
+        };
         List<Dac> dacList = dacDAO.findAll();
         Assert.assertEquals(count, dacList.size());
     }
