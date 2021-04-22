@@ -1,18 +1,18 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.User;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.User;
-import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class DataAccessRequestDAOTest extends DAOTestHelper {
 
@@ -49,7 +49,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertFalse(newDars.isEmpty());
         assertEquals(1, newDars.size());
 
-        List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDraftsByUserId(RandomUtils.nextInt(1, 100));
+        List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDraftsByUserId(0);
         assertTrue(missingDars.isEmpty());
     }
 

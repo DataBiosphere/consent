@@ -411,6 +411,7 @@ public class DAOTestHelper {
     }
 
     protected DataAccessRequest createDraftDataAccessRequest() {
+        User user = createUser();
         DataAccessRequestData data;
         try {
             String darDataString = FileUtils.readFileToString(
@@ -420,7 +421,7 @@ public class DAOTestHelper {
             String referenceId = UUID.randomUUID().toString();
             dataAccessRequestDAO.insertVersion2(
                 referenceId,
-                1,
+                user.getDacUserId(),
                 new Date(),
                 new Date(),
                 new Date(),
