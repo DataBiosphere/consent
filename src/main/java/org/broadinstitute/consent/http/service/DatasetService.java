@@ -388,7 +388,13 @@ public class DatasetService {
                     ds.getConsentId().toLowerCase().contains(lowercasePartial) ||
                     ds.getProperties().stream()
                           .anyMatch(
-                                p -> p.getPropertyValue().toLowerCase().contains(lowercasePartial))
+                                p -> {
+                                    String value = p.getPropertyValue();
+                                    if(Objects.isNull(value)) {
+                                        value = "";
+                                    }
+                                    return value.toLowerCase().contains(lowercasePartial);
+                                })
               )).collect(Collectors.toSet());
         return filteredDatasetsContainingPartial.stream().map(ds ->
               {
