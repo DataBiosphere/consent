@@ -10,7 +10,9 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public class UserRoleDAOTest extends DAOTestHelper {
@@ -29,6 +31,22 @@ public class UserRoleDAOTest extends DAOTestHelper {
 
         List<String> roles = userRoleDAO.findRoleNamesByUserEmail(user.getEmail());
         Assert.assertEquals(1, roles.size());
+    }
+
+    @Test
+    public void testFindRolesByUserMixedCaseEmail() {
+        User user = createUserWithRole(UserRoles.ADMIN.getRoleId());
+        user.setEmail(randomizeCase(user.getEmail()));
+        List<String> roles = userRoleDAO.findRoleNamesByUserEmail(user.getEmail());
+        Assert.assertEquals(1, roles.size());
+    }
+
+    private String randomizeCase(String string) {
+        Random random = new Random();
+        return Arrays
+                .stream(string.split(""))
+                .map(l -> random.nextBoolean() ? l.toUpperCase(Locale.ROOT) : l.toLowerCase(Locale.ROOT))
+                .collect(Collectors.joining(""));
     }
 
     @Test
