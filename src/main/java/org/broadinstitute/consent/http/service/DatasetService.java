@@ -415,12 +415,12 @@ public class DatasetService {
             consentIdMatch = consentId.toLowerCase().contains(term);
         }
         return dataset.getProperties()
-        .stream()
-        .filter(p -> Objects.nonNull(p.getPropertyValue()))
-        .anyMatch(p -> {
-            return consentIdMatch
-            || p.getPropertyValue().toLowerCase().contains(term);
-        });
+            .stream()
+            .filter(p -> Objects.nonNull(p.getPropertyValue()))
+            .anyMatch(p -> {
+                return consentIdMatch
+                || p.getPropertyValue().toLowerCase().contains(term);
+            });
     }
 
     public Set<DatasetDTO> getAllActiveDatasets() {
