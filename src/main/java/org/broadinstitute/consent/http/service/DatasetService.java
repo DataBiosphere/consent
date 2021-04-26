@@ -381,21 +381,17 @@ public class DatasetService {
         Set<DatasetDTO> datasets = describeDatasets(dacUserId);
         String lowercasePartial = partial.toLowerCase();
         Set<DatasetDTO> filteredDatasetsContainingPartial = datasets.stream().filter(ds ->
-              (ds.getProperties().stream()
-                    .anyMatch(
-                          p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
-                    &&
-                    ds.getConsentId().toLowerCase().contains(lowercasePartial) ||
-                    ds.getProperties().stream()
-                          .anyMatch(
-                                p -> {
-                                    String value = p.getPropertyValue();
-                                    if(Objects.isNull(value)) {
-                                        value = "";
-                                    }
-                                    return value.toLowerCase().contains(lowercasePartial);
-                                })
-              )).collect(Collectors.toSet());
+            ds.getProperties().stream().anyMatch(p -> {
+                String propertyValue = p.getPropertyValue();
+                String propertyName = p.getPropertyName();
+                return Objects.nonNull(propertyValue) &&
+                    (
+                        propertyName.equalsIgnoreCase(("Principal Investigator(PI")) 
+                        && ds.getConsentId().toLowerCase().contains(lowercasePartial)
+                        || propertyValue.toLowerCase().contains(lowercasePartial)
+                    );
+            })
+        ).collect(Collectors.toSet());
         return filteredDatasetsContainingPartial.stream().map(ds ->
               {
                   HashMap<String, String> map = new HashMap<>();
