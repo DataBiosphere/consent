@@ -27,7 +27,7 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
             "  INNER JOIN user_role ur ON ur.role_id = r.roleid " +
             "  INNER JOIN dacuser u ON u.dacuserid = ur.user_id " +
             "  WHERE LOWER(u.email) = LOWER(:email)")
-    List<String> findRoleNamessByUserEmail(@Bind("email") String email);
+    List<String> findRoleNamesByUserEmail(@Bind("email") String email);
 
     @UseRowMapper(DatabaseRoleMapper.class)
     @SqlQuery("select * from roles")
