@@ -30,8 +30,8 @@ public class UserAuthorizerTest {
         MockitoAnnotations.initMocks(this);
         when(authorizedUser.getName()).thenReturn("Authorized User");
         when(unauthorizedUser.getName()).thenReturn("Unauthorized User");
-        when(userRoleDAO.findRolesByUserEmail("Authorized User")).thenReturn(Collections.singletonList(getChairpersonRole()));
-        when(userRoleDAO.findRolesByUserEmail("Unauthorized User")).thenReturn(Collections.singletonList(getChairpersonRole()));
+        when(userRoleDAO.findRolesByUserEmail("Authorized User")).thenReturn(Collections.singletonList(getChairpersonRole().getName()));
+        when(userRoleDAO.findRolesByUserEmail("Unauthorized User")).thenReturn(Collections.singletonList(getChairpersonRole().getName()));
         authorizer = new UserAuthorizer(userRoleDAO);
     }
 

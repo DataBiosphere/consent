@@ -27,7 +27,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
     public void testFindRolesByUserEmail() {
         User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
-        List<UserRole> roles = userRoleDAO.findRolesByUserEmail(user.getEmail());
+        List<String> roles = userRoleDAO.findRolesByUserEmail(user.getEmail());
         Assert.assertEquals(1, roles.size());
     }
 

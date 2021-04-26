@@ -23,10 +23,9 @@ public class UserAuthorizer implements Authorizer<AuthUser> {
     public boolean authorize(AuthUser user, String role) {
         boolean authorize = false;
         if (StringUtils.isNotEmpty(role)) {
-            List<UserRole> roles = userRoleDAO.findRolesByUserEmail(user.getName());
+            List<String> roles = userRoleDAO.findRolesByUserEmail(user.getName());
             List<String> existentRole = roles.stream()
-                    .filter(r -> r.getName().equalsIgnoreCase(role))
-                    .map(UserRole::getName)
+                    .filter(r -> r.equalsIgnoreCase(role))
                     .collect(Collectors.toCollection(ArrayList::new));
             if (CollectionUtils.isNotEmpty(existentRole)) {
                 authorize = true;

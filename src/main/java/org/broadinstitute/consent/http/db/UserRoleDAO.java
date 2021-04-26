@@ -22,9 +22,12 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     @SqlQuery("select * from roles r inner join user_role ur on ur.role_id = r.roleId where ur.user_id = :userId")
     List<UserRole> findRolesByUserId(@Bind("userId") Integer userId);
 
-    @SqlQuery("select * from roles r inner join user_role ur on ur.role_id = r.roleId  " +
-              "inner join dacuser u on u.dacUserId = ur.user_id where u.email = :email")
-    List<UserRole> findRolesByUserEmail(@Bind("email") String email);
+    @SqlQuery("SELECT DISTINCT name " +
+            "  FROM roles r " +
+            "  INNER JOIN user_role ur ON ur.role_id = r.roleid " +
+            "  INNER JOIN dacuser u ON u.dacuserid = ur.user_id " +
+            "  WHERE LOWER(u.email) = LOWER(:email)")
+    List<String> findRolesByUserEmail(@Bind("email") String email);
 
     @UseRowMapper(DatabaseRoleMapper.class)
     @SqlQuery("select * from roles")
