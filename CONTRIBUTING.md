@@ -17,6 +17,9 @@ When you open a pull request, add the JIRA issue number and a risk assessment
 from JIRA to the GitHub issue. Add a brief description of your changes above 
 the PR checkbox template.
 
+Include a link to the ticket that this PR addresses. Per our SDLC guidelines,
+all PRs should link to a Jira ticket that describes the full scope of changes.
+
 This is also a good opportunity to check that the acceptance criteria for your 
 JIRA ticket exists and is met. Check with your PO if you have any questions 
 there. You should also fill out a summary to go in the release notes and some 
