@@ -6,7 +6,7 @@ object Settings {
 
   val commonBuildSettings: Seq[Def.Setting[_]] = Defaults.coreDefaultSettings ++ Defaults.defaultConfigs ++ Seq(
     javaOptions += "-Xmx2G",
-    javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
+    javacOptions ++= Seq("-source", "11", "-target", "11")
   )
 
   val commonCompilerSettings: Seq[String] = Seq(
@@ -15,16 +15,14 @@ object Settings {
     "-feature",
     "-encoding", "utf8",
     "-language:postfixOps",
-    "-target:jvm-1.8",
-    "-Xmax-classfile-name", "100",
-    "-Ypartial-unification" // Enable partial unification in type constructor inference
+    "-target:11"
   )
 
   //common settings for all sbt subprojects
   val commonSettings: Seq[Def.Setting[_]] =
     commonBuildSettings ++ List(
       organization  := "org.broadinstitute.dsp.consent",
-      scalaVersion  := "2.12.7",
+      scalaVersion  := "2.13.5",
       scalacOptions ++= commonCompilerSettings
     )
 

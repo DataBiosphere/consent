@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  val gatlingV = "3.4.1"
+  val gatlingV = "3.5.0"
 
   private val netty = "io.netty" % "netty-codec-http" % "4.1.56.Final"
   private val nettyHandler = netty.organization % "netty-handler" % netty.revision
