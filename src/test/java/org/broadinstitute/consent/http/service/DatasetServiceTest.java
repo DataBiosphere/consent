@@ -392,13 +392,25 @@ public class DatasetServiceTest {
     public void testAutoCompleteDatasets() {
         List<DatasetDTO> dtos = getDatasetDTOs();
         Set<DatasetDTO> setOfDtos = dtos.stream().collect(Collectors.toSet());
+        setOfDtos.forEach(dto -> dto.setConsentId("consentId filler value")); 
         when(datasetDAO.findAllDatasets()).thenReturn(setOfDtos);
         when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 0)).thenReturn(UserRoles.ADMIN.getRoleId());
         initService();
-
         List<Map<String, String>> result = datasetService.autoCompleteDatasets("a", 0);
         assertNotNull(result);
         assertEquals(result.size(), dtos.size());
+    }
+    
+    @Test
+    public void testAutoCompleteDatasetsWithNullValues() {
+        List<DatasetDTO> dtos = getDatasetDTOs();
+        Set<DatasetDTO> setOfDtos = dtos.stream().collect(Collectors.toSet());
+        when(datasetDAO.findAllDatasets()).thenReturn(setOfDtos);
+        when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 0)).thenReturn(UserRoles.ADMIN.getRoleId());
+        initService();
+        List<Map<String, String>> result = datasetService.autoCompleteDatasets("a", 0);
+        assertNotNull(result);
+        assertEquals(result.size(), 0);
     }
 
     @Test
