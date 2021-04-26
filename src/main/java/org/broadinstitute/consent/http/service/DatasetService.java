@@ -407,16 +407,19 @@ public class DatasetService {
 
     private boolean filterDatasetOnProperties(DatasetDTO dataset, String term) {
         //datasets need to have consentId, null check to prevent NPE
-        if(Objects.isNull(dataset.getConsentId())) {
-            return false;
-        }
+        Boolean consentIdMatch;
         String consentId = dataset.getConsentId();
+        if(Objects.isNull(consentId)) {
+            consentIdMatch = false;
+        } else {
+            consentIdMatch = consentId.toLowerCase().contains(term);
+        }
         return dataset.getProperties()
         .stream()
         .filter(p -> Objects.nonNull(p.getPropertyValue()))
         .anyMatch(p -> {
-            return (consentId.toLowerCase().contains(term) 
-            || p.getPropertyValue().toLowerCase().contains(term));
+            return consentIdMatch
+            || p.getPropertyValue().toLowerCase().contains(term);
         });
     }
 
