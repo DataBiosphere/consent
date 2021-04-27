@@ -4,7 +4,7 @@ import pprint
 from datetime import datetime
 
 """
-This script parses gatling automated test results into a format expected by 
+This script parses gatling automated test results into a format expected by
 https://github.com/broadinstitute/firecloud-automated-testing. Gatling does not
 print the "type" attribute that is desired on the failures, and therefore the failures do
 not get picked up and sent to BQ.
@@ -25,8 +25,8 @@ def get_test_case(line, className):
     message = line[line.find('KO\t') + 3:].replace('\n', '')
     text = message
     sim_split = line.split('\t')
-    start = int(sim_split[3])
-    end = int(sim_split[4])
+    start = int(sim_split[4])
+    end = int(sim_split[5])
     time = end - start
     name = className.split('.')[len(className.split('.')) - 1]
 
@@ -65,31 +65,35 @@ def toBQTimestamp(ts):
 def build_scenario_performance(simulation_id, simulation_lines):
     scenario_performance_array = []
     request_array = []
-    scenario = {}
+    scenarios = {}
     start = 0
 
     for line in simulation_lines:
         line_split = line.split('\t')
-        
+
         if line_split[0] == 'USER':
-            if line_split[2] == 'START':
-                start = float(strip_chars(line_split[3]))
-                scenario = {
-                    'scenario_id': line_split[1] + '|' + strip_chars(line_split[3]),
-                    'scenario': line_split[1],
+            if line.find('START\t') > -1:
+                start = float(strip_chars(line[line.find('START\t') + 6:]))
+                scenario_name = line_split[1]
+                scenarios[scenario_name] = {
+                    'scenario_id': line_split[1] + '|' + str(start),
+                    'scenario': scenario_name,
                     'start': toBQTimestamp(start),
                     'simulation_id': simulation_id
                 }
-            elif line_split[2] == 'END':
-                scenario['end'] = toBQTimestamp(float(strip_chars(line_split[3])))
-                scenario['time'] = int(float(strip_chars(line_split[3])) - start)
+            elif line.find('END\t') > -1:
+                end_name = line_split[1]
+                end_timestamp = float(strip_chars(line[line.find('END\t') + 4:]))
+                scenarios[end_name]['end'] = toBQTimestamp(end_timestamp)
+                scenarios[end_name]['time'] = int(end_timestamp - start)
 
-                scenario_performance_array.append(scenario)
+                scenario_performance_array.append(scenarios[end_name])
         elif line_split[0] == 'REQUEST':
+            request_scenario_name = line_split[1]
             request_array.append({
                 'request_id': line_split[2] + '|' + strip_chars(line_split[3]),
                 'request': line_split[2],
-                'scenario_id': scenario['scenario_id'],
+                'scenario_id': scenarios[request_scenario_name]['scenario_id'],
                 'start': toBQTimestamp(float(strip_chars(line_split[3]))),
                 'end': toBQTimestamp(float(strip_chars(line_split[4]))),
                 'time': int(strip_chars(line_split[4])) - int(strip_chars(line_split[3])),
@@ -102,7 +106,7 @@ def build_scenario_performance(simulation_id, simulation_lines):
     }
 
 def build_json(assertions_json, simulation_lines):
-    end = float(simulation_lines[len(simulation_lines) - 2].split('\t')[4])
+    end = float(simulation_lines[len(simulation_lines) - 2].split('\t')[3])
     end_time = toBQTimestamp(end)
     start_time = assertions_json['start']
     simulation = {
@@ -115,8 +119,8 @@ def build_json(assertions_json, simulation_lines):
     scenariosAndRequests = build_scenario_performance(simulation['simulation_id'], simulation_lines)
 
     return {
-        'simulation': simulation, 
-        'scenarios': scenariosAndRequests['scenarios'], 
+        'simulation': simulation,
+        'scenarios': scenariosAndRequests['scenarios'],
         'requests': scenariosAndRequests['requests']
     }
 
@@ -162,27 +166,26 @@ if __name__ == '__main__':
         with open(sim_dir, 'w') as wf:
             wf.write(scn['xml'])
             wf.write('\n')
-        
+
         print(sim_dir)
-    
+
     with open("target/test-reports/" + timestamp + "-simulation.json", 'w') as swf:
         for sim in r['simulations_json']:
             swf.write(json.dumps(sim))
             swf.write('\n')
 
         print("target/test-reports/" + timestamp + "-simulation.json")
-    
+
     with open("target/test-reports/" + timestamp + "-scenario.json", 'w') as swf:
         for sc in r['scenarios']:
             swf.write(json.dumps(sc))
             swf.write('\n')
 
         print("target/test-reports/" + timestamp + "-scenario.json")
-    
+
     with open("target/test-reports/" + timestamp + "-request.json", 'w') as swf:
         for rq in r['requests']:
             swf.write(json.dumps(rq))
             swf.write('\n')
 
         print("target/test-reports/" + timestamp + "-request.json")
-        

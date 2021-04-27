@@ -91,7 +91,8 @@ public interface UserDAO extends Transactional<UserDAO> {
                        @Bind("id") Integer id,
                        @Bind("additionalEmail") String additionalEmail);
 
-    @SqlUpdate("delete from dacuser where email = :email")
+    @Deprecated // Use deleteUserById instead
+    @SqlUpdate("DELETE FROM dacuser WHERE LOWER(email) = LOWER(:email)")
     void deleteUserByEmail(@Bind("email") String email);
 
     @SqlUpdate("delete from dacuser where dacuserid = :id")

@@ -53,7 +53,7 @@ object AccessReviewChains {
 
                 val electionReviewStr: String = session(Requests.Election.getDataAccessElectionReviewResponse).as[String]
                 val electionReview: ElectionReview = electionReviewStr.parseJson.convertTo[ElectionReview]
-                val election: Election = electionReview.election.getOrElse(ElectionBuilder.empty)
+                val election: Election = electionReview.election.getOrElse(ElectionBuilder.empty())
 
                 val session1 = session.set(electionDacVotes, ElectionService.getElectionVotesByTypeAndUser(voteList, VoteType.DAC, dacUserId, electionId))
                 val session2 = session1.set(electionFinalVotes, ElectionService.getElectionVotesByTypeAndUser(voteList, VoteType.FINAL, dacUserId, electionId))
