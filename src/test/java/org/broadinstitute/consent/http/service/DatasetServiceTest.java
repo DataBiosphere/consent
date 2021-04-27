@@ -395,7 +395,6 @@ public class DatasetServiceTest {
         when(datasetDAO.findAllDatasets()).thenReturn(setOfDtos);
         when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 0)).thenReturn(UserRoles.ADMIN.getRoleId());
         initService();
-
         List<Map<String, String>> result = datasetService.autoCompleteDatasets("a", 0);
         assertNotNull(result);
         assertEquals(result.size(), dtos.size());

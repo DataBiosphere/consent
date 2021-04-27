@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
+
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -380,16 +381,9 @@ public class DatasetService {
     public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
         Set<DatasetDTO> datasets = describeDatasets(dacUserId);
         String lowercasePartial = partial.toLowerCase();
-        Set<DatasetDTO> filteredDatasetsContainingPartial = datasets.stream().filter(ds ->
-              (ds.getProperties().stream()
-                    .anyMatch(
-                          p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
-                    &&
-                    ds.getConsentId().toLowerCase().contains(lowercasePartial) ||
-                    ds.getProperties().stream()
-                          .anyMatch(
-                                p -> p.getPropertyValue().toLowerCase().contains(lowercasePartial))
-              )).collect(Collectors.toSet());
+        Set<DatasetDTO> filteredDatasetsContainingPartial = datasets.stream()
+        .filter(ds -> filterDatasetOnProperties(ds, lowercasePartial))
+        .collect(Collectors.toSet());
         return filteredDatasetsContainingPartial.stream().map(ds ->
               {
                   HashMap<String, String> map = new HashMap<>();
@@ -409,6 +403,18 @@ public class DatasetService {
                   return map;
               }
         ).collect(Collectors.toList());
+    }
+
+    private boolean filterDatasetOnProperties(DatasetDTO dataset, String term) {
+        //datasets need to have consentId, null check to prevent NPE
+        String consentId = dataset.getConsentId();
+        Boolean consentIdMatch = Objects.nonNull(consentId) && consentId.toLowerCase().contains(term);
+        return consentIdMatch || dataset.getProperties()
+            .stream()
+            .filter(p -> Objects.nonNull(p.getPropertyValue()))
+            .anyMatch(p -> {
+                return p.getPropertyValue().toLowerCase().contains(term);
+            });
     }
 
     public Set<DatasetDTO> getAllActiveDatasets() {
