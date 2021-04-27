@@ -409,12 +409,11 @@ public class DatasetService {
         //datasets need to have consentId, null check to prevent NPE
         String consentId = dataset.getConsentId();
         Boolean consentIdMatch = Objects.nonNull(consentId) && consentId.toLowerCase().contains(term);
-        return dataset.getProperties()
+        return consentIdMatch || dataset.getProperties()
             .stream()
             .filter(p -> Objects.nonNull(p.getPropertyValue()))
             .anyMatch(p -> {
-                return consentIdMatch
-                || p.getPropertyValue().toLowerCase().contains(term);
+                return p.getPropertyValue().toLowerCase().contains(term);
             });
     }
 
