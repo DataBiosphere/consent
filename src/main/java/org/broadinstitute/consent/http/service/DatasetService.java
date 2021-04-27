@@ -408,7 +408,7 @@ public class DatasetService {
     private boolean filterDatasetOnProperties(DatasetDTO dataset, String term) {
         //datasets need to have consentId, null check to prevent NPE
         String consentId = dataset.getConsentId();
-        Boolean consentIdMatch = Objects.isNull(consentId) ? false : consentId.toLowerCase().contains(term);
+        Boolean consentIdMatch = Objects.nonNull(consentId) && consentId.toLowerCase().contains(term);
         return dataset.getProperties()
             .stream()
             .filter(p -> Objects.nonNull(p.getPropertyValue()))
