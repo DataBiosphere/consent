@@ -1,0 +1,119 @@
+version: 2
+updates:
+- package-ecosystem: maven
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  target-branch: develop
+  reviewers:
+  - rushtong
+  - JVThomas
+  assignees:
+  - rushtong
+  - JVThomas
+  labels:
+  - dependency
+  ignore:
+  - dependency-name: com.hubspot.dropwizard:dropwizard-guice
+    versions:
+    - "> 0.8.1.0, < 1"
+  - dependency-name: com.hubspot.dropwizard:dropwizard-guice
+    versions:
+    - ">= 1.a, < 2"
+  - dependency-name: com.sendgrid:sendgrid-java
+    versions:
+    - "> 4.4.1, < 5"
+  - dependency-name: com.twitter:util-core_2.11
+    versions:
+    - ">= 18.a, < 19"
+  - dependency-name: com.twitter:util-core_2.11
+    versions:
+    - ">= 19.a, < 20"
+  - dependency-name: com.twitter:util-core_2.11
+    versions:
+    - "> 20.10.0"
+  - dependency-name: de.spinscale:dropwizard-jobs-core
+    versions:
+    - "> 1.0.1, < 2"
+  - dependency-name: io.dropwizard:dropwizard-assets
+    versions:
+    - "> 1.3.18, < 2"
+  - dependency-name: io.dropwizard:dropwizard-auth
+    versions:
+    - "> 1.3.18, < 2"
+  - dependency-name: io.dropwizard:dropwizard-client
+    versions:
+    - "> 1.3.18, < 2"
+  - dependency-name: io.dropwizard:dropwizard-core
+    versions:
+    - "> 1.3.18, < 2"
+  - dependency-name: io.dropwizard:dropwizard-forms
+    versions:
+    - "> 1.3.18, < 2"
+  - dependency-name: io.dropwizard:dropwizard-jdbi
+    versions:
+    - "> 1.3.18, < 2"
+  - dependency-name: io.dropwizard:dropwizard-logging
+    versions:
+    - "> 1.3.18, < 2"
+  - dependency-name: io.dropwizard:dropwizard-testing
+    versions:
+    - "> 1.3.18, < 2"
+  - dependency-name: org.eclipse.jetty:jetty-servlets
+    versions:
+    - "> 9.4.29.v20200521, < 9.5"
+  - dependency-name: org.glassfish.jersey.core:jersey-client
+    versions:
+    - "> 2.32"
+  - dependency-name: org.mockito:mockito-core
+    versions:
+    - ">= 2.a, < 3"
+  - dependency-name: org.mock-server:mockserver-netty
+    versions:
+    - "> 5.11.1, < 6"
+  - dependency-name: org.mongodb:mongo-java-driver
+    versions:
+    - "> 3.3.0, < 4"
+  - dependency-name: org.powermock:powermock-core
+    versions:
+    - ">= 2.a, < 3"
+  - dependency-name: org.webjars:swagger-ui
+    versions:
+    - "> 2.2.8, < 3"
+  - dependency-name: org.webjars:swagger-ui
+    versions:
+    - ">= 3.34.a, < 3.35"
+  - dependency-name: pl.project13.maven:git-commit-id-plugin
+    versions:
+    - "> 4.0.0, < 4.1"
+  - dependency-name: com.google.inject:guice
+    versions:
+    - 5.0.0
+    - 5.0.1
+  commit-message:
+    prefix: dependency
+- package-ecosystem: docker
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  target-branch: develop
+  reviewers:
+  - rushtong
+  assignees:
+  - rushtong
+  labels:
+  - dependency
+  ignore:
+  - dependency-name: adoptopenjdk
+    versions:
+    - "> 8.pre.hotspot"
+  - dependency-name: broad-dsp-gcr-public/base/jre
+    versions:
+    - ">= 15.pre.alpine.a, < 16"
+  - dependency-name: openjdk
+    versions:
+    - "> 8"
+  commit-message:
+    prefix: dependency
