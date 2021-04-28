@@ -25,6 +25,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -362,6 +363,11 @@ public class DataAccessRequestService {
         DataAccessRequest dar = findByReferenceId(referenceId);
         if (Objects.isNull(dar)) {
             throw new NotFoundException("Unable to find Data Access Request with the provided id: " + referenceId);
+        }
+        List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
+        if (!elections.isEmpty()) {
+            //Is this the right exception to use?
+            throw new IllegalArgumentException("Cancelling this DAR is not allowed");
         }
         DataAccessRequestData darData = dar.getData();
         darData.setStatus(ElectionStatus.CANCELED.getValue());

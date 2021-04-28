@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -133,7 +134,9 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void testCancelDataAccessRequest() {
+    public void testCancelDataAccessRequestSuccess() {
+        List<Election> electionList = new ArrayList<Election>();
+        when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
@@ -146,6 +149,19 @@ public class DataAccessRequestServiceTest {
         assertEquals(ElectionStatus.CANCELED.getValue(), updated.getData().getStatus());
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testCancelDataAccessRequestWithElectionPresentFail() {
+        List<Election> electionList = new ArrayList<Election>();
+        electionList.add(new Election());
+        when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);
+        DataAccessRequest dar = generateDataAccessRequest();
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
+        initService();
+
+        service.cancelDataAccessRequest(dar.getReferenceId());
+    }
+    
     @Test(expected = NotFoundException.class)
     public void testCancelDataAccessRequestNotFound() {
         DataAccessRequest dar = generateDataAccessRequest();
