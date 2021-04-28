@@ -48,7 +48,10 @@ public class ReviewResultsService {
             review = new ElectionReview();
             review.setElection(election);
             Consent consent = consentDAO.findConsentById(review.getElection().getReferenceId());
-            List<ElectionReviewVote> rVotes = (isFinalAccess == null || isFinalAccess == false) ? voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.DAC.getValue()) :  voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.FINAL.getValue());
+            List<ElectionReviewVote> rVotes = isFinalAccess == null ? 
+              voteDAO.findElectionReviewVotesByElectionId(electionId)
+              : isFinalAccess == false ? voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.DAC.getValue())
+                : voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.FINAL.getValue());
             review.setReviewVote(rVotes);
             review.setConsent(consent);
         }

@@ -89,7 +89,7 @@ public class ElectionReviewResourceTest {
         when(reviewResultsService.describeElectionReviewByElectionId(any(), any())).thenReturn(new ElectionReview());
         when(reviewResultsService.describeAgreementVote(any())).thenReturn(Collections.singletonList(new Vote()));
         initResource();
-        ElectionReview response = resource.getAccessElectionReviewByReferenceId(RandomUtils.nextInt(100, 1000), true);
+        ElectionReview response = resource.getAccessElectionReviewByReferenceId(RandomUtils.nextInt(100, 1000));
         assertNotNull(response);
     }
 
