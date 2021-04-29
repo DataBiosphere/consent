@@ -2060,8 +2060,13 @@ paths:
       summary: describeVotesOnElections
       description: Returns the votes of the elections specified in the list of electionIds
       parameters:
-        - name: electionids
+         - name: requestId
           in: path
+          description: referenceId of dar the Elections are on
+          required: true
+          schema:
+        - name: electionids
+          in: body
           description: list of ids representing the Elections to get votes of 
           required: true
           schema:

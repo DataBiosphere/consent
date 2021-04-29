@@ -164,7 +164,7 @@ public class DataRequestVoteResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    public List<Vote> describeVotesOnElections(@PathParam("electionIds") List<Integer> electionIds) {
+    public List<Vote> describeVotesOnElections(@PathParam("requestId") String requestId, List<Integer> electionIds) {
         return voteService.findVotesByElectionIds(electionIds);
     }
 
