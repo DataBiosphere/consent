@@ -364,7 +364,6 @@ public class DataAccessRequestService {
         }
         List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
         if (!elections.isEmpty()) {
-            //Is this the right exception to use?
             throw new UnsupportedOperationException("Cancelling this DAR is not allowed");
         }
         DataAccessRequestData darData = dar.getData();
