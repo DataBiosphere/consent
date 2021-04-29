@@ -270,8 +270,11 @@ public class DatasetService {
     public DatasetDTO getDatasetDTO(Integer datasetId) {
         Set<DatasetDTO> dataset = datasetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
         DatasetDTO result = new DatasetDTO();
-        for (DatasetDTO d : dataset) {
-            result = d;
+        if (Objects.nonNull(dataset) && !dataset.isEmpty()) {
+            result = dataset.iterator().next();
+        }
+        if (Objects.isNull(result.getDataSetId())) {
+            throw new NotFoundException("Unable to find dataset with id: " + datasetId);
         }
         return result;
     }

@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,7 +52,7 @@ public class DatasetServiceTest {
     private ConsentDAO consentDAO;
 
     @Mock
-    DataAccessRequestDAO dataAccessRequestDAO;
+    private DataAccessRequestDAO dataAccessRequestDAO;
 
     @Mock
     private DatasetDAO datasetDAO;
@@ -277,6 +278,13 @@ public class DatasetServiceTest {
 
         assertNotNull(datasetDTO);
         assertFalse(datasetDTO.getProperties().isEmpty());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testGetDatasetDTONotFound() {
+        when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(anyInt())).thenReturn(Collections.emptySet());
+        initService();
+        datasetService.getDatasetDTO(1);
     }
 
     @Test
