@@ -1868,7 +1868,7 @@ paths:
           description: The election or the DAR couldn't be found.
     post:
       summary: createDataRequestElection
-      description: Creates an Election for the DAR identified by the ID.
+      description: Creates an access and RP Election for the DAR identified by the ID.
       parameters:
         - name: requestId
           in: path
@@ -1886,7 +1886,7 @@ paths:
         - Election
       responses:
         200:
-          description: The created election
+          description: The created elections
           content:
             application/json:
               schema:
