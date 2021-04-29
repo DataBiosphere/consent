@@ -2057,12 +2057,12 @@ paths:
           description: Could not find consent with the specified Id
   /api/dataRequest/{requestId}/vote:
     get:
-      summary: describeAllVotes
-      description: Returns the votes of the election with the specified referenceId.
+      summary: describeVotesOnElections
+      description: Returns the votes of the elections specified in the list of electionIds
       parameters:
-        - name: requestId
+        - name: electionids
           in: path
-          description: referenceId of the Election of the requested Votes
+          description: list of ids representing the Elections to get votes of 
           required: true
           schema:
             type: string
@@ -2071,7 +2071,7 @@ paths:
         - DataRequest
       responses:
         200:
-          description: Returns the DataRequest.
+          description: Returns the list of votes.
           content:
             application/json:
               schema:
