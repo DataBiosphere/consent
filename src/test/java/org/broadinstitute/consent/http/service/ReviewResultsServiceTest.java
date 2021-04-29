@@ -87,7 +87,7 @@ public class ReviewResultsServiceTest {
     public void testDescribeElectionReviewByElectionId() throws Exception {
         initService();
         sampleElection.setElectionId(123);
-        ElectionReview review = service.describeElectionReviewByElectionId(1, false);
+        ElectionReview review = service.describeElectionReviewByElectionId(1);
         assertTrue("Consent should be equal to mocked response ", review.getConsent().equals(consent));
         assertTrue("Sample Election should be equal to mocked response ", review.getElection().equals(sampleElection));
 

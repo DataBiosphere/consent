@@ -2782,12 +2782,6 @@ paths:
           required: true
           schema:
             type: integer
-        - name: isFinalAccess
-          in: query
-          description: Defines if the reviewVote array of the retrieved ElectionReview will contain or not the isFinalAccess = TRUE Vote.
-          required: true
-          schema:
-            type: integer
       tags:
         - ElectionReview
       responses:
@@ -2827,12 +2821,6 @@ paths:
           description: |
             Election Id for the associated Data Access Election
             (and not the associated RP Election, this is legacy behavior).
-          required: true
-          schema:
-            type: integer
-        - name: isFinalAccess
-          in: query
-          description: Defines if the reviewVote array of the retrieved ElectionReview will contain or not the isFinalAccess = TRUE Vote.
           required: true
           schema:
             type: integer

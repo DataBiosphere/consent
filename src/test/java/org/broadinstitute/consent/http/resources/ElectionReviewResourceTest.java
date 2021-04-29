@@ -64,7 +64,7 @@ public class ElectionReviewResourceTest {
 
     @Test
     public void testGetElectionReviewByElectionId() {
-        when(reviewResultsService.describeElectionReviewByElectionId(any(), any())).thenReturn(new ElectionReview());
+        when(reviewResultsService.describeElectionReviewByElectionId(any())).thenReturn(new ElectionReview());
         initResource();
         ElectionReview response = resource.getElectionReviewByElectionId(RandomUtils.nextInt(100, 1000));
         assertNotNull(response);
@@ -86,7 +86,7 @@ public class ElectionReviewResourceTest {
         dar.setData(data);
         when(darService.findByReferenceId(any())).thenReturn(dar);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
-        when(reviewResultsService.describeElectionReviewByElectionId(any(), any())).thenReturn(new ElectionReview());
+        when(reviewResultsService.describeElectionReviewByElectionId(any())).thenReturn(new ElectionReview());
         when(reviewResultsService.describeAgreementVote(any())).thenReturn(Collections.singletonList(new Vote()));
         initResource();
         ElectionReview response = resource.getAccessElectionReviewByReferenceId(RandomUtils.nextInt(100, 1000));
@@ -96,9 +96,9 @@ public class ElectionReviewResourceTest {
     @Test
     public void testGetRPElectionReviewByReferenceId() {
         when(electionService.findRPElectionByElectionAccessId(any())).thenReturn(1);
-        when(reviewResultsService.describeElectionReviewByElectionId(any(), any())).thenReturn(new ElectionReview());
+        when(reviewResultsService.describeElectionReviewByElectionId(any())).thenReturn(new ElectionReview());
         initResource();
-        ElectionReview response = resource.getRPElectionReviewByReferenceId(RandomUtils.nextInt(100, 1000), true);
+        ElectionReview response = resource.getRPElectionReviewByReferenceId(RandomUtils.nextInt(100, 1000));
         assertNotNull(response);
     }
 
