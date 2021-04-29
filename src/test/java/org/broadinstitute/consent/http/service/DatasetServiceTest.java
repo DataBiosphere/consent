@@ -11,8 +11,8 @@ import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +21,7 @@ import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -33,10 +33,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -65,7 +65,7 @@ public class DatasetServiceTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
     private void initService() {
@@ -104,11 +104,11 @@ public class DatasetServiceTest {
 
     @Test
     public void testDescribeDataSetsByReceiveOrder() {
-        when(datasetDAO.findDataSetsByReceiveOrder(Arrays.asList(1)))
-            .thenReturn(getDatasetDTOs().stream().collect(Collectors.toSet()));
+        when(datasetDAO.findDataSetsByReceiveOrder(Collections.singletonList(1)))
+            .thenReturn(new HashSet<>(getDatasetDTOs()));
         initService();
 
-        Collection<DatasetDTO> dataSetsByReceiveOrder = datasetService.describeDataSetsByReceiveOrder(Arrays.asList(1));
+        Collection<DatasetDTO> dataSetsByReceiveOrder = datasetService.describeDataSetsByReceiveOrder(Collections.singletonList(1));
         assertNotNull(dataSetsByReceiveOrder);
         assertEquals(dataSetsByReceiveOrder.size(), getDatasetDTOs().size());
     }
@@ -116,7 +116,7 @@ public class DatasetServiceTest {
     @Test
     public void testDescribeDictionaryByDisplayOrder() {
         when(datasetDAO.getMappedFieldsOrderByDisplayOrder())
-                .thenReturn(getDictionaries().stream().collect(Collectors.toList()));
+                .thenReturn(new ArrayList<>(getDictionaries()));
         initService();
 
         Collection<Dictionary> dictionaries = datasetService.describeDictionaryByDisplayOrder();
@@ -127,7 +127,7 @@ public class DatasetServiceTest {
     @Test
     public void testDescribeDictionaryByReceiveOrder() {
         when(datasetDAO.getMappedFieldsOrderByReceiveOrder())
-                .thenReturn(getDictionaries().stream().collect(Collectors.toList()));
+                .thenReturn(new ArrayList<>(getDictionaries()));
         initService();
 
         Collection<Dictionary> dictionaries = datasetService.describeDictionaryByReceiveOrder();
@@ -161,11 +161,11 @@ public class DatasetServiceTest {
 
     @Test
     public void testFindNeedsApprovalDataSetsByObjectId() {
-        when(datasetDAO.findNeedsApprovalDataSetByDataSetId(Arrays.asList(1)))
+        when(datasetDAO.findNeedsApprovalDataSetByDataSetId(Collections.singletonList(1)))
                 .thenReturn(getDatasets());
         initService();
 
-        List<DataSet> dataSets = datasetService.findNeedsApprovalDataSetByObjectId(Arrays.asList(1));
+        List<DataSet> dataSets = datasetService.findNeedsApprovalDataSetByObjectId(Collections.singletonList(1));
         assertNotNull(dataSets);
         assertEquals(dataSets.stream().findFirst().orElseThrow().getDataSetId(), getDatasets().stream().findFirst().orElseThrow().getDataSetId());
     }
@@ -319,8 +319,9 @@ public class DatasetServiceTest {
         when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
         initService();
 
-        DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1).get();
+        Optional<DataSet> updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
         assertNotNull(updated);
+        assertTrue(updated.isPresent());
     }
 
     @Test
@@ -328,10 +329,10 @@ public class DatasetServiceTest {
         int datasetId = 1;
         DatasetDTO dataSetDTO = getDatasetDTO();
         DataSet dataset = getDatasets().get(0);
-        List<DataSetProperty> properties = getDatasetProperties().stream().collect(Collectors.toList());
+        List<DataSetProperty> properties = new ArrayList<>(getDatasetProperties());
         properties.remove(2);
         properties.remove(2);
-        dataset.setProperties(properties.stream().collect(Collectors.toSet()));
+        dataset.setProperties(new HashSet<>(properties));
 
         List<DataSetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
         updatedProperties.get(2).setPropertyValue("added value");
@@ -343,8 +344,9 @@ public class DatasetServiceTest {
         when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
         initService();
 
-        DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1).get();
+        Optional<DataSet> updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
         assertNotNull(updated);
+        assertTrue(updated.isPresent());
     }
 
     @Test
@@ -364,8 +366,9 @@ public class DatasetServiceTest {
         when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
         initService();
 
-        DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1).get();
+        Optional<DataSet> updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
         assertNotNull(updated);
+        assertTrue(updated.isPresent());
     }
 
     @Test
@@ -399,7 +402,7 @@ public class DatasetServiceTest {
     @Test
     public void testAutoCompleteDatasets() {
         List<DatasetDTO> dtos = getDatasetDTOs();
-        Set<DatasetDTO> setOfDtos = dtos.stream().collect(Collectors.toSet());
+        Set<DatasetDTO> setOfDtos = new HashSet<>(dtos);
         when(datasetDAO.findAllDatasets()).thenReturn(setOfDtos);
         when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 0)).thenReturn(UserRoles.ADMIN.getRoleId());
         initService();
@@ -411,7 +414,7 @@ public class DatasetServiceTest {
     @Test
     public void testGetAllActiveDatasets() {
         List<DatasetDTO> dtos = getDatasetDTOs();
-        Set<DatasetDTO> setOfDtos = dtos.stream().collect(Collectors.toSet());
+        Set<DatasetDTO> setOfDtos = new HashSet<>(dtos);
         when(datasetDAO.findActiveDatasets()).thenReturn(setOfDtos);
         initService();
 
@@ -423,7 +426,7 @@ public class DatasetServiceTest {
     @Test
     public void testDescribeDatasets() {
         List<DatasetDTO> dtos = getDatasetDTOs();
-        Set<DatasetDTO> setOfDtos = dtos.stream().collect(Collectors.toSet());
+        Set<DatasetDTO> setOfDtos = new HashSet<>(dtos);
         Set<DatasetDTO> singleDtoSet = Collections.singleton(dtos.get(0));
         Set<DatasetDTO> emptyActiveDtoSet = Collections.emptySet();
         when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 0)).thenReturn(null);
@@ -438,7 +441,7 @@ public class DatasetServiceTest {
 
         Set<DatasetDTO> memberResult = datasetService.describeDatasets(0);
         assertNotNull(memberResult);
-        assertEquals(memberResult.size(), emptyActiveDtoSet.size());
+        assertEquals(memberResult.size(), 0);
         Set<DatasetDTO> adminResult = datasetService.describeDatasets(1);
         assertNotNull(adminResult);
         assertEquals(adminResult.size(), dtos.size());
