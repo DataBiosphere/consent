@@ -2058,7 +2058,7 @@ paths:
   /api/dataRequest/{requestId}/vote:
     get:
       summary: describeAllVotes
-      description:  Returns the votes of the election with the specified referenceId.
+      description: Returns the votes of the election with the specified referenceId.
       parameters:
         - name: requestId
           in: path
