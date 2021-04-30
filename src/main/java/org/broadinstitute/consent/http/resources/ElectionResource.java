@@ -20,6 +20,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Path("{api : (api/)?}election/")
@@ -113,6 +114,14 @@ public class ElectionResource extends Resource {
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
+    }
+
+    @GET
+    @Produces("application/json")
+    @PermitAll
+    @Path("/{electionId}")
+    public List<Vote> describeVotesOnElection(@PathParam("electionId") Integer electionId) {
+        return voteService.findVotesByElectionId(electionId);
     }
 
 }

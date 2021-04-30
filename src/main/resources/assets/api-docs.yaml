@@ -1868,7 +1868,7 @@ paths:
           description: The election or the DAR couldn't be found.
     post:
       summary: createDataRequestElection
-      description: Creates an access and RP Election for the DAR identified by the ID.
+      description: Creates an Access and RP Election for the DAR identified by the ID.
       parameters:
         - name: requestId
           in: path
@@ -1886,7 +1886,7 @@ paths:
         - Election
       responses:
         200:
-          description: The created elections
+          description: The created election
           content:
             application/json:
               schema:
@@ -2057,17 +2057,12 @@ paths:
           description: Could not find consent with the specified Id
   /api/dataRequest/{requestId}/vote:
     get:
-      summary: describeVotesOnElections
-      description: Returns the votes of the elections specified in the list of electionIds
+      summary: describeAllVotes
+      description:  Returns the votes of the election with the specified referenceId.
       parameters:
         - name: requestId
           in: path
           description: referenceId of dar the Elections are on
-          required: true
-          schema:
-        - name: electionids
-          in: body
-          description: list of ids representing the Elections to get votes of 
           required: true
           schema:
             type: string
@@ -2651,6 +2646,28 @@ paths:
       responses:
         200:
           description: Election
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Election'
+        400:
+          description: Could not find Election with the specified Id
+  /api/election/{electionId}:
+    get:
+      summary: describeVotesOnElection
+      description: Returns the list of votes associated with the election  identified by Id
+      parameters:
+        - name: electionId
+          in: path
+          description: Election Id
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Election
+      responses:
+        200:
+          description: List of votes
           content:
             application/json:
               schema:
