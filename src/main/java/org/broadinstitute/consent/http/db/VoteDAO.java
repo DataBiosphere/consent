@@ -24,14 +24,14 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId "
-            + "where election.electionId = :electionId")
-    @UseRowMapper(ElectionReviewVoteMapper.class)
-    List<ElectionReviewVote> findAllElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId);
-
-    @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId "
     + "where election.electionId = :electionId and lower(v.type) != 'chairperson'")
     @UseRowMapper(ElectionReviewVoteMapper.class)
     List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId);
+
+    @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId "
+            + "where election.electionId = :electionId")
+    @UseRowMapper(ElectionReviewVoteMapper.class)
+    List<ElectionReviewVote> findAllElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId);
 
     @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId "
             + "where election.electionId = :electionId and lower(v.type) = lower(:type)")
