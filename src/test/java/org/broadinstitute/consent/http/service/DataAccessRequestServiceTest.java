@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -32,7 +33,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -133,7 +133,9 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void testCancelDataAccessRequest() {
+    public void testCancelDataAccessRequestSuccess() {
+        List<Election> electionList = new ArrayList<Election>();
+        when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
@@ -146,6 +148,19 @@ public class DataAccessRequestServiceTest {
         assertEquals(ElectionStatus.CANCELED.getValue(), updated.getData().getStatus());
     }
 
+    @Test(expected = UnsupportedOperationException.class)
+    public void testCancelDataAccessRequestWithElectionPresentFail() {
+        List<Election> electionList = new ArrayList<Election>();
+        electionList.add(new Election());
+        when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);
+        DataAccessRequest dar = generateDataAccessRequest();
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
+        initService();
+
+        service.cancelDataAccessRequest(dar.getReferenceId());
+    }
+    
     @Test(expected = NotFoundException.class)
     public void testCancelDataAccessRequestNotFound() {
         DataAccessRequest dar = generateDataAccessRequest();
@@ -264,62 +279,6 @@ public class DataAccessRequestServiceTest {
         assertNotNull(docs);
         assertEquals(1, docs.size());
         assertEquals(dar.getReferenceId(), docs.get(0).get(DarConstants.REFERENCE_ID));
-    }
-
-    @Test
-    public void testGetUserEmailAndCancelElection_DataAccess() {
-        Election daElection = generateElection(1);
-
-        when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(daElection.getReferenceId(), ElectionType.DATA_ACCESS.getValue()))
-                .thenReturn(daElection);
-        when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(daElection.getReferenceId(), ElectionType.RP.getValue()))
-                .thenReturn(null);
-
-        Vote vote = new Vote();
-        vote.setDacUserId(1);
-        vote.setVoteId(1);
-        vote.setElectionId(daElection.getElectionId());
-        when(voteDAO.findDACVotesByElectionId(daElection.getElectionId()))
-                .thenReturn(Collections.singletonList(vote));
-
-        User user = new User();
-        user.setDacUserId(1);
-        user.setEmail("test@test.com");
-        when(userDAO.findUsers(Collections.singletonList(1)))
-                .thenReturn(Collections.singletonList(user));
-        initService();
-
-        List<User> users = service.getUserEmailAndCancelElection(daElection.getReferenceId());
-        assertNotNull(users);
-        assertEquals(1, users.size());
-    }
-
-    @Test
-    public void testGetUserEmailAndCancelElection_RP() {
-        Election rpElection = generateElection(1);
-
-        when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(rpElection.getReferenceId(), ElectionType.DATA_ACCESS.getValue()))
-                .thenReturn(null);
-        when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(rpElection.getReferenceId(), ElectionType.RP.getValue()))
-                .thenReturn(rpElection);
-
-        Vote vote = new Vote();
-        vote.setDacUserId(1);
-        vote.setVoteId(1);
-        vote.setElectionId(rpElection.getElectionId());
-        when(voteDAO.findDACVotesByElectionId(rpElection.getElectionId()))
-                .thenReturn(Collections.singletonList(vote));
-
-        User user = new User();
-        user.setDacUserId(1);
-        user.setEmail("test@test.com");
-        when(userDAO.describeUsersByRoleAndEmailPreference(any(), any()))
-                .thenReturn(Collections.singletonList(user));
-        initService();
-
-        List<User> users = service.getUserEmailAndCancelElection(rpElection.getReferenceId());
-        assertNotNull(users);
-        assertEquals(1, users.size());
     }
 
     @Test

@@ -2,9 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
-import freemarker.template.TemplateException;
 import io.dropwizard.auth.Auth;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -15,7 +13,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.mail.MessagingException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
@@ -34,7 +31,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
@@ -217,14 +213,8 @@ public class DataAccessRequestResource extends Resource {
     public Response cancelDataAccessRequest(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
         validateAuthedRoleUser(Collections.emptyList(), authUser, referenceId);
         try {
-            List<User> usersToNotify = dataAccessRequestService.getUserEmailAndCancelElection(referenceId);
             DataAccessRequest dar = dataAccessRequestService.cancelDataAccessRequest(referenceId);
-            if (CollectionUtils.isNotEmpty(usersToNotify)) {
-                emailNotifierService.sendCancelDARRequestMessage(usersToNotify, dar.getData().getDarCode());
-            }
             return Response.ok().entity(dar).build();
-        } catch (MessagingException | TemplateException | IOException e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error("The Data Access Request was cancelled but the DAC/Admin couldn't be notified. Contact Support. ", Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

@@ -42,7 +42,6 @@ import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -363,6 +362,10 @@ public class DataAccessRequestService {
         if (Objects.isNull(dar)) {
             throw new NotFoundException("Unable to find Data Access Request with the provided id: " + referenceId);
         }
+        List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
+        if (!elections.isEmpty()) {
+            throw new UnsupportedOperationException("Cancelling this DAR is not allowed");
+        }
         DataAccessRequestData darData = dar.getData();
         darData.setStatus(ElectionStatus.CANCELED.getValue());
         updateByReferenceId(referenceId, darData);
@@ -602,32 +605,6 @@ public class DataAccessRequestService {
             }
         }
         return darManage;
-    }
-
-    public List<User> getUserEmailAndCancelElection(String referenceId) {
-        Election access = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.DATA_ACCESS.getValue());
-        Election rp = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.RP.getValue());
-        updateElection(access, rp);
-        List<User> users = new ArrayList<>();
-        if (access != null){
-            List<Vote> votes = voteDAO.findDACVotesByElectionId(access.getElectionId());
-            List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
-            users.addAll(userDAO.findUsers(userIds));
-        } else {
-            users =  userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
-        }
-        return users;
-    }
-
-    private void updateElection(Election access, Election rp) {
-        if (access != null) {
-            access.setStatus(ElectionStatus.CANCELED.getValue());
-            electionDAO.updateElectionStatus(new ArrayList<>(Collections.singletonList(access.getElectionId())), access.getStatus());
-        }
-        if (rp != null){
-            rp.setStatus(ElectionStatus.CANCELED.getValue());
-            electionDAO.updateElectionStatus(new ArrayList<>(Collections.singletonList(rp.getElectionId())), rp.getStatus());
-        }
     }
 
     public File createApprovedDARDocument() throws IOException {

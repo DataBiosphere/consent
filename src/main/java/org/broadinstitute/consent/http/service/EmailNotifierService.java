@@ -191,13 +191,6 @@ public class EmailNotifierService {
         }
     }
 
-    public void sendCancelDARRequestMessage(List<User> users, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive){
-            Writer template = templateHelper.getCancelledDarTemplate("DAC Member", dataAcessRequestId, SERVER_URL);
-            mailService.sendCancelDARRequestMessage(getEmails(users), dataAcessRequestId, null, template);
-        }
-    }
-
     public void sendClosedDataSetElectionsMessage(List<Election> elections) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             Map<String, List<Election>> reviewedDatasets = new HashMap<>();
