@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import java.io.File;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -60,14 +59,13 @@ public class DataRequestElectionResource extends Resource {
                                               @PathParam("requestId") String requestId) {
         URI uri;
         Election accessElection = null;
-        Election rpElection = null;
         try {
             DataAccessRequest dar = darService.findByReferenceId(requestId);
             boolean manualReview = dar.requiresManualReview();
             accessElection = electionService.createElection(rec, requestId, ElectionType.DATA_ACCESS);
             List<Vote> votes = voteService.createVotes(accessElection, ElectionType.DATA_ACCESS, manualReview);
             //create RP election
-            rpElection = electionService.createElection(rec, requestId, ElectionType.RP);
+            Election rpElection = electionService.createElection(rec, requestId, ElectionType.RP);
             voteService.createVotes(rpElection, ElectionType.RP, false);
             List<Vote> darVotes = votes.stream().
                     filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
@@ -84,8 +82,7 @@ public class DataRequestElectionResource extends Resource {
             }
             return createExceptionResponse(e);
         }
-        List<Election> elections = Arrays.asList(accessElection, rpElection);
-        return Response.created(uri).entity(elections).build();
+        return Response.created(uri).entity(accessElection).build();
     }
 
 
