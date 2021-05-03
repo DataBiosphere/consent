@@ -2652,9 +2652,9 @@ paths:
                 $ref: '#/components/schemas/Election'
         400:
           description: Could not find Election with the specified Id
-  /api/election/{electionId}:
+  /api/election/{electionId}/votes:
     get:
-      summary: describeVotesOnElection
+      summary: get the votes on the election specified by the electionId
       description: Returns the list of votes associated with the election identified by Id
       parameters:
         - name: electionId

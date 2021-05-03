@@ -119,7 +119,7 @@ public class ElectionResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    @Path("/{electionId}")
+    @Path("/{electionId}/votes")
     public Response describeVotesOnElection(@PathParam("electionId") Integer electionId) {
         try {
             return Response.ok().entity(voteService.findVotesByElectionId(electionId)).build();
