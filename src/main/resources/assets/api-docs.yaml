@@ -2655,7 +2655,7 @@ paths:
   /api/election/{electionId}:
     get:
       summary: describeVotesOnElection
-      description: Returns the list of votes associated with the election  identified by Id
+      description: Returns the list of votes associated with the election identified by Id
       parameters:
         - name: electionId
           in: path
