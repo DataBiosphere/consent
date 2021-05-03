@@ -89,7 +89,7 @@ public class ElectionReviewResourceTest {
         when(reviewResultsService.describeElectionReviewByElectionId(any())).thenReturn(new ElectionReview());
         when(reviewResultsService.describeAgreementVote(any())).thenReturn(Collections.singletonList(new Vote()));
         initResource();
-        ElectionReview response = resource.getAccessElectionReviewByReferenceId(RandomUtils.nextInt(100, 1000));
+        ElectionReview response = resource.getAccessElectionReviewByReferenceId(RandomUtils.nextInt(100, 1000), true);
         assertNotNull(response);
     }
 
@@ -98,7 +98,7 @@ public class ElectionReviewResourceTest {
         when(electionService.findRPElectionByElectionAccessId(any())).thenReturn(1);
         when(reviewResultsService.describeElectionReviewByElectionId(any())).thenReturn(new ElectionReview());
         initResource();
-        ElectionReview response = resource.getRPElectionReviewByReferenceId(RandomUtils.nextInt(100, 1000));
+        ElectionReview response = resource.getRPElectionReviewByReferenceId(RandomUtils.nextInt(100, 1000), true);
         assertNotNull(response);
     }
 

@@ -66,7 +66,7 @@ public class ElectionReviewResource extends Resource {
     @Path("access/{electionId}")
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
-    public ElectionReview getAccessElectionReviewByReferenceId(@PathParam("electionId") Integer electionId) {
+    public ElectionReview getAccessElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
         Election election = electionService.describeElectionById(electionId);
         Election consentElection = electionService.getConsentElectionByDARElectionId(election.getElectionId());
         DataAccessRequest dar = darService.findByReferenceId(election.getReferenceId());
@@ -87,7 +87,7 @@ public class ElectionReviewResource extends Resource {
     @Path("rp/{electionId}")
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
-    public ElectionReview getRPElectionReviewByReferenceId(@PathParam("electionId") Integer electionId) {
+    public ElectionReview getRPElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
         Integer rpElectionId = electionService.findRPElectionByElectionAccessId(electionId);
         if (Objects.nonNull(rpElectionId)) {
             return service.describeElectionReviewByElectionId(rpElectionId);
