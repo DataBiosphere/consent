@@ -133,9 +133,9 @@ public class ElectionResourceTest {
 
     @Test
     public void testDescribeVotesOnElectionError() {
-        when(voteService.findVotesByElectionId(randomInt())).thenThrow(new NotFoundException());
+        when(voteService.findVotesByElectionId(any())).thenThrow(new NotFoundException());
         electionResource = new ElectionResource(voteService, electionService);
-        Response response = electionResource.describeVotesOnElection(randomInt());
+        Response response = electionResource.describeVotesOnElection(any());
         Assert.assertEquals(NOT_FOUND, response.getStatus());
     }
 
