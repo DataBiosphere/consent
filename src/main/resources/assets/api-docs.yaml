@@ -2773,7 +2773,7 @@ paths:
                 $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/access/{electionId}:
     get:
-      summary: getAccessElectionReviewByReferenceId
+      summary: get ElectionReview for access election identified by electionId
       description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for DataAccess elections.
       parameters:
         - name: electionId
@@ -2819,7 +2819,7 @@ paths:
                 $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/rp/{electionId}:
     get:
-      summary: getRPElectionReviewByReferenceId
+      summary: get ElectionReview for rp election identified by electionId
       description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for Research Purpose elections.
       parameters:
         - name: electionId
