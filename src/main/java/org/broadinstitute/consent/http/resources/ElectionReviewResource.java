@@ -59,7 +59,7 @@ public class ElectionReviewResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
     public ElectionReview getElectionReviewByElectionId(@PathParam("electionId") Integer electionId) {
-        return service.describeElectionReviewByElectionId(electionId, null);
+        return service.describeElectionReviewByElectionId(electionId);
     }
 
     @GET
@@ -75,7 +75,7 @@ public class ElectionReviewResource extends Resource {
             dataSetId.addAll(dar.getData().getDatasetIds());
         }
         Consent consent = consentService.getConsentFromDatasetID(dataSetId.get(0));
-        ElectionReview accessElectionReview = service.describeElectionReviewByElectionId(electionId, isFinalAccess);
+        ElectionReview accessElectionReview = service.describeElectionReviewByElectionId(electionId);
         List<Vote> agreementVote = service.describeAgreementVote(electionId);
         accessElectionReview.setConsent(consent);
         accessElectionReview.setVoteAgreement(CollectionUtils.isNotEmpty(agreementVote) ? agreementVote.get(0) : null);
@@ -90,7 +90,7 @@ public class ElectionReviewResource extends Resource {
     public ElectionReview getRPElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
         Integer rpElectionId = electionService.findRPElectionByElectionAccessId(electionId);
         if (Objects.nonNull(rpElectionId)) {
-            return service.describeElectionReviewByElectionId(rpElectionId, isFinalAccess);
+            return service.describeElectionReviewByElectionId(rpElectionId);
         } else return null;
     }
 

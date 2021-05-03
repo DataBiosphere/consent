@@ -2773,7 +2773,7 @@ paths:
                 $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/access/{electionId}:
     get:
-      summary: describeElectionById
+      summary: get ElectionReview for access election identified by electionId
       description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for DataAccess elections.
       parameters:
         - name: electionId
@@ -2787,7 +2787,7 @@ paths:
           description: Defines if the reviewVote array of the retrieved ElectionReview will contain or not the isFinalAccess = TRUE Vote.
           required: true
           schema:
-            type: integer
+            type: boolean
       tags:
         - ElectionReview
       responses:
@@ -2819,7 +2819,7 @@ paths:
                 $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/rp/{electionId}:
     get:
-      summary: describeElectionById
+      summary: get ElectionReview for rp election identified by electionId
       description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for Research Purpose elections.
       parameters:
         - name: electionId
@@ -2835,7 +2835,7 @@ paths:
           description: Defines if the reviewVote array of the retrieved ElectionReview will contain or not the isFinalAccess = TRUE Vote.
           required: true
           schema:
-            type: integer
+            type: boolean
       tags:
         - ElectionReview
       responses:

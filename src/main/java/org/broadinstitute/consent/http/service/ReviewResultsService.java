@@ -41,14 +41,14 @@ public class ReviewResultsService {
         return openElections;
     }
 
-    public ElectionReview describeElectionReviewByElectionId(Integer electionId, Boolean isFinalAccess) {
+    public ElectionReview describeElectionReviewByElectionId(Integer electionId) {
         ElectionReview review = null;
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
         if(election != null){
             review = new ElectionReview();
             review.setElection(election);
             Consent consent = consentDAO.findConsentById(review.getElection().getReferenceId());
-            List<ElectionReviewVote> rVotes = (isFinalAccess == null || isFinalAccess == false) ? voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.DAC.getValue()) :  voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.FINAL.getValue());
+            List<ElectionReviewVote> rVotes = voteDAO.findAllElectionReviewVotesByElectionId(electionId);
             review.setReviewVote(rVotes);
             review.setConsent(consent);
         }
