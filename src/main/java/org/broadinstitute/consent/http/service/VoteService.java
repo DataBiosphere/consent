@@ -68,8 +68,8 @@ public class VoteService {
      * @param electionId The election id for the election.
      * @return Collection of votes for the given reference id
      */
-    public List<Vote> findVotesByElectionId(Integer electionIds) {
-        return voteDAO.findVotesByElectionId(electionIds);
+    public List<Vote> findVotesByElectionId(Integer electionId) {
+        return voteDAO.findVotesByElectionId(electionId);
     }
 
 
