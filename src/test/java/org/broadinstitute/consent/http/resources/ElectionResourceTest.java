@@ -125,6 +125,20 @@ public class ElectionResourceTest {
         Assert.assertEquals(ERROR, response.getStatus());
     }
 
+    @Test
+    public void testDescribeVotesOnElection() {
+        Response response = electionResource.describeVotesOnElection(randomInt());
+        Assert.assertEquals(OK, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeVotesOnElectionError() {
+        when(voteService.findVotesByElectionId(randomInt())).thenThrow(new NotFoundException());
+        electionResource = new ElectionResource(voteService, electionService);
+        Response response = electionResource.describeVotesOnElection(randomInt());
+        Assert.assertEquals(NOT_FOUND, response.getStatus());
+    }
+
     private static int randomInt() {
         return RandomUtils.nextInt(1, 10);
     }

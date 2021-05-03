@@ -120,8 +120,12 @@ public class ElectionResource extends Resource {
     @Produces("application/json")
     @PermitAll
     @Path("/{electionId}")
-    public List<Vote> describeVotesOnElection(@PathParam("electionId") Integer electionId) {
-        return voteService.findVotesByElectionId(electionId);
+    public Response describeVotesOnElection(@PathParam("electionId") Integer electionId) {
+        try {
+            return Response.ok().entity(voteService.findVotesByElectionId(electionId)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
 }
