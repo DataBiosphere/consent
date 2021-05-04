@@ -7,6 +7,7 @@ import java.sql.SQLSyntaxErrorException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.AbstractMap;
 import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
@@ -27,6 +28,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.owasp.fileio.FileValidator;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,11 +49,9 @@ abstract public class Resource {
     public final static String RESEARCHER = "Researcher";
 
     // NOTE: implement more Postgres vendor codes as we encounter them
-    private static Map<String, Integer> vendorCodeStatusMap;
-    static {
-        vendorCodeStatusMap = new HashMap<>();
-        vendorCodeStatusMap.put("23505", Response.Status.CONFLICT.getStatusCode());
-    }
+    private final static Map<String, Integer> vendorCodeStatusMap = Map.ofEntries(
+        new AbstractMap.SimpleEntry<>(PSQLState.UNIQUE_VIOLATION.getState(), Response.Status.CONFLICT.getStatusCode())
+    );
 
     protected Logger logger() {
         return LoggerFactory.getLogger(this.getClass());
