@@ -2672,8 +2672,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Election'
-        400:
+        404:
           description: Could not find Election with the specified Id
+        500:
+          description: Internal Server Error
     put:
       summary: updateElection
       description: "Updates the election specified by Id."
