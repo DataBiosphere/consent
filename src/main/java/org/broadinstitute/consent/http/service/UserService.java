@@ -137,8 +137,12 @@ public class UserService {
         if (StringUtils.isEmpty(updatedUser.getDisplayName())) {
             updatedUser.setDisplayName(existingUser.getDisplayName());
         }
+
+        if (Objects.isNull(updatedUser.getInstitutionId())) {
+            updatedUser.setInstitutionId(existingUser.getInstitutionId());
+        }
         try {
-            userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
+            userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail(), updatedUser.getInstitutionId());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
