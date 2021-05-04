@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
-import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import java.sql.SQLSyntaxErrorException;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +15,7 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
@@ -24,9 +24,12 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.owasp.fileio.FileValidator;
+import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * Created by egolin on 9/17/14.
@@ -112,8 +115,7 @@ abstract public class Resource {
                 Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
         dispatch.put(UpdateConsentException.class, e ->
                 Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
-         dispatch.put(UnableToExecuteStatementException.class, e ->
-                Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error("Database Error", Response.Status.CONFLICT.getStatusCode())).build());
+        dispatch.put(UnableToExecuteStatementException.class, e -> unableToExecuteExceptionHandler(e));
         dispatch.put(SQLSyntaxErrorException.class, e ->
                 Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build());
         dispatch.put(SQLException.class, e ->
@@ -121,6 +123,26 @@ abstract public class Resource {
         dispatch.put(Exception.class, e ->
                 Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build());
 
+    }
+
+    //Helper method to process generic JBDI Postgres exceptions for responses
+    private static Response unableToExecuteExceptionHandler(Exception e) {
+        //default response definition
+        Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()))
+            .build();
+        
+        if(e.getCause() instanceof PSQLException) {
+            //NOTE: implement more Postgres vendor code handlers as we encounter them
+            if(((PSQLException)e.getCause()).getSQLState().equals("23505")) {
+                response = Response.status(Response.Status.CONFLICT)
+                    .type(MediaType.APPLICATION_JSON)
+                    .entity(new Error("Database Error", Response.Status.CONFLICT.getStatusCode()))
+                    .build();
+            }
+        }
+        return response;
     }
 
     /**
