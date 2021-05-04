@@ -46,6 +46,13 @@ abstract public class Resource {
     public final static String MEMBER = "Member";
     public final static String RESEARCHER = "Researcher";
 
+    // NOTE: implement more Postgres vendor codes as we encounter them
+    private static Map<String, Integer> vendorCodeStatusMap;
+    static {
+        vendorCodeStatusMap = new HashMap<>();
+        vendorCodeStatusMap.put("23505", 409);
+    }
+
     protected Logger logger() {
         return LoggerFactory.getLogger(this.getClass());
     }
@@ -130,12 +137,15 @@ abstract public class Resource {
         //default status definition
         Integer status = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
        
-        if(e.getCause() instanceof PSQLException) {
-            //NOTE: implement more Postgres vendor code handlers as we encounter them
-            if(((PSQLException)e.getCause()).getSQLState().equals("23505")) {
-                status = Response.Status.CONFLICT.getStatusCode();
+        try {
+            if(e.getCause() instanceof PSQLException) {
+                String vendorCode = ((PSQLException) e.getCause()).getSQLState();
+                status = vendorCodeStatusMap.get(vendorCode);
             }
+        } catch(Exception error) {
+            //no need to handle, default status already assigned
         }
+
         return Response.status(status)
             .type(MediaType.APPLICATION_JSON)
             .entity(new Error("Database Error", status))
