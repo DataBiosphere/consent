@@ -127,22 +127,19 @@ abstract public class Resource {
 
     //Helper method to process generic JBDI Postgres exceptions for responses
     private static Response unableToExecuteExceptionHandler(Exception e) {
-        //default response definition
-        Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-            .type(MediaType.APPLICATION_JSON)
-            .entity(new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()))
-            .build();
-        
+        //default status definition
+        Integer status = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
+       
         if(e.getCause() instanceof PSQLException) {
             //NOTE: implement more Postgres vendor code handlers as we encounter them
             if(((PSQLException)e.getCause()).getSQLState().equals("23505")) {
-                response = Response.status(Response.Status.CONFLICT)
-                    .type(MediaType.APPLICATION_JSON)
-                    .entity(new Error("Database Error", Response.Status.CONFLICT.getStatusCode()))
-                    .build();
+                status = Response.Status.CONFLICT.getStatusCode();
             }
         }
-        return response;
+        return Response.status(status)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(new Error("Database Error", status))
+            .build();
     }
 
     /**
