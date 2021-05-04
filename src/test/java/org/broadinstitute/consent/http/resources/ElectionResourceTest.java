@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.api.client.http.HttpStatusCodes;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -29,6 +30,8 @@ public class ElectionResourceTest {
     private final int OK = HttpStatusCodes.STATUS_CODE_OK;
     private final int NOT_FOUND = HttpStatusCodes.STATUS_CODE_NOT_FOUND;
     private final int ERROR = HttpStatusCodes.STATUS_CODE_SERVER_ERROR;
+
+    private final AuthUser authUser = new AuthUser("test@test.com");
 
     @Mock
     VoteService voteService;
@@ -127,7 +130,7 @@ public class ElectionResourceTest {
 
     @Test
     public void testDescribeVotesOnElection() {
-        Response response = electionResource.describeVotesOnElection(randomInt());
+        Response response = electionResource.describeVotesOnElection(authUser, randomInt());
         Assert.assertEquals(OK, response.getStatus());
     }
 
@@ -135,7 +138,7 @@ public class ElectionResourceTest {
     public void testDescribeVotesOnElectionError() {
         when(voteService.findVotesByElectionId(any())).thenThrow(new NotFoundException());
         electionResource = new ElectionResource(voteService, electionService);
-        Response response = electionResource.describeVotesOnElection(any());
+        Response response = electionResource.describeVotesOnElection(authUser, any());
         Assert.assertEquals(NOT_FOUND, response.getStatus());
     }
 
