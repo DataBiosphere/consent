@@ -50,7 +50,7 @@ abstract public class Resource {
     private static Map<String, Integer> vendorCodeStatusMap;
     static {
         vendorCodeStatusMap = new HashMap<>();
-        vendorCodeStatusMap.put("23505", 409);
+        vendorCodeStatusMap.put("23505", Response.Status.CONFLICT.getStatusCode());
     }
 
     protected Logger logger() {
