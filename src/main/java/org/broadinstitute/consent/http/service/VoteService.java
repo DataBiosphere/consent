@@ -62,7 +62,7 @@ public class VoteService {
         return voteDAO.findVotesByElectionIds(electionIds);
     }
 
-       /**
+    /**
      * Find all votes for an election id.
      *
      * @param electionId The election id for the election.
