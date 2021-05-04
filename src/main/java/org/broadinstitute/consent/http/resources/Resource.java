@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import java.sql.SQLSyntaxErrorException;
 import java.util.HashMap;
 import java.util.List;
@@ -111,6 +112,8 @@ abstract public class Resource {
                 Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
         dispatch.put(UpdateConsentException.class, e ->
                 Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
+         dispatch.put(UnableToExecuteStatementException.class, e ->
+                Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error("Database Error", Response.Status.CONFLICT.getStatusCode())).build());
         dispatch.put(SQLSyntaxErrorException.class, e ->
                 Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build());
         dispatch.put(SQLException.class, e ->
