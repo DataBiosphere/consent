@@ -46,7 +46,12 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   @SqlQuery("SELECT * FROM institution WHERE institution_id = :institutionId")
   Institution findInstitutionById(@Bind("institutionId") Integer institutionId);
 
-  @SqlQuery("SELECT * FROM institution i" +
-  " LEFT JOIN dacuser u ON u.dacuserid = i.create_user")
+  @SqlQuery("SELECT i.*, u.*, u2.dacuserid AS updateUserId, u2.email AS updateUserEmail, " +
+  " u2.displayName AS updateUserName, u2.createdate AS updateUserCreateDate, " +
+  " u2.additional_email as updateUserAdditionalEmail, u2.email_preference as updateUserEmailPreference, " +
+  " u2.status as updateUserStatus, u2.rationale as updateUserRationale " +
+  " FROM institution i" +
+  " LEFT JOIN dacuser u ON u.dacuserid = i.create_user" +
+  " LEFT JOIN dacuser u2 ON u.dacuserid = i.update_user")
   List<Institution> findAllInstitutions();
 }
