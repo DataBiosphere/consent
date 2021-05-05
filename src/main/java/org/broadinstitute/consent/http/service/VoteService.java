@@ -53,16 +53,31 @@ public class VoteService {
     }
 
     /**
-     * Find all votes for an election id.
+     * Find all votes for election ids.
      *
-     * @param electionIds The election ids for the election.
-     * @return Collection of votes for the given reference id
+     * @param electionIds The election ids for the elections.
+     * @return Collection of votes for the given reference ids
      */
     public List<Vote> findVotesByElectionIds(List<Integer> electionIds) {
         return voteDAO.findVotesByElectionIds(electionIds);
     }
 
     /**
+     * Find all votes for an election id.
+     *
+     * @param electionId The election id for the election.
+     * @return Collection of votes on the election specified by the election id
+     */
+    public List<Vote> findVotesByElectionId(Integer electionId) {
+        Election election = electionDAO.findElectionById(electionId);
+        if (election == null) {
+          throw new NotFoundException();
+        }
+        return voteDAO.findVotesByElectionId(electionId);
+    }
+
+
+    /**s
      * Update votes such that they have the provided value and rationale.
      *
      * @param voteList  Collection of votes to advance
