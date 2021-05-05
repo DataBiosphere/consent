@@ -52,6 +52,6 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   " u2.status as updateUserStatus, u2.rationale as updateUserRationale " +
   " FROM institution i" +
   " LEFT JOIN dacuser u ON u.dacuserid = i.create_user" +
-  " LEFT JOIN dacuser u2 ON u.dacuserid = i.update_user")
+  " LEFT JOIN dacuser u2 ON u2.dacuserid = i.update_user")
   List<Institution> findAllInstitutions();
 }
