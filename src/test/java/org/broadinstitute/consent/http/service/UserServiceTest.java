@@ -17,6 +17,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -45,6 +46,9 @@ public class UserServiceTest {
     @Mock
     private VoteDAO voteDAO;
 
+    @Mock
+    private InstitutionDAO institutionDAO;
+
     private UserService service;
 
     @Before
@@ -53,7 +57,7 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, userPropertyDAO, roleDAO, voteDAO);
+        service = new UserService(userDAO, userPropertyDAO, roleDAO, voteDAO, institutionDAO);
     }
 
     @Test
@@ -258,6 +262,8 @@ public class UserServiceTest {
         User u = generateUser();
         when(userDAO.findUserById(u.getDacUserId()))
                 .thenReturn(u);
+        when(institutionDAO.checkForExistingInstitution(any()))
+                .thenReturn(u.getInstitutionId());
         doNothing().when(userDAO).updateUser(any(), any(), any(), any());
         initService();
         Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
@@ -293,6 +299,7 @@ public class UserServiceTest {
         u.setEmail(email);
         u.setDisplayName(displayName);
         u.setDacUserId(RandomUtils.nextInt(1, 100));
+        u.setInstitutionId(RandomUtils.nextInt(1, 100));
         return u;
     }
 
