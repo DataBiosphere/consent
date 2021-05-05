@@ -47,6 +47,6 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   Institution findInstitutionById(@Bind("institutionId") Integer institutionId);
 
   @SqlQuery("SELECT * FROM institution i" +
-  " LEFT JOIN user u ON u.dacuserid = i.create_user")
+  " LEFT JOIN dacuser u ON u.dacuserid = i.create_user")
   List<Institution> findAllInstitutions();
 }
