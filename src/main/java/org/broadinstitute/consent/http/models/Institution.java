@@ -11,36 +11,38 @@ public class Institution {
   private String itDirectorName;
   private String itDirectorEmail;
   private Date createDate;
-  private Integer createUser;
+  private Integer createUserId;
   private Date updateDate;
-  private Integer updateUser;
+  private Integer updateUserId;
+
+  private User createUser;
 
   //empty constructor sets all null values except create Date
   public Institution() {
     this.createDate = new Date();
   }
 
-  public Institution(Integer id, String name, String itDirectorName, String itDirectorEmail, Integer createUser, Date createDate) {
+  public Institution(Integer id, String name, String itDirectorName, String itDirectorEmail, Integer createUserId, Date createDate) {
     this.id = id;
     this.name = name;
     this.itDirectorName = itDirectorName;
     this.itDirectorEmail = itDirectorEmail;
     this.createDate = createDate;
-    this.createUser = createUser;
+    this.createUserId = createUserId;
     this.updateDate = this.createDate;
-    this.updateUser = this.createUser;
+    this.updateUserId = this.createUserId;
   }
 
   public Institution(Integer id, String name, String itDirectorName, String itDirectorEmail,
-                     Integer createUser, Date createDate, Integer updateUser, Date updateDate) {
+                     Integer createUserId, Date createDate, Integer updateUserId, Date updateDate) {
     this.id = id;
     this.name = name;
     this.itDirectorName = itDirectorName;
     this.itDirectorEmail = itDirectorEmail;
     this.createDate = createDate;
-    this.createUser = createUser;
+    this.createUserId = createUserId;
     this.updateDate = updateDate;
-    this.updateUser = updateUser;
+    this.updateUserId = updateUserId;
   }
 
   public void setId(Integer id) {
@@ -59,20 +61,24 @@ public class Institution {
     this.itDirectorName = itDirectorName;
   }
 
-  public void setCreateUser(Integer createUser) {
-    this.createUser = createUser;
+  public void setCreateUserId(Integer createUserId) {
+    this.createUserId = createUserId;
   }
 
   public void setCreateDate(Date date) {
     this.createDate = date;
   }
 
-  public void setUpdateUser(Integer updateUser) {
-    this.updateUser = updateUser;
+  public void setUpdateUserId(Integer updateUserId) {
+    this.updateUserId = updateUserId;
   }
 
   public void setUpdateDate(Date updateDate) {
     this.updateDate = updateDate;
+  }
+
+  public void setCreateUser(User createUser) {
+    this.createUser = createUser;
   }
 
   public Integer getId() { return id; }
@@ -93,16 +99,20 @@ public class Institution {
     return createDate;
   }
 
-  public Integer getCreateUser() {
-    return createUser;
+  public Integer getCreateUserId() {
+    return createUserId;
   }
 
   public Date getUpdateDate() {
     return updateDate;
   }
 
-  public Integer getUpdateUser() {
-    return updateUser;
+  public Integer getUpdateUserId() {
+    return updateUserId;
+  }
+
+  public User getCreateUser() {
+    return createUser;
   }
 
   @Override

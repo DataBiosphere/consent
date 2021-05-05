@@ -30,9 +30,9 @@ public class InstitutionUtilTest {
     Institution mockInstitution = new Institution();
     mockInstitution.setName("Test Name");
     mockInstitution.setCreateDate(new Date());
-    mockInstitution.setCreateUser(1);
+    mockInstitution.setCreateUserId(1);
     mockInstitution.setUpdateDate(new Date());
-    mockInstitution.setUpdateUser(1);
+    mockInstitution.setUpdateUserId(1);
     mockInstitution.setId(1);
     return mockInstitution;
   }
@@ -57,8 +57,8 @@ public class InstitutionUtilTest {
     String json = builder.toJson(mockInstitution);
     Institution deserialized = new Gson().fromJson(json, Institution.class);
     assertEquals(mockInstitution.getName(), deserialized.getName());
-    assertEquals(mockInstitution.getCreateUser(), deserialized.getCreateUser());
-    assertEquals(mockInstitution.getUpdateUser(), deserialized.getUpdateUser());
+    assertEquals(mockInstitution.getCreateUserId(), deserialized.getCreateUserId());
+    assertEquals(mockInstitution.getUpdateUserId(), deserialized.getUpdateUserId());
     assertEquals(mockInstitution.getCreateDate().toString(), deserialized.getCreateDate().toString());
     assertEquals(mockInstitution.getUpdateDate().toString(), deserialized.getUpdateDate().toString());
     assertEquals(mockInstitution.getId(), deserialized.getId());

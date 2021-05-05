@@ -24,7 +24,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
   @Test
   public void testInsertInstitutionDuplicateName() {
     Institution institution = createInstitution();
-    Integer userId = institution.getCreateUser();
+    Integer userId = institution.getCreateUserId();
     try{
       institutionDAO.insertInstitution(
         institution.getName(), 
@@ -58,7 +58,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
     Institution institution = createInstitution();
     Institution secondInstitution = createInstitution();
     try{
-      institutionDAO.updateInstitutionById(secondInstitution.getId(), institution.getName(), secondInstitution.getItDirectorName(), secondInstitution.getItDirectorEmail(), secondInstitution.getUpdateUser(), secondInstitution.getUpdateDate());
+      institutionDAO.updateInstitutionById(secondInstitution.getId(), institution.getName(), secondInstitution.getItDirectorName(), secondInstitution.getItDirectorEmail(), secondInstitution.getUpdateUserId(), secondInstitution.getUpdateDate());
       Assert.fail("UPDATE should fail due to UNIQUE constraint violation (name)");
     }catch(Exception e) {
       assertEquals("23505", ((PSQLException) e.getCause()).getSQLState());
@@ -82,7 +82,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
     assertEquals(institutionFromDAO.getName(), institution.getName());
     assertEquals(institutionFromDAO.getItDirectorName(), institution.getItDirectorName());
     assertEquals(institutionFromDAO.getItDirectorEmail(), institution.getItDirectorEmail());
-    assertEquals(institutionFromDAO.getCreateUser(), institution.getCreateUser());
+    assertEquals(institutionFromDAO.getCreateUserId(), institution.getCreateUserId());
     assertEquals(institutionFromDAO.getCreateDate(), institution.getCreateDate());
   }
 
