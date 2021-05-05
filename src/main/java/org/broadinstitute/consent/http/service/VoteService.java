@@ -69,11 +69,15 @@ public class VoteService {
      * @return Collection of votes on the election specified by the election id
      */
     public List<Vote> findVotesByElectionId(Integer electionId) {
+        Election election = electionDAO.findElectionById(electionId);
+        if (election == null) {
+          throw new NotFoundException();
+        }
         return voteDAO.findVotesByElectionId(electionId);
     }
 
 
-    /**
+    /**s
      * Update votes such that they have the provided value and rationale.
      *
      * @param voteList  Collection of votes to advance
