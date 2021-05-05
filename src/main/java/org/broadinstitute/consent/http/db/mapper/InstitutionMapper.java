@@ -76,13 +76,11 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
     if (hasColumn(resultSet, "rationale")) {
       user.setRationale(resultSet.getString("rationale"));
     }
-    //currently the user model does not have setInstitutionId or getInstitutionId methods
-    //but the dacuser table does have institution_id, it seems out of the scope of this PR
-    //but I could file a ticket to add the field to the user if that is something we want
+    //user model does not currently have an institutionId field or methods
     // if (hasColumn(resultSet, "institute")) {
     //   user.setInstitutionId(resultSet.getInt("update_user"));
     // }
-    
+
     institution.setCreateUser(user);
 
     institutionMap.put(institution.getId(), institution);
