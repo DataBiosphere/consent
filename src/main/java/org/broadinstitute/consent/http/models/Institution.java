@@ -16,6 +16,7 @@ public class Institution {
   private Integer updateUserId;
 
   private User createUser;
+  private User updateUser;
 
   //empty constructor sets all null values except create Date
   public Institution() {
@@ -81,6 +82,10 @@ public class Institution {
     this.createUser = createUser;
   }
 
+  public void setUpdateUser(User updateUser) {
+    this.updateUser = updateUser;
+  }
+
   public Integer getId() { return id; }
 
   public String getName() {
@@ -113,6 +118,10 @@ public class Institution {
 
   public User getCreateUser() {
     return createUser;
+  }
+
+  public User getUpdateUser() {
+    return updateUser;
   }
 
   @Override
