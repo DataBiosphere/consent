@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -36,18 +38,62 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
       institution.setItDirectorEmail(resultSet.getString("it_director_email"));
     }
     if (hasColumn(resultSet, "create_user")) {
-      institution.setCreateUser(resultSet.getInt("create_user"));
+      institution.setCreateUserId(resultSet.getInt("create_user"));
     }
     if (hasColumn(resultSet, "create_date")) {
       institution.setCreateDate(resultSet.getDate("create_date"));
     } 
     if (hasColumn(resultSet, "update_user")) {
-      institution.setUpdateUser(resultSet.getInt("update_user"));
+      institution.setUpdateUserId(resultSet.getInt("update_user"));
     }
     if (hasColumn(resultSet, "update_date")) {
       institution.setUpdateDate(resultSet.getDate("update_date"));
     }
+
+    User user = new User();;
+
+    if (hasColumn(resultSet, "dacUserId")) {
+      user.setDacUserId(resultSet.getInt("dacUserId"));
+    } 
+    if (hasColumn(resultSet, "email")) {
+      user.setEmail(resultSet.getString("email"));
+    }
+    if (hasColumn(resultSet, "displayName")) {
+      user.setDisplayName(resultSet.getString("displayName"));
+    }
+    if (hasColumn(resultSet, "createDate")) {
+      user.setCreateDate(resultSet.getDate("createDate"));
+    }
+    if (hasColumn(resultSet, "additional_email")) {
+      user.setAdditionalEmail(resultSet.getString("additional_email"));
+    }
+    if (hasColumn(resultSet, "email_preference")) {
+      user.setEmailPreference(resultSet.getBoolean("email_preference"));
+    }
+    if (hasColumn(resultSet, "status")) {
+      user.setStatus(getStatus(resultSet));
+    }
+    if (hasColumn(resultSet, "rationale")) {
+      user.setRationale(resultSet.getString("rationale"));
+    }
+    //currently the user model does not have setInstitutionId or getInstitutionId methods
+    //but the dacuser table does have institution_id, it seems out of the scope of this PR
+    //but I could file a ticket to add the field to the user if that is something we want
+    // if (hasColumn(resultSet, "institute")) {
+    //   user.setInstitutionId(resultSet.getInt("update_user"));
+    // }
+    
+    institution.setCreateUser(user);
+
     institutionMap.put(institution.getId(), institution);
     return institution;
+  }
+
+  private String getStatus(ResultSet r) {
+    try {
+      return RoleStatus.getStatusByValue(r.getInt("status"));
+    } catch (Exception e) {
+      return null;
+    }
   }
 }
