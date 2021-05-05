@@ -50,48 +50,85 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
       institution.setUpdateDate(resultSet.getDate("update_date"));
     }
 
-    User user = new User();;
+    User createUser = new User();
 
     if (hasColumn(resultSet, "dacUserId")) {
-      user.setDacUserId(resultSet.getInt("dacUserId"));
+      createUser.setDacUserId(resultSet.getInt("dacUserId"));
     } 
     if (hasColumn(resultSet, "email")) {
-      user.setEmail(resultSet.getString("email"));
+      createUser.setEmail(resultSet.getString("email"));
     }
     if (hasColumn(resultSet, "displayName")) {
-      user.setDisplayName(resultSet.getString("displayName"));
+      createUser.setDisplayName(resultSet.getString("displayName"));
     }
     if (hasColumn(resultSet, "createDate")) {
-      user.setCreateDate(resultSet.getDate("createDate"));
+      createUser.setCreateDate(resultSet.getDate("createDate"));
     }
     if (hasColumn(resultSet, "additional_email")) {
-      user.setAdditionalEmail(resultSet.getString("additional_email"));
+      createUser.setAdditionalEmail(resultSet.getString("additional_email"));
     }
     if (hasColumn(resultSet, "email_preference")) {
-      user.setEmailPreference(resultSet.getBoolean("email_preference"));
+      createUser.setEmailPreference(resultSet.getBoolean("email_preference"));
     }
     if (hasColumn(resultSet, "status")) {
-      user.setStatus(getStatus(resultSet));
+      createUser.setStatus(getCreateStatus(resultSet));
     }
     if (hasColumn(resultSet, "rationale")) {
-      user.setRationale(resultSet.getString("rationale"));
+      createUser.setRationale(resultSet.getString("rationale"));
     }
     //user model does not currently have an institutionId field or methods
     // if (hasColumn(resultSet, "institute")) {
     //   user.setInstitutionId(resultSet.getInt("update_user"));
     // }
 
-    institution.setCreateUser(user);
+    User updateUser = new User();
+
+    if (hasColumn(resultSet, "updateUserId")) {
+      updateUser.setDacUserId(resultSet.getInt("updateUserId"));
+    } 
+    if (hasColumn(resultSet, "updateUserEmail")) {
+      updateUser.setEmail(resultSet.getString("updateUserEmail"));
+    }
+    if (hasColumn(resultSet, "updateUserName")) {
+      updateUser.setDisplayName(resultSet.getString("updateUserName"));
+    }
+    if (hasColumn(resultSet, "updateUserCreateDate")) {
+      updateUser.setCreateDate(resultSet.getDate("updateUserCreateDate"));
+    }
+    if (hasColumn(resultSet, "updateUserAdditionalEmail")) {
+      updateUser.setAdditionalEmail(resultSet.getString("updateUserAdditionalEmail"));
+    }
+    if (hasColumn(resultSet, "updateUserEmailPreference")) {
+      updateUser.setEmailPreference(resultSet.getBoolean("updateUserEmailPreference"));
+    }
+    if (hasColumn(resultSet, "updateUserStatus")) {
+      updateUser.setStatus(getUpdateStatus(resultSet));
+    }
+    if (hasColumn(resultSet, "updateUserRationale")) {
+      updateUser.setRationale(resultSet.getString("updateUserRationale"));
+    }
+
+    institution.setCreateUser(createUser);
+    institution.setUpdateUser(updateUser);
 
     institutionMap.put(institution.getId(), institution);
     return institution;
   }
 
-  private String getStatus(ResultSet r) {
+  private String getCreateStatus(ResultSet r) {
     try {
       return RoleStatus.getStatusByValue(r.getInt("status"));
     } catch (Exception e) {
       return null;
     }
   }
+
+  private String getUpdateStatus(ResultSet r) {
+    try {
+      return RoleStatus.getStatusByValue(r.getInt("updateUserStatus"));
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
 }
