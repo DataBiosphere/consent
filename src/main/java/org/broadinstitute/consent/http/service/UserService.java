@@ -13,6 +13,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -32,13 +33,15 @@ public class UserService {
     private final UserDAO userDAO;
     private final UserRoleDAO userRoleDAO;
     private final VoteDAO voteDAO;
+    private final InstitutionDAO institutionDAO;
 
     @Inject
-    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO) {
+    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO) {
         this.userDAO = userDAO;
         this.userPropertyDAO = userPropertyDAO;
         this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
+        this.institutionDAO = institutionDAO;
     }
 
     public User createUser(User user) {
@@ -141,6 +144,11 @@ public class UserService {
         if (Objects.isNull(updatedUser.getInstitutionId())) {
             updatedUser.setInstitutionId(existingUser.getInstitutionId());
         }
+
+        if (Objects.nonNull(updatedUser.getInstitutionId()) && !checkForValidInstitution(updatedUser.getInstitutionId())) {
+            throw new BadRequestException("Institution with the given id does not exist");
+        }
+
         try {
             userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail(), updatedUser.getInstitutionId());
         } catch (UnableToExecuteStatementException e) {
@@ -183,6 +191,11 @@ public class UserService {
             }
         });
         userRoleDAO.insertUserRoles(roles, dacUserId);
+    }
+
+    private Boolean checkForValidInstitution(Integer institutionId) {
+        Integer existingId = institutionDAO.checkForExistingInstitution(institutionId);
+        return Objects.nonNull(existingId) && existingId > 0;
     }
 
 }
