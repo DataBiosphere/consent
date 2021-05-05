@@ -1,8 +1,12 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.db.mapper.InstitutionMapper;
+import org.broadinstitute.consent.http.db.mapper.InstitutionWithUsersReducer;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -46,6 +50,9 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   @SqlQuery("SELECT * FROM institution WHERE institution_id = :institutionId")
   Institution findInstitutionById(@Bind("institutionId") Integer institutionId);
 
+  @RegisterBeanMapper(value = User.class, prefix = "u")
+  @RegisterBeanMapper(value = User.class, prefix = "u2")
+  @UseRowReducer(InstitutionWithUsersReducer.class)
   @SqlQuery("SELECT i.*, u.*, u2.dacuserid AS updateUserId, u2.email AS updateUserEmail, " +
   " u2.displayName AS updateUserName, u2.createdate AS updateUserCreateDate, " +
   " u2.additional_email as updateUserAdditionalEmail, u2.email_preference as updateUserEmailPreference, " +
