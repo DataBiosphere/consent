@@ -44,8 +44,17 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
     update_user.setCreateDate(rowView.getColumn("u2_createdate", Timestamp.class));
     update_user.setAdditionalEmail(rowView.getColumn("u2_additional_email", String.class));
     update_user.setEmailPreference(rowView.getColumn("u2_email_preference", Boolean.class));
-    update_user.setStatus(getStatus(rowView, "u2_status"));
     update_user.setRationale(rowView.getColumn("u2_rationale", String.class));
+
+    // Status is an enum type and we need to get the string value
+    try {
+      if (Objects.nonNull(rowView.getColumn("u_status", Integer.class))) {
+        update_user.setStatus(getStatus(rowView, "u2_status"));
+      }
+    } catch (MappingException e) {
+      // Ignore any attempt to map a column that doesn't exist
+
+    }
 
     institution.setCreateUser(create_user);
     institution.setUpdateUser(update_user);
