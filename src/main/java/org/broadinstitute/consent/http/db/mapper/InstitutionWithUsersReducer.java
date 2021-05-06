@@ -23,28 +23,28 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
         id -> rowView.getRow(Institution.class));
 
     User create_user = new User();
-    if (Objects.nonNull(rowView.getColumn("dacuserid", Integer.class))) {
+    if (Objects.nonNull(rowView.getColumn("u_dacuserid", Integer.class))) {
         create_user = rowView.getRow(User.class);
     }
 
     // Status is an enum type and we need to get the string value
     try {
-      if (Objects.nonNull(rowView.getColumn("status", Integer.class))) {
-        create_user.setStatus(getCreateStatus(rowView));
+      if (Objects.nonNull(rowView.getColumn("u_status", Integer.class))) {
+        create_user.setStatus(getStatus(rowView, "u_status"));
       }
     } catch (MappingException e) {
       // Ignore any attempt to map a column that doesn't exist
     }
 
     User update_user = new User();
-    if (Objects.nonNull(rowView.getColumn("updateUserId", Integer.class))) {
+    if (Objects.nonNull(rowView.getColumn("u2_dacuserid", Integer.class))) {
         update_user = rowView.getRow(User.class);
     }
 
     // Status is an enum type and we need to get the string value
     try {
-      if (Objects.nonNull(rowView.getColumn("updateUserStatus", Integer.class))) {
-        update_user.setStatus(getUpdateStatus(rowView));
+      if (Objects.nonNull(rowView.getColumn("u2_status", Integer.class))) {
+        update_user.setStatus(getStatus(rowView, "u2_status"));
       }
     } catch (MappingException e) {
       // Ignore any attempt to map a column that doesn't exist
@@ -54,17 +54,9 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
     institution.setUpdateUser(update_user);
   }
 
-  private String getCreateStatus(RowView r) {
+  private String getStatus(RowView r, String columnName) {
     try {
-      return RoleStatus.getStatusByValue(r.getColumn("status", Integer.class));
-    } catch (Exception e) {
-      return null;
-    }
-  }
-
-  private String getUpdateStatus(RowView r) {
-    try {
-      return RoleStatus.getStatusByValue(r.getColumn("updateUserStatus", Integer.class));
+      return RoleStatus.getStatusByValue(r.getColumn(columnName, Integer.class));
     } catch (Exception e) {
       return null;
     }

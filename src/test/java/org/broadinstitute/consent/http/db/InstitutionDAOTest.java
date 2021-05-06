@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import com.google.gson.Gson;
 import org.broadinstitute.consent.http.models.Institution;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -27,9 +28,9 @@ public class InstitutionDAOTest extends DAOTestHelper {
     Integer userId = institution.getCreateUserId();
     try{
       institutionDAO.insertInstitution(
-        institution.getName(), 
-        institution.getItDirectorName(), 
-        institution.getItDirectorEmail(), 
+        institution.getName(),
+        institution.getItDirectorName(),
+        institution.getItDirectorEmail(),
         userId,
         institution.getCreateDate()
       );
