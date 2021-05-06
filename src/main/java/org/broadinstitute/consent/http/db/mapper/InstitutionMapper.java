@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-//import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.Institution;
-//import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -50,81 +48,8 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
       institution.setUpdateDate(resultSet.getDate("update_date"));
     }
 
-    // User createUser = new User();
-
-    // if (hasColumn(resultSet, "dacUserId")) {
-    //   createUser.setDacUserId(resultSet.getInt("dacUserId"));
-    // } 
-    // if (hasColumn(resultSet, "email")) {
-    //   createUser.setEmail(resultSet.getString("email"));
-    // }
-    // if (hasColumn(resultSet, "displayName")) {
-    //   createUser.setDisplayName(resultSet.getString("displayName"));
-    // }
-    // if (hasColumn(resultSet, "createDate")) {
-    //   createUser.setCreateDate(resultSet.getDate("createDate"));
-    // }
-    // if (hasColumn(resultSet, "additional_email")) {
-    //   createUser.setAdditionalEmail(resultSet.getString("additional_email"));
-    // }
-    // if (hasColumn(resultSet, "email_preference")) {
-    //   createUser.setEmailPreference(resultSet.getBoolean("email_preference"));
-    // }
-    // if (hasColumn(resultSet, "status")) {
-    //   createUser.setStatus(getCreateStatus(resultSet));
-    // }
-    // if (hasColumn(resultSet, "rationale")) {
-    //   createUser.setRationale(resultSet.getString("rationale"));
-    // }
-
-    // User updateUser = new User();
-
-    // if (hasColumn(resultSet, "updateUserId")) {
-    //   updateUser.setDacUserId(resultSet.getInt("updateUserId"));
-    // } 
-    // if (hasColumn(resultSet, "updateUserEmail")) {
-    //   updateUser.setEmail(resultSet.getString("updateUserEmail"));
-    // }
-    // if (hasColumn(resultSet, "updateUserName")) {
-    //   updateUser.setDisplayName(resultSet.getString("updateUserName"));
-    // }
-    // if (hasColumn(resultSet, "updateUserCreateDate")) {
-    //   updateUser.setCreateDate(resultSet.getDate("updateUserCreateDate"));
-    // }
-    // if (hasColumn(resultSet, "updateUserAdditionalEmail")) {
-    //   updateUser.setAdditionalEmail(resultSet.getString("updateUserAdditionalEmail"));
-    // }
-    // if (hasColumn(resultSet, "updateUserEmailPreference")) {
-    //   updateUser.setEmailPreference(resultSet.getBoolean("updateUserEmailPreference"));
-    // }
-    // if (hasColumn(resultSet, "updateUserStatus")) {
-    //   updateUser.setStatus(getUpdateStatus(resultSet));
-    // }
-    // if (hasColumn(resultSet, "updateUserRationale")) {
-    //   updateUser.setRationale(resultSet.getString("updateUserRationale"));
-    // }
-
-    // institution.setCreateUser(createUser);
-    // institution.setUpdateUser(updateUser);
-
     institutionMap.put(institution.getId(), institution);
     return institution;
   }
-
-  // private String getCreateStatus(ResultSet r) {
-  //   try {
-  //     return RoleStatus.getStatusByValue(r.getInt("status"));
-  //   } catch (Exception e) {
-  //     return null;
-  //   }
-  // }
-
-  // private String getUpdateStatus(ResultSet r) {
-  //   try {
-  //     return RoleStatus.getStatusByValue(r.getInt("updateUserStatus"));
-  //   } catch (Exception e) {
-  //     return null;
-  //   }
-  // }
 
 }

@@ -51,7 +51,6 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   Institution findInstitutionById(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
-//  @RegisterBeanMapper(value = User.class, prefix = "u2")
   @UseRowReducer(InstitutionWithUsersReducer.class)
   @SqlQuery(
       "SELECT i.*, "
