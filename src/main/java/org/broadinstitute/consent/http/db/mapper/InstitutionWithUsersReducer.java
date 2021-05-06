@@ -53,7 +53,6 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
       }
     } catch (MappingException e) {
       // Ignore any attempt to map a column that doesn't exist
-
     }
 
     institution.setCreateUser(create_user);
