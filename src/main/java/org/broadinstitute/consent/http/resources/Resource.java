@@ -7,6 +7,7 @@ import java.sql.SQLSyntaxErrorException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.AbstractMap;
 import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
@@ -15,6 +16,7 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
@@ -23,9 +25,13 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.owasp.fileio.FileValidator;
+import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * Created by egolin on 9/17/14.
@@ -41,6 +47,11 @@ abstract public class Resource {
     public final static String DATAOWNER = "DataOwner";
     public final static String MEMBER = "Member";
     public final static String RESEARCHER = "Researcher";
+
+    // NOTE: implement more Postgres vendor codes as we encounter them
+    private final static Map<String, Integer> vendorCodeStatusMap = Map.ofEntries(
+        new AbstractMap.SimpleEntry<>(PSQLState.UNIQUE_VIOLATION.getState(), Response.Status.CONFLICT.getStatusCode())
+    );
 
     protected Logger logger() {
         return LoggerFactory.getLogger(this.getClass());
@@ -111,6 +122,7 @@ abstract public class Resource {
                 Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
         dispatch.put(UpdateConsentException.class, e ->
                 Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
+        dispatch.put(UnableToExecuteStatementException.class, e -> unableToExecuteExceptionHandler(e));
         dispatch.put(SQLSyntaxErrorException.class, e ->
                 Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build());
         dispatch.put(SQLException.class, e ->
@@ -118,6 +130,26 @@ abstract public class Resource {
         dispatch.put(Exception.class, e ->
                 Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build());
 
+    }
+
+    //Helper method to process generic JBDI Postgres exceptions for responses
+    private static Response unableToExecuteExceptionHandler(Exception e) {
+        //default status definition
+        Integer status = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
+       
+        try {
+            if(e.getCause() instanceof PSQLException) {
+                String vendorCode = ((PSQLException) e.getCause()).getSQLState();
+                status = vendorCodeStatusMap.get(vendorCode);
+            }
+        } catch(Exception error) {
+            //no need to handle, default status already assigned
+        }
+
+        return Response.status(status)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(new Error("Database Error", status))
+            .build();
     }
 
     /**
