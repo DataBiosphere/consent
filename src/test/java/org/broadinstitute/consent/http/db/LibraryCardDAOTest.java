@@ -42,7 +42,6 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     }
   }
 
-
   @Test
   public void testUpdateLibraryCardById() {
     Integer userId = createUser().getDacUserId();
