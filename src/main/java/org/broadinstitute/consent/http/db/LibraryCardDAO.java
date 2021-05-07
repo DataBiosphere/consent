@@ -11,7 +11,7 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 
-@RegisterRowMapper(LibraryCardMapper.class);
+@RegisterRowMapper(LibraryCardMapper.class)
 public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate("INSERT INTO library_card " +
