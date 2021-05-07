@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.core.Jdbi;
@@ -70,6 +71,7 @@ public class DAOTestHelper {
     protected static MetricsDAO metricsDAO;
     protected static UserPropertyDAO userPropertyDAO;
     protected static InstitutionDAO institutionDAO;
+    protected static LibraryCardDAO libraryCardDAO;
 
     private static final List<Integer> createdDataSetIds = new ArrayList<>();
     private static final List<Integer> createdDacIds = new ArrayList<>();
@@ -78,6 +80,7 @@ public class DAOTestHelper {
     private static final List<Integer> createdUserIds = new ArrayList<>();
     private static final List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
     private static final List<Integer> createdInstitutionIds = new ArrayList<>();
+    private static final List<Integer> createdLibraryCardIds = new ArrayList<>();
 
     String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
 
@@ -127,6 +130,7 @@ public class DAOTestHelper {
         metricsDAO = jdbi.onDemand(MetricsDAO.class);
         userPropertyDAO = jdbi.onDemand(UserPropertyDAO.class);
         institutionDAO = jdbi.onDemand(InstitutionDAO.class);
+        libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
     }
 
     @AfterClass
@@ -167,6 +171,9 @@ public class DAOTestHelper {
         createdDataAccessRequestReferenceIds.forEach(d ->
                 dataAccessRequestDAO.deleteByReferenceId(d));
         counterDAO.deleteAll();
+        createdLibraryCardIds.forEach(id -> {
+            libraryCardDAO.deleteLibraryCardById(id);
+        });
     }
 
     protected void createAssociation(String consentId, Integer datasetId) {
@@ -382,6 +389,17 @@ public class DAOTestHelper {
         createdDataSetIds.add(id);
         createDatasetProperties(id);
         return dataSetDAO.findDataSetById(id);
+    }
+
+    protected LibraryCard createLibraryCard() {
+        Integer userId = createUser().getDacUserId();
+        Integer institutionId = createInstitution().getId();
+        String stringValue = "value";
+        Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue, userId, new Date());
+        createdUserIds.add(userId);
+        createdInstitutionIds.add(institutionId);
+        createdLibraryCardIds.add(id);
+        return libraryCardDAO.findLibraryCardById(id);
     }
 
     protected Date yesterday() {
