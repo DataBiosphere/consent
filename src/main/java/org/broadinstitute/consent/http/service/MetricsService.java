@@ -16,6 +16,8 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -75,27 +77,28 @@ public class MetricsService {
               .findFirst()
               .orElse(null);
 
-          Optional<Election> accessElection =
-            elections.stream()
-              .filter(
-                e ->
-                  e.getReferenceId()
-                    .equalsIgnoreCase(dataAccessRequest.getReferenceId()))
-              .filter(
-                e ->
-                  e.getElectionType()
-                    .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()))
-              .findFirst();
+          List<Election> associatedElections = elections.stream()
+            .filter(e -> 
+              e.getReferenceId()
+                .equalsIgnoreCase(dataAccessRequest.getReferenceId())
+            ).collect(Collectors.toList());
 
-          Optional<Election> rpElection =
-            elections.stream()
-              .filter(
-                e ->
-                  e.getReferenceId()
-                    .equalsIgnoreCase(dataAccessRequest.getReferenceId()))
-              .filter(e -> e.getElectionType().equalsIgnoreCase(ElectionType.RP.getValue()))
-              .findFirst();
+          List<Election> filteredAccessElections = associatedElections
+            .stream()
+            .filter(e -> e.getElectionType()
+              .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue())
+            ).collect(Collectors.toList());
+              
 
+          List<Election> filteredRpElections = associatedElections
+            .stream()
+            .filter(e -> e.getElectionType()
+              .equalsIgnoreCase(ElectionType.RP.getValue())
+            ).collect(Collectors.toList());
+
+          Optional<Election> accessElection = searchFilteredElectionList(filteredAccessElections);
+          Optional<Election> rpElection = searchFilteredElectionList(filteredRpElections);
+          
           Optional<Match> match =
             matches.stream()
               .filter(
@@ -142,5 +145,28 @@ public class MetricsService {
           })
         .collect(Collectors.toList());
     }
+  }
+
+  private static Optional<Election> searchFilteredElectionList(List<Election> electionList) {
+
+    //Search for instance where election.finalVote is true
+    //Order does not matter, so parallel steam makes sense
+    Optional<Election> election = electionList
+      .stream()
+      .filter(e -> Objects.nonNull(e.getFinalVote()) && e.getFinalVote())
+      .findAny();
+    
+    //if no vote was found, return the earliest vote
+    if(Objects.isNull(election)) {
+      Collections.sort(electionList, new DateComparator());
+      election = electionList.stream().findFirst();
+    }
+    return election;
+  }
+}
+
+class DateComparator implements Comparator<Election> {
+  public int compare(Election a, Election b) {
+    return (a.getFinalVoteDate()).compareTo(b.getFinalVoteDate());
   }
 }

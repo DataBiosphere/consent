@@ -26,19 +26,22 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
   List<DataAccessRequest> findAllDars();
 
   @SqlQuery(
-    " SELECT e.*, v.vote finalvote, v.rationale finalrationale, v.createdate finalvotedate "
-      + " FROM election e "
-      + " INNER JOIN "
-      + "   (SELECT e.referenceid, MAX(e.createdate) AS maxDate "
-      + "    FROM election e "
-      + "    GROUP BY e.referenceid ) electionView ON electionView.maxDate = e.createdate AND electionView.referenceid = e.referenceid "
-      + " LEFT JOIN vote v ON v.electionid = e.electionid AND "
-      + "    CASE "
-      + "        WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final' "
-      + "        WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
-      + "        ELSE 'chairperson' "
-      + "    END = LOWER(v.type)"
-      + " WHERE e.referenceid in (<referenceIds>) ")
+    "SELECT e.*, v.vote finalvote, v.rationale finalrationale, v.createdate finalvotedate "
+    + "FROM election e "
+    + "INNER JOIN ( "
+    + "    SELECT e.referenceid, max(e.electionid) "
+    + "    FROM election e "
+    + "    GROUP BY e.referenceid " 
+    + ") electionView "
+    + "ON electionView.referenceid = e.referenceid "
+    + "LEFT JOIN vote v ON e.electionid = v.electionid AND "
+    + "CASE " 
+    + "    WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final' "
+    + "    WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
+    + "    ELSE 'chairperson' "
+    + "END = LOWER(v.type) "
+    + "WHERE e.referenceid IN (<referenceIds>) "
+  )
   @UseRowMapper(ElectionMapper.class)
   List<Election> findLastElectionsByReferenceIds(
       @BindList("referenceIds") List<String> referenceIds);
