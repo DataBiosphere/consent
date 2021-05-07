@@ -48,6 +48,9 @@ public class User {
     @JsonProperty
     private Boolean profileCompleted;
 
+    @JsonProperty
+    private Integer institutionId;
+
     public User() {
     }
 
@@ -124,6 +127,7 @@ public class User {
         setRoles(u);
         setStatus(u);
         setRationale(u);
+        setInstitutionId(u);
     }
 
     private void setUserId(User u) {
@@ -171,6 +175,12 @@ public class User {
     private void setRationale(User u) {
         if (!StringUtils.isEmpty(u.getRationale())) {
             this.setRationale(u.getRationale());
+        }
+    }
+
+    private void setInstitutionId(User u) {
+        if (Objects.nonNull(u.getInstitutionId())) {
+            this.setInstitutionId(u.getInstitutionId());
         }
     }
 
@@ -253,6 +263,12 @@ public class User {
     public void setProfileCompleted(Boolean profileCompleted) {
         this.profileCompleted = profileCompleted;
     }
+
+    public Integer getInstitutionId() {
+        return institutionId;
+    }
+
+    public void setInstitutionId(Integer institutionId) { this.institutionId = institutionId; }
 
     public void addRole(UserRole userRole) {
         if (Objects.isNull(this.getRoles())) {
