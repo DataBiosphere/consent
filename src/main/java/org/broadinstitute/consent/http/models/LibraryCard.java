@@ -7,6 +7,7 @@ public class LibraryCard {
 
     private Integer id;
     private Integer userId;
+    private Integer institutionId;
     private String eraCommonsId;
     private String name;
     private String email;
@@ -19,9 +20,10 @@ public class LibraryCard {
     this.createDate = new Date();
   }
 
-  public LibraryCard(Integer id, Integer userId, String eraCommonsId, String name, String email, Date createDate, Integer createUser) {
+  public LibraryCard(Integer id, Integer userId, Integer institutionId, String eraCommonsId, String name, String email, Date createDate, Integer createUser) {
     this.id = id;
     this.userId = userId;
+    this.institutionId = institutionId;
     this.eraCommonsId = eraCommonsId;
     this.name = name;
     this.email = email;
@@ -29,9 +31,10 @@ public class LibraryCard {
     this.createUser = createUser;
   }
 
-  public LibraryCard(Integer id, Integer userId, String eraCommonsId, String name, String email, Date createDate, Integer createUser, Date updateDate, Integer updateUser) {
+  public LibraryCard(Integer id, Integer userId, Integer institutionId, String eraCommonsId, String name, String email, Date createDate, Integer createUser, Date updateDate, Integer updateUser) {
     this.id = id;
     this.userId = userId;
+    this.institutionId = institutionId;
     this.eraCommonsId = eraCommonsId;
     this.name = name;
     this.email = email;
@@ -56,6 +59,14 @@ public class LibraryCard {
 
   public void setUserId(Integer userId) {
     this.userId = userId;
+  }
+
+  public Integer getInstitutionId() {
+    return institutionId;
+  }
+
+  public void setInstitutionId(Integer institutionId) {
+    this.institutionId = institutionId;
   }
 
   public String getEraCommonsId() {

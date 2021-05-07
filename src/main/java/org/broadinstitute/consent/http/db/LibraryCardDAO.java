@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.db.mapper.LibraryCardMapper;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -9,7 +11,8 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 
-public interface LibraryCardDAO extends Transactional<LibraryCardDAO>{
+@RegisterRowMapper(LibraryCardMapper.class);
+public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate("INSERT INTO library_card " +
     " (user_id, institution_id, era_commons_id, user_name, user_email, create_user, create_date) " +
