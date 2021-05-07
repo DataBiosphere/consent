@@ -28,7 +28,7 @@
             <column name="create_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="update_user" type="bigint"/>
+            <column name="update_user_id" type="bigint"/>
             <column name="update_date" type="DATETIME"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="library_card" constraintName="fkLibraryCardUser"

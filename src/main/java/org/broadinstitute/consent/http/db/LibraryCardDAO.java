@@ -15,7 +15,7 @@ import java.util.List;
 public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate("INSERT INTO library_card " +
-    " (user_id, institution_id, era_commons_id, user_name, user_email, create_user, create_date) " +
+    " (user_id, institution_id, era_commons_id, user_name, user_email, create_user_id, create_date) " +
     " VALUES (:userId, :institutionId, :eraCommonsId, :userName, :userEmail, :createUser, :createDate)")
   @GetGeneratedKeys
   Integer insertLibraryCard(@Bind("userId") Integer userId,
@@ -33,7 +33,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
     " era_commons_id = :eraCommonsId, " +
     " user_name = :userName, " +
     " user_email = :userEmail, " +
-    " update_user = :updateUser, " +
+    " update_user_id = :updateUser, " +
     " update_date = :updateDate " +
     " WHERE id = :libraryCardId")
   void updateLibraryCardById(@Bind("libraryCardId") Integer libraryCardId,
