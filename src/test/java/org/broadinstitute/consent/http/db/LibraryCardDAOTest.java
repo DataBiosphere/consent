@@ -28,17 +28,17 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     try { 
         Integer id = libraryCardDAO.insertLibraryCard(0, institutionId, stringValue, stringValue, stringValue, userId, new Date());
     } catch (Exception e) {
-        assertEquals("23505", ((PSQLException)e.getCause()).getSQLState());
+        assertEquals("23503", ((PSQLException)e.getCause()).getSQLState());
     }
     try { 
         Integer id = libraryCardDAO.insertLibraryCard(userId, 0, stringValue, stringValue, stringValue, userId, new Date());
     } catch (Exception e) {
-        assertEquals("23505", ((PSQLException)e.getCause()).getSQLState());
+        assertEquals("23503", ((PSQLException)e.getCause()).getSQLState());
     }
     try { 
         Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue, 0, new Date());
     } catch (Exception e) {
-        assertEquals("23505", ((PSQLException)e.getCause()).getSQLState());
+        assertEquals("23503", ((PSQLException)e.getCause()).getSQLState());
     }
   }
 
@@ -107,7 +107,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
   public void testFindAllLibraryCards() {
     List<LibraryCard> cardList = libraryCardDAO.findAllLibraryCards();
     assertEquals(0, cardList.size());
-    createInstitution();
+    createLibraryCard();
     List<LibraryCard> cardListUpdated = libraryCardDAO.findAllLibraryCards();
     assertEquals(1, cardListUpdated.size());
   }

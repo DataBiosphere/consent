@@ -49,6 +49,8 @@
                                  referencesUniqueColumn="false"/>
         <rollback>
             <dropTable tableName="library_card"/>
+            <dropForeignKeyConstraint baseTableName="library_card" constraintName="fkLibraryCardUser"/>
+            <dropForeignKeyConstraint baseTableName="library_card" constraintName="fkLibraryCardInstitution"/>
             <dropForeignKeyConstraint baseTableName="library_card" constraintName="fkLibraryCardCreateUser"/>
             <dropForeignKeyConstraint baseTableName="library_card" constraintName="fkLibraryCardUpdateUser"/>
         </rollback>

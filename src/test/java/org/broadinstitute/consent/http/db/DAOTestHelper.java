@@ -159,6 +159,9 @@ public class DAOTestHelper {
             dacDAO.deleteDacMembers(id);
             dacDAO.deleteDac(id);
         });
+        createdLibraryCardIds.forEach(id -> {
+            libraryCardDAO.deleteLibraryCardById(id);
+        });
         createdInstitutionIds.forEach(id -> {
             institutionDAO.deleteInstitutionById(id);
         });
@@ -171,9 +174,6 @@ public class DAOTestHelper {
         createdDataAccessRequestReferenceIds.forEach(d ->
                 dataAccessRequestDAO.deleteByReferenceId(d));
         counterDAO.deleteAll();
-        createdLibraryCardIds.forEach(id -> {
-            libraryCardDAO.deleteLibraryCardById(id);
-        });
     }
 
     protected void createAssociation(String consentId, Integer datasetId) {
@@ -396,8 +396,6 @@ public class DAOTestHelper {
         Integer institutionId = createInstitution().getId();
         String stringValue = "value";
         Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue, userId, new Date());
-        createdUserIds.add(userId);
-        createdInstitutionIds.add(institutionId);
         createdLibraryCardIds.add(id);
         return libraryCardDAO.findLibraryCardById(id);
     }

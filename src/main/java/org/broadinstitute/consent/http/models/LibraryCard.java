@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.models;
 
 import java.util.Date;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+
 
 public class LibraryCard {
 
@@ -123,6 +125,16 @@ public class LibraryCard {
 
   public void setUpdateUser(Integer updateUser) {
     this.updateUser = updateUser;
+  }
+
+  @Override
+  public boolean equals(Object libraryCard) {
+    if (libraryCard == this) return true;
+    if (libraryCard == null || libraryCard.getClass() != getClass()) return false;
+    LibraryCard other = (LibraryCard) libraryCard;
+    return new EqualsBuilder()
+          .append(id, other.getId())
+          .isEquals();
   }
     
 }

@@ -42,13 +42,13 @@ public class LibraryCardMapper implements RowMapper<LibraryCard>, RowMapperHelpe
       libraryCard.setEmail(resultSet.getString("user_email"));
     }
     if (hasColumn(resultSet, "create_user_id")) {
-      libraryCard.setCreateUser(resultSet.getInt("create_user"));
+      libraryCard.setCreateUser(resultSet.getInt("create_user_id"));
     }
     if (hasColumn(resultSet, "create_date")) {
       libraryCard.setCreateDate(resultSet.getDate("create_date"));
     } 
     if (hasColumn(resultSet, "update_user_id")) {
-      libraryCard.setUpdateUser(resultSet.getInt("update_user"));
+      libraryCard.setUpdateUser(resultSet.getInt("update_user_id"));
     }
     if (hasColumn(resultSet, "update_date")) {
       libraryCard.setUpdateDate(resultSet.getDate("update_date"));
