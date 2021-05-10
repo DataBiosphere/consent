@@ -21,32 +21,7 @@ public class LibraryCard {
   public LibraryCard() {
     this.createDate = new Date();
   }
-
-  public LibraryCard(Integer id, Integer userId, Integer institutionId, String eraCommonsId, String name, String email, Date createDate, Integer createUser) {
-    this.id = id;
-    this.userId = userId;
-    this.institutionId = institutionId;
-    this.eraCommonsId = eraCommonsId;
-    this.name = name;
-    this.email = email;
-    this.createDate = createDate;
-    this.createUser = createUser;
-  }
-
-  public LibraryCard(Integer id, Integer userId, Integer institutionId, String eraCommonsId, String name, String email, Date createDate, Integer createUser, Date updateDate, Integer updateUser) {
-    this.id = id;
-    this.userId = userId;
-    this.institutionId = institutionId;
-    this.eraCommonsId = eraCommonsId;
-    this.name = name;
-    this.email = email;
-    this.createDate = createDate;
-    this.createUser = createUser;
-    this.updateDate = updateDate;
-    this.updateUser = updateUser;
-  }
-
-
+  
   public Integer getId() {
     return id;
   }
