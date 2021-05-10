@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.Date;
 import java.util.List;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.junit.Test;
@@ -26,19 +27,19 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     Integer institutionId = createInstitution().getId();
     String stringValue = "value";
     try { 
-        Integer id = libraryCardDAO.insertLibraryCard(0, institutionId, stringValue, stringValue, stringValue, userId, new Date());
+        libraryCardDAO.insertLibraryCard(0, institutionId, stringValue, stringValue, stringValue, userId, new Date());
     } catch (Exception e) {
-        assertEquals("23503", ((PSQLException)e.getCause()).getSQLState());
+        assertEquals(PSQLState.FOREIGN_KEY_VIOLATION, ((PSQLException)e.getCause()).getSQLState());
     }
     try { 
-        Integer id = libraryCardDAO.insertLibraryCard(userId, 0, stringValue, stringValue, stringValue, userId, new Date());
+        libraryCardDAO.insertLibraryCard(userId, 0, stringValue, stringValue, stringValue, userId, new Date());
     } catch (Exception e) {
-        assertEquals("23503", ((PSQLException)e.getCause()).getSQLState());
+        assertEquals(PSQLState.FOREIGN_KEY_VIOLATION, ((PSQLException)e.getCause()).getSQLState());
     }
     try { 
-        Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue, 0, new Date());
+        libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue, 0, new Date());
     } catch (Exception e) {
-        assertEquals("23503", ((PSQLException)e.getCause()).getSQLState());
+        assertEquals(PSQLState.FOREIGN_KEY_VIOLATION, ((PSQLException)e.getCause()).getSQLState());
     }
   }
 
@@ -68,7 +69,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteInstitutionById() {
+  public void testDeleteLibraryCardById() {
     LibraryCard card = createLibraryCard();
     Integer id = card.getId();
     libraryCardDAO.deleteLibraryCardById(id);
@@ -76,7 +77,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteInstitutionByIdNegative() {
+  public void testDeleteLbraryCardByIdNegative() {
     try{
       libraryCardDAO.deleteLibraryCardById(RandomUtils.nextInt(1, 1000));
     } catch (Exception e) {
@@ -85,7 +86,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindInstitutionById() {
+  public void testFindLibraryCardById() {
     LibraryCard card = createLibraryCard();
     Integer id = card.getId();
     LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardById(id);
@@ -97,7 +98,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindInstitutionByIdNegative() {
+  public void testFindLibraryCardByIdNegative() {
     LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardById(RandomUtils.nextInt(100, 200));
     assertNull(cardFromDAO);
   }
