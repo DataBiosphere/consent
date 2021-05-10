@@ -7,6 +7,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -36,17 +38,41 @@ public class MetricsDAOTest extends DAOTestHelper {
     Consent consent = createConsent(dac.getDacId());
     DataSet dataset = createDataset();
     DataAccessRequest dar = createDataAccessRequestV2();
-    dar.getData().setDatasetIds(Collections.singletonList(dataset.getDataSetId()));
-    dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getData());
-    createAssociation(consent.getConsentId(), dataset.getDataSetId());
-    Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    electionDAO.updateElectionById(
-        election.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
 
+    String darReferenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+    dar.getData().setDatasetIds(Collections.singletonList(datasetId));
+    dataAccessRequestDAO.updateDataByReferenceId(darReferenceId, dar.getData());
+    createAssociation(consent.getConsentId(), datasetId);
+    
+    Election cancelledAccessElection = createAccessElection(darReferenceId, datasetId);
+    Election cancelledRPElection = createRPElection(darReferenceId, datasetId);
+    electionDAO.updateElectionById(
+        cancelledAccessElection.getElectionId(), ElectionStatus.CANCELED.getValue(), new Date(), true);
+    electionDAO.updateElectionById(
+      cancelledRPElection.getElectionId(), ElectionStatus.CANCELED.getValue(),new Date(), true);
+    
+    Election prevClosedAccessElection = createAccessElection(darReferenceId, dataset.getDataSetId());
+    Election prevClosedRPElection = createAccessElection(darReferenceId, datasetId);
+    electionDAO.updateElectionById(
+      prevClosedAccessElection.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
+    electionDAO.updateElectionById(
+      prevClosedRPElection.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
+
+    Election recentClosedAccessElection = createAccessElection(darReferenceId, dataset.getDataSetId());
+    Election recentClosedRPElection = createRPElection(darReferenceId, datasetId);
+    electionDAO.updateElectionById(
+      recentClosedAccessElection.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
+    electionDAO.updateElectionById(
+      recentClosedRPElection.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
     List<Election> elections =
         metricsDAO.findLastElectionsByReferenceIds(Collections.singletonList(dar.referenceId));
+    List<Integer> electionIds = elections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
     assertFalse(elections.isEmpty());
-    assertEquals(1, elections.size());
+    assertEquals(2, elections.size());
+    assertTrue(electionIds.contains(recentClosedAccessElection.getElectionId()));
+    assertTrue(electionIds.contains(recentClosedRPElection.getElectionId()));
+
   }
 
   @Test

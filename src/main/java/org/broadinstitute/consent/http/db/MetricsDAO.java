@@ -36,7 +36,7 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
         + "WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
         + "ELSE 'chairperson' "
       + "END = LOWER(v.type) "
-      + "WHERE e.referenceid = '6cbdf037-eb6d-4c61-afb5-c0b3b1620cdd' "
+      + "WHERE e.referenceid in(<referenceIds>) "
     + ") AS results "
     + "WHERE results.latest = results.electionid"
   )
