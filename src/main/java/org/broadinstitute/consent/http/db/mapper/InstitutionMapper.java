@@ -36,18 +36,20 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
       institution.setItDirectorEmail(resultSet.getString("it_director_email"));
     }
     if (hasColumn(resultSet, "create_user")) {
-      institution.setCreateUser(resultSet.getInt("create_user"));
+      institution.setCreateUserId(resultSet.getInt("create_user"));
     }
     if (hasColumn(resultSet, "create_date")) {
       institution.setCreateDate(resultSet.getDate("create_date"));
     } 
     if (hasColumn(resultSet, "update_user")) {
-      institution.setUpdateUser(resultSet.getInt("update_user"));
+      institution.setUpdateUserId(resultSet.getInt("update_user"));
     }
     if (hasColumn(resultSet, "update_date")) {
       institution.setUpdateDate(resultSet.getDate("update_date"));
     }
+
     institutionMap.put(institution.getId(), institution);
     return institution;
   }
+
 }

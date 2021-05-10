@@ -1,12 +1,16 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.db.mapper.InstitutionMapper;
+import org.broadinstitute.consent.http.db.mapper.InstitutionWithUsersReducer;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Date;
@@ -46,7 +50,24 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   @SqlQuery("SELECT * FROM institution WHERE institution_id = :institutionId")
   Institution findInstitutionById(@Bind("institutionId") Integer institutionId);
 
-  @SqlQuery("SELECT * FROM institution")
+  @RegisterBeanMapper(value = User.class, prefix = "u")
+  @UseRowReducer(InstitutionWithUsersReducer.class)
+  @SqlQuery(
+      "SELECT i.*, "
+          + " u.dacuserid AS u_dacuserid, u.email AS u_email, "
+          + " u.displayname AS u_displayname, u.createdate AS u_createdate, "
+          + " u.additional_email AS u_additional_email, u.email_preference AS u_email_preference, "
+          + " u.status AS u_status, u.rationale AS u_rationale, "
+
+          + " u2.dacuserid AS u2_dacuserid, u2.email AS u2_email, "
+          + " u2.displayname AS u2_displayname, u2.createdate AS u2_createdate, "
+          + " u2.additional_email AS u2_additional_email, u2.email_preference AS u2_email_preference, "
+          + " u2.status AS u2_status, u2.rationale AS u2_rationale "
+
+          + " FROM institution i "
+          + " LEFT JOIN dacuser u ON u.dacuserid = i.create_user "
+          + " LEFT JOIN dacuser u2 ON u2.dacuserid = i.update_user"
+  )
   List<Institution> findAllInstitutions();
 
   @SqlQuery("SELECT institution_id FROM institution WHERE institution_id = :institutionId")

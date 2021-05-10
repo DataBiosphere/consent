@@ -344,18 +344,22 @@ public class DAOTestHelper {
     }
 
     protected Institution createInstitution() {
-        Integer userId = createUser().getDacUserId();
-        String email = RandomStringUtils.randomAlphabetic(6) +
-                "@" +
-                RandomStringUtils.randomAlphabetic(6) +
-                "." +
-                RandomStringUtils.randomAlphabetic(3);
+        User createUser = createUser();
         Integer id = institutionDAO.insertInstitution(
           "Test_" + RandomStringUtils.random(20, true, true),
           "Test_" + RandomStringUtils.random(20, true, true),
-          email,
-          userId,
+          createUser.getEmail(),
+          createUser.getDacUserId(),
           new Date());
+        Institution institution = institutionDAO.findInstitutionById(id);
+        User updateUser = createUser();
+        institutionDAO.updateInstitutionById(
+                institution.getId(),
+                institution.getName(),
+                institution.getItDirectorName(),
+                institution.getItDirectorEmail(),
+                updateUser.getDacUserId(),
+                new Date());
         createdInstitutionIds.add(id);
         return institutionDAO.findInstitutionById(id);
     }

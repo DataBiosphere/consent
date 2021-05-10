@@ -55,9 +55,9 @@ public class InstitutionResourceTest {
     Institution mockInstitution = new Institution();
     mockInstitution.setName("Test Name");
     mockInstitution.setCreateDate(new Date());
-    mockInstitution.setCreateUser(1);
+    mockInstitution.setCreateUserId(1);
     mockInstitution.setUpdateDate(new Date());
-    mockInstitution.setUpdateUser(1);
+    mockInstitution.setUpdateUserId(1);
     mockInstitution.setId(1);
     return mockInstitution;
   }
