@@ -26,21 +26,19 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
   List<DataAccessRequest> findAllDars();
 
   @SqlQuery(
-    "SELECT e.*, v.vote finalvote, v.rationale finalrationale, v.createdate finalvotedate "
-    + "FROM election e "
-    + "INNER JOIN ( "
-    + "    SELECT e.referenceid, max(e.electionid) "
-    + "    FROM election e "
-    + "    GROUP BY e.referenceid " 
-    + ") electionView "
-    + "ON electionView.referenceid = e.referenceid "
-    + "LEFT JOIN vote v ON e.electionid = v.electionid AND "
-    + "CASE " 
-    + "    WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final' "
-    + "    WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
-    + "    ELSE 'chairperson' "
-    + "END = LOWER(v.type) "
-    + "WHERE e.referenceid IN (<referenceIds>) "
+    "SELECT * from ( "
+      + "SELECT e.*, v.vote finalvote, v.rationale finalrationale, v.createdate finalvotedate, MAX(e.electionid) "
+      + "OVER (PARTITION BY e.referenceid, e.electiontype) AS latest "
+      + "FROM election e "
+      + "LEFT JOIN vote v ON e.electionid = v.electionid AND "
+      + "CASE "
+        + "WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final'"
+        + "WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
+        + "ELSE 'chairperson' "
+      + "END = LOWER(v.type) "
+      + "WHERE e.referenceid = '6cbdf037-eb6d-4c61-afb5-c0b3b1620cdd' "
+    + ") AS results "
+    + "WHERE results.latest = results.electionid"
   )
   @UseRowMapper(ElectionMapper.class)
   List<Election> findLastElectionsByReferenceIds(
