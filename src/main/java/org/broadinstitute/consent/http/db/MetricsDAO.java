@@ -38,7 +38,12 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
       + "END = LOWER(v.type) "
       + "WHERE e.referenceid in(<referenceIds>) "
     + ") AS results "
-    + "WHERE results.latest = results.electionid"
+    + "WHERE results.latest = results.electionid "
+    + "ORDER BY results.electionid DESC, "
+    + "CASE "
+      + "WHEN results.finalvotedate IS NULL THEN results.lastupdate "
+      + "ELSE results.finalvotedate "
+    + "END DESC"
   )
   @UseRowMapper(ElectionMapper.class)
   List<Election> findLastElectionsByReferenceIds(

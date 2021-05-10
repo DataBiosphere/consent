@@ -16,8 +16,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -158,15 +156,8 @@ public class MetricsService {
     
     //if no vote was found, return the earliest vote
     if(Objects.isNull(election)) {
-      Collections.sort(electionList, new DateComparator());
       election = electionList.stream().findFirst();
     }
     return election;
-  }
-}
-
-class DateComparator implements Comparator<Election> {
-  public int compare(Election a, Election b) {
-    return (a.getFinalVoteDate()).compareTo(b.getFinalVoteDate());
   }
 }
