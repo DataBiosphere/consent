@@ -9,13 +9,11 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="user_id" type="bigint">
-            </column>
+            <column name="user_id" type="bigint"/>
             <column name="institution_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="era_commons_id" type="varchar(255)">
-            </column>
+            <column name="era_commons_id" type="varchar(255)"/>
             <column name="user_name" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
@@ -48,11 +46,7 @@
                                  referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="false"/>
         <rollback>
-            <dropTable tableName="library_card"/>
-            <dropForeignKeyConstraint baseTableName="library_card" constraintName="fkLibraryCardUser"/>
-            <dropForeignKeyConstraint baseTableName="library_card" constraintName="fkLibraryCardInstitution"/>
-            <dropForeignKeyConstraint baseTableName="library_card" constraintName="fkLibraryCardCreateUser"/>
-            <dropForeignKeyConstraint baseTableName="library_card" constraintName="fkLibraryCardUpdateUser"/>
+            <dropTable cascadeConstraints="true" tableName="library_card"/>
         </rollback>
     </changeSet>
 
