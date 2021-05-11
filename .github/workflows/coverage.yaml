@@ -16,7 +16,13 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+      - name: Test Only
+        if: github.actor == 'dependabot[bot]'
+        env:
+          MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
+        run: mvn clean test
       - name: Test Report
+        if: github.actor != 'dependabot[bot]'
         env:
           COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
           MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120

@@ -36,14 +36,13 @@ import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
 
 @Path("api/dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
-    private final DACUserAPI dacUserAPI;
+    private final UserService userService;
     private final DataAccessRequestService dataAccessRequestService;
     private final DatasetService datasetService;
     private final DatasetAssociationService datasetAssociationService;
@@ -55,14 +54,15 @@ public class DataRequestVoteResource extends Resource {
 
     @Inject
     public DataRequestVoteResource(
-        DataAccessRequestService dataAccessRequestService,
-        DatasetAssociationService datasetAssociationService,
-        EmailNotifierService emailNotifierService,
-        VoteService voteService,
-        DatasetService datasetService,
-        ElectionService electionService) {
+            DataAccessRequestService dataAccessRequestService,
+            DatasetAssociationService datasetAssociationService,
+            EmailNotifierService emailNotifierService,
+            VoteService voteService,
+            DatasetService datasetService,
+            ElectionService electionService,
+            UserService userService) {
         this.emailNotifierService = emailNotifierService;
-        this.dacUserAPI = AbstractDACUserAPI.getInstance();
+        this.userService = userService;
         this.datasetService = datasetService;
         this.dataAccessRequestService = dataAccessRequestService;
         this.datasetAssociationService = datasetAssociationService;
@@ -216,7 +216,7 @@ public class DataRequestVoteResource extends Resource {
                 if(CollectionUtils.isNotEmpty(elections)){
                     elections.forEach(voteService::createDataOwnersReviewVotes);
                 }
-                List<User> admins = dacUserAPI.describeAdminUsersThatWantToReceiveMails();
+                List<User> admins = userService.describeAdminUsersThatWantToReceiveMails();
                 if(CollectionUtils.isNotEmpty(admins)) {
                     emailNotifierService.sendAdminFlaggedDarApproved(dar.getData().getDarCode(), admins, dataOwnerDataSet);
                 }

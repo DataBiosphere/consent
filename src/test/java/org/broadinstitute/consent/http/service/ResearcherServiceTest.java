@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
 
@@ -23,24 +23,12 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore("jdk.internal.reflect.*")
-@PrepareForTest({
-        AbstractDACUserAPI.class
-})
 public class ResearcherServiceTest {
 
     @Mock
@@ -53,7 +41,7 @@ public class ResearcherServiceTest {
     private EmailNotifierService emailNotifierService;
 
     @Mock
-    private DACUserAPI dacUserAPI;
+    private UserService userService;
 
     private ResearcherService service;
 
@@ -73,12 +61,10 @@ public class ResearcherServiceTest {
         user.setDisplayName(RandomStringUtils.random(10));
 
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractDACUserAPI.class);
-        when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
     }
 
     private void initService() {
-        service = new ResearcherService(userPropertyDAO, userDAO, emailNotifierService);
+        service = new ResearcherService(userPropertyDAO, userDAO, emailNotifierService, userService);
     }
 
     @Test
@@ -197,14 +183,14 @@ public class ResearcherServiceTest {
         doNothing().when(userPropertyDAO).deletePropertiesByUserAndKey(any());
         doNothing().when(userPropertyDAO).insertAll(any());
         doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(any());
-        when(dacUserAPI.updateUserStatus(any(), any())).thenReturn(user);
+        when(userService.updateUserStatus(any(), any())).thenReturn(user);
         doNothing().when(emailNotifierService).sendNewResearcherCreatedMessage(any(), any());
         initService();
 
         List<UserProperty> foundProps = service.updateProperties(propMap, authUser, true);
         Assert.assertFalse(foundProps.isEmpty());
         Assert.assertEquals(props.size(), foundProps.size());
-        verifyZeroInteractions(emailNotifierService);
+        verify(emailNotifierService, times(0)).sendNewResearcherCreatedMessage(any(), any());
     }
 
     @Test
@@ -226,7 +212,7 @@ public class ResearcherServiceTest {
         doNothing().when(userPropertyDAO).deletePropertiesByUserAndKey(any());
         doNothing().when(userPropertyDAO).insertAll(any());
         doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(any());
-        when(dacUserAPI.updateUserStatus(any(), any())).thenReturn(user);
+        when(userService.updateUserStatus(any(), any())).thenReturn(user);
         doNothing().when(emailNotifierService).sendNewResearcherCreatedMessage(any(), any());
         initService();
 

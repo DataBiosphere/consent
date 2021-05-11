@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
@@ -23,7 +23,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -72,15 +72,15 @@ public class DatasetResourceTest {
 
     @Test
     public void testCreateDataset() throws Exception {
-        DataSetDTO result = new DataSetDTO();
-        DataSetDTO json = new DataSetDTO();
+        DatasetDTO result = new DatasetDTO();
+        DatasetDTO json = new DatasetDTO();
         Consent consent = new Consent();
         List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
         jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
         json.setProperties(jsonProperties);
 
         when(datasetService.getDatasetByName("test")).thenReturn(null);
-        when(datasetService.createDataset(any(), any(), anyInt())).thenReturn(result);
+        when(datasetService.createDatasetWithConsent(any(), any(), anyInt())).thenReturn(result);
         when(datasetService.createConsentForDataset(any())).thenReturn(consent);
         when(datasetService.getDatasetDTO(any())).thenReturn(result);
         when(authUser.getGoogleUser()).thenReturn(googleUser);
@@ -128,7 +128,7 @@ public class DatasetResourceTest {
     @Test
     public void testUpdateDataset() {
         DataSet preexistingDataset = new DataSet();
-        DataSetDTO json = new DataSetDTO();
+        DatasetDTO json = new DatasetDTO();
         List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
         jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
         json.setProperties(jsonProperties);
@@ -148,7 +148,7 @@ public class DatasetResourceTest {
     @Test
     public void testUpdateDatasetNoContent() {
         DataSet preexistingDataset = new DataSet();
-        DataSetDTO json = new DataSetDTO();
+        DatasetDTO json = new DatasetDTO();
         List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
         jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
         json.setProperties(jsonProperties);
@@ -168,6 +168,7 @@ public class DatasetResourceTest {
     @Test
     public void testDatasetAutocomplete() {
         List<Map<String, String>> autocompleteMap = Collections.singletonList(Collections.EMPTY_MAP);
+        when(authUser.getName()).thenReturn("testauthuser@test.com");
         when(userService.findUserByEmail(anyString())).thenReturn(dacUser);
         when(dacUser.getDacUserId()).thenReturn(0);
         when(datasetService.autoCompleteDatasets(anyString(), anyInt())).thenReturn(autocompleteMap);

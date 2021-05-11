@@ -229,7 +229,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
         createAssociation(consent.getConsentId(), dataset2.getDataSetId());
 
-        consentDAO.deleteAssociationsByDataSetId(dataset.getDataSetId());
+        dataSetDAO.deleteConsentAssociationsByDataSetId(dataset.getDataSetId());
         Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
         assertNull(deletedAssociationId);
         Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDataSetId());

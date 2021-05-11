@@ -5,24 +5,28 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -42,6 +46,9 @@ public class UserServiceTest {
     @Mock
     private VoteDAO voteDAO;
 
+    @Mock
+    private InstitutionDAO institutionDAO;
+
     private UserService service;
 
     @Before
@@ -50,7 +57,7 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, userPropertyDAO, roleDAO, voteDAO);
+        service = new UserService(userDAO, userPropertyDAO, roleDAO, voteDAO, institutionDAO);
     }
 
     @Test
@@ -226,6 +233,56 @@ public class UserServiceTest {
         service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
     }
 
+    @Test
+    public void testUpdateUserStatus() {
+        User u = generateUser();
+        when(userDAO.findUserById(u.getDacUserId()))
+                .thenReturn(u);
+        doNothing().when(userDAO).updateUserStatus(any(), any());
+        initService();
+        User user = service.updateUserStatus(RoleStatus.APPROVED.toString(), u.getDacUserId());
+        assertNotNull(user);
+        assertEquals(u.getDacUserId(), user.getDacUserId());
+    }
+
+    @Test
+    public void testUpdateUserRationale() {
+        User u = generateUser();
+        when(userDAO.findUserById(u.getDacUserId()))
+                .thenReturn(u);
+        doNothing().when(userDAO).updateUserRationale(any(), any());
+        initService();
+        User user = service.updateUserRationale("test", u.getDacUserId());
+        assertNotNull(user);
+        assertEquals(u.getDacUserId(), user.getDacUserId());
+    }
+
+    @Test
+    public void testUpdateDACUserById() {
+        User u = generateUser();
+        when(userDAO.findUserById(u.getDacUserId()))
+                .thenReturn(u);
+        when(institutionDAO.checkForExistingInstitution(any()))
+                .thenReturn(u.getInstitutionId());
+        doNothing().when(userDAO).updateUser(any(), any(), any(), any());
+        initService();
+        Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
+        User user = service.updateDACUserById(dacUsers, u.getDacUserId());
+        assertNotNull(user);
+        assertEquals(u.getDacUserId(), user.getDacUserId());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testUpdateDACUserById_NonExisting() {
+        User u = generateUser();
+        when(userDAO.findUserById(u.getDacUserId()))
+                .thenReturn(null);
+        doNothing().when(userDAO).updateUser(any(), any(), any(), any());
+        initService();
+        Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
+        User user = service.updateDACUserById(dacUsers, u.getDacUserId());
+    }
+
     private User generateUser() {
         User u = new User();
         int i1 = RandomUtils.nextInt(5, 10);
@@ -242,6 +299,7 @@ public class UserServiceTest {
         u.setEmail(email);
         u.setDisplayName(displayName);
         u.setDacUserId(RandomUtils.nextInt(1, 100));
+        u.setInstitutionId(RandomUtils.nextInt(1, 100));
         return u;
     }
 

@@ -14,19 +14,14 @@ import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.ReviewResultsService;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 public class ElectionReviewResourceTest {
@@ -69,7 +64,7 @@ public class ElectionReviewResourceTest {
 
     @Test
     public void testGetElectionReviewByElectionId() {
-        when(reviewResultsService.describeElectionReviewByElectionId(any(), any())).thenReturn(new ElectionReview());
+        when(reviewResultsService.describeElectionReviewByElectionId(any())).thenReturn(new ElectionReview());
         initResource();
         ElectionReview response = resource.getElectionReviewByElectionId(RandomUtils.nextInt(100, 1000));
         assertNotNull(response);
@@ -91,7 +86,7 @@ public class ElectionReviewResourceTest {
         dar.setData(data);
         when(darService.findByReferenceId(any())).thenReturn(dar);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
-        when(reviewResultsService.describeElectionReviewByElectionId(any(), any())).thenReturn(new ElectionReview());
+        when(reviewResultsService.describeElectionReviewByElectionId(any())).thenReturn(new ElectionReview());
         when(reviewResultsService.describeAgreementVote(any())).thenReturn(Collections.singletonList(new Vote()));
         initResource();
         ElectionReview response = resource.getAccessElectionReviewByReferenceId(RandomUtils.nextInt(100, 1000), true);
@@ -101,7 +96,7 @@ public class ElectionReviewResourceTest {
     @Test
     public void testGetRPElectionReviewByReferenceId() {
         when(electionService.findRPElectionByElectionAccessId(any())).thenReturn(1);
-        when(reviewResultsService.describeElectionReviewByElectionId(any(), any())).thenReturn(new ElectionReview());
+        when(reviewResultsService.describeElectionReviewByElectionId(any())).thenReturn(new ElectionReview());
         initResource();
         ElectionReview response = resource.getRPElectionReviewByReferenceId(RandomUtils.nextInt(100, 1000), true);
         assertNotNull(response);

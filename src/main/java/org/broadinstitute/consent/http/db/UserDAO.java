@@ -26,7 +26,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.status, u.rationale, "
+        + "     u.email_preference, u.status, u.rationale, u.institution_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
@@ -44,7 +44,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.status, u.rationale, "
+        + "     u.email_preference, u.status, u.rationale, u.institution_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
@@ -72,7 +72,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.status, u.rationale, "
+        + "     u.email_preference, u.status, u.rationale, u.institution_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
@@ -86,12 +86,14 @@ public interface UserDAO extends Transactional<UserDAO> {
                           @Bind("displayName") String displayName,
                           @Bind("createDate") Date createDate);
 
-    @SqlUpdate("UPDATE dacuser SET displayname=:displayName, additional_email=:additionalEmail WHERE dacuserid=:id")
+    @SqlUpdate("UPDATE dacuser SET displayname=:displayName, additional_email=:additionalEmail, institution_id=:institutionId WHERE dacuserid=:id")
     void updateUser(@Bind("displayName") String displayName,
                        @Bind("id") Integer id,
-                       @Bind("additionalEmail") String additionalEmail);
+                       @Bind("additionalEmail") String additionalEmail,
+                       @Bind("institutionId") Integer institutionId);
 
-    @SqlUpdate("delete from dacuser where email = :email")
+    @Deprecated // Use deleteUserById instead
+    @SqlUpdate("DELETE FROM dacuser WHERE LOWER(email) = LOWER(:email)")
     void deleteUserByEmail(@Bind("email") String email);
 
     @SqlUpdate("delete from dacuser where dacuserid = :id")
@@ -127,7 +129,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.status, u.rationale, "
+        + "     u.email_preference, u.status, u.rationale, u.institution_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "

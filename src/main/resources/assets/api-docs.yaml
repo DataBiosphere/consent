@@ -1630,13 +1630,6 @@ paths:
           If the user is requesting these as an admin, all are returned. As a DAC member, only those
           assigned to the DAC are returned. As a general user, only those created by the user are
           returned.
-        parameters:
-          - name: userId
-            in: query
-            description: Optional user id to filter Data Access Requests by
-            required: false
-            schema:
-              type: integer
         tags:
           - Data Access Request
         responses:
@@ -1875,7 +1868,7 @@ paths:
           description: The election or the DAR couldn't be found.
     post:
       summary: createDataRequestElection
-      description: Creates an Election for the DAR identified by the ID.
+      description: Creates an Access and RP Election for the DAR identified by the ID.
       parameters:
         - name: requestId
           in: path
@@ -2069,7 +2062,7 @@ paths:
       parameters:
         - name: requestId
           in: path
-          description: referenceId of the Election of the requested Votes
+          description: referenceId of dar the Elections are on
           required: true
           schema:
             type: string
@@ -2078,7 +2071,7 @@ paths:
         - DataRequest
       responses:
         200:
-          description: Returns the DataRequest.
+          description: Returns the list of votes.
           content:
             application/json:
               schema:
@@ -2659,6 +2652,30 @@ paths:
                 $ref: '#/components/schemas/Election'
         400:
           description: Could not find Election with the specified Id
+  /api/election/{electionId}/votes:
+    get:
+      summary: get the votes on the election specified by the electionId
+      description: Returns the list of votes associated with the election identified by Id
+      parameters:
+        - name: electionId
+          in: path
+          description: Election Id
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Election
+      responses:
+        200:
+          description: List of votes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Election'
+        404:
+          description: Could not find Election with the specified Id
+        500:
+          description: Internal Server Error
     put:
       summary: updateElection
       description: "Updates the election specified by Id."
@@ -2780,7 +2797,7 @@ paths:
                 $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/access/{electionId}:
     get:
-      summary: describeElectionById
+      summary: get ElectionReview for access election identified by electionId
       description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for DataAccess elections.
       parameters:
         - name: electionId
@@ -2794,7 +2811,7 @@ paths:
           description: Defines if the reviewVote array of the retrieved ElectionReview will contain or not the isFinalAccess = TRUE Vote.
           required: true
           schema:
-            type: integer
+            type: boolean
       tags:
         - ElectionReview
       responses:
@@ -2826,7 +2843,7 @@ paths:
                 $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/rp/{electionId}:
     get:
-      summary: describeElectionById
+      summary: get ElectionReview for rp election identified by electionId
       description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for Research Purpose elections.
       parameters:
         - name: electionId
@@ -2842,7 +2859,7 @@ paths:
           description: Defines if the reviewVote array of the retrieved ElectionReview will contain or not the isFinalAccess = TRUE Vote.
           required: true
           schema:
-            type: integer
+            type: boolean
       tags:
         - ElectionReview
       responses:

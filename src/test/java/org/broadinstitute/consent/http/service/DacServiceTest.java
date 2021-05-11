@@ -1,14 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -24,7 +23,7 @@ import java.util.stream.Stream;
 import javax.ws.rs.BadRequestException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -40,7 +39,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -62,7 +61,7 @@ public class DacServiceTest {
     private UserDAO userDAO;
 
     @Mock
-    private DataSetDAO dataSetDAO;
+    private DatasetDAO dataSetDAO;
 
     @Mock
     private ElectionDAO electionDAO;
@@ -171,7 +170,7 @@ public class DacServiceTest {
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(getDacs());
         initService();
 
-        Set<DataSetDTO> dataSets = service.findDatasetsByDacId(getUser(), 1);
+        Set<DatasetDTO> dataSets = service.findDatasetsByDacId(getUser(), 1);
         Assert.assertNotNull(dataSets);
         Assert.assertEquals(1, dataSets.size());
     }
@@ -267,8 +266,8 @@ public class DacServiceTest {
         initService();
 
         service.removeDacMember(role, chair, dac);
-        verifyZeroInteractions(dacDAO);
-        verifyZeroInteractions(voteService);
+        verify(dacDAO, times(0)).removeDacMember(anyInt());
+        verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
     }
 
     @Test
@@ -823,10 +822,10 @@ public class DacServiceTest {
     /**
      * @return A list of 5 datasets with ids
      */
-    private List<DataSetDTO> getDatasetDTOs() {
+    private List<DatasetDTO> getDatasetDTOs() {
         return IntStream.range(1, 5).
                 mapToObj(i -> {
-                    DataSetDTO dataSet = new DataSetDTO();
+                    DatasetDTO dataSet = new DatasetDTO();
                     dataSet.setDataSetId(i);
                     return dataSet;
                 }).collect(Collectors.toList());

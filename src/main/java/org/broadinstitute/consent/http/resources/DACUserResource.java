@@ -12,8 +12,6 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,13 +42,11 @@ import java.util.stream.Collectors;
 @Path("api/dacuser")
 public class DACUserResource extends Resource {
 
-    private final DACUserAPI dacUserAPI;
     private final UserService userService;
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
     public DACUserResource(UserService userService) {
-        this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.userService = userService;
     }
 
@@ -62,7 +58,7 @@ public class DACUserResource extends Resource {
             User user = userService.createUser(new User(json));
             // Update email preference
             getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->
-                    dacUserAPI.updateEmailPreference(aBoolean, user.getDacUserId())
+                    userService.updateEmailPreference(aBoolean, user.getDacUserId())
             );
             URI uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
             return Response.created(uri).entity(user).build();
@@ -102,12 +98,12 @@ public class DACUserResource extends Resource {
         try {
             validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), findByAuthUser(authUser), userId);
             URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
-            User user = dacUserAPI.updateDACUserById(userMap, userId);
+            User user = userService.updateDACUserById(userMap, userId);
             // Update email preference
             JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
             JsonElement updateUser = jsonObject.get(UserRolesHandler.UPDATED_USER_KEY);
             getEmailPreferenceValueFromUserJson(updateUser.toString()).ifPresent(aBoolean ->
-                    dacUserAPI.updateEmailPreference(aBoolean, user.getDacUserId())
+                    userService.updateEmailPreference(aBoolean, user.getDacUserId())
             );
             return Response.ok(uri).entity(user).build();
         } catch (Exception e) {
@@ -127,14 +123,14 @@ public class DACUserResource extends Resource {
         User user = userService.findUserById(userId);
         if (statusOpt.isPresent()) {
             try {
-                user = dacUserAPI.updateUserStatus(statusOpt.get(), userId);
+                user = userService.updateUserStatus(statusOpt.get(), userId);
             } catch (Exception e) {
                 return createExceptionResponse(e);
             }
         }
         if (rationaleOpt.isPresent()) {
             try {
-                user = dacUserAPI.updateUserRationale(rationaleOpt.get(), userId);
+                user = userService.updateUserRationale(rationaleOpt.get(), userId);
             } catch (Exception e) {
                 return createExceptionResponse(e);
             }

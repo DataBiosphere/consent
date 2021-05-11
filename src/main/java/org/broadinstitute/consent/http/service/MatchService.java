@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -45,14 +45,14 @@ public class MatchService {
     private final UseRestrictionConverter useRestrictionConverter;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final DataAccessRequestDAO dataAccessRequestDAO;
-    private final DataSetDAO dataSetDAO;
+    private final DatasetDAO dataSetDAO;
     private final WebTarget matchServiceTarget;
 
     private final GenericType<ResponseMatchingObject> rmo = new GenericType<>(){};
 
     @Inject
     public MatchService(Client client, ServicesConfiguration config, ConsentDAO consentDAO, MatchDAO matchDAO,
-                        ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, DataSetDAO dataSetDAO,
+                        ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
                         UseRestrictionConverter useRestrictionConverter) {
         this.matchDAO = matchDAO;
         this.consentDAO = consentDAO;

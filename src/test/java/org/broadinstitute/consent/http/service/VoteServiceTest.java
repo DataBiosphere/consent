@@ -4,10 +4,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -22,7 +22,7 @@ import java.util.UUID;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -48,7 +48,7 @@ public class VoteServiceTest {
     @Mock
     DatasetAssociationDAO dataSetAssociationDAO;
     @Mock
-    DataSetDAO datasetDAO;
+    DatasetDAO datasetDAO;
     @Mock
     ElectionDAO electionDAO;
     @Mock

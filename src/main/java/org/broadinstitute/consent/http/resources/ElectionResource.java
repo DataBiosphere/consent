@@ -2,10 +2,13 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.VoteService;
+
+import io.dropwizard.auth.Auth;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -110,6 +113,18 @@ public class ElectionResource extends Resource {
     public Response isDataSetElectionOpen(@Context UriInfo info) {
         try {
             return Response.ok().entity("{ \"open\" : " + electionService.isDataSetElectionOpen() + " }").build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Produces("application/json")
+    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
+    @Path("/{electionId}/votes")
+    public Response describeVotesOnElection(@Auth AuthUser authUser, @PathParam("electionId") Integer electionId) {
+        try {
+            return Response.ok().entity(voteService.findVotesByElectionId(electionId)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

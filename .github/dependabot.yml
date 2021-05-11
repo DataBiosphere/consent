@@ -1,0 +1,42 @@
+version: 2
+updates:
+- package-ecosystem: maven
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  target-branch: develop
+  reviewers:
+  - rushtong
+  - JVThomas
+  assignees:
+  - rushtong
+  - JVThomas
+  labels:
+  - dependency
+  commit-message:
+    prefix: dependency
+- package-ecosystem: docker
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  target-branch: develop
+  reviewers:
+  - rushtong
+  assignees:
+  - rushtong
+  labels:
+  - dependency
+  ignore:
+  - dependency-name: adoptopenjdk
+    versions:
+    - "> 8.pre.hotspot"
+  - dependency-name: broad-dsp-gcr-public/base/jre
+    versions:
+    - ">= 15.pre.alpine.a, < 16"
+  - dependency-name: openjdk
+    versions:
+    - "> 8"
+  commit-message:
+    prefix: dependency

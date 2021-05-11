@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.models.DecisionMetrics;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -25,14 +25,14 @@ import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 public class MetricsServiceTest {
 
   @Mock private DacService dacService;
 
-  @Mock private DataSetDAO dataSetDAO;
+  @Mock private DatasetDAO dataSetDAO;
 
   @Mock private MetricsDAO metricsDAO;
 
@@ -77,8 +77,8 @@ public class MetricsServiceTest {
     when(metricsDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
     Dac dac = generateDac();
     when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
-    List<DataSetDTO> datasetDTOs = generateDatasetDTO(datasetCount);
-    when(dataSetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOs));
+    List<DatasetDTO> datasetDTOS = generateDatasetDTO(datasetCount);
+    when(dataSetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOS));
   }
 
   private Dac generateDac() {
@@ -105,12 +105,12 @@ public class MetricsServiceTest {
     return dac;
   }
 
-  private List<DataSetDTO> generateDatasetDTO(int datasetCount) {
+  private List<DatasetDTO> generateDatasetDTO(int datasetCount) {
     Dac dac = generateDac();
     return generateDatasets(datasetCount).stream()
         .map(
             ds -> {
-              DataSetDTO dto = new DataSetDTO();
+              DatasetDTO dto = new DatasetDTO();
               dto.setDacId(dac.getDacId());
               dto.setAlias(ds.getAlias());
               dto.setDataSetId(ds.getDataSetId());

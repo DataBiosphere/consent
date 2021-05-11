@@ -31,9 +31,8 @@ import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
+import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
-import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 
 @Path("{auth: (basic/|api/)?}consent")
 public class ConsentResource extends Resource {
@@ -41,14 +40,14 @@ public class ConsentResource extends Resource {
     private final ConsentService consentService;
     private final AuditService auditService;
     private final MatchService matchService;
-    private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
+    private final UseRestrictionValidator useRestrictionValidator;
     private final UserService userService;
 
     @Inject
-    public ConsentResource(AuditService auditService, UserService userService, ConsentService consentService, MatchService matchService) {
+    public ConsentResource(AuditService auditService, UserService userService, ConsentService consentService, MatchService matchService, UseRestrictionValidator useRestrictionValidator) {
         this.auditService = auditService;
         this.consentService = consentService;
-        this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
+        this.useRestrictionValidator = useRestrictionValidator;
         this.userService = userService;
         this.matchService = matchService;
     }
@@ -73,7 +72,7 @@ public class ConsentResource extends Resource {
         try {
             User dacUser = userService.findUserByEmail(user.getName());
             if(rec.getUseRestriction() != null){
-                useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
+                useRestrictionValidator.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
             }
             if (rec.getDataUse() == null) {
                 throw new IllegalArgumentException("Data Use Object is required.");
@@ -100,7 +99,7 @@ public class ConsentResource extends Resource {
         try {
             checkConsentElection(id);
             if(updated.getUseRestriction() != null) {
-                useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(updated.getUseRestriction()));
+                useRestrictionValidator.validateUseRestriction(new Gson().toJson(updated.getUseRestriction()));
             }
             if (updated.getDataUse() == null) {
                 throw new IllegalArgumentException("Data Use Object is required.");

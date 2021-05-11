@@ -1,4 +1,4 @@
-FROM iflavoursbv/sbt-openjdk-8-alpine:0.13.15
+FROM broadinstitute/scala-baseimage:jdk11-2.13.5-1.4.7
 
 COPY src /app/src
 COPY test.sh /app

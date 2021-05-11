@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.db;
 
 import java.util.Date;
 import java.util.List;
+
+import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -166,4 +168,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @SqlUpdate("UPDATE data_access_request SET draft = :draft WHERE reference_id = :referenceId ")
   void updateDraftByReferenceId(@Bind("referenceId") String referenceId, @Bind("draft") Boolean draft);
+
+  @RegisterRowMapper(DataAccessRequestDataMapper.class)
+  @SqlQuery(" SELECT (data #>> '{}')::jsonb AS data FROM data_access_request ")
+  List<DataAccessRequestData> findAllDataAccessRequestDatas();
 }

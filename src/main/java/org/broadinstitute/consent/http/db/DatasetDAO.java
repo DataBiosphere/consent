@@ -1,22 +1,16 @@
 package org.broadinstitute.consent.http.db;
 
-import java.sql.Timestamp;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
-import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataSetAudit;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -29,18 +23,25 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
+import java.sql.Timestamp;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
 @RegisterRowMapper(DataSetMapper.class)
-public interface DataSetDAO extends Transactional<DataSetDAO> {
+public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     String CHAIRPERSON = Resource.CHAIRPERSON;
 
+    @Deprecated
     @SqlUpdate("insert into dataset (name, createDate, objectId, active, alias) values (:name, :createDate, :objectId, :active, :alias)")
     @GetGeneratedKeys
     Integer insertDataset(@Bind("name") String name, @Bind("createDate") Date createDate, @Bind("objectId") String objectId, @Bind("active") Boolean active, @Bind("alias") Integer alias);
 
-    @SqlUpdate("INSERT INTO dataset (name, createdate, create_user_id, update_date, update_user_id, objectId, active, alias) VALUES (:name, :createDate, :createUserId, :createDate, :createUserId, :objectId, :active, :alias)")
+    @SqlUpdate("INSERT INTO dataset (name, createdate, create_user_id, update_date, update_user_id, objectId, active, alias) (SELECT :name, :createDate, :createUserId, :createDate, :createUserId, :objectId, :active, MAX(alias)+1 FROM dataset)")
     @GetGeneratedKeys
-    Integer insertDatasetV2(@Bind("name") String name, @Bind("createDate") Timestamp createDate, @Bind("createUserId") Integer createUserId, @Bind("objectId") String objectId, @Bind("active") Boolean active, @Bind("alias") Integer alias);
+    Integer insertDatasetV2(@Bind("name") String name, @Bind("createDate") Timestamp createDate, @Bind("createUserId") Integer createUserId, @Bind("objectId") String objectId, @Bind("active") Boolean active);
 
     @SqlQuery("select * from dataset where dataSetId = :dataSetId")
     DataSet findDataSetById(@Bind("dataSetId") Integer dataSetId);
@@ -54,15 +55,29 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("SELECT * FROM dataset WHERE dataSetId IN (<dataSetIdList>) AND needs_approval = true")
     List<DataSet> findNeedsApprovalDataSetByDataSetId(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
+    @Deprecated
     @SqlBatch("insert into dataset (name, createDate, objectId, active, alias) values (:name, :createDate, :objectId, :active, :alias)")
     void insertAll(@BindBean Collection<DataSet> dataSets);
 
     @SqlBatch("insert into datasetproperty (dataSetId, propertyKey, propertyValue, createDate )" +
             " values (:dataSetId, :propertyKey, :propertyValue, :createDate)")
-    void insertDataSetsProperties(@BindBean List<DataSetProperty> dataSetPropertiesList);
+    void insertDatasetProperties(@BindBean List<DataSetProperty> dataSetPropertiesList);
 
     @SqlBatch("delete from datasetproperty where dataSetId = :dataSetId")
     void deleteDataSetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
+
+    @SqlUpdate("DELETE FROM datasetproperty WHERE datasetid = :datasetId")
+    void deleteDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
+
+    @SqlUpdate("INSERT INTO dataset_audit (datasetid, changeaction, modifiedbyuser, modificationdate, objectid, name, active) VALUES (:dataSetId, :action, :user, :date, :objectId, :name, :active )")
+    @GetGeneratedKeys
+    Integer insertDataSetAudit(@BindBean DataSetAudit dataSets);
+
+    @SqlUpdate("DELETE FROM dataset_user_association WHERE datasetid = :datasetId")
+    void deleteUserAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
+
+    @SqlUpdate("DELETE FROM consentassociations WHERE datasetid = :datasetId")
+    void deleteConsentAssociationsByDataSetId(@Bind("datasetId") Integer datasetId);
 
     @SqlUpdate("UPDATE datasetproperty SET propertyvalue = :propertyValue WHERE datasetid = :datasetId AND propertykey = :propertyKey")
     void updateDatasetProperty(@Bind("datasetId") Integer datasetId, @Bind("propertyKey") Integer propertyKey, @Bind("propertyValue") String propertyValue);
@@ -73,14 +88,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("delete from dataset where dataSetId = :dataSetId")
     void deleteDataSets(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
-    @SqlUpdate("UPDATE dataset SET active = null, name = null, createdate = null, needs_approval = 0 WHERE datasetid = :dataSetId")
-    void logicalDatasetDelete(@Bind("dataSetId") Integer dataSetId);
+    @SqlUpdate("DELETE FROM dataset WHERE datasetid = :datasetId")
+    void deleteDatasetById(@Bind("datasetId") Integer datasetId);
 
     @SqlUpdate("update dataset set active = :active where dataSetId = :dataSetId")
     void updateDataSetActive(@Bind("dataSetId") Integer dataSetId, @Bind("active") Boolean active);
 
     @SqlUpdate("update dataset set needs_approval = :needs_approval where dataSetId = :dataSetId")
-    void updateDataSetNeedsApproval(@Bind("dataSetId") Integer dataSetId, @Bind("needs_approval") Boolean needs_approval);
+    void updateDatasetNeedsApproval(@Bind("dataSetId") Integer dataSetId, @Bind("needs_approval") Boolean needs_approval);
 
     @SqlUpdate("UPDATE dataset SET update_date = :updateDate, update_user_id = :updateUserId WHERE datasetid = :datasetId")
     void updateDatasetUpdateUserAndDate(@Bind("datasetId") Integer datasetId, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId);
@@ -88,36 +103,36 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
-          "INNER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
-          "INNER JOIN dictionary k ON k.keyid = dp.propertykey " +
-          "INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
-          "INNER JOIN consents c ON c.consentid = ca.consentid " +
+          "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey " +
+          "LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid " +
           "INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
           "INNER JOIN dacuser u ON ur.user_id = u.dacuserid " +
           "WHERE u.dacuserid = :dacUserId AND d.name IS NOT NULL " +
           "ORDER BY d.datasetid, k.displayorder")
-    Set<DataSetDTO> findDatasetsByUser(@Bind("dacUserId") Integer dacUserId);
+    Set<DatasetDTO> findDatasetsByUser(@Bind("dacUserId") Integer dacUserId);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
-          "INNER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
-          "INNER JOIN dictionary k ON k.keyid = dp.propertykey " +
-          "INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
-          "INNER JOIN consents c ON c.consentid = ca.consentid " +
+          "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey " +
+          "LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid " +
           "WHERE d.name IS NOT NULL AND d.active = true " +
           "ORDER BY d.datasetid, k.displayorder")
-    Set<DataSetDTO> findActiveDatasets();
+    Set<DatasetDTO> findActiveDatasets();
 
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
-          "INNER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
-          "INNER JOIN dictionary k ON k.keyid = dp.propertykey " +
-          "INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
-          "INNER JOIN consents c ON c.consentid = ca.consentid " +
+          "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey " +
+          "LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
+          "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid " +
           "ORDER BY d.datasetid, k.displayorder")
-    Set<DataSetDTO> findAllDatasets();
+    Set<DatasetDTO> findAllDatasets();
 
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
@@ -127,7 +142,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
           "LEFT OUTER JOIN consentassociations ca on ca.datasetid = d.datasetid " +
           "LEFT OUTER JOIN consents c on c.consentid = ca.consentid " +
           "WHERE d.datasetid = :datasetId ORDER BY d.datasetid, k.displayorder")
-    Set<DataSetDTO> findDatasetDTOWithPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
+    Set<DatasetDTO> findDatasetDTOWithPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
     @UseRowMapper(DatasetPropertyMapper.class)
     @SqlQuery(
@@ -140,7 +155,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
             "where d.dataSetId in (<dataSetIdList>) order by d.dataSetId, k.receiveOrder")
-    Set<DataSetDTO> findDataSetsByReceiveOrder(@BindList("dataSetIdList") List<Integer> dataSetIdList);
+    Set<DatasetDTO> findDataSetsByReceiveOrder(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
     @RegisterRowMapper(DictionaryMapper.class)
     @SqlQuery("SELECT * FROM dictionary d order by receiveOrder")
@@ -156,10 +171,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("SELECT ds.* FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ca.consentId = :consentId")
     List<DataSet> getDataSetsForConsent(@Bind("consentId") String consentId);
 
-    @RegisterRowMapper(AssociationMapper.class)
-    @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId IN (<dataSetIdList>)")
-    List<Association> getAssociationsForDataSetIdList(@BindList("dataSetIdList") List<Integer> dataSetIdList);
-
     @SqlQuery("SELECT ca.consentId FROM consentassociations ca INNER JOIN dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId = :dataSetId")
     String getAssociatedConsentIdByDataSetId(@Bind("dataSetId") Integer dataSetId);
 
@@ -169,20 +180,18 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("SELECT * FROM dataset WHERE datasetid in (<dataSetIds>) ")
     List<DataSet> findDatasetsByIdList(@BindList("dataSetIds") List<Integer> dataSetIds);
 
-    @SqlQuery("select MAX(alias) from dataset")
-    Integer findLastAlias();
-
     /**
      * User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
      *
      * @param email User email
      * @return List of datasets that are visible to the user via DACs.
      */
-    @SqlQuery(" select d.* from dataset d " +
-            " inner join consentassociations a on d.dataSetId = a.dataSetId " +
-            " inner join consents c on a.consentId = c.consentId " +
-            " inner join user_role ur on ur.dac_id = c.dac_id " +
-            " inner join dacuser u on ur.user_id = u.dacUserId and u.email = :email ")
+    @SqlQuery(" SELECT d.* " +
+            " FROM dataset d " +
+            " LEFT OUTER JOIN consentassociations a ON d.dataSetId = a.dataSetId " +
+            " LEFT OUTER JOIN consents c ON a.consentId = c.consentId " +
+            " INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
+            " INNER JOIN dacuser u ON ur.user_id = u.dacUserId and u.email = :email ")
     List<DataSet> findDataSetsByAuthUserEmail(@Bind("email") String email);
 
     /**
@@ -209,7 +218,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " inner join consentassociations a on a.dataSetId = d.dataSetId " +
             " inner join consents c on c.consentId = a.consentId " +
             " where c.dac_id = :dacId ")
-    Set<DataSetDTO> findDatasetsByDac(@Bind("dacId") Integer dacId);
+    Set<DatasetDTO> findDatasetsByDac(@Bind("dacId") Integer dacId);
 
     /**
      * DACs -> Consents -> Consent Associations -> DataSets
@@ -225,7 +234,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " INNER JOIN consentassociations a ON a.datasetid = d.datasetid " +
             " INNER JOIN consents c ON c.consentid = a.consentid " +
             " WHERE c.dac_id IS NOT NULL ")
-    Set<DataSetDTO> findDatasetsWithDacs();
+    Set<DatasetDTO> findDatasetsWithDacs();
 
     /**
      * DACs -> Consents -> Consent Associations -> DataSets

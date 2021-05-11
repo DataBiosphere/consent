@@ -18,7 +18,7 @@ import javax.ws.rs.core.UriInfo;
 
 import java.util.Optional;
 
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 
 public class OAuthCustomAuthFilterTest {
@@ -50,7 +50,7 @@ public class OAuthCustomAuthFilterTest {
         when(requestContext.getHeaders()).thenReturn(headers);
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
         when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
-        when(authenticator.authenticate(anyObject())).thenReturn(principal);
+        when(authenticator.authenticate(notNull())).thenReturn(principal);
         filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, userRoleDAO));
         googleUser = new GoogleUser();
         googleUser.setName("Test User");

@@ -9,8 +9,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,13 +34,11 @@ import java.util.List;
 public class ConsentAssociationResource extends Resource {
 
     private final ConsentService consentService;
-    private final DACUserAPI dacUserAPI;
     private final UserService userService;
 
     @Inject
     public ConsentAssociationResource(ConsentService consentService, UserService userService) {
         this.consentService = consentService;
-        this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.userService = userService;
     }
 

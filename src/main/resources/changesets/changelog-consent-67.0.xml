@@ -1,0 +1,53 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="67.0" author="raejohanek">
+        <createTable tableName="library_card">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint"/>
+            <column name="institution_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="era_commons_id" type="varchar(255)"/>
+            <column name="user_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_email" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="update_user_id" type="bigint"/>
+            <column name="update_date" type="DATETIME"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="library_card" constraintName="fkLibraryCardUser"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="dacuserid" referencedTableName="dacuser"
+                                 referencesUniqueColumn="false"/>
+        <addForeignKeyConstraint baseColumnNames="institution_id" baseTableName="library_card" constraintName="fkLibraryCardInstitution"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="institution_id" referencedTableName="institution"
+                                 referencesUniqueColumn="false"/>
+        <addForeignKeyConstraint baseColumnNames="create_user_id" baseTableName="library_card" constraintName="fkLibraryCardCreateUser"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="dacuserid" referencedTableName="dacuser"
+                                 referencesUniqueColumn="false"/>
+        <addForeignKeyConstraint baseColumnNames="update_user_id" baseTableName="library_card" constraintName="fkLibraryCardUpdateUser"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="dacuserid" referencedTableName="dacuser"
+                                 referencesUniqueColumn="false"/>
+        <rollback>
+            <dropTable cascadeConstraints="true" tableName="library_card"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

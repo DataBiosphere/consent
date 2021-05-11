@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -12,15 +13,19 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
 public class UserService {
 
@@ -28,13 +33,15 @@ public class UserService {
     private final UserDAO userDAO;
     private final UserRoleDAO userRoleDAO;
     private final VoteDAO voteDAO;
+    private final InstitutionDAO institutionDAO;
 
     @Inject
-    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO) {
+    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO) {
         this.userDAO = userDAO;
         this.userPropertyDAO = userPropertyDAO;
         this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
+        this.institutionDAO = institutionDAO;
     }
 
     public User createUser(User user) {
@@ -99,6 +106,61 @@ public class UserService {
         return userPropertyDAO.findResearcherPropertiesByUser(userId);
     }
 
+    public List<User> describeAdminUsersThatWantToReceiveMails() {
+        return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
+    }
+
+    public User updateUserStatus(String status, Integer userId) {
+        Integer statusId = RoleStatus.getValueByStatus(status);
+        validateExistentUserById(userId);
+        if (statusId == null) {
+            throw new IllegalArgumentException(status + " is not a valid status.");
+        }
+        userDAO.updateUserStatus(statusId, userId);
+        return userDAO.findUserById(userId);
+    }
+
+    public User updateUserRationale(String rationale, Integer userId) {
+        validateExistentUserById(userId);
+        if (rationale == null) {
+            throw new IllegalArgumentException("Rationale is required.");
+        }
+        userDAO.updateUserRationale(rationale, userId);
+        return userDAO.findUserById(userId);
+    }
+
+    public User updateDACUserById(Map<String, User> dac, Integer id) throws IllegalArgumentException, NotFoundException {
+        User updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
+        // validate user exists
+        User existingUser = userDAO.findUserById(id);
+        if (Objects.isNull(existingUser)) {
+            throw new NotFoundException("The user for the specified id does not exist");
+        }
+        // validate required fields are not null or empty
+        if (StringUtils.isEmpty(updatedUser.getDisplayName())) {
+            updatedUser.setDisplayName(existingUser.getDisplayName());
+        }
+
+        if (Objects.isNull(updatedUser.getInstitutionId())) {
+            updatedUser.setInstitutionId(existingUser.getInstitutionId());
+        }
+
+        if (Objects.nonNull(updatedUser.getInstitutionId()) && !checkForValidInstitution(updatedUser.getInstitutionId())) {
+            throw new BadRequestException("Institution with the given id does not exist");
+        }
+
+        try {
+            userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail(), updatedUser.getInstitutionId());
+        } catch (UnableToExecuteStatementException e) {
+            throw new IllegalArgumentException("Email shoud be unique.");
+        }
+        return userDAO.findUserById(id);
+    }
+
+    public void updateEmailPreference(boolean preference, Integer userId) {
+        userDAO.updateEmailPreference(preference, userId);
+    }
+
     private void validateRequiredFields(User user) {
         if (Objects.isNull(user.getDisplayName()) || StringUtils.isEmpty(user.getDisplayName())) {
             throw new BadRequestException("Display Name cannot be empty");
@@ -116,6 +178,12 @@ public class UserService {
         });
     }
 
+    private void validateExistentUserById(Integer id) {
+        if (userDAO.findUserById(id) == null) {
+            throw new NotFoundException("The user for the specified id does not exist");
+        }
+    }
+
     public void insertUserRoles(List<UserRole> roles, Integer dacUserId) {
         roles.forEach(r -> {
             if (r.getRoleId() == null) {
@@ -123,6 +191,11 @@ public class UserService {
             }
         });
         userRoleDAO.insertUserRoles(roles, dacUserId);
+    }
+
+    private Boolean checkForValidInstitution(Integer institutionId) {
+        Integer existingId = institutionDAO.checkForExistingInstitution(institutionId);
+        return Objects.nonNull(existingId) && existingId > 0;
     }
 
 }

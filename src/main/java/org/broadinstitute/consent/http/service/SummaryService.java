@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -36,7 +36,7 @@ public class SummaryService {
     private final VoteDAO voteDAO;
     private final ElectionDAO electionDAO;
     private final UserDAO userDAO;
-    private final DataSetDAO datasetDAO;
+    private final DatasetDAO datasetDAO;
     private final MatchDAO matchDAO;
     private final DataAccessRequestService dataAccessRequestService;
     private static final String SEPARATOR = "\t";
@@ -46,7 +46,7 @@ public class SummaryService {
 
     @Inject
     public SummaryService(DataAccessRequestService dataAccessRequestService, VoteDAO dao,
-        ElectionDAO electionDAO, UserDAO userDAO, DataSetDAO datasetDAO,
+        ElectionDAO electionDAO, UserDAO userDAO, DatasetDAO datasetDAO,
         MatchDAO matchDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.voteDAO = dao;

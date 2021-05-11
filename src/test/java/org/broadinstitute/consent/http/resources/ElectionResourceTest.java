@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.api.client.http.HttpStatusCodes;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -16,10 +17,10 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -29,6 +30,8 @@ public class ElectionResourceTest {
     private final int OK = HttpStatusCodes.STATUS_CODE_OK;
     private final int NOT_FOUND = HttpStatusCodes.STATUS_CODE_NOT_FOUND;
     private final int ERROR = HttpStatusCodes.STATUS_CODE_SERVER_ERROR;
+
+    private final AuthUser authUser = new AuthUser("test@test.com");
 
     @Mock
     VoteService voteService;
@@ -123,6 +126,20 @@ public class ElectionResourceTest {
         electionResource = new ElectionResource(voteService, electionService);
         Response response = electionResource.isDataSetElectionOpen(null);
         Assert.assertEquals(ERROR, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeVotesOnElection() {
+        Response response = electionResource.describeVotesOnElection(authUser, randomInt());
+        Assert.assertEquals(OK, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeVotesOnElectionError() {
+        when(voteService.findVotesByElectionId(any())).thenThrow(new NotFoundException());
+        electionResource = new ElectionResource(voteService, electionService);
+        Response response = electionResource.describeVotesOnElection(authUser, any());
+        Assert.assertEquals(NOT_FOUND, response.getStatus());
     }
 
     private static int randomInt() {

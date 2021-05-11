@@ -26,9 +26,9 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.Before;
 import org.junit.Test;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import org.mockito.Mock;
@@ -55,9 +55,9 @@ public class InstitutionResourceTest {
     Institution mockInstitution = new Institution();
     mockInstitution.setName("Test Name");
     mockInstitution.setCreateDate(new Date());
-    mockInstitution.setCreateUser(1);
+    mockInstitution.setCreateUserId(1);
     mockInstitution.setUpdateDate(new Date());
-    mockInstitution.setUpdateUser(1);
+    mockInstitution.setUpdateUserId(1);
     mockInstitution.setId(1);
     return mockInstitution;
   }

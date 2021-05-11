@@ -5,7 +5,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.UserRole;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,10 +22,9 @@ public class UserAuthorizer implements Authorizer<AuthUser> {
     public boolean authorize(AuthUser user, String role) {
         boolean authorize = false;
         if (StringUtils.isNotEmpty(role)) {
-            List<UserRole> roles = userRoleDAO.findRolesByUserEmail(user.getName());
+            List<String> roles = userRoleDAO.findRoleNamesByUserEmail(user.getName());
             List<String> existentRole = roles.stream()
-                    .filter(r -> r.getName().equalsIgnoreCase(role))
-                    .map(UserRole::getName)
+                    .filter(r -> r.equalsIgnoreCase(role))
                     .collect(Collectors.toCollection(ArrayList::new));
             if (CollectionUtils.isNotEmpty(existentRole)) {
                 authorize = true;

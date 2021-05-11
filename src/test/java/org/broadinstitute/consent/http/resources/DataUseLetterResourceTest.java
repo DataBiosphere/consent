@@ -10,19 +10,12 @@ import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.ws.rs.core.MediaType;
 import java.io.File;
@@ -31,17 +24,11 @@ import java.io.InputStream;
 import java.util.UUID;
 
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings("deprecation")
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore("jdk.internal.reflect.*")
-@PrepareForTest({
-        AbstractDACUserAPI.class
-})
 public class DataUseLetterResourceTest {
 
     @Mock
@@ -50,8 +37,6 @@ public class DataUseLetterResourceTest {
     private GCSStore store;
     @Mock
     private ConsentService consentService;
-    @Mock
-    private DACUserAPI dacUserAPI;
     @Mock
     private AuditService auditService;
     @Mock
@@ -63,7 +48,6 @@ public class DataUseLetterResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractDACUserAPI.class);
     }
 
     private void initResource() {
@@ -71,7 +55,6 @@ public class DataUseLetterResourceTest {
         user.setEmail(this.user.getName());
         user.setDacUserId(1);
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         resource = new DataUseLetterResource(auditService, store, userService, consentService);
     }
 

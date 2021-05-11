@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Type;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacDecisionMetrics;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
@@ -26,11 +26,11 @@ import java.util.stream.Collectors;
 public class MetricsService {
 
   private final DacService dacService;
-  private final DataSetDAO dataSetDAO;
+  private final DatasetDAO dataSetDAO;
   private final MetricsDAO metricsDAO;
 
   @Inject
-  public MetricsService(DacService dacService, DataSetDAO dataSetDAO, MetricsDAO metricsDAO) {
+  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, MetricsDAO metricsDAO) {
     this.dacService = dacService;
     this.dataSetDAO = dataSetDAO;
     this.metricsDAO = metricsDAO;
@@ -125,7 +125,7 @@ public class MetricsService {
       return darMetrics;
     } else {
       List<Dac> allDacs = dacService.findAllDacsWithMembers();
-      Set<DataSetDTO> datasetsDacs = dataSetDAO.findDatasetsWithDacs();
+      Set<DatasetDTO> datasetsDacs = dataSetDAO.findDatasetsWithDacs();
       return allDacs.stream()
         .map(
           dac -> {
@@ -134,7 +134,7 @@ public class MetricsService {
                 .filter(m -> Objects.nonNull(m.getDacName()))
                 .filter(m -> m.getDacName().equalsIgnoreCase(dac.getName()))
                 .collect(Collectors.toList());
-            List<DataSetDTO> dacFilteredDatasets =
+            List<DatasetDTO> dacFilteredDatasets =
               datasetsDacs.stream()
                 .filter(ds -> ds.getDacId().equals(dac.getDacId()))
                 .collect(Collectors.toList());

@@ -19,7 +19,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -34,7 +34,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
@@ -43,13 +43,13 @@ public class DacService {
 
     private final DacDAO dacDAO;
     private final UserDAO userDAO;
-    private final DataSetDAO dataSetDAO;
+    private final DatasetDAO dataSetDAO;
     private final ElectionDAO electionDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final VoteService voteService;
 
     @Inject
-    public DacService(DacDAO dacDAO, UserDAO userDAO, DataSetDAO dataSetDAO,
+    public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
                       ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
                       VoteService voteService) {
         this.dacDAO = dacDAO;
@@ -162,8 +162,8 @@ public class DacService {
         return userDAO.findUserById(id);
     }
 
-    public Set<DataSetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
-        Set<DataSetDTO> datasets = dataSetDAO.findDatasetsByDac(dacId);
+    public Set<DatasetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
+        Set<DatasetDTO> datasets = dataSetDAO.findDatasetsByDac(dacId);
         if (isAuthUserAdmin(authUser)) {
             return datasets;
         }

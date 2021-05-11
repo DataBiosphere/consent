@@ -11,12 +11,12 @@
 
   <properties>
     <java.version>11</java.version>
-    <liquibase.version>4.3.2</liquibase.version>
+    <liquibase.version>4.3.5</liquibase.version>
     <dropwizard.version>2.0.21</dropwizard.version>
     <owl.version>5.1.17</owl.version>
-    <postgres.version>42.2.19</postgres.version>
-    <rdf4j-rio.version>3.6.2</rdf4j-rio.version>
-    <swagger.ui.version>3.46.0</swagger.ui.version>
+    <postgres.version>42.2.20</postgres.version>
+    <rdf4j-rio.version>3.6.3</rdf4j-rio.version>
+    <swagger.ui.version>3.48.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -69,7 +69,7 @@
         <groupId>pl.project13.maven</groupId>
         <artifactId>git-commit-id-plugin</artifactId>
         <!-- 4.0.1 seems to break when formatted as json -->
-        <version>4.0.0</version>
+        <version>4.0.4</version>
         <executions>
           <execution>
             <id>get-the-git-infos</id>
@@ -135,7 +135,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.6</version>
+        <version>0.8.7</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -230,7 +230,7 @@
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
-        <version>6.1.5</version>
+        <version>6.1.6</version>
         <executions>
           <execution>
             <goals>
@@ -249,7 +249,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.18.1</version>
+        <version>3.20.0</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -294,14 +294,14 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.12.1</version>
+      <version>2.12.3</version>
     </dependency>
 
     <!-- Addressing OWASP warning: https://nvd.nist.gov/vuln/detail/CVE-2020-25649 -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>2.12.2</version>
+      <version>2.12.3</version>
     </dependency>
 
     <dependency>
@@ -320,7 +320,7 @@
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>sendgrid-java</artifactId>
-      <version>4.4.1</version>
+      <version>4.7.2</version>
       <exclusions>
           <exclusion>
               <groupId>com.fasterxml.jackson.core</groupId>
@@ -452,35 +452,14 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.13.1</version>
+      <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>1.10.19</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-module-junit4</artifactId>
-      <version>2.0.9</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-core</artifactId>
-      <version>1.7.4</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-api-mockito</artifactId>
-      <version>1.7.4</version>
+      <version>3.9.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -512,7 +491,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>30.1-jre</version>
+      <version>30.1.1-jre</version>
     </dependency>
 
     <!-- Pulling in directly to evict older, transitive dependencies -->
@@ -537,14 +516,14 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.15.2</version>
+      <version>1.15.3</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
-      <version>1.31.3</version>
+      <version>1.31.4</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.guava</groupId>
@@ -567,7 +546,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>1.113.14</version>
+      <version>1.113.16</version>
     </dependency>
 
     <dependency>
@@ -615,7 +594,7 @@
     <dependency>
       <groupId>org.mongodb</groupId>
       <artifactId>mongo-java-driver</artifactId>
-      <version>3.3.0</version>
+      <version>3.12.8</version>
     </dependency>
 
     <dependency>
@@ -634,14 +613,14 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>7.12.0</version>
+      <version>7.12.1</version>
     </dependency>
 
     <!-- Required for mocking ontology and elastic search responses -->
     <dependency>
       <groupId>org.mock-server</groupId>
       <artifactId>mockserver-netty</artifactId>
-      <version>5.11.1</version>
+      <version>5.11.2</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -767,7 +746,7 @@
     <dependency>
       <groupId>org.javassist</groupId>
       <artifactId>javassist</artifactId>
-      <version>3.27.0-GA</version>
+      <version>3.28.0-GA</version>
     </dependency>
 
     <!-- java 11 requirement -->
