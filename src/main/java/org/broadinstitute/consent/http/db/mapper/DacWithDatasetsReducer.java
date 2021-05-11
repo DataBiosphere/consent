@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -28,7 +28,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
               rowView.getColumn("dac_id", Integer.class), id -> rowView.getRow(Dac.class));
 
       if (Objects.nonNull(rowView.getColumn("datasetid", Integer.class))) {
-        DataSetDTO dto = rowView.getRow(DataSetDTO.class);
+        DatasetDTO dto = rowView.getRow(DatasetDTO.class);
 
         try { 
           //aliased fields must be set directly
@@ -36,7 +36,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
             Date createDate = rowView.getColumn("dataset_create_date", Date.class);
             dto.setCreateDate(createDate);
           }
-          
+
           if (Objects.nonNull(rowView.getColumn("dataset_update_date", Timestamp.class))) {
             Timestamp updateDate = rowView.getColumn("dataset_update_date", Timestamp.class);
             dto.setUpdateDate(updateDate);
@@ -74,7 +74,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
           dac.addDatasetDTO(dto);
         }
 
-        logger.info("extra line");
+        logger.info("extra line so I can confirm the dto has been added to the dac");
       }
     } catch (MappingException e) {
         logger.warn(e.getMessage());

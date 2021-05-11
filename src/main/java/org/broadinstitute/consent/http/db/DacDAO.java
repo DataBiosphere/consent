@@ -10,7 +10,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -33,7 +33,7 @@ public interface DacDAO extends Transactional<DacDAO> {
      * @return A Dac with Datasets
      */
     @RegisterBeanMapper(value = Dac.class)
-    @RegisterBeanMapper(value = DataSetDTO.class)
+    @RegisterBeanMapper(value = DatasetDTO.class)
     @UseRowReducer(DacWithDatasetsReducer.class)
     @SqlQuery("SELECT " +
                 " dac.dac_id, dac.name, dac.description, " +
