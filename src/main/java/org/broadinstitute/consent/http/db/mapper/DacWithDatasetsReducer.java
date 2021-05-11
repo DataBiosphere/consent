@@ -24,18 +24,16 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
       Dac dac =
           container.computeIfAbsent(
               rowView.getColumn("dac_id", Integer.class), id -> rowView.getRow(Dac.class));
+
       if (Objects.nonNull(rowView.getColumn("datasetid", Integer.class))) {
         DataSetDTO dto = rowView.getRow(DataSetDTO.class);
-        try {
-          if (Objects.nonNull(rowView.getColumn("consent_data_use", String.class))) {
-            String duStr = rowView.getColumn("consent_data_use", String.class);
-            Optional<DataUse> du = DataUse.parseDataUse(duStr);
-            du.ifPresent(dto::setDataUse);
-          }
-        } catch (MappingException e) {
-          logger.warn(e.getMessage());
-        }
-        try {
+
+          // if (Objects.nonNull(rowView.getColumn("consent_data_use", String.class))) {
+          //   String duStr = rowView.getColumn("consent_data_use", String.class);
+          //   Optional<DataUse> du = DataUse.parseDataUse(duStr);
+          //   du.ifPresent(dto::setDataUse);
+          // }
+
           if (Objects.nonNull(rowView.getColumn("dataset_alias", String.class))) {
             String dsAlias = rowView.getColumn("dataset_alias", String.class);
             try {
@@ -44,25 +42,20 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
               logger.error("Exception parsing dataset alias: " + dsAlias, e);
             }
           }
-        } catch (MappingException e) {
-            logger.warn(e.getMessage());
-        }
-        try {
-          if (Objects.nonNull(rowView.getColumn("propertyname", String.class))
-              && Objects.nonNull(rowView.getColumn("propertyvalue", String.class))) {
-            DataSetPropertyDTO propDTO =
-                new DataSetPropertyDTO(
-                    rowView.getColumn("propertyname", String.class),
-                    rowView.getColumn("propertyvalue", String.class));
-            dto.addProperty(propDTO);
-          }
-        } catch (MappingException e) {
-            logger.warn(e.getMessage());
-        }
+        
+          // if (Objects.nonNull(rowView.getColumn("propertyname", String.class))
+          //     && Objects.nonNull(rowView.getColumn("propertyvalue", String.class))) {
+          //   DataSetPropertyDTO propDTO =
+          //       new DataSetPropertyDTO(
+          //           rowView.getColumn("propertyname", String.class),
+          //           rowView.getColumn("propertyvalue", String.class));
+          //   dto.addProperty(propDTO);
+          // }
 
         if (Objects.nonNull(dto)) {
           dac.addDatasetDTO(dto);
         }
+
       }
     } catch (MappingException e) {
         logger.warn(e.getMessage());
