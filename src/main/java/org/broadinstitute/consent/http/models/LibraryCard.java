@@ -11,12 +11,12 @@ public class LibraryCard {
     private Integer userId;
     private Integer institutionId;
     private String eraCommonsId;
-    private String name;
-    private String email;
+    private String userName;
+    private String userEmail;
     private Date createDate;
-    private Integer createUser;
+    private Integer createUserId;
     private Date updateDate;
-    private Integer updateUser;
+    private Integer updateUserId;
 
   public LibraryCard() {
     this.createDate = new Date();
@@ -54,20 +54,20 @@ public class LibraryCard {
     this.eraCommonsId = eraCommonsId;
   }
 
-  public String getName() {
-    return name;
+  public String getUserName() {
+    return userName;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setUserName(String name) {
+    this.userName = name;
   }
 
-  public String getEmail() {
-    return email;
+  public String getUserEmail() {
+    return userEmail;
   }
 
-  public void setEmail(String email) {
-    this.email = email;
+  public void setUserEmail(String email) {
+    this.userEmail = email;
   }
 
   public Date getCreateDate() {
@@ -78,12 +78,12 @@ public class LibraryCard {
     this.createDate = createDate;
   }
 
-  public Integer getCreateUser() {
-    return createUser;
+  public Integer getCreateUserId() {
+    return createUserId;
   }
 
-  public void setCreateUser(Integer createUser) {
-    this.createUser = createUser;
+  public void setCreateUserId(Integer createUser) {
+    this.createUserId = createUser;
   }
 
   public Date getUpdateDate() {
@@ -94,12 +94,12 @@ public class LibraryCard {
     this.updateDate = updateDate;
   }
 
-  public Integer getUpdateUser() {
-    return updateUser;
+  public Integer getUpdateUserId() {
+    return updateUserId;
   }
 
-  public void setUpdateUser(Integer updateUser) {
-    this.updateUser = updateUser;
+  public void setUpdateUserId(Integer updateUser) {
+    this.updateUserId = updateUser;
   }
 
   @Override

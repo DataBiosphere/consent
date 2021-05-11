@@ -52,15 +52,15 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     String newValue = "New Value";
     LibraryCard card = createLibraryCard();
     Integer id = card.getId();
-    card.setName("name");
+    card.setUserName("name");
     Integer institutionId = createInstitution().getId();
     libraryCardDAO.updateLibraryCardById(id, userId, institutionId, newValue, newValue, newValue, userId, new Date());
     LibraryCard updated = libraryCardDAO.findLibraryCardById(id);
     System.out.println(new Gson().toJson(updated));
     assertEquals(newValue, updated.getEraCommonsId());
     assertEquals(institutionId, updated.getInstitutionId());
-    //assertEquals(newValue, updated.getName());
-    //assertEquals(userId, updated.getUpdateUser());
+    assertEquals(newValue, updated.getUserName());
+    assertEquals(userId, updated.getUpdateUserId());
   }
 
   @Test
@@ -98,9 +98,9 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     Integer id = card.getId();
     LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardById(id);
     assertEquals(cardFromDAO.getUserId(), card.getUserId());
-    assertEquals(cardFromDAO.getName(), card.getName());
-    assertEquals(cardFromDAO.getEmail(), card.getEmail());
-    assertEquals(cardFromDAO.getCreateUser(), card.getCreateUser());
+    assertEquals(cardFromDAO.getUserName(), card.getUserName());
+    assertEquals(cardFromDAO.getUserEmail(), card.getUserEmail());
+    assertEquals(cardFromDAO.getCreateUserId(), card.getCreateUserId());
     assertEquals(cardFromDAO.getCreateDate(), card.getCreateDate());
   }
 
