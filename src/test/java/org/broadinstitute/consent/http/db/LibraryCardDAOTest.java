@@ -56,7 +56,6 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     Integer institutionId = createInstitution().getId();
     libraryCardDAO.updateLibraryCardById(id, userId, institutionId, newValue, newValue, newValue, userId, new Date());
     LibraryCard updated = libraryCardDAO.findLibraryCardById(id);
-    System.out.println(new Gson().toJson(updated));
     assertEquals(newValue, updated.getEraCommonsId());
     assertEquals(institutionId, updated.getInstitutionId());
     assertEquals(newValue, updated.getUserName());
