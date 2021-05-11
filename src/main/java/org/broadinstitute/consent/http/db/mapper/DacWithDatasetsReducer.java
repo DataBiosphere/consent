@@ -10,6 +10,8 @@ import org.jdbi.v3.core.result.RowView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,11 +30,17 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
       if (Objects.nonNull(rowView.getColumn("datasetid", Integer.class))) {
         DataSetDTO dto = rowView.getRow(DataSetDTO.class);
 
-          // if (Objects.nonNull(rowView.getColumn("consent_data_use", String.class))) {
-          //   String duStr = rowView.getColumn("consent_data_use", String.class);
-          //   Optional<DataUse> du = DataUse.parseDataUse(duStr);
-          //   du.ifPresent(dto::setDataUse);
-          // }
+        try { 
+          //aliased fields must be set directly
+          if (Objects.nonNull(rowView.getColumn("dataset_create_date", Date.class))) {
+            Date createDate = rowView.getColumn("dataset_create_date", Date.class);
+            dto.setCreateDate(createDate);
+          }
+          
+          if (Objects.nonNull(rowView.getColumn("dataset_update_date", Timestamp.class))) {
+            Timestamp updateDate = rowView.getColumn("dataset_update_date", Timestamp.class);
+            dto.setUpdateDate(updateDate);
+          }
 
           if (Objects.nonNull(rowView.getColumn("dataset_alias", String.class))) {
             String dsAlias = rowView.getColumn("dataset_alias", String.class);
@@ -42,7 +50,17 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
               logger.error("Exception parsing dataset alias: " + dsAlias, e);
             }
           }
+        } catch (Exception e) {
+          //no values for these columns
+        }
+
         
+          // if (Objects.nonNull(rowView.getColumn("consent_data_use", String.class))) {
+          //   String duStr = rowView.getColumn("consent_data_use", String.class);
+          //   Optional<DataUse> du = DataUse.parseDataUse(duStr);
+          //   du.ifPresent(dto::setDataUse);
+          // }
+
           // if (Objects.nonNull(rowView.getColumn("propertyname", String.class))
           //     && Objects.nonNull(rowView.getColumn("propertyvalue", String.class))) {
           //   DataSetPropertyDTO propDTO =
@@ -56,6 +74,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
           dac.addDatasetDTO(dto);
         }
 
+        logger.info("extra line");
       }
     } catch (MappingException e) {
         logger.warn(e.getMessage());
