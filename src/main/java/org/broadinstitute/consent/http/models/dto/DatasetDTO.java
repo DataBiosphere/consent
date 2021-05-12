@@ -14,6 +14,9 @@ import org.broadinstitute.consent.http.models.DataUse;
 public class DatasetDTO {
 
     @JsonProperty
+    private String datasetName;
+
+    @JsonProperty
     private Integer dacId;
 
     @JsonProperty
@@ -65,6 +68,14 @@ public class DatasetDTO {
     public DataUse dataUse;
 
     public DatasetDTO() {
+    }
+
+    public String getDatasetName() {
+        return datasetName;
+    }
+
+    public void setDatasetName(String datasetName) {
+        this.datasetName = datasetName;
     }
 
     public Integer getDacId() {
