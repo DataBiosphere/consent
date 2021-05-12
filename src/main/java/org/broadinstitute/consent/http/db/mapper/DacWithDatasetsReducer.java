@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db.mapper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -22,7 +21,9 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
 
   @Override
   public void accumulate(Map<Integer, Dac> container, RowView rowView) {
+
     try {
+
       Dac dac =
           container.computeIfAbsent(
               rowView.getColumn("dac_id", Integer.class), id -> rowView.getRow(Dac.class));
@@ -31,7 +32,15 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
         DatasetDTO dto = rowView.getRow(DatasetDTO.class);
 
         try { 
-          //aliased fields must be set directly
+          if (Objects.nonNull(rowView.getColumn("dataset_alias", String.class))) {
+            String dsAlias = rowView.getColumn("dataset_alias", String.class);
+            try {
+              dto.setAlias(Integer.parseInt(dsAlias));
+            } catch (Exception e) {
+              logger.error("Exception parsing dataset alias: " + dsAlias, e);
+            }
+          }
+
           if (Objects.nonNull(rowView.getColumn("dataset_create_date", Date.class))) {
             Date createDate = rowView.getColumn("dataset_create_date", Date.class);
             dto.setCreateDate(createDate);
@@ -42,39 +51,20 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
             dto.setUpdateDate(updateDate);
           }
 
-          if (Objects.nonNull(rowView.getColumn("dataset_alias", String.class))) {
-            String dsAlias = rowView.getColumn("dataset_alias", String.class);
-            try {
-              dto.setAlias(Integer.parseInt(dsAlias));
-            } catch (Exception e) {
-              logger.error("Exception parsing dataset alias: " + dsAlias, e);
-            }
-          }
         } catch (Exception e) {
           //no values for these columns
         }
-
         
-          // if (Objects.nonNull(rowView.getColumn("consent_data_use", String.class))) {
-          //   String duStr = rowView.getColumn("consent_data_use", String.class);
-          //   Optional<DataUse> du = DataUse.parseDataUse(duStr);
-          //   du.ifPresent(dto::setDataUse);
-          // }
-
-          // if (Objects.nonNull(rowView.getColumn("propertyname", String.class))
-          //     && Objects.nonNull(rowView.getColumn("propertyvalue", String.class))) {
-          //   DataSetPropertyDTO propDTO =
-          //       new DataSetPropertyDTO(
-          //           rowView.getColumn("propertyname", String.class),
-          //           rowView.getColumn("propertyvalue", String.class));
-          //   dto.addProperty(propDTO);
-          // }
+        if (Objects.nonNull(rowView.getColumn("consent_data_use", String.class))) {
+          String duStr = rowView.getColumn("consent_data_use", String.class);
+          Optional<DataUse> du = DataUse.parseDataUse(duStr);
+          du.ifPresent(dto::setDataUse);
+        }
 
         if (Objects.nonNull(dto)) {
           dac.addDatasetDTO(dto);
         }
 
-        logger.info("extra line so I can confirm the dto has been added to the dac");
       }
     } catch (MappingException e) {
         logger.warn(e.getMessage());
