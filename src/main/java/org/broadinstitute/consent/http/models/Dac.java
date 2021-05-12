@@ -37,6 +37,7 @@ public class Dac {
     @JsonProperty
     private List<User> members;
 
+    @JsonProperty
     private List<DatasetDTO> datasets;
 
     private List<Integer> electionIds = new ArrayList<>();
