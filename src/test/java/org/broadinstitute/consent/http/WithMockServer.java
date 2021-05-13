@@ -1,20 +1,21 @@
 package org.broadinstitute.consent.http;
 
-import org.mockserver.integration.ClientAndServer;
+import org.testcontainers.containers.MockServerContainer;
+import org.testcontainers.utility.DockerImageName;
 
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+import java.util.Objects;
 
 public interface WithMockServer {
 
-    default ClientAndServer startMockServer(int port) {
-        // Mockserver doesn't respect dropwizard log settings
-        ((ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory
-                .getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME))
-                .setLevel(ch.qos.logback.classic.Level.OFF);
-        ((ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory
-                .getLogger("org.mockserver"))
-                .setLevel(ch.qos.logback.classic.Level.OFF);
-        return startClientAndServer(port);
-    }
+  DockerImageName IMAGE = DockerImageName.parse("mockserver/mockserver:mockserver-5.11.2");
 
+  default void stop(MockServerContainer container) {
+    if (Objects.nonNull(container) && container.isRunning()) {
+      container.stop();
+    }
+  }
+
+  default String getRootUrl(MockServerContainer container) {
+    return container.getEndpoint() + "/";
+  }
 }

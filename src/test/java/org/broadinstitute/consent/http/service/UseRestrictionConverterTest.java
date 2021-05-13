@@ -1,15 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -17,28 +7,43 @@ import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.mockserver.integration.ClientAndServer;
+import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
+import org.testcontainers.containers.MockServerContainer;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
 
 public class UseRestrictionConverterTest implements WithMockServer {
 
-    private ClientAndServer mockServer;
-    private final Integer port = 9300;
+    private MockServerClient client;
+
+    @Rule
+    public MockServerContainer container = new MockServerContainer(IMAGE);
 
     @Before
     public void startUp() {
-        mockServer = startMockServer(port);
+        client = new MockServerClient(container.getHost(), container.getServerPort());
     }
 
     @After
     public void tearDown() {
-        mockServer.stop();
+        stop(container);
     }
 
     private void mockSuccess() {
-        mockServer.reset();
-        mockServer.when(
+        client.reset();
+        client.when(
             request()
                 .withMethod("POST")
                 .withPath("/schemas/data-use/dar/translate")
@@ -51,8 +56,8 @@ public class UseRestrictionConverterTest implements WithMockServer {
     }
 
     private void mockFailure() {
-        mockServer.reset();
-        mockServer.when(
+        client.reset();
+        client.when(
             request()
                 .withMethod("POST")
                 .withPath("/schemas/data-use/dar/translate")
@@ -67,7 +72,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
     public ServicesConfiguration config() {
         ServicesConfiguration config = new ServicesConfiguration();
         config.setLocalURL("http://localhost:8180/");
-        config.setOntologyURL("http://localhost:" + port + "/");
+        config.setOntologyURL(getRootUrl(container));
         return config;
     }
 

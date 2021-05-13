@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service.ontology;
 
-import java.nio.charset.Charset;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
@@ -9,6 +8,7 @@ import org.elasticsearch.client.RestClient;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("WeakerAccess")
@@ -18,7 +18,7 @@ public class ElasticSearchSupport {
         HttpHost[] hosts = configuration.
             getServers().
             stream().
-            map(server -> new HttpHost(server, 9200, "http")).
+            map(server -> new HttpHost(server, configuration.getPort(), "http")).
             collect(Collectors.toList()).toArray(new HttpHost[configuration.getServers().size()]);
         return RestClient.builder(hosts).build();
     }

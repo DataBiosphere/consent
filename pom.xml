@@ -520,6 +520,22 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Required for mocking ontology and elastic search instances -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>mockserver</artifactId>
+      <version>1.15.3</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Required for mocking client calls against ontology and elastic search -->
+    <dependency>
+      <groupId>org.mock-server</groupId>
+      <artifactId>mockserver-client-java</artifactId>
+      <version>5.11.2</version>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
@@ -614,32 +630,6 @@
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
       <version>7.12.1</version>
-    </dependency>
-
-    <!-- Required for mocking ontology and elastic search responses -->
-    <dependency>
-      <groupId>org.mock-server</groupId>
-      <artifactId>mockserver-netty</artifactId>
-      <version>5.11.2</version>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-        <!--
-          The following clashes with jakarta.validation:jakarta.validation-api and
-          prevents configurations from loading when running locally
-        -->
-        <exclusion>
-          <groupId>javax.validation</groupId>
-          <artifactId>validation-api</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <!-- See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/11441966 -->
