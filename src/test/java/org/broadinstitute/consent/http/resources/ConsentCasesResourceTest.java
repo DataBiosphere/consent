@@ -4,10 +4,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
@@ -56,7 +58,36 @@ public class ConsentCasesResourceTest {
         Assert.assertNotNull(summary);
     }
 
+    @Test
+    public void testGetConsentSummaryDetailFileInvalid() {
+        initResource();
+        Response response = resource.getConsentSummaryDetailFile(UUID.randomUUID().toString(), null);
+        Assert.assertEquals(200, response.getStatus());
+        Object summaryFile = response.getEntity();
+        Assert.assertNull(summaryFile);
+    }
 
+    @Test
+    public void testGetConsentSummaryDetailFileDUL() throws Exception {
+        File file = File.createTempFile("temp", ".txt");
+        when(summaryService.describeConsentSummaryDetail()).thenReturn(file);
+        initResource();
+        Response response = resource.getConsentSummaryDetailFile(ElectionType.TRANSLATE_DUL.getValue(), null);
+        Assert.assertEquals(200, response.getStatus());
+        Object summaryFile = response.getEntity();
+        Assert.assertNotNull(summaryFile);
+    }
+
+    @Test
+    public void testGetConsentSummaryDetailFileDataAccess() throws Exception {
+        File file = File.createTempFile("temp", ".txt");
+        when(summaryService.describeDataAccessRequestSummaryDetail()).thenReturn(file);
+        initResource();
+        Response response = resource.getConsentSummaryDetailFile(ElectionType.DATA_ACCESS.getValue(), null);
+        Assert.assertEquals(200, response.getStatus());
+        Object summaryFile = response.getEntity();
+        Assert.assertNotNull(summaryFile);
+    }
     @Test
     public void testDescribeClosedElections() {
         when(electionService.describeClosedElectionsByType(anyString(), notNull())).thenReturn(Collections.emptyList());
