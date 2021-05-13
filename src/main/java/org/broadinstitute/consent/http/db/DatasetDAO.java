@@ -1,11 +1,13 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
+import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetAudit;
 import org.broadinstitute.consent.http.models.DataSetProperty;
@@ -179,6 +181,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     @SqlQuery("SELECT * FROM dataset WHERE datasetid in (<dataSetIds>) ")
     List<DataSet> findDatasetsByIdList(@BindList("dataSetIds") List<Integer> dataSetIds);
+
+    @RegisterRowMapper(AssociationMapper.class)
+    @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId IN (<dataSetIdList>)")
+    List<Association> getAssociationsForDataSetIdList(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
     /**
      * User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
