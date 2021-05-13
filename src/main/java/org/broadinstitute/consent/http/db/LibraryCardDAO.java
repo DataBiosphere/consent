@@ -60,6 +60,11 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
+  @SqlQuery("SELECT * FROM library_Card WHERE institution_id = :institutionId")
+  List<LibraryCard> findLibraryCardsByInstitutionId(@Bind("institutionId") Integer institutionId);
+
+  @RegisterBeanMapper(value = LibraryCard.class)
+  @UseRowReducer(LibraryCardReducer.class)
   @SqlQuery("SELECT * FROM library_card")
   List<LibraryCard> findAllLibraryCards();
 
