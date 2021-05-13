@@ -1,15 +1,16 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
+import org.broadinstitute.consent.http.db.mapper.DacWithDatasetsReducer;
 import org.broadinstitute.consent.http.db.mapper.RoleMapper;
-import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.db.mapper.UserRoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -23,11 +24,26 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @RegisterRowMapper(DacMapper.class)
 public interface DacDAO extends Transactional<DacDAO> {
 
-    @SqlQuery("select * from dac")
+    /**
+     * @return A Dac with Datasets
+     */
+    @RegisterBeanMapper(value = Dac.class)
+    @RegisterBeanMapper(value = DatasetDTO.class)
+    @UseRowReducer(DacWithDatasetsReducer.class)
+    @SqlQuery("SELECT " +
+                " dac.dac_id, dac.name, dac.description, " +
+                " d.datasetid, d.name AS dataset_name, DATE(d.createdate) AS dataset_create_date, d.objectid, d.active, d.needs_approval, " +
+                " d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, d.update_user_id, " +
+                " ca.consentid, c.translateduserestriction, c.datause as consent_data_use " +
+                " FROM dac " +
+                " LEFT OUTER JOIN consents c ON c.dac_id = dac.dac_id " +
+                " LEFT OUTER JOIN consentassociations ca ON ca.consentid = c.consentid " +
+                " LEFT OUTER JOIN dataset d ON ca.datasetid = d.datasetid")
     List<Dac> findAll();
 
     @SqlQuery("select distinct d.* from dac d " +
