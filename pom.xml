@@ -528,6 +528,7 @@
       <scope>test</scope>
     </dependency>
 
+
     <!-- Required for mocking client calls against ontology and elastic search -->
     <dependency>
       <groupId>org.mock-server</groupId>
