@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -40,6 +41,8 @@ public class SummaryServiceTest {
     @Mock
     private UserDAO userDAO;
     @Mock
+    private ConsentDAO consentDAO;
+    @Mock
     private DatasetDAO dataSetDAO;
     @Mock
     private MatchDAO matchDAO;
@@ -51,7 +54,7 @@ public class SummaryServiceTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        summaryService = Mockito.spy(new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, dataSetDAO, matchDAO));
+        summaryService = Mockito.spy(new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO, dataSetDAO, matchDAO));
     }
 
     // In this tests we won't validate the resulting file, we will just validate the methods being called for each response given by the mocks is accurate.
