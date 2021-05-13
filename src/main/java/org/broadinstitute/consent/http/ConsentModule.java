@@ -464,7 +464,8 @@ public class ConsentModule extends AbstractModule {
     LibraryCardService providesLibraryCardService() {
         return new LibraryCardService(
                 providesLibraryCardDAO(),
-                providesInstitutionDAO());
+                providesInstitutionDAO(),
+                providesUserDAO());
     }
 
     @Provides

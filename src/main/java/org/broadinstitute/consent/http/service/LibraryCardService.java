@@ -2,8 +2,10 @@ package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.User;
 
 import javax.ws.rs.NotFoundException;
 import java.util.Date;
@@ -14,14 +16,17 @@ public class LibraryCardService {
 
     private final LibraryCardDAO libraryCardDAO;
     private final InstitutionDAO institutionDAO;
+    private final UserDAO userDAO;
 
-    public LibraryCardService(LibraryCardDAO libraryCardDAO, InstitutionDAO institutionDAO) {
+    public LibraryCardService(LibraryCardDAO libraryCardDAO, InstitutionDAO institutionDAO, UserDAO userDAO) {
         this.libraryCardDAO = libraryCardDAO;
         this.institutionDAO = institutionDAO;
+        this.userDAO = userDAO;
     }
 
     public LibraryCard createLibraryCard(LibraryCard libraryCard, Integer userId) {
         checkUserId(userId);
+        checkForValidUser(libraryCard.getUserId());
         checkForValidInstitution(libraryCard.getInstitutionId());
 
         Date createDate = new Date();
@@ -41,6 +46,7 @@ public class LibraryCardService {
         LibraryCard updateCard = this.libraryCardDAO.findLibraryCardById(id);
         throwIfNull(updateCard);
         checkUserId(userId);
+        checkForValidUser(libraryCard.getUserId());
         checkForValidInstitution(libraryCard.getInstitutionId());
 
         Date updateDate = new Date();
@@ -87,6 +93,17 @@ public class LibraryCardService {
 
         if (Objects.isNull(institution)) {
             throw new IllegalArgumentException("Invalid Institution Id");
+        }
+    }
+
+    private void checkForValidUser(Integer userId) {
+        if (Objects.isNull(userId)) {
+            return;
+        }
+
+        User user = this.userDAO.findUserById(userId);
+        if (Objects.isNull(user)) {
+            throw new IllegalArgumentException("Invalid User Id");
         }
     }
 
