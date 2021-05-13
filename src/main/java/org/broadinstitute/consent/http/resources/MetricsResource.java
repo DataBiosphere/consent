@@ -36,9 +36,13 @@ public class MetricsResource extends Resource {
   }
 
   private Response getMetricsData(Type type) {
-    String header = metricsService.getHeaderRow(type);
-    StringBuilder tsv = new StringBuilder(header);
-    metricsService.generateDecisionMetrics(type).forEach(m -> tsv.append(m.toString(JOINER)));
-    return Response.ok(tsv.toString()).build();
+    try{
+      String header = metricsService.getHeaderRow(type);
+      StringBuilder tsv = new StringBuilder(header);
+      metricsService.generateDecisionMetrics(type).forEach(m -> tsv.append(m.toString(JOINER)));
+      return Response.ok(tsv.toString()).build();
+    } catch(Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 }
