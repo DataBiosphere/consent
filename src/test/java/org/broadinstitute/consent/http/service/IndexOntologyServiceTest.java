@@ -41,7 +41,7 @@ public class IndexOntologyServiceTest implements WithMockServer {
     private static final String INDEX_NAME = "test-index";
     private IndexOntologyService ontologyService;
     private final IndexerUtils indexUtils = new IndexerUtils();
-    private RestClient restClient;
+    private RestClient client;
 
     @Rule
     public MockServerContainer container = new MockServerContainer(IMAGE);
@@ -52,7 +52,7 @@ public class IndexOntologyServiceTest implements WithMockServer {
         configuration.setIndexName(INDEX_NAME);
         configuration.setServers(Collections.singletonList("localhost"));
         configuration.setPort(container.getServerPort());
-        restClient = ElasticSearchSupport.createRestClient(configuration);
+        client = ElasticSearchSupport.createRestClient(configuration);
         this.ontologyService = new IndexOntologyService(configuration);
         MockServerClient mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
         mockServerClient.when(request()).respond(response().withStatusCode(200));
@@ -157,7 +157,7 @@ public class IndexOntologyServiceTest implements WithMockServer {
     public void testBulkUploadTerms() {
         try {
             Collection<Term> terms = getTerms();
-            indexUtils.bulkUploadTerms(restClient, INDEX_NAME, terms);
+            indexUtils.bulkUploadTerms(client, INDEX_NAME, terms);
         } catch (Exception e) {
             Assert.fail(e.getMessage());
         }
@@ -166,7 +166,7 @@ public class IndexOntologyServiceTest implements WithMockServer {
     @Test
     public void testBulkDeprecateTerms() {
         try {
-            indexUtils.bulkDeprecateTerms(restClient, INDEX_NAME, "organization");
+            indexUtils.bulkDeprecateTerms(client, INDEX_NAME, "organization");
         } catch (Exception e) {
             Assert.fail(e.getMessage());
         }
