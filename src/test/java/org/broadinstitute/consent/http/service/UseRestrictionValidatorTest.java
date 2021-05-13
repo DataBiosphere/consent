@@ -19,9 +19,9 @@ import static org.mockserver.model.HttpResponse.response;
 
 public class UseRestrictionValidatorTest implements WithMockServer {
 
-    private UseRestrictionValidator validator;
-    private MockServerClient client;
     private final String useRestriction = new Everything().toString();
+    private MockServerClient client;
+    private UseRestrictionValidator validator;
 
     @Rule
     public MockServerContainer container = new MockServerContainer(IMAGE);
@@ -29,7 +29,7 @@ public class UseRestrictionValidatorTest implements WithMockServer {
     @Before
     public void startUp() {
         client = new MockServerClient(container.getHost(), container.getServerPort());
-        this.validator = new UseRestrictionValidator(ClientBuilder.newClient(), config());
+        validator = new UseRestrictionValidator(ClientBuilder.newClient(), config());
     }
 
     @After
