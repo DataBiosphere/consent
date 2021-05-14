@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -46,6 +47,7 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.InstitutionService;
+import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
@@ -92,6 +94,7 @@ public class ConsentModule extends AbstractModule {
     private final AssociationDAO associationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final InstitutionDAO institutionDAO;
+    private final LibraryCardDAO libraryCardDAO;
 
     public static final String DB_ENV = "postgresql";
 
@@ -126,6 +129,7 @@ public class ConsentModule extends AbstractModule {
         this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
         this.institutionDAO = this.jdbi.onDemand((InstitutionDAO.class));
+        this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
     }
 
     @Override
@@ -449,8 +453,19 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
+    LibraryCardDAO providesLibraryCardDAO() { return libraryCardDAO; }
+
+    @Provides
     InstitutionService providesInstitutionService() {
         return new InstitutionService(providesInstitutionDAO());
+    }
+
+    @Provides
+    LibraryCardService providesLibraryCardService() {
+        return new LibraryCardService(
+                providesLibraryCardDAO(),
+                providesInstitutionDAO(),
+                providesUserDAO());
     }
 
     @Provides

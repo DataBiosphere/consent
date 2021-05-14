@@ -78,6 +78,7 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.InstitutionService;
+import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
@@ -179,6 +180,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final UseRestrictionValidator useRestrictionValidator = injector.getProvider(UseRestrictionValidator.class).get();
         final MatchService matchService = injector.getProvider(MatchService.class).get();
         final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
+        final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class).get();
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);

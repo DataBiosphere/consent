@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -107,6 +108,16 @@ public class LibraryCardDAOTest extends DAOTestHelper {
   public void testFindLibraryCardByIdNegative() {
     LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardById(RandomUtils.nextInt(100, 200));
     assertNull(cardFromDAO);
+  }
+
+  @Test
+  public void testFindLibraryCardByInstitutionId() {
+    LibraryCard libraryCard = createLibraryCard();
+    List<LibraryCard> cardsFromDAO = libraryCardDAO.findLibraryCardsByInstitutionId(libraryCard.getInstitutionId());
+
+    assertNotNull(cardsFromDAO);
+    assertEquals(cardsFromDAO.size(), 1);
+    assertEquals(cardsFromDAO.get(0).getId(), libraryCard.getId());
   }
 
   @Test
