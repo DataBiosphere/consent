@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.configurations;
 
-import java.util.List;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 public class ElasticSearchConfiguration {
 
@@ -10,6 +10,11 @@ public class ElasticSearchConfiguration {
 
     @NotNull
     private List<String> servers;
+
+    /**
+     * This is configurable for testing purposes
+     */
+    private int port = 9200;
 
     public List<String> getServers() {
         return servers;
@@ -25,5 +30,13 @@ public class ElasticSearchConfiguration {
 
     public void setIndexName(String indexName) {
         this.indexName = indexName;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 }

@@ -12,8 +12,9 @@ import org.elasticsearch.client.RestClient;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.mockserver.integration.ClientAndServer;
+import org.mockserver.client.MockServerClient;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -22,6 +23,7 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
+import org.testcontainers.containers.MockServerContainer;
 
 import java.io.IOException;
 import java.net.URL;
@@ -38,26 +40,27 @@ public class IndexOntologyServiceTest implements WithMockServer {
 
     private static final String INDEX_NAME = "test-index";
     private IndexOntologyService ontologyService;
-    private IndexerUtils indexUtils = new IndexerUtils();
-    private ClientAndServer server;
+    private final IndexerUtils indexUtils = new IndexerUtils();
     private RestClient client;
+
+    @Rule
+    public MockServerContainer container = new MockServerContainer(IMAGE);
 
     @Before
     public void setUp() throws Exception {
         ElasticSearchConfiguration configuration = new ElasticSearchConfiguration();
         configuration.setIndexName(INDEX_NAME);
         configuration.setServers(Collections.singletonList("localhost"));
+        configuration.setPort(container.getServerPort());
         client = ElasticSearchSupport.createRestClient(configuration);
         this.ontologyService = new IndexOntologyService(configuration);
-        server = startMockServer(9200);
-        server.when(request()).respond(response().withStatusCode(200));
+        MockServerClient mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
+        mockServerClient.when(request()).respond(response().withStatusCode(200));
     }
 
     @After
-    public void shutDown() throws Exception {
-        if (server != null && server.isRunning()) {
-            server.stop();
-        }
+    public void tearDown() {
+        stop(container);
     }
 
     @Test

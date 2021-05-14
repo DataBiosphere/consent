@@ -2,11 +2,14 @@ package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.mockserver.integration.ClientAndServer;
+import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
+import org.testcontainers.containers.MockServerContainer;
 
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
@@ -16,34 +19,34 @@ import static org.mockserver.model.HttpResponse.response;
 
 public class UseRestrictionValidatorTest implements WithMockServer {
 
-    private ClientAndServer mockServer;
-    private final Integer port = 9300;
+    private final String useRestriction = new Everything().toString();
+    private MockServerClient client;
     private UseRestrictionValidator validator;
+
+    @Rule
+    public MockServerContainer container = new MockServerContainer(IMAGE);
 
     @Before
     public void startUp() {
-        mockServer = startMockServer(port);
+        client = new MockServerClient(container.getHost(), container.getServerPort());
+        validator = new UseRestrictionValidator(ClientBuilder.newClient(), config());
     }
 
     @After
     public void tearDown() {
-        mockServer.stop();
+        stop(container);
     }
 
     public ServicesConfiguration config() {
         ServicesConfiguration config = new ServicesConfiguration();
         config.setLocalURL("http://localhost:8180/");
-        config.setOntologyURL("http://localhost:" + port + "/");
+        config.setOntologyURL(getRootUrl(container));
         return config;
     }
 
-    public void initValidator() {
-        this.validator = new UseRestrictionValidator(ClientBuilder.newClient(), config());
-    }
-
     private void mockSuccess() {
-        mockServer.reset();
-        mockServer.when(
+        client.reset();
+        client.when(
             request()
                 .withMethod("POST")
                 .withPath("/validate/userestriction")
@@ -56,8 +59,8 @@ public class UseRestrictionValidatorTest implements WithMockServer {
     }
 
     private void mockInvalid() {
-        mockServer.reset();
-        mockServer.when(
+        client.reset();
+        client.when(
                 request()
                         .withMethod("POST")
                         .withPath("/validate/userestriction")
@@ -70,8 +73,8 @@ public class UseRestrictionValidatorTest implements WithMockServer {
     }
 
     private void mockFailure() {
-        mockServer.reset();
-        mockServer.when(
+        client.reset();
+        client.when(
             request()
                 .withMethod("POST")
                 .withPath("/validate/userestriction")
@@ -86,24 +89,18 @@ public class UseRestrictionValidatorTest implements WithMockServer {
     @Test(expected = IllegalArgumentException.class)
     public void testValidateUseRestriction_Failure() {
         mockFailure();
-        initValidator();
-        validator.validateUseRestriction("{ \"type\": \"everything\" }");
+        validator.validateUseRestriction(useRestriction);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testValidateUseRestriction_Invalid() {
-        String useRestriction = "{ \"type\": \"everything\" }";
         mockInvalid();
-        initValidator();
         validator.validateUseRestriction(useRestriction);
     }
 
     @Test
     public void testValidateUseRestriction_Success() {
-        String useRestriction = "{ \"type\": \"everything\" }";
         mockSuccess();
-        initValidator();
-
         try {
             validator.validateUseRestriction(useRestriction);
             assert true;
