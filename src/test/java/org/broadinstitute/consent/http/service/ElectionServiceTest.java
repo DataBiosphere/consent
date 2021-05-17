@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -31,6 +32,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
@@ -70,6 +72,8 @@ public class ElectionServiceTest {
     @Mock
     private DatasetDAO dataSetDAO;
     @Mock
+    private LibraryCardDAO libraryCardDAO;
+    @Mock
     private DatasetAssociationDAO datasetAssociationDAO;
     @Mock
     private DacService dacService;
@@ -97,6 +101,7 @@ public class ElectionServiceTest {
     private static Vote sampleVoteChairperson;
     private static Vote sampleVoteMember;
     private static Vote sampleVoteRP;
+    private static LibraryCard sampleLibraryCard;
 
     @BeforeClass
     public static void setUpClass() {
@@ -106,6 +111,8 @@ public class ElectionServiceTest {
                 new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/control"))
         );
         String referenceId = "CONS-1";
+
+        sampleLibraryCard = new LibraryCard();
 
         sampleDataset1 = new DataSet();
         sampleDataset1.setDataSetId(1);
@@ -246,6 +253,7 @@ public class ElectionServiceTest {
         when(userDAO.findUsersForElectionsByRoles(Arrays.asList(sampleVoteChairperson.getElectionId()),
                 Arrays.asList(UserRoles.CHAIRPERSON.getRoleName(), UserRoles.MEMBER.getRoleName())))
                 .thenReturn(Set.of(sampleUserChairperson, sampleUserMember));
+        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of(sampleLibraryCard));
     }
 
     private void electionStubs() {
@@ -289,7 +297,7 @@ public class ElectionServiceTest {
     }
 
     private void initService() {
-        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, datasetAssociationDAO, mailMessageDAO, dacService, emailNotifierService, dataAccessRequestService);
+        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, mailMessageDAO, dacService, emailNotifierService, dataAccessRequestService);
     }
 
     @Test
@@ -334,7 +342,7 @@ public class ElectionServiceTest {
     @Test
     public void testSubmitFinalAccessVoteDataRequestElection() throws Exception {
         initService();
-        Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId());
+        Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), sampleDataAccessRequest1.getReferenceId());
         assertNotNull(election);
         assertEquals(sampleElection1.getElectionId(), election.getElectionId());
     }
