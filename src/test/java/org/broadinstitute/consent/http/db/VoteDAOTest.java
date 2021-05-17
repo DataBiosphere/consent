@@ -428,6 +428,31 @@ public class VoteDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindMaxNumberOfDACMembers() {
+        User user = createUser();
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        closeElection(election);
+        Vote v = createDacVote(user.getDacUserId(), election.getElectionId());
+        boolean voteValue = true;
+        voteDAO.updateVote(
+                voteValue,
+                RandomStringUtils.random(10),
+                new Date(),
+                v.getVoteId(),
+                false,
+                election.getElectionId(),
+                v.getCreateDate(),
+                false
+        );
+
+        int count = voteDAO.findMaxNumberOfDACMembers(Collections.singletonList(election.getElectionId()));
+        assertEquals(1, count);
+    }
+
+    @Test
     public void testInsertVotes() {
         User user1 = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         User user2 = createUserWithRole(UserRoles.MEMBER.getRoleId());

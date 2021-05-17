@@ -396,6 +396,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Summary'
+  /api/consent/cases/summary/file:
+      get:
+        summary: Get Consent Summary Detail File
+        description: Returns a file with the detail of the reviewed cases whose type will be specified by fileType param.
+        parameters:
+         - name: fileType
+           in: query
+           description: DataAccess / TranslateDUL , defines the type of the reviewed cases info required.
+           required: true
+           schema:
+             type: string
+        tags:
+          - Summary File
+        responses:
+          200:
+            description: Export data to a txt file.
+            content:
+              text/plain:
+                schema:
+                  type: string
   /api/consent/cases/closed:
     get:
       summary: Describe Closed Elections
