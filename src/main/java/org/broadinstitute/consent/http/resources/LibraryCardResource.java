@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.List;
-import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -18,7 +17,7 @@ import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-// import org.broadinstitute.consent.http.service.LibraryCardService;
+import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/libraryCards")
@@ -40,8 +39,7 @@ public class LibraryCardResource extends Resource{
   @RolesAllowed(ADMIN)
   public Response getLibraryCards(@Auth AuthUser authUser) {
     try{
-      User user = userService.findUserByEmail(authUser.getName()); //NOTE: may not need this? Check tech doc to make sure
-      List<LibraryCard> libraryCards = libraryCardService.getLibraryCards();
+      List<LibraryCard> libraryCards = libraryCardService.findAllLibraryCards();
       return Response.ok().entity(libraryCards).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
@@ -54,8 +52,7 @@ public class LibraryCardResource extends Resource{
   @RolesAllowed(ADMIN)
   public Response getLibraryCardById(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     try {
-      User user = userService.findUserByEmail(authUser.getName());
-      LibraryCard libraryCard = libraryCardService.getLibraryCardById(id);
+      LibraryCard libraryCard = libraryCardService.findLibraryCardById(id);
       return Response.ok().entity(libraryCard).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
@@ -68,11 +65,10 @@ public class LibraryCardResource extends Resource{
   @RolesAllowed(ADMIN)
   public Response getLibraryCardsByInstitutionId(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     try{
-      User user = userService.findUserByEmail(authUser.getName());
-      List<LibraryCard> libraryCards = libraryCardService.getLibraryCardsByInstitutionId(id);
+      List<LibraryCard> libraryCards = libraryCardService.findLibraryCardsByInstitutionId(id);
       return Response.ok().entity(libraryCards).build();
     } catch(Exception e) {
-      createExceptionResponse(e);
+      return createExceptionResponse(e);
     }
   }
 
@@ -84,7 +80,7 @@ public class LibraryCardResource extends Resource{
     try{
       User user = userService.findUserByEmail(authUser.getName());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
-      LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload, user);
+      LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload, user.getDacUserId());
       return Response.ok().entity(newLibraryCard).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
@@ -100,7 +96,7 @@ public class LibraryCardResource extends Resource{
     try {
       User user = userService.findUserByEmail(authUser.getName());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
-      LibraryCard updatedLibraryCard = libraryCardService.updateLibraryCard(id, payload);
+      LibraryCard updatedLibraryCard = libraryCardService.updateLibraryCard(payload, id, user.getDacUserId());
       return Response.ok().entity(updatedLibraryCard).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
@@ -113,7 +109,7 @@ public class LibraryCardResource extends Resource{
   @RolesAllowed(ADMIN)
   public Response deleteLibraryCard(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     try {
-      libraryCardService.deleteLibraryCard(id);
+      libraryCardService.deleteLibraryCardById(id);
       return Response.status(204).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
