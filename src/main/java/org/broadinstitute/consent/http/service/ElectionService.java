@@ -199,7 +199,7 @@ public class ElectionService {
             throw new NotFoundException("Data Access Request for specified id does not exist");
         } 
         Integer userId = dar.getUserId();
-        List<LibraryCard> libraryCards = Objects.nonNull(userId) ? libraryCardDAO.findLibraryCardsByUserId(userId) : new ArrayList<>();
+        List<LibraryCard> libraryCards = Objects.nonNull(userId) ? libraryCardDAO.findLibraryCardsByUserId(userId) : Collections.emptyList();
         if (libraryCards.isEmpty()) {
             throw new NotFoundException("No Library cards exist for the researcher on this DAR");
         }
