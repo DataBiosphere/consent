@@ -343,7 +343,7 @@ public class ElectionServiceTest {
     public void testSubmitFinalAccessVoteDataRequestElection() throws Exception {
         initService();
         when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of(sampleLibraryCard));
-        Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), sampleDataAccessRequest1.getReferenceId());
+        Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId());
         assertNotNull(election);
         assertEquals(sampleElection1.getElectionId(), election.getElectionId());
     }
@@ -352,7 +352,7 @@ public class ElectionServiceTest {
     public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard() throws Exception {
         initService();
         when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
-        service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), sampleDataAccessRequest1.getReferenceId());
+        service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId());
     }
 
     @Test

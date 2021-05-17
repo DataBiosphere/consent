@@ -188,11 +188,12 @@ public class ElectionService {
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
-    public Election submitFinalAccessVoteDataRequestElection(Integer electionId, String darId) throws Exception {
+    public Election submitFinalAccessVoteDataRequestElection(Integer electionId) throws Exception {
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
         if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");
         }
+        String darId = election.getReferenceId();
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(darId);
         if (dar == null) {
             throw new NotFoundException("Data Access Request for specified id does not exist");
@@ -200,7 +201,7 @@ public class ElectionService {
         Integer userId = dar.getUserId();
         List<LibraryCard> libraryCards = Objects.nonNull(userId) ? libraryCardDAO.findLibraryCardsByUserId(userId) : new ArrayList<>();
         if (libraryCards.isEmpty()) {
-            throw new NotFoundException("No Library cards exist for the researcher on this dar");
+            throw new NotFoundException("No Library cards exist for the researcher on this DAR");
         }
         List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);
         // The first final vote to be submitted is what determines the approval/denial of the election
