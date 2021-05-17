@@ -254,7 +254,6 @@ public class ElectionServiceTest {
         when(userDAO.findUsersForElectionsByRoles(Arrays.asList(sampleVoteChairperson.getElectionId()),
                 Arrays.asList(UserRoles.CHAIRPERSON.getRoleName(), UserRoles.MEMBER.getRoleName())))
                 .thenReturn(Set.of(sampleUserChairperson, sampleUserMember));
-                when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of(sampleLibraryCard));
     }
 
     private void electionStubs() {
