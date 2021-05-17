@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -24,6 +25,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
@@ -58,6 +60,7 @@ public class ElectionService {
     private final VoteDAO voteDAO;
     private final UserDAO userDAO;
     private final DatasetDAO dataSetDAO;
+    private final LibraryCardDAO libraryCardDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
     private DacService dacService;
     private DataAccessRequestService dataAccessRequestService;
@@ -67,7 +70,7 @@ public class ElectionService {
 
     @Inject
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
-                           DatasetDAO dataSetDAO, DatasetAssociationDAO datasetAssociationDAO, MailMessageDAO mailMessageDAO,
+                           DatasetDAO dataSetDAO, LibraryCardDAO libraryCardDAO, DatasetAssociationDAO datasetAssociationDAO, MailMessageDAO mailMessageDAO,
                            DacService dacService, EmailNotifierService emailNotifierService,
                            DataAccessRequestService dataAccessRequestService) {
         this.consentDAO = consentDAO;
@@ -75,6 +78,7 @@ public class ElectionService {
         this.voteDAO = voteDAO;
         this.userDAO = userDAO;
         this.dataSetDAO = dataSetDAO;
+        this.libraryCardDAO = libraryCardDAO;
         this.datasetAssociationDAO = datasetAssociationDAO;
         this.mailMessageDAO = mailMessageDAO;
         this.emailNotifierService = emailNotifierService;
@@ -184,10 +188,19 @@ public class ElectionService {
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
-    public Election submitFinalAccessVoteDataRequestElection(Integer electionId) throws Exception {
+    public Election submitFinalAccessVoteDataRequestElection(Integer electionId, String darId) throws Exception {
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
         if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");
+        }
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(darId);
+        if (dar == null) {
+            throw new NotFoundException("Data Access Request for specified id does not exist");
+        } 
+        Integer userId = dar.getUserId();
+        List<LibraryCard> libraryCards = Objects.nonNull(userId) ? libraryCardDAO.findLibraryCardsByUserId(userId) : new ArrayList<>();
+        if (libraryCards.isEmpty()) {
+            throw new NotFoundException("No Library cards exist for the researcher on this dar");
         }
         List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);
         // The first final vote to be submitted is what determines the approval/denial of the election
