@@ -149,6 +149,7 @@ public class ElectionServiceTest {
         sampleConsent1.setConsentId(sampleDataset1.getConsentName());
 
         sampleDataAccessRequest1 = new DataAccessRequest();
+        sampleDataAccessRequest1.setUserId(2);
         DataAccessRequestData data = new DataAccessRequestData();
         data.setReferenceId(sampleElection1.getReferenceId());
         data.setDatasetIds(Arrays.asList(sampleDataset1.getDataSetId()));
@@ -253,7 +254,7 @@ public class ElectionServiceTest {
         when(userDAO.findUsersForElectionsByRoles(Arrays.asList(sampleVoteChairperson.getElectionId()),
                 Arrays.asList(UserRoles.CHAIRPERSON.getRoleName(), UserRoles.MEMBER.getRoleName())))
                 .thenReturn(Set.of(sampleUserChairperson, sampleUserMember));
-        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of(sampleLibraryCard));
+                when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of(sampleLibraryCard));
     }
 
     private void electionStubs() {
@@ -342,9 +343,17 @@ public class ElectionServiceTest {
     @Test
     public void testSubmitFinalAccessVoteDataRequestElection() throws Exception {
         initService();
+        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of(sampleLibraryCard));
         Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), sampleDataAccessRequest1.getReferenceId());
         assertNotNull(election);
         assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard() throws Exception {
+        initService();
+        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
+        service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), sampleDataAccessRequest1.getReferenceId());
     }
 
     @Test
