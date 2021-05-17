@@ -102,8 +102,8 @@ public class DataRequestVoteResource extends Resource {
         String json) {
         try {
             Vote voteRecord = new Gson().fromJson(json, Vote.class);
+            electionService.submitFinalAccessVoteDataRequestElection(voteRecord.getElectionId());
             Vote updatedVote = voteService.updateVoteById(voteRecord, id);
-            electionService.submitFinalAccessVoteDataRequestElection(updatedVote.getElectionId());
             DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
             createDataOwnerElection(updatedVote, dar);
             return Response.ok(updatedVote).build();
