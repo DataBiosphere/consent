@@ -194,7 +194,7 @@ public class ElectionService {
             throw new NotFoundException("Election for specified id does not exist");
         }
         String darId = election.getReferenceId();
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(darId);
+        DataAccessRequest dar = Objects.nonNull(darId) ? dataAccessRequestService.findByReferenceId(darId) : null;
         if (dar == null) {
             throw new NotFoundException("Data Access Request for specified id does not exist");
         } 
