@@ -2973,6 +2973,133 @@ paths:
           description: Institution not found
         500:
           description: Internal Server Error
+  /api/libraryCards:
+    get:
+      summary: Library Card INDEX resource
+      description: Returns all library cards in database
+      tags:
+        - Library Card
+        - Admin
+      responses:
+        200:
+          description: Library Card INDEX request success
+        401:
+          description: User not authorized
+        403:
+          description: User does not have permission to access endpoint
+        500:
+          description: Internal Server Error
+    post:
+      summary: Library Card CREATE resource
+      description: Creates a new Library Card based on user-provided json
+      tags:
+        - Library Card
+        - Admin
+      responses:
+        200:
+          description: Library Card Create Success
+        401:
+          descritpion: User not authorized
+        403:
+          description: User does not have permission to access endpoint
+        409:
+          description: Library Card payload conflicts with an existing record
+        500:
+          description: Internal Server Error
+  /api/libraryCards/{id}:
+    get:
+      description: Library Card GET resource
+      tags:
+        - Library Card
+        - Admin
+      parameters:
+        name: id
+        in: path
+        description: Library Card ID
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: Library Card GET Success
+        401:
+          description: User not authorized
+        403:
+          description: User does not have permission to access endpoint
+        404:
+          description: Library Card not found
+        500:
+          description: Internal Server Error
+    put:
+      description: Library Card PUT resource
+      tags:
+        - Library Card
+        - Admin
+      parameters:
+        name: id
+        in: path
+        description: Library Card ID
+        required: true
+        schema:
+          type: integer
+      responses: 
+        200:
+          description: Library Card Update Request Success
+        401:
+          description: User not authorized
+        403:
+          description: User does not have permission to access endpoint
+        404:
+          description: Library Card not found
+        409:
+          description: Library Card payload conflicts with an existing record
+        500:
+          description: Internal Server Error
+    delete:
+      description: Library Card DELETE
+      tag:
+        - Library Card
+        - Admin
+      parameters:
+        name: id
+        in: path
+        description: Library Card ID
+        required: true
+        schema:
+          type: integer
+      responses:
+        204:
+          description: Delete Request Success
+        401:
+          description: User not authorized
+        403: 
+          description: User does not have permission to access endpoint
+        404:
+          description: Library Card not found
+        500:
+          description: Internal Server Error
+  /api/libraryCards/institution/{id}:
+    get:
+      summary: GET Library Cards with Institution ID
+      description: Returns all Library Cards with institution_id equal to provided parameter
+      parameter:
+          name: id
+          in: path
+          description: Institution ID
+          required: true
+          schema:
+              type: integer
+      responses:
+        200:
+          description: Library Card GET request success
+        401:
+          description: User not authorized
+        403:
+          description: User does not have permission to access endpoint
+        404:
+          description: Institution not found
+        500:
+          description: Internal Server Error
   /api/match/{consentId}/{purposeId}:
     get:
       summary: getMatches

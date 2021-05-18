@@ -110,6 +110,14 @@ public class LibraryCardResourceTest {
   }
 
   @Test
+  public void testGetLibraryCardByInstitutionIdThrowsNotFoundException() {
+    when(libraryCardService.findLibraryCardsByInstitutionId(anyInt())).thenThrow(new NotFoundException());
+    initResource();
+    Response response = resource.getLibraryCardsByInstitutionId(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
   public void testCreateLibraryCard() {
     LibraryCard mockCard = mockLibraryCardSetup();
     String payload = new Gson().toJson(mockCard);
