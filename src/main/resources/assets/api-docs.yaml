@@ -2976,7 +2976,7 @@ paths:
   /api/libraryCards:
     get:
       summary: Library Card INDEX resource
-      description: Returns all library cards in database
+      description: Returns all saved library cards
       tags:
         - Library Card
         - Admin
@@ -3021,7 +3021,8 @@ paths:
           description: Internal server error
   /api/libraryCards/{id}:
     get:
-      description: Library Card GET resource
+      summary: Library Card GET Resource
+      description: Fetch library card bases on id parameter
       tags:
         - Library Card
         - Admin
@@ -3046,7 +3047,8 @@ paths:
         500:
           description: Internal server error
     put:
-      description: Library Card PUT resource
+      summary: Library Card PUT resource
+      description: Update target Library Card based on id parameter and user provided json
       tags:
         - Library Card
         - Admin
@@ -3082,7 +3084,8 @@ paths:
         500:
           description: Internal server error
     delete:
-      description: Library Card DELETE
+      summary: Library Card DELETE resource
+      description: Delete target Library Card based on id parameter
       tag:
         - Library Card
         - Admin
@@ -3104,8 +3107,8 @@ paths:
           description: Internal server error
   /api/libraryCards/institution/{id}:
     get:
-      summary: GET Library Cards with Institution ID
-      description: Returns all Library Cards with institution_id equal to provided parameter
+      summary: Library Card GET based on Institution
+      description: Returns all Library Cards with institution_id equal to provided id
       parameter:
         name: id
         in: path
