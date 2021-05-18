@@ -77,7 +77,7 @@ public class LibraryCardResourceTest {
     initResource();
     Response response = resource.getLibraryCards(authUser);
     String json = response.getEntity().toString();
-    assertEquals(200, response.getStatus());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertNotNull(json);
   }
 
@@ -88,7 +88,7 @@ public class LibraryCardResourceTest {
     initResource();
     Response response = resource.getLibraryCardById(authUser, 1);
     String json = response.getEntity().toString();
-    assertEquals(200, response.getStatus());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertNotNull(json);
   }
 
@@ -131,6 +131,17 @@ public class LibraryCardResourceTest {
   }
 
   @Test
+  public void testCreateLibraryCardThrowsIllegalArgumentException() {
+    LibraryCard mockCard = mockLibraryCardSetup();
+    String payload = new Gson().toJson(mockCard);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class), anyInt())).thenThrow(new IllegalArgumentException());
+    initResource();
+    Response response = resource.createLibraryCard(authUser, payload);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
   public void testCreateLibraryCardThrowsConflictException() {
     UnableToExecuteStatementException exception = generateUniqueViolationException();
     String json = new Gson().toJson(mockLibraryCardSetup());
@@ -153,6 +164,18 @@ public class LibraryCardResourceTest {
     String json = response.getEntity().toString();
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertNotNull(json);
+  }
+
+  @Test
+  public void testUpdateLibraryCardThrowsIllegalArgumentException() {
+    LibraryCard mockCard = mockLibraryCardSetup();
+    String payload = new Gson().toJson(mockCard);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
+      .thenThrow(new IllegalArgumentException());
+    initResource();
+    Response response = resource.updateLibraryCard(authUser, 1, payload);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
