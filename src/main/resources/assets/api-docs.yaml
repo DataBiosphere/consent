@@ -2924,7 +2924,7 @@ paths:
           description: Institution ID
           required: true
           schema:
-            type: String
+            type: string
       responses:
         200:
           description: Returns target institution.
@@ -2985,7 +2985,6 @@ paths:
           description: Library Card INDEX request success
           content:
             application/json:
-              type: array
               schema:
                 $ref: '#/components/schemas/LibraryCard'
         401:
@@ -3014,7 +3013,7 @@ paths:
         400:
           description: Bad request (Issues with json payload)
         401:
-          descritpion: User not authorized
+          description: User not authorized
         409:
           description: Library Card payload conflicts with an existing record
         500:
@@ -3086,11 +3085,11 @@ paths:
     delete:
       summary: Library Card DELETE resource
       description: Delete target Library Card based on id parameter
-      tag:
+      tags:
         - Library Card
         - Admin
       parameters:
-        name: id
+      - name: id
         in: path
         description: Library Card ID
         required: true
@@ -3107,10 +3106,13 @@ paths:
           description: Internal server error
   /api/libraryCards/institution/{id}:
     get:
-      summary: Library Card GET based on Institution
+      summary: Library Card GET based on Institution ID
       description: Returns all Library Cards with institution_id equal to provided id
-      parameter:
-        name: id
+      tags:
+        - Library Card
+        - Institution
+      parameters:
+      - name: id
         in: path
         description: Institution ID
         required: true
@@ -3121,7 +3123,6 @@ paths:
           description: Library Card GET request success
           content:
             application/json:
-              type: array
               schema:
                 $ref: '#/components/schemas/LibraryCard'
         401:
