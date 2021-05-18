@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
@@ -81,7 +82,7 @@ public class LibraryCardResource extends Resource{
       User user = userService.findUserByEmail(authUser.getName());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
       LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload, user.getDacUserId());
-      return Response.ok().entity(newLibraryCard).build();
+      return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(newLibraryCard).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
     }

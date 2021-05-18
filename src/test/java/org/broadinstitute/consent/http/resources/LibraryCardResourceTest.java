@@ -126,7 +126,7 @@ public class LibraryCardResourceTest {
     initResource();
     Response response = resource.createLibraryCard(authUser, payload);
     String json = response.getEntity().toString();
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     assertNotNull(json);
   }
 
