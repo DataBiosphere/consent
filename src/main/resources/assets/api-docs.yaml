@@ -2997,9 +2997,10 @@ paths:
       parameters:
         - name: LibraryCard
           in: body
-          type: string
           description: JSON representation of libraryCard payload
-          $ref: '#/components/schemas/LibraryCard'
+          required: true
+          schema:
+            $ref: '#/components/schemas/LibraryCard'
       tags:
         - Library Card
         - Admin
@@ -3063,7 +3064,6 @@ paths:
         description: JSON representation of Library Card
         required: true
         schema:
-          type: String
           $ref: '#/components/schemas/LibraryCard'
       responses: 
         200:
