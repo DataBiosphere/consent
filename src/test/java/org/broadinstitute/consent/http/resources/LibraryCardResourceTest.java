@@ -93,7 +93,7 @@ public class LibraryCardResourceTest {
   }
 
   @Test
-  public void testGetLibraryCardsByIdNotFound() {
+  public void testGetLibraryCardsByIdThrowsNotFoundException() {
     when(libraryCardService.findLibraryCardById(anyInt())).thenThrow(new NotFoundException());
     initResource();
     Response response = resource.getLibraryCardById(authUser, 1);
@@ -123,7 +123,7 @@ public class LibraryCardResourceTest {
   }
 
   @Test
-  public void testCreateLibraryCardThrowsConflictExceptionOnDuplicate() {
+  public void testCreateLibraryCardThrowsConflictException() {
     UnableToExecuteStatementException exception = generateUniqueViolationException();
     String json = new Gson().toJson(mockLibraryCardSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
@@ -148,7 +148,7 @@ public class LibraryCardResourceTest {
   }
 
   @Test
-  public void testUpdateLibraryCardNotFound() {
+  public void testUpdateLibraryCardThrowsNotFoundException() {
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
       .thenThrow(new NotFoundException());
