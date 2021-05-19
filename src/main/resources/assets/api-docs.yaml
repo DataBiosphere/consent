@@ -2269,9 +2269,9 @@ paths:
         400:
           description: Required parameter is null
         404:
-          description: Election for specified id does not exist
-          description: Data Access Request for specified id does not exist
-          description: No Library cards exist for the researcher on this DAR
+          description: Election for specified id does not exist OR
+           Data Access Request for specified id does not exist OR
+           No Library cards exist for the researcher on this DAR
   /api/dataRequest/{requestId}/vote/final:
     get:
       summary: describeFinalAccessVote
