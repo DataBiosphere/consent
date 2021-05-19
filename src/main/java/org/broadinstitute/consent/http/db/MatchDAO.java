@@ -18,19 +18,19 @@ import java.util.List;
 @RegisterRowMapper(MatchMapper.class)
 public interface MatchDAO extends Transactional<MatchDAO> {
 
-    @SqlQuery("select * from match_entity where consent = :consentId ")
+    @SqlQuery("SELECT * FROM match_entity WHERE consent = :consentId ")
     List<Match> findMatchesByConsentId(@Bind("consentId") String consentId);
 
-    @SqlQuery("select * from match_entity where purpose = :purposeId ")
+    @SqlQuery("SELECT * FROM match_entity WHERE purpose = :purposeId ")
     List<Match> findMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
-    @SqlQuery("select * from match_entity where purpose = :purposeId and consent = :consentId ")
+    @SqlQuery("SELECT * FROM match_entity WHERE purpose = :purposeId AND consent = :consentId ")
     Match findMatchByPurposeIdAndConsentId(@Bind("purposeId") String purposeId, @Bind("consentId") String consentId);
 
-    @SqlQuery("select * from match_entity where matchId = :id ")
+    @SqlQuery("SELECT * FROM match_entity WHERE matchid = :id ")
     Match  findMatchById(@Bind("id") Integer id);
 
-    @SqlQuery("select * from match_entity where purpose IN (<purposeId>)")
+    @SqlQuery("SELECT * FROM match_entity WHERE purpose IN (<purposeId>)")
     List<Match> findMatchesForPurposeIds(@BindList("purposeId") List<String> purposeId);
 
     @SqlUpdate(
@@ -44,7 +44,7 @@ public interface MatchDAO extends Transactional<MatchDAO> {
                         @Bind("failed") Boolean failed,
                         @Bind("createDate") Date date);
 
-    @SqlBatch("insert into match_entity (consent, purpose, matchEntity, failed, createDate) values (:consent, :purpose, :match, :failed, :createDate)")
+    @SqlBatch("INSERT INTO match_entity (consent, purpose, matchentity, failed, createdate) VALUES (:consent, :purpose, :match, :failed, :createDate)")
     void insertAll(@BindBean List<Match> matches);
 
     @SqlUpdate("UPDATE match_entity SET matchentity = :match, consent = :consentId, purpose = :purposeId, failed = :failed WHERE matchid = :id ")
