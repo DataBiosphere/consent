@@ -48,7 +48,8 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     void insertAll(@BindBean List<Match> matches);
 
     @SqlUpdate("update match_entity set matchEntity = :match, consent = :consentId, purpose = :purposeId, failed = :failed where matchId = :id ")
-    void updateMatch(@BindList("match") Boolean match,
+    void updateMatch(@Bind("id") Integer id,
+                     @Bind("match") Boolean match,
                      @Bind("consentId") String consent,
                      @Bind("purposeId") String purpose,
                      @Bind("failed") Boolean failed);

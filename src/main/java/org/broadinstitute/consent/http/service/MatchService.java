@@ -89,7 +89,7 @@ public class MatchService {
         validatePurpose(match.getPurpose());
         if (matchDAO.findMatchById(id) == null)
             throw new NotFoundException("Match for the specified id does not exist");
-        matchDAO.updateMatch(match.getMatch(), match.getConsent(), match.getPurpose(), match.getFailed());
+        matchDAO.updateMatch(id, match.getMatch(), match.getConsent(), match.getPurpose(), match.getFailed());
         return findMatchById(id);
     }
 

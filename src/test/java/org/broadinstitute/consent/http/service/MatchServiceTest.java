@@ -202,7 +202,7 @@ public class MatchServiceTest {
     @Test
     public void testUpdate() throws Exception {
         initSingleMatchMocks("DAR-2", sampleConsent1);
-        doNothing().when(matchDAO).updateMatch(any(), any(), any(), any());
+        doNothing().when(matchDAO).updateMatch(any(), any(), any(), any(), any());
         when(matchDAO.findMatchById(1)).thenReturn(sampleMatch1);
         initService();
 

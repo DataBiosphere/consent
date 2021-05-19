@@ -7,6 +7,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class MatchDAOTest extends DAOTestHelper {
 
@@ -38,4 +39,17 @@ public class MatchDAOTest extends DAOTestHelper {
     assertEquals(found.getMatch(), m.getMatch());
   }
 
+  @Test
+  public void testMpdateMatch() {
+    Match m = createMatch();
+    matchDAO.updateMatch(
+            m.getId(),
+            true,
+            m.getConsent(),
+            m.getPurpose(),
+            false);
+    Match found = matchDAO.findMatchById(m.getId());
+    assertTrue(found.getMatch());
+    assertFalse(found.getFailed());
+  }
 }
