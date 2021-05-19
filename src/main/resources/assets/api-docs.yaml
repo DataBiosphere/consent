@@ -3026,6 +3026,85 @@ paths:
                 $ref: '#/components/schemas/MatchResult'
         500:
           description: Server error.
+
+  /api/match/reprocess/purpose/{purposeId}:
+    post:
+      summary: Process all matches for this research purpose (DAR) id
+      description: Process all matches for this research purpose (DAR) id
+      tags:
+        - Data Access Request
+        - Match
+      parameters:
+        - name: purposeId
+          in: path
+          description: Data Access Request (or research purpose) ID
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Returns a list of reprocessed match results of the Data Access Request. If no results are found, no data is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchResult'
+        500:
+          description: Server error.
+
+  /api/match/consent/{consentId}:
+    get:
+      summary: Get all matches for this consent id
+      description: Get all matches for this consent id
+      tags:
+        - Consent
+        - Match
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent Id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Returns a list of match results of the Consent. If no results are found, no data is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchResult'
+        500:
+          description: Server error.
+
+  /api/match/purpose/{purposeId}:
+    get:
+      summary: Get all matches for this research purpose (DAR) id
+      description: Get all matches for this research purpose (DAR) id
+      tags:
+        - Data Access Request
+        - Match
+      parameters:
+        - name: purposeId
+          in: path
+          description: Data Access Request (or research purpose) ID
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Returns a list of match results of the Data Access Request. If no results are found, no data is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchResult'
+        500:
+          description: Server error.
+
   /api/user/me:
     get:
       summary: Find currently authenticated user

@@ -84,12 +84,6 @@ public class MatchService {
         }
     }
 
-    public void deleteMatches(List<Integer> ids){
-        if(CollectionUtils.isNotEmpty(ids)){
-            matchDAO.deleteMatches(ids);
-        }
-    }
-
     public Match update(Match match, Integer id) {
         validateConsent(match.getConsent());
         validatePurpose(match.getPurpose());
@@ -108,48 +102,37 @@ public class MatchService {
     }
 
     public Match findMatchByConsentIdAndPurposeId(String consentId, String purposeId) {
-        return matchDAO.findMatchByPurposeIdAndConsent(purposeId, consentId);
+        return matchDAO.findMatchByPurposeIdAndConsentId(purposeId, consentId);
     }
 
     public List<Match> findMatchByConsentId(String consentId) {
-        return matchDAO.findMatchByConsentId(consentId);
+        return matchDAO.findMatchesByConsentId(consentId);
     }
 
-    public List<Match> findMatchByPurposeId(String purposeId) {
-        return matchDAO.findMatchByPurposeId(purposeId);
-    }
-
-    public void processMatchesForConsent(String consentId) {
+    public void reprocessMatchesForConsent(String consentId) {
         removeMatchesForConsent(consentId);
         if (!consentDAO.checkManualReview(consentId)) {
-            List<Match> matches = findMatchesForConsent(consentId);
+            List<Match> matches = createMatchesForConsent(consentId);
             createMatches(matches);
         }
     }
 
-    public void processMatchesForPurpose(String purposeId) {
+    public void reprocessMatchesForPurpose(String purposeId) {
         removeMatchesForPurpose(purposeId);
         DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
         if (Objects.nonNull(dar)) {
-            Match match = findMatchForPurpose(dar.getReferenceId());
+            Match match = createMatchesForPurpose(dar.getReferenceId());
             createMatches(Collections.singletonList(match));
         }
 
     }
 
     public void removeMatchesForPurpose(String purposeId) {
-        List<Match> matches = findMatchByPurposeId(purposeId);
-        if (CollectionUtils.isNotEmpty(matches)) {
-            deleteMatches(matches.stream().map(Match::getId).collect(Collectors.toList()));
-        }
+        matchDAO.deleteMatchesByPurposeId(purposeId);
     }
 
     public void removeMatchesForConsent(String consentId) {
-        List<Match> matches = findMatchByConsentId(consentId);
-        if (CollectionUtils.isNotEmpty(matches)) {
-            deleteMatches(matches.stream().map(Match::getId).collect(Collectors.toList()));
-        }
-
+        matchDAO.deleteMatchesByConsentId(consentId);
     }
 
     public Match findSingleMatch(String consentId, String purposeId) {
@@ -167,7 +150,7 @@ public class MatchService {
         return match;
     }
 
-    public Match findMatchForPurpose(String purposeId){
+    public Match createMatchesForPurpose(String purposeId){
         Match match = null;
         DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
         if (Objects.nonNull(dar)) {
@@ -185,7 +168,7 @@ public class MatchService {
         return match;
     }
 
-    public List<Match> findMatchesForConsent(String consentId) {
+    public List<Match> createMatchesForConsent(String consentId) {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
         List<DataSet> dataSets = dataSetDAO.getDataSetsForConsent(consentId);
@@ -195,9 +178,7 @@ public class MatchService {
             for (DataAccessRequest dar : dars) {
                 try {
                     match = singleEntitiesMatch(consent, dar);
-                    if(match != null){
-                        matches.add(match);
-                    }
+                    matches.add(match);
                 } catch (Exception e) {
                     logger.error("Error finding  matches for consent.", e);
                     matches.add(createMatch(consentId, dar.getReferenceId(), true, false));
@@ -228,15 +209,15 @@ public class MatchService {
             logger.error("Data Access Request is null");
             throw new IllegalArgumentException("Data Access Request cannot be null");
         }
-        Match match = createMatch(consent.getConsentId(), dar.getReferenceId(), false, false);
+        Match match;
         RequestMatchingObject requestObject = createRequestObject(consent, dar);
         String json = new Gson().toJson(requestObject);
         Response res = matchServiceTarget.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
         if (res.getStatus() == Response.Status.OK.getStatusCode()) {
             ResponseMatchingObject entity = res.readEntity(rmo);
-            if (entity.isResult()) {
-                match.setMatch(true);
-            }
+            match = createMatch(consent.getConsentId(), dar.getReferenceId(), false, entity.isResult());
+        } else {
+            match = createMatch(consent.getConsentId(), dar.getReferenceId(), true, false);
         }
         return match;
     }
@@ -255,7 +236,7 @@ public class MatchService {
         Consent consent = null;
         try {
             consent = consentDAO.findConsentById(consentId);
-            if (consent == null) {
+            if (Objects.isNull(consent)) {
                 throw new UnknownIdentifierException(String.format("Could not find consent with id %s", consentId));
             }
 
@@ -288,5 +269,9 @@ public class MatchService {
         DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
         UseRestriction darUseRestriction = useRestrictionConverter.parseUseRestriction(dataUse);
         return new RequestMatchingObject(consent.getUseRestriction(), darUseRestriction);
+    }
+
+    public List<Match> findMatchesByPurposeId(String purposeId) {
+        return matchDAO.findMatchesByPurposeId(purposeId);
     }
 }

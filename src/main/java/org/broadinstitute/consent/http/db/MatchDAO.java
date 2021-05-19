@@ -12,7 +12,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -20,19 +19,19 @@ import java.util.List;
 public interface MatchDAO extends Transactional<MatchDAO> {
 
     @SqlQuery("select * from match_entity where consent = :consentId ")
-    List<Match> findMatchByConsentId(@Bind("consentId") String consentId);
+    List<Match> findMatchesByConsentId(@Bind("consentId") String consentId);
 
     @SqlQuery("select * from match_entity where purpose = :purposeId ")
-    List<Match>  findMatchByPurposeId(@Bind("purposeId") String purposeId);
+    List<Match> findMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
     @SqlQuery("select * from match_entity where purpose = :purposeId and consent = :consentId ")
-    Match  findMatchByPurposeIdAndConsent(@Bind("purposeId") String purposeId, @Bind("consentId") String consentId);
+    Match findMatchByPurposeIdAndConsentId(@Bind("purposeId") String purposeId, @Bind("consentId") String consentId);
 
     @SqlQuery("select * from match_entity where matchId = :id ")
     Match  findMatchById(@Bind("id") Integer id);
 
-    @SqlQuery("select * from match_entity where purpose  IN (<purposeId>)")
-    List<Match>  findMatchesPurposeId(@BindList("purposeId") List<String> purposeId);
+    @SqlQuery("select * from match_entity where purpose IN (<purposeId>)")
+    List<Match> findMatchesForPurposeIds(@BindList("purposeId") List<String> purposeId);
 
     @SqlUpdate("insert into match_entity " +
             "(consent, purpose, matchEntity, failed, date) values " +
@@ -53,11 +52,11 @@ public interface MatchDAO extends Transactional<MatchDAO> {
                      @Bind("purposeId") String purpose,
                      @Bind("failed") Boolean failed);
 
-    @SqlBatch("DELETE FROM match_entity WHERE matchid IN (<matchIds>)")
-    void deleteMatches(@BindList("matchIds") Collection<Integer> matchIds);
-
     @SqlUpdate("DELETE FROM match_entity WHERE consent = :consentId")
-    void deleteMatchByConsentId(@Bind("consentId") String consentId);
+    void deleteMatchesByConsentId(@Bind("consentId") String consentId);
+
+    @SqlUpdate("DELETE FROM match_entity WHERE purpose = :purposeId")
+    void deleteMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
     @SqlQuery("SELECT COUNT(*) FROM match_entity where matchEntity = :matchEntity and failed ='FALSE' ")
     Integer countMatchesByResult(@Bind("matchEntity") Boolean matchEntity);

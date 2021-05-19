@@ -293,13 +293,7 @@ public class DataAccessRequestService {
     public void deleteByReferenceId(String referenceId) throws NotAcceptableException {
         List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
         if (Objects.isNull(elections) || elections.isEmpty()) {
-            List<Integer> matchIds = matchDAO.findMatchByPurposeId(referenceId).stream()
-                .filter(Objects::nonNull)
-                .map(Match::getId)
-                .collect(toList());
-            if (CollectionUtils.isNotEmpty(matchIds)) {
-                matchDAO.deleteMatches(matchIds);
-            }
+            matchDAO.deleteMatchesByPurposeId(referenceId);
             dataAccessRequestDAO.deleteByReferenceId(referenceId);
         } else {
             String message = String.format("Unable to delete DAR: '%s', there are existing elections that reference it.", referenceId);

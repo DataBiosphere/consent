@@ -146,7 +146,7 @@ public class DAOTestHelper {
         }
         // Order is important for FK constraints
         createdConsentIds.forEach(id -> {
-            matchDAO.deleteMatchByConsentId(id);
+            matchDAO.deleteMatchesByConsentId(id);
             voteDAO.deleteVotes(id);
             consentDAO.deleteAllAssociationsForConsent(id);
             consentDAO.deleteConsent(id);

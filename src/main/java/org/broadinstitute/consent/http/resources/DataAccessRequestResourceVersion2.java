@@ -83,7 +83,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
           dataAccessRequestService.createDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().build();
       for (DataAccessRequest r : results) {
-        matchService.processMatchesForPurpose(r.getReferenceId());
+        matchService.reprocessMatchesForPurpose(r.getReferenceId());
         emailNotifierService.sendNewDARRequestMessage(
             r.getData().getDarCode(), r.getData().getDatasetIds());
       }
@@ -141,7 +141,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       originalDar.setData(data);
       DataAccessRequest updatedDar =
           dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
-      matchService.processMatchesForPurpose(referenceId);
+      matchService.reprocessMatchesForPurpose(referenceId);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
