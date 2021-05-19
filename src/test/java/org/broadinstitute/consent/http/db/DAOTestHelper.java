@@ -314,7 +314,7 @@ public class DAOTestHelper {
             consent.getConsentId(),
             dar.getReferenceId(),
             RandomUtils.nextBoolean(),
-            RandomUtils.nextBoolean(),
+            false,
             new Date());
         return matchDAO.findMatchById(matchId);
     }

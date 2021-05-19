@@ -71,4 +71,15 @@ public class MatchDAOTest extends DAOTestHelper {
     List<Match> matches = matchDAO.findMatchesByPurposeId(m.getConsent());
     assertTrue(matches.isEmpty());
   }
+
+  @Test
+  public void testCountMatchesByResult() {
+    Match m1 = createMatch();
+    Match m2 = createMatch();
+
+    Integer count1 = matchDAO.countMatchesByResult(m1.getMatch());
+    assertTrue(count1 >= 1);
+    Integer count2 = matchDAO.countMatchesByResult(m2.getMatch());
+    assertTrue(count2 >= 1);
+  }
 }
