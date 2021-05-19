@@ -42,6 +42,7 @@ public class MatchDAOTest extends DAOTestHelper {
   @Test
   public void testUpdateMatch() {
     Match m = createMatch();
+
     matchDAO.updateMatch(
             m.getId(),
             true,
@@ -51,5 +52,23 @@ public class MatchDAOTest extends DAOTestHelper {
     Match found = matchDAO.findMatchById(m.getId());
     assertTrue(found.getMatch());
     assertFalse(found.getFailed());
+  }
+
+  @Test
+  public void testDeleteMatchesByConsentId() {
+    Match m = createMatch();
+
+    matchDAO.deleteMatchesByConsentId(m.getConsent());
+    List<Match> matches = matchDAO.findMatchesByConsentId(m.getConsent());
+    assertTrue(matches.isEmpty());
+  }
+
+  @Test
+  public void testDeleteMatchesByPurposeId() {
+    Match m = createMatch();
+
+    matchDAO.deleteMatchesByPurposeId(m.getPurpose());
+    List<Match> matches = matchDAO.findMatchesByPurposeId(m.getConsent());
+    assertTrue(matches.isEmpty());
   }
 }
