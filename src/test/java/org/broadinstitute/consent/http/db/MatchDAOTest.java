@@ -1,9 +1,16 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Match;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -37,6 +44,31 @@ public class MatchDAOTest extends DAOTestHelper {
     assertEquals(found.getConsent(), m.getConsent());
     assertEquals(found.getFailed(), m.getFailed());
     assertEquals(found.getMatch(), m.getMatch());
+  }
+
+  @Test
+  public void testInsertAll() {
+    Dac dac = createDac();
+    Consent consent = createConsent(dac.getDacId());
+    List<Match> matches = new ArrayList<>();
+    IntStream
+            .range(1, RandomUtils.nextInt(5, 10))
+            .forEach(i -> matches.add(makeMockMatch(consent)));
+
+    matchDAO.insertAll(matches);
+    List<Match> foundMatches = matchDAO.findMatchesByConsentId(consent.getConsentId());
+    assertFalse(foundMatches.isEmpty());
+    assertEquals(matches.size(), foundMatches.size());
+  }
+
+  private Match makeMockMatch(Consent consent) {
+    Match match = new Match();
+    match.setConsent(consent.getConsentId());
+    match.setPurpose(UUID.randomUUID().toString());
+    match.setFailed(false);
+    match.setCreateDate(new Date());
+    match.setMatch(RandomUtils.nextBoolean());
+    return match;
   }
 
   @Test
