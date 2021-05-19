@@ -1,18 +1,12 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Match;
 import org.junit.Test;
 
-import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class MatchDAOTest extends DAOTestHelper {
 
