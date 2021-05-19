@@ -40,7 +40,7 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testMpdateMatch() {
+  public void testUpdateMatch() {
     Match m = createMatch();
     matchDAO.updateMatch(
             m.getId(),
