@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.core.Jdbi;
@@ -171,8 +172,10 @@ public class DAOTestHelper {
                     forEach(ur -> userRoleDAO.removeSingleUserRole(ur.getUserId(), ur.getRoleId()));
             userDAO.deleteUserById(id);
         });
-        createdDataAccessRequestReferenceIds.forEach(d ->
-                dataAccessRequestDAO.deleteByReferenceId(d));
+        createdDataAccessRequestReferenceIds.forEach(d -> {
+            dataAccessRequestDAO.deleteByReferenceId(d);
+            matchDAO.deleteMatchesByPurposeId(d);
+        });
         counterDAO.deleteAll();
     }
 
@@ -300,6 +303,20 @@ public class DAOTestHelper {
                 dacId);
         createdConsentIds.add(consentId);
         return consentDAO.findConsentById(consentId);
+    }
+
+    protected Match createMatch() {
+        DataAccessRequest dar = createDataAccessRequestV2();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Integer matchId =
+        matchDAO.insertMatch(
+            consent.getConsentId(),
+            dar.getReferenceId(),
+            RandomUtils.nextBoolean(),
+            RandomUtils.nextBoolean(),
+            new Date());
+        return matchDAO.findMatchById(matchId);
     }
 
     protected User createUser() {

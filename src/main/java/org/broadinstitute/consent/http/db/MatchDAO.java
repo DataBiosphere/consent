@@ -33,9 +33,10 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     @SqlQuery("select * from match_entity where purpose IN (<purposeId>)")
     List<Match> findMatchesForPurposeIds(@BindList("purposeId") List<String> purposeId);
 
-    @SqlUpdate("insert into match_entity " +
-            "(consent, purpose, matchEntity, failed, date) values " +
-            "(:consentId, :purposeId, :match, :failed, :createDate)")
+    @SqlUpdate(
+            " INSERT INTO match_entity " +
+            " (consent, purpose, matchentity, failed, createdate) VALUES " +
+            " (:consentId, :purposeId, :match, :failed, :createDate)")
     @GetGeneratedKeys
     Integer insertMatch(@Bind("consentId") String consentId,
                         @Bind("purposeId") String purposeId,
