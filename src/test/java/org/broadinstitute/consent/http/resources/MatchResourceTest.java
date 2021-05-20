@@ -9,10 +9,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Response;
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -70,6 +70,26 @@ public class MatchResourceTest {
             UUID.randomUUID().toString(),
             UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  public void testGetMatchesForConsent() {
+    when(service.findMatchByConsentId(any())).thenReturn(Collections.emptyList());
+    initResource();
+
+    Response response = resource.getMatchesForConsent(authUser,
+            UUID.randomUUID().toString());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testGetMatchesForPurpose() {
+    when(service.findMatchesByPurposeId(any())).thenReturn(Collections.emptyList());
+    initResource();
+
+    Response response = resource.getMatchesForPurpose(authUser,
+            UUID.randomUUID().toString());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
 }
