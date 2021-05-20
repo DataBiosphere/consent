@@ -9,13 +9,11 @@ import org.broadinstitute.consent.http.service.MatchService;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.util.List;
-import java.util.Objects;
 
 @Path("api/match")
 public class MatchResource extends Resource {
@@ -34,12 +32,11 @@ public class MatchResource extends Resource {
       @Auth AuthUser authUser,
       @PathParam("consentId") String consentId,
       @PathParam("purposeId") String purposeId) {
-    Match match = service.findMatchByConsentIdAndPurposeId(consentId, purposeId);
-    if (Objects.nonNull(match)) {
+    try {
+      Match match = service.findMatchByConsentIdAndPurposeId(consentId, purposeId);
       return Response.ok().entity(match).build();
-    } else {
-      throw new NotFoundException(
-          "No match exists for consent id: " + consentId + " and purpose id: " + purposeId);
+    } catch (Exception e) {
+      return createExceptionResponse(e);
     }
   }
 
@@ -48,8 +45,12 @@ public class MatchResource extends Resource {
   @RolesAllowed({Resource.ADMIN})
   public Response getMatchesForConsent(
           @Auth AuthUser authUser, @PathParam("consentId") String consentId) {
-    List<Match> matches = service.findMatchByConsentId(consentId);
-    return Response.ok().entity(matches).build();
+    try{
+      List<Match> matches = service.findMatchByConsentId(consentId);
+      return Response.ok().entity(matches).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   @GET
@@ -57,8 +58,12 @@ public class MatchResource extends Resource {
   @RolesAllowed({Resource.ADMIN})
   public Response getMatchesForPurpose(
       @Auth AuthUser authUser, @PathParam("purposeId") String purposeId) {
-    List<Match> matches = service.findMatchesByPurposeId(purposeId);
-    return Response.ok().entity(matches).build();
+    try {
+      List<Match> matches = service.findMatchesByPurposeId(purposeId);
+      return Response.ok().entity(matches).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   @POST
@@ -66,9 +71,13 @@ public class MatchResource extends Resource {
   @RolesAllowed({Resource.ADMIN})
   public Response reprocessPurposeMatches(
       @Auth AuthUser authUser, @PathParam("purposeId") String purposeId) {
-    service.reprocessMatchesForPurpose(purposeId);
-    List<Match> matches = service.findMatchesByPurposeId(purposeId);
-    return Response.ok().entity(matches).build();
+    try {
+      service.reprocessMatchesForPurpose(purposeId);
+      List<Match> matches = service.findMatchesByPurposeId(purposeId);
+      return Response.ok().entity(matches).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
 }

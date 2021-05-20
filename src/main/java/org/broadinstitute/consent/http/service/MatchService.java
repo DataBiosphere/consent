@@ -102,7 +102,11 @@ public class MatchService {
     }
 
     public Match findMatchByConsentIdAndPurposeId(String consentId, String purposeId) {
-        return matchDAO.findMatchByPurposeIdAndConsentId(purposeId, consentId);
+        Match match = matchDAO.findMatchByPurposeIdAndConsentId(purposeId, consentId);
+        if (Objects.isNull(match)) {
+            throw new NotFoundException("No match exists for consent id: " + consentId + " and purpose id: " + purposeId);
+        }
+        return match;
     }
 
     public List<Match> findMatchByConsentId(String consentId) {
