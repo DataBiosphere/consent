@@ -2946,7 +2946,7 @@ paths:
           description: Institution ID
           required: true
           schema:
-            type: String
+            type: string
       responses:
         200:
           description: Returns target institution.
@@ -2995,6 +2995,164 @@ paths:
           description: Institution not found
         500:
           description: Internal Server Error
+  /api/libraryCards:
+    get:
+      summary: Library Card INDEX resource
+      description: Returns all saved library cards
+      tags:
+        - Library Card
+        - Admin
+      responses:
+        200:
+          description: Library Card INDEX request success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryCard'
+        401:
+          description: User not authorized
+        500:
+          description: Internal server error
+    post:
+      summary: Library Card CREATE resource
+      description: Creates a new Library Card based on user-provided json
+      parameters:
+        - name: LibraryCard
+          in: body
+          description: JSON representation of libraryCard payload
+          required: true
+          schema:
+            $ref: '#/components/schemas/LibraryCard'
+      tags:
+        - Library Card
+        - Admin
+      responses:
+        201:
+          description: Library Card CREATE success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryCard'
+        400:
+          description: Bad request (Issues with json payload)
+        401:
+          description: User not authorized
+        409:
+          description: Library Card payload conflicts with an existing record
+        500:
+          description: Internal server error
+  /api/libraryCards/{id}:
+    get:
+      summary: Library Card GET Resource
+      description: Fetch library card bases on id parameter
+      tags:
+        - Library Card
+        - Admin
+      parameters:
+      - name: id
+        in: path
+        description: Library Card ID
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: Library Card GET success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryCard'
+        401:
+          description: User not authorized
+        404:
+          description: Library Card not found
+        500:
+          description: Internal server error
+    put:
+      summary: Library Card PUT resource
+      description: Update target Library Card based on id parameter and user provided json
+      tags:
+        - Library Card
+        - Admin
+      parameters:
+      - name: id
+        in: path
+        description: Library Card ID
+        required: true
+        schema:
+          type: integer
+      - name: libraryCard
+        in: body
+        description: JSON representation of Library Card
+        required: true
+        schema:
+          $ref: '#/components/schemas/LibraryCard'
+      responses: 
+        200:
+          description: Library Card PUT request success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryCard'
+        400:
+          description: Bad request (Issues with json payload)
+        401:
+          description: User not authorized
+        404:
+          description: Library Card not found
+        409:
+          description: Library Card payload conflicts with an existing record
+        500:
+          description: Internal server error
+    delete:
+      summary: Library Card DELETE resource
+      description: Delete target Library Card based on id parameter
+      tags:
+        - Library Card
+        - Admin
+      parameters:
+      - name: id
+        in: path
+        description: Library Card ID
+        required: true
+        schema:
+          type: integer
+      responses:
+        204:
+          description: Library Card DELETE request success
+        401:
+          description: User not authorized
+        404:
+          description: Library Card not found
+        500:
+          description: Internal server error
+  /api/libraryCards/institution/{id}:
+    get:
+      summary: Library Card GET based on Institution ID
+      description: Returns all Library Cards with institution_id equal to provided id
+      tags:
+        - Library Card
+        - Institution
+      parameters:
+      - name: id
+        in: path
+        description: Institution ID
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: Library Card GET request success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryCard'
+        401:
+          description: User not authorized
+        404:
+          description: Institution not found
+        500:
+          description: Internal server error
   /api/match/{consentId}/{purposeId}:
     get:
       summary: getMatches
@@ -4379,6 +4537,41 @@ components:
             type: string
             format: Date
             description: Institution's last update date
+    LibraryCard:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID of Library Card
+        userId:
+          type: integer
+          description: ID of associated user
+        institutionId:
+          type: integer
+          description: ID of associated institution
+        eraCommonsId:
+          type: string
+          description: eraCommonsId of associated User
+        userName:
+          type: string
+          decription: Name of associated user
+        userEmail:
+          type: string
+          description: Email of associated user
+        createDate:
+          type: string
+          format: date
+          description: Date the library card was created
+        createUserId:
+          type: integer
+          description: ID of user who created the Library Card record
+        updateDate:
+          type: string
+          format: Date
+          description: Last update date of Library card
+        updateUserId:
+          type: integer
+          description: User who last updated the LibraryCard
     User:
       type: object
       properties:
