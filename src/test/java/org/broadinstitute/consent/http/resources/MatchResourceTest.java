@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -74,7 +75,7 @@ public class MatchResourceTest {
 
   @Test
   public void testGetMatchesForConsent() {
-    when(service.findMatchByConsentId(any())).thenReturn(Collections.emptyList());
+    when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
     initResource();
 
     Response response = resource.getMatchesForConsent(authUser,
@@ -84,10 +85,21 @@ public class MatchResourceTest {
 
   @Test
   public void testGetMatchesForPurpose() {
-    when(service.findMatchesByPurposeId(any())).thenReturn(Collections.emptyList());
+    when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
     initResource();
 
     Response response = resource.getMatchesForPurpose(authUser,
+            UUID.randomUUID().toString());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testReprocessPurposeMatches() {
+    doNothing().when(service).reprocessMatchesForPurpose(any());
+    when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
+    initResource();
+
+    Response response = resource.reprocessPurposeMatches(authUser,
             UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
