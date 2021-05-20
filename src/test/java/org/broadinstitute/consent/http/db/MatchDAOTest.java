@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Match;
 import org.junit.Test;
 
@@ -48,22 +46,21 @@ public class MatchDAOTest extends DAOTestHelper {
 
   @Test
   public void testInsertAll() {
-    Dac dac = createDac();
-    Consent consent = createConsent(dac.getDacId());
+    String consentId = createConsent(createDac().getDacId()).getConsentId();
     List<Match> matches = new ArrayList<>();
     IntStream
             .range(1, RandomUtils.nextInt(5, 10))
-            .forEach(i -> matches.add(makeMockMatch(consent)));
+            .forEach(i -> matches.add(makeMockMatch(consentId)));
 
     matchDAO.insertAll(matches);
-    List<Match> foundMatches = matchDAO.findMatchesByConsentId(consent.getConsentId());
+    List<Match> foundMatches = matchDAO.findMatchesByConsentId(consentId);
     assertFalse(foundMatches.isEmpty());
     assertEquals(matches.size(), foundMatches.size());
   }
 
-  private Match makeMockMatch(Consent consent) {
+  private Match makeMockMatch(String consentId) {
     Match match = new Match();
-    match.setConsent(consent.getConsentId());
+    match.setConsent(consentId);
     match.setPurpose(UUID.randomUUID().toString());
     match.setFailed(false);
     match.setCreateDate(new Date());
