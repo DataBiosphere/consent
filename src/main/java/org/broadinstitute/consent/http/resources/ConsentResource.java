@@ -83,7 +83,7 @@ public class ConsentResource extends Resource {
             Consent consent = consentService.create(rec);
             auditService.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), dacUser.getEmail());
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
-            matchService.processMatchesForConsent(consent.consentId);
+            matchService.reprocessMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
         }  catch (Exception e) {
             return createExceptionResponse(e);
@@ -110,7 +110,7 @@ public class ConsentResource extends Resource {
             User dacUser = userService.findUserByEmail(user.getName());
             updated = consentService.update(id, updated);
             auditService.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
-            matchService.processMatchesForConsent(id);
+            matchService.reprocessMatchesForConsent(id);
             return Response.ok(updated).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

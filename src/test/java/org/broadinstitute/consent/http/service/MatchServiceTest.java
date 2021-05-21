@@ -202,7 +202,7 @@ public class MatchServiceTest {
     @Test
     public void testUpdate() throws Exception {
         initSingleMatchMocks("DAR-2", sampleConsent1);
-        doNothing().when(matchDAO).updateMatch(any(), any(), any(), any());
+        doNothing().when(matchDAO).updateMatch(any(), any(), any(), any(), any());
         when(matchDAO.findMatchById(1)).thenReturn(sampleMatch1);
         initService();
 
@@ -249,7 +249,7 @@ public class MatchServiceTest {
         initSingleMatchMocks("DAR-2", sampleConsent1);
         initService();
 
-        Match match = service.findMatchForPurpose("DAR-2");
+        Match match = service.createMatchesForPurpose("DAR-2");
         assertTrue(match.getMatch());
         assertFalse(match.getFailed());
     }
@@ -259,7 +259,7 @@ public class MatchServiceTest {
         initSingleMatchMocks("DAR-2", sampleConsent1);
         initService();
 
-        List<Match> matches = service.findMatchesForConsent(sampleConsent1.getConsentId());
+        List<Match> matches = service.createMatchesForConsent(sampleConsent1.getConsentId());
 
         assertEquals(1, matches.size());
         assertFalse(matches.get(0).getFailed());
@@ -269,15 +269,14 @@ public class MatchServiceTest {
     @Test
     public void testProcessMatchesForConsent() throws Exception {
         initSingleMatchMocks("DAR-2", sampleConsent1);
-        when(matchDAO.findMatchByConsentId(sampleConsent1.getConsentId()))
+        when(matchDAO.findMatchesByConsentId(sampleConsent1.getConsentId()))
                 .thenReturn(Arrays.asList(sampleMatch1));
         when(consentDAO.checkManualReview("CONS-1"))
                 .thenReturn(true);
         doNothing().when(matchDAO).insertAll(any());
-        doNothing().when(matchDAO).deleteMatches(any());
         initService();
 
-        service.processMatchesForConsent("CONS-1");
+        service.reprocessMatchesForConsent("CONS-1");
     }
 
     @Test
@@ -286,13 +285,12 @@ public class MatchServiceTest {
         doNothing().when(matchDAO).insertAll(any());
         initService();
 
-        service.processMatchesForPurpose(sampleMatch1.getPurpose());
+        service.reprocessMatchesForPurpose(sampleMatch1.getPurpose());
     }
 
     @Test
     public void testRemoveMatchesForPurpose() throws Exception {
         initSingleMatchMocks("DAR-2", sampleConsent1);
-        doNothing().when(matchDAO).deleteMatches(any());
 
         initService();
 
@@ -302,7 +300,6 @@ public class MatchServiceTest {
     @Test
     public void testRemoveMatchesForConsent() throws Exception {
         initSingleMatchMocks("DAR-2", sampleConsent1);
-        doNothing().when(matchDAO).deleteMatches(any());
 
         initService();
 

@@ -238,7 +238,7 @@ public class SummaryService {
                         rpVotes = voteDAO.findVotesByElectionIds(rpElectionIds);
                     } else rpVotes = null;
                     List<Vote> consentVotes = voteDAO.findVotesByElectionIds(consentElectionIds);
-                    List<Match> matchList = matchDAO.findMatchesPurposeId(referenceIds);
+                    List<Match> matchList = matchDAO.findMatchesForPurposeIds(referenceIds);
                     Collection<Integer> dacUserIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
                     Collection<User> users = userDAO.findUsers(dacUserIds);
                     Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(darElectionIds);

@@ -70,7 +70,7 @@ public class ConsentResourceTest {
         doNothing().when(useRestrictionValidator).validateUseRestriction(any());
         when(consentService.create(any())).thenReturn(consent);
         doNothing().when(auditService).saveConsentAudit(any(), any(), any(), any());
-        doNothing().when(matchService).processMatchesForConsent(any());
+        doNothing().when(matchService).reprocessMatchesForConsent(any());
 
         initResource();
 
@@ -93,7 +93,7 @@ public class ConsentResourceTest {
         when(consentService.retrieve(any())).thenReturn(consent);
         when(consentService.update(any(), any())).thenReturn(consent);
         doNothing().when(auditService).saveConsentAudit(any(), any(), any(), any());
-        doNothing().when(matchService).processMatchesForConsent(any());
+        doNothing().when(matchService).reprocessMatchesForConsent(any());
 
         initResource();
 

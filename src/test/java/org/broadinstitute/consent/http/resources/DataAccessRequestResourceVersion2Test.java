@@ -82,7 +82,7 @@ public class DataAccessRequestResourceVersion2Test {
       when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.createDataAccessRequest(any(), any()))
           .thenReturn(Collections.emptyList());
-      doNothing().when(matchService).processMatchesForPurpose(any());
+      doNothing().when(matchService).reprocessMatchesForPurpose(any());
       doNothing().when(emailNotifierService).sendNewDARRequestMessage(any(), any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
@@ -117,7 +117,7 @@ public class DataAccessRequestResourceVersion2Test {
       when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
       when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
-      doNothing().when(matchService).processMatchesForPurpose(any());
+      doNothing().when(matchService).reprocessMatchesForPurpose(any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -134,7 +134,7 @@ public class DataAccessRequestResourceVersion2Test {
       when(userService.findUserByEmail(any())).thenReturn(invalidUser);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
       when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
-      doNothing().when(matchService).processMatchesForPurpose(any());
+      doNothing().when(matchService).reprocessMatchesForPurpose(any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
