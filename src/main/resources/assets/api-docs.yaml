@@ -3034,7 +3034,7 @@ paths:
         - User
       responses:
         200:
-          description: The user, along with researcher properties and whitelist entries
+          description: The user, along with researcher properties and library cards
           content:
             application/json:
               schema:
@@ -3058,7 +3058,7 @@ paths:
         - User
       responses:
         200:
-          description: The user, along with researcher properties and whitelist entries
+          description: The user, along with researcher properties and library cards
           content:
             application/json:
               schema:
@@ -3094,7 +3094,7 @@ paths:
         - User
       responses:
         200:
-          description: Updated user along with researcher properties and whitelist entries
+          description: Updated user along with researcher properties and library cards
           content:
             application/json:
               schema:
