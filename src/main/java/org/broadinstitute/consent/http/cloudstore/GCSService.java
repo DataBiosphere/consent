@@ -63,6 +63,8 @@ public class GCSService {
         this.config = config;
     }
 
+    //method only called by whitelist service 
+    //deprecated, to be removed along with whitelist classes
     public GenericUrl postWhitelist(String content, String fileName) {
         BlobId blobId = BlobId.of(config.getBucket(), "whitelist/" + fileName);
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
@@ -70,6 +72,8 @@ public class GCSService {
         return new GenericUrl(blob.getMediaLink());
     }
 
+    //method only called by whitelist cache
+    //deprecated, to be removed along with whitelist classes
     public String getMostRecentWhitelist() throws Exception {
         try {
             Optional<Blob> whitelist = listWhitelistItems().stream().findFirst();
@@ -95,6 +99,8 @@ public class GCSService {
         return storage.get(config.getBucket(), Storage.BucketGetOption.fields(Storage.BucketField.values()));
     }
 
+    //method only called by whitelist service 
+    //deprecated, to be removed along with whitelist service and resource classes
     private List<Blob> listWhitelistItems() {
         Bucket bucket = storage.get(config.getBucket());
         Page<Blob> blobs = bucket.list();
