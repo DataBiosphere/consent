@@ -59,6 +59,7 @@ import org.broadinstitute.consent.http.resources.EmailNotifierResource;
 import org.broadinstitute.consent.http.resources.ErrorResource;
 import org.broadinstitute.consent.http.resources.IndexerResource;
 import org.broadinstitute.consent.http.resources.InstitutionResource;
+import org.broadinstitute.consent.http.resources.LibraryCardResource;
 import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
 import org.broadinstitute.consent.http.resources.NihAccountResource;
@@ -230,6 +231,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ElectionResource(voteService, electionService));
         env.jersey().register(new EmailNotifierResource(emailNotifierService));
         env.jersey().register(new InstitutionResource(userService, institutionService));
+        env.jersey().register(new LibraryCardResource(userService, libraryCardService));
         env.jersey().register(new ApprovalExpirationTimeResource(approvalExpirationTimeService, userService));
         env.jersey().register(new MatchResource(matchService));
         env.jersey().register(new MetricsResource(metricsService));
