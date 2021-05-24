@@ -516,16 +516,4 @@ public class ConsentModule extends AbstractModule {
         );
     }
 
-    @Provides
-    WhitelistService providesWhitelistService() {
-        return new WhitelistService(
-                providesGCSService(),
-                providesWhitelistCache());
-    }
-
-    @Provides
-    WhitelistCache providesWhitelistCache() {
-        return new WhitelistCache(providesGCSService());
-    }
-
 }
