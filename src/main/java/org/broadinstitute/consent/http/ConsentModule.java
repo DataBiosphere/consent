@@ -59,8 +59,6 @@ import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.service.WhitelistService;
-import org.broadinstitute.consent.http.util.WhitelistCache;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
