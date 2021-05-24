@@ -82,11 +82,10 @@ public class ResearcherResource extends Resource {
             List<UserRoles> authedRoles = Stream.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER, UserRoles.ADMIN).
                     collect(Collectors.toList());
             validateAuthedRoleUser(authedRoles, findByAuthUser(authUser), userId);
-            User user = userService.findUserById(userId);
             List<UserProperty> props = userService.findAllUserProperties(userId);
             Map<String, Object> propMap = props.stream().
                 collect(Collectors.toMap(UserProperty::getPropertyKey, UserProperty::getPropertyValue));
-            List<LibraryCard> entries = libraryCardService.findLibraryCardsByUserId(user.getDacUserId());
+            List<LibraryCard> entries = libraryCardService.findLibraryCardsByUserId(userId);
             propMap.put(UserFields.LIBRARY_CARD_ENTRIES, entries);
             List<Integer> orgs = entries.stream().
                     map(LibraryCard::getInstitutionId).
