@@ -18,6 +18,8 @@ public class LibraryCard {
     private Date updateDate;
     private Integer updateUserId;
 
+    private String institutionName;
+
   public LibraryCard() {
     this.createDate = new Date();
   }
@@ -100,6 +102,14 @@ public class LibraryCard {
 
   public void setUpdateUserId(Integer updateUser) {
     this.updateUserId = updateUser;
+  }
+
+  public String getInstitutionName() {
+    return institutionName;
+  }
+
+  public void setInstitutionName(String institutionName) {
+    this.institutionName = institutionName;
   }
 
   @Override
