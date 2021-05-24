@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
@@ -46,6 +47,7 @@ public class MetricsService {
         return "\n";
     }
   }
+  
 
   public List<? extends DecisionMetrics> generateDecisionMetrics(Type type) {
     List<DataAccessRequest> dars = metricsDAO.findAllDars();
@@ -159,5 +161,9 @@ public class MetricsService {
       election = electionList.stream().findFirst();
     }
     return election;
+  }
+
+  public DatasetMetrics generateDatasetMetrics(Integer datasetId) {
+    return null;
   }
 }
