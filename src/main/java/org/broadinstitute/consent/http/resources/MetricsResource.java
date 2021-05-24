@@ -1,11 +1,14 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
+
+import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.service.MetricsService;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -33,6 +36,18 @@ public class MetricsResource extends Resource {
   @Produces(MediaType.TEXT_PLAIN)
   public Response getDacMetricsData() {
     return getMetricsData(Type.DAC);
+  }
+
+  @GET
+  @Path("/dataset/{datasetId}")
+  @Produces("application/json")
+  public Response getDatasetMetricsData(@PathParam("datasetId") Integer datasetId) {
+    try{
+      DatasetMetrics metrics = metricsService.generateDatasetMetrics(datasetId);
+      return Response.ok().entity(metrics).build();
+    } catch(Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   private Response getMetricsData(Type type) {
