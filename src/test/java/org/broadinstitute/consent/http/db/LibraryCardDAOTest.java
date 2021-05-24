@@ -130,7 +130,8 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     List<LibraryCard> cardListUpdated = libraryCardDAO.findAllLibraryCards();
     assertEquals(1, cardListUpdated.size());
     LibraryCard card = cardListUpdated.get(0);
-    assertEquals(institution.getId(), card.getInstitutionId());
-    assertEquals(institution.getName(), card.getInstitutionName());
+    Institution cardInstitution = card.getInstitution();
+    assertEquals(institution.getId(), cardInstitution.getId());
+    assertEquals(institution.getName(), cardInstitution.getName());
   }
 }
