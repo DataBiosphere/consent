@@ -20,6 +20,8 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -177,7 +179,7 @@ public class MetricsService {
 
     //get datasetDTO with properties and data use restrictions
     Set<DatasetDTO> datasets = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
-    if (datasets.isEmpty()) {
+    if (datasets == null || datasets.isEmpty()) {
        throw new NotFoundException("Dataset with specified ID does not exist.");
     }
 
@@ -186,14 +188,16 @@ public class MetricsService {
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
     dars.removeIf(dar -> (!dar.data.getDatasetIds().contains(datasetId)));
 
-    //find all associated access elections so we know how many (and which) are approved/denied
+    //find all associated access elections so we know how many (and which) dars are approved/denied
     List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId)).collect(Collectors.toList());
-    List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds, "DataAccess");
-
+    if (!referenceIds.isEmpty()) {
+      List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds, "DataAccess");
+      metrics.setElections(elections);
+    } else {
+      metrics.setElections(Collections.emptyList());
+    }
     metrics.setDataset(datasets.iterator().next());
     metrics.setDars(dars);
-    metrics.setElections(elections);
-
     return metrics;
 
   }
