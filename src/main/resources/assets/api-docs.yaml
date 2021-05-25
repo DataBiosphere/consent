@@ -3585,6 +3585,29 @@ paths:
                 type: string
         500:
           description: Internal Server Error
+  /metrics/dataset/{datasetId}:
+    get:
+      summary: Dataset Metrics
+      description: get dars and elections associated with datasetId
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Metrics
+      responses:
+        200:
+          description: Dataset Metrics
+          content:
+            text/plain:
+              schema:
+                type: '#/components/schema/DatasetMetrics'
+        404:
+          description: Dataset with specified ID does not exist
+        500:
+          description: Internal Server Error
   /status:
     get:
       summary: System Health Status
