@@ -200,15 +200,20 @@ public class ElectionService {
         } 
         Integer userId = dar.getUserId();
         List<LibraryCard> libraryCards = Objects.nonNull(userId) ? libraryCardDAO.findLibraryCardsByUserId(userId) : Collections.emptyList();
-        if (libraryCards.isEmpty()) {
-            throw new NotFoundException("No Library cards exist for the researcher on this DAR");
-        }
         List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);
         // The first final vote to be submitted is what determines the approval/denial of the election
         boolean isApproved = finalVotes.stream().
                 filter(Objects::nonNull).
                 filter(v -> Objects.nonNull(v.getVote())).
                 anyMatch(Vote::getVote);
+        //Users cannot submit a DataAccess approval if the researcher does not have a library card
+        //However Chairs can still approve/disapprove RP elections and/or reject DataAccess elections even if the researcher does not have a Library Card
+        if (libraryCards.isEmpty() 
+            && election.getElectionType() == ElectionType.DATA_ACCESS.getValue()
+            && isApproved
+        ) {
+            throw new NotFoundException("No Library cards exist for the researcher on this DAR");
+        }
         electionDAO.updateElectionById(
                 electionId,
                 election.getStatus(),

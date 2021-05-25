@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -42,6 +43,7 @@ import org.broadinstitute.consent.http.models.grammar.Not;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -98,7 +100,8 @@ public class ElectionServiceTest {
     private static User sampleUserChairperson;
     private static User sampleUserMember;
     private static Dac sampleDac1;
-    private static Vote sampleVoteChairperson;
+    private static Vote sampleVoteChairpersonApproval;
+    private static Vote sampleVoteChairpersonReject;
     private static Vote sampleVoteMember;
     private static Vote sampleVoteRP;
     private static LibraryCard sampleLibraryCard;
@@ -170,12 +173,19 @@ public class ElectionServiceTest {
         sampleDac1.setCreateDate(new Date());
         sampleDac1.setUpdateDate(new Date());
 
-        sampleVoteChairperson = new Vote();
-        sampleVoteChairperson.setElectionId(sampleElection1.getElectionId());
-        sampleVoteChairperson.setDacUserId(sampleUserChairperson.getDacUserId());
-        sampleVoteChairperson.setVote(true);
-        sampleVoteChairperson.setVoteId(1);
-        sampleVoteChairperson.setRationale("Go for it");
+        sampleVoteChairpersonApproval = new Vote();
+        sampleVoteChairpersonApproval.setElectionId(sampleElection1.getElectionId());
+        sampleVoteChairpersonApproval.setDacUserId(sampleUserChairperson.getDacUserId());
+        sampleVoteChairpersonApproval.setVote(true);
+        sampleVoteChairpersonApproval.setVoteId(1);
+        sampleVoteChairpersonApproval.setRationale("Go for it");
+
+        sampleVoteChairpersonReject = new Vote();
+        sampleVoteChairpersonReject.setElectionId(sampleElection1.getElectionId());
+        sampleVoteChairpersonReject.setDacUserId(sampleUserChairperson.getDacUserId());
+        sampleVoteChairpersonReject.setVote(false);
+        sampleVoteChairpersonReject.setVoteId(1);
+        sampleVoteChairpersonReject.setRationale("Rejection vote");
 
         sampleVoteMember = new Vote();
         sampleVoteMember.setElectionId(sampleElection1.getElectionId());
@@ -251,7 +261,7 @@ public class ElectionServiceTest {
                 .thenReturn(sampleUserChairperson);
         when(userDAO.findUserByEmailAndRoleId("test@test.com", UserRoles.MEMBER.getRoleId()))
                 .thenReturn(sampleUserMember);
-        when(userDAO.findUsersForElectionsByRoles(Arrays.asList(sampleVoteChairperson.getElectionId()),
+        when(userDAO.findUsersForElectionsByRoles(Arrays.asList(sampleVoteChairpersonApproval.getElectionId()),
                 Arrays.asList(UserRoles.CHAIRPERSON.getRoleName(), UserRoles.MEMBER.getRoleName())))
                 .thenReturn(Set.of(sampleUserChairperson, sampleUserMember));
     }
@@ -283,15 +293,15 @@ public class ElectionServiceTest {
 
     private void voteStubs() {
         when(voteDAO.findFinalVotesByElectionId(sampleElection1.getElectionId()))
-                .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairperson));
+                .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId()))
-                .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairperson));
+                .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElection2.getElectionId()))
-                .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairperson));
+                .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId()))
                 .thenReturn(Arrays.asList(sampleVoteRP));
         when(voteDAO.findVotesByElectionId(sampleElection1.getElectionId()))
-                .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairperson));
+                .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairpersonApproval));
         when(voteDAO.findVotesByElectionIdAndType(sampleElection1.getElectionId(), VoteType.DATA_OWNER.getValue()))
                 .thenReturn(Arrays.asList(sampleVoteMember));
     }
@@ -349,10 +359,57 @@ public class ElectionServiceTest {
     }
 
     @Test(expected = NotFoundException.class)
-    public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard() throws Exception {
+    public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard_DataAccessApproval() throws Exception {
         initService();
         when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
         service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId());
+    }
+
+    @Test
+    public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard_DataAccessRejection() {
+        initService();
+        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
+        when(voteDAO.findFinalVotesByElectionId(anyInt())).thenReturn(Collections.singletonList(sampleVoteChairpersonReject));
+        try{
+            Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId());
+            assertNotNull(election);
+            assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        //function throws exception, need to have a catch block to handle it
+        } catch(Exception e) {
+            Assert.fail("Vote should not have failed");
+        } 
+    }
+
+    @Test
+    public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard_RPRejection() {
+        initService();
+        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
+        when(voteDAO.findFinalVotesByElectionId(anyInt())).thenReturn(Collections.singletonList(sampleVoteChairpersonReject));
+        when(electionDAO.findElectionWithFinalVoteById(anyInt())).thenReturn(sampleElectionRP);
+        try{
+            Election election = service.submitFinalAccessVoteDataRequestElection(sampleElectionRP.getElectionId());
+            assertNotNull(election);
+            assertEquals(sampleElectionRP.getElectionId(), election.getElectionId());
+        // function throws exception, need to have a catch block to handle it
+        } catch(Exception e) {
+            Assert.fail("Vote should not have failed");
+        }
+    }
+    @Test
+    public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard_RPApproval() {
+        initService();
+        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
+        when(voteDAO.findFinalVotesByElectionId(anyInt()))
+            .thenReturn(Collections.singletonList(sampleVoteChairpersonApproval));
+        when(electionDAO.findElectionWithFinalVoteById(anyInt())).thenReturn(sampleElectionRP);
+        try {
+            Election election = service.submitFinalAccessVoteDataRequestElection(sampleElectionRP.getElectionId());
+            assertNotNull(election);
+            assertEquals(sampleElectionRP.getElectionId(), election.getElectionId());
+        // function throws exception, need to have a catch block to handle it
+        } catch (Exception e) {
+            Assert.fail("Vote should not have failed");
+        }
     }
 
     @Test
@@ -411,17 +468,17 @@ public class ElectionServiceTest {
 
     @Test
     public void testValidateCollectEmailCondition_NoMember() {
-        when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId())).thenReturn(Arrays.asList(sampleVoteChairperson));
+        when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId())).thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
         when(userDAO.findUsersWithRoles(any())).thenReturn(Set.of(sampleUserChairperson));
         initService();
 
-        boolean validate = service.validateCollectEmailCondition(sampleVoteChairperson);
+        boolean validate = service.validateCollectEmailCondition(sampleVoteChairpersonApproval);
         assertEquals(true, validate);
     }
 
     @Test
     public void testValidateCollectDAREmailCondition_NoVotesNoChair() {
-        when(electionDAO.findElectionWithFinalVoteById(sampleVoteChairperson.getElectionId()))
+        when(electionDAO.findElectionWithFinalVoteById(sampleVoteChairpersonApproval.getElectionId()))
                 .thenReturn(sampleElection1);
         when(userDAO.findUsersForElectionsByRoles(Arrays.asList(sampleElection1.getElectionId(), sampleElectionRP.getElectionId()),
                 Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName())))
@@ -429,19 +486,19 @@ public class ElectionServiceTest {
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
         when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(), Arrays.asList(sampleUserChairperson.getDacUserId())))
-                .thenReturn(Arrays.asList(sampleVoteChairperson));
+                .thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
         when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(), Arrays.asList(sampleUserChairperson.getDacUserId())))
-                .thenReturn(Arrays.asList(sampleVoteChairperson));
+                .thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(Arrays.asList());
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId())).thenReturn(Arrays.asList());
         initService();
-        boolean validate = service.validateCollectDAREmailCondition(sampleVoteChairperson);
+        boolean validate = service.validateCollectDAREmailCondition(sampleVoteChairpersonApproval);
         assertEquals(true, validate);
     }
 
     @Test
     public void testValidateCollectDAREmailCondition_NoChairCreated() {
-        when(electionDAO.findElectionWithFinalVoteById(sampleVoteChairperson.getElectionId()))
+        when(electionDAO.findElectionWithFinalVoteById(sampleVoteChairpersonApproval.getElectionId()))
                 .thenReturn(sampleElection1);
         when(userDAO.findUsersForElectionsByRoles(Arrays.asList(sampleElection1.getElectionId(), sampleElectionRP.getElectionId()),
                 Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName())))
@@ -453,7 +510,7 @@ public class ElectionServiceTest {
                         sampleElectionRP.getElectionId(), "", VoteType.AGREEMENT.getValue(),
                         false, false)));
         when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(), Arrays.asList(sampleUserChairperson.getDacUserId())))
-                .thenReturn(Arrays.asList(sampleVoteChairperson));
+                .thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(Arrays.asList());
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId()))
                 .thenReturn(Arrays.asList(sampleVoteMember));
@@ -464,7 +521,7 @@ public class ElectionServiceTest {
 
     @Test
     public void testValidateCollectDAREmailCondition_NeitherChairCreated() {
-        when(electionDAO.findElectionWithFinalVoteById(sampleVoteChairperson.getElectionId()))
+        when(electionDAO.findElectionWithFinalVoteById(sampleVoteChairpersonApproval.getElectionId()))
                 .thenReturn(sampleElection1);
         when(userDAO.findUsersForElectionsByRoles(Arrays.asList(sampleElection1.getElectionId(), sampleElectionRP.getElectionId()),
                 Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName())))
