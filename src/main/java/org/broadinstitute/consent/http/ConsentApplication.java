@@ -233,8 +233,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ApprovalExpirationTimeResource(approvalExpirationTimeService, userService));
         env.jersey().register(new MatchResource(matchService));
         env.jersey().register(new MetricsResource(metricsService));
-        env.jersey().register(new UserResource(userService, whitelistService));
-        env.jersey().register(new ResearcherResource(researcherService, userService, whitelistService));
+        env.jersey().register(new UserResource(userService, libraryCardService));
+        env.jersey().register(new ResearcherResource(researcherService, userService, libraryCardService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
         env.jersey().register(new NihAccountResource(nihService, userService));
         env.jersey().register(new WhitelistResource(whitelistService));

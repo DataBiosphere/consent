@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -24,12 +25,12 @@ import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.WhitelistEntry;
+import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.WhitelistService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +41,7 @@ public class UserResourceTest {
 
   @Mock private UserService userService;
 
-  @Mock private WhitelistService whitelistService;
+  @Mock private LibraryCardService libraryCardService;
 
   private UserResource userResource;
 
@@ -65,7 +66,7 @@ public class UserResourceTest {
   }
 
   private void initResource() {
-    userResource = new UserResource(userService, whitelistService);
+    userResource = new UserResource(userService, libraryCardService);
   }
 
   @Test
@@ -73,8 +74,8 @@ public class UserResourceTest {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(whitelistService.findWhitelistEntriesForUser(any(), any()))
-        .thenReturn(createWhitelistEntries());
+    when(libraryCardService.findLibraryCardsByUserId(any()))
+        .thenReturn(createLibraryCards());
     initResource();
 
     Response response = userResource.getUser(authUser);
@@ -86,8 +87,8 @@ public class UserResourceTest {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(whitelistService.findWhitelistEntriesForUser(any(), any()))
-        .thenReturn(createWhitelistEntries());
+    when(libraryCardService.findLibraryCardsByUserId(any()))
+        .thenReturn(createLibraryCards());;
     initResource();
 
     Response response = userResource.getUserById(authUser, 1);
@@ -163,8 +164,8 @@ public class UserResourceTest {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(whitelistService.findWhitelistEntriesForUser(any(), any()))
-        .thenReturn(createWhitelistEntries());
+    when(libraryCardService.findLibraryCardsByUserId(any()))
+        .thenReturn(createLibraryCards());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1, UserRoles.ADMIN.getRoleId());
     assertEquals(200, response.getStatus());
@@ -183,8 +184,8 @@ public class UserResourceTest {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(whitelistService.findWhitelistEntriesForUser(any(), any()))
-        .thenReturn(createWhitelistEntries());
+    when(libraryCardService.findLibraryCardsByUserId(any()))
+        .thenReturn(createLibraryCards());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1, UserRoles.RESEARCHER.getRoleId());
     assertEquals(304, response.getStatus());
@@ -195,8 +196,8 @@ public class UserResourceTest {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(whitelistService.findWhitelistEntriesForUser(any(), any()))
-        .thenReturn(createWhitelistEntries());
+    when(libraryCardService.findLibraryCardsByUserId(any()))
+        .thenReturn(createLibraryCards());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1, 1000);
     assertEquals(400, response.getStatus());
@@ -223,17 +224,13 @@ public class UserResourceTest {
         .collect(Collectors.toList());
   }
 
-  private List<WhitelistEntry> createWhitelistEntries() {
-    WhitelistEntry e = new WhitelistEntry();
+  private List<LibraryCard> createLibraryCards() {
+    LibraryCard e = new LibraryCard();
     String randomValue = RandomStringUtils.random(10, true, false);
-    e.setCommonsId(randomValue);
-    e.setEmail(randomValue);
-    e.setItDirectorEmail(randomValue);
-    e.setItDirectorName(randomValue);
-    e.setName(randomValue);
-    e.setOrganization(randomValue);
-    e.setSigningOfficialEmail(randomValue);
-    e.setSigningOfficialName(randomValue);
+    e.setEraCommonsId(randomValue);
+    e.setUserEmail(randomValue);
+    e.setUserName(randomValue);
+    e.setInstitutionId(new Random().nextInt());
     return Collections.singletonList(e);
   }
 }

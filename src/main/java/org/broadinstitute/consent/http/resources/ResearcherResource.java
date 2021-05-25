@@ -6,11 +6,11 @@ import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.WhitelistService;
+import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 
 import javax.annotation.security.PermitAll;
@@ -40,13 +40,13 @@ public class ResearcherResource extends Resource {
 
     private final ResearcherService researcherService;
     private final UserService userService;
-    private final WhitelistService whitelistService;
+    private final LibraryCardService libraryCardService;
 
     @Inject
-    public ResearcherResource(ResearcherService researcherService, UserService userService, WhitelistService whitelistService) {
+    public ResearcherResource(ResearcherService researcherService, UserService userService, LibraryCardService libraryCardService) {
         this.researcherService = researcherService;
         this.userService = userService;
-        this.whitelistService = whitelistService;
+        this.libraryCardService = libraryCardService;
     }
 
     @POST
@@ -82,14 +82,13 @@ public class ResearcherResource extends Resource {
             List<UserRoles> authedRoles = Stream.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER, UserRoles.ADMIN).
                     collect(Collectors.toList());
             validateAuthedRoleUser(authedRoles, findByAuthUser(authUser), userId);
-            User user = userService.findUserById(userId);
             List<UserProperty> props = userService.findAllUserProperties(userId);
             Map<String, Object> propMap = props.stream().
                 collect(Collectors.toMap(UserProperty::getPropertyKey, UserProperty::getPropertyValue));
-            List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(user, props);
+            List<LibraryCard> entries = libraryCardService.findLibraryCardsByUserId(userId);
             propMap.put(UserFields.LIBRARY_CARD_ENTRIES, entries);
-            List<String> orgs = entries.stream().
-                    map(WhitelistEntry::getOrganization).
+            List<Integer> orgs = entries.stream().
+                    map(LibraryCard::getInstitutionId).
                     distinct().
                     collect(Collectors.toList());
             propMap.put(UserFields.LIBRARY_CARDS, orgs);

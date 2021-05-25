@@ -31,25 +31,25 @@ import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.WhitelistService;
 
 @Path("{api : (api/)?}user")
 public class UserResource extends Resource {
 
     private final UserService userService;
-    private final WhitelistService whitelistService;
+    private final LibraryCardService libraryCardService;
     private final Gson gson;
 
     @Inject
-    public UserResource(UserService userService, WhitelistService whitelistService) {
+    public UserResource(UserService userService, LibraryCardService libraryCardService) {
         this.userService = userService;
-        this.whitelistService = whitelistService;
+        this.libraryCardService = libraryCardService;
         this.gson = new Gson();
     }
 
@@ -165,16 +165,16 @@ public class UserResource extends Resource {
     /**
      * Convenience method for a generic user object with custom properties added
      * @param user The User
-     * @return JsonObject version of the user with researcher properties and whitelist entries
+     * @return JsonObject version of the user with researcher properties and library card entries
      */
     private JsonObject constructUserJsonObject(User user) {
         List<UserProperty> props = userService.findAllUserProperties(user.getDacUserId());
-        List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(user, props);
+        List<LibraryCard> entries = libraryCardService.findLibraryCardsByUserId(user.getDacUserId());
         JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
         JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
         JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
         userJson.add("researcherProperties", propsJson);
-        userJson.add("whitelistEntries", entriesJson);
+        userJson.add("libraryCards", entriesJson);
         return userJson;
     }
 
