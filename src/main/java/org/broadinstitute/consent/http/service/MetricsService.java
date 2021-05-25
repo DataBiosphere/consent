@@ -56,7 +56,6 @@ public class MetricsService {
         return "\n";
     }
   }
-  
 
   public List<? extends DecisionMetrics> generateDecisionMetrics(Type type) {
     List<DataAccessRequest> dars = metricsDAO.findAllDars();
