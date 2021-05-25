@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Type;
@@ -24,17 +27,23 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.NotFoundException;
+
 public class MetricsService {
 
   private final DacService dacService;
   private final DatasetDAO dataSetDAO;
   private final MetricsDAO metricsDAO;
+  private final DataAccessRequestDAO dataAccessRequestDAO;
+  private final ElectionDAO electionDAO;
 
   @Inject
-  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, MetricsDAO metricsDAO) {
+  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, MetricsDAO metricsDAO, DataAccessRequestDAO dataAccessRequestDAO, ElectionDAO electionDAO) {
     this.dacService = dacService;
     this.dataSetDAO = dataSetDAO;
     this.metricsDAO = metricsDAO;
+    this.dataAccessRequestDAO = dataAccessRequestDAO;
+    this.electionDAO = electionDAO;
   }
 
   public String getHeaderRow(Type type) {
@@ -164,6 +173,29 @@ public class MetricsService {
   }
 
   public DatasetMetrics generateDatasetMetrics(Integer datasetId) {
-    return null;
+
+    DatasetMetrics metrics = new DatasetMetrics();
+
+    //get datasetDTO with properties and data use restrictions
+    Set<DatasetDTO> datasets = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
+    if (datasets.isEmpty()) {
+       throw new NotFoundException("Dataset with specified ID does not exist.");
+    }
+
+    //find all dars, then filter by datasetID because filtering cannot occur in DAO call because
+    //all dar data is saved in one column and not distinguishable until handled by the mapper
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
+    dars.removeIf(dar -> (!dar.data.getDatasetIds().contains(datasetId)));
+
+    //find all associated access elections so we know how many (and which) are approved/denied
+    List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId)).collect(Collectors.toList());
+    List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds, "DataAccess");
+
+    metrics.setDataset(datasets.iterator().next());
+    metrics.setDars(dars);
+    metrics.setElections(elections);
+
+    return metrics;
+
   }
 }
