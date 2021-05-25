@@ -3601,7 +3601,7 @@ paths:
         200:
           description: Dataset Metrics
           content:
-            text/plain:
+            application/json:
               schema:
                 type: '#/components/schema/DatasetMetrics'
         404:
