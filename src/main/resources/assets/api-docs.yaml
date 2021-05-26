@@ -3585,7 +3585,7 @@ paths:
                 type: string
         500:
           description: Internal Server Error
-  /metrics/dataset/{datasetId}:
+  /api/metrics/dataset/{datasetId}:
     get:
       summary: Dataset Metrics
       description: get dars and elections associated with datasetId
