@@ -229,7 +229,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
   private void setDacDecision(Election election) {
     //NOTE: finalVote is pulled from the associated vote
     //Vote records are vastly more reliable than election vote status 
-    if (Objects.nonNull(election) && election.getFinalVote()) {
+    if (Objects.nonNull(election) && Objects.nonNull(election.getFinalVote())) {
       this.dacDecision = election.getFinalVote() ? YES : NO;
     }
   }

@@ -96,7 +96,7 @@ public class MetricsService {
 
           Optional<Election> accessElection = searchFilteredElectionList(filteredAccessElections);
           Optional<Election> rpElection = searchFilteredElectionList(filteredRpElections);
-          
+
           Optional<Match> match =
             matches.stream()
               .filter(
@@ -153,9 +153,8 @@ public class MetricsService {
       .stream()
       .filter(e -> Objects.nonNull(e.getFinalVote()) && e.getFinalVote())
       .findAny();
-    
     //if no vote was found, return the earliest vote
-    if(Objects.isNull(election)) {
+    if(!election.isPresent()) {
       election = electionList.stream().findFirst();
     }
     return election;
