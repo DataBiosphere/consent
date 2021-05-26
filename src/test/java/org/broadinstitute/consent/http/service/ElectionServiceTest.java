@@ -353,7 +353,7 @@ public class ElectionServiceTest {
     public void testSubmitFinalAccessVoteDataRequestElection() throws Exception {
         initService();
         when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of(sampleLibraryCard));
-        Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId());
+        Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), true);
         assertNotNull(election);
         assertEquals(sampleElection1.getElectionId(), election.getElectionId());
     }
@@ -362,7 +362,7 @@ public class ElectionServiceTest {
     public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard_DataAccessApproval() throws Exception {
         initService();
         when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
-        service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId());
+        service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), true);
     }
 
     @Test
@@ -371,45 +371,13 @@ public class ElectionServiceTest {
         when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
         when(voteDAO.findFinalVotesByElectionId(anyInt())).thenReturn(Collections.singletonList(sampleVoteChairpersonReject));
         try{
-            Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId());
+            Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), false);
             assertNotNull(election);
             assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         //function throws exception, need to have a catch block to handle it
         } catch(Exception e) {
             Assert.fail("Vote should not have failed");
         } 
-    }
-
-    @Test
-    public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard_RPRejection() {
-        initService();
-        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
-        when(voteDAO.findFinalVotesByElectionId(anyInt())).thenReturn(Collections.singletonList(sampleVoteChairpersonReject));
-        when(electionDAO.findElectionWithFinalVoteById(anyInt())).thenReturn(sampleElectionRP);
-        try{
-            Election election = service.submitFinalAccessVoteDataRequestElection(sampleElectionRP.getElectionId());
-            assertNotNull(election);
-            assertEquals(sampleElectionRP.getElectionId(), election.getElectionId());
-        // function throws exception, need to have a catch block to handle it
-        } catch(Exception e) {
-            Assert.fail("Vote should not have failed");
-        }
-    }
-    @Test
-    public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard_RPApproval() {
-        initService();
-        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
-        when(voteDAO.findFinalVotesByElectionId(anyInt()))
-            .thenReturn(Collections.singletonList(sampleVoteChairpersonApproval));
-        when(electionDAO.findElectionWithFinalVoteById(anyInt())).thenReturn(sampleElectionRP);
-        try {
-            Election election = service.submitFinalAccessVoteDataRequestElection(sampleElectionRP.getElectionId());
-            assertNotNull(election);
-            assertEquals(sampleElectionRP.getElectionId(), election.getElectionId());
-        // function throws exception, need to have a catch block to handle it
-        } catch (Exception e) {
-            Assert.fail("Vote should not have failed");
-        }
     }
 
     @Test

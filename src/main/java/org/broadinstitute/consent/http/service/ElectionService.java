@@ -188,7 +188,7 @@ public class ElectionService {
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
-    public Election submitFinalAccessVoteDataRequestElection(Integer electionId) throws Exception {
+    public Election submitFinalAccessVoteDataRequestElection(Integer electionId, Boolean voteValue) throws Exception {
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
         if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");
@@ -202,16 +202,15 @@ public class ElectionService {
         List<LibraryCard> libraryCards = Objects.nonNull(userId) ? libraryCardDAO.findLibraryCardsByUserId(userId) : Collections.emptyList();
         List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);
         // The first final vote to be submitted is what determines the approval/denial of the election
+        // isApproved represents whether or not a final vote has already been submitted
         boolean isApproved = finalVotes.stream().
                 filter(Objects::nonNull).
                 filter(v -> Objects.nonNull(v.getVote())).
                 anyMatch(Vote::getVote);
         //Users cannot submit a DataAccess approval if the researcher does not have a library card
-        //However Chairs can still approve/disapprove RP elections and/or reject DataAccess elections even if the researcher does not have a Library Card
-        if (libraryCards.isEmpty() 
-            && election.getElectionType() == ElectionType.DATA_ACCESS.getValue()
-            && isApproved
-        ) {
+        //However Chairs can still reject DataAccess elections even if the researcher does not have a Library Card
+        //voteValue, which represents the vote from the payload, is referenced for this validation step
+        if (libraryCards.isEmpty() && (Boolean.TRUE.equals(voteValue))) {
             throw new NotFoundException("No Library cards exist for the researcher on this DAR");
         }
         electionDAO.updateElectionById(
