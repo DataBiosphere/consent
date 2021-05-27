@@ -183,10 +183,8 @@ public class MetricsService {
        throw new NotFoundException("Dataset with specified ID does not exist.");
     }
 
-    //find all dars, then filter by datasetID because filtering cannot occur in DAO call because
-    //all dar data is saved in one column and not distinguishable until handled by the mapper
-    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
-    dars.removeIf(dar -> (!dar.data.getDatasetIds().contains(datasetId)));
+    //find dars with the given datasetId in their list of datasetIds, String so it can be converted to jsonb in query
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForDatasetMetrics(Integer.toString(datasetId));
 
     //find all associated access elections so we know how many (and which) dars are approved/denied
     List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId)).collect(Collectors.toList());
