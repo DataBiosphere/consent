@@ -20,7 +20,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -28,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.sql.Timestamp;
 
 import javax.ws.rs.NotFoundException;
 
@@ -185,6 +185,13 @@ public class MetricsService {
 
     //find dars with the given datasetId in their list of datasetIds, String so it can be converted to jsonb in query
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForDatasetMetrics(Integer.toString(datasetId));
+    List<Object> darInfo = dars.stream().map(dar -> new Object() {
+      public Timestamp updateDate = dar.getUpdateDate();
+      public String projectTitle = dar.data.getProjectTitle();
+      public String darCode = dar.data.getDarCode();
+      public String investigator = dar.data.getInvestigator();
+      public String nonTechRus = dar.data.getNonTechRus();
+    }).collect(Collectors.toList());
 
     //find all associated access elections so we know how many (and which) dars are approved/denied
     List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId)).collect(Collectors.toList());
@@ -195,7 +202,7 @@ public class MetricsService {
       metrics.setElections(Collections.emptyList());
     }
     metrics.setDataset(datasets.iterator().next());
-    metrics.setDars(dars);
+    metrics.setDars(darInfo);
     return metrics;
 
   }

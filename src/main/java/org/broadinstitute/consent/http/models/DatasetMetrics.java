@@ -8,7 +8,7 @@ import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 public class DatasetMetrics {
 
   private DatasetDTO dataset;
-  private List<DataAccessRequest> dars;
+  private List<Object> dars;
   private List<Election> elections;
 
   public DatasetDTO getDataset() {
@@ -19,11 +19,11 @@ public class DatasetMetrics {
     this.dataset = dataset;
   }
 
-  public List<DataAccessRequest> getDars() {
+  public List<Object> getDars() {
     return dars;
   }
 
-  public void setDars(List<DataAccessRequest> dars) {
+  public void setDars(List<Object> dars) {
     this.dars = dars;
   }
 

@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -93,7 +94,7 @@ public class MetricsServiceTest {
     initService();
     DatasetMetrics metrics = service.generateDatasetMetrics(1);
 
-    assertEquals(metrics.getDars(), dars);
+    assertEquals(metrics.getDars().size(), toObjects(dars).size());
     assertEquals(metrics.getElections(), election);
     assertEquals(metrics.getDataset(), dataset.iterator().next());
   }
@@ -177,6 +178,11 @@ public class MetricsServiceTest {
             })
         .collect(Collectors.toList());
   }
+
+  private List<Object> toObjects(List<DataAccessRequest> dars) {
+    return dars.stream().map(dar -> new Object() {
+      }).collect(Collectors.toList());
+  } 
 
   private List<DataSet> generateDatasets(int count) {
     return IntStream.range(1, count + 1)
