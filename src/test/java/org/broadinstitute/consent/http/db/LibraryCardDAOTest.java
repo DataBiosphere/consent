@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.google.gson.Gson;
 
+import org.broadinstitute.consent.http.models.User;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 import org.apache.commons.lang3.RandomUtils;
@@ -127,5 +128,15 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     createLibraryCard();
     List<LibraryCard> cardListUpdated = libraryCardDAO.findAllLibraryCards();
     assertEquals(1, cardListUpdated.size());
+  }
+
+  @Test
+  public void testFindAllLibraryCardsByUserEmail() {
+    User user = createUser();
+    LibraryCard libraryCard = createLibraryCard(user);
+    List<LibraryCard> libraryCards = libraryCardDAO.findAllLibraryCardsByUserEmail(user.getEmail());
+    assertNotNull(libraryCards);
+    assertEquals(1, libraryCards.size());
+    assertEquals(user.getEmail(), libraryCards.get(0).getUserEmail());
   }
 }
