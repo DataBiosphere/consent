@@ -42,18 +42,12 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    *
    * @return List<DataAccessRequest>
    */
-  @RegisterRowMapper(DataAccessRequestMapper.class)
   @SqlQuery(
       "SELECT id, reference_id, draft, user_id, create_date, sort_date, submission_date, update_date, "
-      + " ((data #>> '{}')::jsonb->>'projectTitle') AS project_title, "
-      + " ((data #>> '{}')::jsonb->>'investigator') AS investigator, "
-      + " ((data #>> '{}')::jsonb->>'nonTechRus') AS nonTechRus, "
-      + " ((data #>> '{}')::jsonb->>'non_tech_rus') AS non_tech_rus, "
-      + " ((data #>> '{}')::jsonb->>'darCode') AS darCode, "
-      + " ((data #>> '{}')::jsonb->>'dar_code') AS dar_code "
-      + " FROM data_access_request "
-           + "WHERE ((data #>> '{}')::jsonb->>'datasetIds')::jsonb @> :datasetId::jsonb "
-           + "AND draft = false")
+          + "(data #>> '{}')::jsonb AS data FROM data_access_request "
+          + " WHERE not (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
+          +  "AND draft = false" 
+          + " AND ((data #>> '{}')::jsonb->>'datasetIds')::jsonb @> :datasetId::jsonb")
   List<DataAccessRequest> findAllDataAccessRequestsForDatasetMetrics(@Bind("datasetId") String datasetId);
 
   /**
