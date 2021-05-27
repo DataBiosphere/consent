@@ -27,7 +27,7 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
 
   @SqlQuery(
     "SELECT * from ( "
-      + "SELECT e.*, v.vote finalvote, v.rationale finalrationale, v.createdate finalvotedate, MAX(e.electionid) "
+      + "SELECT e.*, v.vote finalvote, v.rationale finalrationale, v.updatedate finalvotedate, MAX(e.electionid) "
       + "OVER (PARTITION BY e.referenceid, e.electiontype) AS latest "
       + "FROM election e "
       + "LEFT JOIN vote v ON e.electionid = v.electionid AND "
