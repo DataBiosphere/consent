@@ -27,10 +27,8 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
         dar.setSortDate(resultSet.getTimestamp("sort_date"));
         dar.setSubmissionDate(resultSet.getTimestamp("submission_date"));
         dar.setUpdateDate(resultSet.getTimestamp("update_date"));
-
-        //for dars with the entire data object
-        if (hasColumn(resultSet, "data")) {
-            String darDataString = resultSet.getObject("data", PGobject.class).getValue();
+        String darDataString = resultSet.getObject("data", PGobject.class).getValue();
+        if (Objects.nonNull(darDataString)) {
             // Handle nested quotes
             String quoteFixedDataString = darDataString.replaceAll("\\\\\"", "'");
             // Inserted json data ends up double-escaped via standard jdbi insert.
@@ -44,27 +42,6 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
                 logger.error(message);
                 throw new SQLException(message);
             }
-
-        //for dars the do not contain the entire data object but do contain individual fields from the data object
-        //the data object must be manually constructed, fields can be added here if needed as more DAO calls are created
-        } else if (hasColumn(resultSet, "project_title")) {
-            DataAccessRequestData data = new DataAccessRequestData();
-
-            //different dars have different names for this field
-            String darCode = resultSet.getString("darCode");
-            if (Objects.isNull(darCode)) {
-                darCode = resultSet.getString("dar_code");
-            }
-            //different dars have different names for this field
-            String nonTechRus = resultSet.getString("nonTechRus");
-            if (Objects.isNull(nonTechRus)) {
-                nonTechRus = resultSet.getString("non_tech_rus");
-            }
-            data.setDarCode(darCode);
-            data.setNonTechRus(nonTechRus);
-            data.setProjectTitle(resultSet.getString("project_title"));
-            data.setInvestigator(resultSet.getString("investigator"));
-            dar.setData(data);
         }
         return dar;
     }
