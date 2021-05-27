@@ -38,7 +38,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
 
 
   /**
-   * Find all non-draft/partial DataAccessRequests including only the data needed for the metrics page
+   * Find all non-draft DataAccessRequests for the given datasetId including only the dar data needed for the metrics page
    *
    * @return List<DataAccessRequest>
    */
