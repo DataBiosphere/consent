@@ -62,10 +62,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, draft, user_id, create_date, sort_date, submission_date, update_date, "
-      + " data->'projectTitle' AS projectTitle, data->'investigator' AS investigator, data->'nonTechRus' AS nonTechRus, "
-      + " data->'darCode' AS darCode, data->'datasetIds' AS datasetIds"
-      + " FROM data_access_request "
+    "SELECT id, reference_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
           + "  WHERE (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
           + "  OR draft = true "
           + "  ORDER BY ((data #>> '{}')::jsonb->>'sortDate')::numeric DESC")
