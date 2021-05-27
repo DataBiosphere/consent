@@ -13,7 +13,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Path("api/metrics")
+@Path("/metrics")
 public class MetricsResource extends Resource {
 
   private final MetricsService metricsService;
