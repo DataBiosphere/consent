@@ -54,18 +54,14 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
   List<Match> findMatchesForPurposeIds(@BindList("referenceIds") List<String> referenceIds);
 
   @SqlQuery(
-      "SELECT d.*, e.electionid as electionid "
-          + "FROM dac d "
-          + "INNER JOIN consents c on d.dac_id = c.dac_id "
-          + "INNER JOIN consentassociations a on a.consentid = c.consentid "
-          + "INNER JOIN election e on e.datasetid = a.datasetid "
-          + "WHERE e.electionid in (<electionIds>)"
-          + "UNION "
-          + "SELECT d.*, e.electionid as electionid "
-          + "FROM dac d "
-          + "INNER JOIN consents c on d.dac_id = c.dac_id "
-          + "INNER JOIN election e on e.referenceid = c.consentid "
-          + "WHERE e.electionid in (<electionIds>)")
+    "SELECT d.*, e.electionid as electionid "
+    + "FROM election e "
+    + "INNER JOIN accesselection_consentelection a ON a.access_election_id = e.electionid "
+    + "INNER JOIN election consentElection ON a.consent_election_id = consentElection.electionid "
+    + "INNER JOIN consents c ON consentElection.referenceId = c.consentid "
+    + "INNER JOIN dac d on d.dac_id = c.dac_id "
+    + "WHERE e.electionId IN (<electionIds>) "
+  )
   @UseRowMapper(DacMapper.class)
   List<Dac> findAllDacsForElectionIds(@BindList("electionIds") List<Integer> electionIds);
 
