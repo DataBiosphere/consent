@@ -56,6 +56,7 @@ public class LibraryCardResourceTest {
     LibraryCard mockCard = new LibraryCard();
     mockCard.setUserId(2);
     mockCard.setCreateUserId(1);
+    mockCard.setUserEmail(lcUser.getEmail());
     return mockCard;
   }
 
