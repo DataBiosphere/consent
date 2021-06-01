@@ -6,8 +6,10 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Type;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacDecisionMetrics;
@@ -38,14 +40,16 @@ public class MetricsService {
   private final MetricsDAO metricsDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final ElectionDAO electionDAO;
+  private final UserPropertyDAO userPropertyDAO;
 
   @Inject
-  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, MetricsDAO metricsDAO, DataAccessRequestDAO dataAccessRequestDAO, ElectionDAO electionDAO) {
+  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, MetricsDAO metricsDAO, DataAccessRequestDAO dataAccessRequestDAO, ElectionDAO electionDAO, UserPropertyDAO userPropertyDAO) {
     this.dacService = dacService;
     this.dataSetDAO = dataSetDAO;
     this.metricsDAO = metricsDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.electionDAO = electionDAO;
+    this.userPropertyDAO = userPropertyDAO;
   }
 
   public String getHeaderRow(Type type) {
@@ -189,8 +193,8 @@ public class MetricsService {
       public Timestamp updateDate = dar.getUpdateDate();
       public String projectTitle = dar.data.getProjectTitle();
       public String darCode = dar.data.getDarCode();
-      public String investigator = dar.data.getInvestigator();
       public String nonTechRus = dar.data.getNonTechRus();
+      public String investigator = findPI(userPropertyDAO.findResearcherPropertiesByUser(dar.userId), dar.data.getResearcher()); 
     }).collect(Collectors.toList());
 
     //find all associated access elections so we know how many (and which) dars are approved/denied
@@ -205,5 +209,19 @@ public class MetricsService {
     metrics.setDars(darInfo);
     return metrics;
 
+  }
+
+  public String findPI(List<UserProperty> props, String researcher) {
+
+    Optional<UserProperty> isResearcher = props.stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().toLowerCase().equals("true")).findFirst();
+    if (isResearcher.isPresent()) {
+      return researcher;
+    }
+
+    Optional<UserProperty> piName = props.stream().filter(prop -> prop.getPropertyKey().equals("piName")).findFirst();
+    if (piName.isPresent()) {
+      return piName.get().getPropertyValue();
+    }
+    return "- -";
   }
 }

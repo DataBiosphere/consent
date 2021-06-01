@@ -5,12 +5,14 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -48,6 +50,8 @@ public class MetricsServiceTest {
 
   @Mock private ElectionDAO electionDAO;
 
+  @Mock private UserPropertyDAO userPropertyDAO;
+
   private MetricsService service;
 
   @Before
@@ -56,7 +60,7 @@ public class MetricsServiceTest {
   }
 
   private void initService() {
-    service = new MetricsService(dacService, dataSetDAO, metricsDAO, dataAccessRequestDAO, electionDAO);
+    service = new MetricsService(dacService, dataSetDAO, metricsDAO, dataAccessRequestDAO, electionDAO, userPropertyDAO);
   }
 
   @Test
