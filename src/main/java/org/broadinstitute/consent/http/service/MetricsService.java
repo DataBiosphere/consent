@@ -187,7 +187,8 @@ public class MetricsService {
        throw new NotFoundException("Dataset with specified ID does not exist.");
     }
 
-    //find dars with the given datasetId in their list of datasetIds, String so it can be converted to jsonb in query
+    //find dars with the given datasetId in their list of datasetIds, datasetId is a String so it can be converted to jsonb in query
+    //convert all dars into smaller objects that only contain the information needed
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForDatasetMetrics(Integer.toString(datasetId));
     List<Object> darInfo = dars.stream().map(dar -> new Object() {
       public Timestamp updateDate = dar.getUpdateDate();
@@ -197,7 +198,7 @@ public class MetricsService {
       public String investigator = findPI(userPropertyDAO.findResearcherPropertiesByUser(dar.userId), dar.data.getResearcher()); 
     }).collect(Collectors.toList());
 
-    //find all associated access elections so we know how many (and which) dars are approved/denied
+    //if there are associated dars, find associated access elections so we know how many and which dars are approved/denied
     List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId)).collect(Collectors.toList());
     if (!referenceIds.isEmpty()) {
       List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds, "DataAccess");
@@ -222,6 +223,7 @@ public class MetricsService {
     if (piName.isPresent()) {
       return piName.get().getPropertyValue();
     }
+    
     return "- -";
   }
 }
