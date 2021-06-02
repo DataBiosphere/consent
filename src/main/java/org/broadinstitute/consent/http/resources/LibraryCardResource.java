@@ -85,10 +85,6 @@ public class LibraryCardResource extends Resource{
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
       User lcUser = userService.findUserByEmail(payload.getUserEmail());
 
-      if (Objects.isNull(lcUser)) {
-        throw new BadRequestException("User email does not belong to a valid user.");
-      }
-
       payload.setUserId(lcUser.getDacUserId());
       LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload, user.getDacUserId());
       return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(newLibraryCard).build();
