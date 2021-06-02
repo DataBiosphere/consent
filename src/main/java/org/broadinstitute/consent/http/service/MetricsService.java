@@ -195,7 +195,7 @@ public class MetricsService {
       public String projectTitle = dar.data.getProjectTitle();
       public String darCode = dar.data.getDarCode();
       public String nonTechRus = dar.data.getNonTechRus();
-      public String investigator = findPI(userPropertyDAO.findResearcherPropertiesByUser(dar.userId), dar.data.getResearcher()); 
+      public String investigator = findPI(dar.userId); 
     }).collect(Collectors.toList());
 
     //if there are associated dars, find associated access elections so we know how many and which dars are approved/denied
@@ -212,11 +212,15 @@ public class MetricsService {
 
   }
 
-  public String findPI(List<UserProperty> props, String researcher) {
+  public String findPI(Integer userId) {
+    List<UserProperty> props = userPropertyDAO.findResearcherPropertiesByUser(userId);
 
     Optional<UserProperty> isResearcher = props.stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().toLowerCase().equals("true")).findFirst();
     if (isResearcher.isPresent()) {
-      return researcher;
+      Optional<UserProperty> userName = props.stream().filter(prop -> prop.getPropertyKey().equals("profileName")).findFirst();
+      if(userName.isPresent()) {
+        return userName.get().getPropertyValue();
+      }
     }
 
     Optional<UserProperty> piName = props.stream().filter(prop -> prop.getPropertyKey().equals("piName")).findFirst();
