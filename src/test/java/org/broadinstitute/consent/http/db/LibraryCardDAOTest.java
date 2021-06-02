@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.junit.Test;
 
@@ -125,9 +126,14 @@ public class LibraryCardDAOTest extends DAOTestHelper {
   public void testFindAllLibraryCards() {
     List<LibraryCard> cardList = libraryCardDAO.findAllLibraryCards();
     assertEquals(0, cardList.size());
-    createLibraryCard();
+    Institution institution = createInstitution();
+    createLibraryCardForIndex(institution.getId());
     List<LibraryCard> cardListUpdated = libraryCardDAO.findAllLibraryCards();
     assertEquals(1, cardListUpdated.size());
+    LibraryCard card = cardListUpdated.get(0);
+    Institution cardInstitution = card.getInstitution();
+    assertEquals(institution.getId(), cardInstitution.getId());
+    assertEquals(institution.getName(), cardInstitution.getName());
   }
 
   @Test
