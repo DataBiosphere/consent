@@ -8,13 +8,13 @@ import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -97,7 +98,7 @@ public class MetricsServiceTest {
     initService();
     DatasetMetrics metrics = service.generateDatasetMetrics(1);
 
-    assertEquals(metrics.getDars().size(), toSummaries(dars).size());
+    assertEquals(metrics.getDars().get(0).projectTitle, toSummaries(dars).get(0).projectTitle);
     assertEquals(metrics.getElections(), election);
     assertEquals(metrics.getDataset(), dataset.iterator().next());
   }
@@ -176,6 +177,7 @@ public class MetricsServiceTest {
               DataAccessRequestData data = new DataAccessRequestData();
               data.setDatasetIds(dataSetIds);
               data.setReferenceId(referenceId);
+              data.setProjectTitle(UUID.randomUUID().toString());
               dar.setData(data);
               return dar;
             })
@@ -183,8 +185,7 @@ public class MetricsServiceTest {
   }
 
   private List<DarMetricsSummary> toSummaries(List<DataAccessRequest> dars) {
-    return dars.stream().map(dar -> new DarMetricsSummary() {
-      }).collect(Collectors.toList());
+    return dars.stream().map(dar -> service.new DarMetricsSummary(new Timestamp(1000), dar.data.getProjectTitle(), "", "", "")).collect(Collectors.toList());
   } 
 
   private List<DataSet> generateDatasets(int count) {
