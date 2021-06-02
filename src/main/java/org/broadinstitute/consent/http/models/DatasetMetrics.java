@@ -4,6 +4,7 @@ package org.broadinstitute.consent.http.models;
 import java.util.List;
 
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 
 public class DatasetMetrics {
 

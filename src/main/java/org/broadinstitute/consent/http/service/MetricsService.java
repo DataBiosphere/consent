@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
+import java.sql.Timestamp;
 
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -21,7 +23,6 @@ import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
-import org.broadinstitute.consent.http.models.DarMetricsSummary;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,6 +51,30 @@ public class MetricsService {
     this.electionDAO = electionDAO;
     this.userPropertyDAO = userPropertyDAO;
   }
+
+  public class DarMetricsSummary {
+    @JsonProperty final Timestamp updateDate;
+    @JsonProperty final String projectTitle;
+    @JsonProperty final String darCode;
+    @JsonProperty final String nonTechRus;
+    @JsonProperty final String investigator;
+
+    public DarMetricsSummary(java.sql.Timestamp timestamp, String projectTitle, String darCode, String nonTechRus, String investigator) {
+      this.updateDate = timestamp;
+      this.projectTitle = projectTitle;
+      this.darCode = darCode;
+      this.nonTechRus = nonTechRus;
+      this.investigator = investigator;
+    }
+
+    public DarMetricsSummary() {
+      this.updateDate = null;
+      this.projectTitle = null;
+      this.darCode = null;
+      this.nonTechRus = null;
+      this.investigator = null;
+    }
+}
 
   public String getHeaderRow(Type type) {
     switch (type) {
