@@ -10,7 +10,10 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+
+import java.util.Arrays;
 import java.util.Collections;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.NotFoundException;
@@ -38,6 +41,9 @@ public class LibraryCardResourceTest {
     new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())
   );
   private final User user = new User(1, authUser.getName(), "Display Name", new Date(), adminRoles, authUser.getName());
+  private final User lcUser = new User(2, "testuser@gmail.com", "Test User", new Date(), Collections.singletonList(
+          new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())
+  ), "testuser@gmail.com");
   private LibraryCardResource resource;
 
   @Mock private UserService userService;
@@ -50,6 +56,7 @@ public class LibraryCardResourceTest {
     LibraryCard mockCard = new LibraryCard();
     mockCard.setUserId(2);
     mockCard.setCreateUserId(1);
+    mockCard.setUserEmail(lcUser.getEmail());
     return mockCard;
   }
 
@@ -120,14 +127,29 @@ public class LibraryCardResourceTest {
   @Test
   public void testCreateLibraryCard() {
     LibraryCard mockCard = mockLibraryCardSetup();
+    mockCard.setUserEmail(lcUser.getEmail());
     String payload = new Gson().toJson(mockCard);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getName())).thenReturn(user);
+    when(userService.findUserByEmail(mockCard.getUserEmail())).thenReturn(lcUser);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), anyInt())).thenReturn(mockCard);
     initResource();
     Response response = resource.createLibraryCard(authUser, payload);
     String json = response.getEntity().toString();
     assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     assertNotNull(json);
+  }
+
+  @Test
+  public void testCreateLibraryCardInvalidEmail() {
+    LibraryCard mockCard = mockLibraryCardSetup();
+    mockCard.setUserEmail("wrongemail@gmail.com");
+    String payload = new Gson().toJson(mockCard);
+    when(userService.findUserByEmail(authUser.getName())).thenReturn(user);
+    when(userService.findUserByEmail(lcUser.getEmail())).thenReturn(lcUser);
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class), anyInt())).thenReturn(mockCard);
+    initResource();
+    Response response = resource.createLibraryCard(authUser, payload);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
   @Test

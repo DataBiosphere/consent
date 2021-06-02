@@ -5,7 +5,9 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -81,6 +83,9 @@ public class LibraryCardResource extends Resource{
     try{
       User user = userService.findUserByEmail(authUser.getName());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
+      User lcUser = userService.findUserByEmail(payload.getUserEmail());
+
+      payload.setUserId(lcUser.getDacUserId());
       LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload, user.getDacUserId());
       return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(newLibraryCard).build();
     } catch(Exception e) {
