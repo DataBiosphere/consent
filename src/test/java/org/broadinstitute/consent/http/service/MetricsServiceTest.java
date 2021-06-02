@@ -185,7 +185,7 @@ public class MetricsServiceTest {
   }
 
   private List<DarMetricsSummary> toSummaries(List<DataAccessRequest> dars) {
-    return dars.stream().map(dar -> service.new DarMetricsSummary(new Timestamp(1000), dar.data.getProjectTitle(), "", "", "")).collect(Collectors.toList());
+    return dars.stream().map(dar -> service.new DarMetricsSummary(new Timestamp(1000), dar.data.getProjectTitle(), "", "", "", "")).collect(Collectors.toList());
   } 
 
   private List<DataSet> generateDatasets(int count) {

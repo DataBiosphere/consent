@@ -58,13 +58,15 @@ public class MetricsService {
     @JsonProperty final String darCode;
     @JsonProperty final String nonTechRus;
     @JsonProperty final String investigator;
+    @JsonProperty final String referenceId;
 
-    public DarMetricsSummary(Timestamp timeStamp, String projectTitle, String darCode, String nonTechRus, String investigator) {
+    public DarMetricsSummary(Timestamp timeStamp, String projectTitle, String darCode, String nonTechRus, String investigator, String referenceId) {
       this.updateDate = timeStamp;
       this.projectTitle = projectTitle;
       this.darCode = darCode;
       this.nonTechRus = nonTechRus;
       this.investigator = investigator;
+      this.referenceId = referenceId;
     }
 }
 
@@ -207,7 +209,7 @@ public class MetricsService {
     //convert all dars into smaller objects that only contain the information needed
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForDatasetMetrics(Integer.toString(datasetId));
     List<DarMetricsSummary> darInfo = dars.stream().map(dar -> 
-      new DarMetricsSummary(dar.getUpdateDate(), dar.data.getProjectTitle(), dar.data.getDarCode(), dar.data.getNonTechRus(), findPI(dar.userId)))
+      new DarMetricsSummary(dar.getUpdateDate(), dar.data.getProjectTitle(), dar.data.getDarCode(), dar.data.getNonTechRus(), findPI(dar.userId), dar.getReferenceId()))
       .collect(Collectors.toList());
 
     //if there are associated dars, find associated access elections so we know how many and which dars are approved/denied
