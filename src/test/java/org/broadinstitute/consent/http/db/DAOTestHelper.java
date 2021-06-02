@@ -421,6 +421,17 @@ public class DAOTestHelper {
         return libraryCardDAO.findLibraryCardById(id);
     }
 
+    //overloaded method, helper for INDEX SQL call
+    //createInstitution called outside of helper for institution reference/data checks
+    protected LibraryCard createLibraryCardForIndex(Integer institutionId) {
+        Integer userId = createUser().getDacUserId();
+        String stringValue = "value";
+        Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue,
+                userId, new Date());
+        createdLibraryCardIds.add(id);
+        return libraryCardDAO.findLibraryCardById(id);
+    }
+
     protected Date yesterday() {
         final Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);

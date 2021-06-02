@@ -111,7 +111,7 @@ public class LibraryCardResource extends Resource{
 
   @DELETE
   @Produces("application/json")
-  @Path("/{id")
+  @Path("/{id}")
   @RolesAllowed(ADMIN)
   public Response deleteLibraryCard(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     try {
