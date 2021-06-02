@@ -45,8 +45,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       "SELECT id, reference_id, draft, user_id, create_date, sort_date, submission_date, update_date, "
           + "(data #>> '{}')::jsonb AS data FROM data_access_request "
-          + " WHERE not (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
-          +  "AND draft = false" 
+          + " WHERE draft = false" 
           + " AND ((data #>> '{}')::jsonb->>'datasetIds')::jsonb @> :datasetId::jsonb")
   List<DataAccessRequest> findAllDataAccessRequestsForDatasetMetrics(@Bind("datasetId") String datasetId);
 
