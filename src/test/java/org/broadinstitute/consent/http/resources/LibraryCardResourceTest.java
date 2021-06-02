@@ -149,7 +149,7 @@ public class LibraryCardResourceTest {
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), anyInt())).thenReturn(mockCard);
     initResource();
     Response response = resource.createLibraryCard(authUser, payload);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
   @Test
