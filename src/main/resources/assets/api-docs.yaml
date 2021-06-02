@@ -2927,6 +2927,13 @@ paths:
       description: Creates new institution record based on json payload
       tags:
         - Institutions
+      requestBody:
+        description: Required JSON payload representing updated Institution
+        required: true
+        content:
+          application/json:
+            schema: 
+              $ref: '#/components/schemas/Institution'
       responses:
         201:
           description: Creates and returns newly created record.
@@ -2967,6 +2974,13 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        description: Required JSON payload representing updated Institution
+        required: true
+        content:
+          application/json:
+            schema: 
+              $ref: '#/components/schemas/Institution'
       responses:
         200:
           description: Updates and returns target institution
@@ -3016,13 +3030,13 @@ paths:
     post:
       summary: Library Card CREATE resource
       description: Creates a new Library Card based on user-provided json
-      parameters:
-        - name: LibraryCard
-          in: body
-          description: JSON representation of libraryCard payload
-          required: true
-          schema:
-            $ref: '#/components/schemas/LibraryCard'
+      requestBody:
+        description: JSON representation of libraryCard payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LibraryCard'
       tags:
         - Library Card
         - Admin
@@ -3081,12 +3095,16 @@ paths:
         required: true
         schema:
           type: integer
-      - name: libraryCard
-        in: body
-        description: JSON representation of Library Card
-        required: true
-        schema:
-          $ref: '#/components/schemas/LibraryCard'
+      requestBody:
+          description: 'JSON representation of updated Library Card state'
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryCard'
+              example:
+                libraryCard:
+                  $ref: '#/components/schemas/LibraryCard'
       responses: 
         200:
           description: Library Card PUT request success
@@ -3132,7 +3150,7 @@ paths:
       description: Returns all Library Cards with institution_id equal to provided id
       tags:
         - Library Card
-        - Institution
+        - Institutions
       parameters:
       - name: id
         in: path
@@ -4596,7 +4614,7 @@ components:
           items:
             $ref: '#/components/schemas/User'
     Institution:
-      type: Object
+      type: object
       properties:
           id:
             type: integer
