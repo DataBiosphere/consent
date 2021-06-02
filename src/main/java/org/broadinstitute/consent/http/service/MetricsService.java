@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
+import org.broadinstitute.consent.http.models.DarMetricsSummary;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,8 +30,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.sql.Timestamp;
-
 import javax.ws.rs.NotFoundException;
 
 public class MetricsService {
@@ -50,22 +49,6 @@ public class MetricsService {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.electionDAO = electionDAO;
     this.userPropertyDAO = userPropertyDAO;
-  }
-
-  public class DarMetricsSummary {
-    final Timestamp updateDate;
-    final String projectTitle;
-    final String darCode;
-    final String nonTechRus;
-    final String investigator;
-
-    public DarMetricsSummary(Timestamp updateDate, String projectTitle, String darCode, String nonTechRus, String investigator) {
-      this.updateDate = updateDate;
-      this.projectTitle = projectTitle;
-      this.darCode = darCode;
-      this.nonTechRus = nonTechRus;
-      this.investigator = investigator;
-    }
   }
 
   public String getHeaderRow(Type type) {

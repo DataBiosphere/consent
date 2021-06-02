@@ -8,11 +8,11 @@ import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -98,7 +97,7 @@ public class MetricsServiceTest {
     initService();
     DatasetMetrics metrics = service.generateDatasetMetrics(1);
 
-    assertEquals(metrics.getDars().size(), toObjects(dars).size());
+    assertEquals(metrics.getDars().size(), toSummaries(dars).size());
     assertEquals(metrics.getElections(), election);
     assertEquals(metrics.getDataset(), dataset.iterator().next());
   }
@@ -183,8 +182,8 @@ public class MetricsServiceTest {
         .collect(Collectors.toList());
   }
 
-  private List<Object> toObjects(List<DataAccessRequest> dars) {
-    return dars.stream().map(dar -> new Object() {
+  private List<DarMetricsSummary> toSummaries(List<DataAccessRequest> dars) {
+    return dars.stream().map(dar -> new DarMetricsSummary() {
       }).collect(Collectors.toList());
   } 
 
