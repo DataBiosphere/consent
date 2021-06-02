@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -14,12 +16,14 @@ import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -34,14 +38,16 @@ public class UserService {
     private final UserRoleDAO userRoleDAO;
     private final VoteDAO voteDAO;
     private final InstitutionDAO institutionDAO;
+    private final LibraryCardDAO libraryCardDAO;
 
     @Inject
-    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO) {
+    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO) {
         this.userDAO = userDAO;
         this.userPropertyDAO = userPropertyDAO;
         this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
         this.institutionDAO = institutionDAO;
+        this.libraryCardDAO = libraryCardDAO;
     }
 
     public User createUser(User user) {
@@ -57,6 +63,7 @@ public class UserService {
         }
         Integer dacUserID = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
         insertUserRoles(user.getRoles(), dacUserID);
+        addExistingLibraryCards(user);
         return userDAO.findUserById(dacUserID);
     }
 
@@ -191,6 +198,36 @@ public class UserService {
             }
         });
         userRoleDAO.insertUserRoles(roles, dacUserId);
+    }
+
+    private void addExistingLibraryCards(User user) {
+        List<LibraryCard> libraryCards = libraryCardDAO.findAllLibraryCardsByUserEmail(user.getEmail());
+
+        if (Objects.isNull(libraryCards) || libraryCards.isEmpty()) {
+            return;
+        }
+
+        libraryCards
+                .stream()
+                .forEach(lc -> {
+                    lc.setUserId(user.getDacUserId());
+
+                    if (!Objects.isNull(lc.getInstitutionId())) {
+                        user.setInstitutionId(lc.getInstitutionId());
+                    }
+
+                    libraryCardDAO.updateLibraryCardById(
+                            lc.getId(),
+                            lc.getUserId(),
+                            lc.getInstitutionId(),
+                            lc.getEraCommonsId(),
+                            lc.getUserName(),
+                            lc.getUserEmail(),
+                            user.getDacUserId(),
+                            new Date());
+                });
+
+        userDAO.updateUser(user.getDisplayName(), user.getDacUserId(), user.getAdditionalEmail(), user.getInstitutionId());
     }
 
     private Boolean checkForValidInstitution(Integer institutionId) {

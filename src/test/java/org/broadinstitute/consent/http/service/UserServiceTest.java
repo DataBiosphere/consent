@@ -18,12 +18,14 @@ import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
@@ -49,6 +51,9 @@ public class UserServiceTest {
     @Mock
     private InstitutionDAO institutionDAO;
 
+    @Mock
+    private LibraryCardDAO libraryCardDAO;
+
     private UserService service;
 
     @Before
@@ -57,7 +62,7 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, userPropertyDAO, roleDAO, voteDAO, institutionDAO);
+        service = new UserService(userDAO, userPropertyDAO, roleDAO, voteDAO, institutionDAO, libraryCardDAO);
     }
 
     @Test
@@ -67,12 +72,35 @@ public class UserServiceTest {
         u.setRoles(roles);
         when(userDAO.findUserById(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(roles);
+        when(libraryCardDAO.findAllLibraryCardsByUserEmail(any())).thenReturn(Collections.emptyList());
         initService();
         try {
             service.createUser(u);
         } catch (Exception e) {
             fail(e.getMessage());
         }
+    }
+
+    @Test
+    public void createUserWithLibraryCardTest() {
+        User u = generateUser();
+        LibraryCard libraryCard = generateLibraryCard(u.getEmail());
+        Integer institutionId = libraryCard.getInstitutionId();
+        List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.RESEARCHER.getRoleId()));
+        u.setRoles(roles);
+        when(userDAO.findUserById(any())).thenReturn(u);
+        when(roleDAO.findRolesByUserId(any())).thenReturn(roles);
+        when(libraryCardDAO.findAllLibraryCardsByUserEmail(u.getEmail())).thenReturn(Arrays.asList(libraryCard));
+        initService();
+
+        try {
+            service.createUser(u);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+
+        assertEquals(institutionId, u.getInstitutionId());
+        assertEquals(u.getDacUserId(), libraryCard.getUserId());
     }
 
     @Test(expected = BadRequestException.class)
@@ -301,6 +329,15 @@ public class UserServiceTest {
         u.setDacUserId(RandomUtils.nextInt(1, 100));
         u.setInstitutionId(RandomUtils.nextInt(1, 100));
         return u;
+    }
+
+    private LibraryCard generateLibraryCard(String email) {
+        LibraryCard libraryCard = new LibraryCard();
+        libraryCard.setId(RandomUtils.nextInt(1, 10));
+        libraryCard.setInstitutionId(RandomUtils.nextInt(1, 10));
+        libraryCard.setUserEmail(email);
+        libraryCard.setUserName(RandomStringUtils.randomAlphabetic(RandomUtils.nextInt(1, 10)));
+        return libraryCard;
     }
 
     private UserRole generateRole(int roleId) {
