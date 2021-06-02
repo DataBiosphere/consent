@@ -59,20 +59,12 @@ public class MetricsService {
     @JsonProperty final String nonTechRus;
     @JsonProperty final String investigator;
 
-    public DarMetricsSummary(java.sql.Timestamp timestamp, String projectTitle, String darCode, String nonTechRus, String investigator) {
-      this.updateDate = timestamp;
+    public DarMetricsSummary(Timestamp timeStamp, String projectTitle, String darCode, String nonTechRus, String investigator) {
+      this.updateDate = timeStamp;
       this.projectTitle = projectTitle;
       this.darCode = darCode;
       this.nonTechRus = nonTechRus;
       this.investigator = investigator;
-    }
-
-    public DarMetricsSummary() {
-      this.updateDate = null;
-      this.projectTitle = null;
-      this.darCode = null;
-      this.nonTechRus = null;
-      this.investigator = null;
     }
 }
 
