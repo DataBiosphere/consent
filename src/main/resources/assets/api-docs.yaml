@@ -3603,7 +3603,7 @@ paths:
           content:
             application/json:
               schema:
-                type: '#/components/schema/DatasetMetrics'
+                $ref: '#/components/schema/DatasetMetrics'
         404:
           description: Dataset with specified ID does not exist
         500:
