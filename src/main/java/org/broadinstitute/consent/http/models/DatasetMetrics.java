@@ -4,11 +4,12 @@ package org.broadinstitute.consent.http.models;
 import java.util.List;
 
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 
 public class DatasetMetrics {
 
   private DatasetDTO dataset;
-  private List<Object> dars;
+  private List<DarMetricsSummary> dars;
   private List<Election> elections;
 
   public DatasetDTO getDataset() {
@@ -19,11 +20,11 @@ public class DatasetMetrics {
     this.dataset = dataset;
   }
 
-  public List<Object> getDars() {
+  public List<DarMetricsSummary> getDars() {
     return dars;
   }
 
-  public void setDars(List<Object> dars) {
+  public void setDars(List<DarMetricsSummary> dars) {
     this.dars = dars;
   }
 

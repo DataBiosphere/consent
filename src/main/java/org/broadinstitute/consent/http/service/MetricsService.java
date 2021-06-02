@@ -52,6 +52,22 @@ public class MetricsService {
     this.userPropertyDAO = userPropertyDAO;
   }
 
+  public class DarMetricsSummary {
+    final Timestamp updateDate;
+    final String projectTitle;
+    final String darCode;
+    final String nonTechRus;
+    final String investigator;
+
+    public DarMetricsSummary(Timestamp updateDate, String projectTitle, String darCode, String nonTechRus, String investigator) {
+      this.updateDate = updateDate;
+      this.projectTitle = projectTitle;
+      this.darCode = darCode;
+      this.nonTechRus = nonTechRus;
+      this.investigator = investigator;
+    }
+  }
+
   public String getHeaderRow(Type type) {
     switch (type) {
       case DAR:
@@ -190,13 +206,9 @@ public class MetricsService {
     //find dars with the given datasetId in their list of datasetIds, datasetId is a String so it can be converted to jsonb in query
     //convert all dars into smaller objects that only contain the information needed
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForDatasetMetrics(Integer.toString(datasetId));
-    List<Object> darInfo = dars.stream().map(dar -> new Object() {
-      public Timestamp updateDate = dar.getUpdateDate();
-      public String projectTitle = dar.data.getProjectTitle();
-      public String darCode = dar.data.getDarCode();
-      public String nonTechRus = dar.data.getNonTechRus();
-      public String investigator = findPI(dar.userId); 
-    }).collect(Collectors.toList());
+    List<DarMetricsSummary> darInfo = dars.stream().map(dar -> 
+      new DarMetricsSummary(dar.getUpdateDate(), dar.data.getProjectTitle(), dar.data.getDarCode(), dar.data.getNonTechRus(), findPI(dar.userId)))
+      .collect(Collectors.toList());
 
     //if there are associated dars, find associated access elections so we know how many and which dars are approved/denied
     List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId)).collect(Collectors.toList());
