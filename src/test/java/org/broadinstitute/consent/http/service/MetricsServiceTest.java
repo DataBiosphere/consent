@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -185,7 +184,7 @@ public class MetricsServiceTest {
   }
 
   private List<DarMetricsSummary> toSummaries(List<DataAccessRequest> dars) {
-    return dars.stream().map(dar -> service.new DarMetricsSummary(new Timestamp(1000), dar.data.getProjectTitle(), "", "", "", "")).collect(Collectors.toList());
+    return dars.stream().map(dar -> service.new DarMetricsSummary(dar)).collect(Collectors.toList());
   } 
 
   private List<DataSet> generateDatasets(int count) {

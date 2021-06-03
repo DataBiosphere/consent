@@ -60,13 +60,22 @@ public class MetricsService {
     @JsonProperty final String investigator;
     @JsonProperty final String referenceId;
 
-    public DarMetricsSummary(Timestamp timeStamp, String projectTitle, String darCode, String nonTechRus, String investigator, String referenceId) {
-      this.updateDate = timeStamp;
-      this.projectTitle = projectTitle;
-      this.darCode = darCode;
-      this.nonTechRus = nonTechRus;
-      this.investigator = investigator;
-      this.referenceId = referenceId;
+    public DarMetricsSummary(DataAccessRequest dar) {
+      if (dar != null && dar.data != null) {
+        this.updateDate = dar.getUpdateDate();
+        this.projectTitle = dar.data.getProjectTitle();
+        this.darCode =  dar.data.getDarCode();
+        this.nonTechRus =  dar.data.getNonTechRus();
+        this.investigator = findPI(dar.userId);
+        this.referenceId = dar.getReferenceId();
+      } else {
+        this.updateDate = null;
+        this.projectTitle = null;
+        this.darCode =  null;
+        this.nonTechRus =  null;
+        this.investigator = null;
+        this.referenceId = null;
+      }
     }
 }
 
@@ -209,7 +218,7 @@ public class MetricsService {
     //convert all dars into smaller objects that only contain the information needed
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForDatasetMetrics(Integer.toString(datasetId));
     List<DarMetricsSummary> darInfo = dars.stream().map(dar -> 
-      new DarMetricsSummary(dar.getUpdateDate(), dar.data.getProjectTitle(), dar.data.getDarCode(), dar.data.getNonTechRus(), findPI(dar.userId), dar.getReferenceId()))
+      new DarMetricsSummary(dar))
       .collect(Collectors.toList());
 
     //if there are associated dars, find associated access elections so we know how many and which dars are approved/denied
