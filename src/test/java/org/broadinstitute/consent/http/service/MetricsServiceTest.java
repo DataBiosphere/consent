@@ -5,7 +5,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
@@ -49,7 +49,7 @@ public class MetricsServiceTest {
 
   @Mock private ElectionDAO electionDAO;
 
-  @Mock private UserPropertyDAO userPropertyDAO;
+  @Mock private UserDAO userDAO;
 
   private MetricsService service;
 
@@ -59,7 +59,7 @@ public class MetricsServiceTest {
   }
 
   private void initService() {
-    service = new MetricsService(dacService, dataSetDAO, metricsDAO, dataAccessRequestDAO, electionDAO, userPropertyDAO);
+    service = new MetricsService(dacService, dataSetDAO, metricsDAO, dataAccessRequestDAO, electionDAO, userDAO);
   }
 
   @Test
