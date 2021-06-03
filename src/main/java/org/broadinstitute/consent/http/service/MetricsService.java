@@ -217,7 +217,7 @@ public class MetricsService {
 
     //find dars with the given datasetId in their list of datasetIds, datasetId is a String so it can be converted to jsonb in query
     //convert all dars into smaller objects that only contain the information needed
-    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForDatasetMetrics(Integer.toString(datasetId));
+    List<DataAccessRequest> dars = darDAO.findAllDataAccessRequestsForDatasetMetrics(Integer.toString(datasetId));
     List<DarMetricsSummary> darInfo = dars.stream().map(dar ->
       new DarMetricsSummary(dar))
       .collect(Collectors.toList());
@@ -240,7 +240,7 @@ public class MetricsService {
     if (userId != null) {
       User user = userDAO.findUserWithPropertiesById(userId);
 
-      Optional<UserProperty> isResearcher = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().toLowerCase().equals("true")).findFirst();
+      Optional<UserProperty> isResearcher = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().equalsIgnoreCase("true")).findFirst();
       if (isResearcher.isPresent()) {
         Optional<UserProperty> userName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("profileName")).findFirst();
         if(userName.isPresent()) {

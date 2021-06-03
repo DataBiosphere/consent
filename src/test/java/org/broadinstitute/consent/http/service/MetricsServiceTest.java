@@ -91,7 +91,7 @@ public class MetricsServiceTest {
     Set<DatasetDTO> dataset = new HashSet<>(generateDatasetDTO(1));
 
     when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(dataset);
-    when(dataAccessRequestDAO.findAllDataAccessRequestsForDatasetMetrics(any())).thenReturn(dars);
+    when(darDAO.findAllDataAccessRequestsForDatasetMetrics(any())).thenReturn(dars);
     when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), eq("DataAccess"))).thenReturn(election);
 
     initService();
@@ -201,7 +201,7 @@ public class MetricsServiceTest {
   }
 
   private List<Election> generateElection(String ref) {
-    ArrayList<Election> list = new ArrayList<Election>();
+    ArrayList<Election> list = new ArrayList<>();
     Election e = new Election();
     e.setElectionId(1);
     e.setReferenceId(ref);
