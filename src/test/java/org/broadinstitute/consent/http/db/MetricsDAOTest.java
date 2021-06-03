@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.UUID;
 
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.Consent;
@@ -16,6 +17,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
+
 import org.junit.Test;
 
 public class MetricsDAOTest extends DAOTestHelper {
@@ -97,20 +99,20 @@ public class MetricsDAOTest extends DAOTestHelper {
   @Test
   public void testFindAllDacsForElectionIds() {
     Dac dac = createDac();
-    Consent consent = createConsent(dac.getDacId());
+    String accessReferenceId = UUID.randomUUID().toString();
     DataSet dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequestV2();
-    dar.getData().setDatasetIds(Collections.singletonList(dataset.getDataSetId()));
-    dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getData());
-    createAssociation(consent.getConsentId(), dataset.getDataSetId());
-    Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    electionDAO.updateElectionById(
-        election.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
+    Integer datasetId = dataset.getDataSetId();
+    Consent consent = createConsent(dac.getDacId());
+    Election dulElection = createDULElection(consent.getConsentId(), datasetId);
+    Election accessElection = createAccessElection(accessReferenceId, datasetId);
+    electionDAO.insertAccessAndConsentElection(accessElection.getElectionId(), dulElection.getElectionId());
 
-    List<Dac> dacs =
-        metricsDAO.findAllDacsForElectionIds(Collections.singletonList(election.getElectionId()));
-    assertFalse(dacs.isEmpty());
-    assertEquals(1, dacs.size());
+    List<Integer> electionIds = Collections.singletonList(accessElection.getElectionId());
+    List<Dac> dacList = metricsDAO.findAllDacsForElectionIds(electionIds);
+    Dac dacRecord = dacList.get(0);
+    assertEquals(1, dacList.size());
+    assertEquals(dac.getName(), dacRecord.getName());
+    assertEquals(dac.getDacId(), dacRecord.getDacId());
   }
 
   @Test
