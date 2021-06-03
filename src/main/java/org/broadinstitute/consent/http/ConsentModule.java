@@ -410,8 +410,9 @@ public class ConsentModule extends AbstractModule {
                 providesDacService(),
                 providesDataSetDAO(),
                 providesDataAccessRequestDAO(),
-                providesMatchDAO(),
-                providesElectionDAO()
+                providesElectionDAO(),
+                providesUserDAO(),
+                providesMatchDAO()
         );
     }
 

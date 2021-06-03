@@ -1,13 +1,18 @@
 package org.broadinstitute.consent.http.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
+import java.sql.Timestamp;
 
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Type;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacDecisionMetrics;
@@ -15,16 +20,19 @@ import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
 
 public class MetricsService {
 
@@ -33,17 +41,44 @@ public class MetricsService {
   private final DataAccessRequestDAO darDAO;
   private final MatchDAO matchDAO;
   private final ElectionDAO electionDAO;
-  //private final MetricsDAO metricsDAO;
+  private final UserDAO userDAO;
 
   @Inject
-  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO, MatchDAO matchDAO, ElectionDAO electionDAO) {
+  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO, MatchDAO matchDAO, ElectionDAO electionDAO, UserDAO userDAO) {
     this.dacService = dacService;
     this.dataSetDAO = dataSetDAO;
     this.darDAO = darDAO;
     this.matchDAO = matchDAO;
     this.electionDAO = electionDAO;
-    //this.metricsDAO = metricsDAO;
+    this.userDAO = userDAO;
   }
+
+  public class DarMetricsSummary {
+    @JsonProperty final Timestamp updateDate;
+    @JsonProperty final String projectTitle;
+    @JsonProperty final String darCode;
+    @JsonProperty final String nonTechRus;
+    @JsonProperty final String investigator;
+    @JsonProperty final String referenceId;
+
+    public DarMetricsSummary(DataAccessRequest dar) {
+      if (dar != null && dar.data != null) {
+        this.updateDate = dar.getUpdateDate();
+        this.projectTitle = dar.data.getProjectTitle();
+        this.darCode =  dar.data.getDarCode();
+        this.nonTechRus =  dar.data.getNonTechRus();
+        this.investigator = findPI(dar.userId);
+        this.referenceId = dar.getReferenceId();
+      } else {
+        this.updateDate = null;
+        this.projectTitle = null;
+        this.darCode =  null;
+        this.nonTechRus =  null;
+        this.investigator = null;
+        this.referenceId = null;
+      }
+    }
+}
 
   public String getHeaderRow(Type type) {
     switch (type) {
@@ -168,5 +203,56 @@ public class MetricsService {
       election = electionList.stream().findFirst();
     }
     return election;
+  }
+
+  public DatasetMetrics generateDatasetMetrics(Integer datasetId) {
+
+    DatasetMetrics metrics = new DatasetMetrics();
+
+    //get datasetDTO with properties and data use restrictions
+    Set<DatasetDTO> datasets = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
+    if (datasets == null || datasets.isEmpty()) {
+       throw new NotFoundException("Dataset with specified ID does not exist.");
+    }
+
+    //find dars with the given datasetId in their list of datasetIds, datasetId is a String so it can be converted to jsonb in query
+    //convert all dars into smaller objects that only contain the information needed
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForDatasetMetrics(Integer.toString(datasetId));
+    List<DarMetricsSummary> darInfo = dars.stream().map(dar ->
+      new DarMetricsSummary(dar))
+      .collect(Collectors.toList());
+
+    //if there are associated dars, find associated access elections so we know how many and which dars are approved/denied
+    List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId)).collect(Collectors.toList());
+    if (!referenceIds.isEmpty()) {
+      List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds, "DataAccess");
+      metrics.setElections(elections);
+    } else {
+      metrics.setElections(Collections.emptyList());
+    }
+    metrics.setDataset(datasets.iterator().next());
+    metrics.setDars(darInfo);
+    return metrics;
+
+  }
+
+  public String findPI(Integer userId) {
+    if (userId != null) {
+      User user = userDAO.findUserWithPropertiesById(userId);
+
+      Optional<UserProperty> isResearcher = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().toLowerCase().equals("true")).findFirst();
+      if (isResearcher.isPresent()) {
+        Optional<UserProperty> userName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("profileName")).findFirst();
+        if(userName.isPresent()) {
+          return userName.get().getPropertyValue();
+        }
+      }
+
+      Optional<UserProperty> piName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("piName")).findFirst();
+      if (piName.isPresent()) {
+        return piName.get().getPropertyValue();
+      }
+    }
+    return "- -";
   }
 }

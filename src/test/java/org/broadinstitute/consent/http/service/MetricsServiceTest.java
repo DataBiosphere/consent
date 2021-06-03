@@ -5,14 +5,18 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -25,9 +29,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.ws.rs.NotFoundException;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 public class MetricsServiceTest {
@@ -42,6 +49,8 @@ public class MetricsServiceTest {
 
   @Mock private ElectionDAO electionDAO;
 
+  @Mock private UserDAO userDAO;
+
   private MetricsService service;
 
   @Before
@@ -50,7 +59,7 @@ public class MetricsServiceTest {
   }
 
   private void initService() {
-    service = new MetricsService(dacService, dataSetDAO, darDAO, matchDAO, electionDAO);
+    service = new MetricsService(dacService, dataSetDAO, darDAO, matchDAO, electionDAO, userDAO);
   }
 
   @Test
@@ -73,6 +82,33 @@ public class MetricsServiceTest {
     initService();
     List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAC);
     assertFalse(metrics.isEmpty());
+  }
+
+  @Test
+  public void testGenerateDatasetMetrics() {
+    List<DataAccessRequest> dars = generateDars(1);
+    List<Election> election = generateElection(dars.get(0).getReferenceId());
+    Set<DatasetDTO> dataset = new HashSet<>(generateDatasetDTO(1));
+
+    when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(dataset);
+    when(dataAccessRequestDAO.findAllDataAccessRequestsForDatasetMetrics(any())).thenReturn(dars);
+    when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), eq("DataAccess"))).thenReturn(election);
+
+    initService();
+    DatasetMetrics metrics = service.generateDatasetMetrics(1);
+
+    assertEquals(metrics.getDars().get(0).projectTitle, toSummaries(dars).get(0).projectTitle);
+    assertEquals(metrics.getElections(), election);
+    assertEquals(metrics.getDataset(), dataset.iterator().next());
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testGenerateDatasetMetricsNotFound() {
+    when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(new HashSet<>());
+
+    initService();
+    service.generateDatasetMetrics(1);
+
   }
 
   private void initializeMetricsDAOCalls(int darCount, int datasetCount) {
@@ -140,10 +176,15 @@ public class MetricsServiceTest {
               DataAccessRequestData data = new DataAccessRequestData();
               data.setDatasetIds(dataSetIds);
               data.setReferenceId(referenceId);
+              data.setProjectTitle(UUID.randomUUID().toString());
               dar.setData(data);
               return dar;
             })
         .collect(Collectors.toList());
+  }
+
+  private List<DarMetricsSummary> toSummaries(List<DataAccessRequest> dars) {
+    return dars.stream().map(dar -> service.new DarMetricsSummary(dar)).collect(Collectors.toList());
   }
 
   private List<DataSet> generateDatasets(int count) {
@@ -157,5 +198,15 @@ public class MetricsServiceTest {
               return d;
             })
         .collect(Collectors.toList());
+  }
+
+  private List<Election> generateElection(String ref) {
+    ArrayList<Election> list = new ArrayList<Election>();
+    Election e = new Election();
+    e.setElectionId(1);
+    e.setReferenceId(ref);
+    e.setElectionType("DataAccess");
+    list.add(e);
+    return list;
   }
 }
