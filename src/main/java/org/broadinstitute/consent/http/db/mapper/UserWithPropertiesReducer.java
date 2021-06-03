@@ -27,7 +27,7 @@ public class UserWithPropertiesReducer implements LinkedHashMapRowReducer<Intege
     try {
       if (Objects.nonNull(rowView.getColumn("propertykey", String.class))) {
         UserProperty prop = rowView.getRow(UserProperty.class);
-        user.addProperty(prop);;
+        user.addProperty(prop);
       }
     } catch (MappingException e) {
       // Ignore any attempt to map a column that doesn't exist
