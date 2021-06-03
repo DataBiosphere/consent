@@ -36,6 +36,19 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + "  AND draft != true ")
   List<DataAccessRequest> findAllDataAccessRequests();
 
+
+  /**
+   * Find all non-draft DataAccessRequests for the given datasetId
+   *
+   * @return List<DataAccessRequest>
+   */
+  @SqlQuery(
+      "SELECT id, reference_id, draft, user_id, create_date, sort_date, submission_date, update_date, "
+          + "(data #>> '{}')::jsonb AS data FROM data_access_request "
+          + " WHERE draft = false" 
+          + " AND ((data #>> '{}')::jsonb->>'datasetIds')::jsonb @> :datasetId::jsonb")
+  List<DataAccessRequest> findAllDataAccessRequestsForDatasetMetrics(@Bind("datasetId") String datasetId);
+
   /**
    * Find all draft/partial DataAccessRequests, sorted descending order
    *

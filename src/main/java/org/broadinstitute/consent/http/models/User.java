@@ -37,6 +37,9 @@ public class User {
     private List<UserRole> roles;
 
     @JsonProperty
+    private List<UserProperty> properties;
+
+    @JsonProperty
     private Boolean emailPreference;
 
     @JsonProperty
@@ -216,6 +219,14 @@ public class User {
         this.roles = roles;
     }
 
+    public List<UserProperty> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(List<UserProperty> properties) {
+        this.properties = properties;
+    }
+
     public Date getCreateDate() {
         return createDate;
     }
@@ -275,6 +286,13 @@ public class User {
             this.setRoles(new ArrayList<>());
         }
         this.getRoles().add(userRole);
+    }
+
+    public void addProperty(UserProperty userProp) {
+        if (Objects.isNull(this.getProperties())) {
+            this.setProperties(new ArrayList<>());
+        }
+        this.getProperties().add(userProp);
     }
 
     @Override

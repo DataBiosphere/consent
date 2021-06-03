@@ -3,8 +3,6 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Date;
-
 public class UserProperty {
 
     @JsonProperty
