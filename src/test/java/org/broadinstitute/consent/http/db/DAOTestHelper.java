@@ -69,7 +69,6 @@ public class DAOTestHelper {
     protected static DataAccessRequestDAO dataAccessRequestDAO;
     protected static MatchDAO matchDAO;
     protected static MailMessageDAO mailMessageDAO;
-    protected static MetricsDAO metricsDAO;
     protected static UserPropertyDAO userPropertyDAO;
     protected static InstitutionDAO institutionDAO;
     protected static LibraryCardDAO libraryCardDAO;
@@ -128,7 +127,6 @@ public class DAOTestHelper {
         dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
         matchDAO = jdbi.onDemand(MatchDAO.class);
         mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
-        metricsDAO = jdbi.onDemand(MetricsDAO.class);
         userPropertyDAO = jdbi.onDemand(UserPropertyDAO.class);
         institutionDAO = jdbi.onDemand(InstitutionDAO.class);
         libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);

@@ -1,8 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.db.MetricsDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
@@ -34,7 +36,11 @@ public class MetricsServiceTest {
 
   @Mock private DatasetDAO dataSetDAO;
 
-  @Mock private MetricsDAO metricsDAO;
+  @Mock private DataAccessRequestDAO darDAO;
+
+  @Mock private MatchDAO matchDAO;
+
+  @Mock private ElectionDAO electionDAO;
 
   private MetricsService service;
 
@@ -44,7 +50,7 @@ public class MetricsServiceTest {
   }
 
   private void initService() {
-    service = new MetricsService(dacService, dataSetDAO, metricsDAO);
+    service = new MetricsService(dacService, dataSetDAO, darDAO, matchDAO, electionDAO);
   }
 
   @Test
@@ -70,11 +76,11 @@ public class MetricsServiceTest {
   }
 
   private void initializeMetricsDAOCalls(int darCount, int datasetCount) {
-    when(metricsDAO.findAllDars()).thenReturn(generateDars(darCount));
-    when(metricsDAO.findDatasetsByIds(any())).thenReturn(generateDatasets(datasetCount));
-    when(metricsDAO.findLastElectionsByReferenceIds(any())).thenReturn(Collections.emptyList());
-    when(metricsDAO.findMatchesForPurposeIds(any())).thenReturn(Collections.emptyList());
-    when(metricsDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
+    when(darDAO.findAllDataAccessRequests()).thenReturn(generateDars(darCount));
+    when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(generateDatasets(datasetCount));
+    when(electionDAO.findLastElectionsByReferenceIds(any())).thenReturn(Collections.emptyList());
+    when(matchDAO.findMatchesForPurposeIds(any())).thenReturn(Collections.emptyList());
+    when(electionDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
     Dac dac = generateDac();
     when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
     List<DatasetDTO> datasetDTOS = generateDatasetDTO(datasetCount);

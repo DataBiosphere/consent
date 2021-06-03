@@ -28,7 +28,6 @@ import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -84,7 +83,6 @@ public class ConsentModule extends AbstractModule {
     private final UserRoleDAO userRoleDAO;
     private final MatchDAO matchDAO;
     private final MailMessageDAO mailMessageDAO;
-    private final MetricsDAO metricsDAO;
     private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     private final MailServiceDAO mailServiceDAO;
     private final UserPropertyDAO userPropertyDAO;
@@ -119,7 +117,6 @@ public class ConsentModule extends AbstractModule {
         this.userRoleDAO = this.jdbi.onDemand(UserRoleDAO.class);
         this.matchDAO = this.jdbi.onDemand(MatchDAO.class);
         this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
-        this.metricsDAO = this.jdbi.onDemand(MetricsDAO.class);
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         this.mailServiceDAO = this.jdbi.onDemand(MailServiceDAO.class);
         this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
@@ -408,16 +405,13 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    MetricsDAO providesMetricsDAO() {
-        return metricsDAO;
-    }
-
-    @Provides
     MetricsService providesMetricsService() {
         return new MetricsService(
                 providesDacService(),
                 providesDataSetDAO(),
-                providesMetricsDAO()
+                providesDataAccessRequestDAO(),
+                providesMatchDAO(),
+                providesElectionDAO()
         );
     }
 
