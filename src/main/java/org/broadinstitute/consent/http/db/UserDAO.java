@@ -42,7 +42,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, u.institution_id, "
-        + "      p.propertykey, p.propertyvalue"
+        + "     p.propertykey, p.propertyvalue"
         + " FROM dacuser u "
         + " LEFT JOIN user_property p ON p.userid = u.dacuserid "
         + " WHERE u.dacuserid = :dacUserId")
