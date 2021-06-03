@@ -1,8 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.db.MetricsDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
@@ -27,13 +30,19 @@ public class MetricsService {
 
   private final DacService dacService;
   private final DatasetDAO dataSetDAO;
-  private final MetricsDAO metricsDAO;
+  private final DataAccessRequestDAO darDAO;
+  private final MatchDAO matchDAO;
+  private final ElectionDAO electionDAO;
+  //private final MetricsDAO metricsDAO;
 
   @Inject
-  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, MetricsDAO metricsDAO) {
+  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO, MatchDAO matchDAO, ElectionDAO electionDAO) {
     this.dacService = dacService;
     this.dataSetDAO = dataSetDAO;
-    this.metricsDAO = metricsDAO;
+    this.darDAO = darDAO;
+    this.matchDAO = matchDAO;
+    this.electionDAO = electionDAO;
+    //this.metricsDAO = metricsDAO;
   }
 
   public String getHeaderRow(Type type) {
@@ -48,7 +57,7 @@ public class MetricsService {
   }
 
   public List<? extends DecisionMetrics> generateDecisionMetrics(Type type) {
-    List<DataAccessRequest> dars = metricsDAO.findAllDars();
+    List<DataAccessRequest> dars = darDAO.findAllDataAccessRequests();
     List<String> referenceIds =
       dars.stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
     List<Integer> datasetIds =
@@ -57,12 +66,12 @@ public class MetricsService {
         .map(DataAccessRequestData::getDatasetIds)
         .flatMap(List::stream)
         .collect(Collectors.toList());
-    List<DataSet> datasets = metricsDAO.findDatasetsByIds(datasetIds);
-    List<Election> elections = metricsDAO.findLastElectionsByReferenceIds(referenceIds);
-    List<Match> matches = metricsDAO.findMatchesForPurposeIds(referenceIds);
+    List<DataSet> datasets = dataSetDAO.findDatasetsByIdList(datasetIds);
+    List<Election> elections = electionDAO.findLastElectionsByReferenceIds(referenceIds);
+    List<Match> matches = matchDAO.findMatchesForPurposeIds(referenceIds);
     List<Integer> electionIds =
       elections.stream().map(Election::getElectionId).collect(Collectors.toList());
-    List<Dac> dacs = metricsDAO.findAllDacsForElectionIds(electionIds);
+    List<Dac> dacs = electionDAO.findAllDacsForElectionIds(electionIds);
     List<DarDecisionMetrics> darMetrics = dars.stream()
       .map(
         dataAccessRequest -> {
