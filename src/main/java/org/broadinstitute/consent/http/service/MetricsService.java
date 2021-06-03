@@ -238,7 +238,6 @@ public class MetricsService {
 
   public String findPI(Integer userId) {
     if (userId != null) {
-
       User user = userDAO.findUserWithPropertiesById(userId);
 
       Optional<UserProperty> isResearcher = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().toLowerCase().equals("true")).findFirst();
