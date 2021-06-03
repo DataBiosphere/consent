@@ -252,8 +252,7 @@ public class MetricsService {
       if (piName.isPresent()) {
         return piName.get().getPropertyValue();
       }
-  }
-    
+    }
     return "- -";
   }
 }
