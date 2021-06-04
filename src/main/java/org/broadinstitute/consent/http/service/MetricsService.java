@@ -241,17 +241,19 @@ public class MetricsService {
     if (userId != null) {
       User user = userDAO.findUserWithPropertiesById(userId);
 
-      Optional<UserProperty> isResearcher = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().toLowerCase().equals("true")).findFirst();
-      if (isResearcher.isPresent()) {
-        Optional<UserProperty> userName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("profileName")).findFirst();
-        if(userName.isPresent()) {
-          return userName.get().getPropertyValue();
+      if (user != null) {
+        Optional<UserProperty> isResearcher = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().toLowerCase().equals("true")).findFirst();
+        if (isResearcher.isPresent()) {
+          Optional<UserProperty> userName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("profileName")).findFirst();
+          if(userName.isPresent()) {
+            return userName.get().getPropertyValue();
+          }
         }
-      }
 
-      Optional<UserProperty> piName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("piName")).findFirst();
-      if (piName.isPresent()) {
-        return piName.get().getPropertyValue();
+        Optional<UserProperty> piName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("piName")).findFirst();
+        if (piName.isPresent()) {
+          return piName.get().getPropertyValue();
+        }
       }
     }
     return "- -";
