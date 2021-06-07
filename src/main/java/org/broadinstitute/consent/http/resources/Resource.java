@@ -143,13 +143,13 @@ abstract public class Resource {
         //default status definition
         LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
         Integer status = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
-       
+
         try {
-            if(e.getCause() instanceof PSQLException) {
+            if (e.getCause() instanceof PSQLException) {
                 String vendorCode = ((PSQLException) e.getCause()).getSQLState();
                 status = vendorCodeStatusMap.get(vendorCode);
             }
-        } catch(Exception error) {
+        } catch (Exception error) {
             //no need to handle, default status already assigned
         }
 
