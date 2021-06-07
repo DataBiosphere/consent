@@ -64,6 +64,7 @@ abstract public class Resource {
             if (handler != null) {
                 return handler.handle(e);
             } else {
+                logger().error(e.getMessage());
                 return Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
             }
         } catch (Throwable t) {
@@ -99,7 +100,7 @@ abstract public class Resource {
         Response handle(Exception e);
     }
 
-    private static final Map<Class, ExceptionHandler> dispatch = new HashMap<>();
+    private static final Map<Class<? extends Throwable>, ExceptionHandler> dispatch = new HashMap<>();
 
     static {
         dispatch.put(UserRoleHandlerException.class, e ->
@@ -122,19 +123,25 @@ abstract public class Resource {
                 Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
         dispatch.put(UpdateConsentException.class, e ->
                 Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
-        dispatch.put(UnableToExecuteStatementException.class, e -> unableToExecuteExceptionHandler(e));
+        dispatch.put(UnableToExecuteStatementException.class,
+                Resource::unableToExecuteExceptionHandler);
         dispatch.put(SQLSyntaxErrorException.class, e ->
-                Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build());
+                errorLoggedExceptionHandler(e, new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())));
         dispatch.put(SQLException.class, e ->
-                Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build());
+                errorLoggedExceptionHandler(e, new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())));
         dispatch.put(Exception.class, e ->
-                Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build());
-
+                errorLoggedExceptionHandler(e, new Error(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())));
     }
 
-    //Helper method to process generic JBDI Postgres exceptions for responses
+    private static Response errorLoggedExceptionHandler(Exception e, Error error) {
+        LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
+        return Response.serverError().type(MediaType.APPLICATION_JSON).entity(error).build();
+    }
+
+    //Helper method to process generic JDBI Postgres exceptions for responses
     private static Response unableToExecuteExceptionHandler(Exception e) {
         //default status definition
+        LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
         Integer status = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
        
         try {
