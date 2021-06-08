@@ -1,17 +1,11 @@
-\<your comments for this PR go here\>
 
+----
 Have you read [CONTRIBUTING.md](../CONTRIBUTING.md) lately? If not, do that first.
 
-I, the developer opening this PR, do solemnly pinky swear that:
-
-- [ ] I've followed [the instructions](https://github.com/DataBiosphere/consent/blob/develop/CONTRIBUTING.md#api-changes) if I've made any changes to the API, _especially_ if they're breaking changes
-- [ ] I've updated the RC_XXX release ticket with any manual steps required to release this change
-- [ ] I've updated the [FISMA documentation](https://github.com/DataBiosphere/consent/blob/develop/CONTRIBUTING.md#fisma-documentation-changes) if I've made any security-related changes, including auth, encryption, or auditing
-- [ ] I've updated Swagger to reflect any API changes
-
-In all cases:
-
-- [ ] Get two thumbsworth of review and PO signoff if necessary
-- [ ] Verify all tests go green
-- [ ] Squash and merge; you can delete your branch after this **unless it's for a hotfix**. In that case, don't delete it!
-- [ ] Test this change deployed correctly and works on dev environment after deployment
+- Label PR with a Jira ticket number and include a link to the ticket
+- Label PR with a security risk modifier [no, low, medium, high]
+- PR describes scope of changes
+- Get a minimum of one thumbs worth of review, preferably two if enough team members are available
+- Get PO sign-off for all non-trivial UI or workflow changes
+- Verify all tests go green
+- Test this change deployed correctly and works on dev environment after deployment
