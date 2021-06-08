@@ -33,17 +33,21 @@ static void reprocessMatches(String authToken, String uriHost) {
 
 static Object reprocessMatch(String authToken, String uriHost, String purposeId) {
     Logger logger = Logger.getLogger("ReprocessMatch")
-        configure {
+    configure {
         ignoreSslIssues execution
         request.uri = uriHost
         request.uri.path = "/api/match/reprocess/purpose/${purposeId}"
+        request.contentType = 'application/json'
+        request.accept = 'application/json'
         request.headers['Authorization'] = 'Bearer ' + authToken
     }.post {
         response.parser('application/json') { cc, fs ->
-            System.out.println(cc, fs)
-            new JsonSlurper().parse(fs.inputStream)
+            String thing = new JsonSlurper().parse(fs.inputStream)
+            logger.info(thing)
+            thing
         }
         response.exception { t ->
+            logger.severe("Error: " + t.message)
             logger.severe("Error reprocessing: " + purposeId)
         }
     } as Object
