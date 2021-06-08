@@ -168,26 +168,33 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery(
-        "SELECT * from ( "
-          + "SELECT e.*, v.vote finalvote, v.rationale finalrationale, v.createdate finalvotedate, MAX(e.electionid) "
-          + "OVER (PARTITION BY e.referenceid, e.electiontype) AS latest "
-          + "FROM election e "
-          + "LEFT JOIN vote v ON e.electionid = v.electionid AND "
-          + "CASE "
-            + "WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final'"
-            + "WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
-            + "ELSE 'chairperson' "
-          + "END = LOWER(v.type) "
-          + "WHERE e.referenceid in(<referenceIds>) "
+      "SELECT * from ( "
+        + "SELECT e.*, v.vote finalvote, "
+        + "CASE "
+        + "WHEN v.updatedate IS NULL THEN v.createdate "
+        + "ELSE v.updatedate "
+        + "END as finalvotedate, "
+        + "v.rationale finalrationale, MAX(e.electionid) "
+        + "OVER (PARTITION BY e.referenceid, e.electiontype) AS latest "
+        + "FROM election e "
+        + "LEFT JOIN vote v ON e.electionid = v.electionid AND "
+        + "CASE "
+        + "WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final'"
+        + "WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
+        + "ELSE 'chairperson' "
+        + "END = LOWER(v.type) "
+        + "WHERE e.referenceid in(<referenceIds>) "
         + ") AS results "
         + "WHERE results.latest = results.electionid "
         + "ORDER BY results.electionid DESC, "
         + "CASE "
-          + "WHEN results.finalvotedate IS NULL THEN results.lastupdate "
-          + "ELSE results.finalvotedate "
-        + "END DESC")
-      @UseRowMapper(ElectionMapper.class)
-      List<Election> findLastElectionsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);    
+        + "WHEN results.finalvotedate IS NULL THEN results.lastupdate "
+        + "ELSE results.finalvotedate "
+        + "END DESC"
+    )
+    @UseRowMapper(ElectionMapper.class)
+    List<Election> findLastElectionsByReferenceIds(
+      @BindList("referenceIds") List<String> referenceIds);
 
     @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, " +
             "v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e " +
@@ -334,18 +341,14 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Dac findDacForElection(@Bind("electionId") Integer electionId);
 
     @SqlQuery(
-        "SELECT d.*, e.electionid as electionid "
-            + "FROM dac d "
-            + "INNER JOIN consents c on d.dac_id = c.dac_id "
-            + "INNER JOIN consentassociations a on a.consentid = c.consentid "
-            + "INNER JOIN election e on e.datasetid = a.datasetid "
-            + "WHERE e.electionid in (<electionIds>)"
-            + "UNION "
-            + "SELECT d.*, e.electionid as electionid "
-            + "FROM dac d "
-            + "INNER JOIN consents c on d.dac_id = c.dac_id "
-            + "INNER JOIN election e on e.referenceid = c.consentid "
-            + "WHERE e.electionid in (<electionIds>)")
+      "SELECT d.*, e.electionid as electionid "
+        + "FROM election e "
+        + "INNER JOIN accesselection_consentelection a ON a.access_election_id = e.electionid "
+        + "INNER JOIN election consentElection ON a.consent_election_id = consentElection.electionid "
+        + "INNER JOIN consents c ON consentElection.referenceId = c.consentid "
+        + "INNER JOIN dac d on d.dac_id = c.dac_id "
+        + "WHERE e.electionId IN (<electionIds>) "
+    )
     @UseRowMapper(DacMapper.class)
     List<Dac> findAllDacsForElectionIds(@BindList("electionIds") List<Integer> electionIds);
   
