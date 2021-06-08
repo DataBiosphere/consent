@@ -16,7 +16,7 @@
     <owl.version>5.1.17</owl.version>
     <postgres.version>42.2.20</postgres.version>
     <rdf4j-rio.version>3.7.0</rdf4j-rio.version>
-    <swagger.ui.version>3.49.0</swagger.ui.version>
+    <swagger.ui.version>3.50.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -459,7 +459,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>3.10.0</version>
+      <version>3.11.0</version>
       <scope>test</scope>
     </dependency>
 
