@@ -126,7 +126,8 @@ public class MetricsService {
     return dars.stream()
       .map(
         dataAccessRequest -> {
-          Integer datasetId = dataAccessRequest.getData().getDatasetIds().stream().findFirst().orElse(0);
+          Integer datasetId =
+            dataAccessRequest.getData().getDatasetIds().stream().findFirst().orElse(0);
 
           DataSet dataset =
             datasets.stream()
@@ -135,7 +136,7 @@ public class MetricsService {
               .orElse(null);
 
           List<Election> associatedElections = elections.stream()
-            .filter(e ->
+            .filter(e -> 
               e.getReferenceId()
                 .equalsIgnoreCase(dataAccessRequest.getReferenceId())
             ).collect(Collectors.toList());
@@ -203,18 +204,19 @@ public class MetricsService {
   }
 
   private static Optional<Election> searchFilteredElectionList(List<Election> electionList) {
-
-    //Search for instance where election.finalVote is true
-    //Order does not matter, so parallel steam makes sense
+    //Search for first instance where finalVote is non-null
+    //Only one chairperson vote is registered with current flow (later votes won't be registered due to closed status of election)
+    //Legacy vote flow had odd behavior where, upon Chair vote submission, all Chair votes within an election would have their vote updated
+    //Example: Chair A submits YES, vote for CHAIR A, CHAIR B, CHAIR C would all be YES
+    //This has already been corrected in a previous PR so newer votes will not have this issue
+    //As such, the above pattern largely holds to older records, (maybe Q3 2020 and earlier)
+    //In this instance findFirst is still appropriate since the vote value is still accurate
+    //Currently user id is not used in the DataAccess/RP analysis (% agreement, % accurate, etc), so user-vote attribution isn't a concern
+    //That said if, for whatever reason, you want to do vote tracking/analysis by user, legacy pattern/records will make the task difficult
     Optional<Election> election = electionList
       .stream()
-      .filter(e -> Objects.nonNull(e.getFinalVote()) && e.getFinalVote())
-      .findAny();
-    
-    //if no vote was found, return the earliest vote
-    if(Objects.isNull(election)) {
-      election = electionList.stream().findFirst();
-    }
+      .filter(e -> Objects.nonNull(e.getFinalVote()))
+      .findFirst();
     return election;
   }
 
@@ -253,17 +255,19 @@ public class MetricsService {
     if (userId != null) {
       User user = userDAO.findUserWithPropertiesById(userId);
 
-      Optional<UserProperty> isResearcher = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().equalsIgnoreCase("true")).findFirst();
-      if (isResearcher.isPresent()) {
-        Optional<UserProperty> userName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("profileName")).findFirst();
-        if(userName.isPresent()) {
-          return userName.get().getPropertyValue();
+      if (user != null) {
+        Optional<UserProperty> isResearcher = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().equalsIgnoreCase("true")).findFirst();
+        if (isResearcher.isPresent()) {
+          Optional<UserProperty> userName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("profileName")).findFirst();
+          if(userName.isPresent()) {
+            return userName.get().getPropertyValue();
+          }
         }
-      }
 
-      Optional<UserProperty> piName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("piName")).findFirst();
-      if (piName.isPresent()) {
-        return piName.get().getPropertyValue();
+        Optional<UserProperty> piName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("piName")).findFirst();
+        if (piName.isPresent()) {
+          return piName.get().getPropertyValue();
+        }
       }
     }
     return "- -";
