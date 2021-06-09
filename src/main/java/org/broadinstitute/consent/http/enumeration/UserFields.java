@@ -6,7 +6,8 @@ import java.util.List;
 public enum UserFields {
   PROFILE_NAME("profileName", false),
   ACADEMIC_BUSINESS_EMAIL("academicEmail", true),
-  INSTITUTION("institution", true),
+  @Deprecated //instiution id is stored on user
+  INSTITUTION("institution", false),
   DEPARTMENT("department", true),
   STREET_ADDRESS_1("address1", true),
   CITY("city", true),
