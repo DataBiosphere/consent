@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public enum UserFields {
+  @Deprecated //display name is stored on user
   PROFILE_NAME("profileName", false),
   ACADEMIC_BUSINESS_EMAIL("academicEmail", true),
   @Deprecated //instiution id is stored on user
