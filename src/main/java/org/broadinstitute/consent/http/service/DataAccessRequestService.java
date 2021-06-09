@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
@@ -51,7 +52,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
@@ -76,6 +76,7 @@ public class DataAccessRequestService {
     private final MatchDAO matchDAO;
     private final UserDAO userDAO;
     private final VoteDAO voteDAO;
+    private final InstitutionDAO institutionDAO;
     private final UserPropertyDAO userPropertyDAO;
 
     private final DacService dacService;
@@ -101,6 +102,7 @@ public class DataAccessRequestService {
         this.matchDAO = container.getMatchDAO();
         this.userDAO = container.getUserDAO();
         this.voteDAO = container.getVoteDAO();
+        this.institutionDAO = container.getInstitutionDAO();
         this.dacService = dacService;
         this.userService = userService;
         this.userPropertyDAO = container.getResearcherPropertyDAO();
@@ -610,13 +612,14 @@ public class DataAccessRequestService {
             for (Election election : elections) {
                 Document dar = getDataAccessRequestByReferenceIdAsDocument(election.getReferenceId());
                 DataAccessRequest dataAccessRequest = findByReferenceId(election.getReferenceId());
+                User user = userDAO.findUserById(dataAccessRequest.getUserId());
                 try {
-                    if (dar != null) {
+                    if (dar != null && user != null) {
                         Integer datasetId = dataAccessRequest.getData().getDatasetIds().get(0);
                         String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId);
                         Consent consent = consentDAO.findConsentById(consentId);
-                        String profileName = userPropertyDAO.findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.PROFILE_NAME);
-                        String institution = userPropertyDAO.findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.INSTITUTION);
+                        String profileName = user.getDisplayName();
+                        String institution = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
                         dataAccessReportsParser.addApprovedDARLine(darWriter, election, dar, profileName, institution, consent.getName(), consent.getTranslatedUseRestriction());
                     }
                 } catch (Exception e) {
@@ -661,14 +664,13 @@ public class DataAccessRequestService {
             for(Document dar: darList){
                 String referenceId = dar.getString(DarConstants.REFERENCE_ID);
                 DataAccessRequest dataAccessRequest = findByReferenceId(referenceId);
+                User user = userDAO.findUserById(dataAccessRequest.getUserId());
                 Date approvalDate = electionDAO.findApprovalAccessElectionDate(referenceId);
                 if (approvalDate != null) {
                     String email = userPropertyDAO
                             .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.ACADEMIC_BUSINESS_EMAIL);
-                    String name = userPropertyDAO
-                            .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.PROFILE_NAME);
-                    String institution = userPropertyDAO
-                            .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.INSTITUTION);
+                    String name = (user == null) ? "" : user.getDisplayName();
+                    String institution = (user == null || user.getInstitutionId() == null) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
                     String darCode = dataAccessRequest.getData().getDarCode();
                     dataAccessReportsParser.addDataSetApprovedUsersLine(darWriter, email, name, institution, darCode, approvalDate);
                 }

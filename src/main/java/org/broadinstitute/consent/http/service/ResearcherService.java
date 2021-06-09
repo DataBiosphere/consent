@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
@@ -11,6 +12,7 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 public class ResearcherService {
     private UserPropertyDAO userPropertyDAO;
     private UserDAO userDAO;
+    private InstitutionDAO institutionDAO;
     private final EmailNotifierService emailNotifierService;
     private final UserService userService;
     private static final String ACTION_REGISTERED = "registered";
@@ -37,9 +40,10 @@ public class ResearcherService {
     }
 
     @Inject
-    public ResearcherService(UserPropertyDAO userPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService, UserService userService) {
+    public ResearcherService(UserPropertyDAO userPropertyDAO, UserDAO userDAO, InstitutionDAO institutionDAO, EmailNotifierService emailNotifierService, UserService userService) {
         this.userPropertyDAO = userPropertyDAO;
         this.userDAO = userDAO;
+        this.institutionDAO = institutionDAO;
         this.emailNotifierService = emailNotifierService;
         this.userService = userService;
     }
@@ -101,8 +105,9 @@ public class ResearcherService {
 
     private Map<String, String> getResearcherPropertiesForDAR(Map<String, String> properties, Integer userId) {
         Map<String, String> rpForDAR = new HashMap<>();
-        rpForDAR.put(UserFields.INVESTIGATOR.getValue(), properties.getOrDefault(UserFields.PI_NAME.getValue(), userDAO.findUserById(userId).getDisplayName()));
-        rpForDAR.put(UserFields.INSTITUTION.getValue(), properties.getOrDefault(UserFields.INSTITUTION.getValue(), null));
+        User user =  userDAO.findUserById(userId);
+        rpForDAR.put(UserFields.INVESTIGATOR.getValue(), properties.getOrDefault(UserFields.PI_NAME.getValue(), user.getDisplayName()));
+        rpForDAR.put(DarConstants.INSTITUTION, institutionDAO.findInstitutionById(user.getInstitutionId()).getName());
         rpForDAR.put(UserFields.DEPARTMENT.getValue(), properties.getOrDefault(UserFields.DEPARTMENT.getValue(), null));
         rpForDAR.put(UserFields.STREET_ADDRESS_1.getValue(), properties.getOrDefault(UserFields.STREET_ADDRESS_1.getValue(), null));
         rpForDAR.put(
@@ -115,7 +120,7 @@ public class ResearcherService {
         rpForDAR.put(UserFields.DIVISION.getValue(), properties.getOrDefault(UserFields.DIVISION.getValue(), null));
         rpForDAR.put(UserFields.ERA_COMMONS_ID.getValue(), properties.getOrDefault(UserFields.ERA_COMMONS_ID.getValue(), null));
         rpForDAR.put(UserFields.PUBMED_ID.getValue(), properties.getOrDefault(UserFields.PUBMED_ID.getValue(), null));
-        rpForDAR.put(UserFields.PROFILE_NAME.getValue(), properties.getOrDefault(UserFields.PROFILE_NAME.getValue(), null));
+        rpForDAR.put(DarConstants.PROFILE_NAME, user.getDisplayName());
         rpForDAR.put(
                 UserFields.ACADEMIC_BUSINESS_EMAIL.getValue(), properties.getOrDefault(UserFields.ACADEMIC_BUSINESS_EMAIL.getValue(), null));
         rpForDAR.put(UserFields.SCIENTIFIC_URL.getValue(), properties.getOrDefault(UserFields.SCIENTIFIC_URL.getValue(), null));
@@ -185,7 +190,6 @@ public class ResearcherService {
     private Boolean hasUpdatedFields(Integer userId, Map<String, String> researcherPropertiesMap, Boolean isUpdatedProfileCompleted) {
         Boolean hasUpdatedFields = false;
         if (isUpdatedProfileCompleted) {
-            String institutionName = researcherPropertiesMap.getOrDefault(UserFields.INSTITUTION.getValue(), "");
             String isThePI = researcherPropertiesMap.getOrDefault(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), null);
             String havePI = researcherPropertiesMap.getOrDefault(UserFields.DO_YOU_HAVE_PI.getValue(), null);
             String eRACommonsID = researcherPropertiesMap.getOrDefault(UserFields.ERA_COMMONS_ID.getValue(), "");
@@ -199,7 +203,7 @@ public class ResearcherService {
                             userPropertyDAO.findPropertyValueByPK(userId, UserFields.SCIENTIFIC_URL.getValue()))) {
                 hasUpdatedFields = true;
             } else if (CollectionUtils.isNotEmpty(userPropertyDAO
-                    .findResearcherProperties(userId, institutionName, isThePI, havePI, eRACommonsID, pubmedID, scientificURL))) {
+                    .findResearcherProperties(userId, isThePI, havePI, eRACommonsID, pubmedID, scientificURL))) {
                 hasUpdatedFields = true;
             }
         }
