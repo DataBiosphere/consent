@@ -21,9 +21,14 @@ reprocessMatches(args[0], args[1])
 static void reprocessMatches(String authToken, String uriHost) {
     Logger logger = Logger.getLogger("ReprocessMatches")
 
-    //list of purposeIds to reprocess matches for, comma separated list exported from postico
-    def purposeIds = ['fb885dcf-8639-44a7-97c4-0383a4ebd75c', '0caad95b-37c1-47fd-9e47-ac2b96fd70dd', 'd9a17040-cd35-4983-a9a1-fc080a691bb0']
 
+    def purposeIds = []
+    // "." represents working directory so to use this file path as is cd into matchPopulation
+    new File('./purposeIds').eachLine { line ->
+        purposeIds.add(line)
+    }
+
+    logger.info(purposeIds.toString())
     purposeIds.each { id ->
         reprocessMatch(authToken, uriHost, id)
         logger.info("Reprocessed Match for: ${id}")
