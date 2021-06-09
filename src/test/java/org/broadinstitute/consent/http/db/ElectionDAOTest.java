@@ -240,6 +240,12 @@ public class ElectionDAOTest extends DAOTestHelper {
     assertEquals(dac.getDacId(), dacRecord.getDacId());
   }
 
+  @Test
+  public void testFindAllDacsForElectionIds_NotFound() {
+    List<Integer> electionIds = Collections.singletonList(10000);
+    List<Dac> dacList = electionDAO.findAllDacsForElectionIds(electionIds);
+    assertTrue(dacList.isEmpty());
+  }
 
   @Test
   public void testFindLastElectionsByReferenceIds() {
@@ -281,5 +287,12 @@ public class ElectionDAOTest extends DAOTestHelper {
     assertEquals(2, elections.size());
     assertTrue(electionIds.contains(recentClosedAccessElection.getElectionId()));
     assertTrue(electionIds.contains(recentClosedRPElection.getElectionId()));
+  }
+
+  @Test
+  public void testFindLastElectionsByReferenceIds_NotFound() {
+    List<Election> elections =
+      electionDAO.findLastElectionsByReferenceIds(Collections.singletonList(UUID.randomUUID().toString()));
+    assertTrue(elections.isEmpty());
   }
 }
