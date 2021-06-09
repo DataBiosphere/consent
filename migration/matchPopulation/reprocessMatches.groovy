@@ -21,7 +21,6 @@ reprocessMatches(args[0], args[1])
 static void reprocessMatches(String authToken, String uriHost) {
     Logger logger = Logger.getLogger("ReprocessMatches")
 
-
     def purposeIds = []
     // "." represents working directory so to use this file path as is cd into matchPopulation
     new File('./purposeIds').eachLine { line ->
