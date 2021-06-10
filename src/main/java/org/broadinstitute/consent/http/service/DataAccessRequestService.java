@@ -619,7 +619,10 @@ public class DataAccessRequestService {
                         String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId);
                         Consent consent = consentDAO.findConsentById(consentId);
                         String profileName = user.getDisplayName();
-                        String institution = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+                        if (user.getInstitutionId() == null) {
+                          logger.warn("No institution found for creator of this Data Access Request");
+                        }
+                        String institution = (user.getInstitutionId() == null) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
                         dataAccessReportsParser.addApprovedDARLine(darWriter, election, dar, profileName, institution, consent.getName(), consent.getTranslatedUseRestriction());
                     }
                 } catch (Exception e) {
