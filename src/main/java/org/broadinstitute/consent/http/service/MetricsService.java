@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacDecisionMetrics;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
@@ -67,7 +68,7 @@ public class MetricsService {
         this.projectTitle = dar.data.getProjectTitle();
         this.darCode =  dar.data.getDarCode();
         this.nonTechRus =  dar.data.getNonTechRus();
-        this.investigator = findPI(dar.userId);
+        this.investigator = DarUtil.findPI(userDAO.findUserById(dar.userId));
         this.referenceId = dar.getReferenceId();
       } else {
         this.updateDate = null;
@@ -232,7 +233,7 @@ public class MetricsService {
 
     //find dars with the given datasetId in their list of datasetIds, datasetId is a String so it can be converted to jsonb in query
     //convert all dars into smaller objects that only contain the information needed
-    List<DataAccessRequest> dars = darDAO.findAllDataAccessRequestsForDatasetMetrics(Integer.toString(datasetId));
+    List<DataAccessRequest> dars = darDAO.findAllDataAccessRequestsByDatasetId(Integer.toString(datasetId));
     List<DarMetricsSummary> darInfo = dars.stream().map(dar ->
       new DarMetricsSummary(dar))
       .collect(Collectors.toList());
@@ -249,27 +250,5 @@ public class MetricsService {
     metrics.setDars(darInfo);
     return metrics;
 
-  }
-
-  public String findPI(Integer userId) {
-    if (userId != null) {
-      User user = userDAO.findUserWithPropertiesById(userId);
-
-      if (user != null) {
-        Optional<UserProperty> isResearcher = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().equalsIgnoreCase("true")).findFirst();
-        if (isResearcher.isPresent()) {
-          Optional<UserProperty> userName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("profileName")).findFirst();
-          if(userName.isPresent()) {
-            return userName.get().getPropertyValue();
-          }
-        }
-
-        Optional<UserProperty> piName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("piName")).findFirst();
-        if (piName.isPresent()) {
-          return piName.get().getPropertyValue();
-        }
-      }
-    }
-    return "- -";
   }
 }
