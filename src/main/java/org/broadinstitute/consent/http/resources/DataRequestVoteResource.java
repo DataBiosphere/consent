@@ -120,7 +120,7 @@ public class DataRequestVoteResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    @RolesAllowed({MEMBER, CHAIRPERSON, DATAOWNER})
+    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, DATAOWNER})
     public Response updateDataRequestVote(
             @Auth AuthUser authUser,
             @PathParam("requestId") String requestId,
