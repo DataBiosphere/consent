@@ -13,17 +13,17 @@ import static groovyx.net.http.util.SslUtils.ignoreSslIssues
  * Sample Usage:
  *   groovy reprocessMatches.groovy \
  *     `gcloud auth print-access-token` \
- *     https://local.broadinstitute.org:27443
+ *     https://local.broadinstitute.org:27443 \
+ *     '/path/to/fileOfPurposeIds'
  */
 
-reprocessMatches(args[0], args[1])
+reprocessMatches(args[0], args[1], args[2])
 
-static void reprocessMatches(String authToken, String uriHost) {
+static void reprocessMatches(String authToken, String uriHost, String filePath) {
     Logger logger = Logger.getLogger("ReprocessMatches")
 
     def purposeIds = []
-    // "." represents working directory so to use this file path as is cd into matchPopulation
-    new File('./purposeIds').eachLine { line ->
+    new File(filePath).eachLine { line ->
         purposeIds.add(line)
     }
 
