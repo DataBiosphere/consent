@@ -2240,7 +2240,7 @@ paths:
       summary: updateFinalAccessConsentVote
       description: update a the FinalAccessVote specified by VoteId of a DataRequest Election and set finalAccessVote Election property to TRUE.
       requestBody:
-        description: Vote to be created
+        description: Vote to be updated
         required: true
         content:
           application/json:
