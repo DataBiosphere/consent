@@ -491,7 +491,7 @@ public class DataAccessRequestServiceTest {
         researcherProperties.put(DarConstants.PUBMED_ID, randomString());
         researcherProperties.put(DarConstants.SCIENTIFIC_URL, randomString());
         researcherProperties.put(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
-        researcherProperties.put(DarConstants.PROFILE_NAME, randomString());
+        researcherProperties.put(UserFields.PROFILE_NAME.getValue(), randomString());
         return researcherProperties;
     }
 
