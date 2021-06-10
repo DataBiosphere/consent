@@ -24,8 +24,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
+import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
@@ -118,14 +121,18 @@ public class DataRequestVoteResource extends Resource {
     @Produces("application/json")
     @Path("/{id}")
     @RolesAllowed({MEMBER, CHAIRPERSON, DATAOWNER})
-    public Response updateDataRequestVote(Vote rec,
-                                          @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
+    public Response updateDataRequestVote(
+            @Auth AuthUser authUser,
+            @PathParam("requestId") String requestId,
+            @PathParam("id") Integer id,
+            String rec) {
         try {
-            Vote vote = voteService.updateVote(rec, id, requestId);
-            if(electionService.checkDataOwnerToCloseElection(vote.getElectionId())){
-                electionService.closeDataOwnerApprovalElection(vote.getElectionId());
+            Vote parsedVote = new Gson().fromJson(rec, Vote.class);
+            Vote updatedVote = voteService.updateVote(parsedVote, id, requestId);
+            if (electionService.checkDataOwnerToCloseElection(updatedVote.getElectionId())) {
+                electionService.closeDataOwnerApprovalElection(updatedVote.getElectionId());
             }
-            return Response.ok(vote).build();
+            return Response.ok(updatedVote).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
