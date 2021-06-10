@@ -167,6 +167,35 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("SELECT * FROM election WHERE referenceid = :referenceId")
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
 
+    @SqlQuery(
+      "SELECT * from ( "
+        + "SELECT e.*, v.vote finalvote, "
+        + "CASE "
+        + "WHEN v.updatedate IS NULL THEN v.createdate "
+        + "ELSE v.updatedate "
+        + "END as finalvotedate, "
+        + "v.rationale finalrationale, MAX(e.electionid) "
+        + "OVER (PARTITION BY e.referenceid, e.electiontype) AS latest "
+        + "FROM election e "
+        + "LEFT JOIN vote v ON e.electionid = v.electionid AND "
+        + "CASE "
+        + "WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final'"
+        + "WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
+        + "ELSE 'chairperson' "
+        + "END = LOWER(v.type) "
+        + "WHERE e.referenceid in(<referenceIds>) "
+        + ") AS results "
+        + "WHERE results.latest = results.electionid "
+        + "ORDER BY results.electionid DESC, "
+        + "CASE "
+        + "WHEN results.finalvotedate IS NULL THEN results.lastupdate "
+        + "ELSE results.finalvotedate "
+        + "END DESC"
+    )
+    @UseRowMapper(ElectionMapper.class)
+    List<Election> findLastElectionsByReferenceIds(
+      @BindList("referenceIds") List<String> referenceIds);
+
     @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, " +
             "v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e " +
             "inner join (select referenceId, MAX(createDate) maxDate from election e where e.electionType = :type group by referenceId) " +
@@ -310,6 +339,19 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "     inner join election e2 on e2.referenceId = c2.consentId and e2.electionId = :electionId " +
             " ) as d0 limit 1 ") // `select * from (...) limit 1` syntax is an hsqldb limitation
     Dac findDacForElection(@Bind("electionId") Integer electionId);
+
+    @SqlQuery(
+      "SELECT d.*, e.electionid as electionid "
+        + "FROM election e "
+        + "INNER JOIN accesselection_consentelection a ON a.access_election_id = e.electionid "
+        + "INNER JOIN election consentElection ON a.consent_election_id = consentElection.electionid "
+        + "INNER JOIN consents c ON consentElection.referenceId = c.consentid "
+        + "INNER JOIN dac d on d.dac_id = c.dac_id "
+        + "WHERE e.electionId IN (<electionIds>) "
+    )
+    @UseRowMapper(DacMapper.class)
+    List<Dac> findAllDacsForElectionIds(@BindList("electionIds") List<Integer> electionIds);
+  
 
     /**
      * Find the OPEN elections that belong to this Dac

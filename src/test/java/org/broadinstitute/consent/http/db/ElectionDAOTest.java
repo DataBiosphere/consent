@@ -1,13 +1,18 @@
 package org.broadinstitute.consent.http.db;
 
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.Date;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -214,5 +219,80 @@ public class ElectionDAOTest extends DAOTestHelper {
     assertNotNull(elections);
     assertFalse(elections.isEmpty());
     assertEquals(1, elections.size());
+  }
+
+  @Test
+  public void testFindAllDacsForElectionIds() {
+    Dac dac = createDac();
+    String accessReferenceId = UUID.randomUUID().toString();
+    DataSet dataset = createDataset();
+    Integer datasetId = dataset.getDataSetId();
+    Consent consent = createConsent(dac.getDacId());
+    Election dulElection = createDULElection(consent.getConsentId(), datasetId);
+    Election accessElection = createAccessElection(accessReferenceId, datasetId);
+    electionDAO.insertAccessAndConsentElection(accessElection.getElectionId(), dulElection.getElectionId());
+
+    List<Integer> electionIds = Collections.singletonList(accessElection.getElectionId());
+    List<Dac> dacList = electionDAO.findAllDacsForElectionIds(electionIds);
+    Dac dacRecord = dacList.get(0);
+    assertEquals(1, dacList.size());
+    assertEquals(dac.getName(), dacRecord.getName());
+    assertEquals(dac.getDacId(), dacRecord.getDacId());
+  }
+
+  @Test
+  public void testFindAllDacsForElectionIds_EmptyList() {
+    List<Integer> electionIds = Collections.singletonList(10000);
+    List<Dac> dacList = electionDAO.findAllDacsForElectionIds(electionIds);
+    assertTrue(dacList.isEmpty());
+  }
+
+  @Test
+  public void testFindLastElectionsByReferenceIds() {
+    Dac dac = createDac();
+    Consent consent = createConsent(dac.getDacId());
+    DataSet dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequestV2();
+
+    String darReferenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+    dar.getData().setDatasetIds(Collections.singletonList(datasetId));
+    dataAccessRequestDAO.updateDataByReferenceId(darReferenceId, dar.getData());
+    createAssociation(consent.getConsentId(), datasetId);
+
+    Election cancelledAccessElection = createAccessElection(darReferenceId, datasetId);
+    Election cancelledRPElection = createRPElection(darReferenceId, datasetId);
+    electionDAO.updateElectionById(
+      cancelledAccessElection.getElectionId(), ElectionStatus.CANCELED.getValue(), new Date(), true);
+    electionDAO.updateElectionById(
+      cancelledRPElection.getElectionId(), ElectionStatus.CANCELED.getValue(), new Date(), true);
+
+    Election prevClosedAccessElection = createAccessElection(darReferenceId, dataset.getDataSetId());
+    Election prevClosedRPElection = createAccessElection(darReferenceId, datasetId);
+    electionDAO.updateElectionById(
+      prevClosedAccessElection.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
+    electionDAO.updateElectionById(
+      prevClosedRPElection.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
+
+    Election recentClosedAccessElection = createAccessElection(darReferenceId, dataset.getDataSetId());
+    Election recentClosedRPElection = createRPElection(darReferenceId, datasetId);
+    electionDAO.updateElectionById(
+      recentClosedAccessElection.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
+    electionDAO.updateElectionById(
+      recentClosedRPElection.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
+    List<Election> elections =
+      electionDAO.findLastElectionsByReferenceIds(Collections.singletonList(dar.referenceId));
+    List<Integer> electionIds = elections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
+    assertFalse(elections.isEmpty());
+    assertEquals(2, elections.size());
+    assertTrue(electionIds.contains(recentClosedAccessElection.getElectionId()));
+    assertTrue(electionIds.contains(recentClosedRPElection.getElectionId()));
+  }
+
+  @Test
+  public void testFindLastElectionsByReferenceIds_EmptyList() {
+    List<Election> elections =
+      electionDAO.findLastElectionsByReferenceIds(Collections.singletonList(UUID.randomUUID().toString()));
+    assertTrue(elections.isEmpty());
   }
 }
