@@ -1944,6 +1944,34 @@ paths:
                 type: string
         404:
           description: The DAR or the election couldn't be found.
+  /api/dataRequest/approved:
+    get:
+      summary: Get a list of approved DARs
+      description: Get a list of approved DARs
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: A list of approved DARs
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /api/dataRequest/reviewed:
+    get:
+      summary: Get a list of reviewed DARs
+      description: Get a list of reviewed DARs
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: A list of reviewed DARs
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
   /api/consent/{id}/dul:
     get:
       summary: getDUL
