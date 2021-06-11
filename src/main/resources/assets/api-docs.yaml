@@ -1541,7 +1541,7 @@ paths:
         500:
           description: Internal Server Error.
     get:
-      summary: describeDataAccessRequests
+      summary: get all Data Access Requests
       description: Retrieves all the existent DARs
       tags:
         - Data Access Request
@@ -1756,6 +1756,39 @@ paths:
           description: Data Access Request was deleted
         403:
           description: Forbidden
+        500:
+          description: Internal Server Error.
+    get:
+      summary: Get Partial Data Access Request By Reference Id
+      description: Return the draft DAR specified by the given Id if it exists
+      tags: 
+        - Data Access Request
+      responses:
+        200:
+          description: Partial Data Access Request
+          content:
+            application/json:
+              schema:
+                  ref: '#/components/schemas/DataAccessRequest'
+        404: 
+          description: Cannot find draft data access request with specified reference Id.
+        500:
+          description: Internal Server Error.
+  /api/dar/partials:
+    get:
+      summary: get Draft Data Access Requests
+      description: Get all Partial Data Access Requests for user
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Partial Data Access Requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequest'
         500:
           description: Internal Server Error.
   /api/dar/partials/manage:
