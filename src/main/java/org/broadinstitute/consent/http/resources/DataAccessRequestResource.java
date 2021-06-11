@@ -78,20 +78,11 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    @Deprecated //instead use getDataAccessRequests
+    @Deprecated //instead use V2Resource.getDataAccessRequests
     public Response describeDataAccessRequests(@Auth AuthUser authUser) {
         List<Document> documents = dataAccessRequestService.describeDataAccessRequests(authUser);
         return Response.ok().entity(documents).build();
     }
-
-    @GET
-    @Produces("application/json")
-    @PermitAll
-    public Response getDataAccessRequests(@Auth AuthUser authUser) {
-        List<DataAccessRequest> dars = dataAccessRequestService.getDataAccessRequests(authUser);
-        return Response.ok().entity(dars).build();
-    }
-
 
     @GET
     @Path("/find/{id}")
@@ -184,20 +175,10 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partials")
     @RolesAllowed(RESEARCHER)
-    @Deprecated //instead use getDraftDataAccessRequests
+    @Deprecated //instead use V2Resource.getDraftDataAccessRequests
     public List<Document> describeDraftDataAccessRequests(@Auth AuthUser authUser) {
         User user = findUserByEmail(authUser.getName());
         return dataAccessRequestService.findAllDraftDataAccessRequestDocumentsByUser(user.getDacUserId());
-    }
-
-    @GET
-    @Produces("application/json")
-    @Path("/partials")
-    @RolesAllowed(RESEARCHER)
-    public Response getDraftDataAccessRequests(@Auth AuthUser authUser) {
-        User user = findUserByEmail(authUser.getName());
-        List<DataAccessRequest> draftDars = dataAccessRequestService.findAllDraftDataAccessRequestsByUser(user.getDacUserId());
-        return Response.ok().entity(draftDars).build();
     }
 
     @GET
@@ -216,38 +197,14 @@ public class DataAccessRequestResource extends Resource {
 
     @GET
     @Produces("application/json")
-    @Path("/partial/{id}")
-    @RolesAllowed(RESEARCHER)
-    public Response getDraftDar(@Auth AuthUser authUser, @PathParam("id") String id) {
-        User user = findUserByEmail(authUser.getName());
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-        if (dar.getUserId().equals(user.getDacUserId())) {
-            return Response.ok().entity(dar).build();
-        }
-        throw new ForbiddenException("User does not have permission");
-    }
-
-    @GET
-    @Produces("application/json")
     @Path("/partials/manage")
     @RolesAllowed(RESEARCHER)
-    @Deprecated //instead use getDraftManageDataAccessRequests
+    @Deprecated //instead use V2Resource.getDraftManageDataAccessRequests
     public Response describeDraftManageDataAccessRequests(@Auth AuthUser authUser) {
         User user = findUserByEmail(authUser.getName());
         List<Document> partials = dataAccessRequestService.describeDraftDataAccessRequestManage(user.getDacUserId());
         return Response.ok().entity(partials).build();
     }
-
-    @GET
-    @Produces("application/json")
-    @Path("/partials/manage")
-    @RolesAllowed(RESEARCHER)
-    public Response getDraftManageDataAccessRequests(@Auth AuthUser authUser) {
-        User user = findUserByEmail(authUser.getName());
-        List<DataAccessRequestManage> partials = dataAccessRequestService.getDraftDataAccessRequestManage(user.getDacUserId());
-        return Response.ok().entity(partials).build();
-    }
-
 
     @PUT
     @Consumes("application/json")

@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -68,6 +69,14 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     this.gcsService = gcsService;
     this.userService = userService;
     this.matchService = matchService;
+  }
+
+  @GET
+  @Produces("application/json")
+  @PermitAll
+  public Response getDataAccessRequests(@Auth AuthUser authUser) {
+    List<DataAccessRequest> dars = dataAccessRequestService.getDataAccessRequests(authUser);
+    return Response.ok().entity(dars).build();
   }
 
   @POST
@@ -148,6 +157,29 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
   }
 
+  @GET
+  @Produces("application/json")
+  @Path("/partials")
+  @RolesAllowed(RESEARCHER)
+  public Response getDraftDataAccessRequests(@Auth AuthUser authUser) {
+    User user = findUserByEmail(authUser.getName());
+    List<DataAccessRequest> draftDars = dataAccessRequestService.findAllDraftDataAccessRequestsByUser(user.getDacUserId());
+    return Response.ok().entity(draftDars).build();
+  }
+
+  @GET
+  @Produces("application/json")
+  @Path("/partial/{id}")
+  @RolesAllowed(RESEARCHER)
+  public Response getDraftDar(@Auth AuthUser authUser, @PathParam("id") String id) {
+    User user = findUserByEmail(authUser.getName());
+    DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
+    if (dar.getUserId().equals(user.getDacUserId())) {
+      return Response.ok().entity(dar).build();
+    }
+    throw new ForbiddenException("User does not have permission");
+  }
+
   @POST
   @Consumes("application/json")
   @Produces("application/json")
@@ -165,6 +197,16 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  @GET
+  @Produces("application/json")
+  @Path("/partials/manage")
+  @RolesAllowed(RESEARCHER)
+  public Response getDraftManageDataAccessRequests(@Auth AuthUser authUser) {
+    User user = findUserByEmail(authUser.getName());
+    List<DataAccessRequestManage> partials = dataAccessRequestService.getDraftDataAccessRequestManage(user.getDacUserId());
+    return Response.ok().entity(partials).build();
   }
 
   @PUT
