@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -215,12 +216,8 @@ public class MetricsService {
     //That said if, for whatever reason, you want to do vote tracking/analysis by user, legacy pattern/records will make the task difficult
     Optional<Election> election = electionList
       .stream()
-      .filter(e -> Objects.nonNull(e.getFinalVote()))
+      .sorted(Comparator.comparing(Election::getFinalVote, Comparator.nullsLast(Comparator.naturalOrder())))
       .findFirst();
-
-    if(election.isEmpty()) {
-      election = electionList.stream().findFirst();
-    }
     return election;
   }
 
