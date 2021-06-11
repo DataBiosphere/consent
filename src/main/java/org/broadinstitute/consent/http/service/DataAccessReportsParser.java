@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import java.io.*;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -61,7 +62,7 @@ public class DataAccessReportsParser {
     public void addApprovedDARLine(FileWriter darWriter, Election election, Document dar, String profileName, String institution, String consentName, String translatedUseRestriction) throws IOException {        String rusSummary = StringUtils.isNotEmpty( dar.getString(DarConstants.NON_TECH_RUS)) ?  dar.getString(DarConstants.NON_TECH_RUS).replace("\n", " ") : "";
         String content1 =  profileName + DEFAULT_SEPARATOR + institution + DEFAULT_SEPARATOR;
         String content2 = rusSummary + DEFAULT_SEPARATOR +
-                formatTimeToDate(new Date(dar.getLong(DarConstants.SORT_DATE)).getTime()) + DEFAULT_SEPARATOR +
+                formatTimeToDate(((Timestamp) dar.get(DarConstants.SORT_DATE)).getTime()) + DEFAULT_SEPARATOR +
                 formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
                 "--";
         addDARLine(darWriter, dar, content1, content2, consentName, translatedUseRestriction);
@@ -97,13 +98,17 @@ public class DataAccessReportsParser {
     private void addDARLine(FileWriter darWriter, Document dar, String customContent1, String customContent2, String consentName, String translatedUseRestriction) throws IOException {
         List<Document> dataSetDetails = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
         List<String> datasetNames = new ArrayList<>();
-        for(Document detail : dataSetDetails) {
-            datasetNames.add(StringUtils.defaultString(detail.getString("name")));
+        if (dataSetDetails != null) {
+            for (Document detail : dataSetDetails) {
+                datasetNames.add(StringUtils.defaultString(detail.getString("name")));
+            }
         }
         List<Integer> dataSetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
         List<String> dataSetUUIds = new ArrayList<>();
-        for(Integer id : dataSetIds) {
-            dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
+        if (dataSetIds != null) {
+            for (Integer id : dataSetIds) {
+                dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
+            }
         }
         String sDUL = StringUtils.isNotEmpty(translatedUseRestriction) ?  translatedUseRestriction.replace("\n", " ") : "";
         String translatedRestriction = StringUtils.isNotEmpty(dar.getString(DarConstants.TRANSLATED_RESTRICTION)) ? dar.getString(DarConstants.TRANSLATED_RESTRICTION).replace("<br>", " ") :  "";
