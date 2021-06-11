@@ -375,7 +375,6 @@ public class DataAccessRequestServiceTest {
     @Test
     public void testDARModalDetailsDTOBuilder() {
         DataAccessRequest dar = generateDataAccessRequest();
-        Document doc = generateDarDocument(dar);
 
         when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
                 .thenReturn(dar);
@@ -393,7 +392,7 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.emptyList());
         initService();
 
-        DARModalDetailsDTO darModalDetailsDTO = service.DARModalDetailsDTOBuilder(doc, user, electionService);
+        DARModalDetailsDTO darModalDetailsDTO = service.DARModalDetailsDTOBuilder(dar, user, electionService);
         assertNotNull(darModalDetailsDTO);
         assertEquals(dar.data.getInstitution(), darModalDetailsDTO.getInstitutionName());
     }
@@ -445,15 +444,6 @@ public class DataAccessRequestServiceTest {
         return dar;
     }
 
-    private Document generateDarDocument(DataAccessRequest dar) {
-        Document document = Document.parse(gson.toJson(dar.getData()));
-        document.put(DarConstants.DATA_ACCESS_REQUEST_ID, dar.getId());
-        document.put(DarConstants.REFERENCE_ID, dar.getReferenceId());
-        document.put(DarConstants.CREATE_DATE, dar.getCreateDate());
-        document.put(DarConstants.SORT_DATE, dar.getSortDate());
-        return document;
-    }
-
     private Election generateElection(Integer dataSetId) {
         String refId = UUID.randomUUID().toString();
         Election election = new Election();
@@ -461,26 +451,6 @@ public class DataAccessRequestServiceTest {
         election.setReferenceId(refId);
 
         return election;
-    }
-
-    private Document getDocument(String linkedIn, String orcid, String researcherGate) {
-        Document dar = new Document();
-        dar.put(UserFields.LINKEDIN_PROFILE.getValue(), linkedIn);
-        dar.put(UserFields.ORCID.getValue(), orcid);
-        dar.put(UserFields.RESEARCHER_GATE.getValue(), researcherGate);
-        dar.put(DarConstants.INVESTIGATOR, randomString());
-        dar.put(DarConstants.PI_EMAIL, randomString());
-        dar.put(DarConstants.PROJECT_TITLE, randomString());
-        dar.put(DarConstants.DATASET_DETAIL, new ArrayList<Document>());
-        dar.put(DarConstants.RUS, randomString());
-        dar.put(DarConstants.NON_TECH_RUS, randomString());
-        dar.put(DarConstants.METHODS, true);
-        dar.put(DarConstants.CONTROLS, true);
-        dar.put(DarConstants.OTHER, true);
-        dar.put(DarConstants.POA, true);
-        dar.put(DarConstants.HMB, true);
-        dar.put(DarConstants.OTHER_TEXT, randomString());
-        return dar;
     }
 
     private Map<String, String> getResearcherProperties() {
