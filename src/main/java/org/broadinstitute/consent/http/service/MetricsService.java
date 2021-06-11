@@ -217,6 +217,10 @@ public class MetricsService {
       .stream()
       .filter(e -> Objects.nonNull(e.getFinalVote()))
       .findFirst();
+
+    if(election.isEmpty()) {
+      election = electionList.stream().findFirst();
+    }
     return election;
   }
 

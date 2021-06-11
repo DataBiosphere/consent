@@ -341,13 +341,21 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Dac findDacForElection(@Bind("electionId") Integer electionId);
 
     @SqlQuery(
-      "SELECT d.*, e.electionid as electionid "
+        "SELECT d.*, e.electionid as electionid "
         + "FROM election e "
         + "INNER JOIN accesselection_consentelection a ON a.access_election_id = e.electionid "
         + "INNER JOIN election consentElection ON a.consent_election_id = consentElection.electionid "
         + "INNER JOIN consents c ON consentElection.referenceId = c.consentid "
         + "INNER JOIN dac d on d.dac_id = c.dac_id "
         + "WHERE e.electionId IN (<electionIds>) "
+        + "UNION "
+        + "SELECT d.*, e.electionid " + "FROM dac d " 
+        + "INNER JOIN consents "
+        + "ON d.dac_id = consents.dac_id " + "INNER JOIN consentassociations ca "
+        + "ON ca.consentid = consents.consentid " + "INNER JOIN dataset data "
+        + "ON data.datasetid = ca.datasetid " + "INNER JOIN election e "
+        + "ON e.datasetid = data.datasetid "
+        + "WHERE e.electionId IN (<electionIds>)"
     )
     @UseRowMapper(DacMapper.class)
     List<Dac> findAllDacsForElectionIds(@BindList("electionIds") List<Integer> electionIds);
