@@ -2148,13 +2148,14 @@ paths:
     post:
       summary: createDataRequestVote
       description: update a Vote specified by VoteId of a DataRequest Election.
+      requestBody:
+        description: Vote to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vote'
       parameters:
-        - name: rec
-          in: body
-          description: Vote to be created
-          required: true
-          schema:
-            $ref: '#/components/schemas/Vote'
         - name: requestId
           in: path
           description: referenceId of the Election of the requested Vote ( this value is not used in the create process , its only to complete the path)
@@ -2180,13 +2181,14 @@ paths:
     put:
       summary: updateDataRequestVote
       description: update an edited Vote specified by VoteId of a DataRequest Election.
+      requestBody:
+        description: Vote to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vote'
       parameters:
-        - name: rec
-          in: body
-          description: Vote to be created
-          required: true
-          schema:
-            $ref: '#/components/schemas/Vote'
         - name: requestId
           in: path
           description: referenceId of the Election of the requested Vote ( this value is not used in the create process , its only to complete the path)
@@ -2237,13 +2239,14 @@ paths:
     post:
       summary: updateFinalAccessConsentVote
       description: update a the FinalAccessVote specified by VoteId of a DataRequest Election and set finalAccessVote Election property to TRUE.
+      requestBody:
+        description: Vote to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vote'
       parameters:
-        - name: rec
-          in: body
-          description: Vote to be created
-          required: true
-          schema:
-            $ref: '#/components/schemas/Vote'
         - name: requestId
           in: path
           description: referenceId of the Election of the requested Vote ( this value is not used in the process , its only to complete the path)
@@ -2932,7 +2935,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: 
+            schema:
               $ref: '#/components/schemas/Institution'
       responses:
         201:
@@ -2979,7 +2982,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: 
+            schema:
               $ref: '#/components/schemas/Institution'
       responses:
         200:
@@ -3105,7 +3108,7 @@ paths:
               example:
                 libraryCard:
                   $ref: '#/components/schemas/LibraryCard'
-      responses: 
+      responses:
         200:
           description: Library Card PUT request success
           content:
