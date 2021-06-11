@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
@@ -12,23 +13,31 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class NihService {
 
     private ResearcherService researcherService;
+    private LibraryCardDAO libraryCardDAO;
 
     @Inject
-    public NihService(ResearcherService researcherService) {
+    public NihService(ResearcherService researcherService, LibraryCardDAO libraryCardDAO) {
         this.researcherService = researcherService;
+        this.libraryCardDAO = libraryCardDAO;
     }
 
-    public List<UserProperty> authenticateNih(NIHUserAccount nihAccount, AuthUser user) throws BadRequestException {
+    public List<UserProperty> authenticateNih(NIHUserAccount nihAccount, AuthUser authUser, Integer userId) throws BadRequestException {
         if (StringUtils.isNotEmpty(nihAccount.getNihUsername()) && !nihAccount.getNihUsername().isEmpty()) {
             nihAccount.setEraExpiration(generateEraExpirationDates());
             nihAccount.setStatus(true);
-            return researcherService.updateProperties(nihAccount.getNihMap(), user, false);
+            Map<String, String> userProp = researcherService.describeResearcherPropertiesMap(userId);
+            String eraCommonsId = userProp.getOrDefault(UserFields.ERA_COMMONS_ID.getValue(), "");
+            if (!eraCommonsId.equals("")) {
+              libraryCardDAO.updateEraCommonsForUser(userId, eraCommonsId);
+            }
+            return researcherService.updateProperties(nihAccount.getNihMap(), authUser, false);
         } else {
-            throw new BadRequestException("Invalid NIH UserName for user : " + user.getName());
+            throw new BadRequestException("Invalid NIH UserName for user : " + authUser.getName());
         }
     }
 

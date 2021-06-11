@@ -4,9 +4,12 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
+
+import java.util.List;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DELETE;
@@ -32,8 +35,9 @@ public class NihAccountResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser user) {
         try {
-            userService.findUserByEmail(user.getName());
-            return Response.ok(nihService.authenticateNih(nihAccount, user)).build();
+            User u = userService.findUserByEmail(user.getName());
+            List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, user, u.getDacUserId());
+            return Response.ok(authUserProps).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
