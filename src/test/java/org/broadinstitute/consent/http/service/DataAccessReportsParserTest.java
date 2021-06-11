@@ -182,7 +182,7 @@ public class DataAccessReportsParserTest {
         dar.put(DarConstants.DAR_CODE, DAR_CODE);
         dar.put(DarConstants.TRANSLATED_RESTRICTION, TRANSLATED_USE_RESTRICTION);
         dar.put(DarConstants.NON_TECH_RUS, RUS_SUMMARY);
-        dar.put(DarConstants.SORT_DATE, currentDate.getTime());
+        dar.put(DarConstants.SORT_DATE, currentDate);
         return dar;
     }
 }
