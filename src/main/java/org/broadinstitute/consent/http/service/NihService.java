@@ -31,7 +31,7 @@ public class NihService {
             nihAccount.setEraExpiration(generateEraExpirationDates());
             nihAccount.setStatus(true);
             Map<String, String> userProp = researcherService.describeResearcherPropertiesMap(userId);
-            String eraCommonsId = userProp.getOrDefault(UserFields.ERA_COMMONS_ID.getValue(), "");
+            String eraCommonsId = (userProp == null) ? "" : userProp.getOrDefault(UserFields.ERA_COMMONS_ID.getValue(), "");
             if (!eraCommonsId.equals("")) {
               libraryCardDAO.updateEraCommonsForUser(userId, eraCommonsId);
             }
