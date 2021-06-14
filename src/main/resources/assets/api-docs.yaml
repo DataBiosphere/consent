@@ -1692,24 +1692,15 @@ paths:
         responses:
          200:
            description: 'Returns an integer corresponding to the amount of unreviewed DARs'
-  /api/dar/partial:
-    post:
-      summary: Create Partial Data Access Request
-      description: |
-        DEPRECATED: Use POST /api/dar/v2/draft
-        Create Partial Data Access Request
-      parameters:
-        - name: dar
-          in: body
-          description: The fields that represent a DAR, json format.
-          required: true
-          schema:
-            $ref: '#/components/schemas/DataAccessRequest'
+  /api/dar/partials:
+    get:
+      summary: Get all Draft Data Access Requests
+      description: Returns list of all partial DARs
       tags:
         - Data Access Request
       responses:
         200:
-          description: Returns the created partial Data Access Request, json file.
+          description: Returns the list of partial Data Access Requests
         500:
           description: Internal Server Error.
     put:
@@ -1738,6 +1729,28 @@ paths:
           description: DAR or User Not Found
         500:
           description: Internal Server Error.
+  /api/dar/draft:
+    post:
+      summary: Create a Draft Data Access Request
+      description: Returns the created partial DAR
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the created partial Data Access Requests
+        500:
+          description: Internal Server Error.
+  /api/dar/draft/{referenceId}:
+    put:
+      summary: Update a Draft Data Access Request
+      description: Returns the updated partial DAR
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the updated partial Data Access Requests
+        500:
+          description: Internal Server Error.
   /api/dar/partial/{id}:
     delete:
       summary: Delete Partial Data Access Request
@@ -1758,43 +1771,36 @@ paths:
           description: Forbidden
         500:
           description: Internal Server Error.
-    get:
-      summary: Get Partial Data Access Request By Reference Id
-      description: Return the draft DAR specified by the given Id if it exists
-      tags: 
-        - Data Access Request
-      responses:
-        200:
-          description: Partial Data Access Request
-          content:
-            application/json:
-              schema:
-                  ref: '#/components/schemas/DataAccessRequest'
-        404: 
-          description: Cannot find draft data access request with specified reference Id.
-        500:
-          description: Internal Server Error.
-  /api/dar/partials:
-    get:
-      summary: get Draft Data Access Requests
-      description: Get all Partial Data Access Requests for user
+    put:
+      summary: Update Partial Data Access Request
+      description: |
+        DEPRECATED: Use PUT /api/dar/v2/draft/{referenceId}:
+        Update Partial Data Access Request
+      parameters:
+        - name: dar
+          in: body
+          description: |
+            The fields that represent a DAR, json format.
+            Must contain a `referenceId` for the updated DAR.
+            User must be the creator of the DAR.
+          required: true
+          schema:
+            $ref: '#/components/schemas/DataAccessRequest'
       tags:
         - Data Access Request
       responses:
         200:
-          description: Partial Data Access Requests
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DataAccessRequest'
+          description: Returns the updated partial Data Access Request, json file.
+        403:
+          description: Forbidden
+        404:
+          description: DAR or User Not Found
         500:
           description: Internal Server Error.
   /api/dar/partials/manage:
     get:
-      summary: Get Partial Data Access Requests for user
-      description: Get Partial Data Access Requests for user
+      summary: Get Partial Data Access Request Manage Object for user
+      description: Get information on Partial Data Access Requests for user
       tags:
         - Data Access Request
       responses:
