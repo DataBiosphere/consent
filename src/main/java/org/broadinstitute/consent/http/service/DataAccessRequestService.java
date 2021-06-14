@@ -316,7 +316,11 @@ public class DataAccessRequestService {
     }
 
     public DataAccessRequest findByReferenceId(String referencedId) {
-        return dataAccessRequestDAO.findByReferenceId(referencedId);
+        DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referencedId);
+        if (Objects.isNull(dar)) {
+            throw new NotFoundException("There does not exist a DAR with the given reference Id");
+        }
+        return dar;
     }
 
     @Deprecated // Use updateByReferenceIdVersion2
@@ -712,22 +716,26 @@ public class DataAccessRequestService {
         String status = optionalUser.isPresent() ? user.getStatus() : "";
         String rationale = optionalUser.isPresent() ? user.getRationale() : "";
         User researcher = userDAO.findUserById(dataAccessRequest.getUserId());
-        Optional<UserProperty> department = researcher.getProperties().stream().filter(
+        Boolean hasProps = Objects.nonNull(researcher) && Objects.nonNull(researcher.getProperties());
+        Optional<UserProperty> department = hasProps ? researcher.getProperties().stream().filter(
             (UserProperty prop) -> prop.getPropertyKey() == UserFields.DEPARTMENT.getValue())
-            .findFirst();
-        Optional<UserProperty> city = researcher.getProperties().stream().filter(
+            .findFirst()
+          : Optional.empty();
+        Optional<UserProperty> city = hasProps ? researcher.getProperties().stream().filter(
             (UserProperty prop) -> prop.getPropertyKey() == UserFields.CITY.getValue())
-            .findFirst();
-        Optional<UserProperty> country = researcher.getProperties().stream().filter(
+            .findFirst()
+          : Optional.empty();
+        Optional<UserProperty> country = hasProps ? researcher.getProperties().stream().filter(
             (UserProperty prop) -> prop.getPropertyKey() == UserFields.COUNTRY.getValue())
-            .findFirst();
+            .findFirst()
+          : Optional.empty();
         return darModalDetailsDTO
                 .setNeedDOApproval(electionService.darDatasetElectionStatus(dataAccessRequest.getReferenceId()))
                 .setResearcherName(researcher.getDisplayName())
                 .setStatus(status)
                 .setRationale(rationale)
                 .setUserId(dataAccessRequest.getUserId())
-                .setDarCode(dataAccessRequest.getData().getDarCode())
+                .setDarCode(Objects.nonNull(dataAccessRequest.getData()) ? dataAccessRequest.getData().getDarCode() : "")
                 .setPrincipalInvestigator(DarUtil.findPI(researcher))
                 .setInstitutionName((researcher == null || researcher.getInstitutionId() == null) ?
                    "" 
@@ -742,7 +750,7 @@ public class DataAccessRequestService {
                 .setDiseases(dataAccessRequest)
                 .setPurposeStatements(dataAccessRequest)
                 .setDatasets(datasets)
-                .setRus(dataAccessRequest.data.getRus());
+                .setRus(Objects.nonNull(dataAccessRequest.getData()) ? dataAccessRequest.getData().getRus() : "");
     }
 
     private List<DataSet> populateDatasets(DataAccessRequest dar) {

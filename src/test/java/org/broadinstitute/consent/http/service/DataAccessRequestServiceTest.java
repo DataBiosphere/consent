@@ -3,13 +3,16 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import org.mockito.ArgumentMatcher;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -171,14 +174,31 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void testCreateDataAccessRequest() {
+    public void testCreateDataAccessRequest_Update() {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
         User user = new User(1, "email@test.org", "Display Name", new Date());
         when(counterService.getNextDarSequence()).thenReturn(1);
-        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(null);
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         doNothing().when(dataAccessRequestDAO).updateDraftByReferenceId(any(), any());
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(), any(), any(), any());
+        doNothing().when(dataAccessRequestDAO).insertVersion2(any(), any(), any(), any(), any(), any(), any());
+        initService();
+        List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
+        assertEquals(3, newDars.size());
+    }
+
+    @Test
+    public void testCreateDataAccessRequest_Create() {
+        DataAccessRequest dar = generateDataAccessRequest();
+        dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
+        dar.setCreateDate(new Timestamp(1000));
+        dar.setSortDate(new Timestamp(1000));
+        dar.setReferenceId("id");
+        User user = new User(1, "email@test.org", "Display Name", new Date());
+        when(counterService.getNextDarSequence()).thenReturn(1);
+        when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
+        when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
         doNothing().when(dataAccessRequestDAO).insertVersion2(any(), any(), any(), any(), any(), any(), any());
         initService();
         List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
@@ -378,6 +398,7 @@ public class DataAccessRequestServiceTest {
 
         when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
                 .thenReturn(dar);
+        when(userDAO.findUserById(any())).thenReturn(new User());
         DataSet ds = new DataSet();
         ds.setDataSetId(1);
         ds.setName("DS-1");
@@ -394,7 +415,7 @@ public class DataAccessRequestServiceTest {
 
         DARModalDetailsDTO darModalDetailsDTO = service.DARModalDetailsDTOBuilder(dar, user, electionService);
         assertNotNull(darModalDetailsDTO);
-        assertEquals(dar.data.getInstitution(), darModalDetailsDTO.getInstitutionName());
+        assertEquals("", darModalDetailsDTO.getInstitutionName());
     }
 
     private DataAccessRequest generateDataAccessRequest() {
@@ -477,4 +498,11 @@ public class DataAccessRequestServiceTest {
         return RandomStringUtils.random(10, true, false);
     }
 
+    private class LongerThanTwo implements ArgumentMatcher<String> {
+
+        @Override
+        public boolean matches(String argument) {
+            return argument.length() > 2;
+        }
+    }
 }
