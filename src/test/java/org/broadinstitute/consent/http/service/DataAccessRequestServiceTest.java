@@ -498,6 +498,30 @@ public class DataAccessRequestServiceTest {
         return RandomStringUtils.random(10, true, false);
     }
 
+    @Test
+    public void findAllDataAccessRequests() {
+    }
+
+    @Test
+    public void findAllDraftDataAccessRequests() {
+    }
+
+    @Test
+    public void findAllDraftDataAccessRequestsByUser() {
+    }
+
+    @Test
+    public void getDataAccessRequestsByReferenceIds() {
+    }
+
+    @Test
+    public void getDataAccessRequests() {
+    }
+
+    @Test
+    public void getDraftDataAccessRequestManage() {
+    }
+
     private class LongerThanTwo implements ArgumentMatcher<String> {
 
         @Override
