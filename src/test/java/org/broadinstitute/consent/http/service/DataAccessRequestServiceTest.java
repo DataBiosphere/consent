@@ -7,6 +7,7 @@ import org.mockito.ArgumentMatcher;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -499,27 +500,73 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void findAllDataAccessRequests() {
+    public void testFindAllDraftDataAccessRequests() {
+        when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(Arrays.asList(new DataAccessRequest()));
+        initService();
+        List<DataAccessRequest> drafts = service.findAllDraftDataAccessRequests();
+        assertEquals(drafts.size(), 1);
     }
 
     @Test
-    public void findAllDraftDataAccessRequests() {
+    public void testFindAllDraftDataAccessRequestsByUser() {
+        when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(Arrays.asList(new DataAccessRequest()));
+        initService();
+        List<DataAccessRequest> drafts = service.findAllDraftDataAccessRequestsByUser(1);
+        assertEquals(drafts.size(), 1);
     }
 
     @Test
-    public void findAllDraftDataAccessRequestsByUser() {
+    public void getDataAccessRequestsForUser() {
+        List<DataAccessRequest> dars = Arrays.asList(new DataAccessRequest());
+        when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(dars);
+        when(dacService.filterDataAccessRequestsByDac(eq(dars), any())).thenReturn(dars);
+        initService();
+        List<DataAccessRequest> foundDars = service.getDataAccessRequestsForUser(authUser);
+        assertEquals(foundDars.size(), 1);
     }
 
     @Test
-    public void getDataAccessRequestsByReferenceIds() {
-    }
-
-    @Test
-    public void getDataAccessRequests() {
+    public void getDraftDataAccessRequestManage_NullUserId() {
+        DataAccessRequest dar = new DataAccessRequest();
+        dar.setReferenceId("referenceId");
+        dar.setUserId(1);
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setDatasetIds(Arrays.asList(361));
+        dar.setData(data);
+        when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(Arrays.asList(dar));
+        initService();
+        List<DataAccessRequestManage> darManages = service.getDraftDataAccessRequestManage(null);
+        assertEquals(1, darManages.size());
     }
 
     @Test
     public void getDraftDataAccessRequestManage() {
+        DataAccessRequest dar = new DataAccessRequest();
+        dar.setReferenceId("referenceId");
+        dar.setUserId(1);
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setDatasetIds(Arrays.asList(361));
+        dar.setData(data);
+        when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(Arrays.asList(dar));
+        initService();
+        List<DataAccessRequestManage> darManages = service.getDraftDataAccessRequestManage(1);
+        assertEquals(1, darManages.size());
+    }
+
+    @Test
+    public void testFindByReferenceId() {
+        initService();
+        DataAccessRequest dar = new DataAccessRequest();
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        DataAccessRequest foundDar = service.findByReferenceId("refId");
+        assertEquals(dar, foundDar);
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testFindByReferenceId_NotFound() {
+        initService();
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenThrow(new NotFoundException());
+        service.findByReferenceId("referenceId");
     }
 
     private class LongerThanTwo implements ArgumentMatcher<String> {
