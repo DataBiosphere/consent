@@ -78,7 +78,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    @Deprecated //instead use V2Resource.getDataAccessRequests
+    @Deprecated //instead use V2Resource.getDataAccessRequestsForUser
     public Response describeDataAccessRequests(@Auth AuthUser authUser) {
         List<Document> documents = dataAccessRequestService.describeDataAccessRequests(authUser);
         return Response.ok().entity(documents).build();

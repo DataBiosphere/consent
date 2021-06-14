@@ -355,7 +355,7 @@ public class DataAccessRequestService {
      * @param authUser AuthUser
      * @return List<Document>
      */
-    @Deprecated //use getDataAccessRequests
+    @Deprecated //use getDataAccessRequestsForUser
     public List<Document> describeDataAccessRequests(AuthUser authUser) {
         List<Document> documents = getAllDataAccessRequestsAsDocuments();
         return dacService.filterDarsByDAC(documents, authUser);
@@ -366,8 +366,8 @@ public class DataAccessRequestService {
      * @param authUser AuthUser
      * @return List<DataAccessRequest>
      */
-    public List<DataAccessRequest> getDataAccessRequests(AuthUser authUser) {
-        List<DataAccessRequest> dars = findAllDataAccessRequests();
+    public List<DataAccessRequest> getDataAccessRequestsForUser(AuthUser authUser) {
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
         return dacService.filterDataAccessRequestsByDac(dars, authUser);
     }
 
@@ -630,8 +630,8 @@ public class DataAccessRequestService {
 
     public List<DataAccessRequestManage> getDraftDataAccessRequestManage(Integer userId) {
         List<DataAccessRequest> accessList = userId == null
-                ? findAllDraftDataAccessRequests()
-                : findAllDraftDataAccessRequestsByUser(userId);
+                ? dataAccessRequestDAO.findAllDraftDataAccessRequests()
+                : dataAccessRequestDAO.findAllDraftsByUserId(userId);
         return createAccessRequestManageV2(accessList);
     }
 

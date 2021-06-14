@@ -75,7 +75,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @Produces("application/json")
   @RolesAllowed(ADMIN)
   public Response getDataAccessRequests(@Auth AuthUser authUser) {
-    List<DataAccessRequest> dars = dataAccessRequestService.getDataAccessRequests(authUser);
+    List<DataAccessRequest> dars = dataAccessRequestService.getDataAccessRequestsForUser(authUser);
     return Response.ok().entity(dars).build();
   }
 
