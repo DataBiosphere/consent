@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public class DataAccessReportsParser {
 
@@ -63,11 +64,12 @@ public class DataAccessReportsParser {
     }
 
     public void addApprovedDARLine(FileWriter darWriter, Election election, DataAccessRequest dar, String profileName, String institution, String consentName, String translatedUseRestriction) throws IOException {       
-        String rusSummary = StringUtils.isNotEmpty(dar.data.getNonTechRus()) ?  dar.data.getNonTechRus().replace("\n", " ") : "";
+        String rusSummary = Objects.nonNull(dar.getData()) && StringUtils.isNotEmpty(dar.data.getNonTechRus()) ?  dar.data.getNonTechRus().replace("\n", " ") : "";
         String content1 =  profileName + DEFAULT_SEPARATOR + institution + DEFAULT_SEPARATOR;
+        String electionDate = (Objects.nonNull(election.getFinalVoteDate())) ? formatTimeToDate(election.getFinalVoteDate().getTime()) : "";
         String content2 = rusSummary + DEFAULT_SEPARATOR +
                 dar.getSortDate() + DEFAULT_SEPARATOR +
-                formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
+                electionDate + DEFAULT_SEPARATOR +
                 "--";
         addDARLine(darWriter, dar, content1, content2, consentName, translatedUseRestriction);
     }
