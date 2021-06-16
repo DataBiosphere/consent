@@ -53,16 +53,6 @@ public class VoteService {
     }
 
     /**
-     * Find all votes for election ids.
-     *
-     * @param electionIds The election ids for the elections.
-     * @return Collection of votes for the given reference ids
-     */
-    public List<Vote> findVotesByElectionIds(List<Integer> electionIds) {
-        return voteDAO.findVotesByElectionIds(electionIds);
-    }
-
-    /**
      * Find all votes for an election id.
      *
      * @param electionId The election id for the election.
@@ -131,7 +121,7 @@ public class VoteService {
         Vote vote = voteDAO.findVoteById(voteId);
         Date updateDate = rec.getVote() == null ? null : new Date();
         String rationale = StringUtils.isNotEmpty(rec.getRationale()) ? rec.getRationale() : null;
-        voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, false,  getElectionId(referenceId), vote.getCreateDate(), rec.getHasConcerns());
+        voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, false,  vote.getElectionId(), vote.getCreateDate(), rec.getHasConcerns());
         return voteDAO.findVoteById(voteId);
     }
 
@@ -326,14 +316,6 @@ public class VoteService {
         if (Objects.isNull(voteDAO.findVoteById(vote.getVoteId()))) {
             throw new IllegalArgumentException("No vote exists with the id of " + vote.getVoteId());
         }
-    }
-
-    private Integer getElectionId(String referenceId) {
-        Integer electionId = electionDAO.getOpenElectionIdByReferenceId(referenceId);
-        if (electionId == null) {
-            throw new IllegalArgumentException("The specified object does not have an election");
-        }
-        return electionId;
     }
 
     private Integer setGeneralFields(Vote rec, Integer electionId) {

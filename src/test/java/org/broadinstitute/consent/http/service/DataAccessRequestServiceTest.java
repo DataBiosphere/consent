@@ -318,11 +318,6 @@ public class DataAccessRequestServiceTest {
         when(consentDAO.findConsentById("CONS-1")).thenReturn(consent);
 
         Map<String, String> researcherProperties = getResearcherProperties();
-        when(userPropertyDAO.findPropertyValueByPK(dar.getUserId(), DarConstants.PROFILE_NAME))
-                .thenReturn(researcherProperties.get(DarConstants.PROFILE_NAME));
-        when(userPropertyDAO.findPropertyValueByPK(dar.getUserId(), DarConstants.INSTITUTION))
-                .thenReturn(researcherProperties.get(DarConstants.INSTITUTION));
-
         initService();
         try {
             File file = service.createApprovedDARDocument();
@@ -377,10 +372,6 @@ public class DataAccessRequestServiceTest {
         Map<String, String> researcherProperties = getResearcherProperties();
         when(userPropertyDAO.findPropertyValueByPK(dar.getUserId(), DarConstants.ACADEMIC_BUSINESS_EMAIL))
             .thenReturn(researcherProperties.get(DarConstants.ACADEMIC_BUSINESS_EMAIL));
-        when(userPropertyDAO.findPropertyValueByPK(dar.getUserId(), DarConstants.PROFILE_NAME))
-            .thenReturn(researcherProperties.get(DarConstants.PROFILE_NAME));
-        when(userPropertyDAO.findPropertyValueByPK(dar.getUserId(), DarConstants.INSTITUTION))
-            .thenReturn(researcherProperties.get(DarConstants.INSTITUTION));
 
         initService();
 
@@ -422,6 +413,8 @@ public class DataAccessRequestServiceTest {
     private DataAccessRequest generateDataAccessRequest() {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
+        Integer userId = userDAO.insertUser(UUID.randomUUID().toString(), "displayName", new Date());
+        dar.setUserId(userId);
         dar.setReferenceId(UUID.randomUUID().toString());
         data.setReferenceId(dar.getReferenceId());
         data.setDatasetIds(Collections.singletonList(1));
@@ -477,7 +470,6 @@ public class DataAccessRequestServiceTest {
 
     private Map<String, String> getResearcherProperties() {
         Map<String, String> researcherProperties = new HashMap<>();
-        researcherProperties.put(UserFields.INSTITUTION.getValue(), randomString());
         researcherProperties.put(UserFields.DEPARTMENT.getValue(), randomString());
         researcherProperties.put(UserFields.STREET_ADDRESS_1.getValue(), randomString());
         researcherProperties.put(UserFields.CITY.getValue(), randomString());

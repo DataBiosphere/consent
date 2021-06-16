@@ -190,14 +190,19 @@ public class ElectionService {
 
     public Election submitFinalAccessVoteDataRequestElection(Integer electionId, Boolean voteValue) throws Exception {
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
-        if (election == null) {
-            throw new NotFoundException("Election for specified id does not exist");
+        if (Objects.isNull(election)) {
+            logger.error("Unable to find an election with final vote when submitting a final access vote: " + electionId);
+            election = electionDAO.findElectionById(electionId);
+            if (Objects.isNull(election)) {
+                logger.error("Unable to find an election by id when submitting a final access vote: " + electionId);
+                throw new NotFoundException("Election for specified id does not exist");
+            }
         }
         String darId = election.getReferenceId();
         DataAccessRequest dar = Objects.nonNull(darId) ? dataAccessRequestService.findByReferenceId(darId) : null;
-        if (dar == null) {
+        if (Objects.isNull(dar)) {
             throw new NotFoundException("Data Access Request for specified id does not exist");
-        } 
+        }
         Integer userId = dar.getUserId();
         List<LibraryCard> libraryCards = Objects.nonNull(userId) ? libraryCardDAO.findLibraryCardsByUserId(userId) : Collections.emptyList();
         List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);

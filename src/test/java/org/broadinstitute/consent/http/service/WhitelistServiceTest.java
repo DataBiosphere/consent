@@ -124,7 +124,7 @@ public class WhitelistServiceTest {
         List<UserProperty> properties = new ArrayList<>();
         properties.add(new UserProperty(1, UserFields.ERA_COMMONS_ID.getValue(), matchField));
         properties.add(new UserProperty(1, UserFields.ACADEMIC_BUSINESS_EMAIL.getValue(), matchField));
-        properties.add(new UserProperty(1, UserFields.INSTITUTION.getValue(), matchField));
+        properties.add(new UserProperty(1, UserFields.DEPARTMENT.getValue(), matchField));
 
         initServices(fileData);
         service.postWhitelist(fileData);

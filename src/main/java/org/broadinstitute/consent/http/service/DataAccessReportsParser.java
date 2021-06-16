@@ -10,8 +10,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
+import org.bson.Document;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -63,8 +70,8 @@ public class DataAccessReportsParser {
                         HeaderDAR.RENEWAL_DATE.getValue() + END_OF_LINE);
     }
 
-    public void addApprovedDARLine(FileWriter darWriter, Election election, DataAccessRequest dar, String profileName, String institution, String consentName, String translatedUseRestriction) throws IOException {       
-        String rusSummary = Objects.nonNull(dar.getData()) && StringUtils.isNotEmpty(dar.data.getNonTechRus()) ?  dar.data.getNonTechRus().replace("\n", " ") : "";
+    public void addApprovedDARLine(FileWriter darWriter, Election election, DataAccessRequest dar, String profileName, String institution, String consentName, String translatedUseRestriction) throws IOException {
+        String rusSummary = Objects.nonNull(dar.getData()) && StringUtils.isNotEmpty(dar.getData().getNonTechRus()) ?  dar.getData().getNonTechRus().replace("\n", " ") : "";
         String content1 =  profileName + DEFAULT_SEPARATOR + institution + DEFAULT_SEPARATOR;
         String electionDate = (Objects.nonNull(election.getFinalVoteDate())) ? formatTimeToDate(election.getFinalVoteDate().getTime()) : "";
         String content2 = rusSummary + DEFAULT_SEPARATOR +
@@ -106,7 +113,7 @@ public class DataAccessReportsParser {
         List<Integer> dataSetIds = new ArrayList<>();
         List<String> dataSetUUIds = new ArrayList<>();
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
-            List<DatasetDetailEntry> dataSetDetails = dar.getData().getDatasetDetail();
+            List<DatasetDetailEntry> dataSetDetails = Objects.nonNull(dar.getData().getDatasetDetail()) ? dar.getData().getDatasetDetail() : Collections.emptyList();
             for (DatasetDetailEntry detail : dataSetDetails) {
                 try {
                     Integer id = Integer.parseInt(detail.getDatasetId());
