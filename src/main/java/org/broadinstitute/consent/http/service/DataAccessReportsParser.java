@@ -68,7 +68,7 @@ public class DataAccessReportsParser {
         String content1 =  profileName + DEFAULT_SEPARATOR + institution + DEFAULT_SEPARATOR;
         String electionDate = (Objects.nonNull(election.getFinalVoteDate())) ? formatTimeToDate(election.getFinalVoteDate().getTime()) : "";
         String content2 = rusSummary + DEFAULT_SEPARATOR +
-                dar.getSortDate() + DEFAULT_SEPARATOR +
+                formatTimeToDate(dar.getSortDate().getTime()) + DEFAULT_SEPARATOR +
                 electionDate + DEFAULT_SEPARATOR +
                 "--";
         addDARLine(darWriter, dar, content1, content2, consentName, translatedUseRestriction);
@@ -102,32 +102,34 @@ public class DataAccessReportsParser {
     }
 
     private void addDARLine(FileWriter darWriter, DataAccessRequest dar, String customContent1, String customContent2, String consentName, String translatedUseRestriction) throws IOException {
-        List<DatasetDetailEntry> dataSetDetails = dar.data.getDatasetDetail();
         List<String> datasetNames = new ArrayList<>();
         List<Integer> dataSetIds = new ArrayList<>();
         List<String> dataSetUUIds = new ArrayList<>();
-        for(DatasetDetailEntry detail : dataSetDetails) {
-            try {
-                Integer id = Integer.parseInt(detail.getDatasetId());
-                dataSetIds.add(id);
-                dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
-            } catch (Exception e) {
-                logger.warn("Invalid Dataset ID");
+        if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
+            List<DatasetDetailEntry> dataSetDetails = dar.getData().getDatasetDetail();
+            for (DatasetDetailEntry detail : dataSetDetails) {
+                try {
+                    Integer id = Integer.parseInt(detail.getDatasetId());
+                    dataSetIds.add(id);
+                    dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
+                } catch (Exception e) {
+                    logger.warn("Invalid Dataset ID");
+                }
+                datasetNames.add(detail.getName());
             }
-            datasetNames.add(detail.getName());
-        }
-        String sDUL = StringUtils.isNotEmpty(translatedUseRestriction) ?  translatedUseRestriction.replace("\n", " ") : "";
-        String translatedRestriction = StringUtils.isNotEmpty(dar.data.getTranslatedUseRestriction()) ? dar.data.getTranslatedUseRestriction().replace("<br>", " ") :  "";
-        darWriter.write(
-                dar.data.getDarCode() + DEFAULT_SEPARATOR +
-                        StringUtils.join(datasetNames, ",") + DEFAULT_SEPARATOR +
-                        StringUtils.join(dataSetUUIds, ",") + DEFAULT_SEPARATOR +
-                        consentName + DEFAULT_SEPARATOR +
-                        customContent1 +
-                        sDUL + DEFAULT_SEPARATOR +
-                        translatedRestriction + DEFAULT_SEPARATOR +
-                        customContent2 + END_OF_LINE);
+            String sDUL = StringUtils.isNotEmpty(translatedUseRestriction) ? translatedUseRestriction.replace("\n", " ") : "";
+            String translatedRestriction = StringUtils.isNotEmpty(dar.getData().getTranslatedUseRestriction()) ? dar.getData().getTranslatedUseRestriction().replace("<br>", " ") : "";
+            darWriter.write(
+              dar.getData().getDarCode() + DEFAULT_SEPARATOR +
+                StringUtils.join(datasetNames, ",") + DEFAULT_SEPARATOR +
+                StringUtils.join(dataSetUUIds, ",") + DEFAULT_SEPARATOR +
+                consentName + DEFAULT_SEPARATOR +
+                customContent1 +
+                sDUL + DEFAULT_SEPARATOR +
+                translatedRestriction + DEFAULT_SEPARATOR +
+                customContent2 + END_OF_LINE);
 
+        }
     }
 
 
