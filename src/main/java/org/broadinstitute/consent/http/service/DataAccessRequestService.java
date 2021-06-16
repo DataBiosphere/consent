@@ -645,13 +645,17 @@ public class DataAccessRequestService {
             for (Election election : elections) {
                 DataAccessRequest dataAccessRequest = findByReferenceId(election.getReferenceId());
                 try {
-                    if (dataAccessRequest != null) {
-                        Integer datasetId = dataAccessRequest.getData().getDatasetIds().get(0);
-                        String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId);
-                        Consent consent = consentDAO.findConsentById(consentId);
+                    if (Objects.nonNull(dataAccessRequest) && Objects.nonNull(dataAccessRequest.getData())) {
+                        Integer datasetId = !CollectionUtils.isEmpty(dataAccessRequest.getData().getDatasetIds()) ? dataAccessRequest.getData().getDatasetIds().get(0) : null;
+                        String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId) : null;
+                        Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId): null;
                         String profileName = userPropertyDAO.findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.PROFILE_NAME);
                         String institution = userPropertyDAO.findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.INSTITUTION);
-                        dataAccessReportsParser.addApprovedDARLine(darWriter, election, dataAccessRequest, profileName, institution, consent.getName(), consent.getTranslatedUseRestriction());
+                        if (Objects.nonNull(consent)) {
+                            dataAccessReportsParser.addApprovedDARLine(darWriter, election, dataAccessRequest, profileName, institution, consent.getName(), consent.getTranslatedUseRestriction());
+                        } else {
+                            dataAccessReportsParser.addApprovedDARLine(darWriter, election, dataAccessRequest, profileName, institution, "", "");
+                        }
                     }
                 } catch (Exception e) {
                     logger.error("Exception generating Approved DAR Document", e);
@@ -674,11 +678,15 @@ public class DataAccessRequestService {
         if (CollectionUtils.isNotEmpty(elections)) {
             for (Election election : elections) {
                 DataAccessRequest dar = findByReferenceId(election.getReferenceId());
-                if (dar != null) {
-                    Integer datasetId = (dar.data.getDatasetIds() != null && !dar.data.getDatasetIds().isEmpty()) ? dar.data.getDatasetIds().get(0) : null;
-                    String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId);
-                    Consent consent = consentDAO.findConsentById(consentId);
-                    dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar, consent.getName(), consent.getTranslatedUseRestriction());
+                if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
+                    Integer datasetId = !CollectionUtils.isEmpty(dar.getData().getDatasetIds()) ? dar.getData().getDatasetIds().get(0) : null;
+                    String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId) : null;
+                    Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
+                    if (Objects.nonNull(consent)) {
+                        dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar, consent.getName(), consent.getTranslatedUseRestriction());
+                    } else {
+                        dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar, "", "");
+                    }
                 }
             }
         }
