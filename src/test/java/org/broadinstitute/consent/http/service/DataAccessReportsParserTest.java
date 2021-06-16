@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -182,7 +183,7 @@ public class DataAccessReportsParserTest {
         dar.put(DarConstants.DAR_CODE, DAR_CODE);
         dar.put(DarConstants.TRANSLATED_RESTRICTION, TRANSLATED_USE_RESTRICTION);
         dar.put(DarConstants.NON_TECH_RUS, RUS_SUMMARY);
-        dar.put(DarConstants.SORT_DATE, currentDate.getTime());
+        dar.put(DarConstants.SORT_DATE, new Timestamp(currentDate.getTime()));
         return dar;
     }
 }

@@ -18,6 +18,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -36,6 +37,9 @@ public class ResearcherServiceTest {
 
     @Mock
     private UserDAO userDAO;
+
+    @Mock
+    private InstitutionDAO institutionDAO;
 
     @Mock
     private EmailNotifierService emailNotifierService;
@@ -64,14 +68,14 @@ public class ResearcherServiceTest {
     }
 
     private void initService() {
-        service = new ResearcherService(userPropertyDAO, userDAO, emailNotifierService, userService);
+        service = new ResearcherService(userPropertyDAO, userDAO, institutionDAO, emailNotifierService, userService);
     }
 
     @Test
     public void testSetProperties() {
         UserProperty prop = new UserProperty(
                 user.getDacUserId(),
-                UserFields.INSTITUTION.getValue(),
+                UserFields.DEPARTMENT.getValue(),
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
@@ -118,7 +122,7 @@ public class ResearcherServiceTest {
     public void testUpdatePropertiesNoValidation() {
         UserProperty prop = new UserProperty(
                 user.getDacUserId(),
-                UserFields.INSTITUTION.getValue(),
+                UserFields.DEPARTMENT.getValue(),
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
@@ -136,7 +140,7 @@ public class ResearcherServiceTest {
     public void testUpdatePropertiesMissingFields() {
         UserProperty prop = new UserProperty(
                 user.getDacUserId(),
-                UserFields.INSTITUTION.getValue(),
+                UserFields.DEPARTMENT.getValue(),
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
