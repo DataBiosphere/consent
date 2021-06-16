@@ -398,11 +398,13 @@ public class DataAccessRequestResourceVersion2Test {
     assertEquals(true, res.hasEntity());
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test
   public void getDraftDataAccessRequests_UserNotFound() {
     initResource();
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     resource.getDraftDataAccessRequests(authUser);
+    Response res = resource.getDraftDataAccessRequests(authUser);
+    assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
   }
 
   @Test
@@ -419,24 +421,26 @@ public class DataAccessRequestResourceVersion2Test {
     assertEquals(true, res.hasEntity());
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test
   public void getDraftDar_UserNotFound() {
     initResource();
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
-    resource.getDraftDar(authUser, "id");
+    Response res = resource.getDraftDar(authUser, "id");
+    assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test
   public void getDraftDar_DarNotFound() {
     initResource();
     User user = new User();
     user.setDacUserId(10);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenThrow(new NotFoundException());
-    resource.getDraftDar(authUser, "id");
+    Response res = resource.getDraftDar(authUser, "id");
+    assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
   }
 
-  @Test(expected = ForbiddenException.class)
+  @Test
   public void getDraftDar_UserNotAllowed() {
     initResource();
     User user = new User();
@@ -445,7 +449,8 @@ public class DataAccessRequestResourceVersion2Test {
     dar.setUserId(11);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    resource.getDraftDar(authUser, "id");
+    Response res = resource.getDraftDar(authUser, "id");
+    assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
   }
 
   @Test
@@ -461,10 +466,11 @@ public class DataAccessRequestResourceVersion2Test {
     assertEquals(true, res.hasEntity());
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test
   public void getDraftManageDataAccessRequests_UserNotFound() {
     initResource();
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
-    resource.getDraftManageDataAccessRequests(authUser);
+    Response res = resource.getDraftManageDataAccessRequests(authUser);
+    assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
   }
 }
