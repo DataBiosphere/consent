@@ -14,6 +14,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class NihService {
 
@@ -30,12 +31,13 @@ public class NihService {
         if (StringUtils.isNotEmpty(nihAccount.getNihUsername()) && !nihAccount.getNihUsername().isEmpty()) {
             nihAccount.setEraExpiration(generateEraExpirationDates());
             nihAccount.setStatus(true);
-            Map<String, String> userProp = researcherService.describeResearcherPropertiesMap(userId);
-            String eraCommonsId = (userProp == null) ? "" : userProp.getOrDefault(UserFields.ERA_COMMONS_ID.getValue(), "");
+            List<UserProperty> updatedProps = researcherService.updateProperties(nihAccount.getNihMap(), authUser, false);
+            Optional<UserProperty> eraCommonsProp = updatedProps.stream().filter((prop) -> prop.getPropertyKey() == UserFields.ERA_COMMONS_ID.getValue()).findFirst();
+            String eraCommonsId = (eraCommonsProp.isPresent()) ? eraCommonsProp.get().getPropertyValue() : "";
             if (!eraCommonsId.equals("")) {
               libraryCardDAO.updateEraCommonsForUser(userId, eraCommonsId);
             }
-            return researcherService.updateProperties(nihAccount.getNihMap(), authUser, false);
+            return updatedProps;
         } else {
             throw new BadRequestException("Invalid NIH UserName for user : " + authUser.getName());
         }
