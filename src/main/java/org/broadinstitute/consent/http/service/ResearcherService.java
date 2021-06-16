@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 
@@ -107,7 +108,7 @@ public class ResearcherService {
         Map<String, String> rpForDAR = new HashMap<>();
         User user =  userDAO.findUserById(userId);
         rpForDAR.put(UserFields.INVESTIGATOR.getValue(), properties.getOrDefault(UserFields.PI_NAME.getValue(), (user == null) ? "" : user.getDisplayName()));
-        rpForDAR.put(UserFields.INSTITUTION.getValue(), (user == null || user.getInstitutionId() == null) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName());
+        rpForDAR.put(UserFields.INSTITUTION.getValue(), (Objects.isNull(user) || Objects.isNull(user.getInstitutionId())) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName());
         rpForDAR.put(UserFields.DEPARTMENT.getValue(), properties.getOrDefault(UserFields.DEPARTMENT.getValue(), null));
         rpForDAR.put(UserFields.STREET_ADDRESS_1.getValue(), properties.getOrDefault(UserFields.STREET_ADDRESS_1.getValue(), null));
         rpForDAR.put(
@@ -120,7 +121,7 @@ public class ResearcherService {
         rpForDAR.put(UserFields.DIVISION.getValue(), properties.getOrDefault(UserFields.DIVISION.getValue(), null));
         rpForDAR.put(UserFields.ERA_COMMONS_ID.getValue(), properties.getOrDefault(UserFields.ERA_COMMONS_ID.getValue(), null));
         rpForDAR.put(UserFields.PUBMED_ID.getValue(), properties.getOrDefault(UserFields.PUBMED_ID.getValue(), null));
-        rpForDAR.put(UserFields.PROFILE_NAME.getValue(), (user == null) ? "" : user.getDisplayName());
+        rpForDAR.put(UserFields.PROFILE_NAME.getValue(), Objects.isNull(user) ? "" : user.getDisplayName());
         rpForDAR.put(
                 UserFields.ACADEMIC_BUSINESS_EMAIL.getValue(), properties.getOrDefault(UserFields.ACADEMIC_BUSINESS_EMAIL.getValue(), null));
         rpForDAR.put(UserFields.SCIENTIFIC_URL.getValue(), properties.getOrDefault(UserFields.SCIENTIFIC_URL.getValue(), null));

@@ -7,12 +7,14 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
-import java.io.*;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public class DataAccessReportsParser {
 
@@ -98,14 +100,14 @@ public class DataAccessReportsParser {
     private void addDARLine(FileWriter darWriter, Document dar, String customContent1, String customContent2, String consentName, String translatedUseRestriction) throws IOException {
         List<Document> dataSetDetails = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
         List<String> datasetNames = new ArrayList<>();
-        if (dataSetDetails != null) {
+        if (Objects.nonNull(dataSetDetails)) {
             for (Document detail : dataSetDetails) {
                 datasetNames.add(StringUtils.defaultString(detail.getString("name")));
             }
         }
         List<Integer> dataSetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
         List<String> dataSetUUIds = new ArrayList<>();
-        if (dataSetIds != null) {
+        if (Objects.nonNull(dataSetIds)) {
             for (Integer id : dataSetIds) {
                 dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
             }

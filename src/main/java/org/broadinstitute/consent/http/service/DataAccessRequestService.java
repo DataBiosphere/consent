@@ -614,15 +614,15 @@ public class DataAccessRequestService {
                 DataAccessRequest dataAccessRequest = findByReferenceId(election.getReferenceId());
                 User user = userDAO.findUserById(dataAccessRequest.getUserId());
                 try {
-                    if (dar != null && user != null) {
+                    if (Objects.nonNull(dar) && Objects.nonNull(user)) {
                         Integer datasetId = dataAccessRequest.getData().getDatasetIds().get(0);
                         String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId);
                         Consent consent = consentDAO.findConsentById(consentId);
                         String profileName = user.getDisplayName();
-                        if (user.getInstitutionId() == null) {
+                        if (Objects.isNull(user.getInstitutionId())) {
                           logger.warn("No institution found for creator of this Data Access Request");
                         }
-                        String institution = (user.getInstitutionId() == null) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+                        String institution = Objects.isNull(user.getInstitutionId()) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
                         dataAccessReportsParser.addApprovedDARLine(darWriter, election, dar, profileName, institution, consent.getName(), consent.getTranslatedUseRestriction());
                     }
                 } catch (Exception e) {
@@ -669,11 +669,11 @@ public class DataAccessRequestService {
                 DataAccessRequest dataAccessRequest = findByReferenceId(referenceId);
                 User user = userDAO.findUserById(dataAccessRequest.getUserId());
                 Date approvalDate = electionDAO.findApprovalAccessElectionDate(referenceId);
-                if (approvalDate != null) {
+                if (Objects.nonNull(approvalDate)) {
                     String email = userPropertyDAO
                             .findPropertyValueByPK(dataAccessRequest.getUserId(), DarConstants.ACADEMIC_BUSINESS_EMAIL);
-                    String name = (user == null) ? "" : user.getDisplayName();
-                    String institution = (user == null || user.getInstitutionId() == null) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+                    String name = Objects.isNull(user) ? "" : user.getDisplayName();
+                    String institution = (Objects.isNull(user) || Objects.isNull(user.getInstitutionId())) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
                     String darCode = dataAccessRequest.getData().getDarCode();
                     dataAccessReportsParser.addDataSetApprovedUsersLine(darWriter, email, name, institution, darCode, approvalDate);
                 }
