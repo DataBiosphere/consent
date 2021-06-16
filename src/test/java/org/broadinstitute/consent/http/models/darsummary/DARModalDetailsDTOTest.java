@@ -72,16 +72,16 @@ public class DARModalDetailsDTOTest {
     @Test
     public void generateModalDetailsDTO(){
         DARModalDetailsDTO modalDetailsDTO = new DARModalDetailsDTO()
-            .setDarCode(dar.data.getDarCode())
+            .setDarCode(dar.getData().getDarCode())
             .setPrincipalInvestigator(DarUtil.findPI(user))
             .setInstitutionName((user.getInstitutionId() == null) ?
             "" 
             : institutionDAO.findInstitutionById(user.getInstitutionId()).getName())
-            .setProjectTitle(dar.data.getProjectTitle())
-            .setDepartment(dar.data.getDepartment())
-            .setCity(dar.data.getCity())
-            .setCountry(dar.data.getCountry())
-            .setNihUsername(dar.data.getNihUsername())
+            .setProjectTitle(dar.getData().getProjectTitle())
+            .setDepartment(dar.getData().getDepartment())
+            .setCity(dar.getData().getCity())
+            .setCountry(dar.getData().getCountry())
+            .setNihUsername(dar.getData().getNihUsername())
             .setIsThereDiseases(false)
             .setIsTherePurposeStatements(false)
             .setResearchType(dar)

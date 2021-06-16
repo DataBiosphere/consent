@@ -175,17 +175,17 @@ public class DataAccessReportsParserTest {
     private DataAccessRequest createDAR(Date currentDate) {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
-        dar.setData(data);
         DatasetDetailEntry datasetDetail = new DatasetDetailEntry();
         datasetDetail.setObjectId(SC_ID);
         datasetDetail.setName(NAME);
         List<DatasetDetailEntry> detailsList = new ArrayList<>();
         detailsList.add(datasetDetail);
-        dar.data.setDatasetDetail(detailsList);
-        dar.data.setDatasetIds(new ArrayList<>());
-        dar.data.setDarCode(DAR_CODE);
-        dar.data.setTranslatedUseRestriction(TRANSLATED_USE_RESTRICTION);
-        dar.data.setNonTechRus(RUS_SUMMARY);
+        data.setDatasetDetail(detailsList);
+        data.setDatasetIds(new ArrayList<>());
+        data.setDarCode(DAR_CODE);
+        data.setTranslatedUseRestriction(TRANSLATED_USE_RESTRICTION);
+        data.setNonTechRus(RUS_SUMMARY);
+        dar.setData(data);
         dar.setSortDate(new Timestamp(currentDate.getTime()));
         return dar;
     }
