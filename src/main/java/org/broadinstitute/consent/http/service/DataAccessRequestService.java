@@ -762,7 +762,7 @@ public class DataAccessRequestService {
     }
 
     private List<DataSet> populateDatasets(DataAccessRequest dar) {
-        List<Integer> datasetIds = dar.data.getDatasetIds();
+        List<Integer> datasetIds = Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
         if (!datasetIds.isEmpty()) {
             return dataSetDAO.findDataSetsByIdList(datasetIds);
         }
@@ -908,7 +908,7 @@ public class DataAccessRequestService {
      */
     private List<DataAccessRequest> getUnReviewedDarsForUser(AuthUser authUser) {
         List<DataAccessRequest> activeDars = dataAccessRequestDAO.findAllDataAccessRequests().stream().
-                filter(d -> !ElectionStatus.CANCELED.getValue().equalsIgnoreCase(d.data.getStatus())).
+                filter(d -> !ElectionStatus.CANCELED.getValue().equalsIgnoreCase(Objects.nonNull(d.getData()) ? d.getData().getStatus() : "")).
                 collect(Collectors.toList());
         if (dacService.isAuthUserAdmin(authUser)) {
             return activeDars;
