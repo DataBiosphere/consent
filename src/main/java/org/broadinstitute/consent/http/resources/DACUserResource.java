@@ -52,7 +52,7 @@ public class DACUserResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    @RolesAllowed(ADMIN)
+    @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
     public Response createDACUser(@Context UriInfo info, String json) {
         try {
             User user = userService.createUser(new User(json));
