@@ -1287,6 +1287,24 @@ paths:
                   $ref: '#/components/schemas/DataAccessRequest'
         500:
           description: Internal Server Error.
+    get:
+      summary: Get all Data Access Requests
+      description: Returns the list of all Data Access Requests
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns a list of Data Access Requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequest'
+        403:
+          description: The user is not authorized to see all DARs
+        500:
+          description: Server Error
   /api/dar/v2/{referenceId}:
     get:
       summary: Get a Data Access Request by Reference Id
@@ -1385,6 +1403,22 @@ paths:
           description: Returns the created draft Data Access Request.
         500:
           description: Internal Server Error.
+    get:
+      summary: Get all Draft Data Access Requests
+      description: Returns a list of all Draft Data Access Request
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns a list of Draft Data Access Requests
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/DataAccessRequest'
+        500:
+          description: Internal Server Error.
   /api/dar/v2/draft/{referenceId}:
     put:
       summary: Update Draft Data Access Request
@@ -1409,6 +1443,44 @@ paths:
           description: Returns the upated draft Data Access Request.
         403:
           description: Updates are restricted to the create user.
+        500:
+          description: Internal Server Error.
+    get:
+      summary: Get a Draft Data Access Request
+      description: Returns the Draft Data Access Request specified by the referencId
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          schema:
+            type: string
+      tags:
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the draft Data Access Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataAccessRequest'
+        500:
+          description: Internal Server Error.
+  /api/dar/v2/draft/manage:
+    get:
+      summary: Get all Draft Data Access Request Manage Objects
+      description: Returns a list of information (Dar Manage Objects) on Draft DARs
+      tags:
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the draft Data Access Request Manage objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequestManage'
         500:
           description: Internal Server Error.
   /api/dar/v2/{referenceId}/irbDocument:
@@ -1692,15 +1764,24 @@ paths:
         responses:
          200:
            description: 'Returns an integer corresponding to the amount of unreviewed DARs'
-  /api/dar/partials:
-    get:
-      summary: Get all Draft Data Access Requests
-      description: Returns list of all partial DARs
+  /api/dar/partial:
+    post:
+      summary: Create Partial Data Access Request
+      description: |
+        DEPRECATED: Use POST /api/dar/v2/draft
+        Create Partial Data Access Request
+      parameters:
+        - name: dar
+          in: body
+          description: The fields that represent a DAR, json format.
+          required: true
+          schema:
+            $ref: '#/components/schemas/DataAccessRequest'
       tags:
         - Data Access Request
       responses:
         200:
-          description: Returns the list of partial Data Access Requests
+          description: Returns the created of partial Data Access Requests
         500:
           description: Internal Server Error.
     put:
@@ -1727,28 +1808,6 @@ paths:
           description: Forbidden
         404:
           description: DAR or User Not Found
-        500:
-          description: Internal Server Error.
-  /api/dar/draft:
-    post:
-      summary: Create a Draft Data Access Request
-      description: Returns the created partial DAR
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the created partial Data Access Requests
-        500:
-          description: Internal Server Error.
-  /api/dar/draft/{referenceId}:
-    put:
-      summary: Update a Draft Data Access Request
-      description: Returns the updated partial DAR
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the updated partial Data Access Requests
         500:
           description: Internal Server Error.
   /api/dar/partial/{id}:
@@ -1769,32 +1828,6 @@ paths:
           description: Data Access Request was deleted
         403:
           description: Forbidden
-        500:
-          description: Internal Server Error.
-    put:
-      summary: Update Partial Data Access Request
-      description: |
-        DEPRECATED: Use PUT /api/dar/v2/draft/{referenceId}:
-        Update Partial Data Access Request
-      parameters:
-        - name: dar
-          in: body
-          description: |
-            The fields that represent a DAR, json format.
-            Must contain a `referenceId` for the updated DAR.
-            User must be the creator of the DAR.
-          required: true
-          schema:
-            $ref: '#/components/schemas/DataAccessRequest'
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the updated partial Data Access Request, json file.
-        403:
-          description: Forbidden
-        404:
-          description: DAR or User Not Found
         500:
           description: Internal Server Error.
   /api/dar/partials/manage:

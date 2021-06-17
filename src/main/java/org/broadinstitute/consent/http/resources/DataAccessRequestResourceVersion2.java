@@ -163,7 +163,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
   @GET
   @Produces("application/json")
-  @Path("/partials")
+  @Path("/draft")
   @RolesAllowed(RESEARCHER)
   public Response getDraftDataAccessRequests(@Auth AuthUser authUser) {
     try {
@@ -177,9 +177,9 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
   @GET
   @Produces("application/json")
-  @Path("/partial/{id}")
+  @Path("/draft/{referenceId}")
   @RolesAllowed(RESEARCHER)
-  public Response getDraftDar(@Auth AuthUser authUser, @PathParam("id") String id) {
+  public Response getDraftDar(@Auth AuthUser authUser, @PathParam("referenceId") String id) {
     try {
       User user = findUserByEmail(authUser.getName());
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
@@ -213,7 +213,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
   @GET
   @Produces("application/json")
-  @Path("/partials/manage")
+  @Path("/draft/manage")
   @RolesAllowed(RESEARCHER)
   public Response getDraftManageDataAccessRequests(@Auth AuthUser authUser) {
     try {
