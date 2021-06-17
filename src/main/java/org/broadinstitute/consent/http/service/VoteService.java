@@ -107,7 +107,7 @@ public class VoteService {
 
     public Vote updateVoteById(Vote rec,  Integer voteId) throws IllegalArgumentException {
         Vote vote = voteDAO.findVoteById(voteId);
-        if (vote == null) notFoundException(voteId);
+        if (Objects.isNull(vote)) notFoundException(voteId);
         Integer electionId = setGeneralFields(rec, vote.getElectionId());
         String rationale = StringUtils.isEmpty(rec.getRationale()) ? null : rec.getRationale();
         boolean reminder = Objects.nonNull(rec.getIsReminderSent()) ? rec.getIsReminderSent() : false;
@@ -227,15 +227,6 @@ public class VoteService {
         return resultVotes;
     }
 
-    public Vote describeVoteById(Integer voteId, String referenceId)
-            throws IllegalArgumentException {
-        Vote vote = voteDAO.findVoteById(voteId);
-        if (vote == null) {
-            throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
-        }
-        return vote;
-    }
-
     /**
      * Delete any votes in Open elections for the specified user in the specified Dac.
      *
@@ -280,8 +271,16 @@ public class VoteService {
 
     public Vote describeDataOwnerVote(String requestId, Integer dataOwnerId) throws NotFoundException {
         Vote vote = voteDAO.findVotesByReferenceIdTypeAndUser(requestId, dataOwnerId, VoteType.DATA_OWNER.getValue());
-        if(vote == null) {
+        if (Objects.isNull(vote)) {
             throw new NotFoundException("Vote doesn't exist for the specified dataOwnerId");
+        }
+        return vote;
+    }
+
+    public Vote findVoteById(Integer voteId) {
+        Vote vote = voteDAO.findVoteById(voteId);
+        if (Objects.isNull(vote)) {
+            notFoundException(voteId);
         }
         return vote;
     }
@@ -325,7 +324,7 @@ public class VoteService {
         return electionId;
     }
 
-    private void notFoundException(Integer voteId){
+    private void notFoundException(Integer voteId) {
         throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
     }
 
