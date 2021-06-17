@@ -199,10 +199,15 @@ public class DataRequestVoteResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    public List<Vote> describeAllVotes(
+    public Response describeAllVotes(
             @Auth AuthUser authUser,
             @PathParam("requestId") String requestId) {
-        return voteService.describeVotes(requestId);
+        try {
+            List<Vote> votes = voteService.describeVotes(requestId);
+            return Response.ok().entity(votes).build();
+        } catch (Exception e){
+            return createExceptionResponse(e);
+        }
     }
 
     @DELETE
