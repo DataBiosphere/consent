@@ -85,10 +85,11 @@ public class DataRequestVoteResource extends Resource {
             @Context UriInfo info,
             @PathParam("requestId") String requestId,
             @PathParam("id") Integer voteId,
-            Vote rec) {
+            String json) {
         try {
+            Vote parsedVote = new Gson().fromJson(json, Vote.class);
             validateUserAndVoteId(authUser, voteId);
-            Vote vote = voteService.updateVoteById(rec, voteId);
+            Vote vote = voteService.updateVoteById(parsedVote, voteId);
             validateCollectDAREmail(vote);
             if(electionService.checkDataOwnerToCloseElection(vote.getElectionId())){
                 electionService.closeDataOwnerApprovalElection(vote.getElectionId());
@@ -113,9 +114,9 @@ public class DataRequestVoteResource extends Resource {
         String json) {
         try {
             validateUserAndVoteId(authUser, id);
-            Vote voteRecord = new Gson().fromJson(json, Vote.class);
-            electionService.submitFinalAccessVoteDataRequestElection(voteRecord.getElectionId(), voteRecord.getVote());
-            Vote updatedVote = voteService.updateVoteById(voteRecord, id);
+            Vote parsedVote = new Gson().fromJson(json, Vote.class);
+            electionService.submitFinalAccessVoteDataRequestElection(parsedVote.getElectionId(), parsedVote.getVote());
+            Vote updatedVote = voteService.updateVoteById(parsedVote, id);
             DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
             createDataOwnerElection(updatedVote, dar);
             return Response.ok(updatedVote).build();
@@ -134,10 +135,10 @@ public class DataRequestVoteResource extends Resource {
             @Auth AuthUser authUser,
             @PathParam("requestId") String requestId,
             @PathParam("id") Integer id,
-            String vote) {
+            String json) {
         try {
             validateUserAndVoteId(authUser, id);
-            Vote parsedVote = new Gson().fromJson(vote, Vote.class);
+            Vote parsedVote = new Gson().fromJson(json, Vote.class);
             Vote updatedVote = voteService.updateVote(parsedVote, id, requestId);
             if (electionService.checkDataOwnerToCloseElection(updatedVote.getElectionId())) {
                 electionService.closeDataOwnerApprovalElection(updatedVote.getElectionId());
