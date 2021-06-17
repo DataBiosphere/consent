@@ -192,7 +192,7 @@ public class DataRequestVoteResource extends Resource {
         try {
             Vote vote = voteService.describeDataOwnerVote(requestId,dataOwnerId);
             return Response.ok().entity(vote).build();
-        } catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -206,7 +206,7 @@ public class DataRequestVoteResource extends Resource {
         try {
             List<Vote> votes = voteService.describeVotes(requestId);
             return Response.ok().entity(votes).build();
-        } catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
