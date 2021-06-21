@@ -65,7 +65,7 @@ public class LibraryCardResource extends Resource{
   @GET
   @Produces("application/json")
   @Path("/institution/{id}")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN})
   public Response getLibraryCardsByInstitutionId(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     try{
       List<LibraryCard> libraryCards = libraryCardService.findLibraryCardsByInstitutionId(id);
@@ -78,7 +78,7 @@ public class LibraryCardResource extends Resource{
   @POST
   @Consumes("application/json")
   @Produces("application/json")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   public Response createLibraryCard(@Auth AuthUser authUser, String libraryCard) {
     try{
       User user = userService.findUserByEmail(authUser.getName());

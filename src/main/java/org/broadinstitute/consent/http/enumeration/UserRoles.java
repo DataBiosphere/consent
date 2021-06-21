@@ -9,7 +9,8 @@ public enum UserRoles {
     ALUMNI(Resource.ALUMNI, 3),
     ADMIN(Resource.ADMIN, 4),
     RESEARCHER(Resource.RESEARCHER, 5),
-    DATAOWNER(Resource.DATAOWNER, 6);
+    DATAOWNER(Resource.DATAOWNER, 6),
+    SIGNINGOFFICIAL(Resource.SIGNINGOFFICIAL, 7);
 
     private String roleName;
     private Integer roleId;
