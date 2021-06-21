@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -142,12 +143,22 @@ public class DataAccessRequestService {
      * @param authUser Filter on what DACs the auth user has access to.
      * @return List of DataAccessRequestManage objects
      */
-    public List<DataAccessRequestManage> describeDataAccessRequestManageV2(AuthUser authUser) {
+    public List<DataAccessRequestManage> describeDataAccessRequestManageV2(AuthUser authUser, Optional<String> roleName) {
+        if (roleName.isPresent()) {
+            if (roleName.get().equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                User user = userDAO.findUserByEmail(authUser.getName());
+                if (Objects.nonNull(user) && Objects.nonNull(user.getInstitutionId())) {
+                    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
+                    List<DataAccessRequest> openDars = filterOutCanceledDars(dars);
+                    return createAccessRequestManageV2(openDars);
+                } else {
+                    throw new NotFoundException("Signing Official user associated to an Institution cannot be found.");
+                }
+            }
+        }
         List<DataAccessRequest> allDars = findAllDataAccessRequests();
         List<DataAccessRequest> filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, authUser);
-        List<DataAccessRequest> openDarList = filteredAccessList.stream().filter(dar -> {
-            return !ElectionStatus.CANCELED.getValue().equals(dar.getData().getStatus());
-        }).collect(Collectors.toList());
+        List<DataAccessRequest> openDarList = filterOutCanceledDars(filteredAccessList);
         openDarList.sort(sortTimeComparator());
         if (CollectionUtils.isNotEmpty(openDarList)) {
             return createAccessRequestManageV2(openDarList);
@@ -420,6 +431,10 @@ public class DataAccessRequestService {
                 return darManage;
             })
             .collect(toList());
+    }
+
+    private List<DataAccessRequest> filterOutCanceledDars(List<DataAccessRequest> dars) {
+        return dars.stream().filter(dar -> !ElectionStatus.CANCELED.getValue().equals(dar.getData().getStatus())).collect(Collectors.toList());
     }
 
     @Deprecated // Use createAccessRequestManageV2 instead
