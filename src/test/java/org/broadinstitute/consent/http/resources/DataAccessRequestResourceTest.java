@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
@@ -133,14 +134,14 @@ public class DataAccessRequestResourceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         DataAccessRequestManage manage = new DataAccessRequestManage();
         manage.setDar(dar);
-        when(dataAccessRequestService.describeDataAccessRequestManageV2(any()))
+        when(dataAccessRequestService.describeDataAccessRequestManageV2(any(), any()))
             .thenReturn(Collections.singletonList(manage));
         resource = new DataAccessRequestResource(
             dataAccessRequestService,
             emailNotifierService,
             userService,
             consentService, electionService);
-        Response response = resource.describeManageDataAccessRequestsV2(authUser);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 

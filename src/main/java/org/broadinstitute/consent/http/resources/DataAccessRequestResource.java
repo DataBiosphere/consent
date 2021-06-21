@@ -154,9 +154,9 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/manage/v2")
-    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
-    public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser) {
-        List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(authUser);
+    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL})
+    public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser, @QueryParam("roleName") Optional<String> roleName) {
+        List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(authUser, roleName);
         return Response.ok().entity(dars).build();
     }
 
