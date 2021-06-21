@@ -1670,6 +1670,13 @@ paths:
       summary: Manage Data Access Requests V2
       description: |
         Returns all the elections created for Data Access Requests relevant to the current user.
+      parameters:
+        - name: roleName
+          in: query
+          description: The optional roleName of the user making the request
+          required: false
+          schema:
+            type: String
       tags:
         - Data Access Request
       responses:
