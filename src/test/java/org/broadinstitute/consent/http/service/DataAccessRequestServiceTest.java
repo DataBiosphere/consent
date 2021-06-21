@@ -262,7 +262,7 @@ public class DataAccessRequestServiceTest {
     public void testDescribeDataAccessRequestManageV2_SO() {
         User user = new User();
         user.setInstitutionId(1);
-        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        when(userDAO.findUserByEmailAndRoleId(any(), any())).thenReturn(user);
 
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();

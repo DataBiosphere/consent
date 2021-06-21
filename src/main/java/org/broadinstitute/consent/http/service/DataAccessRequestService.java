@@ -146,7 +146,7 @@ public class DataAccessRequestService {
     public List<DataAccessRequestManage> describeDataAccessRequestManageV2(AuthUser authUser, Optional<String> roleName) {
         if (roleName.isPresent()) {
             if (roleName.get().equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-                User user = userDAO.findUserByEmail(authUser.getName());
+                User user = userDAO.findUserByEmailAndRoleId(authUser.getName(), 7);
                 if (Objects.nonNull(user) && Objects.nonNull(user.getInstitutionId())) {
                     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
                     List<DataAccessRequest> openDars = filterOutCanceledDars(dars);
