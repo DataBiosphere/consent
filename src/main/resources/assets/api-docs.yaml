@@ -1411,12 +1411,12 @@ paths:
       responses:
         200:
           description: Returns a list of Draft Data Access Requests
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/DataAccessRequest'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequest'
         500:
           description: Internal Server Error.
   /api/dar/v2/draft/{referenceId}:
