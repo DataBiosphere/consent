@@ -73,7 +73,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
   @GET
   @Produces("application/json")
-  @RolesAllowed(ADMIN)
+  @PermitAll
   public Response getDataAccessRequests(@Auth AuthUser authUser) {
     try {
       List<DataAccessRequest> dars = dataAccessRequestService.getDataAccessRequestsForUser(authUser);
