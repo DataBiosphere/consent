@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import javax.ws.rs.NotFoundException;
 
@@ -247,7 +248,7 @@ public class DataAccessRequestServiceTest {
         when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Collections.singleton(d));
         initService();
 
-        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(authUser);
+        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(authUser, Optional.empty());
         assertNotNull(manages);
         assertFalse(manages.isEmpty());
         assertEquals(dar.getReferenceId(), manages.get(0).getDar().getReferenceId());
@@ -255,6 +256,50 @@ public class DataAccessRequestServiceTest {
         assertEquals(e.getElectionId(), manages.get(0).getElection().getElectionId());
         assertEquals(d.getDacId(), manages.get(0).getDac().getDacId());
         assertFalse(manages.get(0).getVotes().isEmpty());
+    }
+
+    @Test
+    public void testDescribeDataAccessRequestManageV2_SO() {
+        User user = new User();
+        user.setInstitutionId(1);
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+
+        Integer genericId = 1;
+        DataAccessRequest dar = generateDataAccessRequest();
+        dar.setData(new DataAccessRequestData());
+        dar.getData().setDatasetIds(Collections.singletonList(genericId));
+        when(dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(any())).thenReturn(Collections.singletonList(dar));
+
+        Election e = new Election();
+        e.setReferenceId(dar.getReferenceId());
+        e.setElectionId(genericId);
+        when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), any())).thenReturn(Collections.singletonList(e));
+
+        Vote v = new Vote();
+        v.setVoteId(genericId);
+        v.setElectionId(e.getElectionId());
+        when(voteDAO.findVotesByElectionIds(any())).thenReturn(Collections.singletonList(v));
+
+        Dac d = new Dac();
+        d.setDacId(genericId);
+        d.addDatasetId(genericId);
+        when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Collections.singleton(d));
+        initService();
+
+        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(authUser, Optional.of("SigningOfficial"));
+        assertNotNull(manages);
+        assertFalse(manages.isEmpty());
+        assertEquals(dar.getReferenceId(), manages.get(0).getDar().getReferenceId());
+        assertEquals(1, manages.size());
+        assertEquals(e.getElectionId(), manages.get(0).getElection().getElectionId());
+        assertEquals(d.getDacId(), manages.get(0).getDac().getDacId());
+        assertFalse(manages.get(0).getVotes().isEmpty());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testDescribeDataAccessRequestManageV2_SO_NotFound() {
+        initService();
+        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(authUser, Optional.of("SigningOfficial"));
     }
 
     @Test
