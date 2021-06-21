@@ -21,8 +21,8 @@ import javax.ws.rs.core.Response;
 @Path("api/nih")
 public class NihAccountResource extends Resource {
 
-    private NihService nihService;
-    private UserService userService;
+    private final NihService nihService;
+    private final UserService userService;
 
     @Inject
     public NihAccountResource(NihService nihService, UserService userService) {
@@ -33,10 +33,10 @@ public class NihAccountResource extends Resource {
     @POST
     @Produces("application/json")
     @RolesAllowed(RESEARCHER)
-    public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser user) {
+    public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser authUser) {
         try {
-            User u = userService.findUserByEmail(user.getName());
-            List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, user, u.getDacUserId());
+            User user = userService.findUserByEmail(authUser.getName());
+            List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, authUser, user.getDacUserId());
             return Response.ok(authUserProps).build();
         } catch (Exception e){
             return createExceptionResponse(e);
