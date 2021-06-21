@@ -1781,7 +1781,7 @@ paths:
         - Data Access Request
       responses:
         200:
-          description: Returns the created of partial Data Access Requests
+          description: Returns the created partial Data Access Requests
         500:
           description: Internal Server Error.
     put:
