@@ -32,7 +32,7 @@ public class NihService {
             nihAccount.setEraExpiration(generateEraExpirationDates());
             nihAccount.setStatus(true);
             List<UserProperty> updatedProps = researcherService.updateProperties(nihAccount.getNihMap(), authUser, false);
-            Optional<UserProperty> eraCommonsProp = updatedProps.stream().filter((prop) -> prop.getPropertyKey() == UserFields.ERA_COMMONS_ID.getValue()).findFirst();
+            Optional<UserProperty> eraCommonsProp = updatedProps.stream().filter((prop) -> prop.getPropertyKey().equalsIgnoreCase(UserFields.ERA_USERNAME.getValue())).findFirst();
             String eraCommonsId = (eraCommonsProp.isPresent()) ? eraCommonsProp.get().getPropertyValue() : "";
             if (!eraCommonsId.equals("")) {
               libraryCardDAO.updateEraCommonsForUser(userId, eraCommonsId);
