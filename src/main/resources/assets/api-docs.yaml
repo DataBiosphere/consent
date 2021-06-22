@@ -1287,6 +1287,24 @@ paths:
                   $ref: '#/components/schemas/DataAccessRequest'
         500:
           description: Internal Server Error.
+    get:
+      summary: Get all Data Access Requests
+      description: Returns the list of all Data Access Requests
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns a list of Data Access Requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequest'
+        403:
+          description: The user is not authorized to see all DARs
+        500:
+          description: Server Error
   /api/dar/v2/{referenceId}:
     get:
       summary: Get a Data Access Request by Reference Id
@@ -1385,6 +1403,22 @@ paths:
           description: Returns the created draft Data Access Request.
         500:
           description: Internal Server Error.
+    get:
+      summary: Get all Draft Data Access Requests
+      description: Returns a list of all Draft Data Access Request
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns a list of Draft Data Access Requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequest'
+        500:
+          description: Internal Server Error.
   /api/dar/v2/draft/{referenceId}:
     put:
       summary: Update Draft Data Access Request
@@ -1409,6 +1443,44 @@ paths:
           description: Returns the upated draft Data Access Request.
         403:
           description: Updates are restricted to the create user.
+        500:
+          description: Internal Server Error.
+    get:
+      summary: Get a Draft Data Access Request
+      description: Returns the Draft Data Access Request specified by the referencId
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          schema:
+            type: string
+      tags:
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the draft Data Access Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataAccessRequest'
+        500:
+          description: Internal Server Error.
+  /api/dar/v2/draft/manage:
+    get:
+      summary: Get all Draft Data Access Request Manage Objects
+      description: Returns a list of information (Dar Manage Objects) on Draft DARs
+      tags:
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the draft Data Access Request Manage objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequestManage'
         500:
           description: Internal Server Error.
   /api/dar/v2/{referenceId}/irbDocument:
@@ -1541,7 +1613,7 @@ paths:
         500:
           description: Internal Server Error.
     get:
-      summary: describeDataAccessRequests
+      summary: get all Data Access Requests
       description: Retrieves all the existent DARs
       tags:
         - Data Access Request
@@ -1709,7 +1781,7 @@ paths:
         - Data Access Request
       responses:
         200:
-          description: Returns the created partial Data Access Request, json file.
+          description: Returns the created partial Data Access Requests
         500:
           description: Internal Server Error.
     put:
@@ -1760,8 +1832,8 @@ paths:
           description: Internal Server Error.
   /api/dar/partials/manage:
     get:
-      summary: Get Partial Data Access Requests for user
-      description: Get Partial Data Access Requests for user
+      summary: Get Partial Data Access Request Manage Object for user
+      description: Get information on Partial Data Access Requests for user
       tags:
         - Data Access Request
       responses:
