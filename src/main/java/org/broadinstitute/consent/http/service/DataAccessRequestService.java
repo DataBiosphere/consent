@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
@@ -140,24 +141,26 @@ public class DataAccessRequestService {
     /**
      * Filter DataAccessRequestManage objects on user.
      *
-     * @param authUser Filter on what DACs the auth user has access to.
+     * @param user Filter on what DARs the user has access to.
      * @return List of DataAccessRequestManage objects
      */
-    public List<DataAccessRequestManage> describeDataAccessRequestManageV2(AuthUser authUser, Optional<String> roleName) {
+    public List<DataAccessRequestManage> describeDataAccessRequestManageV2(User user, Optional<String> roleName) {
         if (roleName.isPresent()) {
-            if (roleName.get().equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-                User user = userDAO.findUserByEmailAndRoleId(authUser.getName(), 7);
-                if (Objects.nonNull(user) && Objects.nonNull(user.getInstitutionId())) {
+            if (roleName.get().equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName()) && DarUtil.hasUserRole(user, 7)) {
+                if (Objects.nonNull(user.getInstitutionId())) {
                     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
                     List<DataAccessRequest> openDars = filterOutCanceledDars(dars);
                     return createAccessRequestManageV2(openDars);
                 } else {
-                    throw new NotFoundException("Signing Official user associated to an Institution cannot be found.");
+                    throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ", " + user.getDacUserId() + ") "
+                      + "is not associated with an Institution.");
                 }
+            } else {
+                throw new ForbiddenException("User: " + user.getDisplayName() + ", " + user.getDacUserId() + " does not have Signing Official role.");
             }
         }
         List<DataAccessRequest> allDars = findAllDataAccessRequests();
-        List<DataAccessRequest> filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, authUser);
+        List<DataAccessRequest> filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, user);
         List<DataAccessRequest> openDarList = filterOutCanceledDars(filteredAccessList);
         openDarList.sort(sortTimeComparator());
         if (CollectionUtils.isNotEmpty(openDarList)) {
@@ -181,7 +184,8 @@ public class DataAccessRequestService {
         List<DataAccessRequest> filteredAccessList;
         List<DataAccessRequest> allDars = findAllDataAccessRequests();
         if (userId == null) {
-            filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, authUser);
+            User user = userDAO.findUserByEmail(authUser.getName());
+            filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, user);
         } else {
             filteredAccessList = allDars.stream().
                     filter(d -> d.getUserId() != null).

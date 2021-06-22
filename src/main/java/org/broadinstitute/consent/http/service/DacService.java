@@ -306,13 +306,13 @@ public class DacService {
     /**
      * Filter data access requests by the DAC they are associated with.
      */
-    List<DataAccessRequest> filterDataAccessRequestsByDac(List<DataAccessRequest> documents, AuthUser authUser) {
-        if (isAuthUserAdmin(authUser)) {
+    List<DataAccessRequest> filterDataAccessRequestsByDac(List<DataAccessRequest> documents, User user) {
+        if (DarUtil.hasUserRole(user, 4)) {
             return documents;
         }
         // Chair and Member users can see data access requests that they have DAC access to
-        if (isAuthUserChairOrMember(authUser)) {
-            List<Integer> accessibleDatasetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).
+        if (DarUtil.hasUserRole(user, 1) || DarUtil.hasUserRole(user, 2)) {
+            List<Integer> accessibleDatasetIds = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail()).
                     stream().
                     map(DataSet::getDataSetId).
                     collect(Collectors.toList());
