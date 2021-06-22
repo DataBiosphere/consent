@@ -47,6 +47,7 @@ abstract public class Resource {
     public final static String DATAOWNER = "DataOwner";
     public final static String MEMBER = "Member";
     public final static String RESEARCHER = "Researcher";
+    public final static String SIGNINGOFFICIAL = "SigningOfficial";
 
     // NOTE: implement more Postgres vendor codes as we encounter them
     private final static Map<String, Integer> vendorCodeStatusMap = Map.ofEntries(

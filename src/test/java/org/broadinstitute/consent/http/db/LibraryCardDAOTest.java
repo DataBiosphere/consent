@@ -8,8 +8,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.Date;
 import java.util.List;
 
-import com.google.gson.Gson;
-
 import org.broadinstitute.consent.http.models.User;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
@@ -145,4 +143,14 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     assertEquals(1, libraryCards.size());
     assertEquals(user.getEmail(), libraryCards.get(0).getUserEmail());
   }
+
+  @Test
+  public void testUpdateEraCommonsForUser() {
+    User user = createUser();
+    LibraryCard card = createLibraryCard(user);
+    assertEquals("value", card.getEraCommonsId());
+    libraryCardDAO.updateEraCommonsForUser(user.getDacUserId(), "newEraCommonsId");
+    assertEquals("newEraCommonsId", libraryCardDAO.findLibraryCardById(card.getId()).getEraCommonsId());
+  }
 }
+
