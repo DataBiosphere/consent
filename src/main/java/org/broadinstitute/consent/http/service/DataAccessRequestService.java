@@ -355,7 +355,7 @@ public class DataAccessRequestService {
      * @param authUser AuthUser
      * @return List<Document>
      */
-    @Deprecated //use getDataAccessRequestsForUser
+    @Deprecated //use getDataAccessRequestsByUserRole
     public List<Document> describeDataAccessRequests(AuthUser authUser) {
         List<Document> documents = getAllDataAccessRequestsAsDocuments();
         return dacService.filterDarsByDAC(documents, authUser);
@@ -366,7 +366,7 @@ public class DataAccessRequestService {
      * @param authUser AuthUser
      * @return List<DataAccessRequest>
      */
-    public List<DataAccessRequest> getDataAccessRequestsForUser(AuthUser authUser) {
+    public List<DataAccessRequest> getDataAccessRequestsByUserRole(AuthUser authUser) {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
         return dacService.filterDataAccessRequestsByDac(dars, authUser);
     }
@@ -652,7 +652,8 @@ public class DataAccessRequestService {
                         Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
                         String profileName = user.getDisplayName();
                         if (Objects.isNull(user.getInstitutionId())) {
-                            logger.warn("No institution found for creator of this Data Access Request");
+                            logger.warn("No institution found for creator (user: " + user.getDisplayName() + ", " + user.getDacUserId() + ") "
+                              + "of this Data Access Request (DAR: " + dataAccessRequest.getReferenceId() + ")");
                         }
                         String institution = Objects.isNull(user.getInstitutionId()) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
                         dataAccessReportsParser.addApprovedDARLine(darWriter, election, dataAccessRequest, profileName, institution, consent.getName(), consent.getTranslatedUseRestriction());

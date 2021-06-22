@@ -114,7 +114,7 @@ public class DataAccessReportsParser {
                     dataSetIds.add(id);
                     dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
                 } catch (Exception e) {
-                    logger.warn("Invalid Dataset ID");
+                    logger.warn("Invalid Dataset ID: " + detail.getDatasetId());
                 }
                 datasetNames.add(detail.getName());
             }

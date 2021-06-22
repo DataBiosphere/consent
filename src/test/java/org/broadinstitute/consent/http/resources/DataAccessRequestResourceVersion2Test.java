@@ -379,7 +379,7 @@ public class DataAccessRequestResourceVersion2Test {
   public void getDataAccessRequests() {
     initResource();
     List list = Collections.emptyList();
-    when(dataAccessRequestService.getDataAccessRequestsForUser(any())).thenReturn(list);
+    when(dataAccessRequestService.getDataAccessRequestsByUserRole(any())).thenReturn(list);
     Response res = resource.getDataAccessRequests(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
     assertEquals(true, res.hasEntity());
