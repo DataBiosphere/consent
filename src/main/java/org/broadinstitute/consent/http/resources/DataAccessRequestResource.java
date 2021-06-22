@@ -156,8 +156,13 @@ public class DataAccessRequestResource extends Resource {
     @Path("/manage/v2")
     @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL})
     public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser, @QueryParam("roleName") Optional<String> roleName) {
-        List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(authUser, roleName);
-        return Response.ok().entity(dars).build();
+        try {
+            User user = userService.findUserByEmail(authUser.getName());
+            List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(user, roleName);
+            return Response.ok().entity(dars).build();
+        } catch(Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
