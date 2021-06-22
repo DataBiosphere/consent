@@ -1673,7 +1673,7 @@ paths:
       parameters:
         - name: roleName
           in: query
-          description: The optional roleName of the user making the request
+          description: An optional roleName that the user is making the request as. A user can have multiple roles, so adding this parameter will filter the list accordingly.
           required: false
           schema:
             type: String
