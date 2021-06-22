@@ -145,6 +145,18 @@ public class DataAccessRequestResourceTest {
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
+    @Test
+    public void testDescribeManageDataAccessRequestsV2_UserNotFound() {
+        when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
+        resource = new DataAccessRequestResource(
+          dataAccessRequestService,
+          emailNotifierService,
+          userService,
+          consentService, electionService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+
     private DataAccessRequest generateDataAccessRequest() {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
