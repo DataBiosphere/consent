@@ -1,6 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
 import junit.framework.TestCase;
+
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -13,7 +16,9 @@ import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -23,6 +28,9 @@ public class NihServiceTest extends TestCase {
 
     @Mock
     private ResearcherService researcherService;
+
+    @Mock
+    private LibraryCardDAO libraryCardDAO;
 
     private NihService service;
     private NIHUserAccount nihUserAccount;
@@ -36,14 +44,14 @@ public class NihServiceTest extends TestCase {
     }
 
     private void initService() {
-        service = new NihService(researcherService);
+        service = new NihService(researcherService, libraryCardDAO);
     }
 
     @Test
     public void testAuthenticateNih_InvalidUser() {
         initService();
         try {
-            service.authenticateNih(new NIHUserAccount(), new AuthUser("test@test.com"));
+            service.authenticateNih(new NIHUserAccount(), new AuthUser("test@test.com"), 1);
             assert false;
         } catch (BadRequestException bre) {
             assert true;
@@ -56,7 +64,24 @@ public class NihServiceTest extends TestCase {
                 .thenReturn(Arrays.asList(new UserProperty(1, 1, "test", "value")));
         initService();
         try {
-            List<UserProperty> properties = service.authenticateNih(nihUserAccount, authUser);
+            List<UserProperty> properties = service.authenticateNih(nihUserAccount, authUser, 1);
+            assertEquals(1, properties.size());
+            assertEquals(Integer.valueOf(1), properties.get(0).getPropertyId());
+        } catch (BadRequestException bre) {
+            assert false;
+        }
+    }
+
+    @Test
+    public void testAuthenticateNih_LibraryCardUpdate() {
+        Map<String, String> props = new HashMap<>();
+        props.put(UserFields.ERA_USERNAME.getValue(), "eracommonsid");
+        when(researcherService.updateProperties(any(), any(),any()))
+                .thenReturn(Arrays.asList(new UserProperty(1, 1, "test", "value")));
+        when(researcherService.describeResearcherPropertiesForDAR(any())).thenReturn(props);
+        initService();
+        try {
+            List<UserProperty> properties = service.authenticateNih(nihUserAccount, authUser, 1);
             assertEquals(1, properties.size());
             assertEquals(Integer.valueOf(1), properties.get(0).getPropertyId());
         } catch (BadRequestException bre) {
