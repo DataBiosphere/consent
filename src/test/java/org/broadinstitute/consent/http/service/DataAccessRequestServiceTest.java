@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -19,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 
 import com.google.gson.Gson;
@@ -35,17 +38,6 @@ import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserFields;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -225,6 +217,7 @@ public class DataAccessRequestServiceTest {
 
     @Test
     public void testDescribeDataAccessRequestManageV2() {
+        User user = new User();
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setData(new DataAccessRequestData());
@@ -248,7 +241,7 @@ public class DataAccessRequestServiceTest {
         when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Collections.singleton(d));
         initService();
 
-        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(authUser, Optional.empty());
+        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(user, Optional.empty());
         assertNotNull(manages);
         assertFalse(manages.isEmpty());
         assertEquals(dar.getReferenceId(), manages.get(0).getDar().getReferenceId());
@@ -262,6 +255,8 @@ public class DataAccessRequestServiceTest {
     public void testDescribeDataAccessRequestManageV2_SO() {
         User user = new User();
         user.setInstitutionId(1);
+        user.setRoles(new ArrayList<>());
+        user.getRoles().add(new UserRole(7, UserRoles.SIGNINGOFFICIAL.getRoleName()));
         when(userDAO.findUserByEmailAndRoleId(any(), any())).thenReturn(user);
 
         Integer genericId = 1;
@@ -286,7 +281,7 @@ public class DataAccessRequestServiceTest {
         when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Collections.singleton(d));
         initService();
 
-        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(authUser, Optional.of("SigningOfficial"));
+        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(user, Optional.of("SigningOfficial"));
         assertNotNull(manages);
         assertFalse(manages.isEmpty());
         assertEquals(dar.getReferenceId(), manages.get(0).getDar().getReferenceId());
@@ -297,9 +292,19 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test(expected = NotFoundException.class)
-    public void testDescribeDataAccessRequestManageV2_SO_NotFound() {
+    public void testDescribeDataAccessRequestManageV2_SO_InstitutionNotFound() {
+        User user = new User();
+        user.setRoles(new ArrayList<>());
+        user.getRoles().add(new UserRole(7, UserRoles.SIGNINGOFFICIAL.getRoleName()));
         initService();
-        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(authUser, Optional.of("SigningOfficial"));
+        service.describeDataAccessRequestManageV2(user, Optional.of("SigningOfficial"));
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void testDescribeDataAccessRequestManageV2_SO_RoleMissing() {
+        User user = new User();
+        initService();
+        service.describeDataAccessRequestManageV2(user, Optional.of("SigningOfficial"));
     }
 
     @Test
