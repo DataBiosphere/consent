@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import org.broadinstitute.consent.http.models.User;
 import org.bson.Document;
 
 public class DarUtil {
@@ -17,6 +19,14 @@ public class DarUtil {
                 collect(Collectors.toList());
         }
         return Collections.emptyList();
+    }
+
+    public static boolean hasUserRole(User user, Integer roleId) {
+        if (Objects.isNull(user) || Objects.isNull(user.getRoles())) {
+            return false;
+        } else {
+            return user.getRoles().stream().anyMatch((role) -> role.getRoleId().equals(roleId));
+        }
     }
 
 }
