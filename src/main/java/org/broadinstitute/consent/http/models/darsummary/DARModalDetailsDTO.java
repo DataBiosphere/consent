@@ -1,15 +1,14 @@
 package org.broadinstitute.consent.http.models.darsummary;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.models.User;
+import org.apache.commons.lang3.BooleanUtils;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.OntologyEntry;
 import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 public class DARModalDetailsDTO {
 
@@ -53,15 +52,8 @@ public class DARModalDetailsDTO {
         return researcherName;
     }
 
-    public DARModalDetailsDTO setResearcherName(User owner, String principalInvestigator) {
-        if (owner == null) {
-            return this;
-        }
-        if (owner.getDisplayName().equals(principalInvestigator)) {
-            researcherName = principalInvestigator;
-        } else {
-            researcherName = owner.getDisplayName();
-        }
+    public DARModalDetailsDTO setResearcherName(String researcherName) {
+      this.researcherName = researcherName;
         return this;
     }
 
@@ -82,53 +74,56 @@ public class DARModalDetailsDTO {
         return sensitivePopulation;
     }
 
-    public List<SummaryItem> generatePurposeStatementsSummary(Document darDocument) {
+    public List<SummaryItem> generatePurposeStatementsSummary(DataAccessRequest dar) {
         List<SummaryItem> psList = new ArrayList<>();
-        if(darDocument.getBoolean(DarConstants.FOR_PROFIT)){
-            psList.add(new SummaryItem(SummaryConstants.PS_FOR_PROFIT, false));
-        }
-        if(darDocument.getBoolean(DarConstants.ONE_GENDER)) {
-            if (darDocument.getString(DarConstants.GENDER).equalsIgnoreCase("F")) {
-                psList.add(new SummaryItem("Gender: ", SummaryConstants.PS_GENDER_FEMALE, false));
-            } else {
-                psList.add(new SummaryItem("Gender: ", SummaryConstants.PS_GENDER_MALE, false));
+        if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
+
+            if (isTrue(dar.getData().getForProfit())) {
+                psList.add(new SummaryItem(SummaryConstants.PS_FOR_PROFIT, false));
             }
-        }
-        if(darDocument.getBoolean(DarConstants.PEDIATRIC)){
-            psList.add(new SummaryItem("Pediatric: ", SummaryConstants.PS_PEDIATRIC_STUDY, false));
-        }
-        if(darDocument.getBoolean(DarConstants.ILLEGAL_BEHAVE)){
-            psList.add(new SummaryItem("Illegal Behavior: ", SummaryConstants.PS_ILLEGAL_BEHAVIOR_STUDY, true));
-            sensitivePopulationIsTrue();
-        }
-        if(darDocument.getBoolean(DarConstants.ADDICTION)){
-            psList.add(new SummaryItem("Addiction: ", SummaryConstants.PS_ADDICTIONS_STUDY, true));
-            sensitivePopulationIsTrue();
-        }
-        if(darDocument.getBoolean(DarConstants.SEXUAL_DISEASES)){
-            psList.add(new SummaryItem("Sexual Diseases: ", SummaryConstants.PS_SEXUAL_DISEASES_STUDY, true));
-            sensitivePopulationIsTrue();
-        }
-        if(darDocument.getBoolean(DarConstants.STIGMATIZED_DISEASES)){
-            psList.add(new SummaryItem("Stigmatized Diseases: ", SummaryConstants.PS_STIGMATIZING_ILLNESSES_STUDY, true));
-            sensitivePopulationIsTrue();
-        }
-        if(darDocument.getBoolean(DarConstants.VULNERABLE_POP)){
-            psList.add(new SummaryItem("Vulnerable Population: ", SummaryConstants.PS_VULNERABLE_POPULATION_STUDY, true));
-            sensitivePopulationIsTrue();
-        }
-        if(darDocument.getBoolean(DarConstants.POP_MIGRATION)){
-            psList.add(new SummaryItem("Population Migration: ", SummaryConstants.PS_POPULATION_MIGRATION_STUDY, true));
-            sensitivePopulationIsTrue();
-        }
-        if(darDocument.getBoolean(DarConstants.PSYCH_TRAITS)){
-            psList.add(new SummaryItem("Psychological Traits: ", SummaryConstants.PS_PSYCOLOGICAL_TRAITS_STUDY, true));
-            sensitivePopulationIsTrue();
-        }
-        if(darDocument.getBoolean(DarConstants.NOT_HEALTH)){
-            psList.add(new SummaryItem("Not Health Related: ", SummaryConstants.PS_NOT_HEALT_RELATED_STUDY
-                    , true));
-            sensitivePopulationIsTrue();
+            if (isTrue(dar.getData().getOneGender())) {
+                if (dar.getData().getGender().equalsIgnoreCase("F")) {
+                    psList.add(new SummaryItem("Gender: ", SummaryConstants.PS_GENDER_FEMALE, false));
+                } else {
+                    psList.add(new SummaryItem("Gender: ", SummaryConstants.PS_GENDER_MALE, false));
+                }
+            }
+            if (isTrue(dar.getData().getPediatric())) {
+                psList.add(new SummaryItem("Pediatric: ", SummaryConstants.PS_PEDIATRIC_STUDY, false));
+            }
+            if (isTrue(dar.getData().getIllegalBehavior())) {
+                psList.add(new SummaryItem("Illegal Behavior: ", SummaryConstants.PS_ILLEGAL_BEHAVIOR_STUDY, true));
+                sensitivePopulationIsTrue();
+            }
+            if (isTrue(dar.getData().getAddiction())) {
+                psList.add(new SummaryItem("Addiction: ", SummaryConstants.PS_ADDICTIONS_STUDY, true));
+                sensitivePopulationIsTrue();
+            }
+            if (isTrue(dar.getData().getSexualDiseases())) {
+                psList.add(new SummaryItem("Sexual Diseases: ", SummaryConstants.PS_SEXUAL_DISEASES_STUDY, true));
+                sensitivePopulationIsTrue();
+            }
+            if (isTrue(dar.getData().getStigmatizedDiseases())) {
+                psList.add(new SummaryItem("Stigmatized Diseases: ", SummaryConstants.PS_STIGMATIZING_ILLNESSES_STUDY, true));
+                sensitivePopulationIsTrue();
+            }
+            if (isTrue(dar.getData().getVulnerablePopulation())) {
+                psList.add(new SummaryItem("Vulnerable Population: ", SummaryConstants.PS_VULNERABLE_POPULATION_STUDY, true));
+                sensitivePopulationIsTrue();
+            }
+            if (isTrue(dar.getData().getPopulationMigration())) {
+                psList.add(new SummaryItem("Population Migration: ", SummaryConstants.PS_POPULATION_MIGRATION_STUDY, true));
+                sensitivePopulationIsTrue();
+            }
+            if (isTrue(dar.getData().getPsychiatricTraits())) {
+                psList.add(new SummaryItem("Psychological Traits: ", SummaryConstants.PS_PSYCOLOGICAL_TRAITS_STUDY, true));
+                sensitivePopulationIsTrue();
+            }
+            if (isTrue(dar.getData().getNotHealth())) {
+                psList.add(new SummaryItem("Not Health Related: ", SummaryConstants.PS_NOT_HEALT_RELATED_STUDY
+                  , true));
+                sensitivePopulationIsTrue();
+            }
         }
         if(!CollectionUtils.isEmpty(psList)){
             setIsTherePurposeStatements(true);
@@ -136,43 +131,47 @@ public class DARModalDetailsDTO {
         return psList;
     }
 
-    private List<String> generateDiseasesSummary(Document darDocument) {
-        List<Map<String, String>> ontologies = (List<Map<String, String>>) darDocument.get(DarConstants.ONTOLOGIES);
+    private List<String> generateDiseasesSummary(DataAccessRequest dar) {
         List<String> diseases = new ArrayList<>();
-        if(!CollectionUtils.isEmpty(ontologies)) {
-            setIsThereDiseases(true);
-            for (Map<String, String> ontology : ontologies) {
-                diseases.add(ontology.get("label"));
+        if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
+            List<OntologyEntry> ontologies =  dar.getData().getOntologies();
+            if(!CollectionUtils.isEmpty(ontologies)) {
+                setIsThereDiseases(true);
+                for (OntologyEntry ontology : ontologies) {
+                    diseases.add(ontology.getLabel());
+                }
             }
         }
         return diseases;
     }
 
-    private List<SummaryItem> generateResearchTypeSummary(Document darDocument) {
+    private List<SummaryItem> generateResearchTypeSummary(DataAccessRequest dar) {
         List<SummaryItem> researchList = new ArrayList<>();
-        if(darDocument.containsKey(DarConstants.DISEASES) && darDocument.getBoolean(DarConstants.DISEASES)){
-            researchList.add(new SummaryItem(SummaryConstants.RT_DISEASE_RELATED, SummaryConstants.RT_DISEASE_RELATED_DETAIL, false));
-        }
-        if(darDocument.containsKey(DarConstants.METHODS) && darDocument.getBoolean(DarConstants.METHODS)){
-            researchList.add(new SummaryItem(SummaryConstants.RT_METHODS_DEVELOPMENT, SummaryConstants.RT_METHODS_DEVELOPMENT_DETAIL, false));
-        }
-        if(darDocument.containsKey(DarConstants.CONTROLS) && darDocument.getBoolean(DarConstants.CONTROLS)){
-            researchList.add(new SummaryItem(SummaryConstants.RT_CONTROLS, SummaryConstants.RT_CONTROLS_DETAIL, false));
-        }
-        if(darDocument.containsKey(DarConstants.POPULATION) && darDocument.getBoolean(DarConstants.POPULATION)){
-            researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION, SummaryConstants.RT_POPULATION_DETAIL, true));
-            manualReviewIsTrue();
-        }
-        if(darDocument.containsKey(DarConstants.HMB) && darDocument.getBoolean(DarConstants.HMB)){
-            researchList.add(new SummaryItem(SummaryConstants.RT_HEALTH_BIOMEDICAL, SummaryConstants.RT_HEALTH_BIOMEDICAL_DETAIL, false));
-        }
-        if(darDocument.containsKey(DarConstants.POA) && darDocument.getBoolean(DarConstants.POA)){
-            researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION_ORIGINS, SummaryConstants.RT_POPULATION_ORIGINS_DETAIL, true));
-            manualReviewIsTrue();
-        }
-        if(darDocument.containsKey(DarConstants.OTHER) && darDocument.getBoolean(DarConstants.OTHER)){
-            researchList.add(new SummaryItem(SummaryConstants.RT_OTHER, darDocument.getString(DarConstants.OTHER_TEXT), true));
-            manualReviewIsTrue();
+        if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
+            if (isTrue(dar.getData().getDiseases())) {
+                researchList.add(new SummaryItem(SummaryConstants.RT_DISEASE_RELATED, SummaryConstants.RT_DISEASE_RELATED_DETAIL, false));
+            }
+            if (isTrue(dar.getData().getMethods())) {
+                researchList.add(new SummaryItem(SummaryConstants.RT_METHODS_DEVELOPMENT, SummaryConstants.RT_METHODS_DEVELOPMENT_DETAIL, false));
+            }
+            if (isTrue(dar.getData().getControls())) {
+                researchList.add(new SummaryItem(SummaryConstants.RT_CONTROLS, SummaryConstants.RT_CONTROLS_DETAIL, false));
+            }
+            if (isTrue(dar.getData().getPopulation())) {
+                researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION, SummaryConstants.RT_POPULATION_DETAIL, true));
+                manualReviewIsTrue();
+            }
+            if (isTrue(dar.getData().getHmb())) {
+                researchList.add(new SummaryItem(SummaryConstants.RT_HEALTH_BIOMEDICAL, SummaryConstants.RT_HEALTH_BIOMEDICAL_DETAIL, false));
+            }
+            if (isTrue(dar.getData().getPoa())) {
+                researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION_ORIGINS, SummaryConstants.RT_POPULATION_ORIGINS_DETAIL, true));
+                manualReviewIsTrue();
+            }
+            if (isTrue(dar.getData().getOther())) {
+                researchList.add(new SummaryItem(SummaryConstants.RT_OTHER, dar.getData().getOtherText(), true));
+                manualReviewIsTrue();
+            }
         }
         return researchList;
     }
@@ -217,7 +216,7 @@ public class DARModalDetailsDTO {
         return researchType;
     }
 
-    public DARModalDetailsDTO setResearchType(Document dar) {
+    public DARModalDetailsDTO setResearchType(DataAccessRequest dar) {
         this.researchType = generateResearchTypeSummary(dar);
         return this;
     }
@@ -226,7 +225,7 @@ public class DARModalDetailsDTO {
         return diseases;
     }
 
-    public DARModalDetailsDTO setDiseases(Document darDocument) {
+    public DARModalDetailsDTO setDiseases(DataAccessRequest darDocument) {
         this.diseases = generateDiseasesSummary(darDocument);
         return this;
     }
@@ -235,7 +234,7 @@ public class DARModalDetailsDTO {
         return purposeStatements;
     }
 
-    public DARModalDetailsDTO setPurposeStatements(Document darDocuement) {
+    public DARModalDetailsDTO setPurposeStatements(DataAccessRequest darDocuement) {
         this.purposeStatements = generatePurposeStatementsSummary(darDocuement);
         return this;
     }
@@ -356,6 +355,10 @@ public class DARModalDetailsDTO {
     public DARModalDetailsDTO setNihUsername(String nihUsername) {
         this.nihUsername = nihUsername;
         return this;
+    }
+
+    private boolean isTrue(Boolean obj) {
+        return BooleanUtils.isTrue(obj);
     }
 
 }
