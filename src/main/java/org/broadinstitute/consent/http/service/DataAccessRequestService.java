@@ -146,7 +146,7 @@ public class DataAccessRequestService {
      */
     public List<DataAccessRequestManage> describeDataAccessRequestManageV2(User user, String roleName) {
         if (Objects.nonNull(roleName) && Objects.nonNull(user)) {
-            if (roleName.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName()) && user.hasUserRole( UserRoles.SIGNINGOFFICIAL)) {
+            if (roleName.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
                 if (Objects.nonNull(user.getInstitutionId())) {
                     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
                     List<DataAccessRequest> openDars = filterOutCanceledDars(dars);
@@ -155,10 +155,9 @@ public class DataAccessRequestService {
                     throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") "
                       + "is not associated with an Institution.");
                 }
-            } else {
-                throw new ForbiddenException("User: " + user.getDisplayName() + ", " + user.getDacUserId() + " does not have Signing Official role.");
             }
         }
+        //if there is no roleName then user is a member, chair, or admin
         List<DataAccessRequest> allDars = findAllDataAccessRequests();
         List<DataAccessRequest> filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, user);
         List<DataAccessRequest> openDarList = filterOutCanceledDars(filteredAccessList);

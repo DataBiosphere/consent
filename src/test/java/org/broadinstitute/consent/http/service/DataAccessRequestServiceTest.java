@@ -331,13 +331,6 @@ public class DataAccessRequestServiceTest {
         service.describeDataAccessRequestManageV2(user, "SigningOfficial");
     }
 
-    @Test(expected = ForbiddenException.class)
-    public void testDescribeDataAccessRequestManageV2_SO_RoleMissing() {
-        User user = new User();
-        initService();
-        service.describeDataAccessRequestManageV2(user, "SigningOfficial");
-    }
-
     @Test
     public void testDescribeDataAccessRequestFieldsById() {
         DataAccessRequest dar = generateDataAccessRequest();
