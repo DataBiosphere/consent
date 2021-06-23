@@ -5,9 +5,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -81,12 +79,10 @@ public class LibraryCardResource extends Resource{
   @RolesAllowed(ADMIN)
   public Response createLibraryCard(@Auth AuthUser authUser, String libraryCard) {
     try{
-      User user = userService.findUserByEmail(authUser.getName());
+      User admin = userService.findUserByEmail(authUser.getName());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
-      User lcUser = userService.findUserByEmail(payload.getUserEmail());
-
-      payload.setUserId(lcUser.getDacUserId());
-      LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload, user.getDacUserId());
+      payload.setCreateUserId(admin.getDacUserId());
+      LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload);
       return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(newLibraryCard).build();
     } catch(Exception e) {
       return createExceptionResponse(e);

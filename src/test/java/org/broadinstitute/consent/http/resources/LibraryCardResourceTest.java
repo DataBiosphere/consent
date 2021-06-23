@@ -11,11 +11,10 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 
-import java.util.Arrays;
 import java.util.Collections;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -127,11 +126,9 @@ public class LibraryCardResourceTest {
   @Test
   public void testCreateLibraryCard() {
     LibraryCard mockCard = mockLibraryCardSetup();
-    mockCard.setUserEmail(lcUser.getEmail());
     String payload = new Gson().toJson(mockCard);
     when(userService.findUserByEmail(authUser.getName())).thenReturn(user);
-    when(userService.findUserByEmail(mockCard.getUserEmail())).thenReturn(lcUser);
-    when(libraryCardService.createLibraryCard(any(LibraryCard.class), anyInt())).thenReturn(mockCard);
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class))).thenReturn(mockCard);
     initResource();
     Response response = resource.createLibraryCard(authUser, payload);
     String json = response.getEntity().toString();
@@ -139,25 +136,25 @@ public class LibraryCardResourceTest {
     assertNotNull(json);
   }
 
-  @Test
-  public void testCreateLibraryCardInvalidEmail() {
-    LibraryCard mockCard = mockLibraryCardSetup();
-    mockCard.setUserEmail("wrongemail@gmail.com");
-    String payload = new Gson().toJson(mockCard);
-    when(userService.findUserByEmail(authUser.getName())).thenReturn(user);
-    when(userService.findUserByEmail(lcUser.getEmail())).thenReturn(lcUser);
-    when(libraryCardService.createLibraryCard(any(LibraryCard.class), anyInt())).thenReturn(mockCard);
-    initResource();
-    Response response = resource.createLibraryCard(authUser, payload);
-    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
-  }
+  // Email validation now occurs in service, commenting out for review with plans for deletion if approved
+  // @Test
+  // public void testCreateLibraryCardInvalidEmail() {
+  //   LibraryCard mockCard = mockLibraryCardSetup();
+  //   mockCard.setUserEmail("wrongemail@gmail.com");
+  //   String payload = new Gson().toJson(mockCard);
+  //   when(userService.findUserByEmail(authUser.getName())).thenReturn(user);
+  //   when(libraryCardService.createLibraryCard(any(LibraryCard.class))).thenReturn(mockCard);
+  //   initResource();
+  //   Response response = resource.createLibraryCard(authUser, payload);
+  //   assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  // }
 
   @Test
   public void testCreateLibraryCardThrowsIllegalArgumentException() {
     LibraryCard mockCard = mockLibraryCardSetup();
     String payload = new Gson().toJson(mockCard);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.createLibraryCard(any(LibraryCard.class), anyInt())).thenThrow(new IllegalArgumentException());
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class))).thenThrow(new IllegalArgumentException());
     initResource();
     Response response = resource.createLibraryCard(authUser, payload);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -168,10 +165,32 @@ public class LibraryCardResourceTest {
     UnableToExecuteStatementException exception = generateUniqueViolationException();
     String json = new Gson().toJson(mockLibraryCardSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.createLibraryCard(any(LibraryCard.class), anyInt())).thenThrow(exception);
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class))).thenThrow(exception);
     initResource();
     Response response = resource.createLibraryCard(authUser, json);
     assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
+  }
+
+  @Test
+  public void testCreateLibraryCardThrowsBadRequestException() {
+    BadRequestException exception = new BadRequestException();
+    String json = new Gson().toJson(mockLibraryCardSetup());
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class))).thenThrow(exception);
+    initResource();
+    Response response = resource.createLibraryCard(authUser, json);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testCreateLibraruCardThrowsNotFoundException() {
+    NotFoundException exception = new NotFoundException();
+    String json = new Gson().toJson(mockLibraryCardSetup());
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class))).thenThrow(exception);
+    initResource();
+    Response response = resource.createLibraryCard(authUser, json);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
