@@ -1752,7 +1752,6 @@ paths:
             nullable: true
             enum:
               - SigningOfficial
-              - null
       tags:
         - Data Access Request
       responses:

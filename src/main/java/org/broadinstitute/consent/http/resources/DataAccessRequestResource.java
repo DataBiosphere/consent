@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -160,17 +161,19 @@ public class DataAccessRequestResource extends Resource {
             User user = userService.findUserByEmail(authUser.getName());
             String roleNameValue = roleName.orElse(null);
             if (Objects.nonNull(roleNameValue)) {
-                if (roleNameValue.equalsIgnoreCase(UserRoles.MEMBER.getRoleName())
-                || roleNameValue.equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName())
-                || roleNameValue.equalsIgnoreCase(UserRoles.DATAOWNER.getRoleName())
-                || roleNameValue.equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName())
-                || roleNameValue.equalsIgnoreCase(UserRoles.ALUMNI.getRoleName())) {
-                    throw new BadRequestException("Signing Official Role is the only role supported at this time");
-                }
-                //if the roleName is SO and the user does not have that role throw an exception
-                if (roleNameValue.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-                    if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
-                        throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
+                boolean valid = EnumSet.allOf(UserRoles.class)
+                  .stream()
+                  .map(UserRoles::getRoleName)
+                  .map(String::toLowerCase)
+                  .anyMatch(roleNameValue::equalsIgnoreCase);
+                if (valid) {
+                    //if the roleName is SO and the user does not have that role throw an exception
+                    if (roleNameValue.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                        if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+                           throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
+                       }
+                   } else {
+                        throw new BadRequestException("Signing Official Role is the only role supported at this time");
                     }
                 } else {
                     throw new BadRequestException("Invalid role name: " + roleNameValue);
