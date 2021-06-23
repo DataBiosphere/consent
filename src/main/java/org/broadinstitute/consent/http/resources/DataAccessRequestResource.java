@@ -158,6 +158,11 @@ public class DataAccessRequestResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getName());
             String roleNameValue = roleName.orElse(null);
+            if (Objects.nonNull(roleNameValue) && roleNameValue.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+                    throw new ForbiddenException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
+                }
+            }
             List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(user, roleNameValue);
             return Response.ok().entity(dars).build();
         } catch(Exception e) {

@@ -155,6 +155,17 @@ public class DataAccessRequestResourceTest {
         assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
+    @Test
+    public void testDescribeManageDataAccessRequestsV2_UserMissingRole() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        resource = new DataAccessRequestResource(
+          dataAccessRequestService,
+          userService,
+          consentService, electionService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of("SigningOfficial"));
+        assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+
     private DataAccessRequest generateDataAccessRequest() {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
