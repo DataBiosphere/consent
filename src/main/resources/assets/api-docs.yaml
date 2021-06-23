@@ -1749,6 +1749,10 @@ paths:
           required: false
           schema:
             type: String
+            nullable: true
+            enum:
+              - SigningOfficial
+              - null
       tags:
         - Data Access Request
       responses:
