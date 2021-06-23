@@ -563,7 +563,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(dars);
         when(dacService.filterDataAccessRequestsByDac(eq(dars), any())).thenReturn(dars);
         initService();
-        List<DataAccessRequest> foundDars = service.getDataAccessRequestsByUserRole(authUser);
+        List<DataAccessRequest> foundDars = service.getDataAccessRequestsByUserRole(new User());
         assertEquals(foundDars.size(), 1);
     }
 

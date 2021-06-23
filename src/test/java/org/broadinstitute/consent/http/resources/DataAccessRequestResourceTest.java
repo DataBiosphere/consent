@@ -149,7 +149,6 @@ public class DataAccessRequestResourceTest {
         when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
         resource = new DataAccessRequestResource(
           dataAccessRequestService,
-          emailNotifierService,
           userService,
           consentService, electionService);
         Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());

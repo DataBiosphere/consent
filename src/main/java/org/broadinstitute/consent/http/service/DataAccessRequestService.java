@@ -378,12 +378,12 @@ public class DataAccessRequestService {
 
     /**
      *
-     * @param authUser AuthUser
+     * @param user User
      * @return List<DataAccessRequest>
      */
-    public List<DataAccessRequest> getDataAccessRequestsByUserRole(AuthUser authUser) {
+    public List<DataAccessRequest> getDataAccessRequestsByUserRole(User user) {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
-        return dacService.filterDataAccessRequestsByDac(dars, authUser);
+        return dacService.filterDataAccessRequestsByDac(dars, user);
     }
 
     /**
