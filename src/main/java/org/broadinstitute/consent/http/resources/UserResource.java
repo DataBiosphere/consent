@@ -24,6 +24,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -51,6 +52,19 @@ public class UserResource extends Resource {
         this.userService = userService;
         this.libraryCardService = libraryCardService;
         this.gson = new Gson();
+    }
+
+    @GET
+    @Produces("application/json")
+    @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
+    public Response getUsers(@Auth AuthUser authUser, @QueryParam("roleName") String roleName) {
+        try {
+            User user = userService.findUserByEmail(authUser.getName());
+            List<User> users = userService.getUsersByUserRole(user, roleName);
+            return Response.ok().entity(users).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
