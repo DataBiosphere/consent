@@ -181,6 +181,6 @@ public interface UserDAO extends Transactional<UserDAO> {
             " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
             " LEFT JOIN roles r ON r.roleid = ur.role_id " +
             " WHERE du.institution_id = :institutionId")
-    List<User> findUsersByInstitution(@BindList("institutionId") Integer institutionId)
+    List<User> findUsersByInstitution(@BindList("institutionId") Integer institutionId);
 
 }
