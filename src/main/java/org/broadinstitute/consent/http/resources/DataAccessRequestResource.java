@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
@@ -158,9 +159,15 @@ public class DataAccessRequestResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getName());
             String roleNameValue = roleName.orElse(null);
-            if (Objects.nonNull(roleNameValue) && roleNameValue.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-                if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
-                    throw new ForbiddenException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
+            if (Objects.nonNull(roleNameValue)) {
+                //if the roleName is SO and the user does not have that role throw an exception
+                if (roleNameValue.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                    if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+                        throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
+                    }
+                //if there is a roleName but it is not SO then throw an exception
+                } else {
+                    throw new BadRequestException("Invalid role name: " + roleNameValue);
                 }
             }
             List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(user, roleNameValue);
