@@ -10,11 +10,13 @@ import io.dropwizard.auth.Auth;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -60,8 +62,28 @@ public class UserResource extends Resource {
     public Response getUsers(@Auth AuthUser authUser, @QueryParam("roleName") String roleName) {
         try {
             User user = userService.findUserByEmail(authUser.getName());
-            List<User> users = userService.getUsersByUserRole(user, roleName);
-            return Response.ok().entity(users).build();
+            if (Objects.nonNull(roleName)) {
+                //if the roleName is SO and the user does not have that role throw an exception
+                if (roleName.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                    if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+                        throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
+                    }
+                }
+                //if the roleName is Admin and the user does not have that role throw an exception
+                if (roleName.equals(UserRoles.ADMIN.getRoleName())) {
+                    if (!user.hasUserRole(UserRoles.ADMIN)) {
+                        throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Admin role.");
+                    }
+                //if there is a roleName but it is not SO or Admin then throw an exception
+                } else {
+                    throw new BadRequestException("Invalid role name: " + roleName);
+                }
+                List<User> users = userService.getUsersByUserRole(user, roleName);
+                return Response.ok().entity(users).build();
+            } else {
+                throw new BadRequestException("No user role specified.");
+            }
+
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

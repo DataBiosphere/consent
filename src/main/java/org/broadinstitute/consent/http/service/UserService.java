@@ -90,28 +90,18 @@ public class UserService {
     }
 
     public List<User> getUsersByUserRole(User user, String roleName) {
-        if (Objects.nonNull(roleName)) {
-            if (roleName.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-                if (User.hasUserRole(user, UserRoles.SIGNINGOFFICIAL)) {
-                    if (Objects.nonNull(user.getInstitutionId())) {
-                        return userDAO.findUsersByInstitution(user.getInstitutionId());
-                    } else {
-                        throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") "
-                          + "is not associated with an Institution.");
-                    }
-                } else {
-                    throw new ForbiddenException("User: " + user.getDisplayName() + ", " + user.getDacUserId() + " does not have Signing Official role.");
-                }
+        if (roleName.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+            if (Objects.nonNull(user.getInstitutionId())) {
+                List<User> users = new ArrayList<>(userDAO.findUsersByInstitution(user.getInstitutionId()));
+                return users;
+            } else {
+                throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") "+ "is not associated with an Institution.");
             }
-            if (roleName.equalsIgnoreCase(UserRoles.ADMIN.getRoleName())) {
-                if (User.hasUserRole(user, UserRoles.ADMIN)) {
-                    List<User> users = new ArrayList<>(userDAO.findUsers());
-                        return users;
-                } else {
-                    throw new ForbiddenException("User: " + user.getDisplayName() + ", " + user.getDacUserId() + " does not have Admin role.");
-                }
-            }
-        } throw new BadRequestException("No role name specified");
+        //there are only two cases here since we validate the roleName in the resource class, if it is not SO, then it is Admin
+        } else {
+            List<User> users = new ArrayList<>(userDAO.findUsers());
+            return users;
+        }
     }
 
     public void deleteUserByEmail(String email) {
