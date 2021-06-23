@@ -13,6 +13,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.slf4j.LoggerFactory;
 import net.gcardone.junidecode.Junidecode;
 
@@ -316,6 +317,14 @@ public class User {
     @Override
     public String toString() {
         return new Gson().toJson(this);
+    }
+
+    public static boolean hasUserRole(User user, UserRoles role) {
+        if (Objects.isNull(user) || Objects.isNull(user.getRoles())) {
+            return false;
+        } else {
+            return user.getRoles().stream().anyMatch((r) -> r.getRoleId().equals(role.getRoleId()));
+        }
     }
 
 }

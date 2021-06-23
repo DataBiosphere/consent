@@ -23,14 +23,6 @@ public class DarUtil {
         return Collections.emptyList();
     }
 
-    public static boolean hasUserRole(User user, Integer roleId) {
-        if (Objects.isNull(user) || Objects.isNull(user.getRoles())) {
-            return false;
-        } else {
-            return user.getRoles().stream().anyMatch((role) -> role.getRoleId().equals(roleId));
-        }
-    }
-
     public static String findPI(User user) {
         if (user != null && user.getProperties() != null) {
             Optional<UserProperty> isResearcher = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().equalsIgnoreCase("true")).findFirst();
