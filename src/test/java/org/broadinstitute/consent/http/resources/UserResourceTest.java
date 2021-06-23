@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import liquibase.pro.packaged.A;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -101,6 +102,81 @@ public class UserResourceTest {
     initResource();
 
     Response response = userResource.getUserById(authUser, 1);
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test void testGetUsers_SO() {
+    User user = createUserWithRole();
+    user.setRoles(Arrays.asList(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.getUsersByUserRole(user, "SigningOfficial")).thenReturn(Arrays.asList(new User(), new User()));
+    initResource();
+
+    Response response = userResource.getUsers(authUser, "SigningOfficial");
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test void testGetUsers_SO_NoRole() {
+    User user = createUserWithRole();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    initResource();
+
+    Response response = userResource.getUsers(authUser, "SigningOfficial");
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test void testGetUsers_Admin() {
+    User user = createUserWithRole();
+    user.setRoles(Arrays.asList(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.getUsersByUserRole(user, "Admin")).thenReturn(Arrays.asList(new User(), new User()));
+    initResource();
+
+    Response response = userResource.getUsers(authUser, "Admin");
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test void testGetUsers_Admin_NoRole() {
+    User user = createUserWithRole();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    initResource();
+
+    Response response = userResource.getUsers(authUser, "Admin");
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test void testGetUsers_UnsupportedRole() {
+      User user = createUserWithRole();
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      initResource();
+
+      Response response = userResource.getUsers(authUser, "Researcher");
+      assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+
+  @Test void testGetUsers_InvalidRole() {
+    User user = createUserWithRole();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    initResource();
+
+    Response response = userResource.getUsers(authUser, "BadRequest");
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+
+  @Test void testGetUsers_NoRole() {
+    User user = createUserWithRole();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    initResource();
+
+    Response response = userResource.getUsers(authUser, null);
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+
+  @Test void testGetUsers_UserNotFound() {
+    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
+    initResource();
+
+    Response response = userResource.getUsers(authUser, "Admin");
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
