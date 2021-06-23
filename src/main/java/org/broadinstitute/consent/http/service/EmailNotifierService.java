@@ -217,16 +217,6 @@ public class EmailNotifierService {
         }
     }
 
-    public void sendNeedsPIApprovalMessage(Map<User, List<DataSet>> dataSetMap, Document access, Integer amountOfTime) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive){
-            for(User owner: dataSetMap.keySet()){
-                String dataOwnerConsoleURL = SERVER_URL + DATA_OWNER_CONSOLE_URL;
-                Writer template =  getPIApprovalMessageTemplate(access, dataSetMap.get(owner), owner, amountOfTime, dataOwnerConsoleURL);
-                mailService.sendFlaggedDarAdminApprovedMessage(getEmails(Collections.singletonList(owner)), access.getString(DarConstants.DAR_CODE), SERVER_URL, template);
-            }
-        }
-    }
-
     public void sendUserDelegateResponsibilitiesMessage(User user, Integer oldUser, String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             String delegateURL = SERVER_URL + delegateURL(newRole);
@@ -329,48 +319,6 @@ public class EmailNotifierService {
 
     private Writer getUserDelegateResponsibilitiesTemplate(User user, String newRole, List<VoteAndElectionModel> delegatedVotes, String URL) throws IOException, TemplateException {
         return templateHelper.getUserDelegateResponsibilitiesTemplate(user.getDisplayName(), delegatedVotes, newRole, URL);
-    }
-
-
-    private Writer getPIApprovalMessageTemplate(Document access, List<DataSet> dataSets, User user, int daysToApprove, String URL) throws IOException, TemplateException {
-        List<DataSetPIMailModel> dsPIModelList = new ArrayList<>();
-        for (DataSet ds: dataSets) {
-            dsPIModelList.add(new DataSetPIMailModel(ds.getObjectId(), ds.getName(), ds.getDatasetIdentifier()));
-        }
-
-        DARModalDetailsDTO details = new DARModalDetailsDTO()
-            .setDarCode(access.getString(DarConstants.DAR_CODE))
-            .setPrincipalInvestigator(access.getString(DarConstants.INVESTIGATOR))
-            .setInstitutionName(access.getString(DarConstants.INSTITUTION))
-            .setProjectTitle(access.getString(DarConstants.PROJECT_TITLE))
-            .setDepartment(access.getString(DarConstants.DEPARTMENT))
-            .setCity(access.getString(DarConstants.CITY))
-            .setCountry(access.getString(DarConstants.COUNTRY))
-            .setNihUsername(access.getString(DarConstants.NIH_USERNAME))
-            .setHaveNihUsername(StringUtils.isNotEmpty(access.getString(DarConstants.NIH_USERNAME)))
-            .setIsThereDiseases(false)
-            .setIsTherePurposeStatements(false)
-            .setResearchType(access)
-            .setDiseases(access)
-            .setPurposeStatements(access);
-
-        List<String> checkedSentences = (details.getPurposeStatements()).stream().map(SummaryItem::getDescription).collect(Collectors.toList());
-        Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
-        String translatedUseRestriction = Objects.nonNull(consent) ? consent.getTranslatedUseRestriction() : "";
-        return templateHelper.getApprovedDarTemplate(
-                user.getDisplayName(),
-                getDateString(daysToApprove),
-                details.getDarCode(),
-                details.getPrincipalInvestigator(),
-                details.getInstitutionName(),
-                access.getString(DarConstants.RUS),
-                details.getResearchType(),
-                generateDiseasesString(details.getDiseases()),
-                checkedSentences,
-                translatedUseRestriction,
-                dsPIModelList,
-                String.valueOf(daysToApprove),
-                URL);
     }
 
     private String getDateString(int daysToApprove) {

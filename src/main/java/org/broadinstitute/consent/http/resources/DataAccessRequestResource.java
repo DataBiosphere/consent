@@ -34,7 +34,6 @@ import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.bson.Document;
 
@@ -44,14 +43,12 @@ public class DataAccessRequestResource extends Resource {
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
     private final DataAccessRequestService dataAccessRequestService;
     private final ConsentService consentService;
-    private final EmailNotifierService emailNotifierService;
     private final ElectionService electionService;
     private final UserService userService;
 
     @Inject
-    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, UserService userService, ConsentService consentService, ElectionService electionService) {
+    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, UserService userService, ConsentService consentService, ElectionService electionService) {
         this.dataAccessRequestService = dataAccessRequestService;
-        this.emailNotifierService = emailNotifierService;
         this.consentService = consentService;
         this.electionService = electionService;
         this.userService = userService;
@@ -66,8 +63,8 @@ public class DataAccessRequestResource extends Resource {
             Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
                 .collect(Collectors.toList()),
             authUser, id);
-        Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
-        Integer userId = obtainUserId(dar);
+        DataAccessRequest dar = findDataAccessRequestById(id);
+        Integer userId = dar.getUserId();
         User user = null;
         try {
             user = userService.findUserById(userId);
@@ -81,6 +78,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
+    @Deprecated //instead use V2Resource.getDataAccessRequestsByUserRole
     public Response describeDataAccessRequests(@Auth AuthUser authUser) {
         List<Document> documents = dataAccessRequestService.describeDataAccessRequests(authUser);
         return Response.ok().entity(documents).build();
@@ -89,7 +87,8 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Path("/find/{id}")
     @Produces("application/json")
-    @PermitAll
+    @PermitAll 
+    @Deprecated // instead use DataAccessRequestResourceVersion2.getByReferenceId
     public Document describeSpecificFields(@Auth AuthUser authUser, @PathParam("id") String id, @QueryParam("fields") List<String> fields) {
         validateAuthedRoleUser(
             Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
@@ -181,6 +180,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partials")
     @RolesAllowed(RESEARCHER)
+    @Deprecated //instead use V2Resource.getDraftDataAccessRequests
     public List<Document> describeDraftDataAccessRequests(@Auth AuthUser authUser) {
         User user = findUserByEmail(authUser.getName());
         return dataAccessRequestService.findAllDraftDataAccessRequestDocumentsByUser(user.getDacUserId());
@@ -190,6 +190,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partial/{id}")
     @RolesAllowed(RESEARCHER)
+    @Deprecated //instead use getDraftDar
     public Document describeDraftDar(@Auth AuthUser authUser, @PathParam("id") String id) {
         User user = findUserByEmail(authUser.getName());
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
@@ -203,12 +204,12 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partials/manage")
     @RolesAllowed(RESEARCHER)
+    @Deprecated //instead use V2Resource.getDraftManageDataAccessRequests
     public Response describeDraftManageDataAccessRequests(@Auth AuthUser authUser) {
         User user = findUserByEmail(authUser.getName());
         List<Document> partials = dataAccessRequestService.describeDraftDataAccessRequestManage(user.getDacUserId());
         return Response.ok().entity(partials).build();
     }
-
 
     @PUT
     @Consumes("application/json")
@@ -222,14 +223,6 @@ public class DataAccessRequestResource extends Resource {
             return Response.ok().entity(dar).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
-        }
-    }
-
-    private Integer obtainUserId(Document dar) {
-        try {
-            return dar.getInteger("userId");
-        } catch (Exception e) {
-            return Integer.valueOf(dar.getString("userId"));
         }
     }
 

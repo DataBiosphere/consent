@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.consent.http.models.User;
+import java.util.Optional;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.bson.Document;
 
 public class DarUtil {
@@ -27,6 +29,24 @@ public class DarUtil {
         } else {
             return user.getRoles().stream().anyMatch((role) -> role.getRoleId().equals(roleId));
         }
+    }
+
+    public static String findPI(User user) {
+        if (user != null && user.getProperties() != null) {
+            Optional<UserProperty> isResearcher = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("isThePI") && prop.getPropertyValue().equalsIgnoreCase("true")).findFirst();
+            if (isResearcher.isPresent()) {
+                Optional<UserProperty> userName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("profileName")).findFirst();
+                if (userName.isPresent()) {
+                    return userName.get().getPropertyValue();
+                }
+            }
+
+            Optional<UserProperty> piName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("piName")).findFirst();
+            if (piName.isPresent()) {
+              return piName.get().getPropertyValue();
+            }
+        }
+        return "- -";
     }
 
 }

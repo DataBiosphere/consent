@@ -47,7 +47,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + "(data #>> '{}')::jsonb AS data FROM data_access_request "
           + " WHERE draft = false" 
           + " AND ((data #>> '{}')::jsonb->>'datasetIds')::jsonb @> :datasetId::jsonb")
-  List<DataAccessRequest> findAllDataAccessRequestsForDatasetMetrics(@Bind("datasetId") String datasetId);
+  List<DataAccessRequest> findAllDataAccessRequestsByDatasetId(@Bind("datasetId") String datasetId);
 
   /**
    * Find all draft/partial DataAccessRequests, sorted descending order
