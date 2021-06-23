@@ -167,6 +167,17 @@ public class DataAccessRequestResourceTest {
     }
 
     @Test
+    public void testDescribeManageDataAccessRequestsV2_UnsupportedRoleName() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        resource = new DataAccessRequestResource(
+          dataAccessRequestService,
+          userService,
+          consentService, electionService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of("Member"));
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
     public void testDescribeManageDataAccessRequestsV2_InvalidRoleName() {
         when(userService.findUserByEmail(any())).thenReturn(new User());
         resource = new DataAccessRequestResource(

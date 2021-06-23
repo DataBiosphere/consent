@@ -160,12 +160,18 @@ public class DataAccessRequestResource extends Resource {
             User user = userService.findUserByEmail(authUser.getName());
             String roleNameValue = roleName.orElse(null);
             if (Objects.nonNull(roleNameValue)) {
+                if (roleNameValue.equalsIgnoreCase(UserRoles.MEMBER.getRoleName())
+                || roleNameValue.equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName())
+                || roleNameValue.equalsIgnoreCase(UserRoles.DATAOWNER.getRoleName())
+                || roleNameValue.equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName())
+                || roleNameValue.equalsIgnoreCase(UserRoles.ALUMNI.getRoleName())) {
+                    throw new BadRequestException("Signing Official Role is the only role supported at this time");
+                }
                 //if the roleName is SO and the user does not have that role throw an exception
-                if (roleNameValue.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                if (roleNameValue.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
                     if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
                         throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
                     }
-                //if there is a roleName but it is not SO then throw an exception
                 } else {
                     throw new BadRequestException("Invalid role name: " + roleNameValue);
                 }
