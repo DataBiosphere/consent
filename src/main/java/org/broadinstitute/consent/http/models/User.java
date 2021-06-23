@@ -319,11 +319,11 @@ public class User {
         return new Gson().toJson(this);
     }
 
-    public static boolean hasUserRole(User user, UserRoles role) {
-        if (Objects.isNull(user) || Objects.isNull(user.getRoles())) {
+    public boolean hasUserRole(UserRoles role) {
+        if (Objects.isNull(this.getRoles())) {
             return false;
         } else {
-            return user.getRoles().stream().anyMatch((r) -> r.getRoleId().equals(role.getRoleId()));
+            return this.getRoles().stream().anyMatch((r) -> r.getRoleId().equals(role.getRoleId()));
         }
     }
 

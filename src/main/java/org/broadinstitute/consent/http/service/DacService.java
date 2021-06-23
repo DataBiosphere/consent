@@ -307,23 +307,25 @@ public class DacService {
      * Filter data access requests by the DAC they are associated with.
      */
     List<DataAccessRequest> filterDataAccessRequestsByDac(List<DataAccessRequest> documents, User user) {
-        if (User.hasUserRole(user, UserRoles.ADMIN)) {
-            return documents;
-        }
-        // Chair and Member users can see data access requests that they have DAC access to
-        if (User.hasUserRole(user, UserRoles.MEMBER) || User.hasUserRole(user, UserRoles.CHAIRPERSON)) {
-            List<Integer> accessibleDatasetIds = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail()).
-                    stream().
-                    map(DataSet::getDataSetId).
-                    collect(Collectors.toList());
+        if (Objects.nonNull(user)) {
+            if (user.hasUserRole(UserRoles.ADMIN)) {
+                return documents;
+            }
+            // Chair and Member users can see data access requests that they have DAC access to
+            if (user.hasUserRole(UserRoles.MEMBER) || user.hasUserRole(UserRoles.CHAIRPERSON)) {
+                List<Integer> accessibleDatasetIds = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail()).
+                  stream().
+                  map(DataSet::getDataSetId).
+                  collect(Collectors.toList());
 
-            return documents.
-                    stream().
-                    filter(d -> {
-                        List<Integer> datasetIds = d.getData().getDatasetIds();
-                        return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
-                    }).
-                    collect(Collectors.toList());
+                return documents.
+                  stream().
+                  filter(d -> {
+                      List<Integer> datasetIds = d.getData().getDatasetIds();
+                      return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
+                  }).
+                  collect(Collectors.toList());
+            }
         }
         return Collections.emptyList();
     }

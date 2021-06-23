@@ -145,8 +145,8 @@ public class DataAccessRequestService {
      * @return List of DataAccessRequestManage objects
      */
     public List<DataAccessRequestManage> describeDataAccessRequestManageV2(User user, String roleName) {
-        if (Objects.nonNull(roleName)) {
-            if (roleName.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName()) && User.hasUserRole(user, UserRoles.SIGNINGOFFICIAL)) {
+        if (Objects.nonNull(roleName) && Objects.nonNull(user)) {
+            if (roleName.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName()) && user.hasUserRole( UserRoles.SIGNINGOFFICIAL)) {
                 if (Objects.nonNull(user.getInstitutionId())) {
                     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
                     List<DataAccessRequest> openDars = filterOutCanceledDars(dars);

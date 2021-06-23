@@ -157,7 +157,7 @@ public class DataAccessRequestResource extends Resource {
     public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser, @QueryParam("roleName") Optional<String> roleName) {
         try {
             User user = userService.findUserByEmail(authUser.getName());
-            String roleNameValue = roleName.isPresent() ? roleName.get() : null;
+            String roleNameValue = roleName.orElse(null);
             List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(user, roleNameValue);
             return Response.ok().entity(dars).build();
         } catch(Exception e) {
