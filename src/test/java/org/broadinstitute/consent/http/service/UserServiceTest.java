@@ -311,6 +311,21 @@ public class UserServiceTest {
         User user = service.updateDACUserById(dacUsers, u.getDacUserId());
     }
 
+    @Test
+    public void testGetUsersByUserRole_SO() {
+
+    }
+
+    @Test
+    public void testGetUsersByUserRole_SO_noInstitution() {
+
+    }
+
+    @Test
+    public void testGetUsersByUserRole_Admin() {
+
+    }
+
     private User generateUser() {
         User u = new User();
         int i1 = RandomUtils.nextInt(5, 10);
