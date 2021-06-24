@@ -50,7 +50,6 @@ public class DataAccessRequestData {
     private String isThePi;
     private String havePi;
     private String piEmail;
-    private String profileName;
     private String pubmedId;
     private String scientificUrl;
     private Boolean eraExpiration;
@@ -280,14 +279,6 @@ public class DataAccessRequestData {
 
     public void setPiEmail(String piEmail) {
         this.piEmail = piEmail;
-    }
-
-    public String getProfileName() {
-        return profileName;
-    }
-
-    public void setProfileName(String profileName) {
-        this.profileName = profileName;
     }
 
     public String getPubmedId() {

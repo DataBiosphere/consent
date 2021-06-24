@@ -382,22 +382,22 @@ public class DacServiceTest {
 
     @Test
     public void testFilterDataAccessRequestsByDAC_adminCase() {
+        User user = new User();
+        user.setRoles(new ArrayList<>());
+        user.getRoles().add(new UserRole( UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+
         // User is an admin user
-        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();
 
-        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getUser());
+        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, user);
         // As an admin, all docs should be returned.
         Assert.assertEquals(dars.size(), filtered.size());
     }
 
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_1() {
-        // Member is not an admin user
-        when(userDAO.findUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
-
         // Member has access to DataSet 1
         List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
         when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
@@ -408,7 +408,7 @@ public class DacServiceTest {
 
         List<DataAccessRequest> dars = getDataAccessRequests();
 
-        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMemberAuthUser());
+        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should only contain the ones the user has direct access to:
         Assert.assertEquals(memberDataSets.size(), filtered.size());
@@ -416,9 +416,6 @@ public class DacServiceTest {
 
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_2() {
-        // Member is not an admin user
-        when(userDAO.findUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
-
         // Member has access to datasets
         List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
         when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
@@ -430,7 +427,7 @@ public class DacServiceTest {
 
         List<DataAccessRequest> dars = getDataAccessRequests();
 
-        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMemberAuthUser());
+        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should only contain the ones the user has direct access to
         Assert.assertEquals(memberDataSets.size(), filtered.size());
@@ -438,9 +435,6 @@ public class DacServiceTest {
 
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_3() {
-        // Member is not an admin user
-        when(userDAO.findUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
-
         // Member no direct access to datasets
         List<DataSet> memberDataSets = Collections.emptyList();
         when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
@@ -452,7 +446,7 @@ public class DacServiceTest {
 
         List<DataAccessRequest> dars = getDataAccessRequests();
 
-        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMemberAuthUser());
+        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should contain the ones the user has direct access to
         Assert.assertEquals(memberDataSets.size(), filtered.size());

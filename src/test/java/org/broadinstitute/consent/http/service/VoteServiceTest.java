@@ -270,11 +270,10 @@ public class VoteServiceTest {
     }
 
     @Test(expected = NotFoundException.class)
-    public void testDescribeVoteById_InvalidId() {
-        when(voteDAO.findVoteById(1))
-            .thenReturn(null);
+    public void testFindVoteById_InvalidId() {
+        when(voteDAO.findVoteById(any())).thenReturn(null);
         initService();
-        Vote vote = service.describeVoteById(1, "test");
+        service.findVoteById(1);
     }
 
     @Test
@@ -282,7 +281,7 @@ public class VoteServiceTest {
         Vote v = setUpTestVote(false, false);
         initService();
 
-        Vote vote = service.describeVoteById(v.getVoteId(), "test");
+        Vote vote = service.findVoteById(v.getVoteId());
         assertNotNull(vote);
         assertEquals(v.getVoteId(), vote.getVoteId());
     }
