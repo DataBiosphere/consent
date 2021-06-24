@@ -76,7 +76,8 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @PermitAll
   public Response getDataAccessRequests(@Auth AuthUser authUser) {
     try {
-      List<DataAccessRequest> dars = dataAccessRequestService.getDataAccessRequestsByUserRole(authUser);
+      User user = userService.findUserByEmail(authUser.getName());
+      List<DataAccessRequest> dars = dataAccessRequestService.getDataAccessRequestsByUserRole(user);
       return Response.ok().entity(dars).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

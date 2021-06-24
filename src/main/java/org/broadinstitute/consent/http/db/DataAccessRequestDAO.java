@@ -185,4 +185,16 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @RegisterRowMapper(DataAccessRequestDataMapper.class)
   @SqlQuery(" SELECT (data #>> '{}')::jsonb AS data FROM data_access_request ")
   List<DataAccessRequestData> findAllDataAccessRequestDatas();
+
+  /**
+   * Find all non-draft/partial DataAccessRequests for users in the given institution
+   *
+   * @return List<DataAccessRequest>
+   */
+  @SqlQuery(
+    "SELECT id, reference_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
+        + " INNER JOIN dacuser d on d.dacuserid = user_id AND d.institution_id = :institutionId "
+        + " WHERE draft != true")
+  List<DataAccessRequest> findAllDataAccessRequestsForInstitution(@Bind("institutionId") Integer institutionId);
+
 }

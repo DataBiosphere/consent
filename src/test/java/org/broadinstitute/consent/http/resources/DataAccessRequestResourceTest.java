@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
@@ -133,15 +134,60 @@ public class DataAccessRequestResourceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         DataAccessRequestManage manage = new DataAccessRequestManage();
         manage.setDar(dar);
-        when(dataAccessRequestService.describeDataAccessRequestManageV2(any()))
+        when(dataAccessRequestService.describeDataAccessRequestManageV2(any(), any()))
             .thenReturn(Collections.singletonList(manage));
         resource = new DataAccessRequestResource(
             dataAccessRequestService,
             userService,
             consentService, electionService);
-        Response response = resource.describeManageDataAccessRequestsV2(authUser);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
+
+    @Test
+    public void testDescribeManageDataAccessRequestsV2_UserNotFound() {
+        when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
+        resource = new DataAccessRequestResource(
+          dataAccessRequestService,
+          userService,
+          consentService, electionService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeManageDataAccessRequestsV2_UserMissingRole() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        resource = new DataAccessRequestResource(
+          dataAccessRequestService,
+          userService,
+          consentService, electionService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of("SigningOfficial"));
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeManageDataAccessRequestsV2_UnsupportedRoleName() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        resource = new DataAccessRequestResource(
+          dataAccessRequestService,
+          userService,
+          consentService, electionService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of("Member"));
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeManageDataAccessRequestsV2_InvalidRoleName() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        resource = new DataAccessRequestResource(
+          dataAccessRequestService,
+          userService,
+          consentService, electionService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of("BadRequest"));
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
 
     private DataAccessRequest generateDataAccessRequest() {
         DataAccessRequest dar = new DataAccessRequest();

@@ -147,4 +147,19 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(foundDar.getData().getTranslatedUseRestriction().contains(">"));
     }
 
+    @Test
+    public void  testFindAllDataAccessRequestsForInstitution() {
+        //should be included in result
+        Integer institutionId = createDataAccessRequestUserWithInstitute();
+
+        //should not be included in result
+        createDraftDataAccessRequest();
+        createDataAccessRequestV2();
+
+        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(institutionId);
+        assertFalse(newDars.isEmpty());
+        assertEquals(1, newDars.size());
+
+    }
+
 }

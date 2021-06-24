@@ -1742,6 +1742,16 @@ paths:
       summary: Manage Data Access Requests V2
       description: |
         Returns all the elections created for Data Access Requests relevant to the current user.
+      parameters:
+        - name: roleName
+          in: query
+          description: An optional roleName that the user is making the request as. A user can have multiple roles, so adding this parameter will filter the list accordingly.
+          required: false
+          schema:
+            type: String
+            nullable: true
+            enum:
+              - SigningOfficial
       tags:
         - Data Access Request
       responses:

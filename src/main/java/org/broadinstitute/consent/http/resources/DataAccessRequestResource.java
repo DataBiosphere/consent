@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
@@ -153,10 +155,35 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/manage/v2")
-    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
-    public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser) {
-        List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(authUser);
-        return Response.ok().entity(dars).build();
+    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL})
+    public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser, @QueryParam("roleName") Optional<String> roleName) {
+        try {
+            User user = userService.findUserByEmail(authUser.getName());
+            String roleNameValue = roleName.orElse(null);
+            if (Objects.nonNull(roleNameValue)) {
+                boolean valid = EnumSet.allOf(UserRoles.class)
+                  .stream()
+                  .map(UserRoles::getRoleName)
+                  .map(String::toLowerCase)
+                  .anyMatch(roleNameValue::equalsIgnoreCase);
+                if (valid) {
+                    //if the roleName is SO and the user does not have that role throw an exception
+                    if (roleNameValue.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                        if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+                           throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
+                       }
+                   } else {
+                        throw new BadRequestException("Signing Official Role is the only role supported at this time");
+                    }
+                } else {
+                    throw new BadRequestException("Invalid role name: " + roleNameValue);
+                }
+            }
+            List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(user, roleNameValue);
+            return Response.ok().entity(dars).build();
+        } catch(Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
