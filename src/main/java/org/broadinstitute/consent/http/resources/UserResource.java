@@ -65,29 +65,15 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getName());
             if (Objects.nonNull(roleName)) {
-                boolean valid = EnumSet.allOf(UserRoles.class)
-                  .stream()
-                  .map(UserRoles::getRoleName)
-                  .map(String::toLowerCase)
-                  .anyMatch(roleName::equalsIgnoreCase);
+                boolean valid = UserRoles.isValidRole(roleName);
                 if (valid) {
-                    //if the roleName is SO and the user does not have that role throw an exception
-                    if (roleName.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-                        if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
-                            throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
-                        }
-                    }
-                    //if the roleName is Admin and the user does not have that role throw an exception
-                    if (roleName.equals(UserRoles.ADMIN.getRoleName())) {
-                        if (!user.hasUserRole(UserRoles.ADMIN)) {
-                            throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Admin role.");
-                        }
-                    }
                     //if there is a valid roleName but it is not SO or Admin then throw an exception
                     if (!roleName.equals(UserRoles.ADMIN.getRoleName()) && !roleName.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
                         throw new BadRequestException("Unsupported role name: " + roleName);
                     }
-
+                    if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleName))) {
+                        throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have " + roleName + " role.");
+                    }
                     List<User> users = userService.getUsersByUserRole(user, roleName);
                     return Response.ok().entity(users).build();
                 }

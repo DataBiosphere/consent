@@ -3449,8 +3449,8 @@ paths:
           schema:
             type: String
             enum:
-              - SigningOfficial
               - Admin
+              - SigningOfficial
       tags:
         - User
       responses:
@@ -3463,9 +3463,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
         400:
-          description: Unsupported or Invalid role name, or user does not have the given role
+          description: Unsupported or Invalid role name
         404:
-          description: The role name is SO and the user does not have an Institution
+          description: The user does not have the given role, or role is SO and the user does not have an Institution
         500:
           description: Server error.
   /api/user/{userId}/{roleId}:

@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.enumeration;
 
 import org.broadinstitute.consent.http.resources.Resource;
 
+import java.util.EnumSet;
+
 public enum UserRoles {
 
     MEMBER(Resource.MEMBER, 1),
@@ -44,6 +46,14 @@ public enum UserRoles {
             }
         }
         return null;
+    }
+
+    public static boolean isValidRole(String roleName) {
+        return EnumSet.allOf(UserRoles.class)
+          .stream()
+          .map(UserRoles::getRoleName)
+          .map(String::toLowerCase)
+          .anyMatch(roleName::equalsIgnoreCase);
     }
 
 }

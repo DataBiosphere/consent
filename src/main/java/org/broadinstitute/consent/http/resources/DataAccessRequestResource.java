@@ -161,11 +161,7 @@ public class DataAccessRequestResource extends Resource {
             User user = userService.findUserByEmail(authUser.getName());
             String roleNameValue = roleName.orElse(null);
             if (Objects.nonNull(roleNameValue)) {
-                boolean valid = EnumSet.allOf(UserRoles.class)
-                  .stream()
-                  .map(UserRoles::getRoleName)
-                  .map(String::toLowerCase)
-                  .anyMatch(roleNameValue::equalsIgnoreCase);
+                boolean valid = UserRoles.isValidRole(roleNameValue);
                 if (valid) {
                     //if the roleName is SO and the user does not have that role throw an exception
                     if (roleNameValue.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
