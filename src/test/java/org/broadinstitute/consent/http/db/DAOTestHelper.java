@@ -338,6 +338,7 @@ public class DAOTestHelper {
         Integer institutionId = institutionDAO.insertInstitution("name", "itdirectorName", "itDirectorEmail", userId, new Date());
         userDAO.updateUser("display name", userId, email, institutionId);
         createdUserIds.add(userId);
+        createdInstitutionIds.add(institutionId);
         return userDAO.findUserById(userId);
     }
 
