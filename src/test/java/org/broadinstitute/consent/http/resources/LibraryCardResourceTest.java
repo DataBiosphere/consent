@@ -136,19 +136,6 @@ public class LibraryCardResourceTest {
     assertNotNull(json);
   }
 
-  // Email validation now occurs in service, commenting out for review with plans for deletion if approved
-  // @Test
-  // public void testCreateLibraryCardInvalidEmail() {
-  //   LibraryCard mockCard = mockLibraryCardSetup();
-  //   mockCard.setUserEmail("wrongemail@gmail.com");
-  //   String payload = new Gson().toJson(mockCard);
-  //   when(userService.findUserByEmail(authUser.getName())).thenReturn(user);
-  //   when(libraryCardService.createLibraryCard(any(LibraryCard.class))).thenReturn(mockCard);
-  //   initResource();
-  //   Response response = resource.createLibraryCard(authUser, payload);
-  //   assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
-  // }
-
   @Test
   public void testCreateLibraryCardThrowsIllegalArgumentException() throws Exception {
     LibraryCard mockCard = mockLibraryCardSetup();
