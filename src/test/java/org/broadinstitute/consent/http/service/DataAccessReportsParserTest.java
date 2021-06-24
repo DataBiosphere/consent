@@ -1,9 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 import org.junit.Test;
 
 import java.io.File;
@@ -48,7 +49,7 @@ public class DataAccessReportsParserTest {
         File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
         Date currentDate = new Date();
         Election election = createElection(currentDate);
-        Document dar = createDAR(currentDate);
+        DataAccessRequest dar = createDAR(currentDate);
         FileWriter darWriter = new FileWriter(file);
         parser.setApprovedDARHeader(darWriter);
         parser.addApprovedDARLine(darWriter, election, dar, REQUESTER, ORGANIZATION, CONSENT_NAME, sDUL);
@@ -95,7 +96,7 @@ public class DataAccessReportsParserTest {
         File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
         Date currentDate = new Date();
         Election election = createElection(currentDate);
-        Document dar = createDAR(currentDate);
+        DataAccessRequest dar = createDAR(currentDate);
         FileWriter darWriter = new FileWriter(file);
         parser.setReviewedDARHeader(darWriter);
         parser.addReviewedDARLine(darWriter, election, dar, CONSENT_NAME, sDUL);
@@ -171,19 +172,21 @@ public class DataAccessReportsParserTest {
         return election;
     }
 
-    private Document createDAR(Date currentDate) {
-        Document dar = new Document();
-        Document datasetDetail = new Document();
-        datasetDetail.put(DarConstants.OBJECT_ID, SC_ID);
-        datasetDetail.put("name", NAME);
-        List<Document> detailsList = new ArrayList<>();
+    private DataAccessRequest createDAR(Date currentDate) {
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        DatasetDetailEntry datasetDetail = new DatasetDetailEntry();
+        datasetDetail.setObjectId(SC_ID);
+        datasetDetail.setName(NAME);
+        List<DatasetDetailEntry> detailsList = new ArrayList<>();
         detailsList.add(datasetDetail);
-        dar.put(DarConstants.DATASET_DETAIL, detailsList);
-        dar.put(DarConstants.DATASET_ID, new ArrayList<>());
-        dar.put(DarConstants.DAR_CODE, DAR_CODE);
-        dar.put(DarConstants.TRANSLATED_RESTRICTION, TRANSLATED_USE_RESTRICTION);
-        dar.put(DarConstants.NON_TECH_RUS, RUS_SUMMARY);
-        dar.put(DarConstants.SORT_DATE, new Timestamp(currentDate.getTime()));
+        data.setDatasetDetail(detailsList);
+        data.setDatasetIds(new ArrayList<>());
+        data.setDarCode(DAR_CODE);
+        data.setTranslatedUseRestriction(TRANSLATED_USE_RESTRICTION);
+        data.setNonTechRus(RUS_SUMMARY);
+        dar.setData(data);
+        dar.setSortDate(new Timestamp(currentDate.getTime()));
         return dar;
     }
 }

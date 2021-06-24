@@ -66,7 +66,7 @@ public class DataAccessRequestResourceTest {
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(user.getDacUserId()).thenReturn(dar.getUserId());
         when(userService.findUserByEmail(any())).thenReturn(user);
-        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService, consentService, electionService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService, electionService);
         Consent consent = resource.describeConsentForDAR(authUser, dar.getReferenceId());
         assertNotNull(consent);
     }
@@ -83,7 +83,7 @@ public class DataAccessRequestResourceTest {
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(user.getDacUserId()).thenReturn(dar.getUserId());
         when(userService.findUserByEmail(any())).thenReturn(user);
-        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService, consentService, electionService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService, electionService);
         Consent consent = resource.describeConsentForDAR(authUser, dar.getReferenceId());
         assertNotNull(consent);
     }
@@ -96,7 +96,7 @@ public class DataAccessRequestResourceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(null);
-        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService, consentService, electionService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService, electionService);
         resource.describeConsentForDAR(authUser, dar.getReferenceId());
     }
 
@@ -108,7 +108,7 @@ public class DataAccessRequestResourceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.getData().setDatasetIds(null);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService, consentService, electionService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService, electionService);
         resource.describeConsentForDAR(authUser, dar.getReferenceId());
     }
 
@@ -124,7 +124,7 @@ public class DataAccessRequestResourceTest {
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(user.getDacUserId()).thenReturn(dar.getUserId() + 1);
         when(userService.findUserByEmail(any())).thenReturn(user);
-        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService, consentService, electionService);
+        resource = new DataAccessRequestResource(dataAccessRequestService,userService, consentService, electionService);
         resource.describeConsentForDAR(authUser, dar.getReferenceId());
     }
 
@@ -137,7 +137,6 @@ public class DataAccessRequestResourceTest {
             .thenReturn(Collections.singletonList(manage));
         resource = new DataAccessRequestResource(
             dataAccessRequestService,
-            emailNotifierService,
             userService,
             consentService, electionService);
         Response response = resource.describeManageDataAccessRequestsV2(authUser);

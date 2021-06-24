@@ -82,7 +82,7 @@ public class ConsentVoteResource extends Resource {
     @PermitAll
     public Vote describe(@PathParam("consentId") String consentId,
                          @PathParam("id") Integer id) {
-        return voteService.describeVoteById(id, consentId);
+        return voteService.findVoteById(id);
     }
 
     @DELETE

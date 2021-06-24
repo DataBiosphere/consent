@@ -37,8 +37,6 @@ public class DarConstants {
 
     public static final String SORT_DATE = "sortDate";
 
-    public static final String PROFILE_NAME = "profileName";
-
     public static final String ACADEMIC_BUSINESS_EMAIL = "academicEmail";
 
     public static final String DEPARTMENT = "department";

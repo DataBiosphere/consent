@@ -91,7 +91,7 @@ public class MetricsServiceTest {
     Set<DatasetDTO> dataset = new HashSet<>(generateDatasetDTO(1));
 
     when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(dataset);
-    when(darDAO.findAllDataAccessRequestsForDatasetMetrics(any())).thenReturn(dars);
+    when(darDAO.findAllDataAccessRequestsByDatasetId(any())).thenReturn(dars);
     when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), eq("DataAccess"))).thenReturn(election);
 
     initService();

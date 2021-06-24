@@ -3,30 +3,9 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
-import java.io.IOException;
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
-import javax.mail.MessagingException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
 import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -41,6 +20,30 @@ import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
+import javax.mail.MessagingException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Path("api/dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
@@ -77,11 +80,16 @@ public class DataRequestVoteResource extends Resource {
     @Consumes("application/json")
     @Path("/{id}")
     @RolesAllowed({MEMBER, CHAIRPERSON, DATAOWNER})
-    public Response createDataRequestVote(@Context UriInfo info, Vote rec,
-                                          @PathParam("requestId") String requestId,
-                                          @PathParam("id") Integer voteId) {
+    public Response createDataRequestVote(
+            @Auth AuthUser authUser,
+            @Context UriInfo info,
+            @PathParam("requestId") String requestId,
+            @PathParam("id") Integer voteId,
+            String json) {
         try {
-            Vote vote = voteService.updateVoteById(rec, voteId);
+            Vote parsedVote = new Gson().fromJson(json, Vote.class);
+            validateUserAndVoteId(authUser, voteId);
+            Vote vote = voteService.updateVoteById(parsedVote, voteId);
             validateCollectDAREmail(vote);
             if(electionService.checkDataOwnerToCloseElection(vote.getElectionId())){
                 electionService.closeDataOwnerApprovalElection(vote.getElectionId());
@@ -98,15 +106,17 @@ public class DataRequestVoteResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}/final")
-    @RolesAllowed(CHAIRPERSON)
+    @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response submitFinalAccessVote(
+        @Auth AuthUser authUser,
         @PathParam("requestId") String referenceId,
         @PathParam("id") Integer id,
         String json) {
         try {
-            Vote voteRecord = new Gson().fromJson(json, Vote.class);
-            electionService.submitFinalAccessVoteDataRequestElection(voteRecord.getElectionId(), voteRecord.getVote());
-            Vote updatedVote = voteService.updateVoteById(voteRecord, id);
+            validateUserAndVoteId(authUser, id);
+            Vote parsedVote = new Gson().fromJson(json, Vote.class);
+            electionService.submitFinalAccessVoteDataRequestElection(parsedVote.getElectionId(), parsedVote.getVote());
+            Vote updatedVote = voteService.updateVoteById(parsedVote, id);
             DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
             createDataOwnerElection(updatedVote, dar);
             return Response.ok(updatedVote).build();
@@ -125,9 +135,10 @@ public class DataRequestVoteResource extends Resource {
             @Auth AuthUser authUser,
             @PathParam("requestId") String requestId,
             @PathParam("id") Integer id,
-            String rec) {
+            String json) {
         try {
-            Vote parsedVote = new Gson().fromJson(rec, Vote.class);
+            validateUserAndVoteId(authUser, id);
+            Vote parsedVote = new Gson().fromJson(json, Vote.class);
             Vote updatedVote = voteService.updateVote(parsedVote, id, requestId);
             if (electionService.checkDataOwnerToCloseElection(updatedVote.getElectionId())) {
                 electionService.closeDataOwnerApprovalElection(updatedVote.getElectionId());
@@ -143,27 +154,45 @@ public class DataRequestVoteResource extends Resource {
     @Produces("application/json")
     @Path("/{id}")
     @PermitAll
-    public Vote describe(@PathParam("requestId") String requestId,
-                         @PathParam("id") Integer id) {
-        return voteService.describeVoteById(id, requestId);
+    public Response describe(
+            @Auth AuthUser authUser,
+            @PathParam("requestId") String requestId,
+            @PathParam("id") Integer id) {
+        try {
+            Vote vote = voteService.findVoteById(id);
+            return Response.ok().entity(vote).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
     @Produces("application/json")
     @Path("/final")
     @PermitAll
-    public Vote describeFinalAccessVote(@PathParam("requestId") Integer requestId) {
-        return voteService.describeFinalAccessVoteByElectionId(requestId);
+    public Response describeFinalAccessVote(
+            @Auth AuthUser authUser,
+            @PathParam("requestId") Integer requestId) {
+        try {
+            Vote vote = voteService.describeFinalAccessVoteByElectionId(requestId);
+            return Response.ok().entity(vote).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
     @Produces("application/json")
     @Path("/dataOwner/{dataOwnerId}")
     @PermitAll
-    public Response describeDataOwnerVote(@PathParam("requestId") String requestId, @PathParam("dataOwnerId") Integer dataOwnerId){
-        try{
-            return Response.ok(voteService.describeDataOwnerVote(requestId,dataOwnerId)).build();
-        }catch (Exception e){
+    public Response describeDataOwnerVote(
+            @Auth AuthUser authUser,
+            @PathParam("requestId") String requestId,
+            @PathParam("dataOwnerId") Integer dataOwnerId){
+        try {
+            Vote vote = voteService.describeDataOwnerVote(requestId,dataOwnerId);
+            return Response.ok().entity(vote).build();
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -171,16 +200,27 @@ public class DataRequestVoteResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    public List<Vote> describeAllVotes(@PathParam("requestId") String requestId) {
-        return voteService.describeVotes(requestId);
+    public Response describeAllVotes(
+            @Auth AuthUser authUser,
+            @PathParam("requestId") String requestId) {
+        try {
+            List<Vote> votes = voteService.describeVotes(requestId);
+            return Response.ok().entity(votes).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
-    @RolesAllowed(ADMIN)
-    public Response deleteVote(@PathParam("requestId") String requestId, @PathParam("id") Integer id) {
+    @RolesAllowed({ADMIN})
+    public Response deleteVote(
+            @Auth AuthUser authUser,
+            @PathParam("requestId") String requestId,
+            @PathParam("id") Integer id) {
         try {
+            validateUserAndVoteId(authUser, id);
             voteService.deleteVote(id, requestId);
             return Response.status(Response.Status.OK).entity("Vote was deleted").build();
         } catch (Exception e) {
@@ -190,8 +230,10 @@ public class DataRequestVoteResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed(ADMIN)
-    public Response deleteVotes(@PathParam("requestId") String requestId) {
+    @RolesAllowed({ADMIN})
+    public Response deleteVotes(
+            @Auth AuthUser authUser,
+            @PathParam("requestId") String requestId) {
         try {
             if (requestId == null)
                 return Response.status(Response.Status.BAD_REQUEST).build();
@@ -200,6 +242,18 @@ public class DataRequestVoteResource extends Resource {
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
+    }
+
+    // Validate that the user is an admin OR has the same user id as the target vote's user id
+    // Chairs, Members, and Data Owners should only be able to update their own votes
+    // while Admins can make updates to anyone's vote.
+    private void validateUserAndVoteId(AuthUser authUser, Integer voteId) throws NotFoundException {
+        User user = userService.findUserByEmail(authUser.getName());
+        Vote existingVote = voteService.findVoteById(voteId);
+        validateAuthedRoleUser(
+                Collections.singletonList(UserRoles.ADMIN),
+                user,
+                existingVote.getDacUserId());
     }
 
     private void createDataOwnerElection(Vote vote, DataAccessRequest dar) throws MessagingException, IOException, TemplateException {

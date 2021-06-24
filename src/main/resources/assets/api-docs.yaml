@@ -1287,6 +1287,24 @@ paths:
                   $ref: '#/components/schemas/DataAccessRequest'
         500:
           description: Internal Server Error.
+    get:
+      summary: Get all Data Access Requests
+      description: Returns the list of all Data Access Requests
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns a list of Data Access Requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequest'
+        403:
+          description: The user is not authorized to see all DARs
+        500:
+          description: Server Error
   /api/dar/v2/{referenceId}:
     get:
       summary: Get a Data Access Request by Reference Id
@@ -1385,6 +1403,22 @@ paths:
           description: Returns the created draft Data Access Request.
         500:
           description: Internal Server Error.
+    get:
+      summary: Get all Draft Data Access Requests
+      description: Returns a list of all Draft Data Access Request
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns a list of Draft Data Access Requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequest'
+        500:
+          description: Internal Server Error.
   /api/dar/v2/draft/{referenceId}:
     put:
       summary: Update Draft Data Access Request
@@ -1409,6 +1443,44 @@ paths:
           description: Returns the upated draft Data Access Request.
         403:
           description: Updates are restricted to the create user.
+        500:
+          description: Internal Server Error.
+    get:
+      summary: Get a Draft Data Access Request
+      description: Returns the Draft Data Access Request specified by the referencId
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          schema:
+            type: string
+      tags:
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the draft Data Access Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataAccessRequest'
+        500:
+          description: Internal Server Error.
+  /api/dar/v2/draft/manage:
+    get:
+      summary: Get all Draft Data Access Request Manage Objects
+      description: Returns a list of information (Dar Manage Objects) on Draft DARs
+      tags:
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the draft Data Access Request Manage objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequestManage'
         500:
           description: Internal Server Error.
   /api/dar/v2/{referenceId}/irbDocument:
@@ -1541,7 +1613,7 @@ paths:
         500:
           description: Internal Server Error.
     get:
-      summary: describeDataAccessRequests
+      summary: get all Data Access Requests
       description: Retrieves all the existent DARs
       tags:
         - Data Access Request
@@ -1709,7 +1781,7 @@ paths:
         - Data Access Request
       responses:
         200:
-          description: Returns the created partial Data Access Request, json file.
+          description: Returns the created partial Data Access Requests
         500:
           description: Internal Server Error.
     put:
@@ -1760,8 +1832,8 @@ paths:
           description: Internal Server Error.
   /api/dar/partials/manage:
     get:
-      summary: Get Partial Data Access Requests for user
-      description: Get Partial Data Access Requests for user
+      summary: Get Partial Data Access Request Manage Object for user
+      description: Get information on Partial Data Access Requests for user
       tags:
         - Data Access Request
       responses:
@@ -2105,18 +2177,18 @@ paths:
           description: Could not find consent with the specified Id
   /api/dataRequest/{requestId}/vote:
     get:
-      summary: describeAllVotes
+      summary: Find all Data Access Request votes
       description: Returns the votes of the election with the specified referenceId.
       parameters:
         - name: requestId
           in: path
-          description: referenceId of dar the Elections are on
+          description: Reference Id of Data Access Request the Elections are on
           required: true
           schema:
             type: string
       tags:
         - Vote
-        - DataRequest
+        - Data Access Request
       responses:
         200:
           description: Returns the list of votes.
@@ -2127,7 +2199,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Vote'
     delete:
-      summary: deleteVotes
+      summary: Delete votes for the Data Access Request election
       description: Deletes the votes of the election with the specified reference Id
       parameters:
         - name: requestId
@@ -2138,7 +2210,7 @@ paths:
             type: string
       tags:
         - Vote
-        - DataRequest
+        - Data Access Request
       responses:
         200:
           description: The Votes were deleted.
@@ -2146,12 +2218,12 @@ paths:
           description: The Election doesn't exist.
   /api/dataRequest/{requestId}/vote/{id}:
     get:
-      summary: describe
+      summary: Find the vote for the Data Access Request and Vote ID
       description: Returns the Vote with the specified Id.
       parameters:
         - name: requestId
           in: path
-          description: referenceId of the Election of the requested Vote ( this value is not used in the search , its only to complete the path)
+          description: Reference Id of the Election of the requested Vote (this value is not used in the search, its only to complete the path)
           required: true
           schema:
             type: string
@@ -2163,7 +2235,7 @@ paths:
             type: integer
       tags:
         - Vote
-        - DataRequest
+        - Data Access Request
       responses:
         200:
           description: Returns the requested Vote.
@@ -2174,7 +2246,7 @@ paths:
         404:
           description: The Vote doesn't exist.
     post:
-      summary: createDataRequestVote
+      summary: Create a Data Access Request Vote
       description: update a Vote specified by VoteId of a DataRequest Election.
       requestBody:
         description: Vote to be created
@@ -2186,7 +2258,7 @@ paths:
       parameters:
         - name: requestId
           in: path
-          description: referenceId of the Election of the requested Vote ( this value is not used in the create process , its only to complete the path)
+          description: referenceId of the Election of the requested Vote (this value is not used in the create process, its only to complete the path)
           required: true
           schema:
             type: string
@@ -2198,16 +2270,16 @@ paths:
             type: integer
       tags:
         - Vote
-        - DataRequest
+        - Data Access Request
       responses:
         201:
           description: Returns the updated Vote.
         400:
           description: Required parameter is null
         404:
-          description: The \"to update\" vote doesn't exist.
+          description: The vote id doesn't exist.
     put:
-      summary: updateDataRequestVote
+      summary: Update Data Access Request Vote
       description: update an edited Vote specified by VoteId of a DataRequest Election.
       requestBody:
         description: Vote to be updated
@@ -2231,16 +2303,16 @@ paths:
             type: integer
       tags:
         - Vote
-        - DataRequest
+        - Data Access Request
       responses:
         201:
           description: Returns the updated Vote.
         400:
           description: Required parameter is null
         404:
-          description: The \"to update\" vote doesn't exist.
+          description: The vote doesn't exist.
     delete:
-      summary: deleteVote
+      summary: Delete Vote by id
       description: Deletes the vote specified by the requestId and the VoteId.
       parameters:
         - name: requestId
@@ -2257,7 +2329,7 @@ paths:
             type: integer
       tags:
         - Vote
-        - DataRequest
+        - Data Access Request
       responses:
         200:
           description: The Vote was deleted.
@@ -2265,7 +2337,7 @@ paths:
           description: Could not find vote with this Vote ID.
   /api/dataRequest/{requestId}/vote/{id}/final:
     post:
-      summary: updateFinalAccessConsentVote
+      summary: Update Final Access Consent Vote
       description: update a the FinalAccessVote specified by VoteId of a DataRequest Election and set finalAccessVote Election property to TRUE.
       requestBody:
         description: Vote to be updated
@@ -2289,7 +2361,7 @@ paths:
             type: integer
       tags:
         - Vote
-        - DataRequest
+        - Data Access Request
       responses:
         200:
           description: Returns the updated Vote.
@@ -2316,7 +2388,7 @@ paths:
             type: integer
       tags:
         - Vote
-        - DataRequest
+        - Data Access Request
       responses:
         200:
           description: Returns the requested Vote.

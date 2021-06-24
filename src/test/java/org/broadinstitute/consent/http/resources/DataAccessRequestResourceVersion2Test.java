@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.HttpStatusCodes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -371,5 +373,104 @@ public class DataAccessRequestResourceVersion2Test {
     dar.setUpdateDate(now);
     dar.setSortDate(now);
     return dar;
+  }
+
+  @Test
+  public void getDataAccessRequests() {
+    initResource();
+    List list = Collections.emptyList();
+    when(dataAccessRequestService.getDataAccessRequestsByUserRole(any())).thenReturn(list);
+    Response res = resource.getDataAccessRequests(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
+    assertEquals(true, res.hasEntity());
+  }
+
+  @Test
+  public void getDraftDataAccessRequests() {
+    initResource();
+    List list = Collections.emptyList();
+    User user = new User();
+    user.setDacUserId(1);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findAllDraftDataAccessRequestsByUser(any())).thenReturn(list);
+    Response res = resource.getDraftDataAccessRequests(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
+    assertEquals(true, res.hasEntity());
+  }
+
+  @Test
+  public void getDraftDataAccessRequests_UserNotFound() {
+    initResource();
+    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
+    resource.getDraftDataAccessRequests(authUser);
+    Response res = resource.getDraftDataAccessRequests(authUser);
+    assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+  }
+
+  @Test
+  public void getDraftDar() {
+    initResource();
+    User user = new User();
+    user.setDacUserId(10);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setUserId(10);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    Response res = resource.getDraftDar(authUser, "id");
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
+    assertEquals(true, res.hasEntity());
+  }
+
+  @Test
+  public void getDraftDar_UserNotFound() {
+    initResource();
+    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
+    Response res = resource.getDraftDar(authUser, "id");
+    assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+  }
+
+  @Test
+  public void getDraftDar_DarNotFound() {
+    initResource();
+    User user = new User();
+    user.setDacUserId(10);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenThrow(new NotFoundException());
+    Response res = resource.getDraftDar(authUser, "id");
+    assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+  }
+
+  @Test
+  public void getDraftDar_UserNotAllowed() {
+    initResource();
+    User user = new User();
+    user.setDacUserId(10);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setUserId(11);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    Response res = resource.getDraftDar(authUser, "id");
+    assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+  }
+
+  @Test
+  public void getDraftManageDataAccessRequests() {
+    initResource();
+    List list = Collections.emptyList();
+    User user = new User();
+    user.setDacUserId(10);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.getDraftDataAccessRequestManage(any())).thenReturn(list);
+    Response res = resource.getDraftManageDataAccessRequests(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
+    assertEquals(true, res.hasEntity());
+  }
+
+  @Test
+  public void getDraftManageDataAccessRequests_UserNotFound() {
+    initResource();
+    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
+    Response res = resource.getDraftManageDataAccessRequests(authUser);
+    assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
   }
 }

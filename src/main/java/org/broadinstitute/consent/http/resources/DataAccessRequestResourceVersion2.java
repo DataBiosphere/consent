@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -68,6 +69,18 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     this.gcsService = gcsService;
     this.userService = userService;
     this.matchService = matchService;
+  }
+
+  @GET
+  @Produces("application/json")
+  @PermitAll
+  public Response getDataAccessRequests(@Auth AuthUser authUser) {
+    try {
+      List<DataAccessRequest> dars = dataAccessRequestService.getDataAccessRequestsByUserRole(authUser);
+      return Response.ok().entity(dars).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   @POST
@@ -148,6 +161,37 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
   }
 
+  @GET
+  @Produces("application/json")
+  @Path("/draft")
+  @RolesAllowed(RESEARCHER)
+  public Response getDraftDataAccessRequests(@Auth AuthUser authUser) {
+    try {
+      User user = findUserByEmail(authUser.getName());
+      List<DataAccessRequest> draftDars = dataAccessRequestService.findAllDraftDataAccessRequestsByUser(user.getDacUserId());
+      return Response.ok().entity(draftDars).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces("application/json")
+  @Path("/draft/{referenceId}")
+  @RolesAllowed(RESEARCHER)
+  public Response getDraftDar(@Auth AuthUser authUser, @PathParam("referenceId") String id) {
+    try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
+      if (dar.getUserId().equals(user.getDacUserId())) {
+        return Response.ok().entity(dar).build();
+      }
+      throw new ForbiddenException("User does not have permission");
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @POST
   @Consumes("application/json")
   @Produces("application/json")
@@ -162,6 +206,20 @@ public class DataAccessRequestResourceVersion2 extends Resource {
           dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
       return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces("application/json")
+  @Path("/draft/manage")
+  @RolesAllowed(RESEARCHER)
+  public Response getDraftManageDataAccessRequests(@Auth AuthUser authUser) {
+    try {
+      User user = findUserByEmail(authUser.getName());
+      List<DataAccessRequestManage> partials = dataAccessRequestService.getDraftDataAccessRequestManage(user.getDacUserId());
+      return Response.ok().entity(partials).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
