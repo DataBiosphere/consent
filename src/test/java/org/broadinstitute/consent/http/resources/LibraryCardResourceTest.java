@@ -124,7 +124,7 @@ public class LibraryCardResourceTest {
   }
 
   @Test
-  public void testCreateLibraryCard() {
+  public void testCreateLibraryCard() throws Exception {
     LibraryCard mockCard = mockLibraryCardSetup();
     String payload = new Gson().toJson(mockCard);
     when(userService.findUserByEmail(authUser.getName())).thenReturn(user);
@@ -150,7 +150,7 @@ public class LibraryCardResourceTest {
   // }
 
   @Test
-  public void testCreateLibraryCardThrowsIllegalArgumentException() {
+  public void testCreateLibraryCardThrowsIllegalArgumentException() throws Exception {
     LibraryCard mockCard = mockLibraryCardSetup();
     String payload = new Gson().toJson(mockCard);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
@@ -161,7 +161,7 @@ public class LibraryCardResourceTest {
   }
 
   @Test
-  public void testCreateLibraryCardThrowsConflictException() {
+  public void testCreateLibraryCardThrowsConflictException() throws Exception {
     UnableToExecuteStatementException exception = generateUniqueViolationException();
     String json = new Gson().toJson(mockLibraryCardSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
@@ -172,7 +172,7 @@ public class LibraryCardResourceTest {
   }
 
   @Test
-  public void testCreateLibraryCardThrowsBadRequestException() {
+  public void testCreateLibraryCardThrowsBadRequestException() throws Exception {
     BadRequestException exception = new BadRequestException();
     String json = new Gson().toJson(mockLibraryCardSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
@@ -183,7 +183,7 @@ public class LibraryCardResourceTest {
   }
 
   @Test
-  public void testCreateLibraruCardThrowsNotFoundException() {
+  public void testCreateLibraruCardThrowsNotFoundException() throws Exception {
     NotFoundException exception = new NotFoundException();
     String json = new Gson().toJson(mockLibraryCardSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(user);

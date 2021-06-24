@@ -3,12 +3,12 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 
 import java.util.Date;
@@ -28,7 +28,7 @@ public class LibraryCardService {
         this.userDAO = userDAO;
     }
 
-    public LibraryCard createLibraryCard(LibraryCard libraryCard) {
+    public LibraryCard createLibraryCard(LibraryCard libraryCard) throws Exception {
         throwIfNull(libraryCard);
         checkForValidInstitution(libraryCard.getInstitutionId());
         checkIfCardExists(libraryCard);
@@ -130,7 +130,7 @@ public class LibraryCardService {
     }
 
     //helper method for create method, checks to see if card already exists
-    private void checkIfCardExists(LibraryCard payload) {
+    private void checkIfCardExists(LibraryCard payload) throws Exception {
         Integer userId = payload.getUserId();
         String email = payload.getUserEmail();
         Integer institutionId = payload.getInstitutionId();
@@ -154,7 +154,7 @@ public class LibraryCardService {
 
         if(foundCard.isPresent()) {
             //This exception is a placeholder, what's an exception that can be translated as "CONFLICT"
-            throw new InternalServerErrorException();
+            throw new ConsentConflictException();
         } 
     }
 

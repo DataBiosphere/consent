@@ -4,6 +4,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -22,7 +23,6 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 
 public class LibraryCardServiceTest {
@@ -47,7 +47,7 @@ public class LibraryCardServiceTest {
 
     @Test
     // Test LC create with userId and email
-    public void testCreateLibraryCardFullUserDetails() {
+    public void testCreateLibraryCardFullUserDetails() throws Exception {
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
@@ -67,7 +67,7 @@ public class LibraryCardServiceTest {
 
     @Test
     //Test LC create with only user email (no userId)
-    public void testCreateLibraryCardPartialUserDetailsEmail() {
+    public void testCreateLibraryCardPartialUserDetailsEmail() throws Exception {
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
@@ -90,7 +90,7 @@ public class LibraryCardServiceTest {
 
     @Test
     //Test LC create with only user id (no email)
-    public void testCreateLibraryCardPartialUserDetailsId() {
+    public void testCreateLibraryCardPartialUserDetailsId() throws Exception {
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
@@ -111,7 +111,7 @@ public class LibraryCardServiceTest {
 
     @Test(expected = BadRequestException.class)
     //Negative test, checks if error is thrown if payload email and userId don't match up to those on user record
-    public void testCreateLibraryCardIncorrectUserIdAndEmail() {
+    public void testCreateLibraryCardIncorrectUserIdAndEmail() throws Exception {
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
@@ -131,9 +131,9 @@ public class LibraryCardServiceTest {
         service.createLibraryCard(payload);
     }
 
-    @Test(expected = InternalServerErrorException.class)
+    @Test(expected = ConsentConflictException.class)
     //Negative test, checks to see if error thrown if card already exists on user id and institution id
-    public void testCreateLibraryCardAlreadyExistsOnUserId(){
+    public void testCreateLibraryCardAlreadyExistsOnUserId() throws Exception{
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
@@ -145,9 +145,9 @@ public class LibraryCardServiceTest {
         service.createLibraryCard(payload);
     }
 
-    @Test(expected = InternalServerErrorException.class)
+    @Test(expected = ConsentConflictException.class)
     // Negative test, checks to see if error thrown if card already exists on user email and institution id
-    public void testCreateLibraryCardAlreadyExistsOnUserEmail() {
+    public void testCreateLibraryCardAlreadyExistsOnUserEmail() throws Exception {
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
@@ -164,7 +164,7 @@ public class LibraryCardServiceTest {
 
     @Test(expected = BadRequestException.class)
     //Negative test, checks to see if error is thrown if email and userId are not provided
-    public void testCreateLibraryCardNoUserDetails() {
+    public void testCreateLibraryCardNoUserDetails() throws Exception {
         initService();
         Institution institution = testInstitution();
         LibraryCard payload = testLibraryCard(institution.getId(), null);
@@ -175,7 +175,7 @@ public class LibraryCardServiceTest {
 
     @Test(expected = IllegalArgumentException.class)
     //Negative test, checks if error is thrown on null institutionId
-    public void testCreateLibraryCard_InvalidInstitution() {
+    public void testCreateLibraryCard_InvalidInstitution() throws Exception {
         User user = testUser(1);
         LibraryCard libraryCard = testLibraryCard(1, user.getDacUserId());
 
@@ -192,7 +192,7 @@ public class LibraryCardServiceTest {
 
     @Test(expected = NotFoundException.class)
     //Negative test, checks to see if error is thrown on null payload
-    public void testCreateLibraryCardNullPayload() {
+    public void testCreateLibraryCardNullPayload() throws Exception {
         initService();
         service.createLibraryCard(null);
     }

@@ -19,6 +19,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -47,6 +48,7 @@ abstract public class Resource {
     public final static String DATAOWNER = "DataOwner";
     public final static String MEMBER = "Member";
     public final static String RESEARCHER = "Researcher";
+    public final static String SIGNINGOFFICIAL = "SigningOfficial";
 
     // NOTE: implement more Postgres vendor codes as we encounter them
     private final static Map<String, Integer> vendorCodeStatusMap = Map.ofEntries(
@@ -103,6 +105,8 @@ abstract public class Resource {
     private static final Map<Class<? extends Throwable>, ExceptionHandler> dispatch = new HashMap<>();
 
     static {
+        dispatch.put(ConsentConflictException.class, e-> 
+            Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
         dispatch.put(UserRoleHandlerException.class, e ->
                 Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
         dispatch.put(UnsupportedOperationException.class, e ->
