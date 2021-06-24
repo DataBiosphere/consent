@@ -59,8 +59,9 @@ public class UserResource extends Resource {
 
     @GET
     @Produces("application/json")
+    @Path("/role/{roleName}")
     @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
-    public Response getUsers(@Auth AuthUser authUser, @QueryParam("roleName") String roleName) {
+    public Response getUsers(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
         try {
             User user = userService.findUserByEmail(authUser.getName());
             if (Objects.nonNull(roleName)) {

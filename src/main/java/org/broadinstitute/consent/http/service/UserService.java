@@ -92,8 +92,7 @@ public class UserService {
     public List<User> getUsersByUserRole(User user, String roleName) {
         if (roleName.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
             if (Objects.nonNull(user.getInstitutionId())) {
-                List<User> users = new ArrayList<>(userDAO.findUsersByInstitution(user.getInstitutionId()));
-                return users;
+                return userDAO.findUsersByInstitution(user.getInstitutionId());
             } else {
                 throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") "+ "is not associated with an Institution.");
             }

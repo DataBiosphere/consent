@@ -3437,6 +3437,37 @@ paths:
           description: User not found
         500:
           description: Server error.
+  /api/user/role/{roleName}:
+    get:
+      summary: Get a list of users that you have access to based on your role
+      description: Finds users based on the user role and permissions
+      parameters:
+        - name: roleName
+          in: path
+          description: The name of the role of the user
+          required: true
+          schema:
+            type: String
+            enum:
+              - SigningOfficial
+              - Admin
+      tags:
+        - User
+      responses:
+        200:
+          description: The list of users, along with their roles, does not include properties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        400:
+          description: Unsupported or Invalid role name, or user does not have the given role
+        404:
+          description: The role name is SO and the user does not have an Institution
+        500:
+          description: Server error.
   /api/user/{userId}/{roleId}:
     put:
       summary: Add a role to a user
