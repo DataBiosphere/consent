@@ -9,6 +9,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -63,23 +64,35 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getName());
             if (Objects.nonNull(roleName)) {
-                //if the roleName is SO and the user does not have that role throw an exception
-                if (roleName.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-                    if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
-                        throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
+                boolean valid = EnumSet.allOf(UserRoles.class)
+                  .stream()
+                  .map(UserRoles::getRoleName)
+                  .map(String::toLowerCase)
+                  .anyMatch(roleName::equalsIgnoreCase);
+                if (valid) {
+                    //if the roleName is SO and the user does not have that role throw an exception
+                    if (roleName.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                        if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+                            throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
+                        }
                     }
+                    //if the roleName is Admin and the user does not have that role throw an exception
+                    if (roleName.equals(UserRoles.ADMIN.getRoleName())) {
+                        if (!user.hasUserRole(UserRoles.ADMIN)) {
+                            throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Admin role.");
+                        }
+                    }
+                    //if there is a valid roleName but it is not SO or Admin then throw an exception
+                    if (!roleName.equals(UserRoles.ADMIN.getRoleName()) && !roleName.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                        throw new BadRequestException("Unsupported role name: " + roleName);
+                    }
+
+                    List<User> users = userService.getUsersByUserRole(user, roleName);
+                    return Response.ok().entity(users).build();
                 }
-                //if the roleName is Admin and the user does not have that role throw an exception
-                if (roleName.equals(UserRoles.ADMIN.getRoleName())) {
-                    if (!user.hasUserRole(UserRoles.ADMIN)) {
-                        throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Admin role.");
-                    }
-                //if there is a roleName but it is not SO or Admin then throw an exception
-                } else {
+                else {
                     throw new BadRequestException("Invalid role name: " + roleName);
                 }
-                List<User> users = userService.getUsersByUserRole(user, roleName);
-                return Response.ok().entity(users).build();
             } else {
                 throw new BadRequestException("No user role specified.");
             }

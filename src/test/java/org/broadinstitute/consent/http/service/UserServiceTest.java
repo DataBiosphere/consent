@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import liquibase.pro.packaged.U;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -328,6 +327,7 @@ public class UserServiceTest {
     @Test(expected = NotFoundException.class)
     public void testGetUsersByUserRole_SO_noInstitution() {
         User u = generateUser();
+        u.setInstitutionId(null);
         initService();
         service.getUsersByUserRole(u, "SigningOfficial");
     }
@@ -335,9 +335,9 @@ public class UserServiceTest {
     @Test
     public void testGetUsersByUserRole_Admin() {
         User u = generateUser();
-        when(userDAO.findUsers()).thenReturn(new HashSet<>(Arrays.asList(new User(), new User(), new User())));
+        when(userDAO.findUsers()).thenReturn(new HashSet<>(Arrays.asList(generateUser(), generateUser(), generateUser())));
         initService();
-        List<User> users = service.getUsersByUserRole(u, "SigningOfficial");
+        List<User> users = service.getUsersByUserRole(u, "Admin");
         assertNotNull(users);
         assertEquals(3, users.size());
     }

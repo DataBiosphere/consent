@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import liquibase.pro.packaged.A;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -105,7 +104,8 @@ public class UserResourceTest {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test void testGetUsers_SO() {
+  @Test
+  public void testGetUsers_SO() {
     User user = createUserWithRole();
     user.setRoles(Arrays.asList(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -116,7 +116,8 @@ public class UserResourceTest {
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
-  @Test void testGetUsers_SO_NoRole() {
+  @Test
+  public void testGetUsers_SO_NoRole() {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
@@ -125,7 +126,8 @@ public class UserResourceTest {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test void testGetUsers_Admin() {
+  @Test
+  public void testGetUsers_Admin() {
     User user = createUserWithRole();
     user.setRoles(Arrays.asList(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -136,7 +138,8 @@ public class UserResourceTest {
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
-  @Test void testGetUsers_Admin_NoRole() {
+  @Test
+  public void testGetUsers_Admin_NoRole() {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
@@ -145,7 +148,8 @@ public class UserResourceTest {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test void testGetUsers_UnsupportedRole() {
+  @Test
+  public void testGetUsers_UnsupportedRole() {
       User user = createUserWithRole();
       when(userService.findUserByEmail(any())).thenReturn(user);
       initResource();
@@ -154,7 +158,8 @@ public class UserResourceTest {
       assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
-  @Test void testGetUsers_InvalidRole() {
+  @Test
+  public void testGetUsers_InvalidRole() {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
@@ -163,7 +168,8 @@ public class UserResourceTest {
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
-  @Test void testGetUsers_NoRole() {
+  @Test
+  public void testGetUsers_NoRole() {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
@@ -172,7 +178,8 @@ public class UserResourceTest {
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
-  @Test void testGetUsers_UserNotFound() {
+  @Test
+  public void testGetUsers_UserNotFound() {
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     initResource();
 
