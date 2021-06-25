@@ -1,23 +1,10 @@
 package org.broadinstitute.consent.http.exceptions;
 
-public class ConsentConflictException extends Exception{
-  public ConsentConflictException() {
-    super();
-  }
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ClientErrorException;
 
-  public ConsentConflictException(String message) {
-    super(message);
-  }
-
-  public ConsentConflictException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public ConsentConflictException(Throwable cause) {
-    super(cause);
-  }
-
-  public ConsentConflictException(String message, Throwable cause, boolean enableSuppresion, boolean writableStackTrace) {
-    super(message, cause, enableSuppresion, writableStackTrace);
-  }
+public class ConsentConflictException extends ClientErrorException {
+ public ConsentConflictException() {
+   super(Response.Status.CONFLICT);
+ }
 }

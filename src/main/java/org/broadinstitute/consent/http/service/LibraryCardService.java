@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
@@ -160,20 +159,16 @@ public class LibraryCardService {
 
     //Helper method to process user data on create LC payload
     //Needed since CREATE has a unique situation where admins can create LCs without an active user (save with userEmail instead)
-    private LibraryCard processUserOnNewLC(LibraryCard card) {
+    private LibraryCard processUserOnNewLC(LibraryCard card) throws Exception {
         if (Objects.isNull(card.getUserId())) {
             if (Objects.isNull(card.getUserEmail())) {
                 throw new BadRequestException();
             } else {
-                try{
-                    //If a user is found, update the card to have the correct userId associated
-                    User user = userDAO.findUserByEmail(card.getUserEmail());
+                //If a user is found, update the card to have the correct userId associated
+                User user = userDAO.findUserByEmail(card.getUserEmail());
+                if(!Objects.isNull(user)) {
                     Integer userId = user.getDacUserId();
                     card.setUserId(userId);
-                } catch(Exception e) {
-                    //Exception here means the email has not been used
-                    //Does not mean card is invalid, it just means it will only have user email provided
-                    //As such card can move forward as is
                 }
             }
         } else {
@@ -181,7 +176,7 @@ public class LibraryCardService {
             User user = userDAO.findUserById(card.getUserId());
             if(Objects.nonNull(user.getEmail()) && !(user.getEmail().equalsIgnoreCase(card.getUserEmail()))) {
                 //throw error here, user is trying to associate incorrect userId with email
-                throw new BadRequestException();
+                throw new ConsentConflictException();
             }
         }
         return card;

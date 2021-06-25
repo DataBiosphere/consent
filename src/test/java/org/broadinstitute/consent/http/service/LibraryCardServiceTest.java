@@ -109,7 +109,7 @@ public class LibraryCardServiceTest {
         service.createLibraryCard(payload);
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test(expected = ConsentConflictException.class)
     //Negative test, checks if error is thrown if payload email and userId don't match up to those on user record
     public void testCreateLibraryCardIncorrectUserIdAndEmail() throws Exception {
         initService();
