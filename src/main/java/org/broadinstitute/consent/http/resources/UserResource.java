@@ -165,7 +165,7 @@ public class UserResource extends Resource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/SigningOfficials")
-    @PermitAll
+    @RolesAllowed(RESEARCHER)
     public Response getSOsForInstitution(@Auth AuthUser authUser) {
         try {
             User user = userService.findUserByEmail(authUser.getName());
