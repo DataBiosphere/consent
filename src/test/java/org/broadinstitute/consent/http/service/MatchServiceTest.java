@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -22,8 +21,6 @@ import org.broadinstitute.consent.http.models.grammar.Not;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
 import org.broadinstitute.consent.http.models.matching.ResponseMatchingObject;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -83,7 +80,6 @@ public class MatchServiceTest {
     private static ResponseMatchingObject resmo1;
     private static ResponseMatchingObject resmo2;
     private static Match sampleMatch1;
-    private static Match sampleMatch2;
 
     @Mock
     private Client clientMock;
@@ -98,9 +94,7 @@ public class MatchServiceTest {
     @Mock
     private UseRestrictionConverter useRestrictionConverter;
 
-    private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
-
-    private void initService() {
+   private void initService() {
         service = new MatchService(clientMock, config, consentDAO, matchDAO,
                 electionDAO, dataAccessRequestDAO, dataSetDAO,
                 useRestrictionConverter);
@@ -138,7 +132,6 @@ public class MatchServiceTest {
         resmo2 = new ResponseMatchingObject(false, reqmo2);
 
         sampleMatch1 = new Match(1, "CONS-1", "DAR-2", true, false, new Date());
-        sampleMatch2 = new Match(2, "CONS-2", "DAR-2", true, false, new Date());
     }
 
     @Before
@@ -327,13 +320,7 @@ public class MatchServiceTest {
         when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
         when(clientMock.target(config.getMatchURL())).thenReturn(target);
 
-        Document document = Document.parse(gson.toJson(dar2.getData()));
-        document.put(DarConstants.DATA_ACCESS_REQUEST_ID, dar2.getId());
-        document.put(DarConstants.REFERENCE_ID, dar2.getReferenceId());
-        document.put(DarConstants.CREATE_DATE, dar2.getCreateDate());
-        document.put(DarConstants.SORT_DATE, dar2.getSortDate());
-
-        when(dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId)).thenReturn(document);
+        when(dataAccessRequestService.findByReferenceId(referenceId)).thenReturn(dar2);
         when(matchDAO.findMatchById(any())).thenReturn(sampleMatch1);
     }
 
