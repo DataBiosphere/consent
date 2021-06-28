@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.HttpStatusCodes;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -203,6 +204,25 @@ public class UserResourceTest {
     assertEquals(400, response.getStatus());
   }
 
+  @Test
+  public void testGetSOsForInstitution() {
+    User user = createUserWithInstitution();
+    User so = createUserWithRole();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.findSOsByInstitutionId(any())).thenReturn(Arrays.asList(so, so, so));
+    initResource();
+    Response response = userResource.getSOsForInstitution(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testGetSOsForInstitution_UserNotFound() {
+    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
+    initResource();
+    Response response = userResource.getSOsForInstitution(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
   private User createUserWithRole() {
     User user = new User();
     user.setDacUserId(1);
@@ -214,6 +234,15 @@ public class UserResourceTest {
     researcher.setRoleId(UserRoles.RESEARCHER.getRoleId());
     roles.add(researcher);
     user.setRoles(roles);
+    return user;
+  }
+
+  private User createUserWithInstitution() {
+    User user = new User();
+    user.setDacUserId(1);
+    user.setDisplayName("Test Name");
+    user.setEmail("Test Email");
+    user.setInstitutionId(1);
     return user;
   }
 

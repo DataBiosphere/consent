@@ -162,6 +162,20 @@ public class UserResource extends Resource {
         return Response.ok().build();
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/SigningOfficials")
+    @PermitAll
+    public Response getSOsForInstitution(@Auth AuthUser authUser) {
+        try {
+            User user = userService.findUserByEmail(authUser.getName());
+            List<User> signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
+            return Response.ok().entity(signingOfficials).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
     /**
      * Convenience method for a generic user object with custom properties added
      * @param user The User
