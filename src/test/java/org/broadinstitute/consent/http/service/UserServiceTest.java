@@ -311,6 +311,23 @@ public class UserServiceTest {
         User user = service.updateDACUserById(dacUsers, u.getDacUserId());
     }
 
+    @Test
+    public void testFindSOsByInstitutionId() {
+        User u = generateUser();
+        Integer institutionId = u.getInstitutionId();
+        when(userDAO.getSOsByInstitution(any())).thenReturn(Arrays.asList(u, u, u));
+        initService();
+        List<User> users = service.findSOsByInstitutionId(institutionId);
+        assertEquals(3, users.size());
+    }
+
+    @Test
+    public void testFindSOsByInstitutionId_NullId() {
+        initService();
+        List<User> users = service.findSOsByInstitutionId(null);
+        assertEquals(0, users.size());
+    }
+
     private User generateUser() {
         User u = new User();
         int i1 = RandomUtils.nextInt(5, 10);

@@ -168,6 +168,13 @@ public class UserService {
         userDAO.updateEmailPreference(preference, userId);
     }
 
+    public List<User> findSOsByInstitutionId(Integer institutionId) {
+        if (Objects.isNull(institutionId)) {
+            return Collections.emptyList();
+        }
+       return userDAO.getSOsByInstitution(institutionId);
+    }
+
     private void validateRequiredFields(User user) {
         if (Objects.isNull(user.getDisplayName()) || StringUtils.isEmpty(user.getDisplayName())) {
             throw new BadRequestException("Display Name cannot be empty");
