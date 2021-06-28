@@ -1233,36 +1233,6 @@ paths:
           description: Malformed user entity.
         403:
           description: User must have appropriate roles to update different users' information.
-  /api/dacuser/status/{userId}:
-    put:
-      summary: updateUserStatusById
-      description: |
-        DEPRECATED: Use PUT /api/dacuser/{id}
-        Update a user's status by user id
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-        - name: json
-          in: body
-          schema:
-            type: object
-          description: |
-            JSON object with a "status" member. Statuses allowed are "pending", "approved", or
-            "rejected".
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the updated user
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        500:
-          description: Server Error
   /api/dar/v2:
     post:
       summary: Create Data Access Request, version 2
@@ -1612,14 +1582,6 @@ paths:
           description: Returns the created Data Access Request, json file.
         500:
           description: Internal Server Error.
-    get:
-      summary: get all Data Access Requests
-      description: Retrieves all the existent DARs
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the DAR collection
   /api/dar/cancel/{id}:
     put:
       summary: Cancel a Data Access Request
@@ -1662,34 +1624,6 @@ paths:
       responses:
         200:
           description: 'Returns a DARModalDetails initialized with the DAR associated with the provided Id.'
-  /api/dar/find/{id}:
-    get:
-      summary: describeSpecificFields
-      description: Returns the requested fields present in the DAR identified by the ID
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-        - name: fields
-          in: query
-          description: The name of the required fields
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: A JSON with the requested fields or the whole DAR if there wasn't any requested fields in the parameter.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataAccessRequest'
-        404:
-          description: The requested DAR couldn't be found.
   /api/dar/find/{id}/consent:
     get:
       summary: describeConsentForDAR
@@ -1774,90 +1708,6 @@ paths:
         responses:
          200:
            description: 'Returns an integer corresponding to the amount of unreviewed DARs'
-  /api/dar/partial:
-    post:
-      summary: Create Partial Data Access Request
-      description: |
-        DEPRECATED: Use POST /api/dar/v2/draft
-        Create Partial Data Access Request
-      parameters:
-        - name: dar
-          in: body
-          description: The fields that represent a DAR, json format.
-          required: true
-          schema:
-            $ref: '#/components/schemas/DataAccessRequest'
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the created partial Data Access Requests
-        500:
-          description: Internal Server Error.
-    put:
-      summary: Update Partial Data Access Request
-      description: |
-        DEPRECATED: Use PUT /api/dar/v2/draft/{referenceId}:
-        Update Partial Data Access Request
-      parameters:
-        - name: dar
-          in: body
-          description: |
-            The fields that represent a DAR, json format.
-            Must contain a `referenceId` for the updated DAR.
-            User must be the creator of the DAR.
-          required: true
-          schema:
-            $ref: '#/components/schemas/DataAccessRequest'
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the updated partial Data Access Request, json file.
-        403:
-          description: Forbidden
-        404:
-          description: DAR or User Not Found
-        500:
-          description: Internal Server Error.
-  /api/dar/partial/{id}:
-    delete:
-      summary: Delete Partial Data Access Request
-      description: Delete Partial Data Access Request
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Data Access Request was deleted
-        403:
-          description: Forbidden
-        500:
-          description: Internal Server Error.
-  /api/dar/partials/manage:
-    get:
-      summary: Get Partial Data Access Request Manage Object for user
-      description: Get information on Partial Data Access Requests for user
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Partial Data Access Requests
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DataAccessRequest'
-        500:
-          description: Internal Server Error.
-
   /api/dataRequest/cases/pending:
     get:
       summary: Get Data Access Request Pending Cases
@@ -1868,31 +1718,6 @@ paths:
       responses:
         200:
           description: A list of Data Access Request Pending Cases
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PendingCase'
-  /api/dataRequest/cases/pending/{dacUserId}:
-    get:
-      summary: getDataRequestPendingCases
-      description: |
-        DEPRECATED: Use GET /api/dataRequest/cases/pending
-        Retrieves the election the user has with votes pending.
-      parameters:
-        - name: dacUserId
-          in: path
-          description: The id of the user
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-        - Pending Case
-      responses:
-        200:
-          description: A list of Pending Cases.
           content:
             application/json:
               schema:
