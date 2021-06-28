@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 import com.google.inject.Inject;
 import java.io.File;
@@ -37,9 +38,6 @@ import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -220,9 +218,9 @@ public class SummaryService {
                 List<Election> reviewedRPElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue());
                 if (!CollectionUtils.isEmpty(reviewedElections)) {
                     List<String> referenceIds = reviewedElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-                    List<Document> dataAccessRequests = dataAccessRequestService.getDataAccessRequestsByReferenceIdsAsDocuments(referenceIds);
+                    List<DataAccessRequest> dataAccessRequests = dataAccessRequestService.getDataAccessRequestsByReferenceIds(referenceIds);
                     List<Integer> datasetIds = dataAccessRequests.stream().
-                            map(dar -> DarUtil.getIntegerList(dar, DarConstants.DATASET_ID)).
+                            map(dar -> Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : new ArrayList<Integer>()).
                             flatMap(List::stream).
                             collect(Collectors.toList());
                     List<Association> associations = datasetDAO.getAssociationsForDataSetIdList(new ArrayList<>(datasetIds));
@@ -270,15 +268,15 @@ public class SummaryService {
                         } catch (IllegalStateException e){
                             match = null;
                         }
-                        Document dar = findAssociatedDAR(dataAccessRequests, election.getReferenceId());
-                        if (dar != null && !dar.isEmpty()) {
-                            List<Integer> datasetId =   DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+                        DataAccessRequest dar = findAssociatedDAR(dataAccessRequests, election.getReferenceId());
+                        if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
+                            List<Integer> datasetId = dar.getData().getDatasetIds();
                             if (CollectionUtils.isNotEmpty(datasetId)) {
                                 Association association = associations.stream().filter((as) -> as.getDataSetId().equals(datasetId.get(0))).collect(singletonCollector());
                                 Election consentElection = reviewedConsentElections.stream().filter(re -> re.getReferenceId().equals(association.getConsentId())).collect(singletonCollector());
                                 List<Vote> electionConsentVotes = consentVotes.stream().filter(cv -> cv.getElectionId().equals(consentElection.getElectionId())).collect(Collectors.toList());
                                 Vote chairPersonConsentVote =  electionConsentVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
-                                summaryWriter.write(dar.get(DarConstants.DAR_CODE) + SEPARATOR);
+                                summaryWriter.write(dar.getData().getDarCode() + SEPARATOR);
                                 summaryWriter.write(formatLongToDate(election.getCreateDate().getTime()) + SEPARATOR);
                                 summaryWriter.write(chairPerson.getDisplayName() + SEPARATOR);
                                 summaryWriter.write( booleanToString(finalVote.getVote()) + SEPARATOR);
@@ -295,15 +293,16 @@ public class SummaryService {
                                     summaryWriter.write("-" + SEPARATOR);
                                     summaryWriter.write("-" + SEPARATOR);
                                 }
-                                summaryWriter.write( dar.get(DarConstants.INVESTIGATOR)  + SEPARATOR);
-                                summaryWriter.write( dar.get(DarConstants.PROJECT_TITLE)  + SEPARATOR);
-                                List<Integer> dataSetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+                                User u = userDAO.findUserById(dar.getUserId());
+                                summaryWriter.write( u.getDisplayName()  + SEPARATOR);
+                                summaryWriter.write( dar.getData().getProjectTitle() + SEPARATOR);
+                                List<Integer> dataSetIds =  dar.getData().getDatasetIds();
                                 List<String> dataSetUUIds = new ArrayList<>();
                                 for (Integer id : dataSetIds) {
                                     dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
                                 }
                                 summaryWriter.write( StringUtils.join(dataSetUUIds, ",")  + SEPARATOR);
-                                summaryWriter.write( formatLongToDate(dar.getLong(DarConstants.SORT_DATE))  + SEPARATOR);
+                                summaryWriter.write( formatLongToDate(dar.getSortDate().getTime())  + SEPARATOR);
                                 for (User user : electionUsers){
                                     summaryWriter.write( user.getDisplayName() + SEPARATOR);
                                 }
@@ -311,7 +310,7 @@ public class SummaryService {
                                     summaryWriter.write(
                                             SEPARATOR);
                                 }
-                                summaryWriter.write( booleanToString(!dar.containsKey(DarConstants.RESTRICTION))+ SEPARATOR);
+                                summaryWriter.write( booleanToString(Objects.isNull(dar.getData().getRestriction()))+ SEPARATOR);
 
                                 if (Objects.nonNull(chairPersonVote)) {
                                     summaryWriter.write(booleanToString(chairPersonVote.getVote()) + SEPARATOR);
@@ -510,11 +509,11 @@ public class SummaryService {
         );
     }
 
-    private Document findAssociatedDAR(List<Document> dataAccessRequests, String referenceId) {
-        Optional<Document> documentOption = dataAccessRequests.stream().
-                filter(d -> d.getString(DarConstants.REFERENCE_ID).equalsIgnoreCase(referenceId)).
+    private DataAccessRequest findAssociatedDAR(List<DataAccessRequest> dataAccessRequests, String referenceId) {
+        Optional<DataAccessRequest> darOption = dataAccessRequests.stream().
+                filter(d -> Objects.nonNull(d) ? d.getReferenceId().equalsIgnoreCase(referenceId) : false).
                 findFirst();
-        return documentOption.orElse(null);
+        return darOption.orElse(null);
     }
 
     private String booleanToString(Boolean b) {
