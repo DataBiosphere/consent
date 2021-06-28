@@ -152,7 +152,6 @@ public class LibraryCardService {
         }).findFirst();
 
         if(foundCard.isPresent()) {
-            //This exception is a placeholder, what's an exception that can be translated as "CONFLICT"
             throw new ConsentConflictException();
         } 
     }
@@ -174,6 +173,9 @@ public class LibraryCardService {
         } else {
             //check if userId exists
             User user = userDAO.findUserById(card.getUserId());
+            if(Objects.isNull(user)) {
+                throw new NotFoundException();
+            }
             if(Objects.nonNull(user.getEmail()) && !(user.getEmail().equalsIgnoreCase(card.getUserEmail()))) {
                 //throw error here, user is trying to associate incorrect userId with email
                 throw new ConsentConflictException();
