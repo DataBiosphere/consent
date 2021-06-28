@@ -36,14 +36,6 @@ public class DataRequestCasesResource extends Resource {
     }
 
     @GET
-    @Path("/pending")
-    @RolesAllowed({CHAIRPERSON, MEMBER})
-    public Response getDataRequestPendingCasesByAuthUser(@Auth AuthUser authUser) {
-        List<PendingCase> pendingCases = pendingCaseService.describeDataRequestPendingCases(authUser);
-        return Response.ok().entity(pendingCases).build();
-    }
-
-    @GET
     @Path("/pending/dataOwner/{dataOwnerId}")
     @RolesAllowed({CHAIRPERSON, DATAOWNER})
     public Response getDataOwnerPendingCases(@PathParam("dataOwnerId") Integer dataOwnerId, @Auth AuthUser authUser) {
