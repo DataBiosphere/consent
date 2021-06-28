@@ -15,15 +15,10 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.broadinstitute.consent.http.service.WhitelistService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,32 +58,6 @@ public class GCSService {
         this.config = config;
     }
 
-    //method only called by whitelist service 
-    //deprecated, to be removed along with whitelist classes
-    public GenericUrl postWhitelist(String content, String fileName) {
-        BlobId blobId = BlobId.of(config.getBucket(), "whitelist/" + fileName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
-        Blob blob = storage.create(blobInfo, content.getBytes());
-        return new GenericUrl(blob.getMediaLink());
-    }
-
-    //method only called by whitelist cache
-    //deprecated, to be removed along with whitelist classes
-    public String getMostRecentWhitelist() throws Exception {
-        try {
-            Optional<Blob> whitelist = listWhitelistItems().stream().findFirst();
-            if (whitelist.isPresent()) {
-                return new String(whitelist.get().getContent());
-            } else {
-                logger.error("Most recent whitelist does not exist.");
-                throw new Exception("Most recent whitelist does not exist.");
-            }
-        } catch (Exception e) {
-            logger.error("Error getting most recent whitelist: " + e.getMessage());
-            throw new Exception("Error getting most recent whitelist: " + e.getMessage());
-        }
-    }
-
     /**
      * Get the root bucket configured for this environment. Returns a Bucket with all possible
      * metadata values.
@@ -97,22 +66,6 @@ public class GCSService {
      */
     public Bucket getRootBucketWithMetadata() {
         return storage.get(config.getBucket(), Storage.BucketGetOption.fields(Storage.BucketField.values()));
-    }
-
-    //method only called by whitelist service 
-    //deprecated, to be removed along with whitelist service and resource classes
-    private List<Blob> listWhitelistItems() {
-        Bucket bucket = storage.get(config.getBucket());
-        Page<Blob> blobs = bucket.list();
-        List<Blob> matchingBlobs = StreamSupport.
-                stream(blobs.iterateAll().spliterator(), false).
-                filter(b -> !b.isDirectory()).
-                filter(b -> b.getName().contains(WhitelistService.WHITELIST_FILE_PREFIX)).
-                collect(Collectors.toList());
-        Comparator<Blob> comparator = Comparator.comparing(BlobInfo::getCreateTime);
-        Comparator<Blob> reversed = comparator.reversed();
-        matchingBlobs.sort(reversed);
-        return matchingBlobs;
     }
 
     /**
