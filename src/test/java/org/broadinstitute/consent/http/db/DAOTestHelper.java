@@ -331,6 +331,16 @@ public class DAOTestHelper {
         return userDAO.findUserById(userId);
     }
 
+    protected User createUserWithInstitution() {
+        int i1 = RandomUtils.nextInt(5, 10);
+        String email = RandomStringUtils.randomAlphabetic(i1);
+        Integer userId = userDAO.insertUser(email, "display name", new Date());
+        Integer institutionId = institutionDAO.insertInstitution("name", "itdirectorName", "itDirectorEmail", userId, new Date());
+        userDAO.updateUser("display name", userId, email, institutionId);
+        createdUserIds.add(userId);
+        return userDAO.findUserById(userId);
+    }
+
     protected User createUserWithRole(Integer roleId) {
         int i1 = RandomUtils.nextInt(5, 10);
         int i2 = RandomUtils.nextInt(5, 10);
@@ -445,13 +455,23 @@ public class DAOTestHelper {
     }
 
     protected DataAccessRequest createDataAccessRequestV2() {
+        Integer userId = createUser().getDacUserId();
+        return insertDAR(userId);
+    }
+
+    protected Integer createDataAccessRequestUserWithInstitute() {
+        User user = createUserWithInstitution();
+        insertDAR(user.getDacUserId());
+        return user.getInstitutionId();
+    }
+
+    private DataAccessRequest insertDAR(Integer userId) {
         DataAccessRequestData data;
         Date now = new Date();
-        Integer userId = createUser().getDacUserId();
         try {
             String darDataString = FileUtils.readFileToString(
-                    new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
-                    Charset.defaultCharset());
+              new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
+              Charset.defaultCharset());
             data = DataAccessRequestData.fromString(darDataString);
             String referenceId = UUID.randomUUID().toString();
             dataAccessRequestDAO.insertVersion2(referenceId, userId, now, now, now, now, data);

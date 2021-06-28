@@ -1,5 +1,18 @@
 package org.broadinstitute.consent.http.service;
 
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DatasetDetailEntry;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -22,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 
 import com.google.gson.Gson;
@@ -38,17 +52,6 @@ import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserFields;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -245,6 +248,7 @@ public class DataAccessRequestServiceTest {
 
     @Test
     public void testDescribeDataAccessRequestManageV2() {
+        User user = new User();
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setData(new DataAccessRequestData());
@@ -268,7 +272,7 @@ public class DataAccessRequestServiceTest {
         when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Collections.singleton(d));
         initService();
 
-        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(authUser);
+        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(user, null);
         assertNotNull(manages);
         assertFalse(manages.isEmpty());
         assertEquals(dar.getReferenceId(), manages.get(0).getDar().getReferenceId());
@@ -276,6 +280,55 @@ public class DataAccessRequestServiceTest {
         assertEquals(e.getElectionId(), manages.get(0).getElection().getElectionId());
         assertEquals(d.getDacId(), manages.get(0).getDac().getDacId());
         assertFalse(manages.get(0).getVotes().isEmpty());
+    }
+
+    @Test
+    public void testDescribeDataAccessRequestManageV2_SO() {
+        User user = new User();
+        user.setInstitutionId(1);
+        user.setRoles(new ArrayList<>());
+        user.getRoles().add(new UserRole(7, UserRoles.SIGNINGOFFICIAL.getRoleName()));
+        when(userDAO.findUserByEmailAndRoleId(any(), any())).thenReturn(user);
+
+        Integer genericId = 1;
+        DataAccessRequest dar = generateDataAccessRequest();
+        dar.setData(new DataAccessRequestData());
+        dar.getData().setDatasetIds(Collections.singletonList(genericId));
+        when(dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(any())).thenReturn(Collections.singletonList(dar));
+
+        Election e = new Election();
+        e.setReferenceId(dar.getReferenceId());
+        e.setElectionId(genericId);
+        when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), any())).thenReturn(Collections.singletonList(e));
+
+        Vote v = new Vote();
+        v.setVoteId(genericId);
+        v.setElectionId(e.getElectionId());
+        when(voteDAO.findVotesByElectionIds(any())).thenReturn(Collections.singletonList(v));
+
+        Dac d = new Dac();
+        d.setDacId(genericId);
+        d.addDatasetId(genericId);
+        when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Collections.singleton(d));
+        initService();
+
+        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(user, "SigningOfficial");
+        assertNotNull(manages);
+        assertFalse(manages.isEmpty());
+        assertEquals(dar.getReferenceId(), manages.get(0).getDar().getReferenceId());
+        assertEquals(1, manages.size());
+        assertEquals(e.getElectionId(), manages.get(0).getElection().getElectionId());
+        assertEquals(d.getDacId(), manages.get(0).getDac().getDacId());
+        assertFalse(manages.get(0).getVotes().isEmpty());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testDescribeDataAccessRequestManageV2_SO_InstitutionNotFound() {
+        User user = new User();
+        user.setRoles(new ArrayList<>());
+        user.getRoles().add(new UserRole(7, UserRoles.SIGNINGOFFICIAL.getRoleName()));
+        initService();
+        service.describeDataAccessRequestManageV2(user, "SigningOfficial");
     }
 
     @Test
@@ -513,7 +566,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(dars);
         when(dacService.filterDataAccessRequestsByDac(eq(dars), any())).thenReturn(dars);
         initService();
-        List<DataAccessRequest> foundDars = service.getDataAccessRequestsByUserRole(authUser);
+        List<DataAccessRequest> foundDars = service.getDataAccessRequestsByUserRole(new User());
         assertEquals(foundDars.size(), 1);
     }
 

@@ -4,8 +4,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.Optional;
+
 import org.broadinstitute.consent.http.models.User;
+import java.util.Optional;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.bson.Document;
 
@@ -31,7 +32,7 @@ public class DarUtil {
                     return userName.get().getPropertyValue();
                 }
             }
-    
+
             Optional<UserProperty> piName = user.getProperties().stream().filter(prop -> prop.getPropertyKey().equals("piName")).findFirst();
             if (piName.isPresent()) {
               return piName.get().getPropertyValue();
