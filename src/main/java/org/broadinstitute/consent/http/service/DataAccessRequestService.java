@@ -232,75 +232,16 @@ public class DataAccessRequestService {
         return electionMap;
     }
 
-    /**
-     *
-     * Convenience method during transition away from `Document` and to `DataAccessRequest`
-     * Replacement for MongoConsentDB.getDataAccessRequestCollection()
-     *
-     * @return List of all DataAccessRequestData objects as Documents
-     */
-    @Deprecated //instead use findAllDataAccessRequests
-    public List<Document> getAllDataAccessRequestsAsDocuments() {
-        return findAllDataAccessRequests().stream().
-                map(this::createDocumentFromDar).
-                collect(Collectors.toList());
-    }
-
     public List<DataAccessRequest> findAllDataAccessRequests() {
         return dataAccessRequestDAO.findAllDataAccessRequests();
-    }
-
-    @Deprecated //instead use findAllDraftDataAccessRequests
-    public List<Document> findAllDraftDataAccessRequestsAsDocuments() {
-        return dataAccessRequestDAO.findAllDraftDataAccessRequests().stream().
-                map(this::createDocumentFromDar).
-                collect(Collectors.toList());
     }
 
     public List<DataAccessRequest> findAllDraftDataAccessRequests() {
         return dataAccessRequestDAO.findAllDraftDataAccessRequests();
     }
 
-    @Deprecated //instead use findAllDraftDataAccessRequestByUser
-    public List<Document> findAllDraftDataAccessRequestDocumentsByUser(Integer userId) {
-        return dataAccessRequestDAO.findAllDraftsByUserId(userId).stream().
-                map(this::createDocumentFromDar).
-                collect(Collectors.toList());
-    }
-
     public List<DataAccessRequest> findAllDraftDataAccessRequestsByUser(Integer userId) {
         return dataAccessRequestDAO.findAllDraftsByUserId(userId);
-    }
-
-    /**
-     *
-     * Convenience method during transition away from `Document` and to `DataAccessRequest`
-     * Replacement for MongoConsentDB.getDataAccessRequestCollection().find(ObjectId)
-     *
-     * @return DataAccessRequestData object as Document
-     */
-    @Deprecated //instead use findByReferenceId
-    public Document getDataAccessRequestByReferenceIdAsDocument(String referenceId) {
-        DataAccessRequest d = dataAccessRequestDAO.findByReferenceId(referenceId);
-        if (d == null) {
-            throw new NotFoundException("Unable to find Data Access Request by reference id: " + referenceId);
-        }
-        return createDocumentFromDar(d);
-    }
-
-    /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
-     *
-     * Convenience method during transition away from `Document` and to `DataAccessRequest`
-     *
-     * @return DataAccessRequestData object as Document
-     */
-    @Deprecated //instead use getDataAccessRequestsByReferenceIds
-    public List<Document> getDataAccessRequestsByReferenceIdsAsDocuments(List<String> referenceIds) {
-        return getDataAccessRequestsByReferenceIds(referenceIds).
-                stream().
-                map(this::createDocumentFromDar).
-                collect(Collectors.toList());
     }
 
     public List<DataAccessRequest> getDataAccessRequestsByReferenceIds(List<String> referenceIds) {
@@ -362,17 +303,6 @@ public class DataAccessRequestService {
         );
         dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), true);
         return findByReferenceId(dar.getReferenceId());
-    }
-
-    /**
-     *
-     * @param authUser AuthUser
-     * @return List<Document>
-     */
-    @Deprecated //use getDataAccessRequestsByUserRole
-    public List<Document> describeDataAccessRequests(AuthUser authUser) {
-        List<Document> documents = getAllDataAccessRequestsAsDocuments();
-        return dacService.filterDarsByDAC(documents, authUser);
     }
 
     /**
@@ -478,7 +408,7 @@ public class DataAccessRequestService {
         List<DataSet> dataSetsToApprove = dataSetDAO.
                 findNeedsApprovalDataSetByDataSetId(datasetIdsForDatasetsToApprove);
 
-        // Sort documents by sort time, create time, then reversed.
+        // Sort dars by sort time, create time, then reversed.
         Comparator<DataAccessRequest> sortField = Comparator.comparing(d -> d.getData().getSortDate());
         Comparator<DataAccessRequest> createField = Comparator.comparing(d -> d.getData().getCreateDate());
         documents.sort(sortField.thenComparing(createField).reversed());
@@ -613,37 +543,6 @@ public class DataAccessRequestService {
             now,
             dar.getData());
         return findByReferenceId(dar.getReferenceId());
-    }
-
-    public Document describeDataAccessRequestFieldsById(String id, List<String> fields) {
-        Document dar = getDataAccessRequestByReferenceIdAsDocument(id);
-        Document result = new Document();
-        for (String field : fields) {
-            if (field.equals(DarConstants.DATASET_ID)){
-                List<String> dataSets = dar.get(field, List.class);
-                result.append(field, dataSets);
-            } else{
-                String content = (String) dar.getOrDefault(field.replaceAll("\\s", ""), "Not found");
-                result.append(field, content);
-            }
-        }
-        return result;
-    }
-
-    @Deprecated //use getDraftDataAccessRequestManage
-    public List<Document> describeDraftDataAccessRequestManage(Integer userId) {
-        List<Document> accessList = userId == null
-                ? findAllDraftDataAccessRequestsAsDocuments()
-                : findAllDraftDataAccessRequestDocumentsByUser(userId);
-        List<Document> darManage = new ArrayList<>();
-        List<String> accessRequestIds = getRequestIds(accessList);
-        if (CollectionUtils.isNotEmpty(accessRequestIds)){
-            for(Document doc: accessList){
-                doc.append("dataRequestId", doc.get(DarConstants.REFERENCE_ID).toString());
-                darManage.add(doc);
-            }
-        }
-        return darManage;
     }
 
     public List<DataAccessRequestManage> getDraftDataAccessRequestManage(Integer userId) {
@@ -786,16 +685,6 @@ public class DataAccessRequestService {
             return dataSetDAO.findDataSetsByIdList(datasetIds);
         }
         return Collections.emptyList();
-    }
-
-    private List<String> getRequestIds(List<Document> access) {
-        List<String> accessIds = new ArrayList<>();
-        if (access != null) {
-            access.forEach(document ->
-                    accessIds.add(document.getString(DarConstants.REFERENCE_ID))
-            );
-        }
-        return accessIds;
     }
 
     /**
