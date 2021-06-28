@@ -1708,22 +1708,6 @@ paths:
         responses:
          200:
            description: 'Returns an integer corresponding to the amount of unreviewed DARs'
-  /api/dataRequest/cases/pending:
-    get:
-      summary: Get Data Access Request Pending Cases
-      description: Retrieves the pending cases for open/final elections the user has access to
-      tags:
-        - Data Access Request
-        - Pending Case
-      responses:
-        200:
-          description: A list of Data Access Request Pending Cases
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PendingCase'
   /api/dataRequest/cases/summary/DataAccess:
     get:
       summary: getConsentSummaryCases
