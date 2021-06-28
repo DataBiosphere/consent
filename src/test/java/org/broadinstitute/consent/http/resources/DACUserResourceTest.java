@@ -123,42 +123,6 @@ public class DACUserResourceTest {
     }
 
     @Test
-    public void testUpdateStatus() {
-        User user = createDacUser(UserRoles.RESEARCHER);
-        user.setDacUserId(RandomUtils.nextInt(1, 10));
-        user.setStatus("pending");
-        user.setRationale("rationale");
-        when(userService.findUserById(any())).thenReturn(user);
-        when(userService.updateUserStatus(any(), any())).thenReturn(user);
-        when(userService.updateUserRationale(any(), any())).thenReturn(user);
-        initResource();
-        Response response = resource.updateStatus(user.getDacUserId(), user.toString());
-        assertEquals(200, response.getStatus());
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void testUpdateStatusUserNotFound() {
-        User user = createDacUser(UserRoles.RESEARCHER);
-        user.setDacUserId(RandomUtils.nextInt(1, 10));
-        when(userService.findUserById(any())).thenThrow(new NotFoundException());
-        initResource();
-        Response response = resource.updateStatus(user.getDacUserId(), user.toString());
-        assertEquals(200, response.getStatus());
-    }
-
-    @Test
-    public void testUpdateStatusBadRequest() {
-        User user = createDacUser(UserRoles.RESEARCHER);
-        user.setDacUserId(RandomUtils.nextInt(1, 10));
-        user.setStatus("Bad Status");
-        when(userService.findUserById(any())).thenReturn(user);
-        when(userService.updateUserStatus(any(), any())).thenThrow(new IllegalArgumentException());
-        initResource();
-        Response response = resource.updateStatus(user.getDacUserId(), user.toString());
-        assertEquals(400, response.getStatus());
-    }
-
-    @Test
     public void testConvertJsonToDACUserNumericDateCase() {
         String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
         String json = "{\"dacUserId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"createDate\": 1302828677828, \"additionalEmail\": \"additionalEmail\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
