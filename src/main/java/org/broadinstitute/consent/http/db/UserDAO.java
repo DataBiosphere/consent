@@ -175,4 +175,12 @@ public interface UserDAO extends Transactional<UserDAO> {
             @BindList("datasetIds") List<Integer> datasetIds,
             @BindList("roleNames") List<String> roleNames);
 
+    @RegisterBeanMapper(value = User.class)
+    @SqlQuery("SELECT u.* FROM dacuser u "
+      + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
+      + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+      + " WHERE r.name = 'SigningOfficial' "
+      + " AND u.institution_id = :institutionId")
+    List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
+
 }

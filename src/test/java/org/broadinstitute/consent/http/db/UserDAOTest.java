@@ -343,6 +343,20 @@ public class UserDAOTest extends DAOTestHelper {
         assertTrue(users.isEmpty());
     }
 
+    @Test
+    public void testDescribeUsersByRoleAndInstitution() {
+        //user with institutionId and SO role
+        User user = createUserWithInstitution();
+        Integer institutionId = user.getInstitutionId();
+        String displayName = user.getDisplayName();
+        List<User> users = userDAO.getSOsByInstitution( institutionId);
+        assertEquals(1, users.size());
+        assertEquals(displayName, users.get(0).getDisplayName());
+
+        List<User> differentInstitutionUsers = userDAO.getSOsByInstitution( institutionId + 1);
+        assertEquals(0, differentInstitutionUsers.size());
+    }
+
     private String getRandomEmailAddress() {
         String user = RandomStringUtils.randomAlphanumeric(20);
         String domain = RandomStringUtils.randomAlphanumeric(10);
