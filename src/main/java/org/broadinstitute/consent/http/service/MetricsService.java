@@ -60,7 +60,6 @@ public class MetricsService {
     @JsonProperty final String projectTitle;
     @JsonProperty final String darCode;
     @JsonProperty final String nonTechRus;
-    @JsonProperty final String investigator;
     @JsonProperty final String referenceId;
 
     public DarMetricsSummary(DataAccessRequest dar) {
@@ -69,14 +68,12 @@ public class MetricsService {
         this.projectTitle = dar.data.getProjectTitle();
         this.darCode =  dar.data.getDarCode();
         this.nonTechRus =  dar.data.getNonTechRus();
-        this.investigator = DarUtil.findPI(userDAO.findUserById(dar.userId));
         this.referenceId = dar.getReferenceId();
       } else {
         this.updateDate = null;
         this.projectTitle = null;
         this.darCode =  null;
         this.nonTechRus =  null;
-        this.investigator = null;
         this.referenceId = null;
       }
     }
