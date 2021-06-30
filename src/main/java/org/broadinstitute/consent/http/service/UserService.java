@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -117,6 +115,7 @@ public class UserService {
         return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
     }
 
+    @Deprecated
     public User updateUserStatus(String status, Integer userId) {
         Integer statusId = RoleStatus.getValueByStatus(status);
         validateExistentUserById(userId);
@@ -127,6 +126,7 @@ public class UserService {
         return userDAO.findUserById(userId);
     }
 
+    @Deprecated
     public User updateUserRationale(String rationale, Integer userId) {
         validateExistentUserById(userId);
         if (rationale == null) {
@@ -156,8 +156,19 @@ public class UserService {
             throw new BadRequestException("Institution with the given id does not exist");
         }
 
+        if (Objects.isNull(updatedUser.getStatus())) {
+            updatedUser.setStatus(existingUser.getStatus());
+        }
+
+        Integer statusId = RoleStatus.getValueByStatus(updatedUser.getStatus());
+
+        if (Objects.isNull(updatedUser.getRationale())) {
+            updatedUser.setRationale(existingUser.getRationale());
+        }
+
         try {
-            userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail(), updatedUser.getInstitutionId());
+            userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail(), updatedUser.getInstitutionId(),
+              statusId,  updatedUser.getRationale());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
@@ -226,8 +237,9 @@ public class UserService {
                             user.getDacUserId(),
                             new Date());
                 });
-
-        userDAO.updateUser(user.getDisplayName(), user.getDacUserId(), user.getAdditionalEmail(), user.getInstitutionId());
+                
+        Integer statusId = RoleStatus.getValueByStatus(user.getStatus());
+        userDAO.updateUser(user.getDisplayName(), user.getDacUserId(), user.getAdditionalEmail(), user.getInstitutionId(), statusId, user.getRationale());
     }
 
     private Boolean checkForValidInstitution(Integer institutionId) {

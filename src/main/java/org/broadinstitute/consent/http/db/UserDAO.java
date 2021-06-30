@@ -100,11 +100,19 @@ public interface UserDAO extends Transactional<UserDAO> {
                           @Bind("displayName") String displayName,
                           @Bind("createDate") Date createDate);
 
-    @SqlUpdate("UPDATE dacuser SET displayname=:displayName, additional_email=:additionalEmail, institution_id=:institutionId WHERE dacuserid=:id")
+    @SqlUpdate("UPDATE dacuser SET " 
+    + " displayname = :displayName, " 
+    + " additional_email = :additionalEmail, "
+    + " institution_id = :institutionId, "
+    + " status = :statusId, "
+    + " rationale = :rationale "
+    + " WHERE dacuserid = :id")
     void updateUser(@Bind("displayName") String displayName,
                        @Bind("id") Integer id,
                        @Bind("additionalEmail") String additionalEmail,
-                       @Bind("institutionId") Integer institutionId);
+                       @Bind("institutionId") Integer institutionId,
+                       @Bind("statusId") Integer statusId,
+                       @Bind("rationale") String rationale);
 
     @Deprecated // Use deleteUserById instead
     @SqlUpdate("DELETE FROM dacuser WHERE LOWER(email) = LOWER(:email)")
@@ -132,9 +140,11 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlUpdate("update dacuser set email_preference = :emailPreference where dacUserId = :userId")
     void updateEmailPreference(@Bind("emailPreference") Boolean emailPreference, @Bind("userId") Integer userId);
 
+    @Deprecated
     @SqlUpdate("update dacuser set status = :status where dacUserId = :userId")
     void updateUserStatus(@Bind("status") Integer status, @Bind("userId") Integer userId);
 
+    @Deprecated
     @SqlUpdate("update dacuser set rationale = :rationale where dacUserId = :userId")
     void updateUserRationale(@Bind("rationale") String rationale, @Bind("userId") Integer userId);
 
