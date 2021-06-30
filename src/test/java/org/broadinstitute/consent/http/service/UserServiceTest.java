@@ -274,18 +274,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testUpdateUserRationale() {
-        User u = generateUser();
-        when(userDAO.findUserById(u.getDacUserId()))
-                .thenReturn(u);
-        doNothing().when(userDAO).updateUserRationale(any(), any());
-        initService();
-        User user = service.updateUserRationale("test", u.getDacUserId());
-        assertNotNull(user);
-        assertEquals(u.getDacUserId(), user.getDacUserId());
-    }
-
-    @Test
     public void testUpdateDACUserById() {
         User u = generateUser();
         when(userDAO.findUserById(u.getDacUserId()))
