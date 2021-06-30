@@ -55,7 +55,6 @@ public class GCSServiceTest {
     public void testStoreDocument() throws Exception {
         String filename = "filename.txt";
         BlobId blobId = BlobId.of(config.getEndpoint(), filename);
-        when(blobId.getName()).thenReturn(filename);
         when(blob.getBlobId()).thenReturn(blobId);
         when(storage.create(any(BlobInfo.class), any())).thenReturn(blob);
         when(storage.create(any(BlobInfo.class), any(), new Storage.BlobTargetOption[0])).thenReturn(blob);
