@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -124,15 +123,6 @@ public class UserService {
             throw new IllegalArgumentException(status + " is not a valid status.");
         }
         userDAO.updateUserStatus(statusId, userId);
-        return userDAO.findUserById(userId);
-    }
-
-    public User updateUserRationale(String rationale, Integer userId) {
-        validateExistentUserById(userId);
-        if (rationale == null) {
-            throw new IllegalArgumentException("Rationale is required.");
-        }
-        userDAO.updateUserRationale(rationale, userId);
         return userDAO.findUserById(userId);
     }
 
