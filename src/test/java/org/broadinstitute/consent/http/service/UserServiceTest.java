@@ -292,7 +292,7 @@ public class UserServiceTest {
                 .thenReturn(u);
         when(institutionDAO.checkForExistingInstitution(any()))
                 .thenReturn(u.getInstitutionId());
-        doNothing().when(userDAO).updateUser(any(), any(), any(), any());
+        doNothing().when(userDAO).updateUser(any(), any(), any(), any(), any(), any());
         initService();
         Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
         User user = service.updateDACUserById(dacUsers, u.getDacUserId());
@@ -305,7 +305,7 @@ public class UserServiceTest {
         User u = generateUser();
         when(userDAO.findUserById(u.getDacUserId()))
                 .thenReturn(null);
-        doNothing().when(userDAO).updateUser(any(), any(), any(), any());
+        doNothing().when(userDAO).updateUser(any(), any(), any(), any(), any(), any());
         initService();
         Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
         User user = service.updateDACUserById(dacUsers, u.getDacUserId());
