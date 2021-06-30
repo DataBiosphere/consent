@@ -52,7 +52,6 @@ public enum UserRoles {
         return EnumSet.allOf(UserRoles.class)
           .stream()
           .map(UserRoles::getRoleName)
-          .map(String::toLowerCase)
           .anyMatch(roleName::equalsIgnoreCase);
     }
 

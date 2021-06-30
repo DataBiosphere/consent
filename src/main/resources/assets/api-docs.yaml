@@ -3445,12 +3445,10 @@ paths:
         - name: roleName
           in: path
           description: The name of the role of the user
-          required: true
           schema:
             type: String
-            enum:
-              - Admin
-              - SigningOfficial
+            nullable: false
+            enum: [Admin, SigningOfficial]
       tags:
         - User
       responses:
