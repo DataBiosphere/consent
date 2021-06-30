@@ -171,7 +171,7 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getName());
             if (Objects.isNull(user.getInstitutionId())) {
-                throw new NotFoundException("Current user, " + user.getDisplayName() + " does not have an institution.");
+                throw new NotFoundException("Current user, " + user.getDisplayName() + ", does not have an institution.");
             }
             List<User> signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
             return Response.ok().entity(signingOfficials).build();
