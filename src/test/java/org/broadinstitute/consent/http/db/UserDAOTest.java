@@ -179,10 +179,13 @@ public class UserDAOTest extends DAOTestHelper {
                 "Dac User Test",
                 user.getDacUserId(),
                 newEmail,
-                institutionId
-                );
+                institutionId,
+                0,
+                "rationale");
         User user2 = userDAO.findUserById(user.getDacUserId());
         assertEquals(user2.getAdditionalEmail(), newEmail);
+        assertEquals(RoleStatus.getStatusByValue(0), user2.getStatus());
+        assertEquals("rationale", user2.getRationale());
     }
 
     @Test
