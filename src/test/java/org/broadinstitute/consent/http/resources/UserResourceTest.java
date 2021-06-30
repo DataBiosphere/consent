@@ -216,6 +216,17 @@ public class UserResourceTest {
   }
 
   @Test
+  public void testGetSOsForInstitution_NoInstitution() {
+    User user = createUserWithRole();
+    User so = createUserWithRole();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.findSOsByInstitutionId(any())).thenReturn(Arrays.asList(so, so, so));
+    initResource();
+    Response response = userResource.getSOsForInstitution(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
   public void testGetSOsForInstitution_UserNotFound() {
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     initResource();
