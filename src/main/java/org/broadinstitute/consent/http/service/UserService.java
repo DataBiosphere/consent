@@ -2,8 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -81,10 +79,6 @@ public class UserService {
             throw new NotFoundException("Unable to find user with email: " + email);
         }
         return user;
-    }
-
-    public Collection<User> describeUsers() {
-        return userDAO.findUsers();
     }
 
     public void deleteUserByEmail(String email) {
