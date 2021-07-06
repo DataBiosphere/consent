@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
@@ -93,8 +94,24 @@ public class UserService {
         return user;
     }
 
+    @Deprecated //instead use getUsersByUserRole(user, roleName)
     public Collection<User> describeUsers() {
         return userDAO.findUsers();
+    }
+
+    public List<User> getUsersByUserRole(User user, String roleName) {
+        switch(roleName) {
+            case Resource.SIGNINGOFFICIAL :
+                if (Objects.nonNull(user.getInstitutionId())) {
+                    return userDAO.findUsersByInstitution(user.getInstitutionId());
+                } else {
+                    throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") is not associated with an Institution.");
+                }
+            case Resource.ADMIN :
+                List<User> users = new ArrayList<>(userDAO.findUsers());
+                return users;
+        } 
+        return Collections.emptyList();
     }
 
     public void deleteUserByEmail(String email) {

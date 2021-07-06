@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.BadRequestException;
@@ -328,6 +329,36 @@ public class UserServiceTest {
         initService();
         List<SimplifiedUser> users = service.findSOsByInstitutionId(null);
         assertEquals(0, users.size());
+    }
+
+    @Test
+    public void testGetUsersByUserRole_SO() {
+        User u = generateUser();
+        u.setInstitutionId(1);
+        when(userDAO.findUsersByInstitution(1)).thenReturn(Arrays.asList(new User(), new User(), new User()));
+        initService();
+
+        List<User> users = service.getUsersByUserRole(u, "SigningOfficial");
+        assertNotNull(users);
+        assertEquals(3, users.size());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testGetUsersByUserRole_SO_noInstitution() {
+        User u = generateUser();
+        u.setInstitutionId(null);
+        initService();
+        service.getUsersByUserRole(u, "SigningOfficial");
+    }
+
+    @Test
+    public void testGetUsersByUserRole_Admin() {
+        User u = generateUser();
+        when(userDAO.findUsers()).thenReturn(new HashSet<>(Arrays.asList(generateUser(), generateUser(), generateUser())));
+        initService();
+        List<User> users = service.getUsersByUserRole(u, "Admin");
+        assertNotNull(users);
+        assertEquals(3, users.size());
     }
 
     private User generateUser() {

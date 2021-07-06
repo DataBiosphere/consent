@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import java.util.Objects;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -53,6 +54,33 @@ public class UserResource extends Resource {
         this.userService = userService;
         this.libraryCardService = libraryCardService;
         this.gson = new Gson();
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/role/{roleName}")
+    @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
+    public Response getUsers(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
+        try {
+            User user = userService.findUserByEmail(authUser.getName());
+            boolean valid = UserRoles.isValidRole(roleName);
+            if (valid) {
+                //if there is a valid roleName but it is not SO or Admin then throw an exception
+                if (!roleName.equals(UserRoles.ADMIN.getRoleName()) && !roleName.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                    throw new BadRequestException("Unsupported role name: " + roleName);
+                }
+                if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleName))) {
+                    throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " + roleName + " role.");
+                }
+                List<User> users = userService.getUsersByUserRole(user, roleName);
+                return Response.ok().entity(users).build();
+            }
+            else {
+                throw new BadRequestException("Invalid role name: " + roleName);
+            }
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET

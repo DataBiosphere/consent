@@ -344,6 +344,18 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindUsersByInstitution() {
+        Integer institutionId = createUserWithInstitution().getInstitutionId();
+        List<User> beforeList = userDAO.findUsersByInstitution(institutionId);
+        //should not change results since they are not in the institution
+        createUser();
+        createUser();
+        List<User> afterList = userDAO.findUsersByInstitution(institutionId);
+        assertEquals(1, beforeList.size());
+        assertEquals(beforeList, afterList);
+    }
+
+    @Test
     public void testGetSOsByInstitution() {
         //user with institutionId and SO role
         User user = createUserWithInstitution();

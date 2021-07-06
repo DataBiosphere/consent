@@ -176,6 +176,16 @@ public interface UserDAO extends Transactional<UserDAO> {
             @BindList("roleNames") List<String> roleNames);
 
     @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery("SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id " +
+            " FROM dacuser du " +
+            " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
+            " LEFT JOIN roles r ON r.roleid = ur.role_id " +
+            " WHERE du.institution_id = :institutionId")
+    List<User> findUsersByInstitution(@Bind("institutionId") Integer institutionId);
+
+    @RegisterBeanMapper(value = User.class)
     @SqlQuery("SELECT u.dacuserid, u.displayname FROM dacuser u "
       + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
       + " LEFT JOIN roles r ON r.roleid = ur.role_id "

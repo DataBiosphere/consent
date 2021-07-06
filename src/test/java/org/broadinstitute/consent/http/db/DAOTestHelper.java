@@ -340,6 +340,7 @@ public class DAOTestHelper {
         addUserRole(7, userId);
         createdInstitutionIds.add(institutionId);
         createdUserIds.add(userId);
+        createdInstitutionIds.add(institutionId);
         return userDAO.findUserById(userId);
     }
 
