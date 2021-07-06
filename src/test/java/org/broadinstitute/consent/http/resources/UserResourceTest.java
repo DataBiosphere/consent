@@ -169,16 +169,6 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUsers_NoRole() {
-    User user = createUserWithRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    initResource();
-
-    Response response = userResource.getUsers(authUser, null);
-    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-  }
-
-  @Test
   public void testGetUsers_UserNotFound() {
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     initResource();

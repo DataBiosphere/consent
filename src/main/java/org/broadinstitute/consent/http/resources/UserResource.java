@@ -64,26 +64,21 @@ public class UserResource extends Resource {
     public Response getUsers(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
         try {
             User user = userService.findUserByEmail(authUser.getName());
-            if (Objects.nonNull(roleName)) {
-                boolean valid = UserRoles.isValidRole(roleName);
-                if (valid) {
-                    //if there is a valid roleName but it is not SO or Admin then throw an exception
-                    if (!roleName.equals(UserRoles.ADMIN.getRoleName()) && !roleName.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-                        throw new BadRequestException("Unsupported role name: " + roleName);
-                    }
-                    if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleName))) {
-                        throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have " + roleName + " role.");
-                    }
-                    List<User> users = userService.getUsersByUserRole(user, roleName);
-                    return Response.ok().entity(users).build();
+            boolean valid = UserRoles.isValidRole(roleName);
+            if (valid) {
+                //if there is a valid roleName but it is not SO or Admin then throw an exception
+                if (!roleName.equals(UserRoles.ADMIN.getRoleName()) && !roleName.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                    throw new BadRequestException("Unsupported role name: " + roleName);
                 }
-                else {
-                    throw new BadRequestException("Invalid role name: " + roleName);
+                if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleName))) {
+                    throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have " + roleName + " role.");
                 }
-            } else {
-                throw new BadRequestException("No user role specified.");
+                List<User> users = userService.getUsersByUserRole(user, roleName);
+                return Response.ok().entity(users).build();
+                }
+            else {
+                throw new BadRequestException("Invalid role name: " + roleName);
             }
-
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
