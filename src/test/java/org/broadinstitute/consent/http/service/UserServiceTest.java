@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
@@ -317,14 +318,15 @@ public class UserServiceTest {
         Integer institutionId = u.getInstitutionId();
         when(userDAO.getSOsByInstitution(any())).thenReturn(Arrays.asList(u, u, u));
         initService();
-        List<User> users = service.findSOsByInstitutionId(institutionId);
+        List<SimplifiedUser> users = service.findSOsByInstitutionId(institutionId);
         assertEquals(3, users.size());
+        assertEquals(u.getDisplayName(), users.get(0).displayName);
     }
 
     @Test
     public void testFindSOsByInstitutionId_NullId() {
         initService();
-        List<User> users = service.findSOsByInstitutionId(null);
+        List<SimplifiedUser> users = service.findSOsByInstitutionId(null);
         assertEquals(0, users.size());
     }
 

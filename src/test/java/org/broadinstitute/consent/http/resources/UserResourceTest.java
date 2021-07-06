@@ -209,7 +209,7 @@ public class UserResourceTest {
     User user = createUserWithInstitution();
     User so = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.findSOsByInstitutionId(any())).thenReturn(Arrays.asList(so, so, so));
+    when(userService.findSOsByInstitutionId(any())).thenReturn(Arrays.asList(userService.new SimplifiedUser(so), userService.new SimplifiedUser(so)));
     initResource();
     Response response = userResource.getSOsForInstitution(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -220,7 +220,7 @@ public class UserResourceTest {
     User user = createUserWithRole();
     User so = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.findSOsByInstitutionId(any())).thenReturn(Arrays.asList(so, so, so));
+    when(userService.findSOsByInstitutionId(any())).thenReturn(Arrays.asList(userService.new SimplifiedUser(so), userService.new SimplifiedUser(so)));
     initResource();
     Response response = userResource.getSOsForInstitution(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());

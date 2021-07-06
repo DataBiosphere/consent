@@ -344,7 +344,7 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testDescribeUsersByRoleAndInstitution() {
+    public void testGetSOsByInstitution() {
         //user with institutionId and SO role
         User user = createUserWithInstitution();
         Integer institutionId = user.getInstitutionId();

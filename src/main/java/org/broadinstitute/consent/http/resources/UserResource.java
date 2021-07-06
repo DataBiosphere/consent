@@ -39,6 +39,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 @Path("{api : (api/)?}user")
 public class UserResource extends Resource {
@@ -173,7 +174,7 @@ public class UserResource extends Resource {
             if (Objects.isNull(user.getInstitutionId())) {
                 throw new NotFoundException("Current user, " + user.getDisplayName() + ", does not have an institution.");
             }
-            List<User> signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
+            List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
             return Response.ok().entity(signingOfficials).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

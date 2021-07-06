@@ -3427,7 +3427,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/User'
+                  $ref: '#/components/schemas/SimplifiedUser'
         404:
           description: User not found
         500:

@@ -50,6 +50,16 @@ public class UserService {
         this.libraryCardDAO = libraryCardDAO;
     }
 
+    public class SimplifiedUser {
+        public final String displayName;
+        public final Integer userId;
+
+        public SimplifiedUser(User user) {
+            this.displayName = user.getDisplayName();
+            this.userId = user.getDacUserId();
+        };
+    }
+
     public User createUser(User user) {
         // Default role is researcher.
         if (Objects.isNull(user.getRoles()) || CollectionUtils.isEmpty(user.getRoles())) {
@@ -168,11 +178,13 @@ public class UserService {
         userDAO.updateEmailPreference(preference, userId);
     }
 
-    public List<User> findSOsByInstitutionId(Integer institutionId) {
+    public List<SimplifiedUser> findSOsByInstitutionId(Integer institutionId) {
         if (Objects.isNull(institutionId)) {
             return Collections.emptyList();
         }
-       return userDAO.getSOsByInstitution(institutionId);
+
+        List<User> users = userDAO.getSOsByInstitution(institutionId);
+        return users.stream().map(u -> new SimplifiedUser(u)).collect(Collectors.toList());
     }
 
     private void validateRequiredFields(User user) {
