@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.cloudstore;
 
-import com.google.api.client.http.GenericUrl;
-import com.google.api.gax.paging.Page;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
