@@ -4868,6 +4868,15 @@ components:
         name:
           type: string
           description: Name of the role
+    SimplifiedUser:
+      type: object
+      properties:
+        dacUserId:
+          type: integer
+          description: ID of the user
+        displayName:
+          type: string
+          description: Name of the user
     ErrorResponse:
       properties:
         message:
