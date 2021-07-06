@@ -16,7 +16,7 @@
     <owl.version>5.1.17</owl.version>
     <postgres.version>42.2.22</postgres.version>
     <rdf4j-rio.version>3.7.1</rdf4j-rio.version>
-    <swagger.ui.version>3.50.0</swagger.ui.version>
+    <swagger.ui.version>3.51.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -504,7 +504,7 @@
     <dependency>
       <groupId>com.opencsv</groupId>
       <artifactId>opencsv</artifactId>
-      <version>5.4</version>
+      <version>5.5</version>
     </dependency>
 
     <dependency>
@@ -540,7 +540,7 @@
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
-      <version>1.31.5</version>
+      <version>1.32.1</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.guava</groupId>
@@ -563,7 +563,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>1.116.0</version>
+      <version>1.117.1</version>
     </dependency>
 
     <dependency>

@@ -3413,6 +3413,25 @@ paths:
           description: User not found
         500:
           description: Server error.
+  /api/user/signing-officials:
+    get:
+      summary: Find SOs for currently authenticated user's institution
+      description: Return list of SOs belonging to the same institution as currently authenticated user
+      tags:
+        - User
+      responses:
+        200:
+          description: The users with the same institutionId and SO Role
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SimplifiedUser'
+        404:
+          description: User not found
+        500:
+          description: Server error.
   /api/user/{id}:
     get:
       summary: Find user by id
@@ -4878,6 +4897,15 @@ components:
         name:
           type: string
           description: Name of the role
+    SimplifiedUser:
+      type: object
+      properties:
+        dacUserId:
+          type: integer
+          description: ID of the user
+        displayName:
+          type: string
+          description: Name of the user
     ErrorResponse:
       properties:
         message:
