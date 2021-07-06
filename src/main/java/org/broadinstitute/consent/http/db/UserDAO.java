@@ -179,7 +179,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlQuery("SELECT u.* FROM dacuser u "
       + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
       + " LEFT JOIN roles r ON r.roleid = ur.role_id "
-      + " WHERE r.name = 'SigningOfficial' "
+      + " WHERE LOWER(r.name) = 'signingofficial' "
       + " AND u.institution_id = :institutionId")
     List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
