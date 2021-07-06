@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.Objects;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -38,6 +39,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 @Path("{api : (api/)?}user")
 public class UserResource extends Resource {
@@ -160,6 +162,23 @@ public class UserResource extends Resource {
     public Response delete(@PathParam("email") String email, @Context UriInfo info) {
         userService.deleteUserByEmail(email);
         return Response.ok().build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/signing-officials")
+    @RolesAllowed(RESEARCHER)
+    public Response getSOsForInstitution(@Auth AuthUser authUser) {
+        try {
+            User user = userService.findUserByEmail(authUser.getName());
+            if (Objects.isNull(user.getInstitutionId())) {
+                throw new NotFoundException("Current user, " + user.getDisplayName() + ", does not have an institution.");
+            }
+            List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
+            return Response.ok().entity(signingOfficials).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     /**

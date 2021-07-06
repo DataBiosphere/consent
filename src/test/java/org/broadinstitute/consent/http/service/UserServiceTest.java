@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
@@ -309,6 +310,24 @@ public class UserServiceTest {
         initService();
         Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
         User user = service.updateDACUserById(dacUsers, u.getDacUserId());
+    }
+
+    @Test
+    public void testFindSOsByInstitutionId() {
+        User u = generateUser();
+        Integer institutionId = u.getInstitutionId();
+        when(userDAO.getSOsByInstitution(any())).thenReturn(Arrays.asList(u, u, u));
+        initService();
+        List<SimplifiedUser> users = service.findSOsByInstitutionId(institutionId);
+        assertEquals(3, users.size());
+        assertEquals(u.getDisplayName(), users.get(0).displayName);
+    }
+
+    @Test
+    public void testFindSOsByInstitutionId_NullId() {
+        initService();
+        List<SimplifiedUser> users = service.findSOsByInstitutionId(null);
+        assertEquals(0, users.size());
     }
 
     private User generateUser() {
