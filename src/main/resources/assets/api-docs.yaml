@@ -3446,8 +3446,8 @@ paths:
           in: path
           description: The name of the role of the user
           schema:
-            type: String
-            nullable: false
+            type: string
+            required: true
             enum: [Admin, SigningOfficial]
       tags:
         - User

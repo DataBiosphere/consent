@@ -9,9 +9,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,7 +25,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -71,7 +68,7 @@ public class UserResource extends Resource {
                     throw new BadRequestException("Unsupported role name: " + roleName);
                 }
                 if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleName))) {
-                    throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have " + roleName + " role.");
+                    throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " + roleName + " role.");
                 }
                 List<User> users = userService.getUsersByUserRole(user, roleName);
                 return Response.ok().entity(users).build();

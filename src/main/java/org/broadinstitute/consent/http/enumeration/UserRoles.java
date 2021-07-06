@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.enumeration;
 import org.broadinstitute.consent.http.resources.Resource;
 
 import java.util.EnumSet;
+import java.util.Objects;
 
 public enum UserRoles {
 
@@ -49,6 +50,9 @@ public enum UserRoles {
     }
 
     public static boolean isValidRole(String roleName) {
+        if (Objects.isNull(roleName)) {
+            return false;
+        }
         return EnumSet.allOf(UserRoles.class)
           .stream()
           .map(UserRoles::getRoleName)
