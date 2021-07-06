@@ -1233,6 +1233,36 @@ paths:
           description: Malformed user entity.
         403:
           description: User must have appropriate roles to update different users' information.
+  /api/dacuser/status/{userId}:
+    put:
+      summary: updateUserStatusById
+      description: |
+        DEPRECATED: Use PUT /api/dacuser/{id}
+        Update a user's status by user id
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: json
+          in: body
+          schema:
+            type: object
+          description: |
+            JSON object with a "status" member. Statuses allowed are "pending", "approved", or
+            "rejected".
+      tags:
+        - User
+      responses:
+        200:
+          description: Returns the updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        500:
+          description: Server Error 
   /api/dar/v2:
     post:
       summary: Create Data Access Request, version 2

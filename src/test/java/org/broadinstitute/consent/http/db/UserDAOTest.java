@@ -259,6 +259,16 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testUpdateUserRationale() {
+        User user = createUser();
+        String rationale = "New Rationale";
+        userDAO.updateUserRationale(rationale, user.getDacUserId());
+        User user2 = userDAO.findUserById(user.getDacUserId());
+        assertNotNull(user2);
+        assertEquals(user2.getRationale(), rationale);
+    }
+
+    @Test
     public void testFindDACUserByEmailAndRoleId() {
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         User user = userDAO.findUserByEmailAndRoleId(chair.getEmail(), UserRoles.CHAIRPERSON.getRoleId());

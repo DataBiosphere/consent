@@ -111,6 +111,52 @@ public class DACUserResource extends Resource {
         }
     }
 
+    @PUT
+    @Path("/status/{userId}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed(ADMIN)
+    public Response updateStatus(@PathParam("userId") Integer userId, String json) {
+        Optional<String> statusOpt = getMemberNameStringFromJson(json, "status");
+        Optional<String> rationaleOpt = getMemberNameStringFromJson(json, "rationale");
+        User user = userService.findUserById(userId);
+        if (statusOpt.isPresent()) {
+            try {
+                user = userService.updateUserStatus(statusOpt.get(), userId);
+            } catch (Exception e) {
+                return createExceptionResponse(e);
+            }
+        }
+        if (rationaleOpt.isPresent()) {
+            try {
+                user = userService.updateUserRationale(rationaleOpt.get(), userId);
+            } catch (Exception e) {
+                return createExceptionResponse(e);
+            }
+        }
+        return Response.ok(user).build();
+    }
+
+    /**
+     * Convenience method to find a member from legacy json structure.
+     *
+     * @param json       Raw json string from client
+     * @param memberName The name of the member to find in the json
+     * @return Optional value of memberName
+     */
+    private Optional<String> getMemberNameStringFromJson(String json, String memberName) {
+        Optional<String> aString = Optional.empty();
+        JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
+        if (jsonObject.has(memberName) && !jsonObject.get(memberName).isJsonNull()) {
+            try {
+                aString = Optional.of(jsonObject.get(memberName).getAsString());
+            } catch (Exception e) {
+                logger.debug(e.getMessage());
+            }
+        }
+        return aString;
+    }
+
     /**
      * Convenience method to find the email preference from legacy json structure.
      *
