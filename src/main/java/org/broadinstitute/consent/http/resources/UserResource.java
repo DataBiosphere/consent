@@ -72,7 +72,7 @@ public class UserResource extends Resource {
                 }
                 List<User> users = userService.getUsersByUserRole(user, roleName);
                 return Response.ok().entity(users).build();
-                }
+            }
             else {
                 throw new BadRequestException("Invalid role name: " + roleName);
             }
