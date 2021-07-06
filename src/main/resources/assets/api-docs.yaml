@@ -1262,7 +1262,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
         500:
-          description: Server Error 
+          description: Server Error
   /api/dar/v2:
     post:
       summary: Create Data Access Request, version 2
