@@ -3505,6 +3505,7 @@ paths:
             ADMIN: 4
             RESEARCHER: 5
             DATAOWNER: 6
+            SIGNINGOFFICIAL: 7
           required: true
           schema:
             type: number

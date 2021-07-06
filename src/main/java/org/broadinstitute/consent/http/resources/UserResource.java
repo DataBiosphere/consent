@@ -119,7 +119,7 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserById(userId);
             List<UserRoles> allowableRoles = Stream
-                .of(UserRoles.ADMIN, UserRoles.ALUMNI, UserRoles.RESEARCHER, UserRoles.DATAOWNER)
+                .of(UserRoles.ADMIN, UserRoles.ALUMNI, UserRoles.RESEARCHER, UserRoles.DATAOWNER, UserRoles.SIGNINGOFFICIAL)
                 .collect(Collectors.toList());
             Optional<UserRoles> matchingRole = allowableRoles
                 .stream()
