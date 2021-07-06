@@ -72,7 +72,7 @@ public class UserResource extends Resource {
                         throw new BadRequestException("Unsupported role name: " + roleName);
                     }
                     if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleName))) {
-                        throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have " + roleName + " role.");
+                        throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " + roleName + " role.");
                     }
                     List<User> users = userService.getUsersByUserRole(user, roleName);
                     return Response.ok().entity(users).build();
