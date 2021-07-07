@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -27,6 +28,7 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
@@ -47,6 +49,16 @@ public class UserService {
         this.voteDAO = voteDAO;
         this.institutionDAO = institutionDAO;
         this.libraryCardDAO = libraryCardDAO;
+    }
+
+    public class SimplifiedUser {
+        public final String displayName;
+        public final Integer userId;
+
+        public SimplifiedUser(User user) {
+            this.displayName = user.getDisplayName();
+            this.userId = user.getDacUserId();
+        };
     }
 
     public User createUser(User user) {
@@ -82,8 +94,24 @@ public class UserService {
         return user;
     }
 
+    @Deprecated //instead use getUsersByUserRole(user, roleName)
     public Collection<User> describeUsers() {
         return userDAO.findUsers();
+    }
+
+    public List<User> getUsersByUserRole(User user, String roleName) {
+        switch(roleName) {
+            case Resource.SIGNINGOFFICIAL :
+                if (Objects.nonNull(user.getInstitutionId())) {
+                    return userDAO.findUsersByInstitution(user.getInstitutionId());
+                } else {
+                    throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") is not associated with an Institution.");
+                }
+            case Resource.ADMIN :
+                List<User> users = new ArrayList<>(userDAO.findUsers());
+                return users;
+        }
+        return Collections.emptyList();
     }
 
     public void deleteUserByEmail(String email) {
@@ -165,6 +193,15 @@ public class UserService {
 
     public void updateEmailPreference(boolean preference, Integer userId) {
         userDAO.updateEmailPreference(preference, userId);
+    }
+
+    public List<SimplifiedUser> findSOsByInstitutionId(Integer institutionId) {
+        if (Objects.isNull(institutionId)) {
+            return Collections.emptyList();
+        }
+
+        List<User> users = userDAO.getSOsByInstitution(institutionId);
+        return users.stream().map(u -> new SimplifiedUser(u)).collect(Collectors.toList());
     }
 
     private void validateRequiredFields(User user) {

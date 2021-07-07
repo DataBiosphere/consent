@@ -70,6 +70,7 @@ public class DACUserResource extends Resource {
     @GET
     @Produces("application/json")
     @RolesAllowed(ADMIN)
+    @Deprecated //use UserResource.getUsers(authUser, roleName)
     public Collection<User> describeAllUsers() {
         return userService.describeUsers();
     }
