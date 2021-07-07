@@ -197,29 +197,6 @@ public class VoteService {
         return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
     }
 
-    /**
-     * Find the final access vote for this election. In practice, there can be more than one final vote
-     * if multiple chairpersons exist. If no one has voted yet, then they are effectively all the same
-     * null vote, so any one can be returned. If any chair(s) has voted, then we need to get the most recent
-     * vote as that will reflect the latest decision point of the chair(s).
-     *
-     * @param electionId Election Id
-     * @return Final Access Vote
-     * @throws NotFoundException No final vote exists for this election
-     */
-    public Vote describeFinalAccessVoteByElectionId(Integer electionId) throws NotFoundException {
-        List<Vote> votes = voteDAO.findFinalVotesByElectionId(electionId);
-        if (CollectionUtils.isEmpty(votes)) {
-            throw new NotFoundException("Could not find vote for specified id. Election id: " + electionId);
-        }
-        // Look for votes with a value, find by the most recent (max update date)
-        // Fall back to the first list vote if we can't find what we're looking for.
-        Optional<Vote> mostRecentVote = votes.stream().
-                filter(v -> Objects.nonNull(v.getVote())).
-                max(Comparator.comparing(Vote::getUpdateDate));
-        return mostRecentVote.orElse(votes.get(0));
-    }
-
     public List<Vote> describeVotes(String referenceId) {
         List<Vote> resultVotes = voteDAO.findVotesByReferenceId(referenceId);
         if (CollectionUtils.isEmpty(resultVotes)) {
