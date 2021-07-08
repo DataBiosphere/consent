@@ -94,4 +94,13 @@ public class ElectionReviewResource extends Resource {
         } else return null;
     }
 
+    @GET
+    @Path("last/{referenceId}")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
+    public ElectionReview getElectionReviewByReferenceId(@PathParam("referenceId") String referenceId) {
+        return service.describeElectionReviewByReferenceId(referenceId);
+    }
+
+
 }
