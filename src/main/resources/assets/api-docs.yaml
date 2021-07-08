@@ -2371,29 +2371,6 @@ paths:
           description: Election for specified id does not exist OR
            Data Access Request for specified id does not exist OR
            No Library cards exist for the researcher on this DAR
-  /api/dataRequest/{requestId}/vote/final:
-    get:
-      summary: describeFinalAccessVote
-      description: Returns the Vote with isfinalAccessVote property  = TRUE with the specified Id.
-      parameters:
-        - name: requestId
-          in: path
-          description: Vote ID
-          required: true
-          schema:
-            type: integer
-      tags:
-        - Vote
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the requested Vote.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Vote'
-        404:
-          description: Could not find a vote with this id.
   /api/dataset:
     get:
       summary: Get Datasets
