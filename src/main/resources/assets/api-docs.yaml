@@ -1160,20 +1160,6 @@ paths:
                 $ref: '#/components/schemas/User'
         400:
           description: Malformed user entity.
-    get:
-      summary: describeAllUsers
-      description: Returns all the users
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the collection of all the users and their permissions.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
   /api/dacuser/{email}:
     get:
       summary: describe
