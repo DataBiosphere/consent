@@ -110,7 +110,7 @@ public class UserService {
             case Resource.ADMIN :
                 List<User> users = new ArrayList<>(userDAO.findUsers());
                 return users;
-        }
+        } 
         return Collections.emptyList();
     }
 

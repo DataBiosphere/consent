@@ -1755,30 +1755,30 @@ paths:
                 items:
                   $ref: '#/components/schemas/PendingCase'
   /api/dataRequest/cases/pending/{dacUserId}:
-      get:
-        summary: getDataRequestPendingCases
-        description: |
-          DEPRECATED: Use GET /api/dataRequest/cases/pending
-          Retrieves the election the user has with votes pending.
-        parameters:
-          - name: dacUserId
-            in: path
-            description: The id of the user
-            required: true
-            schema:
-              type: string
-        tags:
-          - Data Access Request
-          - Pending Case
-        responses:
-          200:
-            description: A list of Pending Cases.
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/PendingCase'
+    get:
+      summary: getDataRequestPendingCases
+      description: |
+        DEPRECATED: Use GET /api/dataRequest/cases/pending
+        Retrieves the election the user has with votes pending.
+      parameters:
+        - name: dacUserId
+          in: path
+          description: The id of the user
+          required: true
+          schema:
+            type: string
+      tags:
+        - Data Access Request
+        - Pending Case
+      responses:
+        200:
+          description: A list of Pending Cases.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PendingCase'
   /api/dataRequest/cases/summary/DataAccess:
     get:
       summary: getConsentSummaryCases
