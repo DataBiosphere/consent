@@ -39,16 +39,6 @@ public class DataRequestCasesResourceTest {
     }
 
     @Test
-    public void testGetDataRequestPendingCases() {
-        when(pendingCaseService.describeDataRequestPendingCases(any())).thenReturn(Collections.emptyList());
-        initResource();
-        Response response = resource.getDataRequestPendingCases(null, null);
-        Assert.assertEquals(200, response.getStatus());
-        List cases = ((List) response.getEntity());
-        Assert.assertTrue(cases.isEmpty());
-    }
-
-    @Test
     public void testGetDataOwnerPendingCases() {
         when(pendingCaseService.describeDataOwnerPendingCases(anyInt(), notNull())).thenReturn(Collections.emptyList());
         initResource();
