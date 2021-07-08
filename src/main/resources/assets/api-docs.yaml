@@ -2942,26 +2942,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ElectionReview'
-  /api/electionReview/last/{referenceId}:
-    get:
-      summary: getElectionReviewByReferenceId
-      description: Returns the ElectionReview from an Election identified by referenceId with ElectionStatus = CLOSED and the most recent CreateDate.
-      parameters:
-        - name: referenceId
-          in: path
-          description: referenceId of the Election
-          required: true
-          schema:
-            type: string
-      tags:
-        - ElectionReview
-      responses:
-        200:
-          description: ElectionReview
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/rp/{electionId}:
     get:
       summary: get ElectionReview for rp election identified by electionId
