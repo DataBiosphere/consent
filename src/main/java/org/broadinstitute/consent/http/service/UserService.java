@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -92,11 +91,6 @@ public class UserService {
             throw new NotFoundException("Unable to find user with email: " + email);
         }
         return user;
-    }
-
-    @Deprecated //instead use getUsersByUserRole(user, roleName)
-    public Collection<User> describeUsers() {
-        return userDAO.findUsers();
     }
 
     public List<User> getUsersByUserRole(User user, String roleName) {
