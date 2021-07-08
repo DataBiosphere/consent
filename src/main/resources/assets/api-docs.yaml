@@ -3713,28 +3713,6 @@ paths:
           description: Returns eRA Commons Account information. Map<String, String> format
         404:
           description: The user doesn't exist in the system
-  /api/whitelist:
-    post:
-      summary: postWhitelist
-      description: Uploads Library Card Whitelist tsv to bucket
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                data:
-                  type: string
-                  format: binary
-      tags:
-        - Whitelist
-      responses:
-        201:
-          description: Successfully Created
-        400:
-          description: Improper whitelist format
-        500:
-          description: Internal Server Error
   /metrics/dac/decision:
     get:
       summary: Dac Decision Metrics
