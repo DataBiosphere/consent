@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
