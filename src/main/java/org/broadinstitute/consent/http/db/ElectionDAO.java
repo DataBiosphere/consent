@@ -137,23 +137,23 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findLastDataAccessElectionsWithFinalVoteByStatus(@Bind("status") String status);
 
     @SqlQuery("select e.electionId,  e.datasetId, e.lastUpdate, v.vote finalVote, e.finalAccessVote, e.status, e.createDate, e.referenceId, e.electionType, " +
-      "v.rationale finalRationale, v.createDate finalVoteDate, e.dataUseLetter, e.dulName, e.archived, e.version  from election e inner join " +
-      "vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' where e.referenceId = :referenceId  " +
-      "and lower(e.status) in (<status>) order by createDate desc limit 1")
+            "v.rationale finalRationale, v.createDate finalVoteDate, e.dataUseLetter, e.dulName, e.archived, e.version  from election e inner join " +
+            "vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' where e.referenceId = :referenceId  " +
+            "and lower(e.status) in (<status>) order by createDate desc limit 1")
     Election findLastElectionWithFinalVoteByReferenceIdAndStatus(@Bind("referenceId") String referenceId, @BindList("status") List<String> status);
 
     @SqlQuery("SELECT DISTINCT e.electionId, e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, " +
-      "       v.rationale finalRationale, v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, " +
-      "       e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version " +
-      " FROM election e " +
-      " INNER JOIN vote v ON v.electionId = e.electionId AND LOWER(v.type) = 'chairperson' " +
-      " INNER JOIN (SELECT referenceId, MAX(createDate) maxDate FROM election e WHERE LOWER(e.electionType) = LOWER(:type) GROUP BY referenceId) electionView " +
-      "     ON electionView.maxDate = e.createDate " +
-      "     AND electionView.referenceId = e.referenceId " +
-      "     AND LOWER(e.electionType) = LOWER(:type) " +
-      "     AND e.finalAccessVote = :vote " +
-      "     AND LOWER(e.status) not in ('canceled', 'closed') " +
-      " ORDER BY createDate ASC")
+            "       v.rationale finalRationale, v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, " +
+            "       e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version " +
+            " FROM election e " +
+            " INNER JOIN vote v ON v.electionId = e.electionId AND LOWER(v.type) = 'chairperson' " +
+            " INNER JOIN (SELECT referenceId, MAX(createDate) maxDate FROM election e WHERE LOWER(e.electionType) = LOWER(:type) GROUP BY referenceId) electionView " +
+            "     ON electionView.maxDate = e.createDate " +
+            "     AND electionView.referenceId = e.referenceId " +
+            "     AND LOWER(e.electionType) = LOWER(:type) " +
+            "     AND e.finalAccessVote = :vote " +
+            "     AND LOWER(e.status) not in ('canceled', 'closed') " +
+            " ORDER BY createDate ASC")
     List<Election> findOpenLastElectionsByTypeAndFinalAccessVoteForChairPerson(@Bind("type") String type, @Bind("vote") Boolean finalAccessVote);
 
     @SqlQuery("select count(*) from election e inner join vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' where lower(e.electionType) = lower(:type) and lower(e.status) = lower(:status) and " +
