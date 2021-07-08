@@ -102,5 +102,4 @@ public class ElectionReviewResource extends Resource {
         return service.describeElectionReviewByReferenceId(referenceId);
     }
 
-
 }

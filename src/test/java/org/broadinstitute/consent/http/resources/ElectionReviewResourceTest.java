@@ -110,6 +110,5 @@ public class ElectionReviewResourceTest {
         assertNotNull(response);
     }
 
-
 }
 

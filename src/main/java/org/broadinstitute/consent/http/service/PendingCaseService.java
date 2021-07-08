@@ -101,14 +101,14 @@ public class PendingCaseService {
         Integer dacUserId = user.getDacUserId();
         boolean isChair = dacService.isAuthUserChair(authUser);
         List<Election> unfilteredElections = isChair ?
-          electionDAO.findOpenLastElectionsByTypeAndFinalAccessVoteForChairPerson(ElectionType.DATA_ACCESS.getValue(), false) :
-          electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
+                electionDAO.findOpenLastElectionsByTypeAndFinalAccessVoteForChairPerson(ElectionType.DATA_ACCESS.getValue(), false) :
+                electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
         List<Election> elections = dacService.filterElectionsByDAC(unfilteredElections, authUser);
         List<PendingCase> pendingCases = new ArrayList<>();
         if (elections != null) {
             for (Election election : elections) {
                 Vote accessVote = voteDAO.findVoteByElectionIdAndDACUserId(election.getElectionId(),
-                  dacUserId);
+                        dacUserId);
                 if (accessVote == null) {
                     continue;
                 }
@@ -251,7 +251,7 @@ public class PendingCaseService {
     private void setFinalVote(Integer dacUserId, Election election, PendingCase pendingCase) {
         if (pendingCase.getAlreadyVoted()) {
             Vote chairPersonVote = voteDAO.findChairPersonVoteByElectionIdAndDACUserId(
-              election.getElectionId(), dacUserId);
+                    election.getElectionId(), dacUserId);
             if (chairPersonVote != null) {
                 pendingCase.setIsFinalVote(chairPersonVote.getVote() != null);
             }

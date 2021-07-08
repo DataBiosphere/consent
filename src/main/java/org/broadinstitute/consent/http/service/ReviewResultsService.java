@@ -57,8 +57,8 @@ public class ReviewResultsService {
 
     public ElectionReview describeElectionReviewByReferenceId(String referenceId){
         List<String> statuses = Stream.of(ElectionStatus.CLOSED.getValue(), ElectionStatus.FINAL.getValue()).
-          map(String::toLowerCase).
-          collect(Collectors.toList());
+                map(String::toLowerCase).
+                collect(Collectors.toList());
         Election election = electionDAO.findLastElectionWithFinalVoteByReferenceIdAndStatus(referenceId, statuses);
         return getElectionReview(referenceId, election);
     }

@@ -215,11 +215,10 @@ public class VoteService {
         // Look for votes with a value, find by the most recent (max update date)
         // Fall back to the first list vote if we can't find what we're looking for.
         Optional<Vote> mostRecentVote = votes.stream().
-          filter(v -> Objects.nonNull(v.getVote())).
-          max(Comparator.comparing(Vote::getUpdateDate));
+                filter(v -> Objects.nonNull(v.getVote())).
+                max(Comparator.comparing(Vote::getUpdateDate));
         return mostRecentVote.orElse(votes.get(0));
     }
-
 
     public List<Vote> describeVotes(String referenceId) {
         List<Vote> resultVotes = voteDAO.findVotesByReferenceId(referenceId);

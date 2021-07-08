@@ -171,8 +171,8 @@ public class DataRequestVoteResource extends Resource {
     @Path("/final")
     @PermitAll
     public Response describeFinalAccessVote(
-      @Auth AuthUser authUser,
-      @PathParam("requestId") Integer requestId) {
+            @Auth AuthUser authUser,
+            @PathParam("requestId") Integer requestId) {
         try {
             Vote vote = voteService.describeFinalAccessVoteByElectionId(requestId);
             return Response.ok().entity(vote).build();
