@@ -3,14 +3,17 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class LibraryCardService {
 
@@ -24,19 +27,19 @@ public class LibraryCardService {
         this.userDAO = userDAO;
     }
 
-    public LibraryCard createLibraryCard(LibraryCard libraryCard, Integer userId) {
-        checkUserId(userId);
-        checkForValidUser(libraryCard.getUserId());
+    public LibraryCard createLibraryCard(LibraryCard libraryCard) throws Exception {
+        throwIfNull(libraryCard);
         checkForValidInstitution(libraryCard.getInstitutionId());
-
+        checkIfCardExists(libraryCard);
+        LibraryCard processedCard = processUserOnNewLC(libraryCard);
         Date createDate = new Date();
         Integer id = this.libraryCardDAO.insertLibraryCard(
-                libraryCard.getUserId(),
-                libraryCard.getInstitutionId(),
-                libraryCard.getEraCommonsId(),
-                libraryCard.getUserName(),
-                libraryCard.getUserEmail(),
-                userId,
+                processedCard.getUserId(),
+                processedCard.getInstitutionId(),
+                processedCard.getEraCommonsId(),
+                processedCard.getUserName(),
+                processedCard.getUserEmail(),
+                processedCard.getCreateUserId(),
                 createDate
         );
         return this.libraryCardDAO.findLibraryCardById(id);
@@ -123,5 +126,61 @@ public class LibraryCardService {
         if (Objects.isNull(libraryCard)) {
             throw new NotFoundException("LibraryCard not found.");
         }
+    }
+
+    //helper method for create method, checks to see if card already exists
+    private void checkIfCardExists(LibraryCard payload) throws Exception {
+        Integer userId = payload.getUserId();
+        String email = payload.getUserEmail();
+        Integer institutionId = payload.getInstitutionId();
+        Optional<LibraryCard> foundCard;
+        List<LibraryCard> results;
+
+        if(Objects.nonNull(payload.getUserId())) {
+            results = libraryCardDAO.findLibraryCardsByUserId(userId);
+        } else if(Objects.nonNull(email)) {
+            results = libraryCardDAO.findAllLibraryCardsByUserEmail(email);
+        }
+        else {
+            throw new BadRequestException();
+        }
+        foundCard = results.stream().filter(card -> {
+            Boolean sameUserId = Objects.nonNull(userId) && card.getUserId().equals(userId);
+            Boolean sameUserEmail = Objects.nonNull(email) && card.getUserEmail().equalsIgnoreCase(email);
+            Boolean sameInstitution = card.getInstitutionId().equals(institutionId);
+            return (sameUserId || sameUserEmail) && sameInstitution;
+        }).findFirst();
+
+        if(foundCard.isPresent()) {
+            throw new ConsentConflictException();
+        } 
+    }
+
+    //Helper method to process user data on create LC payload
+    //Needed since CREATE has a unique situation where admins can create LCs without an active user (save with userEmail instead)
+    private LibraryCard processUserOnNewLC(LibraryCard card) throws Exception {
+        if (Objects.isNull(card.getUserId())) {
+            if (Objects.isNull(card.getUserEmail())) {
+                throw new BadRequestException();
+            } else {
+                //If a user is found, update the card to have the correct userId associated
+                User user = userDAO.findUserByEmail(card.getUserEmail());
+                if(!Objects.isNull(user)) {
+                    Integer userId = user.getDacUserId();
+                    card.setUserId(userId);
+                }
+            }
+        } else {
+            //check if userId exists
+            User user = userDAO.findUserById(card.getUserId());
+            if(Objects.isNull(user)) {
+                throw new NotFoundException();
+            }
+            if(Objects.nonNull(user.getEmail()) && !(user.getEmail().equalsIgnoreCase(card.getUserEmail()))) {
+                //throw error here, user is trying to associate incorrect userId with email
+                throw new ConsentConflictException();
+            }
+        }
+        return card;
     }
 }

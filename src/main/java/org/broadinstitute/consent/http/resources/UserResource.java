@@ -13,8 +13,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.Objects;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -38,6 +40,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 @Path("{api : (api/)?}user")
 public class UserResource extends Resource {
@@ -51,6 +54,33 @@ public class UserResource extends Resource {
         this.userService = userService;
         this.libraryCardService = libraryCardService;
         this.gson = new Gson();
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/role/{roleName}")
+    @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
+    public Response getUsers(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
+        try {
+            User user = userService.findUserByEmail(authUser.getName());
+            boolean valid = UserRoles.isValidRole(roleName);
+            if (valid) {
+                //if there is a valid roleName but it is not SO or Admin then throw an exception
+                if (!roleName.equals(UserRoles.ADMIN.getRoleName()) && !roleName.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                    throw new BadRequestException("Unsupported role name: " + roleName);
+                }
+                if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleName))) {
+                    throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " + roleName + " role.");
+                }
+                List<User> users = userService.getUsersByUserRole(user, roleName);
+                return Response.ok().entity(users).build();
+            }
+            else {
+                throw new BadRequestException("Invalid role name: " + roleName);
+            }
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
@@ -89,7 +119,7 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserById(userId);
             List<UserRoles> allowableRoles = Stream
-                .of(UserRoles.ADMIN, UserRoles.ALUMNI, UserRoles.RESEARCHER, UserRoles.DATAOWNER)
+                .of(UserRoles.ADMIN, UserRoles.ALUMNI, UserRoles.RESEARCHER, UserRoles.DATAOWNER, UserRoles.SIGNINGOFFICIAL)
                 .collect(Collectors.toList());
             Optional<UserRoles> matchingRole = allowableRoles
                 .stream()
@@ -160,6 +190,23 @@ public class UserResource extends Resource {
     public Response delete(@PathParam("email") String email, @Context UriInfo info) {
         userService.deleteUserByEmail(email);
         return Response.ok().build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/signing-officials")
+    @RolesAllowed(RESEARCHER)
+    public Response getSOsForInstitution(@Auth AuthUser authUser) {
+        try {
+            User user = userService.findUserByEmail(authUser.getName());
+            if (Objects.isNull(user.getInstitutionId())) {
+                throw new NotFoundException("Current user, " + user.getDisplayName() + ", does not have an institution.");
+            }
+            List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
+            return Response.ok().entity(signingOfficials).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     /**

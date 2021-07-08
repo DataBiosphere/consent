@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.BadRequestException;
@@ -28,6 +29,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
@@ -309,6 +311,54 @@ public class UserServiceTest {
         initService();
         Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
         User user = service.updateDACUserById(dacUsers, u.getDacUserId());
+    }
+
+    @Test
+    public void testFindSOsByInstitutionId() {
+        User u = generateUser();
+        Integer institutionId = u.getInstitutionId();
+        when(userDAO.getSOsByInstitution(any())).thenReturn(Arrays.asList(u, u, u));
+        initService();
+        List<SimplifiedUser> users = service.findSOsByInstitutionId(institutionId);
+        assertEquals(3, users.size());
+        assertEquals(u.getDisplayName(), users.get(0).displayName);
+    }
+
+    @Test
+    public void testFindSOsByInstitutionId_NullId() {
+        initService();
+        List<SimplifiedUser> users = service.findSOsByInstitutionId(null);
+        assertEquals(0, users.size());
+    }
+
+    @Test
+    public void testGetUsersByUserRole_SO() {
+        User u = generateUser();
+        u.setInstitutionId(1);
+        when(userDAO.findUsersByInstitution(1)).thenReturn(Arrays.asList(new User(), new User(), new User()));
+        initService();
+
+        List<User> users = service.getUsersByUserRole(u, "SigningOfficial");
+        assertNotNull(users);
+        assertEquals(3, users.size());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testGetUsersByUserRole_SO_noInstitution() {
+        User u = generateUser();
+        u.setInstitutionId(null);
+        initService();
+        service.getUsersByUserRole(u, "SigningOfficial");
+    }
+
+    @Test
+    public void testGetUsersByUserRole_Admin() {
+        User u = generateUser();
+        when(userDAO.findUsers()).thenReturn(new HashSet<>(Arrays.asList(generateUser(), generateUser(), generateUser())));
+        initService();
+        List<User> users = service.getUsersByUserRole(u, "Admin");
+        assertNotNull(users);
+        assertEquals(3, users.size());
     }
 
     private User generateUser() {
