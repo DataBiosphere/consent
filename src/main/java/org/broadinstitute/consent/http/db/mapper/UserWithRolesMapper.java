@@ -36,6 +36,9 @@ public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
       if (hasColumn(r, "completed")) {
         user.setProfileCompleted(Boolean.valueOf(r.getString("completed")));
       }
+      if (hasColumn(r, "era_commons_id")) {
+        user.setEraCommonsId(r.getString("era_commons_id"));
+      }
     } else {
       user = users.get(r.getInt("dacUserId"));
     }
