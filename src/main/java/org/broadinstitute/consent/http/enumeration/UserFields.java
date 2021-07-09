@@ -28,8 +28,6 @@ public enum UserFields {
   INVESTIGATOR("investigator", false),
   ERA_EXPIRATION_DATE("eraExpiration", false),
   ERA_STATUS("eraAuthorized", false),
-  @Deprecated
-  ERA_USERNAME("nihUsername", false),
   LINKEDIN_PROFILE("linkedIn", false),
   RESEARCHER_GATE("researcherGate", false),
   ORCID("orcid", false),
