@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 
 import com.google.gson.Gson;
@@ -341,20 +340,6 @@ public class DataAccessRequestServiceTest {
         assertNotNull(doc);
         assertEquals(dar.getReferenceId(), doc.get(DarConstants.REFERENCE_ID));
     }
-
-    @Test
-    public void testDescribeDraftDataAccessRequestManage() {
-        DataAccessRequest dar = generateDataAccessRequest();
-        when(dataAccessRequestDAO.findAllDraftDataAccessRequests())
-                .thenReturn(Collections.singletonList(dar));
-        initService();
-
-        List<Document> docs = service.describeDraftDataAccessRequestManage(null);
-        assertNotNull(docs);
-        assertEquals(1, docs.size());
-        assertEquals(dar.getReferenceId(), docs.get(0).get(DarConstants.REFERENCE_ID));
-    }
-
     @Test
     public void testCreateApprovedDARDocument() {
         Election election = generateElection(1);
