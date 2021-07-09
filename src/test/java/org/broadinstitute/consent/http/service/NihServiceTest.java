@@ -77,7 +77,7 @@ public class NihServiceTest extends TestCase {
 
     @Test
     public void testAuthenticateNih_LibraryCardUpdate() {
-        //test no longer tests library card update, needs to be updated once service method is updated
+        //test no longer tests library card update, needs to be updated
         Map<String, String> props = new HashMap<>();
         when(researcherService.updateProperties(any(), any(),any()))
                 .thenReturn(Arrays.asList(new UserProperty(1, 1, "test", "value")));

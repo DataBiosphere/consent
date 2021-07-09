@@ -33,11 +33,11 @@ public class NihService {
         if (StringUtils.isNotEmpty(nihAccount.getNihUsername()) && !nihAccount.getNihUsername().isEmpty()) {
             nihAccount.setEraExpiration(generateEraExpirationDates());
             nihAccount.setStatus(true);
-            //now that eraCommons is not being updated in properties we need to update it separately
             List<UserProperty> updatedProps = researcherService.updateProperties(nihAccount.getNihMap(), authUser, false);
             if (Objects.nonNull(nihAccount.getNihUsername())) {
                 //only updates eraCommons on LC not on user
                 libraryCardDAO.updateEraCommonsForUser(userId, nihAccount.getNihUsername());
+                //now that eraCommons is not being updated in properties we need to update it separately
                 userDAO.updateEraCommonsId(userId, nihAccount.getNihUsername());
             }
             return updatedProps;
