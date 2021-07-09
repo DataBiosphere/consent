@@ -13,8 +13,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 
 public class NihService {
 
@@ -32,10 +31,8 @@ public class NihService {
             nihAccount.setEraExpiration(generateEraExpirationDates());
             nihAccount.setStatus(true);
             List<UserProperty> updatedProps = researcherService.updateProperties(nihAccount.getNihMap(), authUser, false);
-            Optional<UserProperty> eraCommonsProp = updatedProps.stream().filter((prop) -> prop.getPropertyKey().equalsIgnoreCase(UserFields.ERA_USERNAME.getValue())).findFirst();
-            String eraCommonsId = (eraCommonsProp.isPresent()) ? eraCommonsProp.get().getPropertyValue() : "";
-            if (!eraCommonsId.equals("")) {
-              libraryCardDAO.updateEraCommonsForUser(userId, eraCommonsId);
+            if (Objects.nonNull(nihAccount.getNihUsername())) {
+              libraryCardDAO.updateEraCommonsForUser(userId, nihAccount.getNihUsername());
             }
             return updatedProps;
         } else {
@@ -47,7 +44,6 @@ public class NihService {
         List<UserProperty> properties = new ArrayList<>();
         properties.add(new UserProperty(userId, UserFields.ERA_EXPIRATION_DATE.getValue()));
         properties.add(new UserProperty(userId, UserFields.ERA_STATUS.getValue()));
-        properties.add(new UserProperty(userId, UserFields.ERA_USERNAME.getValue()));
         researcherService.deleteResearcherSpecificProperties(properties);
     }
 
