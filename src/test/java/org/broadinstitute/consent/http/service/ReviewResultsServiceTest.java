@@ -18,7 +18,6 @@ import org.mockito.MockitoAnnotations;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -53,7 +52,6 @@ public class ReviewResultsServiceTest {
         when(voteDAO.findElectionReviewVotesByElectionId(anyInt())).thenReturn(randomReviewVotesList());
         when(voteDAO.findElectionReviewVotesByElectionId(anyInt(), anyString())).thenReturn(randomReviewVotesList());
         when(electionDAO.findLastElectionByReferenceIdAndType(anyString(), anyString())).thenReturn(sampleElection);
-        when(electionDAO.findLastElectionWithFinalVoteByReferenceIdAndStatus(anyString(), notNull())).thenReturn(sampleElection);
         when(electionDAO.findElectionWithFinalVoteById(anyInt())).thenReturn(sampleElection);
         when(consentDAO.findConsentById(any())).thenReturn(consent);
     }
@@ -73,14 +71,6 @@ public class ReviewResultsServiceTest {
         assertTrue("There are open elections", service.openElections());
         when(electionDAO.verifyOpenElections()).thenReturn(0);
         assertFalse("There aren't open elections", service.openElections());
-    }
-
-    @Test
-    public void testDescribeElectionReviewByReferenceId() throws Exception {
-        initService();
-        ElectionReview review = service.describeElectionReviewByReferenceId("anyString");
-        assertTrue("Consent should be equal to mocked response ", review.getConsent().equals(consent));
-        assertTrue("Sample Election should be equal to mocked response ", review.getElection().equals(sampleElection));
     }
 
     @Test
