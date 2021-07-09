@@ -3181,9 +3181,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LibraryCard'
-              example:
-                libraryCard:
-                  $ref: '#/components/schemas/LibraryCard'
       responses:
         200:
           description: Library Card PUT request success
@@ -4800,6 +4797,17 @@ components:
         updateUserId:
           type: integer
           description: User who last updated the LibraryCard
+      example:
+        id: 1
+        userId: 2
+        institutionId: 3
+        eraCommonsId: CommonsId
+        userName: User Smith
+        userEmail: email@somewhere.com
+        createDate: date
+        createUserId: 3
+        updateDate: date
+        updateUserId: 4
     User:
       type: object
       properties:
