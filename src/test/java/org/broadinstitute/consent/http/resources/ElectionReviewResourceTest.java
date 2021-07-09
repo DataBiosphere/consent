@@ -102,13 +102,5 @@ public class ElectionReviewResourceTest {
         assertNotNull(response);
     }
 
-    @Test
-    public void testGetElectionReviewByReferenceId() {
-        when(reviewResultsService.describeElectionReviewByReferenceId(any())).thenReturn(new ElectionReview());
-        initResource();
-        ElectionReview response = resource.getElectionReviewByReferenceId(RandomStringUtils.random(10));
-        assertNotNull(response);
-    }
-
 }
 
