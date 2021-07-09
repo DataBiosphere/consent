@@ -18,6 +18,7 @@ public enum UserFields {
   DIVISION("division", false),
   STREET_ADDRESS_2("address2", false),
   STATE("state", false),
+  @Deprecated
   ERA_COMMONS_ID("eRACommonsID", false),
   PUBMED_ID("pubmedID", false),
   SCIENTIFIC_URL("scientificURL", false),
@@ -29,6 +30,7 @@ public enum UserFields {
   INVESTIGATOR("investigator", false),
   ERA_EXPIRATION_DATE("eraExpiration", false),
   ERA_STATUS("eraAuthorized", false),
+  @Deprecated
   ERA_USERNAME("nihUsername", false),
   LINKEDIN_PROFILE("linkedIn", false),
   RESEARCHER_GATE("researcherGate", false),
