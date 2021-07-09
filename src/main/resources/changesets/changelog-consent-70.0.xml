@@ -11,9 +11,11 @@
         <column name="era_commons_id" type="varchar(255)"/>
       </addColumn>
 
-
-      <!-- TODO: populate from researcher properties -->
       <sql>
+        update dacuser
+        set era_commons_id = subquery.propertyvalue
+        from (select userid, propertyvalue from user_property where propertykey in ('nihUsername')) as subquery
+        where dacuserid = subquery.userid
       </sql>
 
       <rollback>
