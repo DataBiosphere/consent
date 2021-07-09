@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
@@ -19,11 +20,13 @@ public class NihService {
 
     private ResearcherService researcherService;
     private LibraryCardDAO libraryCardDAO;
+    private UserDAO userDAO;
 
     @Inject
-    public NihService(ResearcherService researcherService, LibraryCardDAO libraryCardDAO) {
+    public NihService(ResearcherService researcherService, LibraryCardDAO libraryCardDAO, UserDAO userDAO) {
         this.researcherService = researcherService;
         this.libraryCardDAO = libraryCardDAO;
+        this.userDAO = userDAO;
     }
 
     public List<UserProperty> authenticateNih(NIHUserAccount nihAccount, AuthUser authUser, Integer userId) throws BadRequestException {
@@ -35,7 +38,7 @@ public class NihService {
             if (Objects.nonNull(nihAccount.getNihUsername())) {
                 //only updates eraCommons on LC not on user
                 libraryCardDAO.updateEraCommonsForUser(userId, nihAccount.getNihUsername());
-                //add new DAO call here to update eraCommons user
+                userDAO.updateEraCommonsId(userId, nihAccount.getNihUsername());
             }
             return updatedProps;
         } else {

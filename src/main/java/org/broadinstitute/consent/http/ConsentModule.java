@@ -495,7 +495,7 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     NihService providesNihService() {
-        return new NihService(providesResearcherService(), providesLibraryCardDAO());
+        return new NihService(providesResearcherService(), providesLibraryCardDAO(), providesUserDAO());
     }
 
     @Provides

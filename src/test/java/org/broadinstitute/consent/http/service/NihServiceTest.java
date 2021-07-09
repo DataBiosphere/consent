@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service;
 import junit.framework.TestCase;
 
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
-import org.broadinstitute.consent.http.enumeration.UserFields;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -32,6 +32,9 @@ public class NihServiceTest extends TestCase {
     @Mock
     private LibraryCardDAO libraryCardDAO;
 
+    @Mock
+    private UserDAO userDAO;
+
     private NihService service;
     private NIHUserAccount nihUserAccount;
     private AuthUser authUser;
@@ -44,7 +47,7 @@ public class NihServiceTest extends TestCase {
     }
 
     private void initService() {
-        service = new NihService(researcherService, libraryCardDAO);
+        service = new NihService(researcherService, libraryCardDAO, userDAO);
     }
 
     @Test
