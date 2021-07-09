@@ -74,8 +74,8 @@ public class NihServiceTest extends TestCase {
 
     @Test
     public void testAuthenticateNih_LibraryCardUpdate() {
+        //test no longer tests library card update
         Map<String, String> props = new HashMap<>();
-        props.put(UserFields.ERA_USERNAME.getValue(), "eracommonsid");
         when(researcherService.updateProperties(any(), any(),any()))
                 .thenReturn(Arrays.asList(new UserProperty(1, 1, "test", "value")));
         when(researcherService.describeResearcherPropertiesForDAR(any())).thenReturn(props);
