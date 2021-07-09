@@ -34,12 +34,8 @@ public class NihService {
             nihAccount.setEraExpiration(generateEraExpirationDates());
             nihAccount.setStatus(true);
             List<UserProperty> updatedProps = researcherService.updateProperties(nihAccount.getNihMap(), authUser, false);
-            if (Objects.nonNull(nihAccount.getNihUsername())) {
-                //only updates eraCommons on LC not on user
-                libraryCardDAO.updateEraCommonsForUser(userId, nihAccount.getNihUsername());
-                //now that eraCommons is not being updated in properties we need to update it separately
-                userDAO.updateEraCommonsId(userId, nihAccount.getNihUsername());
-            }
+            libraryCardDAO.updateEraCommonsForUser(userId, nihAccount.getNihUsername());
+            userDAO.updateEraCommonsId(userId, nihAccount.getNihUsername());
             return updatedProps;
         } else {
             throw new BadRequestException("Invalid NIH UserName for user : " + authUser.getName());
