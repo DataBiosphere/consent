@@ -1598,14 +1598,6 @@ paths:
           description: Returns the created Data Access Request, json file.
         500:
           description: Internal Server Error.
-    get:
-      summary: get all Data Access Requests
-      description: Retrieves all the existent DARs
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the DAR collection
   /api/dar/cancel/{id}:
     put:
       summary: Cancel a Data Access Request
