@@ -90,7 +90,7 @@ public interface DacDAO extends Transactional<DacDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.status, u.rationale, "
+        + "     u.email_preference, u.status, u.rationale, u.era_commons_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
         + " INNER JOIN user_role ur ON ur.user_id = u.dacuserid "
@@ -103,7 +103,7 @@ public interface DacDAO extends Transactional<DacDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.status, u.rationale, "
+        + "     u.email_preference, u.status, u.rationale, u.era_commons_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
         + " INNER JOIN user_role ur ON ur.user_id = u.dacuserid "
