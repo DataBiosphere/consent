@@ -77,6 +77,7 @@ public class ResearcherResource extends Resource {
     @Path("{userId}")
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER, CHAIRPERSON, MEMBER})
+    @Deprecated // Use UserResource.getUserById or UserResource.getUser
     public Response describeAllResearcherProperties(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
         try {
             List<UserRoles> authedRoles = Stream.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER, UserRoles.ADMIN).

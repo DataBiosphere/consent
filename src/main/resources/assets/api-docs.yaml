@@ -3181,9 +3181,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LibraryCard'
-              example:
-                libraryCard:
-                  $ref: '#/components/schemas/LibraryCard'
       responses:
         200:
           description: Library Card PUT request success
@@ -3588,8 +3585,11 @@ paths:
           description: Server error.
   /api/researcher/{userId}:
     get:
+      deprecated: true
       summary: Return researcher properties.
-      description: Describes all the properties for a reseacher user.
+      description: |
+        DEPRECATED: Use /api/user/me or /api/user/{id}
+        Describes all the properties for a reseacher user.
       parameters:
         - name: userId
           in: path
@@ -3819,6 +3819,7 @@ components:
           type: string
         libraryCards:
           type: array
+          description: List of string values of the organizations for all library cards the user has access to.
           items:
             type: string
         zipcode:
@@ -3826,7 +3827,7 @@ components:
         libraryCardEntries:
           type: array
           items:
-            $ref: '#/components/schemas/LibraryCardEntry'
+            $ref: '#/components/schemas/LibraryCard'
         institution:
           type: string
         nihUsername:
@@ -3844,25 +3845,6 @@ components:
         eraAuthorized:
           type: string
         eraExpiration:
-          type: string
-    LibraryCardEntry:
-      type: object
-      properties:
-        organization:
-          type: string
-        commonsId:
-          type: string
-        name:
-          type: string
-        email:
-          type: string
-        signingOfficialName:
-          type: string
-        signingOfficialEmail:
-          type: string
-        itDirectorName:
-          type: string
-        itDirectorEmail:
           type: string
     NIHUserAccount:
       type: object
@@ -4774,6 +4756,8 @@ components:
         userId:
           type: integer
           description: ID of associated user
+        institution:
+          $ref: '#/components/schemas/Institution'
         institutionId:
           type: integer
           description: ID of associated institution
@@ -4800,6 +4784,17 @@ components:
         updateUserId:
           type: integer
           description: User who last updated the LibraryCard
+      example:
+        id: 1
+        userId: 2
+        institutionId: 3
+        eraCommonsId: CommonsId
+        userName: User Smith
+        userEmail: email@somewhere.com
+        createDate: date
+        createUserId: 3
+        updateDate: date
+        updateUserId: 4
     User:
       type: object
       properties:
@@ -4832,6 +4827,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UserRole'
+        researcherProperties:
+          $ref: '#/components/schemas/UserProperties'
+        libraryCards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LibraryCard'
     UserRole:
       type: object
       properties:
