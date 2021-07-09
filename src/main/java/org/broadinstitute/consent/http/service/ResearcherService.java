@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.util.DarConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,7 +135,6 @@ public class ResearcherService {
                 UserFields.ORCID.getValue(), properties.getOrDefault(UserFields.ORCID.getValue(), null));
         rpForDAR.put(UserFields.CHECK_NOTIFICATIONS.getValue(), properties.getOrDefault(UserFields.CHECK_NOTIFICATIONS.getValue(), null));
         rpForDAR.put(UserFields.ERA_EXPIRATION_DATE.getValue(), properties.getOrDefault(UserFields.ERA_EXPIRATION_DATE.getValue(), null));
-        rpForDAR.put(UserFields.ERA_USERNAME.getValue(), properties.getOrDefault(UserFields.ERA_USERNAME.getValue(), null));
         rpForDAR.put(UserFields.ERA_STATUS.getValue(), properties.getOrDefault(UserFields.ERA_STATUS.getValue(), null));
         return rpForDAR;
     }
