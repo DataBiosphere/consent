@@ -57,12 +57,12 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
           + " u.dacuserid AS u_dacuserid, u.email AS u_email, "
           + " u.displayname AS u_displayname, u.createdate AS u_createdate, "
           + " u.additional_email AS u_additional_email, u.email_preference AS u_email_preference, "
-          + " u.status AS u_status, u.rationale AS u_rationale, "
+          + " u.status AS u_status, u.rationale AS u_rationale, u.era_commons_id AS u_era_commons_id, "
 
           + " u2.dacuserid AS u2_dacuserid, u2.email AS u2_email, "
           + " u2.displayname AS u2_displayname, u2.createdate AS u2_createdate, "
           + " u2.additional_email AS u2_additional_email, u2.email_preference AS u2_email_preference, "
-          + " u2.status AS u2_status, u2.rationale AS u2_rationale "
+          + " u2.status AS u2_status, u2.rationale AS u2_rationale, u2.era_commons_id AS u2_era_commons_id "
 
           + " FROM institution i "
           + " LEFT JOIN dacuser u ON u.dacuserid = i.create_user "
