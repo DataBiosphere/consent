@@ -119,7 +119,6 @@ public class ResearcherService {
                 UserFields.STATE.getValue(), properties.getOrDefault(UserFields.STATE.getValue(), null));
         rpForDAR.put(UserFields.STREET_ADDRESS_2.getValue(), properties.getOrDefault(UserFields.STREET_ADDRESS_2.getValue(), null));
         rpForDAR.put(UserFields.DIVISION.getValue(), properties.getOrDefault(UserFields.DIVISION.getValue(), null));
-        rpForDAR.put(UserFields.ERA_COMMONS_ID.getValue(), properties.getOrDefault(UserFields.ERA_COMMONS_ID.getValue(), null));
         rpForDAR.put(UserFields.PUBMED_ID.getValue(), properties.getOrDefault(UserFields.PUBMED_ID.getValue(), null));
         rpForDAR.put(UserFields.PROFILE_NAME.getValue(), Objects.isNull(user) ? "" : user.getDisplayName());
         rpForDAR.put(
@@ -193,18 +192,15 @@ public class ResearcherService {
         if (isUpdatedProfileCompleted) {
             String isThePI = researcherPropertiesMap.getOrDefault(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), null);
             String havePI = researcherPropertiesMap.getOrDefault(UserFields.DO_YOU_HAVE_PI.getValue(), null);
-            String eRACommonsID = researcherPropertiesMap.getOrDefault(UserFields.ERA_COMMONS_ID.getValue(), "");
             String pubmedID = researcherPropertiesMap.getOrDefault(UserFields.PUBMED_ID.getValue(), "");
             String scientificURL = researcherPropertiesMap.getOrDefault(UserFields.SCIENTIFIC_URL.getValue(), "");
-            if (StringUtils.isNotEmpty(eRACommonsID) && StringUtils.isEmpty(
-                    userPropertyDAO.findPropertyValueByPK(userId, UserFields.ERA_COMMONS_ID.getValue())) ||
-                    StringUtils.isNotEmpty(pubmedID) && StringUtils.isEmpty(
+            if (StringUtils.isNotEmpty(pubmedID) && StringUtils.isEmpty(
                             userPropertyDAO.findPropertyValueByPK(userId, UserFields.PUBMED_ID.getValue())) ||
                     StringUtils.isNotEmpty(scientificURL) && StringUtils.isEmpty(
                             userPropertyDAO.findPropertyValueByPK(userId, UserFields.SCIENTIFIC_URL.getValue()))) {
                 hasUpdatedFields = true;
             } else if (CollectionUtils.isNotEmpty(userPropertyDAO
-                    .findResearcherProperties(userId, isThePI, havePI, eRACommonsID, pubmedID, scientificURL))) {
+                    .findResearcherProperties(userId, isThePI, havePI, pubmedID, scientificURL))) {
                 hasUpdatedFields = true;
             }
         }

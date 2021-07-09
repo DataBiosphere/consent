@@ -18,8 +18,6 @@ public enum UserFields {
   DIVISION("division", false),
   STREET_ADDRESS_2("address2", false),
   STATE("state", false),
-  @Deprecated
-  ERA_COMMONS_ID("eRACommonsID", false),
   PUBMED_ID("pubmedID", false),
   SCIENTIFIC_URL("scientificURL", false),
   DO_YOU_HAVE_PI("havePI", false),
