@@ -200,7 +200,7 @@ public interface UserDAO extends Transactional<UserDAO> {
 
     @SqlUpdate("UPDATE dacuser SET " +
       " era_commons_id = :eraCommonsId " +
-      " WHERE user_id = :userId")
+      " WHERE dacuserid = :userId")
     void updateEraCommonsId(@Bind("userId") Integer userId, @Bind("eraCommonsId") String eraCommonsId);
 
 }
