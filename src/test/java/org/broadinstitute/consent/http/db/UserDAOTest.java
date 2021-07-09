@@ -369,6 +369,16 @@ public class UserDAOTest extends DAOTestHelper {
         assertEquals(0, differentInstitutionUsers.size());
     }
 
+    @Test
+    public void testUpdateEraCommonsId() {
+        User u = createUser();
+        String era = u.getEraCommonsId();
+        assertNull(era);
+        userDAO.updateEraCommonsId(u.getDacUserId(), "newEraCommonsId");
+        User updated = userDAO.findUserById(u.getDacUserId());
+        assertEquals("newEraCommonsId", updated.getEraCommonsId());
+    }
+
     private String getRandomEmailAddress() {
         String user = RandomStringUtils.randomAlphanumeric(20);
         String domain = RandomStringUtils.randomAlphanumeric(10);
