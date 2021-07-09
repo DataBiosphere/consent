@@ -198,4 +198,9 @@ public interface UserDAO extends Transactional<UserDAO> {
       + " AND u.institution_id = :institutionId")
     List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
+    @SqlUpdate("UPDATE dacuser SET " +
+      " era_commons_id = :eraCommonsId " +
+      " WHERE user_id = :userId")
+    void updateEraCommonsId(@Bind("userId") Integer userId, @Bind("eraCommonsId") String eraCommonsId);
+
 }
