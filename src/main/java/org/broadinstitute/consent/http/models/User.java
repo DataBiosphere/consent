@@ -55,6 +55,9 @@ public class User {
     @JsonProperty
     private Integer institutionId;
 
+    @JsonProperty
+    private String eraCommonsId;
+
     public User() {
     }
 
@@ -196,7 +199,7 @@ public class User {
         this.dacUserId = dacUserId;
     }
 
-    public String getEmail() { 
+    public String getEmail() {
         return email;
     }
 
@@ -281,6 +284,14 @@ public class User {
     }
 
     public void setInstitutionId(Integer institutionId) { this.institutionId = institutionId; }
+
+    public String getEraCommonsId() {
+        return eraCommonsId;
+    }
+
+    public void setEraCommonsId(String eraCommonsId) {
+        this.eraCommonsId = eraCommonsId;
+    }
 
     public void addRole(UserRole userRole) {
         if (Objects.isNull(this.getRoles())) {
