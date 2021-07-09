@@ -5,7 +5,6 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
