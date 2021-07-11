@@ -149,7 +149,7 @@ public class ConsentService {
         if (StringUtils.isEmpty(consentDAO.checkConsentById(id))) {
             throw new NotFoundException();
         }
-        if (Objects.isNull(rec.getTranslatedUseRestriction())) {
+        if (Objects.isNull(rec.getTranslatedUseRestriction()) && Objects.nonNull(rec.getDataUse())) {
             rec.setTranslatedUseRestriction(useRestrictionConverter.translateDataUse(rec.getDataUse()));
         }
         consentDAO.updateConsent(id, rec.getRequiresManualReview(),
