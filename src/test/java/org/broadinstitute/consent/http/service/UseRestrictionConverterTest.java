@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.After;
@@ -41,7 +42,36 @@ public class UseRestrictionConverterTest implements WithMockServer {
         stop(container);
     }
 
-    private void mockSuccess() {
+    private void mockDataUseTranslateSuccess() {
+        client.reset();
+        client
+            .when(request().withMethod("POST").withPath("/translate"))
+            .respond(
+                response()
+                    .withStatusCode(200)
+                    .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
+                    .withBody(
+                        "Samples are restricted for use under the following conditions:\n"
+                            + "Data is limited for health/medical/biomedical research. [HMB]\n"
+                            + "Commercial use is not prohibited.\n"
+                            + "Data use for methods development research irrespective of the specified data use limitations is not prohibited.\n"
+                            + "Restrictions for use as a control set for diseases other than those defined were not specified."));
+    }
+
+    private void mockDataUseTranslateFailure() {
+        client.reset();
+        client
+            .when(request().withMethod("POST").withPath("/translate"))
+            .respond(
+                response()
+                        .withStatusCode(500)
+                        .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
+                        .withBody("Exception")
+            );
+    }
+
+
+    private void mockDarTranslateSuccess() {
         client.reset();
         client.when(
             request()
@@ -55,7 +85,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         );
     }
 
-    private void mockFailure() {
+    private void mockDarTranslateFailure() {
         client.reset();
         client.when(
             request()
@@ -81,7 +111,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
      */
     @Test
     public void testUseRestrictionConverterConnection() {
-        mockSuccess();
+        mockDarTranslateSuccess();
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
@@ -96,13 +126,40 @@ public class UseRestrictionConverterTest implements WithMockServer {
      */
     @Test
     public void testFailedUseRestrictionConverterConnection() {
-        mockFailure();
+        mockDarTranslateFailure();
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = converter.parseDataUsePurpose("{  }");
         UseRestriction restriction = converter.parseUseRestriction(dataUse);
         assertNull(restriction);
+    }
+
+    /*
+     * Test that the UseRestrictionConverter makes a call to the ontology service and gets back a valid translation
+     */
+    @Test
+    public void testTranslateDataUse() {
+        mockDataUseTranslateSuccess();
+        Client client = ClientBuilder.newClient();
+        UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+        DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
+        String translation = converter.translateDataUse(dataUse);
+        assertNotNull(translation);
+    }
+
+    /*
+     * Test that when the UseRestrictionConverter makes a failed call to the ontology service, a null is returned.
+     */
+    @Test
+    public void testFailedDataUseTranslateConverterConnection() {
+        mockDataUseTranslateFailure();
+
+        Client client = ClientBuilder.newClient();
+        UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+        DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
+        String translation = converter.translateDataUse(dataUse);
+        assertNull(translation);
     }
 
     /*
