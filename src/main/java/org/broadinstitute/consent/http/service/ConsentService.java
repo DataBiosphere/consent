@@ -104,8 +104,7 @@ public class ConsentService {
             throw new IllegalArgumentException("Consent for the specified id already exist");
         }
         Date createDate = new Date();
-        if (Objects.isNull(rec.getTranslatedUseRestriction()) &&
-        Objects.nonNull(rec.getDataUse())) {
+        if (Objects.isNull(rec.getTranslatedUseRestriction()) && Objects.nonNull(rec.getDataUse())) {
             String translatedUseRestriction = useRestrictionConverter.translateDataUse(rec.getDataUse());
             rec.setTranslatedUseRestriction(translatedUseRestriction);
         }
