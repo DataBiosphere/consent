@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -149,12 +150,13 @@ public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testUpdateConsentTranslatedUseRestriction() {
-        String randomString = RandomStringUtils.random(10);
         Consent consent = createConsent(null);
 
+        String randomString = RandomStringUtils.random(10);
         consentDAO.updateConsentTranslatedUseRestriction(consent.getConsentId(), randomString);
         Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
         assertEquals(randomString, foundConsent.getTranslatedUseRestriction());
+        assertNotEquals(consent.getTranslatedUseRestriction(), foundConsent.getTranslatedUseRestriction());
     }
 
     @Test
