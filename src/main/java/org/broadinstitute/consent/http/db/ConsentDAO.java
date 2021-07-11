@@ -95,7 +95,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("dacId") Integer dacId);
 
     @SqlUpdate(" UPDATE consents " +
-            " SET translateduserestriction = :translatedUseRestriction, " +
+            " SET translateduserestriction = :translatedUseRestriction " +
             " WHERE consentid = :consentId ")
     void updateConsentTranslatedUseRestriction(
             @Bind("consentId") String consentId,

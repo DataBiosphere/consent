@@ -12,6 +12,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Dac;
@@ -143,6 +145,16 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
         assertNotNull(foundConsent.getDacId());
         assertEquals(dac.getDacId(), foundConsent.getDacId());
+    }
+
+    @Test
+    public void testUpdateConsentTranslatedUseRestriction() {
+        String randomString = RandomStringUtils.random(10);
+        Consent consent = createConsent(null);
+
+        consentDAO.updateConsentTranslatedUseRestriction(consent.getConsentId(), randomString);
+        Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
+        assertEquals(randomString, foundConsent.getTranslatedUseRestriction());
     }
 
     @Test
