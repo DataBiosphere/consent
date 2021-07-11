@@ -85,6 +85,9 @@ public class ElectionServiceTest {
     private DataAccessRequestDAO dataAccessRequestDAO;
     @Mock
     private EmailNotifierService emailNotifierService;
+    @Mock
+    private UseRestrictionConverter useRestrictionConverter;
+
     private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
 
     private static Election sampleElection1;
@@ -307,7 +310,7 @@ public class ElectionServiceTest {
     }
 
     private void initService() {
-        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, mailMessageDAO, dacService, emailNotifierService, dataAccessRequestService);
+        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, mailMessageDAO, dacService, emailNotifierService, dataAccessRequestService, useRestrictionConverter);
     }
 
     @Test
@@ -377,7 +380,7 @@ public class ElectionServiceTest {
         //function throws exception, need to have a catch block to handle it
         } catch(Exception e) {
             Assert.fail("Vote should not have failed");
-        } 
+        }
     }
 
     @Test

@@ -94,6 +94,13 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("updated") Boolean updateStatus,
                        @Bind("dacId") Integer dacId);
 
+    @SqlUpdate(" update consents set " +
+            " translatedUseRestriction = :translatedUseRestriction, " +
+            " where consentId = :consentId ")
+    void updateConsentTranslatedUseRestriction(
+            @Bind("consentId") String consentId,
+            @Bind("translatedUseRestriction") String translatedUseRestriction);
+
     @SqlUpdate("update consents set sortDate = :sortDate " +
             "where consentId = :consentId and active = true")
     void updateConsentSortDate(@Bind("consentId") String consentId, @Bind("sortDate") Date sortDate);

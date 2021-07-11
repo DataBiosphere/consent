@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
@@ -55,16 +56,17 @@ import java.util.stream.Collectors;
 public class ElectionService {
 
     private final MailMessageDAO mailMessageDAO;
-    private ConsentDAO consentDAO;
-    private ElectionDAO electionDAO;
+    private final ConsentDAO consentDAO;
+    private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
     private final UserDAO userDAO;
     private final DatasetDAO dataSetDAO;
     private final LibraryCardDAO libraryCardDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
-    private DacService dacService;
-    private DataAccessRequestService dataAccessRequestService;
+    private final DacService dacService;
+    private final DataAccessRequestService dataAccessRequestService;
     private final EmailNotifierService emailNotifierService;
+    private final UseRestrictionConverter useRestrictionConverter;
     private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
     private static final Logger logger = LoggerFactory.getLogger("ElectionService");
 
@@ -72,7 +74,7 @@ public class ElectionService {
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
                            DatasetDAO dataSetDAO, LibraryCardDAO libraryCardDAO, DatasetAssociationDAO datasetAssociationDAO, MailMessageDAO mailMessageDAO,
                            DacService dacService, EmailNotifierService emailNotifierService,
-                           DataAccessRequestService dataAccessRequestService) {
+                           DataAccessRequestService dataAccessRequestService, UseRestrictionConverter useRestrictionConverter) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
@@ -84,6 +86,7 @@ public class ElectionService {
         this.emailNotifierService = emailNotifierService;
         this.dacService = dacService;
         this.dataAccessRequestService = dataAccessRequestService;
+        this.useRestrictionConverter = useRestrictionConverter;
     }
 
     public List<Election> describeClosedElectionsByType(String type, AuthUser authUser) {
@@ -640,7 +643,21 @@ public class ElectionService {
                     datasetsDetail.add(new DatasetMailDTO(ds.getName(), ds.getDatasetIdentifier()))
             );
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
-            emailNotifierService.sendResearcherDarApproved(dar.getData().getDarCode(),  dar.getUserId(), datasetsDetail, consent.getTranslatedUseRestriction());
+            DataUse dataUse = consent.getDataUse();
+            // Legacy behavior was to populate the plain language translation we received from ORSP
+            // If we don't have that and have a valid data use, use that instead as it is more up to date.
+            String translatedUseRestriction = consent.getTranslatedUseRestriction();
+            if (Objects.isNull(translatedUseRestriction)) {
+                if (Objects.nonNull(dataUse)) {
+                    translatedUseRestriction = useRestrictionConverter.translateDataUse(dataUse);
+                    // update so we don't have to make this check again
+                    consentDAO.updateConsentTranslatedUseRestriction(consent.getConsentId(), translatedUseRestriction);
+                } else {
+                    logger.error("Error finding translation for consent id: " + consent.getConsentId());
+                    translatedUseRestriction = "";
+                }
+            }
+            emailNotifierService.sendResearcherDarApproved(dar.getData().getDarCode(),  dar.getUserId(), datasetsDetail, translatedUseRestriction);
         }
     }
 

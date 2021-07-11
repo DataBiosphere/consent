@@ -195,6 +195,20 @@ public class UseRestrictionConverter {
         return null;
     }
 
+    public String translateDataUse(DataUse dataUse) {
+        WebTarget target = client.target(servicesConfiguration.getOntologyURL() + "translate");
+        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(dataUse.toString()));
+        if (response.getStatus() == 200) {
+            try {
+                return response.readEntity(String.class);
+            } catch (Exception e) {
+                LOGGER.error("Error parsing response from Ontology service: " + e);
+            }
+        }
+        LOGGER.error("Error response from Ontology service: " + response.readEntity(String.class));
+        return null;
+    }
+
     public Map<String, Object> parseAsMap(String str) {
         ObjectReader reader = mapper.readerFor(Map.class);
         try {

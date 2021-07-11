@@ -116,15 +116,14 @@ public class DatasetService {
             boolean manualReview = isConsentDataUseManualReview(dataset.getDataUse());
             /*
              * Consents created for a dataset do not need the following properties:
-             * use restriction
              * data user letter
              * data user letter name
-             * translated use restriction
              */
             UseRestriction useRestriction = converter.parseUseRestriction(dataset.getDataUse());
+            String translatedUseRestriction = converter.translateDataUse(dataset.getDataUse());
             consentDAO.useTransaction(h -> {
                 try {
-                    h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, null, groupName, dataset.getDacId());
+                    h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, translatedUseRestriction, groupName, dataset.getDacId());
                     if (Objects.nonNull(dataset.getDacId())) {
                         h.updateConsentDac(consentId, dataset.getDacId());
                     }
