@@ -643,13 +643,12 @@ public class ElectionService {
                     datasetsDetail.add(new DatasetMailDTO(ds.getName(), ds.getDatasetIdentifier()))
             );
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
-            DataUse dataUse = consent.getDataUse();
             // Legacy behavior was to populate the plain language translation we received from ORSP
             // If we don't have that and have a valid data use, use that instead as it is more up to date.
             String translatedUseRestriction = consent.getTranslatedUseRestriction();
             if (Objects.isNull(translatedUseRestriction)) {
-                if (Objects.nonNull(dataUse)) {
-                    translatedUseRestriction = useRestrictionConverter.translateDataUse(dataUse);
+                if (Objects.nonNull(consent.getDataUse())) {
+                    translatedUseRestriction = useRestrictionConverter.translateDataUse(consent.getDataUse());
                     // update so we don't have to make this check again
                     consentDAO.updateConsentTranslatedUseRestriction(consent.getConsentId(), translatedUseRestriction);
                 } else {
