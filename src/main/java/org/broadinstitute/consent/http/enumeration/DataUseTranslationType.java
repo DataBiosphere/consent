@@ -2,6 +2,11 @@ package org.broadinstitute.consent.http.enumeration;
 
 import java.util.List;
 
+/**
+ * Ontology's translation endpoint for a `DataUse` object has separate
+ * translations depending on the whether the use restrictions apply to
+ * a dataset (i.e. consent) or a purpose (i.e. DAR or research purpose).
+ */
 public enum DataUseTranslationType {
   DATASET("dataset"),
   PURPOSE("purpose");

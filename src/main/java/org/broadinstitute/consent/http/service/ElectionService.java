@@ -649,7 +649,7 @@ public class ElectionService {
             String translatedUseRestriction = consent.getTranslatedUseRestriction();
             if (Objects.isNull(translatedUseRestriction)) {
                 if (Objects.nonNull(consent.getDataUse())) {
-                    translatedUseRestriction = useRestrictionConverter.translateDataUse(consent.getDataUse(), DataUseTranslationType.PURPOSE);
+                    translatedUseRestriction = useRestrictionConverter.translateDataUse(consent.getDataUse(), DataUseTranslationType.DATASET);
                     // update so we don't have to make this check again
                     consentDAO.updateConsentTranslatedUseRestriction(consent.getConsentId(), translatedUseRestriction);
                 } else {

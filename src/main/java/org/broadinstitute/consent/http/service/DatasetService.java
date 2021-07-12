@@ -121,7 +121,7 @@ public class DatasetService {
              * data user letter name
              */
             UseRestriction useRestriction = converter.parseUseRestriction(dataset.getDataUse());
-            String translatedUseRestriction = converter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.PURPOSE);
+            String translatedUseRestriction = converter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET);
             consentDAO.useTransaction(h -> {
                 try {
                     h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, translatedUseRestriction, groupName, dataset.getDacId());

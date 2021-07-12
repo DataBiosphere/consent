@@ -107,7 +107,7 @@ public class ConsentService {
         Date createDate = new Date();
         if (Objects.isNull(rec.getTranslatedUseRestriction()) && Objects.nonNull(rec.getDataUse())) {
       String translatedUseRestriction =
-          useRestrictionConverter.translateDataUse(rec.getDataUse(), DataUseTranslationType.PURPOSE);
+          useRestrictionConverter.translateDataUse(rec.getDataUse(), DataUseTranslationType.DATASET);
             rec.setTranslatedUseRestriction(translatedUseRestriction);
         }
         consentDAO.insertConsent(id, rec.getRequiresManualReview(),
@@ -152,7 +152,7 @@ public class ConsentService {
             throw new NotFoundException();
         }
         if (Objects.isNull(rec.getTranslatedUseRestriction()) && Objects.nonNull(rec.getDataUse())) {
-            rec.setTranslatedUseRestriction(useRestrictionConverter.translateDataUse(rec.getDataUse(), DataUseTranslationType.PURPOSE));
+            rec.setTranslatedUseRestriction(useRestrictionConverter.translateDataUse(rec.getDataUse(), DataUseTranslationType.DATASET));
         }
         consentDAO.updateConsent(id, rec.getRequiresManualReview(),
                 rec.getUseRestriction().toString(), rec.getDataUse().toString(),
