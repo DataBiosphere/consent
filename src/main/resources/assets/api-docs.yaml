@@ -1160,20 +1160,6 @@ paths:
                 $ref: '#/components/schemas/User'
         400:
           description: Malformed user entity.
-    get:
-      summary: describeAllUsers
-      description: Returns all the users
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the collection of all the users and their permissions.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
   /api/dacuser/{email}:
     get:
       summary: describe
@@ -2265,29 +2251,6 @@ paths:
           description: Election for specified id does not exist OR
            Data Access Request for specified id does not exist OR
            No Library cards exist for the researcher on this DAR
-  /api/dataRequest/{requestId}/vote/final:
-    get:
-      summary: describeFinalAccessVote
-      description: Returns the Vote with isfinalAccessVote property  = TRUE with the specified Id.
-      parameters:
-        - name: requestId
-          in: path
-          description: Vote ID
-          required: true
-          schema:
-            type: integer
-      tags:
-        - Vote
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the requested Vote.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Vote'
-        404:
-          description: Could not find a vote with this id.
   /api/dataset:
     get:
       summary: Get Datasets
@@ -2836,26 +2799,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ElectionReview'
-  /api/electionReview/last/{referenceId}:
-    get:
-      summary: getElectionReviewByReferenceId
-      description: Returns the ElectionReview from an Election identified by referenceId with ElectionStatus = CLOSED and the most recent CreateDate.
-      parameters:
-        - name: referenceId
-          in: path
-          description: referenceId of the Election
-          required: true
-          schema:
-            type: string
-      tags:
-        - ElectionReview
-      responses:
-        200:
-          description: ElectionReview
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/rp/{electionId}:
     get:
       summary: get ElectionReview for rp election identified by electionId
@@ -3095,9 +3038,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LibraryCard'
-              example:
-                libraryCard:
-                  $ref: '#/components/schemas/LibraryCard'
       responses:
         200:
           description: Library Card PUT request success
@@ -3502,8 +3442,11 @@ paths:
           description: Server error.
   /api/researcher/{userId}:
     get:
+      deprecated: true
       summary: Return researcher properties.
-      description: Describes all the properties for a reseacher user.
+      description: |
+        DEPRECATED: Use /api/user/me or /api/user/{id}
+        Describes all the properties for a reseacher user.
       parameters:
         - name: userId
           in: path
@@ -3593,28 +3536,6 @@ paths:
           description: Returns eRA Commons Account information. Map<String, String> format
         404:
           description: The user doesn't exist in the system
-  /api/whitelist:
-    post:
-      summary: postWhitelist
-      description: Uploads Library Card Whitelist tsv to bucket
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                data:
-                  type: string
-                  format: binary
-      tags:
-        - Whitelist
-      responses:
-        201:
-          description: Successfully Created
-        400:
-          description: Improper whitelist format
-        500:
-          description: Internal Server Error
   /metrics/dac/decision:
     get:
       summary: Dac Decision Metrics
@@ -3755,6 +3676,7 @@ components:
           type: string
         libraryCards:
           type: array
+          description: List of string values of the organizations for all library cards the user has access to.
           items:
             type: string
         zipcode:
@@ -3762,7 +3684,7 @@ components:
         libraryCardEntries:
           type: array
           items:
-            $ref: '#/components/schemas/LibraryCardEntry'
+            $ref: '#/components/schemas/LibraryCard'
         institution:
           type: string
         nihUsername:
@@ -3780,25 +3702,6 @@ components:
         eraAuthorized:
           type: string
         eraExpiration:
-          type: string
-    LibraryCardEntry:
-      type: object
-      properties:
-        organization:
-          type: string
-        commonsId:
-          type: string
-        name:
-          type: string
-        email:
-          type: string
-        signingOfficialName:
-          type: string
-        signingOfficialEmail:
-          type: string
-        itDirectorName:
-          type: string
-        itDirectorEmail:
           type: string
     NIHUserAccount:
       type: object
@@ -4710,6 +4613,8 @@ components:
         userId:
           type: integer
           description: ID of associated user
+        institution:
+          $ref: '#/components/schemas/Institution'
         institutionId:
           type: integer
           description: ID of associated institution
@@ -4736,6 +4641,17 @@ components:
         updateUserId:
           type: integer
           description: User who last updated the LibraryCard
+      example:
+        id: 1
+        userId: 2
+        institutionId: 3
+        eraCommonsId: CommonsId
+        userName: User Smith
+        userEmail: email@somewhere.com
+        createDate: date
+        createUserId: 3
+        updateDate: date
+        updateUserId: 4
     User:
       type: object
       properties:
@@ -4768,6 +4684,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UserRole'
+        researcherProperties:
+          $ref: '#/components/schemas/UserProperties'
+        libraryCards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LibraryCard'
     UserRole:
       type: object
       properties:

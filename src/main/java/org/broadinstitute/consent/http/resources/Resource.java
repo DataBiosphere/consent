@@ -105,7 +105,7 @@ abstract public class Resource {
     private static final Map<Class<? extends Throwable>, ExceptionHandler> dispatch = new HashMap<>();
 
     static {
-        dispatch.put(ConsentConflictException.class, e-> 
+        dispatch.put(ConsentConflictException.class, e->
             Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
         dispatch.put(UserRoleHandlerException.class, e ->
                 Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
@@ -128,6 +128,8 @@ abstract public class Resource {
         dispatch.put(UpdateConsentException.class, e ->
                 Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
         dispatch.put(UnableToExecuteStatementException.class,
+                Resource::unableToExecuteExceptionHandler);
+        dispatch.put(PSQLException.class,
                 Resource::unableToExecuteExceptionHandler);
         dispatch.put(SQLSyntaxErrorException.class, e ->
                 errorLoggedExceptionHandler(e, new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())));

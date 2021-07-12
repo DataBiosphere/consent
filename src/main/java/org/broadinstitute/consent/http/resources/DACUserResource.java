@@ -31,7 +31,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -65,14 +64,6 @@ public class DACUserResource extends Resource {
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
-    }
-
-    @GET
-    @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    @Deprecated //use UserResource.getUsers(authUser, roleName)
-    public Collection<User> describeAllUsers() {
-        return userService.describeUsers();
     }
 
     @GET
