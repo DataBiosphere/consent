@@ -16,6 +16,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.OntologyEntry;
@@ -195,8 +196,8 @@ public class UseRestrictionConverter {
         return null;
     }
 
-    public String translateDataUse(DataUse dataUse) {
-        WebTarget target = client.target(servicesConfiguration.getOntologyURL() + "translate");
+    public String translateDataUse(DataUse dataUse, DataUseTranslationType type) {
+        WebTarget target = client.target(servicesConfiguration.getOntologyURL() + "translate?for=" + type.getValue());
         Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(dataUse.toString()));
         if (response.getStatus() == 200) {
             try {

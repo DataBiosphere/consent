@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.grammar.Everything;
@@ -139,12 +140,25 @@ public class UseRestrictionConverterTest implements WithMockServer {
      * Test that the UseRestrictionConverter makes a call to the ontology service and gets back a valid translation
      */
     @Test
-    public void testTranslateDataUse() {
+    public void testTranslateDataUsePurpose() {
         mockDataUseTranslateSuccess();
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
-        String translation = converter.translateDataUse(dataUse);
+        String translation = converter.translateDataUse(dataUse, DataUseTranslationType.PURPOSE);
+        assertNotNull(translation);
+    }
+
+    /*
+     * Test that the UseRestrictionConverter makes a call to the ontology service and gets back a valid translation
+     */
+    @Test
+    public void testTranslateDataUseDataset() {
+        mockDataUseTranslateSuccess();
+        Client client = ClientBuilder.newClient();
+        UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+        DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
+        String translation = converter.translateDataUse(dataUse, DataUseTranslationType.DATASET);
         assertNotNull(translation);
     }
 
@@ -158,7 +172,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
-        String translation = converter.translateDataUse(dataUse);
+        String translation = converter.translateDataUse(dataUse, DataUseTranslationType.PURPOSE);
         assertNull(translation);
     }
 

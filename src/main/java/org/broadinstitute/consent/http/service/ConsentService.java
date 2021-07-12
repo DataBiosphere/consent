@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
@@ -105,7 +106,8 @@ public class ConsentService {
         }
         Date createDate = new Date();
         if (Objects.isNull(rec.getTranslatedUseRestriction()) && Objects.nonNull(rec.getDataUse())) {
-            String translatedUseRestriction = useRestrictionConverter.translateDataUse(rec.getDataUse());
+      String translatedUseRestriction =
+          useRestrictionConverter.translateDataUse(rec.getDataUse(), DataUseTranslationType.PURPOSE);
             rec.setTranslatedUseRestriction(translatedUseRestriction);
         }
         consentDAO.insertConsent(id, rec.getRequiresManualReview(),
@@ -150,7 +152,7 @@ public class ConsentService {
             throw new NotFoundException();
         }
         if (Objects.isNull(rec.getTranslatedUseRestriction()) && Objects.nonNull(rec.getDataUse())) {
-            rec.setTranslatedUseRestriction(useRestrictionConverter.translateDataUse(rec.getDataUse()));
+            rec.setTranslatedUseRestriction(useRestrictionConverter.translateDataUse(rec.getDataUse(), DataUseTranslationType.PURPOSE));
         }
         consentDAO.updateConsent(id, rec.getRequiresManualReview(),
                 rec.getUseRestriction().toString(), rec.getDataUse().toString(),

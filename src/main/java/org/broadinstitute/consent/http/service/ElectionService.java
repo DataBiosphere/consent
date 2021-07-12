@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -648,7 +649,7 @@ public class ElectionService {
             String translatedUseRestriction = consent.getTranslatedUseRestriction();
             if (Objects.isNull(translatedUseRestriction)) {
                 if (Objects.nonNull(consent.getDataUse())) {
-                    translatedUseRestriction = useRestrictionConverter.translateDataUse(consent.getDataUse());
+                    translatedUseRestriction = useRestrictionConverter.translateDataUse(consent.getDataUse(), DataUseTranslationType.PURPOSE);
                     // update so we don't have to make this check again
                     consentDAO.updateConsentTranslatedUseRestriction(consent.getConsentId(), translatedUseRestriction);
                 } else {

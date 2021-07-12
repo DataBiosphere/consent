@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -120,7 +121,7 @@ public class DatasetService {
              * data user letter name
              */
             UseRestriction useRestriction = converter.parseUseRestriction(dataset.getDataUse());
-            String translatedUseRestriction = converter.translateDataUse(dataset.getDataUse());
+            String translatedUseRestriction = converter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.PURPOSE);
             consentDAO.useTransaction(h -> {
                 try {
                     h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, translatedUseRestriction, groupName, dataset.getDacId());
