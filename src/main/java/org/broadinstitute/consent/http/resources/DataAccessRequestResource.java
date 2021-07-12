@@ -15,6 +15,7 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
@@ -23,6 +24,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -34,6 +36,7 @@ import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.bson.Document;
 
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
@@ -73,7 +76,32 @@ public class DataAccessRequestResource extends Resource {
         return Response.ok().entity(detailsDTO).build();
     }
 
+    @GET
+    @Produces("application/json")
+    @PermitAll
+    @Deprecated //instead use V2Resource.getDataAccessRequestsByUserRole
+    public Response describeDataAccessRequests(@Auth AuthUser authUser) {
+        List<Document> documents = dataAccessRequestService.describeDataAccessRequests(authUser);
+        return Response.ok().entity(documents).build();
+    }
 
+    @GET
+    @Path("/find/{id}")
+    @Produces("application/json")
+    @PermitAll
+    @Deprecated // instead use DataAccessRequestResourceVersion2.getByReferenceId
+    public Document describeSpecificFields(@Auth AuthUser authUser, @PathParam("id") String id, @QueryParam("fields") List<String> fields) {
+        validateAuthedRoleUser(
+          Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+            .collect(Collectors.toList()),
+          authUser, id);
+        if (CollectionUtils.isNotEmpty(fields)) {
+            List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
+            return dataAccessRequestService.describeDataAccessRequestFieldsById(id, fieldValues);
+        } else {
+            return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
+        }
+    }
     /**
      * Note that this method assumes a single consent for a DAR. The UI doesn't curently handle the
      * case where there are multiple datasets associated to a DAR.
@@ -160,6 +188,17 @@ public class DataAccessRequestResource extends Resource {
         int count = dataAccessRequestService.getTotalUnReviewedDars(authUser);
         UnreviewedCases entity = new UnreviewedCases(count);
         return Response.ok().entity(entity).build();
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/partials/manage")
+    @RolesAllowed(RESEARCHER)
+    @Deprecated //instead use V2Resource.getDraftManageDataAccessRequests
+    public Response describeDraftManageDataAccessRequests(@Auth AuthUser authUser) {
+        User user = findUserByEmail(authUser.getName());
+        List<Document> partials = dataAccessRequestService.describeDraftDataAccessRequestManage(user.getDacUserId());
+        return Response.ok().entity(partials).build();
     }
 
     @PUT
