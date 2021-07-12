@@ -93,9 +93,9 @@ public class DataAccessRequestResource extends Resource {
     @Deprecated // instead use DataAccessRequestResourceVersion2.getByReferenceId
     public Document describeSpecificFields(@Auth AuthUser authUser, @PathParam("id") String id, @QueryParam("fields") List<String> fields) {
         validateAuthedRoleUser(
-          Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-            .collect(Collectors.toList()),
-          authUser, id);
+            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+                .collect(Collectors.toList()),
+            authUser, id);
         if (CollectionUtils.isNotEmpty(fields)) {
             List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
             return dataAccessRequestService.describeDataAccessRequestFieldsById(id, fieldValues);
@@ -103,6 +103,7 @@ public class DataAccessRequestResource extends Resource {
             return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
         }
     }
+
     /**
      * Note that this method assumes a single consent for a DAR. The UI doesn't curently handle the
      * case where there are multiple datasets associated to a DAR.

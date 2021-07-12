@@ -241,10 +241,9 @@ public class DataAccessRequestService {
     @Deprecated //instead use findAllDataAccessRequests
     public List<Document> getAllDataAccessRequestsAsDocuments() {
         return findAllDataAccessRequests().stream().
-          map(this::createDocumentFromDar).
-          collect(Collectors.toList());
+              map(this::createDocumentFromDar).
+              collect(Collectors.toList());
     }
-
 
     public List<DataAccessRequest> findAllDataAccessRequests() {
         return dataAccessRequestDAO.findAllDataAccessRequests();
