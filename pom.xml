@@ -11,7 +11,7 @@
 
   <properties>
     <java.version>11</java.version>
-    <liquibase.version>4.4.0</liquibase.version>
+    <liquibase.version>4.4.1</liquibase.version>
     <dropwizard.version>2.0.23</dropwizard.version>
     <owl.version>5.1.17</owl.version>
     <postgres.version>42.2.23</postgres.version>
