@@ -1648,34 +1648,6 @@ paths:
       responses:
         200:
           description: 'Returns a DARModalDetails initialized with the DAR associated with the provided Id.'
-  /api/dar/find/{id}:
-    get:
-      summary: describeSpecificFields
-      description: Returns the requested fields present in the DAR identified by the ID
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-        - name: fields
-          in: query
-          description: The name of the required fields
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: A JSON with the requested fields or the whole DAR if there wasn't any requested fields in the parameter.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataAccessRequest'
-        404:
-          description: The requested DAR couldn't be found.
   /api/dar/find/{id}/consent:
     get:
       summary: describeConsentForDAR
