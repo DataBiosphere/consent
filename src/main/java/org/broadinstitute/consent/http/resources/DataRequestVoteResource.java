@@ -168,21 +168,6 @@ public class DataRequestVoteResource extends Resource {
 
     @GET
     @Produces("application/json")
-    @Path("/final")
-    @PermitAll
-    public Response describeFinalAccessVote(
-            @Auth AuthUser authUser,
-            @PathParam("requestId") Integer requestId) {
-        try {
-            Vote vote = voteService.describeFinalAccessVoteByElectionId(requestId);
-            return Response.ok().entity(vote).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
-    @GET
-    @Produces("application/json")
     @Path("/dataOwner/{dataOwnerId}")
     @PermitAll
     public Response describeDataOwnerVote(
