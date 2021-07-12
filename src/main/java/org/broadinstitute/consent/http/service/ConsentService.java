@@ -106,8 +106,7 @@ public class ConsentService {
         }
         Date createDate = new Date();
         if (Objects.isNull(rec.getTranslatedUseRestriction()) && Objects.nonNull(rec.getDataUse())) {
-      String translatedUseRestriction =
-          useRestrictionConverter.translateDataUse(rec.getDataUse(), DataUseTranslationType.DATASET);
+            String translatedUseRestriction = useRestrictionConverter.translateDataUse(rec.getDataUse(), DataUseTranslationType.DATASET);
             rec.setTranslatedUseRestriction(translatedUseRestriction);
         }
         consentDAO.insertConsent(id, rec.getRequiresManualReview(),
