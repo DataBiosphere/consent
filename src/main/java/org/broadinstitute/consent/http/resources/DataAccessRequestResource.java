@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;

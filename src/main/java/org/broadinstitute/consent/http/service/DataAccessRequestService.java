@@ -570,6 +570,21 @@ public class DataAccessRequestService {
         return findByReferenceId(dar.getReferenceId());
     }
 
+    public Document describeDataAccessRequestFieldsById(String id, List<String> fields) {
+        Document dar = getDataAccessRequestByReferenceIdAsDocument(id);
+        Document result = new Document();
+        for (String field : fields) {
+            if (field.equals(DarConstants.DATASET_ID)){
+                List<String> dataSets = dar.get(field, List.class);
+                result.append(field, dataSets);
+            } else{
+                String content = (String) dar.getOrDefault(field.replaceAll("\\s", ""), "Not found");
+                result.append(field, content);
+            }
+        }
+        return result;
+    }
+
     public List<DataAccessRequestManage> getDraftDataAccessRequestManage(Integer userId) {
         List<DataAccessRequest> accessList = userId == null
                 ? dataAccessRequestDAO.findAllDraftDataAccessRequests()
