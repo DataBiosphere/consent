@@ -208,17 +208,6 @@ public class DataAccessRequestResource extends Resource {
         throw new ForbiddenException("User does not have permission");
     }
 
-    @GET
-    @Produces("application/json")
-    @Path("/partials/manage")
-    @RolesAllowed(RESEARCHER)
-    @Deprecated //instead use V2Resource.getDraftManageDataAccessRequests
-    public Response describeDraftManageDataAccessRequests(@Auth AuthUser authUser) {
-        User user = findUserByEmail(authUser.getName());
-        List<Document> partials = dataAccessRequestService.describeDraftDataAccessRequestManage(user.getDacUserId());
-        return Response.ok().entity(partials).build();
-    }
-
     @PUT
     @Consumes("application/json")
     @Produces("application/json")

@@ -236,13 +236,6 @@ public class DataAccessRequestService {
         return dataAccessRequestDAO.findAllDataAccessRequests();
     }
 
-    @Deprecated //instead use findAllDraftDataAccessRequests
-    public List<Document> findAllDraftDataAccessRequestsAsDocuments() {
-        return dataAccessRequestDAO.findAllDraftDataAccessRequests().stream().
-                map(this::createDocumentFromDar).
-                collect(Collectors.toList());
-    }
-
     public List<DataAccessRequest> findAllDraftDataAccessRequests() {
         return dataAccessRequestDAO.findAllDraftDataAccessRequests();
     }
@@ -603,22 +596,6 @@ public class DataAccessRequestService {
             }
         }
         return result;
-    }
-
-    @Deprecated //use getDraftDataAccessRequestManage
-    public List<Document> describeDraftDataAccessRequestManage(Integer userId) {
-        List<Document> accessList = userId == null
-                ? findAllDraftDataAccessRequestsAsDocuments()
-                : findAllDraftDataAccessRequestDocumentsByUser(userId);
-        List<Document> darManage = new ArrayList<>();
-        List<String> accessRequestIds = getRequestIds(accessList);
-        if (CollectionUtils.isNotEmpty(accessRequestIds)){
-            for(Document doc: accessList){
-                doc.append("dataRequestId", doc.get(DarConstants.REFERENCE_ID).toString());
-                darManage.add(doc);
-            }
-        }
-        return darManage;
     }
 
     public List<DataAccessRequestManage> getDraftDataAccessRequestManage(Integer userId) {
