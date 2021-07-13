@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -22,6 +21,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Assert;
@@ -180,13 +180,13 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateDACUser_case1() {
         User user = createUser();
+        Institution firstInstitute = createInstitution();
         String newEmail = getRandomEmailAddress();
-        Integer institutionId = getRandomInstitutionId();
         userDAO.updateUser(
                 "Dac User Test",
                 user.getDacUserId(),
                 newEmail,
-                institutionId
+                firstInstitute.getId()
                 );
         User user2 = userDAO.findUserById(user.getDacUserId());
         assertEquals(user2.getAdditionalEmail(), newEmail);
@@ -380,10 +380,5 @@ public class UserDAOTest extends DAOTestHelper {
         String user = RandomStringUtils.randomAlphanumeric(20);
         String domain = RandomStringUtils.randomAlphanumeric(10);
         return user + "@" + domain + ".org";
-    }
-
-    private Integer getRandomInstitutionId() {
-        Integer institutionId = RandomUtils.nextInt(1, 10);
-        return institutionId;
     }
 }
