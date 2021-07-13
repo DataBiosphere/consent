@@ -295,8 +295,6 @@ public class ElectionServiceTest {
     }
 
     private void voteStubs() {
-        when(voteDAO.findFinalVotesByElectionId(sampleElection1.getElectionId()))
-                .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId()))
                 .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElection2.getElectionId()))
@@ -372,7 +370,6 @@ public class ElectionServiceTest {
     public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard_DataAccessRejection() {
         initService();
         when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
-        when(voteDAO.findFinalVotesByElectionId(anyInt())).thenReturn(Collections.singletonList(sampleVoteChairpersonReject));
         try{
             Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), false);
             assertNotNull(election);
