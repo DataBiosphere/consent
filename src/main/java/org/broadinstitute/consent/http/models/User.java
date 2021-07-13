@@ -55,6 +55,8 @@ public class User {
     @JsonProperty
     private Integer institutionId;
 
+    private Institution institution;
+
     public User() {
     }
 
@@ -132,6 +134,7 @@ public class User {
         setStatus(u);
         setRationale(u);
         setInstitutionId(u);
+        setInstitution(u);
     }
 
     private void setUserId(User u) {
@@ -281,6 +284,20 @@ public class User {
     }
 
     public void setInstitutionId(Integer institutionId) { this.institutionId = institutionId; }
+
+    public void setInstitution(Institution institution) {
+        this.institution = institution;
+    }
+
+    public void setInstitution(User user) {
+        if (Objects.nonNull(user.getInstitution())) {
+            this.institution = user.institution;
+        }
+    }
+
+    public Institution getInstitution() {
+        return institution;
+    }
 
     public void addRole(UserRole userRole) {
         if (Objects.isNull(this.getRoles())) {

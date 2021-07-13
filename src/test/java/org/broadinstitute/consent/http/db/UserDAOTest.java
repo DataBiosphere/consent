@@ -38,7 +38,7 @@ public class UserDAOTest extends DAOTestHelper {
         addUserRole(UserRoles.ADMIN.getRoleId(), user.getDacUserId());
         addUserRole(UserRoles.RESEARCHER.getRoleId(), user.getDacUserId());
         addUserRole(UserRoles.DATAOWNER.getRoleId(), user.getDacUserId());
-
+        
         User user2 = userDAO.findUserById(user.getDacUserId());
         assertNotNull(user2);
         assertEquals(user.getEmail(), user2.getEmail());
@@ -52,6 +52,13 @@ public class UserDAOTest extends DAOTestHelper {
             .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
         assertTrue(user2.getRoles().stream()
             .anyMatch(r -> r.getRoleId().equals(UserRoles.DATAOWNER.getRoleId())));
+        
+        //assert institution base data is present if available
+        User user3 = createUserWithInstitution();
+        User queriedUser3 = userDAO.findUserById(user3.getDacUserId());
+        assert(queriedUser3.getDacUserId()).equals(user3.getDacUserId());
+        assertNotNull(queriedUser3.getInstitutionId());
+        assert(queriedUser3.getInstitution().getId()).equals(user3.getInstitution().getId());
     }
 
     @Test
