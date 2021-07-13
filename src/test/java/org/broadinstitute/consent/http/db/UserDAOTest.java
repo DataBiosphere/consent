@@ -190,6 +190,7 @@ public class UserDAOTest extends DAOTestHelper {
                 );
         User user2 = userDAO.findUserById(user.getDacUserId());
         assertEquals(user2.getAdditionalEmail(), newEmail);
+        assertEquals(user2.getInstitution().getId(), firstInstitute.getId());
     }
 
     @Test
