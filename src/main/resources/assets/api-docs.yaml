@@ -355,34 +355,6 @@ paths:
                   $ref: '#/components/schemas/ConsentAssociation'
         default:
           description: Unexpected error
-  /api/consent/cases/pending/{dacUserId}:
-    get:
-      summary: Get Consent Pending Cases
-      description: Describes the cases that the user has without logging his vote.
-      parameters:
-        - name: dacUserId
-          in: path
-          description: User ID
-          required: true
-          schema:
-            type: integer
-      tags:
-        - Pending Case
-      responses:
-        200:
-          description: An array of products
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PendingCase'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /api/consent/cases/summary:
     get:
       summary: Get Consent Summary Cases
