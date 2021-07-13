@@ -5,7 +5,6 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -75,15 +74,6 @@ public class DataAccessRequestResource extends Resource {
         }
         DARModalDetailsDTO detailsDTO = dataAccessRequestService.DARModalDetailsDTOBuilder(dar, user, electionService);
         return Response.ok().entity(detailsDTO).build();
-    }
-
-    @GET
-    @Produces("application/json")
-    @PermitAll
-    @Deprecated //instead use V2Resource.getDataAccessRequestsByUserRole
-    public Response describeDataAccessRequests(@Auth AuthUser authUser) {
-        List<Document> documents = dataAccessRequestService.describeDataAccessRequests(authUser);
-        return Response.ok().entity(documents).build();
     }
 
     @GET

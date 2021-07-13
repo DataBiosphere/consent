@@ -261,14 +261,6 @@ public class DacService {
         return user != null;
     }
 
-    private boolean isAuthUserChairOrMember(AuthUser authUser) {
-        if (isAuthUserChair(authUser)) {
-            return true;
-        }
-        User user = userDAO.findUserByEmailAndRoleId(authUser.getName(), UserRoles.MEMBER.getRoleId());
-        return user != null;
-    }
-
     private List<Integer> getDacIdsForUser(AuthUser authUser) {
         return dacDAO.findDacsForEmail(authUser.getName())
                 .stream()
@@ -277,32 +269,6 @@ public class DacService {
                 .distinct()
                 .collect(Collectors.toList());
     }
-
-    /**
-     * Filter data access requests by the DAC they are associated with.
-     */
-    List<Document> filterDarsByDAC(List<Document> documents, AuthUser authUser) {
-        if (isAuthUserAdmin(authUser)) {
-            return documents;
-        }
-        // Chair and Member users can see data access requests that they have DAC access to
-        if (isAuthUserChairOrMember(authUser)) {
-            List<Integer> accessibleDatasetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).
-                    stream().
-                    map(DataSet::getDataSetId).
-                    collect(Collectors.toList());
-
-            return documents.
-                    stream().
-                    filter(d -> {
-                        List<Integer> datasetIds = DarUtil.getIntegerList(d, DarConstants.DATASET_ID);
-                        return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
-                    }).
-                    collect(Collectors.toList());
-        }
-        return Collections.emptyList();
-    }
-
     /**
      * Filter data access requests by the DAC they are associated with.
      */

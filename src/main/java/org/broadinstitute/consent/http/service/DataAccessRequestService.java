@@ -232,20 +232,6 @@ public class DataAccessRequestService {
         return electionMap;
     }
 
-    /**
-     *
-     * Convenience method during transition away from `Document` and to `DataAccessRequest`
-     * Replacement for MongoConsentDB.getDataAccessRequestCollection()
-     *
-     * @return List of all DataAccessRequestData objects as Documents
-     */
-    @Deprecated //instead use findAllDataAccessRequests
-    public List<Document> getAllDataAccessRequestsAsDocuments() {
-        return findAllDataAccessRequests().stream().
-                map(this::createDocumentFromDar).
-                collect(Collectors.toList());
-    }
-
     public List<DataAccessRequest> findAllDataAccessRequests() {
         return dataAccessRequestDAO.findAllDataAccessRequests();
     }
@@ -362,17 +348,6 @@ public class DataAccessRequestService {
         );
         dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), true);
         return findByReferenceId(dar.getReferenceId());
-    }
-
-    /**
-     *
-     * @param authUser AuthUser
-     * @return List<Document>
-     */
-    @Deprecated //use getDataAccessRequestsByUserRole
-    public List<Document> describeDataAccessRequests(AuthUser authUser) {
-        List<Document> documents = getAllDataAccessRequestsAsDocuments();
-        return dacService.filterDarsByDAC(documents, authUser);
     }
 
     /**
