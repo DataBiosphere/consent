@@ -5,8 +5,8 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -23,7 +23,6 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
@@ -209,13 +208,6 @@ public class ElectionService {
         }
         Integer userId = dar.getUserId();
         List<LibraryCard> libraryCards = Objects.nonNull(userId) ? libraryCardDAO.findLibraryCardsByUserId(userId) : Collections.emptyList();
-        List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);
-        // The first final vote to be submitted is what determines the approval/denial of the election
-        // isApproved represents whether or not a final vote has already been submitted
-        boolean isApproved = finalVotes.stream().
-                filter(Objects::nonNull).
-                filter(v -> Objects.nonNull(v.getVote())).
-                anyMatch(Vote::getVote);
         //Users cannot submit a DataAccess approval if the researcher does not have a library card
         //However Chairs can still reject DataAccess elections even if the researcher does not have a Library Card
         //voteValue, which represents the vote from the payload, is referenced for this validation step
@@ -226,8 +218,8 @@ public class ElectionService {
                 electionId,
                 election.getStatus(),
                 new Date(),
-                isApproved);
-        if (isApproved) {
+                voteValue);
+        if (voteValue) {
             sendResearcherNotification(election.getReferenceId());
             sendDataCustodianNotification(election.getReferenceId());
         }
