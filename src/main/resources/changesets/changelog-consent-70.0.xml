@@ -4,7 +4,7 @@
     xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd
     http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
-  <changeSet id="69.0" author="JVThomas">
+  <changeSet id="70.0" author="JVThomas">
     <addForeignKeyConstraint baseColumnNames="institution_id"
         baseTableName="dacuser"
         constraintName="FK_institution_dacuser"
