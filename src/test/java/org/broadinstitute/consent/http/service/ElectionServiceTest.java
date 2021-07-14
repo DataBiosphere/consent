@@ -377,14 +377,14 @@ public class ElectionServiceTest {
         //function throws exception, need to have a catch block to handle it
         } catch(Exception e) {
             Assert.fail("Vote should not have failed");
-        } 
+        }
     }
 
     @Test
     public void testDeleteElection() {
         initService();
 
-        service.deleteElection(sampleElection1.getReferenceId(), sampleElection1.getElectionId());
+        service.deleteElection(sampleElection1.getElectionId());
     }
 
     @Test
