@@ -230,7 +230,7 @@ public class ElectionService {
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
-    public void deleteElection(String referenceId, Integer id) {
+    public void deleteElection(Integer id) {
         Election election = electionDAO.findElectionById(id);
         if (Objects.isNull(election)) {
             throw new IllegalArgumentException("Does not exist an election for the specified id");

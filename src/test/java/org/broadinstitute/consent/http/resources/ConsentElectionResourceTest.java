@@ -199,7 +199,7 @@ public class ConsentElectionResourceTest {
 
     @Test
     public void testDeleteElection() {
-        doNothing().when(electionService).deleteElection(anyString(), anyInt());
+        doNothing().when(electionService).deleteElection(anyInt());
         initResource();
 
         Response response = resource.deleteElection(UUID.randomUUID().toString(), info, RandomUtils.nextInt(1, 10));

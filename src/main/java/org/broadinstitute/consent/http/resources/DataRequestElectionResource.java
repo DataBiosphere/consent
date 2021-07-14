@@ -75,7 +75,7 @@ public class DataRequestElectionResource extends Resource {
         } catch (Exception e) {
             try {
                 if (Objects.nonNull(accessElection)) {
-                    electionService.deleteElection(requestId, accessElection.getElectionId());
+                    electionService.deleteElection(accessElection.getElectionId());
                 }
             } catch (Exception e2) {
                 logger().warn("Error deleting created access election: ", e2);
@@ -103,7 +103,7 @@ public class DataRequestElectionResource extends Resource {
     @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response deleteElection(@PathParam("requestId") String requestId, @PathParam("id") Integer id, @Context UriInfo info) {
         try {
-            electionService.deleteElection(requestId, id);
+            electionService.deleteElection(id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
         } catch (Exception e) {
             return createExceptionResponse(e);
