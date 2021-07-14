@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -24,7 +23,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -74,24 +72,6 @@ public class DataAccessRequestResource extends Resource {
         }
         DARModalDetailsDTO detailsDTO = dataAccessRequestService.DARModalDetailsDTOBuilder(dar, user, electionService);
         return Response.ok().entity(detailsDTO).build();
-    }
-
-    @GET
-    @Path("/find/{id}")
-    @Produces("application/json")
-    @PermitAll 
-    @Deprecated // instead use DataAccessRequestResourceVersion2.getByReferenceId
-    public Document describeSpecificFields(@Auth AuthUser authUser, @PathParam("id") String id, @QueryParam("fields") List<String> fields) {
-        validateAuthedRoleUser(
-            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-                .collect(Collectors.toList()),
-            authUser, id);
-        if (CollectionUtils.isNotEmpty(fields)) {
-            List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
-            return dataAccessRequestService.describeDataAccessRequestFieldsById(id, fieldValues);
-        } else {
-            return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
-        }
     }
 
     /**

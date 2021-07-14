@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
@@ -583,28 +582,12 @@ public class DataAccessRequestService {
         return findByReferenceId(dar.getReferenceId());
     }
 
-    public Document describeDataAccessRequestFieldsById(String id, List<String> fields) {
-        Document dar = getDataAccessRequestByReferenceIdAsDocument(id);
-        Document result = new Document();
-        for (String field : fields) {
-            if (field.equals(DarConstants.DATASET_ID)){
-                List<String> dataSets = dar.get(field, List.class);
-                result.append(field, dataSets);
-            } else{
-                String content = (String) dar.getOrDefault(field.replaceAll("\\s", ""), "Not found");
-                result.append(field, content);
-            }
-        }
-        return result;
-    }
-
     public List<DataAccessRequestManage> getDraftDataAccessRequestManage(Integer userId) {
         List<DataAccessRequest> accessList = userId == null
                 ? dataAccessRequestDAO.findAllDraftDataAccessRequests()
                 : dataAccessRequestDAO.findAllDraftsByUserId(userId);
         return createAccessRequestManageV2(accessList);
     }
-
 
     public File createApprovedDARDocument() throws IOException {
         List<Election> elections = electionDAO.findDataAccessClosedElectionsByFinalResult(true);

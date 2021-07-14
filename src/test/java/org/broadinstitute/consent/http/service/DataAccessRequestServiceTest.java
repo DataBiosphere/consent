@@ -331,16 +331,6 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void testDescribeDataAccessRequestFieldsById() {
-        DataAccessRequest dar = generateDataAccessRequest();
-        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        initService();
-
-        Document doc = service.describeDataAccessRequestFieldsById(dar.getReferenceId(), Arrays.asList(DarConstants.DATASET_ID, DarConstants.REFERENCE_ID));
-        assertNotNull(doc);
-        assertEquals(dar.getReferenceId(), doc.get(DarConstants.REFERENCE_ID));
-    }
-    @Test
     public void testCreateApprovedDARDocument() {
         Election election = generateElection(1);
         when(electionDAO.findDataAccessClosedElectionsByFinalResult(any()))
