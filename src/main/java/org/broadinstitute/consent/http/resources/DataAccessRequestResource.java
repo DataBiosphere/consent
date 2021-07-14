@@ -74,15 +74,6 @@ public class DataAccessRequestResource extends Resource {
         return Response.ok().entity(detailsDTO).build();
     }
 
-    @GET
-    @Produces("application/json")
-    @PermitAll
-    @Deprecated //instead use V2Resource.getDataAccessRequestsByUserRole
-    public Response describeDataAccessRequests(@Auth AuthUser authUser) {
-        List<Document> documents = dataAccessRequestService.describeDataAccessRequests(authUser);
-        return Response.ok().entity(documents).build();
-    }
-
     /**
      * Note that this method assumes a single consent for a DAR. The UI doesn't curently handle the
      * case where there are multiple datasets associated to a DAR.
