@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db.mapper;
 import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.core.mapper.MappingException;
@@ -34,6 +35,14 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
       }
     } catch (MappingException e) {
       // Ignore any attempt to map a column that doesn't exist
+    }
+    try {
+      if(Objects.nonNull(rowView.getColumn("i_id", Integer.class))) {
+        Institution institution = rowView.getRow(Institution.class);
+        user.setInstitution(institution);
+      }
+    } catch(MappingException e) {
+      //Ignore institution mapping errors, possible for new users to not have an institution
     }
   }
 

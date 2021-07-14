@@ -355,34 +355,6 @@ paths:
                   $ref: '#/components/schemas/ConsentAssociation'
         default:
           description: Unexpected error
-  /api/consent/cases/pending/{dacUserId}:
-    get:
-      summary: Get Consent Pending Cases
-      description: Describes the cases that the user has without logging his vote.
-      parameters:
-        - name: dacUserId
-          in: path
-          description: User ID
-          required: true
-          schema:
-            type: integer
-      tags:
-        - Pending Case
-      responses:
-        200:
-          description: An array of products
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PendingCase'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /api/consent/cases/summary:
     get:
       summary: Get Consent Summary Cases
@@ -1598,14 +1570,6 @@ paths:
           description: Returns the created Data Access Request, json file.
         500:
           description: Internal Server Error.
-    get:
-      summary: get all Data Access Requests
-      description: Retrieves all the existent DARs
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the DAR collection
   /api/dar/cancel/{id}:
     put:
       summary: Cancel a Data Access Request
@@ -1648,34 +1612,6 @@ paths:
       responses:
         200:
           description: 'Returns a DARModalDetails initialized with the DAR associated with the provided Id.'
-  /api/dar/find/{id}:
-    get:
-      summary: describeSpecificFields
-      description: Returns the requested fields present in the DAR identified by the ID
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-        - name: fields
-          in: query
-          description: The name of the required fields
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: A JSON with the requested fields or the whole DAR if there wasn't any requested fields in the parameter.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataAccessRequest'
-        404:
-          description: The requested DAR couldn't be found.
   /api/dar/find/{id}/consent:
     get:
       summary: describeConsentForDAR
@@ -1826,24 +1762,6 @@ paths:
           description: Forbidden
         500:
           description: Internal Server Error.
-  /api/dar/partials/manage:
-    get:
-      summary: Get Partial Data Access Request Manage Object for user
-      description: Get information on Partial Data Access Requests for user
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Partial Data Access Requests
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DataAccessRequest'
-        500:
-          description: Internal Server Error.
-
   /api/dataRequest/cases/pending:
     get:
       summary: Get Data Access Request Pending Cases

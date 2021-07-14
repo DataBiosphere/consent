@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -22,6 +21,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Assert;
@@ -38,7 +38,7 @@ public class UserDAOTest extends DAOTestHelper {
         addUserRole(UserRoles.ADMIN.getRoleId(), user.getDacUserId());
         addUserRole(UserRoles.RESEARCHER.getRoleId(), user.getDacUserId());
         addUserRole(UserRoles.DATAOWNER.getRoleId(), user.getDacUserId());
-
+        
         User user2 = userDAO.findUserById(user.getDacUserId());
         assertNotNull(user2);
         assertEquals(user.getEmail(), user2.getEmail());
@@ -52,6 +52,13 @@ public class UserDAOTest extends DAOTestHelper {
             .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
         assertTrue(user2.getRoles().stream()
             .anyMatch(r -> r.getRoleId().equals(UserRoles.DATAOWNER.getRoleId())));
+        
+        //assert institution base data is present if available
+        User user3 = createUserWithInstitution();
+        User queriedUser3 = userDAO.findUserById(user3.getDacUserId());
+        assert(queriedUser3.getDacUserId()).equals(user3.getDacUserId());
+        assertNotNull(queriedUser3.getInstitutionId());
+        assert(queriedUser3.getInstitution().getId()).equals(user3.getInstitution().getId());
     }
 
     @Test
@@ -173,16 +180,17 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateDACUser_case1() {
         User user = createUser();
+        Institution firstInstitute = createInstitution();
         String newEmail = getRandomEmailAddress();
-        Integer institutionId = getRandomInstitutionId();
         userDAO.updateUser(
                 "Dac User Test",
                 user.getDacUserId(),
                 newEmail,
-                institutionId
+                firstInstitute.getId()
                 );
         User user2 = userDAO.findUserById(user.getDacUserId());
         assertEquals(user2.getAdditionalEmail(), newEmail);
+        assertEquals(user2.getInstitution().getId(), firstInstitute.getId());
     }
 
     @Test
@@ -373,10 +381,5 @@ public class UserDAOTest extends DAOTestHelper {
         String user = RandomStringUtils.randomAlphanumeric(20);
         String domain = RandomStringUtils.randomAlphanumeric(10);
         return user + "@" + domain + ".org";
-    }
-
-    private Integer getRandomInstitutionId() {
-        Integer institutionId = RandomUtils.nextInt(1, 10);
-        return institutionId;
     }
 }

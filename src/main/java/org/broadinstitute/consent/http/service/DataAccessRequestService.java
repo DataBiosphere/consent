@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
@@ -232,29 +231,8 @@ public class DataAccessRequestService {
         return electionMap;
     }
 
-    /**
-     *
-     * Convenience method during transition away from `Document` and to `DataAccessRequest`
-     * Replacement for MongoConsentDB.getDataAccessRequestCollection()
-     *
-     * @return List of all DataAccessRequestData objects as Documents
-     */
-    @Deprecated //instead use findAllDataAccessRequests
-    public List<Document> getAllDataAccessRequestsAsDocuments() {
-        return findAllDataAccessRequests().stream().
-                map(this::createDocumentFromDar).
-                collect(Collectors.toList());
-    }
-
     public List<DataAccessRequest> findAllDataAccessRequests() {
         return dataAccessRequestDAO.findAllDataAccessRequests();
-    }
-
-    @Deprecated //instead use findAllDraftDataAccessRequests
-    public List<Document> findAllDraftDataAccessRequestsAsDocuments() {
-        return dataAccessRequestDAO.findAllDraftDataAccessRequests().stream().
-                map(this::createDocumentFromDar).
-                collect(Collectors.toList());
     }
 
     public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -355,17 +333,6 @@ public class DataAccessRequestService {
         );
         dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), true);
         return findByReferenceId(dar.getReferenceId());
-    }
-
-    /**
-     *
-     * @param authUser AuthUser
-     * @return List<Document>
-     */
-    @Deprecated //use getDataAccessRequestsByUserRole
-    public List<Document> describeDataAccessRequests(AuthUser authUser) {
-        List<Document> documents = getAllDataAccessRequestsAsDocuments();
-        return dacService.filterDarsByDAC(documents, authUser);
     }
 
     /**
@@ -608,44 +575,12 @@ public class DataAccessRequestService {
         return findByReferenceId(dar.getReferenceId());
     }
 
-    public Document describeDataAccessRequestFieldsById(String id, List<String> fields) {
-        Document dar = getDataAccessRequestByReferenceIdAsDocument(id);
-        Document result = new Document();
-        for (String field : fields) {
-            if (field.equals(DarConstants.DATASET_ID)){
-                List<String> dataSets = dar.get(field, List.class);
-                result.append(field, dataSets);
-            } else{
-                String content = (String) dar.getOrDefault(field.replaceAll("\\s", ""), "Not found");
-                result.append(field, content);
-            }
-        }
-        return result;
-    }
-
-    @Deprecated //use getDraftDataAccessRequestManage
-    public List<Document> describeDraftDataAccessRequestManage(Integer userId) {
-        List<Document> accessList = userId == null
-                ? findAllDraftDataAccessRequestsAsDocuments()
-                : findAllDraftDataAccessRequestDocumentsByUser(userId);
-        List<Document> darManage = new ArrayList<>();
-        List<String> accessRequestIds = getRequestIds(accessList);
-        if (CollectionUtils.isNotEmpty(accessRequestIds)){
-            for(Document doc: accessList){
-                doc.append("dataRequestId", doc.get(DarConstants.REFERENCE_ID).toString());
-                darManage.add(doc);
-            }
-        }
-        return darManage;
-    }
-
     public List<DataAccessRequestManage> getDraftDataAccessRequestManage(Integer userId) {
         List<DataAccessRequest> accessList = userId == null
                 ? dataAccessRequestDAO.findAllDraftDataAccessRequests()
                 : dataAccessRequestDAO.findAllDraftsByUserId(userId);
         return createAccessRequestManageV2(accessList);
     }
-
 
     public File createApprovedDARDocument() throws IOException {
         List<Election> elections = electionDAO.findDataAccessClosedElectionsByFinalResult(true);

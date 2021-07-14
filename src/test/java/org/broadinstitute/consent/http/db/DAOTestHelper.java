@@ -166,8 +166,8 @@ public class DAOTestHelper {
         });
         createdUserIds.forEach(id -> {
             userPropertyDAO.deleteAllPropertiesByUser(id);
-            userRoleDAO.findRolesByUserId(id).
-                    forEach(ur -> userRoleDAO.removeSingleUserRole(ur.getUserId(), ur.getRoleId()));
+            userRoleDAO.findRolesByUserId(id)
+                    .forEach(ur -> userRoleDAO.removeSingleUserRole(ur.getUserId(), ur.getRoleId()));
             userDAO.deleteUserById(id);
         });
         createdDataAccessRequestReferenceIds.forEach(d -> {
