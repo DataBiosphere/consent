@@ -3,9 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,7 +23,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -75,33 +72,6 @@ public class DataAccessRequestResource extends Resource {
         }
         DARModalDetailsDTO detailsDTO = dataAccessRequestService.DARModalDetailsDTOBuilder(dar, user, electionService);
         return Response.ok().entity(detailsDTO).build();
-    }
-
-    @GET
-    @Produces("application/json")
-    @PermitAll
-    @Deprecated //instead use V2Resource.getDataAccessRequestsByUserRole
-    public Response describeDataAccessRequests(@Auth AuthUser authUser) {
-        List<Document> documents = dataAccessRequestService.describeDataAccessRequests(authUser);
-        return Response.ok().entity(documents).build();
-    }
-
-    @GET
-    @Path("/find/{id}")
-    @Produces("application/json")
-    @PermitAll
-    @Deprecated // instead use DataAccessRequestResourceVersion2.getByReferenceId
-    public Document describeSpecificFields(@Auth AuthUser authUser, @PathParam("id") String id, @QueryParam("fields") List<String> fields) {
-        validateAuthedRoleUser(
-            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-                .collect(Collectors.toList()),
-            authUser, id);
-        if (CollectionUtils.isNotEmpty(fields)) {
-            List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
-            return dataAccessRequestService.describeDataAccessRequestFieldsById(id, fieldValues);
-        } else {
-            return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
-        }
     }
 
     /**
@@ -192,15 +162,30 @@ public class DataAccessRequestResource extends Resource {
         return Response.ok().entity(entity).build();
     }
 
+    // Partial Data Access Requests Methods
+
     @GET
     @Produces("application/json")
-    @Path("/partials/manage")
+    @Path("/partials")
     @RolesAllowed(RESEARCHER)
-    @Deprecated //instead use V2Resource.getDraftManageDataAccessRequests
-    public Response describeDraftManageDataAccessRequests(@Auth AuthUser authUser) {
+    @Deprecated //instead use V2Resource.getDraftDataAccessRequests
+    public List<Document> describeDraftDataAccessRequests(@Auth AuthUser authUser) {
         User user = findUserByEmail(authUser.getName());
-        List<Document> partials = dataAccessRequestService.describeDraftDataAccessRequestManage(user.getDacUserId());
-        return Response.ok().entity(partials).build();
+        return dataAccessRequestService.findAllDraftDataAccessRequestDocumentsByUser(user.getDacUserId());
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/partial/{id}")
+    @RolesAllowed(RESEARCHER)
+    @Deprecated //instead use getDraftDar
+    public Document describeDraftDar(@Auth AuthUser authUser, @PathParam("id") String id) {
+        User user = findUserByEmail(authUser.getName());
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
+        if (dar.getUserId().equals(user.getDacUserId())) {
+            return dataAccessRequestService.createDocumentFromDar(dar);
+        }
+        throw new ForbiddenException("User does not have permission");
     }
 
     @PUT
