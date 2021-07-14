@@ -196,16 +196,6 @@ public class DataAccessRequestResource extends Resource {
 
     @GET
     @Produces("application/json")
-    @Path("/partials")
-    @RolesAllowed(RESEARCHER)
-    @Deprecated //instead use V2Resource.getDraftDataAccessRequests
-    public List<Document> describeDraftDataAccessRequests(@Auth AuthUser authUser) {
-        User user = findUserByEmail(authUser.getName());
-        return dataAccessRequestService.findAllDraftDataAccessRequestDocumentsByUser(user.getDacUserId());
-    }
-
-    @GET
-    @Produces("application/json")
     @Path("/partial/{id}")
     @RolesAllowed(RESEARCHER)
     @Deprecated //instead use getDraftDar

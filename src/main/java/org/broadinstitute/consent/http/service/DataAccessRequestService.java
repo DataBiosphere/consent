@@ -261,13 +261,6 @@ public class DataAccessRequestService {
         return dataAccessRequestDAO.findAllDraftDataAccessRequests();
     }
 
-    @Deprecated //instead use findAllDraftDataAccessRequestByUser
-    public List<Document> findAllDraftDataAccessRequestDocumentsByUser(Integer userId) {
-        return dataAccessRequestDAO.findAllDraftsByUserId(userId).stream().
-                map(this::createDocumentFromDar).
-                collect(Collectors.toList());
-    }
-
     public List<DataAccessRequest> findAllDraftDataAccessRequestsByUser(Integer userId) {
         return dataAccessRequestDAO.findAllDraftsByUserId(userId);
     }
