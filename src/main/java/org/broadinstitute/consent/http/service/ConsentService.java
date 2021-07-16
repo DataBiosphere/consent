@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
@@ -52,15 +53,18 @@ public class ConsentService {
     private final Logger logger;
     private final DatasetDAO dataSetDAO;
 
-    private ConsentDAO consentDAO;
-    private ElectionDAO electionDAO;
-    private VoteDAO voteDAO;
-    private DacService dacService;
-    private DataAccessRequestDAO dataAccessRequestDAO;
+    private final ConsentDAO consentDAO;
+    private final ElectionDAO electionDAO;
+    private final VoteDAO voteDAO;
+    private final DacService dacService;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
+    private final UseRestrictionConverter useRestrictionConverter;
 
     @Inject
     public ConsentService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
-                          DataAccessRequestDAO dataAccessRequestDAO, AuditService auditService, AssociationDAO associationDAO, Jdbi jdbi, DatasetDAO dataSetDAO) {
+                          DataAccessRequestDAO dataAccessRequestDAO, AuditService auditService,
+                          AssociationDAO associationDAO, Jdbi jdbi, DatasetDAO dataSetDAO,
+                          UseRestrictionConverter useRestrictionConverter) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
@@ -70,6 +74,7 @@ public class ConsentService {
         this.associationDAO = associationDAO;
         this.jdbi = jdbi;
         this.dataSetDAO = dataSetDAO;
+        this.useRestrictionConverter = useRestrictionConverter;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -100,6 +105,10 @@ public class ConsentService {
             throw new IllegalArgumentException("Consent for the specified id already exist");
         }
         Date createDate = new Date();
+        if (Objects.isNull(rec.getTranslatedUseRestriction()) && Objects.nonNull(rec.getDataUse())) {
+            String translatedUseRestriction = useRestrictionConverter.translateDataUse(rec.getDataUse(), DataUseTranslationType.DATASET);
+            rec.setTranslatedUseRestriction(translatedUseRestriction);
+        }
         consentDAO.insertConsent(id, rec.getRequiresManualReview(),
                 rec.getUseRestriction().toString(), rec.getDataUse().toString(),
                 rec.getDataUseLetter(), rec.getName(), rec.getDulName(), createDate, createDate,
@@ -140,6 +149,9 @@ public class ConsentService {
         rec = updateConsentDates(rec);
         if (StringUtils.isEmpty(consentDAO.checkConsentById(id))) {
             throw new NotFoundException();
+        }
+        if (Objects.isNull(rec.getTranslatedUseRestriction()) && Objects.nonNull(rec.getDataUse())) {
+            rec.setTranslatedUseRestriction(useRestrictionConverter.translateDataUse(rec.getDataUse(), DataUseTranslationType.DATASET));
         }
         consentDAO.updateConsent(id, rec.getRequiresManualReview(),
                 rec.getUseRestriction().toString(), rec.getDataUse().toString(),
