@@ -53,10 +53,12 @@ public class UserService {
     public class SimplifiedUser {
         public final String displayName;
         public final Integer userId;
+        public final String email;
 
         public SimplifiedUser(User user) {
             this.displayName = user.getDisplayName();
             this.userId = user.getDacUserId();
+            this.email = user.getEmail();
         };
     }
 
