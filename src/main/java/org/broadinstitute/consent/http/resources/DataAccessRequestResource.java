@@ -164,20 +164,6 @@ public class DataAccessRequestResource extends Resource {
 
     // Partial Data Access Requests Methods
 
-    @GET
-    @Produces("application/json")
-    @Path("/partial/{id}")
-    @RolesAllowed(RESEARCHER)
-    @Deprecated //instead use getDraftDar
-    public Document describeDraftDar(@Auth AuthUser authUser, @PathParam("id") String id) {
-        User user = findUserByEmail(authUser.getName());
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-        if (dar.getUserId().equals(user.getDacUserId())) {
-            return dataAccessRequestService.createDocumentFromDar(dar);
-        }
-        throw new ForbiddenException("User does not have permission");
-    }
-
     @PUT
     @Consumes("application/json")
     @Produces("application/json")

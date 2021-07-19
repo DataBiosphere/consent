@@ -1,8 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import javax.ws.rs.NotFoundException;
+
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -15,7 +14,6 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -41,8 +39,6 @@ import org.broadinstitute.consent.http.models.grammar.And;
 import org.broadinstitute.consent.http.models.grammar.Named;
 import org.broadinstitute.consent.http.models.grammar.Not;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -85,10 +81,9 @@ public class ElectionServiceTest {
     private DataAccessRequestDAO dataAccessRequestDAO;
     @Mock
     private EmailNotifierService emailNotifierService;
+
     @Mock
     private UseRestrictionConverter useRestrictionConverter;
-
-    private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
 
     private static Election sampleElection1;
     private static Election sampleElection2;
@@ -251,7 +246,7 @@ public class ElectionServiceTest {
                 .thenReturn(sampleDataAccessRequest1);
         when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(Arrays.asList(sampleDataset1));
         when(consentDAO.checkConsentById(sampleConsent1.getConsentId())).thenReturn(sampleConsent1.getConsentId());
-        when(dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(any())).thenReturn(new Document());
+        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
         when(consentDAO.findConsentFromDatasetID(sampleDataset1.getDataSetId())).thenReturn(sampleConsent1);
     }
 
@@ -334,6 +329,7 @@ public class ElectionServiceTest {
     @Test
     public void testCreateElection() throws Exception {
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any())).thenReturn(null);
+        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(sampleDataAccessRequest1);
         initService();
         Election election = service.createElection(sampleElection1, sampleElection1.getReferenceId(), ElectionType.DATA_ACCESS);
         assertNotNull(election);
@@ -354,6 +350,7 @@ public class ElectionServiceTest {
     public void testSubmitFinalAccessVoteDataRequestElection() throws Exception {
         initService();
         when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of(sampleLibraryCard));
+        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(sampleDataAccessRequest1);
         Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), true);
         assertNotNull(election);
         assertEquals(sampleElection1.getElectionId(), election.getElectionId());
@@ -532,8 +529,8 @@ public class ElectionServiceTest {
 
     @Test
     public void testDarDatasetElectionStatus_NoApproval() {
-        when(dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(sampleElection1.getReferenceId()))
-                .thenReturn(createDocumentFromDar(sampleDataAccessRequest1));
+        when(dataAccessRequestService.findByReferenceId(sampleElection1.getReferenceId()))
+                .thenReturn(sampleDataAccessRequest1);
         when(dataSetDAO.findNeedsApprovalDataSetByDataSetId(any()))
                 .thenReturn(Arrays.asList());
         initService();
@@ -544,8 +541,8 @@ public class ElectionServiceTest {
 
     @Test
     public void testDarDatasetElectionStatus_Pending() {
-        when(dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(sampleElection1.getReferenceId()))
-                .thenReturn(createDocumentFromDar(sampleDataAccessRequest1));
+        when(dataAccessRequestService.findByReferenceId(sampleElection1.getReferenceId()))
+                .thenReturn(sampleDataAccessRequest1);
         when(dataSetDAO.findNeedsApprovalDataSetByDataSetId(any()))
                 .thenReturn(Arrays.asList(sampleDataset1));
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any()))
@@ -560,8 +557,8 @@ public class ElectionServiceTest {
 
     @Test
     public void testDarDatasetElectionStatus_OpenElection() {
-        when(dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(sampleElection1.getReferenceId()))
-                .thenReturn(createDocumentFromDar(sampleDataAccessRequest1));
+        when(dataAccessRequestService.findByReferenceId(sampleElection1.getReferenceId()))
+          .thenReturn(sampleDataAccessRequest1);
         when(dataSetDAO.findNeedsApprovalDataSetByDataSetId(any()))
                 .thenReturn(Arrays.asList(sampleDataset1));
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any()))
@@ -576,8 +573,8 @@ public class ElectionServiceTest {
 
     @Test
     public void testDarDatasetElectionStatus_DeniedElection() {
-        when(dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(sampleElection1.getReferenceId()))
-                .thenReturn(createDocumentFromDar(sampleDataAccessRequest1));
+        when(dataAccessRequestService.findByReferenceId(sampleElection1.getReferenceId()))
+          .thenReturn(sampleDataAccessRequest1);
         when(dataSetDAO.findNeedsApprovalDataSetByDataSetId(any()))
                 .thenReturn(Arrays.asList(sampleDataset1));
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any()))
@@ -592,8 +589,8 @@ public class ElectionServiceTest {
 
     @Test
     public void testDarDatasetElectionStatus_ApprovedElection() {
-        when(dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(sampleElection1.getReferenceId()))
-                .thenReturn(createDocumentFromDar(sampleDataAccessRequest1));
+        when(dataAccessRequestService.findByReferenceId(sampleElection1.getReferenceId()))
+          .thenReturn(sampleDataAccessRequest1);
         when(dataSetDAO.findNeedsApprovalDataSetByDataSetId(any()))
                 .thenReturn(Arrays.asList(sampleDataset1));
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any()))
@@ -639,12 +636,4 @@ public class ElectionServiceTest {
         assertEquals(false, isOpen);
     }
 
-    private Document createDocumentFromDar(DataAccessRequest d) {
-        Document document = Document.parse(gson.toJson(d.getData()));
-        document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
-        document.put(DarConstants.REFERENCE_ID, d.getReferenceId());
-        document.put(DarConstants.CREATE_DATE, d.getCreateDate());
-        document.put(DarConstants.SORT_DATE, d.getSortDate());
-        return document;
-    }
 }

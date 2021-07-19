@@ -57,9 +57,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -243,49 +241,8 @@ public class DataAccessRequestService {
         return dataAccessRequestDAO.findAllDraftsByUserId(userId);
     }
 
-    /**
-     *
-     * Convenience method during transition away from `Document` and to `DataAccessRequest`
-     * Replacement for MongoConsentDB.getDataAccessRequestCollection().find(ObjectId)
-     *
-     * @return DataAccessRequestData object as Document
-     */
-    @Deprecated //instead use findByReferenceId
-    public Document getDataAccessRequestByReferenceIdAsDocument(String referenceId) {
-        DataAccessRequest d = dataAccessRequestDAO.findByReferenceId(referenceId);
-        if (d == null) {
-            throw new NotFoundException("Unable to find Data Access Request by reference id: " + referenceId);
-        }
-        return createDocumentFromDar(d);
-    }
-
-    /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
-     *
-     * Convenience method during transition away from `Document` and to `DataAccessRequest`
-     *
-     * @return DataAccessRequestData object as Document
-     */
-    @Deprecated //instead use getDataAccessRequestsByReferenceIds
-    public List<Document> getDataAccessRequestsByReferenceIdsAsDocuments(List<String> referenceIds) {
-        return getDataAccessRequestsByReferenceIds(referenceIds).
-                stream().
-                map(this::createDocumentFromDar).
-                collect(Collectors.toList());
-    }
-
     public List<DataAccessRequest> getDataAccessRequestsByReferenceIds(List<String> referenceIds) {
         return dataAccessRequestDAO.findByReferenceIds(referenceIds);
-    }
-
-    @Deprecated
-    public Document createDocumentFromDar(DataAccessRequest d) {
-        Document document = Document.parse(gson.toJson(d.getData()));
-        document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
-        document.put(DarConstants.REFERENCE_ID, d.getReferenceId());
-        document.put(DarConstants.CREATE_DATE, d.getCreateDate());
-        document.put(DarConstants.SORT_DATE, d.getSortDate());
-        return document;
     }
 
     public void deleteByReferenceId(String referenceId) throws NotAcceptableException {
@@ -438,7 +395,7 @@ public class DataAccessRequestService {
         List<DataSet> dataSetsToApprove = dataSetDAO.
                 findNeedsApprovalDataSetByDataSetId(datasetIdsForDatasetsToApprove);
 
-        // Sort documents by sort time, create time, then reversed.
+        // Sort dars by sort time, create time, then reversed.
         Comparator<DataAccessRequest> sortField = Comparator.comparing(d -> d.getData().getSortDate());
         Comparator<DataAccessRequest> createField = Comparator.comparing(d -> d.getData().getCreateDate());
         documents.sort(sortField.thenComparing(createField).reversed());
@@ -714,16 +671,6 @@ public class DataAccessRequestService {
             return dataSetDAO.findDataSetsByIdList(datasetIds);
         }
         return Collections.emptyList();
-    }
-
-    private List<String> getRequestIds(List<Document> access) {
-        List<String> accessIds = new ArrayList<>();
-        if (access != null) {
-            access.forEach(document ->
-                    accessIds.add(document.getString(DarConstants.REFERENCE_ID))
-            );
-        }
-        return accessIds;
     }
 
     /**

@@ -103,7 +103,6 @@ public class DACUserResource extends Resource {
         }
     }
 
-    @Deprecated // Use update instead
     @PUT
     @Path("/status/{userId}")
     @Consumes("application/json")

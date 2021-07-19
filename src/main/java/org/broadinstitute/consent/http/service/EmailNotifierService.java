@@ -32,7 +32,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.MailService;
-import org.broadinstitute.consent.http.mail.freemarker.DataSetPIMailModel;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
 import org.broadinstitute.consent.http.models.Consent;
@@ -42,15 +41,8 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.resources.Resource;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 public class EmailNotifierService {
 
@@ -71,9 +63,6 @@ public class EmailNotifierService {
     private static final String LOG_VOTE_ACCESS_URL = "access_review";
     private static final String COLLECT_VOTE_ACCESS_URL = "access_review_results";
     private static final String COLLECT_VOTE_DUL_URL = "dul_review_results";
-    private static final String DATA_OWNER_CONSOLE_URL = "data_owner_console";
-    private static final String CHAIR_CONSOLE_URL = "chair_console";
-    private static final String MEMBER_CONSOLE_URL = "user_console";
     private static final String REVIEW_RESEARCHER_URL = "researcher_review";
 
     public enum ElectionTypeString {
@@ -196,7 +185,8 @@ public class EmailNotifierService {
             Map<String, List<Election>> reviewedDatasets = new HashMap<>();
             for(Election election: elections) {
                 List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
-                String dar_code = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(election.getReferenceId()).getString(DarConstants.DAR_CODE);
+                DataAccessRequest dar = dataAccessRequestService.findByReferenceId(election.getReferenceId());
+                String dar_code = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDarCode() : "";
                 reviewedDatasets.put(dar_code, dsElections);
             }
             List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
@@ -214,17 +204,6 @@ public class EmailNotifierService {
                 Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVER_URL);
                 mailService.sendFlaggedDarAdminApprovedMessage(getEmails(Collections.singletonList(admin)), darCode, SERVER_URL, template);
             }
-        }
-    }
-
-    public void sendUserDelegateResponsibilitiesMessage(User user, Integer oldUser, String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive){
-            String delegateURL = SERVER_URL + delegateURL(newRole);
-            List<VoteAndElectionModel> votesInformation = findVotesDelegationInfo(delegatedVotes.stream().
-                    map(Vote::getVoteId).
-                    collect(Collectors.toList()), oldUser);
-            Writer template =  getUserDelegateResponsibilitiesTemplate(user, newRole, votesInformation, delegateURL);
-            mailService.sendDelegateResponsibilitiesMessage(getEmails(Collections.singletonList(user)), template);
         }
     }
 
@@ -271,26 +250,6 @@ public class EmailNotifierService {
         return emails;
     }
 
-    private List<VoteAndElectionModel> findVotesDelegationInfo(List<Integer> voteIds, Integer oldUserId){
-        if(CollectionUtils.isNotEmpty(voteIds)) {
-            List<VoteAndElectionModel> votesInformation = mailServiceDAO.findVotesDelegationInfo(voteIds, oldUserId);
-            votesInformation.forEach(voteInfo -> {
-                if (voteInfo.getElectionType().equals(ElectionType.TRANSLATE_DUL.getValue())) {
-                    Consent consent = consentDAO.findConsentById(voteInfo.getReferenceId());
-                    if (Objects.nonNull(consent)) {
-                        voteInfo.setElectionNumber(consent.getName());
-                    }
-                } else {
-                    Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(voteInfo.getReferenceId());
-                    voteInfo.setElectionNumber(dar.getString(DarConstants.DAR_CODE));
-                }
-                voteInfo.setElectionType(retrieveElectionTypeString(voteInfo.getElectionType()));
-            });
-            return votesInformation;
-        }
-        return new ArrayList<>();
-    }
-
     private User describeDACUserById(Integer id) throws IllegalArgumentException {
         User user = userDAO.findUserById(id);
         if (user == null) {
@@ -299,38 +258,8 @@ public class EmailNotifierService {
         return user;
     }
 
-    private String delegateURL(String newUserRole) {
-        switch (newUserRole) {
-            case Resource.MEMBER:
-                return MEMBER_CONSOLE_URL;
-            case Resource.CHAIRPERSON:
-                return CHAIR_CONSOLE_URL;
-            case Resource.DATAOWNER:
-                return DATA_OWNER_CONSOLE_URL;
-            default:
-                return "";
-        }
-    }
-
     private Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String URL, String action) throws IOException, TemplateException {
         return templateHelper.getNewResearcherCreatedTemplate(admin, researcherName, URL, action);
-    }
-
-
-    private Writer getUserDelegateResponsibilitiesTemplate(User user, String newRole, List<VoteAndElectionModel> delegatedVotes, String URL) throws IOException, TemplateException {
-        return templateHelper.getUserDelegateResponsibilitiesTemplate(user.getDisplayName(), delegatedVotes, newRole, URL);
-    }
-
-    private String getDateString(int daysToApprove) {
-        DateTimeFormatter dtfOut = DateTimeFormat.forPattern("MM/dd/yyyy");
-        return new DateTime().plusDays(daysToApprove).toString(dtfOut);
-    }
-
-    private String generateDiseasesString(List<String> dsList) {
-        if (CollectionUtils.isEmpty(dsList)) {
-            return "";
-        }
-        return String.join(", ", dsList);
     }
 
     private void sendNewCaseMessage(Set<String> userAddress, String electionType, String entityId, Writer template) throws MessagingException {
