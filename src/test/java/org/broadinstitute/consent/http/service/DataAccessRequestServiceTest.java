@@ -270,7 +270,7 @@ public class DataAccessRequestServiceTest {
         when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Collections.singleton(d));
         initService();
 
-        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(user, null);
+        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(user, UserRoles.ADMIN);
         assertNotNull(manages);
         assertFalse(manages.isEmpty());
         assertEquals(dar.getReferenceId(), manages.get(0).getDar().getReferenceId());
@@ -309,7 +309,7 @@ public class DataAccessRequestServiceTest {
         when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Collections.singleton(d));
         initService();
 
-        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(user, "SigningOfficial");
+        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(user, UserRoles.SIGNINGOFFICIAL);
         assertNotNull(manages);
         assertFalse(manages.isEmpty());
         assertEquals(dar.getReferenceId(), manages.get(0).getDar().getReferenceId());
@@ -325,7 +325,7 @@ public class DataAccessRequestServiceTest {
         user.setRoles(new ArrayList<>());
         user.getRoles().add(new UserRole(7, UserRoles.SIGNINGOFFICIAL.getRoleName()));
         initService();
-        service.describeDataAccessRequestManageV2(user, "SigningOfficial");
+        service.describeDataAccessRequestManageV2(user, UserRoles.SIGNINGOFFICIAL);
     }
 
     @Test
@@ -355,7 +355,7 @@ public class DataAccessRequestServiceTest {
         when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Collections.singleton(d));
         initService();
 
-        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(user, "Researcher");
+        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(user, UserRoles.RESEARCHER);
         assertNotNull(manages);
         assertFalse(manages.isEmpty());
         assertEquals(dar.getReferenceId(), manages.get(0).getDar().getReferenceId());
@@ -363,6 +363,19 @@ public class DataAccessRequestServiceTest {
         assertEquals(e.getElectionId(), manages.get(0).getElection().getElectionId());
         assertEquals(d.getDacId(), manages.get(0).getDac().getDacId());
         assertFalse(manages.get(0).getVotes().isEmpty());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDescribeDataAccessRequestManageV2_NullUserRole() {
+        User user = new User();
+        initService();
+        service.describeDataAccessRequestManageV2(user, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDescribeDataAccessRequestManageV2_NullUser() {
+        initService();
+        service.describeDataAccessRequestManageV2(null, UserRoles.MEMBER);
     }
 
     @Test
