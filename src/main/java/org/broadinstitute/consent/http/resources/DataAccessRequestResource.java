@@ -133,13 +133,13 @@ public class DataAccessRequestResource extends Resource {
             if (Objects.nonNull(roleNameValue)) {
                 boolean valid = UserRoles.isValidRole(roleNameValue);
                 if (valid) {
-                    //if the roleName is SO and the user does not have that role throw an exception
-                    if (roleNameValue.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-                        if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
-                           throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
-                       }
-                   } else {
-                        throw new BadRequestException("Signing Official Role is the only role supported at this time");
+                    //if the user does not have the given roleName throw NotFoundException
+                    if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleNameValue))) {
+                        throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " + roleName + " role.");
+                    }
+                    //if there is a valid roleName but it is not SO or Researcher then throw an exception
+                    if (!roleNameValue.equals(UserRoles.RESEARCHER.getRoleName()) && !roleNameValue.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+                        throw new BadRequestException("Unsupported role name: " + roleName);
                     }
                 } else {
                     throw new BadRequestException("Invalid role name: " + roleNameValue);
