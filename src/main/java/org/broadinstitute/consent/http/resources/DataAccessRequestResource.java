@@ -130,22 +130,32 @@ public class DataAccessRequestResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getName());
             String roleNameValue = roleName.orElse(null);
-            if (Objects.nonNull(roleNameValue)) {
-                boolean valid = UserRoles.isValidRole(roleNameValue);
-                if (valid) {
+            UserRoles queriedUserRole = UserRoles.getUserRoleFromName(roleNameValue);
+            if (roleName.isPresent()) {
+                //if a roleName was passed in but it is not in the UserRoles enum throw exception
+                if (Objects.isNull(queriedUserRole)) {
+                    throw new BadRequestException("Invalid role name: " + roleNameValue);
+                } else {
+                    //if there is a valid roleName but it is not SO or Researcher then throw an exception
+                    if (queriedUserRole != UserRoles.RESEARCHER && queriedUserRole != UserRoles.SIGNINGOFFICIAL) {
+                        throw new BadRequestException("Unsupported role name: " + roleName);
+                    }
                     //if the user does not have the given roleName throw NotFoundException
                     if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleNameValue))) {
                         throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " + roleName + " role.");
                     }
-                    //if there is a valid roleName but it is not SO or Researcher then throw an exception
-                    if (!roleNameValue.equals(UserRoles.RESEARCHER.getRoleName()) && !roleNameValue.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-                        throw new BadRequestException("Unsupported role name: " + roleName);
-                    }
-                } else {
-                    throw new BadRequestException("Invalid role name: " + roleNameValue);
+                }
+            //if no roleName was passed in, find the user's role
+            } else {
+                if (user.hasUserRole(UserRoles.ADMIN)) {
+                    queriedUserRole = UserRoles.ADMIN;
+                } else if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
+                    queriedUserRole = UserRoles.CHAIRPERSON;
+                } else if (user.hasUserRole(UserRoles.MEMBER)) {
+                    queriedUserRole = UserRoles.MEMBER;
                 }
             }
-            List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(user, roleNameValue);
+            List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(user, queriedUserRole);
             return Response.ok().entity(dars).build();
         } catch(Exception e) {
             return createExceptionResponse(e);

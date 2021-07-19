@@ -133,9 +133,12 @@ public class DataAccessRequestResourceTest {
 
     @Test
     public void testDescribeManageDataAccessRequestsV2() {
+        User user = new User();
+        user.setRoles(Collections.singletonList(new UserRole(4, UserRoles.ADMIN.getRoleName())));
         DataAccessRequest dar = generateDataAccessRequest();
         DataAccessRequestManage manage = new DataAccessRequestManage();
         manage.setDar(dar);
+        when(userService.findUserByEmail(any())).thenReturn(user);
         when(dataAccessRequestService.describeDataAccessRequestManageV2(any(), any()))
             .thenReturn(Collections.singletonList(manage));
         resource = new DataAccessRequestResource(
