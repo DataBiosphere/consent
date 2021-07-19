@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import javax.ws.rs.NotFoundException;
+
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -13,7 +14,6 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -84,9 +84,6 @@ public class ElectionServiceTest {
 
     @Mock
     private UseRestrictionConverter useRestrictionConverter;
-
-    private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
-
 
     private static Election sampleElection1;
     private static Election sampleElection2;
