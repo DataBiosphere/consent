@@ -82,7 +82,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @SqlQuery(
       "SELECT id, reference_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
-          + "  WHERE ( draft = false ) "
+          + "  WHERE draft = false "
           + "  AND user_id = :userId "
           + "  ORDER BY sort_date DESC")
   List<DataAccessRequest> findAllDarsByUserId(@Bind("userId") Integer userId);
