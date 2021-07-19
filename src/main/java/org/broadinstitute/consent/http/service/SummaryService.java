@@ -296,9 +296,8 @@ public class SummaryService {
                                 User u = userDAO.findUserById(dar.getUserId());
                                 summaryWriter.write( u.getDisplayName()  + SEPARATOR);
                                 summaryWriter.write( dar.getData().getProjectTitle() + SEPARATOR);
-                                List<Integer> dataSetIds =  dar.getData().getDatasetIds();
                                 List<String> dataSetUUIds = new ArrayList<>();
-                                for (Integer id : dataSetIds) {
+                                for (Integer id : datasetId) {
                                     dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
                                 }
                                 summaryWriter.write( StringUtils.join(dataSetUUIds, ",")  + SEPARATOR);
