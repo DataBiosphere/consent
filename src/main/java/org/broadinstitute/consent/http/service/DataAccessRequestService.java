@@ -155,6 +155,10 @@ public class DataAccessRequestService {
                       + "is not associated with an Institution.");
                 }
             }
+            if (roleName.equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName())) {
+                    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getDacUserId());
+                    return createAccessRequestManageV2(dars);
+            }
         }
         //if there is no roleName then user is a member, chair, or admin
         List<DataAccessRequest> allDars = findAllDataAccessRequests();
