@@ -36,7 +36,6 @@ public interface UserDAO extends Transactional<UserDAO> {
         + "     i.it_director_name as i_it_director_name, i.it_director_email as i_it_director_email, "
         + "     i.create_date as i_create_date, i.update_date as i_update_date, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name  "
-        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
         + " LEFT JOIN roles r ON r.roleid = ur.role_id "

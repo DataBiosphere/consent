@@ -1,0 +1,26 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="71.0" author="grushton">
+        <validCheckSum>ANY</validCheckSum>
+
+        <addColumn tableName="dacuser">
+            <column name="era_commons_id" type="varchar(255)"/>
+        </addColumn>
+
+        <sql>
+            update dacuser
+            set era_commons_id = subquery.propertyvalue
+            from (select userid, propertyvalue from user_property where propertykey in ('nihUsername')) as subquery
+            where dacuserid = subquery.userid
+        </sql>
+
+        <rollback>
+            <dropColumn tableName="dacuser" columnName="era_commons_id"/>
+        </rollback>
+
+    </changeSet>
+</databaseChangeLog>
