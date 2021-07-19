@@ -7,6 +7,7 @@ import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithPropertiesReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -25,15 +26,21 @@ public interface UserDAO extends Transactional<UserDAO> {
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
+    @RegisterBeanMapper(value = Institution.class, prefix = "i")
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, u.institution_id, "
         + "     u.era_commons_id, "
+        + "     i.institution_id as i_id, i.institution_name as i_name, "
+        + "     i.it_director_name as i_it_director_name, i.it_director_email as i_it_director_email, "
+        + "     i.create_date as i_create_date, i.update_date as i_update_date, "
+        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name  "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
         + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+        + " LEFT JOIN institution i ON u.institution_id = i.institution_id"
         + " WHERE u.dacuserid = :dacUserId")
     User findUserById(@Bind("dacUserId") Integer dacUserId);
 
@@ -191,7 +198,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     List<User> findUsersByInstitution(@Bind("institutionId") Integer institutionId);
 
     @RegisterBeanMapper(value = User.class)
-    @SqlQuery("SELECT u.dacuserid, u.displayname FROM dacuser u "
+    @SqlQuery("SELECT u.dacuserid, u.displayname, u.email FROM dacuser u "
       + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
       + " LEFT JOIN roles r ON r.roleid = ur.role_id "
       + " WHERE LOWER(r.name) = 'signingofficial' "

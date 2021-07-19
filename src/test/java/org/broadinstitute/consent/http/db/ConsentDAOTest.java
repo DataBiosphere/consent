@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -12,6 +13,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Dac;
@@ -143,6 +146,17 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
         assertNotNull(foundConsent.getDacId());
         assertEquals(dac.getDacId(), foundConsent.getDacId());
+    }
+
+    @Test
+    public void testUpdateConsentTranslatedUseRestriction() {
+        Consent consent = createConsent(null);
+
+        String randomString = RandomStringUtils.random(10);
+        consentDAO.updateConsentTranslatedUseRestriction(consent.getConsentId(), randomString);
+        Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
+        assertEquals(randomString, foundConsent.getTranslatedUseRestriction());
+        assertNotEquals(consent.getTranslatedUseRestriction(), foundConsent.getTranslatedUseRestriction());
     }
 
     @Test

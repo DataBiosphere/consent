@@ -136,7 +136,7 @@ public class DataRequestElectionResourceTest {
 
     @Test
     public void testDeleteElection() {
-        doNothing().when(electionService).deleteElection(any(), any());
+        doNothing().when(electionService).deleteElection(any());
         initResource();
         Response response = resource.deleteElection(
                 UUID.randomUUID().toString(),
@@ -148,7 +148,7 @@ public class DataRequestElectionResourceTest {
 
     @Test
     public void testDeleteElectionNotFound() {
-        doThrow(new NotFoundException()).when(electionService).deleteElection(any(), any());
+        doThrow(new NotFoundException()).when(electionService).deleteElection(any());
         initResource();
         Response response = resource.deleteElection(
                 UUID.randomUUID().toString(),
@@ -160,7 +160,7 @@ public class DataRequestElectionResourceTest {
 
     @Test
     public void testDeleteElectionBadRequest() {
-        doThrow(new IllegalArgumentException()).when(electionService).deleteElection(any(), any());
+        doThrow(new IllegalArgumentException()).when(electionService).deleteElection(any());
         initResource();
         Response response = resource.deleteElection(
                 UUID.randomUUID().toString(),

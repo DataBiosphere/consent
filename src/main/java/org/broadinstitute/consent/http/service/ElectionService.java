@@ -5,14 +5,15 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -55,16 +56,17 @@ import java.util.stream.Collectors;
 public class ElectionService {
 
     private final MailMessageDAO mailMessageDAO;
-    private ConsentDAO consentDAO;
-    private ElectionDAO electionDAO;
+    private final ConsentDAO consentDAO;
+    private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
     private final UserDAO userDAO;
     private final DatasetDAO dataSetDAO;
     private final LibraryCardDAO libraryCardDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
-    private DacService dacService;
-    private DataAccessRequestService dataAccessRequestService;
+    private final DacService dacService;
+    private final DataAccessRequestService dataAccessRequestService;
     private final EmailNotifierService emailNotifierService;
+    private final UseRestrictionConverter useRestrictionConverter;
     private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
     private static final Logger logger = LoggerFactory.getLogger("ElectionService");
 
@@ -72,7 +74,7 @@ public class ElectionService {
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
                            DatasetDAO dataSetDAO, LibraryCardDAO libraryCardDAO, DatasetAssociationDAO datasetAssociationDAO, MailMessageDAO mailMessageDAO,
                            DacService dacService, EmailNotifierService emailNotifierService,
-                           DataAccessRequestService dataAccessRequestService) {
+                           DataAccessRequestService dataAccessRequestService, UseRestrictionConverter useRestrictionConverter) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
@@ -84,6 +86,7 @@ public class ElectionService {
         this.emailNotifierService = emailNotifierService;
         this.dacService = dacService;
         this.dataAccessRequestService = dataAccessRequestService;
+        this.useRestrictionConverter = useRestrictionConverter;
     }
 
     public List<Election> describeClosedElectionsByType(String type, AuthUser authUser) {
@@ -205,13 +208,6 @@ public class ElectionService {
         }
         Integer userId = dar.getUserId();
         List<LibraryCard> libraryCards = Objects.nonNull(userId) ? libraryCardDAO.findLibraryCardsByUserId(userId) : Collections.emptyList();
-        List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);
-        // The first final vote to be submitted is what determines the approval/denial of the election
-        // isApproved represents whether or not a final vote has already been submitted
-        boolean isApproved = finalVotes.stream().
-                filter(Objects::nonNull).
-                filter(v -> Objects.nonNull(v.getVote())).
-                anyMatch(Vote::getVote);
         //Users cannot submit a DataAccess approval if the researcher does not have a library card
         //However Chairs can still reject DataAccess elections even if the researcher does not have a Library Card
         //voteValue, which represents the vote from the payload, is referenced for this validation step
@@ -222,15 +218,15 @@ public class ElectionService {
                 electionId,
                 election.getStatus(),
                 new Date(),
-                isApproved);
-        if (isApproved) {
+                voteValue);
+        if (voteValue) {
             sendResearcherNotification(election.getReferenceId());
             sendDataCustodianNotification(election.getReferenceId());
         }
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
-    public void deleteElection(String referenceId, Integer id) {
+    public void deleteElection(Integer id) {
         Election election = electionDAO.findElectionById(id);
         if (Objects.isNull(election)) {
             throw new IllegalArgumentException("Does not exist an election for the specified id");
@@ -640,7 +636,20 @@ public class ElectionService {
                     datasetsDetail.add(new DatasetMailDTO(ds.getName(), ds.getDatasetIdentifier()))
             );
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
-            emailNotifierService.sendResearcherDarApproved(dar.getData().getDarCode(),  dar.getUserId(), datasetsDetail, consent.getTranslatedUseRestriction());
+            // Legacy behavior was to populate the plain language translation we received from ORSP
+            // If we don't have that and have a valid data use, use that instead as it is more up to date.
+            String translatedUseRestriction = consent.getTranslatedUseRestriction();
+            if (Objects.isNull(translatedUseRestriction)) {
+                if (Objects.nonNull(consent.getDataUse())) {
+                    translatedUseRestriction = useRestrictionConverter.translateDataUse(consent.getDataUse(), DataUseTranslationType.DATASET);
+                    // update so we don't have to make this check again
+                    consentDAO.updateConsentTranslatedUseRestriction(consent.getConsentId(), translatedUseRestriction);
+                } else {
+                    logger.error("Error finding translation for consent id: " + consent.getConsentId());
+                    translatedUseRestriction = "";
+                }
+            }
+            emailNotifierService.sendResearcherDarApproved(dar.getData().getDarCode(),  dar.getUserId(), datasetsDetail, translatedUseRestriction);
         }
     }
 

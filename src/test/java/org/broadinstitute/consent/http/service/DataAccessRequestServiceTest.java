@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 
 import com.google.gson.Gson;
@@ -329,30 +328,6 @@ public class DataAccessRequestServiceTest {
         user.getRoles().add(new UserRole(7, UserRoles.SIGNINGOFFICIAL.getRoleName()));
         initService();
         service.describeDataAccessRequestManageV2(user, "SigningOfficial");
-    }
-
-    @Test
-    public void testDescribeDataAccessRequestFieldsById() {
-        DataAccessRequest dar = generateDataAccessRequest();
-        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        initService();
-
-        Document doc = service.describeDataAccessRequestFieldsById(dar.getReferenceId(), Arrays.asList(DarConstants.DATASET_ID, DarConstants.REFERENCE_ID));
-        assertNotNull(doc);
-        assertEquals(dar.getReferenceId(), doc.get(DarConstants.REFERENCE_ID));
-    }
-
-    @Test
-    public void testDescribeDraftDataAccessRequestManage() {
-        DataAccessRequest dar = generateDataAccessRequest();
-        when(dataAccessRequestDAO.findAllDraftDataAccessRequests())
-                .thenReturn(Collections.singletonList(dar));
-        initService();
-
-        List<Document> docs = service.describeDraftDataAccessRequestManage(null);
-        assertNotNull(docs);
-        assertEquals(1, docs.size());
-        assertEquals(dar.getReferenceId(), docs.get(0).get(DarConstants.REFERENCE_ID));
     }
 
     @Test

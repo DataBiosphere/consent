@@ -113,7 +113,7 @@ public class ConsentElectionResource extends Resource {
     @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response deleteElection(@PathParam("consentId") String consentId, @Context UriInfo info, @PathParam("id") Integer id) {
         try {
-            electionService.deleteElection(consentId, id);
+            electionService.deleteElection(id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
         } catch (Exception e) {
             return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
