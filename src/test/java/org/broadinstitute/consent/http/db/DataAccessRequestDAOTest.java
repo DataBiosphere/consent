@@ -54,6 +54,18 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindAllDarsByUserId() {
+        DataAccessRequest dar = createDraftDataAccessRequest();
+
+        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDarsByUserId(dar.getUserId());
+        assertFalse(newDars.isEmpty());
+        assertEquals(1, newDars.size());
+        assertEquals(newDars.get(0).getReferenceId(), dar.getReferenceId());
+
+        List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDarsByUserId(0);
+        assertTrue(missingDars.isEmpty());
+    }
+    @Test
     public void updateDraftToNonDraft() {
         DataAccessRequest dar = createDraftDataAccessRequest();
 
