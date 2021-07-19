@@ -2,20 +2,20 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import net.gcardone.junidecode.Junidecode;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.slf4j.LoggerFactory;
-import net.gcardone.junidecode.Junidecode;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 public class User {
 
@@ -98,9 +98,13 @@ public class User {
     public User(String json) {
         Gson gson = new Gson();
         JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
-        // There are no cases where we want to pull the create date from user-provided data.
-        if (userJsonObject.has("createDate")) {
-            userJsonObject.remove("createDate");
+        // There are no cases where we want to pull the create date/update date from user-provided data.
+        userJsonObject = filterFields(userJsonObject, Collections.singletonList("createDate"));
+        if (userJsonObject.has("institution")) {
+            JsonObject institutionJsonObject = userJsonObject.get("institution").getAsJsonObject();
+            userJsonObject.remove("institution");
+            JsonObject filteredInstitution = filterFields(institutionJsonObject, Arrays.asList("createDate", "updateDate"));
+            userJsonObject.add("institution", filteredInstitution);
         }
         User u = gson.fromJson(userJsonObject.toString(), User.class);
         setUserId(u);
@@ -113,6 +117,22 @@ public class User {
         setRationale(u);
         setInstitutionId(u);
         setInstitution(u);
+    }
+
+    /**
+     * Private method to filter out fields that we do not want to parse from json objects.
+     * @param obj The json object
+     * @param fields The fields to remove
+     * @return Filtered Clone of the object.
+     */
+    private JsonObject filterFields(JsonObject obj, List<String> fields) {
+        JsonObject copy = obj.deepCopy();
+        fields.forEach(f -> {
+            if (copy.has(f)) {
+                copy.remove(f);
+            }
+        });
+        return copy;
     }
 
     private void setUserId(User u) {
