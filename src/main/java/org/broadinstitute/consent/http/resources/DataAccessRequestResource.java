@@ -125,7 +125,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/manage/v2")
-    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL})
+    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
     public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser, @QueryParam("roleName") Optional<String> roleName) {
         try {
             User user = userService.findUserByEmail(authUser.getName());
