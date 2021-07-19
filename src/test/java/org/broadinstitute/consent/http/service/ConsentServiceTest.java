@@ -76,13 +76,16 @@ public class ConsentServiceTest {
     @Mock
     Jdbi jdbi;
 
+    @Mock
+    UseRestrictionConverter useRestrictionConverter;
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
     }
 
     private void initService() {
-        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO, auditService, associationDAO, jdbi, dataSetDAO);
+        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO, auditService, associationDAO, jdbi, dataSetDAO, useRestrictionConverter);
     }
 
     @Test

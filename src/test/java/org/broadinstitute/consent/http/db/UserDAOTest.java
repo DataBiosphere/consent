@@ -369,9 +369,11 @@ public class UserDAOTest extends DAOTestHelper {
         User user = createUserWithInstitution();
         Integer institutionId = user.getInstitutionId();
         String displayName = user.getDisplayName();
+        String email = user.getEmail();
         List<User> users = userDAO.getSOsByInstitution( institutionId);
         assertEquals(1, users.size());
         assertEquals(displayName, users.get(0).getDisplayName());
+        assertEquals(email, users.get(0).getEmail());
 
         List<User> differentInstitutionUsers = userDAO.getSOsByInstitution( institutionId + 1);
         assertEquals(0, differentInstitutionUsers.size());

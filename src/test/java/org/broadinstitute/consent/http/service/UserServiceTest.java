@@ -322,6 +322,7 @@ public class UserServiceTest {
         List<SimplifiedUser> users = service.findSOsByInstitutionId(institutionId);
         assertEquals(3, users.size());
         assertEquals(u.getDisplayName(), users.get(0).displayName);
+        assertEquals(u.getEmail(), users.get(0).email);
     }
 
     @Test

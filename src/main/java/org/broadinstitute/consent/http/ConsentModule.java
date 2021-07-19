@@ -217,7 +217,8 @@ public class ConsentModule extends AbstractModule {
                 providesAuditService(),
                 providesAssociationDAO(),
                 providesJdbi(),
-                providesDataSetDAO());
+                providesDataSetDAO(),
+                providesUseRestrictionConverter());
     }
 
     @Provides
@@ -277,7 +278,8 @@ public class ConsentModule extends AbstractModule {
                 providesMailMessageDAO(),
                 providesDacService(),
                 providesEmailNotifierService(),
-                providesDataAccessRequestService());
+                providesDataAccessRequestService(),
+                providesUseRestrictionConverter());
     }
 
     @Provides

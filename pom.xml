@@ -249,7 +249,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.20.1</version>
+        <version>3.21.0</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -370,7 +370,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.2.3</version>
+      <version>1.2.4</version>
     </dependency>
 
     <!-- Support for JSON logging -->
@@ -611,7 +611,7 @@
     <dependency>
       <groupId>org.mongodb</groupId>
       <artifactId>mongo-java-driver</artifactId>
-      <version>3.12.8</version>
+      <version>3.12.9</version>
     </dependency>
 
     <dependency>
