@@ -98,36 +98,14 @@ public class User {
     public User(String json) {
         Gson gson = new Gson();
         JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
-        // Create Date can come in differently, either as a long or a string.
-        // Handle known cases here.
-        String createDateFieldName = "createDate";
-        Date createDate = null;
-        if (userJsonObject.has(createDateFieldName)) {
-            JsonElement createDateElement = userJsonObject.get(createDateFieldName);
-            try {
-                createDate = new Date(createDateElement.getAsLong());
-            } catch (NumberFormatException nfe) {
-                // Known date formats createDate could be in:
-                //   * "Oct 28, 2020"
-                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
-                try {
-                    createDate = sdf.parse(createDateElement.getAsString());
-                } catch (Exception e) {
-                    LoggerFactory
-                        .getLogger(this.getClass())
-                        .error("Unable to parse create date: " + e.getMessage());
-                }
-            }
-            // Remove this from the JSON so we don't re-process it in `gson.fromJson(String, User)`
-            userJsonObject.remove(createDateFieldName);
+        // There are no cases where we want to pull the create date from user-provided data.
+        if (userJsonObject.has("createDate")) {
+            userJsonObject.remove("createDate");
         }
         User u = gson.fromJson(userJsonObject.toString(), User.class);
         setUserId(u);
         setEmail(u);
         setDisplayName(u);
-        if (Objects.nonNull(createDate)) {
-            setCreateDate(createDate);
-        }
         setAdditionalEmail(u);
         setEmailPreference(u);
         setRoles(u);
@@ -199,7 +177,7 @@ public class User {
         this.dacUserId = dacUserId;
     }
 
-    public String getEmail() { 
+    public String getEmail() {
         return email;
     }
 
