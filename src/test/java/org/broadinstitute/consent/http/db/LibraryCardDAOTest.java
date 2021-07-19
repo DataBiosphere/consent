@@ -142,6 +142,19 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     assertNotNull(libraryCards);
     assertEquals(1, libraryCards.size());
     assertEquals(user.getEmail(), libraryCards.get(0).getUserEmail());
+    assertEquals(libraryCard.getId(), libraryCards.get(0).getId());
+  }
+
+  @Test
+  public void testFindAllLibraryCardsByUserId() {
+    User user = createUser();
+    LibraryCard one = createLibraryCard(user);
+    LibraryCard two = createLibraryCard(user);
+    List<LibraryCard> libraryCards = libraryCardDAO.findLibraryCardsByUserId(user.getDacUserId());
+    assertNotNull(libraryCards);
+    assertEquals(2, libraryCards.size());
+    assertEquals(one.getId(), libraryCards.get(0).getId());
+    assertEquals(two.getId(), libraryCards.get(1).getId());
   }
 
   @Test

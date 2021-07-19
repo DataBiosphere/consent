@@ -84,6 +84,8 @@ public class UserService {
         if (user == null) {
             throw new NotFoundException("Unable to find user with id: " + id);
         }
+        List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getDacUserId());
+        user.setLibraryCards(cards);
         return user;
     }
 

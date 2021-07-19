@@ -163,6 +163,24 @@ public class UserServiceTest {
     }
 
     @Test
+    public void testFindUserById_HasLibraryCards() {
+        User u = generateUser();
+        LibraryCard one = generateLibraryCard(u);
+        LibraryCard two = generateLibraryCard(u);
+        List<LibraryCard> cards = Arrays.asList(one, two);
+        when(userDAO.findUserById(any())).thenReturn(u);
+        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(cards);
+        initService();
+
+        User user = service.findUserById(u.getDacUserId());
+        assertNotNull(user);
+        assertNotNull(user.getLibraryCards());
+        assertEquals(user.getLibraryCards().size(), 2);
+        assertEquals(user.getLibraryCards().get(0).getId(), one.getId());
+        assertEquals(user.getLibraryCards().get(1).getId(), two.getId());
+    }
+
+    @Test
     public void testFindUserByIdNoRoles() {
         User u = generateUser();
         when(userDAO.findUserById(any())).thenReturn(u);
@@ -388,6 +406,14 @@ public class UserServiceTest {
         libraryCard.setInstitutionId(RandomUtils.nextInt(1, 10));
         libraryCard.setUserEmail(email);
         libraryCard.setUserName(RandomStringUtils.randomAlphabetic(RandomUtils.nextInt(1, 10)));
+        return libraryCard;
+    }
+
+    private LibraryCard generateLibraryCard(User user) {
+        LibraryCard libraryCard = new LibraryCard();
+        libraryCard.setId(RandomUtils.nextInt(1, 10));
+        libraryCard.setUserId(user.getDacUserId());
+        libraryCard.setInstitutionId(RandomUtils.nextInt(1,10));
         return libraryCard;
     }
 
