@@ -56,6 +56,8 @@ public class User {
 
     private Institution institution;
 
+    private List<LibraryCard> libraryCards;
+
     public User() {
     }
 
@@ -294,6 +296,14 @@ public class User {
 
     public Institution getInstitution() {
         return institution;
+    }
+
+    public void setLibraryCards(List<LibraryCard> cards) {
+        this.libraryCards = cards;
+    }
+    
+    public List<LibraryCard> getLibraryCards() {
+        return this.libraryCards;
     }
 
     public void addRole(UserRole userRole) {
