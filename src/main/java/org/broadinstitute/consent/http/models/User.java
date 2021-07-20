@@ -95,7 +95,7 @@ public class User {
      * This method is intended to reconstruct a User object from a supplied JSON string
      * for primary fields and roles. Other associated objects are not intended to be parsed
      * using this method since it comes from user-supplied data and may conflict with what
-     * system knows about those associations.
+     * the system knows about those associations.
      *
      * @param json A json string that may or may not be correctly structured as a DACUser
      */
