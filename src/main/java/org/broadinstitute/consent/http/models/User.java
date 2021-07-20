@@ -92,6 +92,10 @@ public class User {
 
     /**
      * Convenience method for backwards compatibility support for older clients.
+     * This method is intended to reconstruct a User object from a supplied JSON string
+     * for primary fields and roles. Other associated objects are not intended to be parsed
+     * using this method since it comes from user-supplied data and may conflict with what
+     * system knows about those associations.
      *
      * @param json A json string that may or may not be correctly structured as a DACUser
      */
@@ -99,13 +103,8 @@ public class User {
         Gson gson = new Gson();
         JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
         // There are no cases where we want to pull the create date/update date from user-provided data.
-        userJsonObject = filterFields(userJsonObject, Collections.singletonList("createDate"));
-        if (userJsonObject.has("institution")) {
-            JsonObject institutionJsonObject = userJsonObject.get("institution").getAsJsonObject();
-            userJsonObject.remove("institution");
-            JsonObject filteredInstitution = filterFields(institutionJsonObject, Arrays.asList("createDate", "updateDate"));
-            userJsonObject.add("institution", filteredInstitution);
-        }
+        // Nor do we need to retrieve the full institution object from user-provided data.
+        userJsonObject = filterFields(userJsonObject, Arrays.asList("createDate", "institution"));
         User u = gson.fromJson(userJsonObject.toString(), User.class);
         setUserId(u);
         setEmail(u);
@@ -116,7 +115,6 @@ public class User {
         setStatus(u);
         setRationale(u);
         setInstitutionId(u);
-        setInstitution(u);
     }
 
     /**
