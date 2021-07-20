@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -104,7 +103,9 @@ public class User {
         JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
         // There are no cases where we want to pull the create date/update date from user-provided data.
         // Nor do we need to retrieve the full institution object from user-provided data.
-        JsonObject filteredUserJsonObject = filterFields(userJsonObject, Arrays.asList("createDate", "institution"));
+        JsonObject filteredUserJsonObject = filterFields(
+                userJsonObject,
+                Arrays.asList("createDate", "institution", "libraryCards"));
         User u = gson.fromJson(filteredUserJsonObject.toString(), User.class);
         setUserId(u);
         setEmail(u);
