@@ -104,8 +104,8 @@ public class User {
         JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
         // There are no cases where we want to pull the create date/update date from user-provided data.
         // Nor do we need to retrieve the full institution object from user-provided data.
-        userJsonObject = filterFields(userJsonObject, Arrays.asList("createDate", "institution"));
-        User u = gson.fromJson(userJsonObject.toString(), User.class);
+        JsonObject filteredUserJsonObject = filterFields(userJsonObject, Arrays.asList("createDate", "institution"));
+        User u = gson.fromJson(filteredUserJsonObject.toString(), User.class);
         setUserId(u);
         setEmail(u);
         setDisplayName(u);
