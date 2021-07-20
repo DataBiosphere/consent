@@ -104,24 +104,6 @@ public class DataAccessRequestResource extends Resource {
         return c;
     }
 
-
-    @GET
-    @Produces("application/json")
-    @Path("/manage")
-    @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
-    @Deprecated // Use describeManageDataAccessRequestsV2
-    public Response describeManageDataAccessRequests(@Auth AuthUser authUser) {
-        // If a user id is provided, ensure that is the current user.
-        try{
-            User user = userService.findUserByEmail(authUser.getName());
-            Integer userId = user.getDacUserId();
-            List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManage(userId, authUser);
-            return Response.ok().entity(dars).build();
-        } catch(Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
     @GET
     @Produces("application/json")
     @Path("/manage/v2")
