@@ -31,9 +31,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -380,7 +377,8 @@ public class ElectionService {
     }
 
     public String darDatasetElectionStatus(String darReferenceId){
-        List<Integer> dataSets =  DarUtil.getIntegerList(describeDataAccessRequestById(darReferenceId), DarConstants.DATASET_ID);
+        DataAccessRequest dar = describeDataAccessRequestById(darReferenceId);
+        List<Integer> dataSets =  Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
         List<DataSet> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
         if(CollectionUtils.isEmpty(dsForApproval)) {
             return DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
@@ -439,7 +437,7 @@ public class ElectionService {
         Election consentElection = null;
         if (electionType.equals(ElectionType.DATA_ACCESS)) {
             DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(referenceId);
-            if (Objects.isNull(dataAccessRequest)) {
+            if (Objects.isNull(dataAccessRequest) || Objects.isNull(dataAccessRequest.getData())) {
                 throw new NotFoundException();
             }
             List<DataSet> dataSets = verifyActiveDataSets(dataAccessRequest, referenceId);
@@ -450,7 +448,7 @@ public class ElectionService {
     }
 
     private List<DataSet> verifyActiveDataSets(DataAccessRequest dar, String referenceId) throws Exception {
-        List<Integer> dataSets = dar.getData().getDatasetIds();
+        List<Integer> dataSets = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
         List<DataSet> dataSetList = dataSets.isEmpty() ? Collections.emptyList() : dataSetDAO.findDatasetsByIdList(dataSets);
         List<String> disabledDataSets = dataSetList.stream()
                 .filter(ds -> !ds.getActive())
@@ -489,8 +487,8 @@ public class ElectionService {
         dataAccessRequestService.updateByReferenceId(referenceId, dar.getData());
     }
 
-    private Document describeDataAccessRequestById(String id) {
-        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
+    private DataAccessRequest describeDataAccessRequestById(String id) {
+        return dataAccessRequestService.findByReferenceId(id);
     }
 
     private void setGeneralFields(Election election, String referenceId, ElectionType electionType) {
@@ -506,8 +504,8 @@ public class ElectionService {
                 break;
             case DATA_ACCESS:
             case RP:
-                Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
-                List<Integer> datasetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+                DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+                List<Integer> datasetIdList = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
                 if (datasetIdList != null && !datasetIdList.isEmpty()) {
                     if (datasetIdList.size() > 1) {
                         logger.warn("DAR " +
@@ -537,7 +535,7 @@ public class ElectionService {
     }
 
     private void validateDataRequestId(String dataRequest) {
-        Document dar = describeDataAccessRequestById(dataRequest);
+        DataAccessRequest dar = describeDataAccessRequestById(dataRequest);
         if (dataRequest != null && dar == null ) {
             throw new NotFoundException("Invalid id: " + dataRequest);
         }

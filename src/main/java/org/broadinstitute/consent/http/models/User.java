@@ -2,20 +2,19 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import net.gcardone.junidecode.Junidecode;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.slf4j.LoggerFactory;
-import net.gcardone.junidecode.Junidecode;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 public class User {
 
@@ -60,6 +59,8 @@ public class User {
 
     private Institution institution;
 
+    private List<LibraryCard> libraryCards;
+
     public User() {
     }
 
@@ -95,49 +96,47 @@ public class User {
 
     /**
      * Convenience method for backwards compatibility support for older clients.
+     * This method is intended to reconstruct a User object from a supplied JSON string
+     * for primary fields and roles. Other associated objects are not intended to be parsed
+     * using this method since it comes from user-supplied data and may conflict with what
+     * the system knows about those associations.
      *
      * @param json A json string that may or may not be correctly structured as a DACUser
      */
     public User(String json) {
         Gson gson = new Gson();
         JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
-        // Create Date can come in differently, either as a long or a string.
-        // Handle known cases here.
-        String createDateFieldName = "createDate";
-        Date createDate = null;
-        if (userJsonObject.has(createDateFieldName)) {
-            JsonElement createDateElement = userJsonObject.get(createDateFieldName);
-            try {
-                createDate = new Date(createDateElement.getAsLong());
-            } catch (NumberFormatException nfe) {
-                // Known date formats createDate could be in:
-                //   * "Oct 28, 2020"
-                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
-                try {
-                    createDate = sdf.parse(createDateElement.getAsString());
-                } catch (Exception e) {
-                    LoggerFactory
-                        .getLogger(this.getClass())
-                        .error("Unable to parse create date: " + e.getMessage());
-                }
-            }
-            // Remove this from the JSON so we don't re-process it in `gson.fromJson(String, User)`
-            userJsonObject.remove(createDateFieldName);
-        }
-        User u = gson.fromJson(userJsonObject.toString(), User.class);
+        // There are no cases where we want to pull the create date/update date from user-provided data.
+        // Nor do we need to retrieve the full institution object from user-provided data.
+        JsonObject filteredUserJsonObject = filterFields(
+                userJsonObject,
+                Arrays.asList("createDate", "institution", "libraryCards"));
+        User u = gson.fromJson(filteredUserJsonObject.toString(), User.class);
         setUserId(u);
         setEmail(u);
         setDisplayName(u);
-        if (Objects.nonNull(createDate)) {
-            setCreateDate(createDate);
-        }
         setAdditionalEmail(u);
         setEmailPreference(u);
         setRoles(u);
         setStatus(u);
         setRationale(u);
         setInstitutionId(u);
-        setInstitution(u);
+    }
+
+    /**
+     * Private method to filter out fields that we do not want to parse from json objects.
+     * @param obj The json object
+     * @param fields The fields to remove
+     * @return Filtered Clone of the object.
+     */
+    private JsonObject filterFields(JsonObject obj, List<String> fields) {
+        JsonObject copy = obj.deepCopy();
+        fields.forEach(f -> {
+            if (copy.has(f)) {
+                copy.remove(f);
+            }
+        });
+        return copy;
     }
 
     private void setUserId(User u) {
@@ -308,6 +307,14 @@ public class User {
 
     public Institution getInstitution() {
         return institution;
+    }
+
+    public void setLibraryCards(List<LibraryCard> cards) {
+        this.libraryCards = cards;
+    }
+    
+    public List<LibraryCard> getLibraryCards() {
+        return this.libraryCards;
     }
 
     public void addRole(UserRole userRole) {
