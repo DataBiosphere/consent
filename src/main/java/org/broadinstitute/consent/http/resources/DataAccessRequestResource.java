@@ -138,11 +138,11 @@ public class DataAccessRequestResource extends Resource {
                 } else {
                     //if there is a valid roleName but it is not SO or Researcher then throw an exception
                     if (queriedUserRole != UserRoles.RESEARCHER && queriedUserRole != UserRoles.SIGNINGOFFICIAL) {
-                        throw new BadRequestException("Unsupported role name: " + roleName);
+                        throw new BadRequestException("Unsupported role name: " +  queriedUserRole.getRoleName());
                     }
                     //if the user does not have the given roleName throw NotFoundException
-                    if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleNameValue))) {
-                        throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " + roleName + " role.");
+                    if (!user.hasUserRole(queriedUserRole)) {
+                        throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " +  queriedUserRole.getRoleName() + " role.");
                     }
                 }
             //if no roleName was passed in, find the user's role
