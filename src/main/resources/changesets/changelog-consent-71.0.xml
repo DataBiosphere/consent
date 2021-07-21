@@ -11,10 +11,25 @@
             <column name="era_commons_id" type="varchar(255)"/>
         </addColumn>
 
+        <!--
+            The era commons id has been stored in multiple places over the years.
+            First, it was stored as 'eracommonsid' then later on, as 'nihusername'
+            Our update strategy therefore is to first copy over 'eracommonsid' and
+            then if there is a more recent value in 'nihusername', update the user
+            with that value. There is at least one user on prod that has both properties
+            filled out, but with different values.
+         -->
         <sql>
             UPDATE dacuser
             SET era_commons_id = subquery.propertyvalue
-            FROM (SELECT userid, propertyvalue FROM user_property WHERE propertykey = 'nihUsername' AND propertyvalue is not NULL and propertyvalue != '') AS subquery
+            FROM (SELECT disinct userid, propertyvalue FROM user_property WHERE LOWER(propertykey) = 'eracommonsid' AND propertyvalue is not NULL and propertyvalue != '') AS subquery
+            WHERE dacuserid = subquery.userid
+        </sql>
+
+        <sql>
+            UPDATE dacuser
+            SET era_commons_id = subquery.propertyvalue
+            FROM (SELECT disinct userid, propertyvalue FROM user_property WHERE LOWER(propertykey) = 'nihusername' AND propertyvalue is not NULL and propertyvalue != '') AS subquery
             WHERE dacuserid = subquery.userid
         </sql>
 
