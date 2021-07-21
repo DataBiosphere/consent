@@ -32,15 +32,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.NotFoundException;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -51,10 +46,8 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.util.DarConstants;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -87,12 +80,11 @@ public class DataAccessRequestServiceTest {
     @Mock
     private ElectionService electionService;
 
-    private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private DataAccessRequestService service;
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         doNothings();
     }
 
@@ -442,7 +434,7 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(dar);
         when(dataSetDAO.findDataSetsByIdList(dar.data.getDatasetIds()))
                 .thenReturn(Collections.singletonList(ds));
-                
+
         User user = new User();
         user.setDacUserId(1);
         user.setEmail("test@test.com");
@@ -512,29 +504,6 @@ public class DataAccessRequestServiceTest {
         election.setReferenceId(refId);
 
         return election;
-    }
-
-    private Map<String, String> getResearcherProperties() {
-        Map<String, String> researcherProperties = new HashMap<>();
-        researcherProperties.put(UserFields.DEPARTMENT.getValue(), randomString());
-        researcherProperties.put(UserFields.STREET_ADDRESS_1.getValue(), randomString());
-        researcherProperties.put(UserFields.CITY.getValue(), randomString());
-        researcherProperties.put(UserFields.ZIP_POSTAL_CODE.getValue(), randomString());
-        researcherProperties.put(UserFields.COUNTRY.getValue(), randomString());
-        researcherProperties.put(UserFields.STATE.getValue(), randomString());
-        researcherProperties.put(UserFields.STREET_ADDRESS_2.getValue(), randomString());
-        researcherProperties.put(UserFields.DIVISION.getValue(), randomString());
-        researcherProperties.put(DarConstants.ACADEMIC_BUSINESS_EMAIL, randomString());
-        researcherProperties.put(DarConstants.ERA_COMMONS_ID, randomString());
-        researcherProperties.put(DarConstants.PUBMED_ID, randomString());
-        researcherProperties.put(DarConstants.SCIENTIFIC_URL, randomString());
-        researcherProperties.put(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
-        researcherProperties.put(UserFields.PROFILE_NAME.getValue(), randomString());
-        return researcherProperties;
-    }
-
-    private String randomString() {
-        return RandomStringUtils.random(10, true, false);
     }
 
     @Test
