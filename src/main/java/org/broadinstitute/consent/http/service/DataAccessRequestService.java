@@ -76,16 +76,14 @@ public class DataAccessRequestService {
     private final UserDAO userDAO;
     private final VoteDAO voteDAO;
     private final InstitutionDAO institutionDAO;
-    private final UserPropertyDAO userPropertyDAO;
 
     private final DacService dacService;
-    private final UserService userService;
     private final DataAccessReportsParser dataAccessReportsParser;
     private static final String SUFFIX = "-A-";
 
     @Inject
     public DataAccessRequestService(CounterService counterService, DAOContainer container,
-            DacService dacService, UserService userService) {
+            DacService dacService) {
         this.consentDAO = container.getConsentDAO();
         this.counterService = counterService;
         this.dacDAO = container.getDacDAO();
@@ -97,8 +95,6 @@ public class DataAccessRequestService {
         this.voteDAO = container.getVoteDAO();
         this.institutionDAO = container.getInstitutionDAO();
         this.dacService = dacService;
-        this.userService = userService;
-        this.userPropertyDAO = container.getResearcherPropertyDAO();
         this.dataAccessReportsParser = new DataAccessReportsParser();
     }
 
