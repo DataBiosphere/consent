@@ -12,10 +12,10 @@
         </addColumn>
 
         <sql>
-            update dacuser
-            set era_commons_id = subquery.propertyvalue
-            from (select userid, propertyvalue from user_property where propertykey in ('nihUsername')) as subquery
-            where dacuserid = subquery.userid
+            UPDATE dacuser
+            SET era_commons_id = subquery.propertyvalue
+            FROM (SELECT userid, propertyvalue FROM user_property WHERE propertykey = 'nihUsername' AND propertyvalue is not NULL and propertyvalue != '') AS subquery
+            WHERE dacuserid = subquery.userid
         </sql>
 
         <rollback>
