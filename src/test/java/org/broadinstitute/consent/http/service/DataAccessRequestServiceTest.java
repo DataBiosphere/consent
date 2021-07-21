@@ -104,6 +104,7 @@ public class DataAccessRequestServiceTest {
         DAOContainer container = new DAOContainer();
         container.setConsentDAO(consentDAO);
         container.setDataAccessRequestDAO(dataAccessRequestDAO);
+        container.setInstitutionDAO(institutionDAO);
         container.setDacDAO(dacDAO);
         container.setUserDAO(userDAO);
         container.setDatasetDAO(dataSetDAO);
@@ -430,16 +431,18 @@ public class DataAccessRequestServiceTest {
         Institution institution = new Institution();
         institution.setId(1);
         institution.setName("Institution");
-        when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
-                .thenReturn(dar);
-        when(userDAO.findUserById(any())).thenReturn(researcher);
-        when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
         DataSet ds = new DataSet();
         ds.setDataSetId(1);
         ds.setName("DS-1");
         ds.setConsentName(dar.getReferenceId());
+
+        when(userDAO.findUserById(any())).thenReturn(researcher);
+        when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
+        when(dataAccessRequestDAO.findByReferenceId(any()))
+                .thenReturn(dar);
         when(dataSetDAO.findDataSetsByIdList(dar.data.getDatasetIds()))
                 .thenReturn(Collections.singletonList(ds));
+                
         User user = new User();
         user.setDacUserId(1);
         user.setEmail("test@test.com");
@@ -450,7 +453,7 @@ public class DataAccessRequestServiceTest {
 
         DARModalDetailsDTO darModalDetailsDTO = service.DARModalDetailsDTOBuilder(dar, user, electionService);
         assertNotNull(darModalDetailsDTO);
-        assertEquals("", darModalDetailsDTO.getInstitutionName());
+        assertEquals("Institution", darModalDetailsDTO.getInstitutionName());
     }
 
     private DataAccessRequest generateDataAccessRequest() {
