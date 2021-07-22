@@ -2,15 +2,9 @@ package org.broadinstitute.dsp.consent.chains
 
 import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
-import org.broadinstitute.dsp.consent.requests.Requests
-import org.broadinstitute.dsp.consent.{TestConfig}
-import spray.json._
-import DefaultJsonProtocol._
-import org.broadinstitute.dsp.consent.models.PendingModels._
-import org.broadinstitute.dsp.consent.models.JsonProtocols
-import org.broadinstitute.dsp.consent.services.{DarService}
-import scala.concurrent.duration._
 import io.netty.handler.codec.http.HttpResponseStatus._
+import org.broadinstitute.dsp.consent.TestConfig
+import org.broadinstitute.dsp.consent.requests.Requests
 
 object MemberChains {
     def loginToConsole(additionalHeaders: Map[String, String]): ChainBuilder = {
@@ -19,7 +13,7 @@ object MemberChains {
         )
         .pause(TestConfig.defaultPause)
         .exec(
-            Requests.PendingCases.getPendingDataRequestsByUserId(OK.code, "${dacUserId}", additionalHeaders)
+            Requests.PendingCases.getPendingDataRequests(OK.code, additionalHeaders)
         )
         .exec(
             Requests.PendingCases.getPendingCasesByUserId(OK.code, "${dacUserId}", additionalHeaders)
