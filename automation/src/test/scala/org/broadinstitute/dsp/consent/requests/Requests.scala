@@ -380,7 +380,7 @@ object Requests {
 
     def getPendingDataRequestsByUserId(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get Pending Data Requests")
-        .get(s"api/dataRequest/cases/pending/$userId")
+        .get(s"api/dataRequest/cases/pending")
         .headers(TestConfig.jsonHeader)
         .headers(additionalHeaders)
         .check(bodyString.saveAs(dataRequestPendingResponse))
