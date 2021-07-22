@@ -1,16 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
-import org.broadinstitute.consent.http.db.mapper.UserWithPropertiesReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
