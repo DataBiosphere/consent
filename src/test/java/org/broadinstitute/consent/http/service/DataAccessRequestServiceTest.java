@@ -48,7 +48,6 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.util.DarConstants;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
