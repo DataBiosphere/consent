@@ -191,9 +191,9 @@ object Requests {
         .check(status.is(expectedStatus))
     }
 
-    def manageDar(expectedStatus: Int, additionalHeaders: Map[String, String], userId: String = ""): HttpRequestBuilder = {
+    def manageDar(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Manage DARs")
-        .get("/api/dar/manage/?userId=" + userId)
+        .get("/api/dar/manage/v2")
         .headers(TestConfig.jsonHeader)
         .headers(additionalHeaders)
         .check(bodyString.saveAs(manageDarResponse))
