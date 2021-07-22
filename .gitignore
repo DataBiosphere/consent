@@ -153,3 +153,4 @@ automation/src/test/resources/accounts/*.json
 /config/
 /config_postgres/
 /env.properties
+/automation/.bsp/
