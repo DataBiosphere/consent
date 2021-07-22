@@ -14,7 +14,6 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
@@ -34,7 +33,6 @@ import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.bson.Document;
 
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
@@ -102,24 +100,6 @@ public class DataAccessRequestResource extends Resource {
             throw new NotFoundException("Unable to find the datasetId related to the DAR.");
         }
         return c;
-    }
-
-
-    @GET
-    @Produces("application/json")
-    @Path("/manage")
-    @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
-    @Deprecated // Use describeManageDataAccessRequestsV2
-    public Response describeManageDataAccessRequests(@Auth AuthUser authUser) {
-        // If a user id is provided, ensure that is the current user.
-        try{
-            User user = userService.findUserByEmail(authUser.getName());
-            Integer userId = user.getDacUserId();
-            List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManage(userId, authUser);
-            return Response.ok().entity(dars).build();
-        } catch(Exception e) {
-            return createExceptionResponse(e);
-        }
     }
 
     @GET

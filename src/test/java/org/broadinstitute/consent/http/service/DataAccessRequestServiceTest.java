@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
@@ -31,29 +32,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.NotFoundException;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.util.DarConstants;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -80,20 +74,17 @@ public class DataAccessRequestServiceTest {
     @Mock
     private DacService dacService;
     @Mock
-    private UserService userService;
-    @Mock
     private VoteDAO voteDAO;
     @Mock
-    private UserPropertyDAO userPropertyDAO;
+    private InstitutionDAO institutionDAO;
     @Mock
     private ElectionService electionService;
 
-    private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private DataAccessRequestService service;
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         doNothings();
     }
 
@@ -105,13 +96,13 @@ public class DataAccessRequestServiceTest {
         DAOContainer container = new DAOContainer();
         container.setConsentDAO(consentDAO);
         container.setDataAccessRequestDAO(dataAccessRequestDAO);
+        container.setInstitutionDAO(institutionDAO);
         container.setDacDAO(dacDAO);
         container.setUserDAO(userDAO);
         container.setDatasetDAO(dataSetDAO);
         container.setElectionDAO(electionDAO);
         container.setVoteDAO(voteDAO);
-        container.setResearcherPropertyDAO(userPropertyDAO);
-        service = new DataAccessRequestService(counterService, container, dacService, userService);
+        service = new DataAccessRequestService(counterService, container, dacService);
     }
 
     @Test
@@ -332,7 +323,7 @@ public class DataAccessRequestServiceTest {
     public void testDescribeDataAccessRequestManageV2_Researcher() {
         User user = new User();
         user.setRoles(Arrays.asList(new UserRole(5, UserRoles.RESEARCHER.getRoleName())));
-    
+
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setData(new DataAccessRequestData());
@@ -385,6 +376,12 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.singletonList(election));
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
+        User user = new User();
+        user.setDacUserId(1);
+        user.setDisplayName("displayName");
+        user.setInstitutionId(1);
+        Institution institution = new Institution();
+        institution.setName("Institution");
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         when(dataSetDAO.getAssociatedConsentIdByDataSetId(any()))
                 .thenReturn("CONS-1");
@@ -392,8 +389,7 @@ public class DataAccessRequestServiceTest {
         Consent consent = new Consent();
         consent.setConsentId("CONS-1");
         when(consentDAO.findConsentById("CONS-1")).thenReturn(consent);
-
-        Map<String, String> researcherProperties = getResearcherProperties();
+        when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
         initService();
         try {
             File file = service.createApprovedDARDocument();
@@ -438,6 +434,14 @@ public class DataAccessRequestServiceTest {
     @Test
     public void testCreateDataSetApprovedUsersDocument() {
         DataAccessRequest dar = generateDataAccessRequest();
+        dar.setUserId(1);
+        User user = new User();
+        user.setDacUserId(1);
+        user.setDisplayName("displayName");
+        user.setInstitutionId(1);
+        Institution institution = new Institution();
+        institution.setName("Institution");
+        when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
         when(dataAccessRequestDAO.findAllDataAccessRequests())
                 .thenReturn(Collections.singletonList(dar));
         when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
@@ -445,9 +449,6 @@ public class DataAccessRequestServiceTest {
         when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
                 .thenReturn(new Date());
 
-        Map<String, String> researcherProperties = getResearcherProperties();
-        when(userPropertyDAO.findPropertyValueByPK(dar.getUserId(), DarConstants.ACADEMIC_BUSINESS_EMAIL))
-            .thenReturn(researcherProperties.get(DarConstants.ACADEMIC_BUSINESS_EMAIL));
 
         initService();
 
@@ -463,27 +464,37 @@ public class DataAccessRequestServiceTest {
     @Test
     public void testDARModalDetailsDTOBuilder() {
         DataAccessRequest dar = generateDataAccessRequest();
-
-        when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
-                .thenReturn(dar);
-        when(userDAO.findUserById(any())).thenReturn(new User());
+        dar.setUserId(1);
+        User researcher = new User();
+        researcher.setDacUserId(1);
+        researcher.setDisplayName("displayName");
+        researcher.setInstitutionId(1);
+        Institution institution = new Institution();
+        institution.setId(1);
+        institution.setName("Institution");
         DataSet ds = new DataSet();
         ds.setDataSetId(1);
         ds.setName("DS-1");
         ds.setConsentName(dar.getReferenceId());
+
+        when(userDAO.findUserById(any())).thenReturn(researcher);
+        when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
+        when(dataAccessRequestDAO.findByReferenceId(any()))
+                .thenReturn(dar);
         when(dataSetDAO.findDataSetsByIdList(dar.data.getDatasetIds()))
                 .thenReturn(Collections.singletonList(ds));
+
         User user = new User();
         user.setDacUserId(1);
         user.setEmail("test@test.com");
         user.setDisplayName("Test User");
-        when(userPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId()))
-                .thenReturn(Collections.emptyList());
+        user.setStatus("approved");
+        user.setRationale("");
         initService();
 
         DARModalDetailsDTO darModalDetailsDTO = service.DARModalDetailsDTOBuilder(dar, user, electionService);
         assertNotNull(darModalDetailsDTO);
-        assertEquals("", darModalDetailsDTO.getInstitutionName());
+        assertEquals("Institution", darModalDetailsDTO.getInstitutionName());
     }
 
     private DataAccessRequest generateDataAccessRequest() {
@@ -542,29 +553,6 @@ public class DataAccessRequestServiceTest {
         election.setReferenceId(refId);
 
         return election;
-    }
-
-    private Map<String, String> getResearcherProperties() {
-        Map<String, String> researcherProperties = new HashMap<>();
-        researcherProperties.put(UserFields.DEPARTMENT.getValue(), randomString());
-        researcherProperties.put(UserFields.STREET_ADDRESS_1.getValue(), randomString());
-        researcherProperties.put(UserFields.CITY.getValue(), randomString());
-        researcherProperties.put(UserFields.ZIP_POSTAL_CODE.getValue(), randomString());
-        researcherProperties.put(UserFields.COUNTRY.getValue(), randomString());
-        researcherProperties.put(UserFields.STATE.getValue(), randomString());
-        researcherProperties.put(UserFields.STREET_ADDRESS_2.getValue(), randomString());
-        researcherProperties.put(UserFields.DIVISION.getValue(), randomString());
-        researcherProperties.put(DarConstants.ACADEMIC_BUSINESS_EMAIL, randomString());
-        researcherProperties.put(DarConstants.ERA_COMMONS_ID, randomString());
-        researcherProperties.put(DarConstants.PUBMED_ID, randomString());
-        researcherProperties.put(DarConstants.SCIENTIFIC_URL, randomString());
-        researcherProperties.put(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
-        researcherProperties.put(UserFields.PROFILE_NAME.getValue(), randomString());
-        return researcherProperties;
-    }
-
-    private String randomString() {
-        return RandomStringUtils.random(10, true, false);
     }
 
     @Test
