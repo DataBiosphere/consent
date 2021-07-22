@@ -1650,6 +1650,7 @@ paths:
             nullable: true
             enum:
               - SigningOfficial
+              - Researcher
       tags:
         - Data Access Request
       responses:

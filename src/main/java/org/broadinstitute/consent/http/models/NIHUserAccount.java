@@ -34,7 +34,6 @@ public class NIHUserAccount {
     public Map<String, String> getNihMap() {
         Map<String, String> nihComponents = new HashMap<>();
         nihComponents.put(UserFields.ERA_STATUS.getValue(), Boolean.TRUE.toString());
-        nihComponents.put(UserFields.ERA_USERNAME.getValue(), this.nihUsername);
         nihComponents.put(UserFields.ERA_EXPIRATION_DATE.getValue(), this.eraExpiration);
         return nihComponents;
     }

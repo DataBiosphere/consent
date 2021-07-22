@@ -1,0 +1,41 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="71.0" author="grushton">
+        <validCheckSum>ANY</validCheckSum>
+
+        <addColumn tableName="dacuser">
+            <column name="era_commons_id" type="varchar(255)"/>
+        </addColumn>
+
+        <!--
+            The era commons id has been stored in multiple places over the years.
+            First, it was stored as 'eracommonsid' then later on, as 'nihusername'
+            Our update strategy therefore is to first copy over 'eracommonsid' and
+            then if there is a more recent value in 'nihusername', update the user
+            with that value. There is at least one user on prod that has both properties
+            filled out, but with different values.
+         -->
+        <sql>
+            UPDATE dacuser
+            SET era_commons_id = subquery.propertyvalue
+            FROM (SELECT distinct userid, propertyvalue FROM user_property WHERE LOWER(propertykey) = 'eracommonsid' AND propertyvalue is not NULL and propertyvalue != '') AS subquery
+            WHERE dacuserid = subquery.userid
+        </sql>
+
+        <sql>
+            UPDATE dacuser
+            SET era_commons_id = subquery.propertyvalue
+            FROM (SELECT distinct userid, propertyvalue FROM user_property WHERE LOWER(propertykey) = 'nihusername' AND propertyvalue is not NULL and propertyvalue != '') AS subquery
+            WHERE dacuserid = subquery.userid
+        </sql>
+
+        <rollback>
+            <dropColumn tableName="dacuser" columnName="era_commons_id"/>
+        </rollback>
+
+    </changeSet>
+</databaseChangeLog>
