@@ -54,6 +54,9 @@ public class User {
     @JsonProperty
     private Integer institutionId;
 
+    @JsonProperty
+    private String eraCommonsId;
+
     private Institution institution;
 
     private List<LibraryCard> libraryCards;
@@ -283,6 +286,14 @@ public class User {
     }
 
     public void setInstitutionId(Integer institutionId) { this.institutionId = institutionId; }
+
+    public String getEraCommonsId() {
+        return eraCommonsId;
+    }
+
+    public void setEraCommonsId(String eraCommonsId) {
+        this.eraCommonsId = eraCommonsId;
+    }
 
     public void setInstitution(Institution institution) {
         this.institution = institution;
