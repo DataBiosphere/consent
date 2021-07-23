@@ -21,6 +21,7 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
         DataAccessRequest dar = new DataAccessRequest();
         dar.setId(resultSet.getInt("id"));
         dar.setReferenceId(resultSet.getString("reference_id"));
+        dar.setCollectionId(resultSet.getInt("collection_id"));
         dar.setDraft(resultSet.getBoolean("draft"));
         dar.setUserId(resultSet.getInt("user_id"));
         dar.setCreateDate(resultSet.getTimestamp("create_date"));
