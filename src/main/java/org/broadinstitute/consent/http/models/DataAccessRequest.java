@@ -24,6 +24,8 @@ public class DataAccessRequest {
 
   @JsonProperty public String referenceId;
 
+  @JsonProperty public Integer collectionId;
+
   @JsonProperty public DataAccessRequestData data;
 
   @JsonProperty public Boolean draft;
@@ -57,6 +59,10 @@ public class DataAccessRequest {
   public void setReferenceId(String referenceId) {
     this.referenceId = referenceId;
   }
+
+  public Integer getCollectionId() { return collectionId; }
+
+  public void setCollectionId(Integer collectionId) { this.collectionId = collectionId; }
 
   public DataAccessRequestData getData() {
     return data;
