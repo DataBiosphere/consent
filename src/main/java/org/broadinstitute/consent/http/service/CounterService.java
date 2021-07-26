@@ -1,6 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import java.util.List;
+import java.util.Objects;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.CounterDAO;
 
 public class CounterService {
@@ -14,7 +17,8 @@ public class CounterService {
     }
 
     public Integer getNextDarSequence() {
-        return counterDAO.incrementCountByName(DAR_COUNTER);
+        counterDAO.incrementCountByName(DAR_COUNTER);
+        return counterDAO.getMaxCountByName(DAR_COUNTER);
     }
 
 }
