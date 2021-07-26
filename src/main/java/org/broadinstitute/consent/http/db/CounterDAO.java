@@ -18,11 +18,11 @@ public interface CounterDAO extends Transactional<CounterDAO> {
     @SqlQuery("SELECT MAX(count) FROM counter c WHERE name = :name ")
     Integer getMaxCountByName(@Bind("name") String name);
 
-  @SqlUpdate("UPDATE counter " +
-    "   SET count = subquery.max_count + 1 " +
-    "   FROM (SELECT MAX(count) as max_count FROM counter WHERE name = :name) AS subquery " +
-    "   WHERE name = :name")
-  void incrementCountByName(@Bind("name") String name);
+    @SqlUpdate("UPDATE counter " +
+             "   SET count = subquery.max_count + 1 " +
+             "   FROM (SELECT MAX(count) as max_count FROM counter WHERE name = :name) AS subquery " +
+             "   WHERE name = :name")
+    void incrementCountByName(@Bind("name") String name);
 
     @SqlUpdate("DELETE FROM counter")
     void deleteAll();
