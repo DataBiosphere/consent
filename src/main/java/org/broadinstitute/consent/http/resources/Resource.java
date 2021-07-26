@@ -1,22 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.SQLException;
-import java.sql.SQLSyntaxErrorException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.AbstractMap;
-import java.util.stream.Collectors;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -32,6 +15,23 @@ import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 /**
@@ -153,7 +153,9 @@ abstract public class Resource {
         try {
             if (e.getCause() instanceof PSQLException) {
                 String vendorCode = ((PSQLException) e.getCause()).getSQLState();
-                status = vendorCodeStatusMap.get(vendorCode);
+                if (vendorCodeStatusMap.containsKey(vendorCode)) {
+                    status = vendorCodeStatusMap.get(vendorCode);
+                }
             }
         } catch (Exception error) {
             //no need to handle, default status already assigned
