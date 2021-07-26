@@ -24,7 +24,6 @@ public class DarCollection {
   @JsonProperty
   User updateUser;
 
-  //empty constructor sets all null values except create Date
   public DarCollection() {this.createDate = new Timestamp(System.currentTimeMillis()); }
 
   public Integer getDarCollectionId() {
