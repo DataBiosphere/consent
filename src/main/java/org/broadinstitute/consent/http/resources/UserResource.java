@@ -199,11 +199,11 @@ public class UserResource extends Resource {
     public Response getSOsForInstitution(@Auth AuthUser authUser) {
         try {
             User user = userService.findUserByEmail(authUser.getName());
-            if (Objects.isNull(user.getInstitutionId())) {
-                throw new NotFoundException("Current user, " + user.getDisplayName() + ", does not have an institution.");
+            if (Objects.nonNull(user.getInstitutionId())) {
+                List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
+                return Response.ok().entity(signingOfficials).build();
             }
-            List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
-            return Response.ok().entity(signingOfficials).build();
+            return Response.ok().entity(Collections.emptyList()).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
