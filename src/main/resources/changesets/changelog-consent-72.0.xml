@@ -28,13 +28,14 @@
             <column name="update_user" type="timestamp"/>
         </createTable>
 
-        <rollback>
-            <dropColumn tableName="data_access_request" columnName="collection_id"/>
-        </rollback>
+        <addUniqueConstraint columnNames="dar_code" tableName="dar_collection"
+                             deferrable="false" initiallyDeferred="false"/>
 
         <rollback>
-            <dropTable tableName="dar_collection"/>
+            <dropColumn tableName="data_access_request" columnName="collection_id"/>
+            <dropTable cascadeConstraints="true" tableName="dar_collection"/>
         </rollback>
+
 
     </changeSet>
 </databaseChangeLog>
