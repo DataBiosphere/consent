@@ -15,7 +15,6 @@ public class DarCollection {
   @JsonProperty
   Timestamp createDate;
 
-  //userId or User?
   @JsonProperty
   User createUser;
 

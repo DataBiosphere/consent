@@ -28,23 +28,6 @@
             <column name="update_user" type="timestamp"/>
         </createTable>
 
-        <sql>
-            for each dar (dar1)
-              if dar1 already has a collection Id
-                skip
-              if not
-                 create a new dar collection
-                 assign dar1 the collection Id
-                 get dar1's dar code
-                 go through every other dar (dar2)
-                    skip all dar2 that already have a collectionId
-                    compare the dar codes for equality up to the second dash (if there is one)
-                    if they are the same
-                       assign the collectionId that was assigned to dar1 to dar2
-                    if not
-                       do nothing
-        </sql>
-
         <rollback>
             <dropColumn tableName="data_access_request" columnName="collection_id"/>
         </rollback>
