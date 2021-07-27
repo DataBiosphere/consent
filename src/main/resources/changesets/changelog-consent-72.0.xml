@@ -31,9 +31,15 @@
         <addUniqueConstraint columnNames="dar_code" tableName="dar_collection"
                              deferrable="false" initiallyDeferred="false"/>
 
+        <addForeignKeyConstraint baseColumnNames="collection_id" baseTableName="data_access_request" constraintName="fkDataAccessRequestCollectionId"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="collection_id" referencedTableName="dar_collection"
+                                 referencesUniqueColumn="false"/>
+
         <rollback>
             <dropColumn tableName="data_access_request" columnName="collection_id"/>
             <dropTable cascadeConstraints="true" tableName="dar_collection"/>
+            <dropForeignKeyConstraint baseTableName="data_access_request" constraintName="fkDataAccessRequestCollectionId"/>
         </rollback>
 
 
