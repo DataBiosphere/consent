@@ -6,6 +6,10 @@ jobs:
     name: Automation Tests
     runs-on: ubuntu-latest
     steps:
+
+      - name: Log Actor
+        run: echo "${{ github.actor }}"
+
       - name: Checkout
         uses: actions/checkout@v1
 
