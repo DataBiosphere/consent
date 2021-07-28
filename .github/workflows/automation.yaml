@@ -31,6 +31,8 @@ jobs:
           echo "$MEMBER" >> ./automation/src/test/resources/accounts/duos-automation-member.json
           echo "$RESEARCHER" >> ./automation/src/test/resources/accounts/duos-automation-researcher.json
           echo "$SIGNING_OFFICIAL" >> ./automation/src/test/resources/accounts/duos-automation-signing-official.json
+          echo "consent { baseUrl = 'https://consent.dsde-dev.broadinstitute.org/', fireCloudUrl = 'https://firecloud-orchestration.dsde-dev.broadinstitute.org/', profileUrl = 'https://profile-dot-broad-shibboleth-prod.appspot.com/dev', ontologyUrl = 'https://consent-ontology.dsde-dev.broadinstitute.org/' }" >> ./automation/src/test/resources/application.conf
+          echo '<?xml version="1.0" encoding="UTF-8"?><configuration><appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender"><encoder><pattern>[DEV] %d{HH:mm:ss.SSS} [%-5level] %logger{15} - %msg%n%rEx</pattern></encoder><immediateFlush>false</immediateFlush></appender><root level="WARN"><appender-ref ref="CONSOLE" /></root></configuration>' >> ./automation/src/test/resources/logback.xml
           ls -al ./automation/src/test/resources/accounts
 
       - name: Start containers
