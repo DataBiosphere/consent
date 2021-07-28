@@ -3,14 +3,13 @@ package org.broadinstitute.dsp.consent.chains
 import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
 import org.broadinstitute.dsp.consent.requests.Requests
-import org.broadinstitute.dsp.consent.{TestConfig}
+import org.broadinstitute.dsp.consent.TestConfig
 import spray.json._
 import DefaultJsonProtocol._
 import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
 import org.broadinstitute.dsp.consent.models.ElectionModels._
 import org.broadinstitute.dsp.consent.models.JsonProtocols
 import org.broadinstitute.dsp.consent.services._
-import scala.concurrent.duration._
 import io.netty.handler.codec.http.HttpResponseStatus._
 
 object AdminChains {
@@ -38,15 +37,13 @@ object AdminChains {
                 val manageDarStr: String = session(Requests.Dar.manageDarResponse).as[String]
                 val manageDars: Seq[DataAccessRequestManage] = manageDarStr.parseJson.convertTo[Seq[DataAccessRequestManage]]
 
-                val newManageDars: Seq[DataAccessRequestManage] = DarService.setManageRolesByOwner(manageDars)
-
-                val researcherDars: Seq[DataAccessRequestManage] = DarService.getPendingDARsByMostRecent(newManageDars, 2)
+                val researcherDars: Seq[DataAccessRequestManage] = DarService.getPendingDARsByMostRecent(manageDars)
                 val electionStatus: ElectionStatus = ElectionStatus(status = Status.OPEN, finalAccessVote = false)
-                
+
                 val newSession = session.set(Requests.Dar.manageDarResponse, researcherDars)
                 newSession.set("electionStatusBody", electionStatus.toJson.compactPrint)
             }
-        }   
+        }
         .exec(
             Requests.Dac.list(OK.code, additionalHeaders)
         )
@@ -57,8 +54,7 @@ object AdminChains {
             exec { session =>
                 val manageDars: Seq[DataAccessRequestManage] = session(Requests.Dar.manageDarResponse).as[Seq[DataAccessRequestManage]]
                 val darIndex: Int = session("darIndex").as[Int]
-
-                session.set("dataRequestId", manageDars(darIndex).dataRequestId.getOrElse(""))
+                session.set("dataRequestId", manageDars(darIndex).dar.get.referenceId)
             }
             .exec(
                 Requests.Election.createElection(CREATED.code, "${dataRequestId}", "${electionStatusBody}", additionalHeaders)
