@@ -1,0 +1,47 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="72.0" author="raejohanek">
+        <validCheckSum>ANY</validCheckSum>
+
+        <addColumn tableName="data_access_request">
+            <column name="collection_id" type="bigint"/>
+        </addColumn>
+
+        <createTable tableName="dar_collection">
+            <column name="collection_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="dar_code" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_user" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_date" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="update_date" type="bigint"/>
+            <column name="update_user" type="timestamp"/>
+        </createTable>
+
+        <addUniqueConstraint columnNames="dar_code" tableName="dar_collection"
+                             deferrable="false" initiallyDeferred="false"/>
+
+        <addForeignKeyConstraint baseColumnNames="collection_id" baseTableName="data_access_request" constraintName="fkDataAccessRequestCollectionId"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="collection_id" referencedTableName="dar_collection"
+                                 referencesUniqueColumn="false"/>
+
+        <rollback>
+            <dropColumn tableName="data_access_request" columnName="collection_id"/>
+            <dropTable cascadeConstraints="true" tableName="dar_collection"/>
+            <dropForeignKeyConstraint baseTableName="data_access_request" constraintName="fkDataAccessRequestCollectionId"/>
+        </rollback>
+
+
+    </changeSet>
+</databaseChangeLog>
