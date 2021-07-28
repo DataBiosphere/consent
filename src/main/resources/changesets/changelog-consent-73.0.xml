@@ -1,0 +1,91 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="73.0" author="raejohanek">
+        <validCheckSum>ANY</validCheckSum>
+
+        <!--
+            backpopulate the collection_id column on data_access_request by comparing darCodes
+            dar structure has changed, old dars have their dar code saved as dar_code while new dars have
+            their dar code saved as darCode
+
+            SUBQUERY FOR GETTING DARS WITH SIMILAR DAR CODE
+            NEW DAR structure:
+
+            SELECT reference_Id, (data #>> '{}')::jsonb->>'darCode' AS dar_code FROM data_access_request
+             WHERE draft != true
+             AND collection_id IS NULL
+             AND (data #>> '{}')::jsonb->>'darCode' LIKE 'DAR-260%'
+
+            OLD DAR structure:
+
+            SELECT reference_Id, (data #>> '{}')::jsonb->>'dar_code' AS dar_code FROM data_access_request
+             WHERE draft != true
+             AND collection_id IS NULL
+             AND (data #>> '{}')::jsonb->>'dar_code' LIKE 'DAR-100%'
+         -->
+
+        <!-- There is a unique constraint on dar code so if it errors that means a dar collection with given
+                 dar code already exists so just move on -->
+        <sql>
+            DO $$
+            BEGIN
+              INSERT INTO dar_collection (dar_code, create_user, create_date)
+              SELECT
+                CASE
+                  WHEN (data #>> '{}')::jsonb->>'darCode' IS NOT NULL THEN
+                     CASE
+                       WHEN POSITION('-A-' in  (data #>> '{}')::jsonb->>'darCode') > 0
+                         THEN SUBSTRING((data #>> '{}')::jsonb->>'darCode' from 1 for POSITION('-A-' in  (data #>> '{}')::jsonb->>'darCode') - 1)
+                       ELSE (data #>> '{}')::jsonb->>'darCode'
+                     END
+                  WHEN (data #>> '{}')::jsonb->>'dar_code' IS NOT NULL THEN
+                     CASE
+                       WHEN POSITION('-A-' in  (data #>> '{}')::jsonb->>'dar_code') > 0
+                         THEN SUBSTRING((data #>> '{}')::jsonb->>'dar_code' from 1 for POSITION('-A-' in  (data #>> '{}')::jsonb->>'dar_code') - 1)
+                       ELSE (data #>> '{}')::jsonb->>'dar_code'
+                     END
+                END,
+                user_id, create_date
+              FROM data_access_request dar
+              WHERE dar.draft != true;
+              EXCEPTION
+                WHEN not_null
+                WHEN unique_violation THEN RAISE INFO 'dar_code must be unique';
+                WHEN others THEN RAISE INFO 'dar_code cannot be null and must be unique';
+              END;
+              $$;
+
+
+
+
+
+        </sql>
+
+        <sql>
+
+            SELECT dar.* FROM data_access_request dar
+            INNER JOIN dar_collection d ON
+            (dar.data #>> '{}')::jsonb->>'darCode' LIKE d.dar_code || '%';
+
+            SELECT d.* FROM dar_collection d
+            JOIN data_access_request dar2 ON
+            (dar2.data #>> '{}')::jsonb->>'darCode' LIKE d.dar_code || '%'
+            LIMIT 1)
+
+            UPDATE data_access_request dar
+            SET dar.collection_id = subquery.collection_id
+            FROM (
+            SELECT d.* FROM dar_collection d
+            WHERE (dar.data #>> '{}')::jsonb->>'darCode' LIKE d.dar_code || '%'
+            LIMIT 1) as subquery;
+
+        </sql>
+
+
+
+    </changeSet>
+</databaseChangeLog>
