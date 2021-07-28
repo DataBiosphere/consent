@@ -14,20 +14,23 @@ jobs:
           mkdir -p automation/src/test/resources
           mkdir -p target
 
-      - name: Render admin
+      - name: Render configs
+        env:
+          ADMIN: ${{ secrets.DUOS_AUTOMATION_ADMIN }}
+          CHAIR: ${{ secrets.DUOS_AUTOMATION_CHAIR }}
+          MEMBER: ${{ secrets.DUOS_AUTOMATION_MEMBER }}
+          RESEARCHER: ${{ secrets.DUOS_AUTOMATION_RESEARCHER }}
+          SIGNING_OFFICIAL: ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL }}
         run: |
-          echo ${{ secrets.DUOS_AUTOMATION_ADMIN }} >> automation/src/test/resources/duos-automation-admin.json
-
-      - name: Render others
-        run: |
-          echo ${{ secrets.DUOS_AUTOMATION_CHAIR }} >> automation/src/test/resources/duos-automation-chair.json
-          echo ${{ secrets.DUOS_AUTOMATION_MEMBER }} >> automation/src/test/resources/duos-automation-member.json
-          echo ${{ secrets.DUOS_AUTOMATION_RESEARCHER }} >> automation/src/test/resources/duos-automation-researcher.json
-          echo ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL }} >> automation/src/test/resources/duos-automation-signing-official.json
+          echo "$ADMIN" >> automation/src/test/resources/duos-automation-admin.json
+          echo "$CHAIR" >> automation/src/test/resources/duos-automation-chair.json
+          echo "$MEMBER" >> automation/src/test/resources/duos-automation-member.json
+          echo "$RESEARCHER" >> automation/src/test/resources/duos-automation-researcher.json
+          echo "$SIGNING_OFFICIAL" >> automation/src/test/resources/duos-automation-signing-official.json
 
       - name: Start containers
         run: |
-          docker-compose -f "docker-compose-automation.yml" up -d --build
+          docker-compose -f docker-compose-automation.yml up -d --build
 
       - name: Build/Run automation tests
         run: |
@@ -38,4 +41,4 @@ jobs:
       - name: Stop containers
         if: always()
         run: |
-          docker-compose -f "docker-compose-automation.yml" down
+          docker-compose -f docker-compose-automation.yml down
