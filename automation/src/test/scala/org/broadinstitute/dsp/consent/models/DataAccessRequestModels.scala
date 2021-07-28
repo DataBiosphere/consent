@@ -2,7 +2,7 @@ package org.broadinstitute.dsp.consent.models
 
 import org.broadinstitute.dsp.consent.models.UserModels._
 import org.broadinstitute.dsp.consent.models.DataSetModels._
-import org.broadinstitute.dsp.consent.models.DacModels._
+import org.broadinstitute.dsp.consent.models.ElectionModels.Vote
 
 object DataAccessRequestModels {
     case class OntologyEntry(
@@ -130,34 +130,10 @@ object DataAccessRequestModels {
     )
 
     case class DataAccessRequestManage(
-        referenceId: Option[String],
-        logged: Option[String],
-        alreadyVoted: Option[Boolean],
-        isReminderSent: Option[Boolean],
-        isFinalVote: Option[Boolean],
-        voteId: Option[Int],
-        totalVotes: Option[Int],
-        votesLogged: Option[Int],
-        rpElectionId: Option[Int],
-        rpVoteId: Option[Int],
-        consentGroupName: Option[String],
-        dac: Option[Dac],
-        electionStatus: Option[String],
-        status: Option[String],
-        rus: Option[String],
-        dataRequestId: Option[String],
-        projectTitle: Option[String],
-        frontEndId: Option[String],
-        electionId: Option[Int],
-        createDate: Option[Long],
-        sortDate: Option[Long],
-        electionVote: Option[Boolean],
-        isCanceled: Option[Boolean],
-        needsApproval: Option[Boolean],
-        dataSetElectionResult: Option[String],
-        datasetId: Option[Int],
-        dacId: Option[Int],
-        errors: Option[Seq[String]],
-        ownerUser: Option[User]
+        dar: Option[DataAccessRequest] = None,
+        election: Option[ElectionModels.Election] = None,
+        votes: Option[Seq[Vote]] = None,
+        researcher: Option[User] = None,
+        errors: Option[Seq[String]] = None
     )
 }

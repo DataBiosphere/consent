@@ -1,27 +1,25 @@
 package org.broadinstitute.dsp.consent.models
 
-import spray.json._
-import DefaultJsonProtocol._
-import org.broadinstitute.dsp.consent.models.UserModels._
-import org.broadinstitute.dsp.consent.models.WhiteListModels._
-import org.broadinstitute.dsp.consent.models.ResearcherModels._
+import org.broadinstitute.dsp.consent.models.ConsentModels._
+import org.broadinstitute.dsp.consent.models.DacModels._
+import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
 import org.broadinstitute.dsp.consent.models.DataSetModels._
 import org.broadinstitute.dsp.consent.models.DataUseModels._
-import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
-import org.broadinstitute.dsp.consent.models.NihModels._
-import org.broadinstitute.dsp.consent.models.DacModels._
 import org.broadinstitute.dsp.consent.models.ElectionModels._
-import org.broadinstitute.dsp.consent.models.PendingModels._
-import org.broadinstitute.dsp.consent.models.ConsentModels._
 import org.broadinstitute.dsp.consent.models.MatchModels._
+import org.broadinstitute.dsp.consent.models.NihModels._
+import org.broadinstitute.dsp.consent.models.PendingModels._
+import org.broadinstitute.dsp.consent.models.ResearcherModels._
+import org.broadinstitute.dsp.consent.models.UserModels._
+import org.broadinstitute.dsp.consent.models.WhiteListModels._
+import spray.json._
 
-
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 object JsonProtocols extends DefaultJsonProtocol {
     implicit val researcherPropertyFormat: JsonFormat[ResearcherProperty] = jsonFormat4(ResearcherProperty)
     implicit val userRoleFormat: JsonFormat[UserRole] = jsonFormat5(UserRole)
-    implicit val whiteListEntryFormat: JsonFormat[WhiteListEntry] = jsonFormat8(WhiteListEntry) 
+    implicit val whiteListEntryFormat: JsonFormat[WhiteListEntry] = jsonFormat8(WhiteListEntry)
     implicit val dataSetPropertyFormat: JsonFormat[DataSetProperty] = jsonFormat2(DataSetProperty)
     implicit val dataUseFormat: JsonFormat[DataUse] = jsonFormat5(DataUse)
     implicit val dataSetEntryFormat: JsonFormat[DataSetEntry] = jsonFormat4(DataSetEntry)
@@ -54,83 +52,9 @@ object JsonProtocols extends DefaultJsonProtocol {
         }
     }
 
-    /*implicit object MatchFormat extends JsonFormat[Match] {
-        def write(matchObj: Match) = {
-            var map = collection.mutable.Map[String, JsValue]()
-            val manualList = List("cMatch")
-            matchObj.getClass.getDeclaredFields
-                .filterNot(f => manualList.contains(f.getName))
-                .foreach { f =>
-                    f.setAccessible(true)
-                    f.get(matchObj) match {
-                        case Some(x: Boolean) => map += f.getName -> x.toJson
-                        case Some(y: String) => map += f.getName -> y.toJson
-                        case Some(l: Long) => map += f.getName -> l.toJson
-                        case Some(i: Int) => map += f.getName -> i.toJson
-                        case _ => map += f.getName -> JsNull
-                    }
-                }
-
-            map += ("match" -> JsBoolean(matchObj.cMatch))
-            
-            JsObject(map.toMap)
-        }
-
-        def read(value: JsValue): Match = {
-            val fields = value.asJsObject.fields
-            Match(
-                id = optionalEntryReader("id", fields, _.convertTo[Int], 0),
-                consent = optionalEntryReader("consent", fields, _.convertTo[String], ""),
-                purpose = optionalEntryReader("purpose", fields, _.convertTo[String], ""),
-                cMatch = optionalEntryReader("match", fields, _.convertTo[Boolean], false),
-                failed = optionalEntryReader("failed", fields, _.convertTo[Boolean], false),
-                createDate = optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None)
-            )
-        }
-    }
-
-    implicit object VoteFormat extends JsonFormat[Vote] {
-        def write(vote: Vote) = {
-            var map = collection.mutable.Map[String, JsValue]()
-            val manualList = List("vType")
-            vote.getClass.getDeclaredFields
-                .filterNot(f => manualList.contains(f.getName))
-                .foreach { f =>
-                    f.setAccessible(true)
-                    f.get(vote) match {
-                        case Some(x: Boolean) => map += f.getName -> x.toJson
-                        case Some(y: String) => map += f.getName -> y.toJson
-                        case Some(l: Long) => map += f.getName -> l.toJson
-                        case Some(i: Int) => map += f.getName -> i.toJson
-                        case _ => map += f.getName -> JsNull
-                    }
-                }
-
-            map += ("type" -> JsString(vote.vType.getOrElse("")))
-            
-            JsObject(map.toMap)
-        }
-
-        def read(value: JsValue): Vote = {
-            val fields = value.asJsObject.fields
-            Vote(
-                voteId = optionalEntryReader("voteId", fields, _.convertTo[Option[Int]], None),
-                vote = optionalEntryReader("vote", fields, _.convertTo[Option[Boolean]], None),
-                dacUserId = optionalEntryReader("dacUserId", fields, _.convertTo[Option[Int]], None),
-                createDate = optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None),
-                updateDate = optionalEntryReader("updateDate", fields, _.convertTo[Option[Long]], None),
-                electionId = optionalEntryReader("electionId", fields, _.convertTo[Option[Int]], None),
-                rationale = optionalEntryReader("rationale", fields, _.convertTo[Option[String]], None),
-                vType = optionalEntryReader("type", fields, _.convertTo[Option[String]], None),
-                isReminderSent = optionalEntryReader("isReminderSent", fields, _.convertTo[Option[Boolean]], None),
-                hasConcerns = optionalEntryReader("hasConcerns", fields, _.convertTo[Option[Boolean]], None)
-            )
-        }
-    }*/
-
     implicit object DataAccessRequestManageFormat extends JsonFormat[DataAccessRequestManage] {
-        def write(darm: DataAccessRequestManage) = {
-            var map = collection.mutable.Map[String, JsValue]()
+        def write(darm: DataAccessRequestManage): JsObject = {
+            val map = collection.mutable.Map[String, JsValue]()
             val manualList = List("errors")
             darm.getClass.getDeclaredFields
                 .filterNot(f => manualList.contains(f.getName))
@@ -156,42 +80,18 @@ object JsonProtocols extends DefaultJsonProtocol {
         def read(value: JsValue): DataAccessRequestManage = {
             val fields = value.asJsObject.fields
             DataAccessRequestManage(
-                referenceId = optionalEntryReader("referenceId", fields, _.convertTo[Option[String]], None),
-                logged = optionalEntryReader("logged", fields, _.convertTo[Option[String]], None),
-                alreadyVoted = optionalEntryReader("alreadyVoted", fields, _.convertTo[Option[Boolean]], None),
-                isReminderSent = optionalEntryReader("isReminderSent", fields, _.convertTo[Option[Boolean]], None),
-                isFinalVote = optionalEntryReader("isFinalVote", fields, _.convertTo[Option[Boolean]], None),
-                voteId = optionalEntryReader("voteId", fields, _.convertTo[Option[Int]], None),
-                totalVotes = optionalEntryReader("totalVotes", fields, _.convertTo[Option[Int]], None),
-                votesLogged = optionalEntryReader("votesLogged", fields, _.convertTo[Option[Int]], None),
-                rpElectionId = optionalEntryReader("rpElectionId", fields, _.convertTo[Option[Int]], None),
-                rpVoteId = optionalEntryReader("rpVoteId", fields, _.convertTo[Option[Int]], None),
-                consentGroupName = optionalEntryReader("consentGroupName", fields, _.convertTo[Option[String]], None),
-                dac = optionalEntryReader("dac", fields, _.convertTo[Option[Dac]], None),
-                electionStatus = optionalEntryReader("electionStatus", fields, _.convertTo[Option[String]], None),
-                status = optionalEntryReader("status", fields, _.convertTo[Option[String]], None),
-                rus = optionalEntryReader("rus", fields, _.convertTo[Option[String]], None),
-                dataRequestId = optionalEntryReader("dataRequestId", fields, _.convertTo[Option[String]], None),
-                projectTitle = optionalEntryReader("projectTitle", fields, _.convertTo[Option[String]], None),
-                frontEndId = optionalEntryReader("frontEndId", fields, _.convertTo[Option[String]], None),
-                electionId = optionalEntryReader("electionId", fields, _.convertTo[Option[Int]], None),
-                createDate = optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None),
-                sortDate = optionalEntryReader("sortDate", fields, _.convertTo[Option[Long]], None),
-                electionVote = optionalEntryReader("electionVote", fields, _.convertTo[Option[Boolean]], None),
-                isCanceled = optionalEntryReader("isCanceled", fields, _.convertTo[Option[Boolean]], None),
-                needsApproval = optionalEntryReader("needsApproval", fields, _.convertTo[Option[Boolean]], None),
-                dataSetElectionResult = optionalEntryReader("dataSetElectionResult", fields, _.convertTo[Option[String]], None),
-                datasetId = optionalEntryReader("datasetId", fields, _.convertTo[Option[Int]], None),
-                dacId = optionalEntryReader("dacId", fields, _.convertTo[Option[Int]], None),
-                errors = optionalEntryReader("errors", fields, _.convertTo[Option[Seq[String]]], None),
-                ownerUser = optionalEntryReader("ownerUser", fields, _.convertTo[Option[User]], None)
+                dar = optionalEntryReader("dar", fields, _.convertTo[Option[DataAccessRequest]], None),
+                election = optionalEntryReader("election", fields, _.convertTo[Option[ElectionModels.Election]], None),
+                votes = optionalEntryReader("votes", fields, _.convertTo[Option[Seq[Vote]]], None),
+                researcher = optionalEntryReader("researcher", fields, _.convertTo[Option[User]], None),
+                errors = optionalEntryReader("errors", fields, _.convertTo[Option[Seq[String]]], None)
             )
         }
     }
 
     implicit object ResearcherInfoFormat extends JsonFormat[ResearcherInfo] {
-        def write(ri: ResearcherInfo) = {
-            var map = collection.mutable.Map[String, JsValue]()
+        def write(ri: ResearcherInfo): JsObject = {
+            val map = collection.mutable.Map[String, JsValue]()
             val manualList = List("libraryCards", "libraryCardEntries")
             ri.getClass.getDeclaredFields
               .filterNot(f => manualList.contains(f.getName)).foreach { f =>
@@ -251,8 +151,8 @@ object JsonProtocols extends DefaultJsonProtocol {
     }
 
     implicit object DataAccessRequestDataFormat extends JsonFormat[DataAccessRequestData] {
-        def write(dar: DataAccessRequestData) = {
-            var map = collection.mutable.Map[String, JsValue]()
+        def write(dar: DataAccessRequestData): JsObject = {
+            val map = collection.mutable.Map[String, JsValue]()
             val manualList = List("ontologies", "labCollaborators", "internalCollaborators", "externalCollaborators", "datasets", "datasetDetail")
 
             dar.getClass.getDeclaredFields
@@ -343,7 +243,7 @@ object JsonProtocols extends DefaultJsonProtocol {
                 datasets = optionalEntryReader("datasets", fields, _.convertTo[Option[Seq[DataSetEntry]]], None),
                 darCode = optionalEntryReader("darCode", fields, _.convertTo[Option[String]], None),
                 partialDarCode = optionalEntryReader("partialDarCode", fields, _.convertTo[Option[String]], None),
-                restriction = optionalEntryReader("restriction", fields, jv => None, None),
+                restriction = optionalEntryReader("restriction", fields, _ => None, None),
                 validRestriction = optionalEntryReader("validRestriction", fields, _.convertTo[Option[Boolean]], None),
                 translatedUseRestriction = optionalEntryReader("translatedUseRestriction", fields, _.convertTo[Option[String]], None),
                 createDate = optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None),
