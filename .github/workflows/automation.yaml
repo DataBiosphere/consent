@@ -9,19 +9,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
 
-      - name: Start containers
-        run: |
-          mkdir -p target
-          docker-compose -f "docker-compose-automation.yml" up -d --build
-
-      - name: Render configs
+      - name: Setup paths
         run: |
           mkdir -p automation/src/test/resources
+          mkdir -p target
+
+      - name: Render admin
+        run: |
           echo ${{ secrets.DUOS_AUTOMATION_ADMIN }} >> automation/src/test/resources/duos-automation-admin.json
+
+      - name: Render others
+        run: |
           echo ${{ secrets.DUOS_AUTOMATION_CHAIR }} >> automation/src/test/resources/duos-automation-chair.json
           echo ${{ secrets.DUOS_AUTOMATION_MEMBER }} >> automation/src/test/resources/duos-automation-member.json
           echo ${{ secrets.DUOS_AUTOMATION_RESEARCHER }} >> automation/src/test/resources/duos-automation-researcher.json
           echo ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL }} >> automation/src/test/resources/duos-automation-signing-official.json
+
+      - name: Start containers
+        run: |
+          docker-compose -f "docker-compose-automation.yml" up -d --build
 
       - name: Build/Run automation tests
         run: |
