@@ -1,0 +1,33 @@
+name: automation
+on: [ pull_request ]
+
+jobs:
+  automation-tests:
+    name: Automation Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Start containers
+        run: docker-compose -f "docker-compose-automation.yml" up -d --build
+
+      - name: Render configs
+        run: |
+          mkdir -p automation/src/test/resources
+          echo ${{ secrets.DUOS_AUTOMATION_ADMIN }} >> automation/src/test/resources/duos-automation-admin.json
+          echo ${{ secrets.DUOS_AUTOMATION_CHAIR }} >> automation/src/test/resources/duos-automation-chair.json
+          echo ${{ secrets.DUOS_AUTOMATION_MEMBER }} >> automation/src/test/resources/duos-automation-member.json
+          echo ${{ secrets.DUOS_AUTOMATION_RESEARCHER }} >> automation/src/test/resources/duos-automation-researcher.json
+          echo ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL }} >> automation/src/test/resources/duos-automation-signing-official.json
+
+      - name: Run automation tests
+        run: |
+          cp ./jenkins/jenkins-run-tests.sh ./automation
+          cd ./automation
+          chmod +x *.sh
+          ./jenkins-run-tests.sh
+
+      - name: Stop containers
+        if: always()
+        run: docker-compose -f "docker-compose-automation.yml" down
