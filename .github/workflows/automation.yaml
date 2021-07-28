@@ -36,7 +36,7 @@ jobs:
         run: |
           cd ./automation
           docker build -f Dockerfile -t automation-consent .
-          docker run -v "${PWD}/target":/app/target --net consentautomation_default -e CONSENT_API_URL='http://consent-api:8000/' automation-consent
+          docker run -v "${PWD}/target":/app/target -e CONSENT_API_URL='http://consent-api:8000/' automation-consent
 
       - name: Stop containers
         if: always()
