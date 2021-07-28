@@ -1,27 +1,25 @@
 package org.broadinstitute.dsp.consent.services
 
-import org.broadinstitute.dsp.consent.models.JsonProtocols
-import org.broadinstitute.dsp.consent.models.DataSetModels._
-import org.broadinstitute.dsp.consent.models.ResearcherModels._
 import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
-import org.broadinstitute.dsp.consent.models.UserModels._
+import org.broadinstitute.dsp.consent.models.DataSetModels._
+import org.broadinstitute.dsp.consent.models.JsonProtocols
+import org.broadinstitute.dsp.consent.models.ResearcherModels._
+import spray.json.DefaultJsonProtocol._
 import spray.json._
-import DefaultJsonProtocol._
 
 object DarService {
     val projectTitle: String = "Test Automation Project"
 
     def createDar(dar: DataAccessRequest,
-                  researcherInfo: ResearcherInfo, 
-                  userId: Int, 
-                  referenceId: String, 
-                  dataSetIds: Seq[Int], 
-                  datasets: Seq[DataSet], 
+                  researcherInfo: ResearcherInfo,
+                  userId: Int,
+                  referenceId: String,
+                  dataSetIds: Seq[Int],
+                  datasets: Seq[DataSet],
                   finalSubmit: Boolean = false): DataAccessRequest = {
         implicit val dataAccessRequestDataFormat: JsonProtocols.DataAccessRequestDataFormat.type = JsonProtocols.DataAccessRequestDataFormat
         implicit val dataSetEntryFormat: JsonProtocols.dataSetEntryFormat.type = JsonProtocols.dataSetEntryFormat
-        var dataMap: collection.mutable.Map[String, JsValue] = collection.mutable.Map[String, JsValue]()
-        var darMap: collection.mutable.Map[String, JsValue] = collection.mutable.Map[String, JsValue]()
+        val dataMap: collection.mutable.Map[String, JsValue] = collection.mutable.Map[String, JsValue]()
 
         dataMap += ("datasets" -> JsArray(datasets.map(DataSetEntryBuilder.fromDataSet(_).toJson).toVector))
         dataMap += ("datasetIds" -> JsArray(dataSetIds.map(_.toJson).toVector))
@@ -31,7 +29,7 @@ object DarService {
         val isThePI: String = researcherInfo.isThePI.getOrElse("false")
 
         dataMap += ("researcher" -> JsString(profileName))
-        
+
         if (piName == "" && isThePI == "true") {
             dataMap += ("investigator" -> JsString(profileName))
         } else if (piName == "" && isThePI == "false") {
@@ -39,7 +37,7 @@ object DarService {
         } else {
             dataMap += ("investigator" -> JsString(piName))
         }
-        
+
         dataMap += ("referenceId" -> JsString(referenceId))
         dataMap += ("linkedIn" -> JsString(researcherInfo.linkedIn.getOrElse("")))
         dataMap += ("researcherGate" -> JsString(researcherInfo.researcherGate.getOrElse("")))
@@ -98,25 +96,10 @@ object DarService {
         )
     }
 
-    def setManageRolesByOwner(manageDars: Seq[DataAccessRequestManage]): Seq[DataAccessRequestManage] = {
-        manageDars.map { dar =>
-            dar.ownerUser match {
-                case Some(u: User) => {
-                    if (u.roles.getOrElse(List()).exists(_.name == "Researcher"))
-                        dar.copy(status = Some(u.status.getOrElse("")))
-                    else
-                        dar
-                }
-                case _ => dar
-            }
-        }
-    }
-
     def getPendingDARsByMostRecent(manageDars: Seq[DataAccessRequestManage], limit: Int = 2): Seq[DataAccessRequestManage] = {
-        manageDars.filter(md => md.electionStatus.getOrElse("") != "Open" && md.electionStatus.getOrElse("") != "Final"
-            && md.electionStatus.getOrElse("") != "Pending Approval")
-            .sortWith((a, b) => a.createDate.getOrElse(0L) > b.createDate.getOrElse(0L))
-            .take(limit)
-            .toSeq
+        manageDars.filter(md => md.election.get.status.getOrElse("") != "Open" && md.election.get.status.getOrElse("") != "Final"
+          && md.election.get.status.getOrElse("") != "Pending Approval")
+          .sortWith((a, b) => a.election.get.createDate.getOrElse(0L) > b.election.get.createDate.getOrElse(0L))
+          .take(limit)
     }
 }
