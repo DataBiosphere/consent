@@ -10,7 +10,9 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Start containers
-        run: docker-compose -f "docker-compose-automation.yml" up -d --build
+        run: |
+          mkdir -p target
+          docker-compose -f "docker-compose-automation.yml" up -d --build
 
       - name: Render configs
         run: |
@@ -21,13 +23,13 @@ jobs:
           echo ${{ secrets.DUOS_AUTOMATION_RESEARCHER }} >> automation/src/test/resources/duos-automation-researcher.json
           echo ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL }} >> automation/src/test/resources/duos-automation-signing-official.json
 
-      - name: Run automation tests
+      - name: Build/Run automation tests
         run: |
-          cp ./jenkins/jenkins-run-tests.sh ./automation
           cd ./automation
-          chmod +x *.sh
-          ./jenkins-run-tests.sh
+          docker build -f Dockerfile -t automation-consent .
+          docker run -v "${PWD}/target":/app/target --net consentautomation_default -e CONSENT_API_URL='http://consent-api:8000/' automation-consent
 
       - name: Stop containers
         if: always()
-        run: docker-compose -f "docker-compose-automation.yml" down
+        run: |
+          docker-compose -f "docker-compose-automation.yml" down
