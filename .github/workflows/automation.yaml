@@ -40,12 +40,13 @@ jobs:
       - name: Start containers
         run: |
           docker-compose -f docker-compose-automation.yml up -d --build
+          docker ps
 
       - name: Build/Run automation tests
         run: |
           cd ./automation
           docker build -f Dockerfile -t automation-consent .
-          docker run -v "${PWD}/target":/app/target -e CONSENT_API_URL='http://consent-api:8000/' automation-consent
+          docker run -v "${PWD}/target":/app/target automation-consent
 
 #      - name: Stop containers
 #        if: always()
