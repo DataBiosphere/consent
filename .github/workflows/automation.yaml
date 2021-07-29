@@ -40,7 +40,7 @@ jobs:
       - name: Run automation tests
         run: |
           cd ./automation
-          docker compose -f docker-compose.yml up -d
+          docker-compose -f docker-compose.yml up -d
 
 #      - name: Stop containers
 #        if: always()
