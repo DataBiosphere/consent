@@ -4,10 +4,12 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -45,12 +47,15 @@ public class LibraryCardServiceTest {
         this.service = new LibraryCardService(libraryCardDAO, institutionDAO, userDAO);
     }
 
+
+
     @Test
     // Test LC create with userId and email
     public void testCreateLibraryCardFullUserDetails() throws Exception {
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
+        User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         user.setEmail("testemail");
         when(userDAO.findUserById(anyInt())).thenReturn(user);
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
@@ -62,7 +67,7 @@ public class LibraryCardServiceTest {
 
         LibraryCard payload = testLibraryCard(institution.getId(), user.getDacUserId());
         payload.setUserEmail(user.getEmail());
-        service.createLibraryCard(payload);
+        service.createLibraryCard(payload, adminUser);
     }
 
     @Test
@@ -71,6 +76,7 @@ public class LibraryCardServiceTest {
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
+        User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         user.setDacUserId(null);
         user.setEmail("testemail");
 
@@ -85,7 +91,7 @@ public class LibraryCardServiceTest {
 
         LibraryCard payload = testLibraryCard(institution.getId(), user.getDacUserId());
         payload.setUserEmail(user.getEmail());
-        service.createLibraryCard(payload);
+        service.createLibraryCard(payload, adminUser);
     }
 
     @Test
@@ -94,6 +100,7 @@ public class LibraryCardServiceTest {
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
+        User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         user.setEmail(null);
 
         when(userDAO.findUserById(anyInt())).thenReturn(user);
@@ -106,7 +113,7 @@ public class LibraryCardServiceTest {
         when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
         LibraryCard payload = testLibraryCard(institution.getId(), user.getDacUserId());
-        service.createLibraryCard(payload);
+        service.createLibraryCard(payload, adminUser);
     }
 
     @Test(expected = ConsentConflictException.class)
@@ -115,6 +122,7 @@ public class LibraryCardServiceTest {
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
+        User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         user.setDacUserId(1);
         user.setEmail("testemail");
 
@@ -128,7 +136,7 @@ public class LibraryCardServiceTest {
 
         LibraryCard payload = testLibraryCard(institution.getId(), user.getDacUserId());
         payload.setUserEmail("differentemail");
-        service.createLibraryCard(payload);
+        service.createLibraryCard(payload, adminUser);
     }
 
     @Test(expected = ConsentConflictException.class)
@@ -137,12 +145,13 @@ public class LibraryCardServiceTest {
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
+        User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         LibraryCard savedCard = testLibraryCard(institution.getId(), user.getDacUserId());
         LibraryCard payload = savedCard;
 
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
         when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(Collections.singletonList(savedCard));
-        service.createLibraryCard(payload);
+        service.createLibraryCard(payload, adminUser);
     }
 
     @Test(expected = ConsentConflictException.class)
@@ -151,6 +160,7 @@ public class LibraryCardServiceTest {
         initService();
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
+        User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         user.setEmail("testemail");
         LibraryCard savedCard = testLibraryCard(institution.getId(), null);
         savedCard.setUserEmail(user.getEmail());
@@ -159,24 +169,26 @@ public class LibraryCardServiceTest {
 
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
         when(libraryCardDAO.findAllLibraryCardsByUserEmail(any())).thenReturn(Collections.singletonList(savedCard));
-        service.createLibraryCard(payload);
+        service.createLibraryCard(payload, adminUser);
     }
 
     @Test(expected = BadRequestException.class)
     //Negative test, checks to see if error is thrown if email and userId are not provided
     public void testCreateLibraryCardNoUserDetails() throws Exception {
+        User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         initService();
         Institution institution = testInstitution();
         LibraryCard payload = testLibraryCard(institution.getId(), null);
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
 
-        service.createLibraryCard(payload);
+        service.createLibraryCard(payload, adminUser);
     }
 
     @Test(expected = IllegalArgumentException.class)
     //Negative test, checks if error is thrown on null institutionId
     public void testCreateLibraryCard_InvalidInstitution() throws Exception {
         User user = testUser(1);
+        User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         LibraryCard libraryCard = testLibraryCard(1, user.getDacUserId());
 
         when(libraryCardDAO.findLibraryCardById(libraryCard.getId()))
@@ -187,14 +199,15 @@ public class LibraryCardServiceTest {
                 .thenReturn(user);
 
         initService();
-        service.createLibraryCard(libraryCard);
+        service.createLibraryCard(libraryCard, adminUser);
     }
 
     @Test(expected = NotFoundException.class)
     //Negative test, checks to see if error is thrown on null payload
     public void testCreateLibraryCardNullPayload() throws Exception {
+        User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         initService();
-        service.createLibraryCard(null);
+        service.createLibraryCard(null, adminUser);
     }
 
 
@@ -303,4 +316,11 @@ public class LibraryCardServiceTest {
 
         return institution;
     }
+
+    private User createUserWithRole(Integer id, String name) {
+        Institution institution = testInstitution();
+        User user = testUser(institution.getId());
+        user.addRole(new UserRole(id, name));
+        return user;
+    };
 }

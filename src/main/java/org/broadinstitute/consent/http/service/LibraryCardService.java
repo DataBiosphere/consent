@@ -4,6 +4,7 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -27,12 +28,16 @@ public class LibraryCardService {
         this.userDAO = userDAO;
     }
 
-    public LibraryCard createLibraryCard(LibraryCard libraryCard) throws Exception {
+    public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) throws Exception {
         throwIfNull(libraryCard);
         checkForValidInstitution(libraryCard.getInstitutionId());
         checkIfCardExists(libraryCard);
         LibraryCard processedCard = processUserOnNewLC(libraryCard);
         Date createDate = new Date();
+        Boolean isAdmin = user.getRoles().stream().anyMatch(ur -> ur.getName().equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName()));
+        if(!isAdmin) {
+            processedCard.setInstitutionId(user.getInstitutionId());
+        }
         Integer id = this.libraryCardDAO.insertLibraryCard(
                 processedCard.getUserId(),
                 processedCard.getInstitutionId(),

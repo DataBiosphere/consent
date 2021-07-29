@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,6 +23,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Assert;
@@ -361,6 +363,22 @@ public class UserDAOTest extends DAOTestHelper {
         List<User> afterList = userDAO.findUsersByInstitution(institutionId);
         assertEquals(1, beforeList.size());
         assertEquals(beforeList, afterList);
+    }
+
+    @Test
+    public void testFindUsersWithCardsByInstitution() {
+        LibraryCard card = createLibraryCard();
+        Integer institutionId = card.getInstitutionId();
+        Integer userId = card.getUserId();
+        String stringValue = "value";
+        Institution nonTargetInstitution = createInstitution();
+        //creating card with different institution id, should not be picked up by query
+        libraryCardDAO.insertLibraryCard(userId, nonTargetInstitution.getId(), stringValue, stringValue, stringValue, userId, new Date());
+        List<User> userWithCardList = userDAO.findUsersByInstitution(institutionId);
+        assertEquals(1, userWithCardList.size());
+        User user = userWithCardList.get(0);
+        assertEquals(user.getLibraryCards().size(), 1);
+        assertEquals(user.getLibraryCards().get(0).getInstitutionId(), institutionId);
     }
 
     @Test
