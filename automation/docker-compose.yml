@@ -2,6 +2,8 @@ version: '3.0'
 services:
   consent-postgres:
     image: postgres:11.6-alpine
+    logging:
+      driver: none
     environment:
       - POSTGRES_USER=automation
       - POSTGRES_PASSWORD=automation
@@ -11,6 +13,8 @@ services:
 
   consent-app:
     image: consent
+    logging:
+      driver: none
     depends_on:
       - consent-postgres
     build:
