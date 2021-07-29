@@ -2844,7 +2844,8 @@ paths:
         - Institutions
       responses:
         200:
-          description: Returns all institutions. If no results are found, an empty array is returned.
+          description: Returns all institutions, along with their create user, update user, and signing official users if there are any.
+            If no results are found, an empty array is returned.
             Admin will see all details while non-Admins will only see a subset.
         500:
           description: Internal Server Error
