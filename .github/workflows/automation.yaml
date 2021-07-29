@@ -37,16 +37,10 @@ jobs:
           ls -al ./automation/src/test/resources
           ls -al ./automation/src/test/resources/accounts
 
-      - name: Start containers
-        run: |
-          docker-compose -f docker-compose-automation.yml up -d --build
-          docker ps
-
-      - name: Build/Run automation tests
+      - name: Run automation tests
         run: |
           cd ./automation
-          docker build -f Dockerfile -t automation-consent .
-          docker run -v "${PWD}/target":/app/target automation-consent
+          docker compose -f docker-compose.yml up -d
 
 #      - name: Stop containers
 #        if: always()
