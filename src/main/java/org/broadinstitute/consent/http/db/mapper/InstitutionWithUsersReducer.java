@@ -1,9 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -59,18 +56,17 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
       // Ignore any attempt to map a column that doesn't exist
     }
 
-    ArrayList<User> signingOfficials = new ArrayList<>();
+    institution.setCreateUser(create_user);
+    institution.setUpdateUser(update_user);
+
     if (Objects.nonNull(rowView.getColumn("so_dacuserid", Integer.class))) {
       User so_user = new User();
       so_user.setDacUserId(rowView.getColumn("so_dacuserid", Integer.class));
       so_user.setEmail(rowView.getColumn("so_email", String.class));
       so_user.setDisplayName(rowView.getColumn("so_displayname", String.class));
-      signingOfficials.add(so_user);
+      institution.addSigningOfficial(so_user);
     }
 
-    institution.setCreateUser(create_user);
-    institution.setUpdateUser(update_user);
-    institution.setSigningOfficials(signingOfficials);
   }
 
   private String getStatus(RowView r, String columnName) {

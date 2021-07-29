@@ -1,8 +1,9 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
@@ -30,7 +31,7 @@ public class Institution {
     this.name = name;
     this.itDirectorName = itDirectorName;
     this.itDirectorEmail = itDirectorEmail;
-    this.signingOfficials = Collections.emptyList();
+    this.signingOfficials = new ArrayList<>();
     this.createDate = createDate;
     this.createUserId = createUserId;
     this.updateDate = this.createDate;
@@ -43,7 +44,7 @@ public class Institution {
     this.name = name;
     this.itDirectorName = itDirectorName;
     this.itDirectorEmail = itDirectorEmail;
-    this.signingOfficials = Collections.emptyList();
+    this.signingOfficials = new ArrayList<>();
     this.createDate = createDate;
     this.createUserId = createUserId;
     this.updateDate = updateDate;
@@ -73,6 +74,13 @@ public class Institution {
   public void setSigningOfficials(List<User> signingOfficials) {
     this.signingOfficials = signingOfficials;
   }
+
+  public void addSigningOfficial(User so) {
+    if (Objects.isNull(signingOfficials)) {
+        this.setSigningOfficials(new ArrayList<>());
+    }
+    signingOfficials.add(so);
+}
 
   public void setCreateUserId(Integer createUserId) {
     this.createUserId = createUserId;
