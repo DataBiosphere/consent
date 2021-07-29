@@ -8,17 +8,22 @@ services:
       - POSTGRES_DB=consent
     ports:
       - 5432:5432
+
   consent-app:
     image: consent
     depends_on:
       - consent-postgres
     build:
       context: ../
-      dockerfile: Dockerfile-automation
+      dockerfile: Dockerfile
+    volumes:
+      - ./consent-automation-config.yml:/opt/consent-config.yml
     ports:
       - 8000:8000
     environment:
       - CONSENT_CHANGELOG_FILE=test-data.xml
+    command: ["java", "-jar", "/opt/consent.jar", "server", "/opt/consent-config.yml"]
+
   automation-tests:
     image: automation-test
     depends_on:
@@ -26,4 +31,3 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
-
