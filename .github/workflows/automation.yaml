@@ -46,8 +46,3 @@ jobs:
         run: |
           docker ps
           docker-compose -f docker-compose-automation.yml down
-
-      -name: Report
-        if: steps.automation-tests.exitcode > 0
-        run: |
-          echo "Failure"
