@@ -47,7 +47,7 @@ sbt clean gatling:testOnly *.StatusScenarios
 
 ### Run all tests with the standalone docker stack:
 ```
-docker-compose -f docker-compose.yml up
+docker-compose -f docker-compose.yml up --quiet-pull --abort-on-container-exit --exit-code-from automation-tests
 ```
 
 ## Development
