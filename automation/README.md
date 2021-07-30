@@ -18,6 +18,12 @@ Render configs for all cases below:
   * Environment to run tests against; defaults to `dev`. Other valid values are `local`, `staging`
 * Vault Auth Token
   * Defaults to reading it from the .vault-token via `$(cat ~/.vault-token)`.
+
+### The different environments
+* Tests can be run against a remotely running app
+* Tests can be run against a separately running local app
+* Tests can be run as a standalone docker-compose file
+  * To run as standalone docker, render configs for local case, i.e. `./render-local-env.sh local`
   
 Example for running tests locally against the dev environment:
 ```bash
@@ -39,10 +45,9 @@ sbt clean gatling:test
 sbt clean gatling:testOnly *.StatusScenarios 
 ```
 
-### Run all tests under docker:
+### Run all tests with the standalone docker stack:
 ```
-docker build -t automation-consent:latest .
-docker run automation-consent
+docker-compose -f docker-compose.yml up
 ```
 
 ## Development
