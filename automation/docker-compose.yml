@@ -21,7 +21,7 @@ services:
       context: ../
       dockerfile: Dockerfile
     volumes:
-      - ./consent-automation-config.yml:/opt/consent-config.yml
+      - ./configs/consent-config.yml:/opt/consent-config.yml
     ports:
       - 8000:8000
     environment:
@@ -35,3 +35,6 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
+    volumes:
+      - ./configs/application.conf:/app/src/test/resources/application.conf
+      - ./configs/logback.xml:/app/src/test/resources/logback.xml
