@@ -32,7 +32,7 @@ import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.VoteService;
 
-@Path("{api : (api/)?}dataRequest/{requestId}/election")
+@Path("api/dataRequest/{requestId}/election")
 public class DataRequestElectionResource extends Resource {
 
     private final DataAccessRequestService darService;

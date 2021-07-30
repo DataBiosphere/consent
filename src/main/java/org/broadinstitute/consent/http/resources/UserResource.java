@@ -42,7 +42,7 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
-@Path("{api : (api/)?}user")
+@Path("api/user")
 public class UserResource extends Resource {
 
     private final UserService userService;
