@@ -20,7 +20,6 @@ jobs:
 
       - name: Render configs
         env:
-          CONFIG: ${{ secrets.DUOS_AUTOMATION_CONFIG }}
           ADMIN: ${{ secrets.DUOS_AUTOMATION_ADMIN }}
           CHAIR: ${{ secrets.DUOS_AUTOMATION_CHAIR }}
           MEMBER: ${{ secrets.DUOS_AUTOMATION_MEMBER }}
@@ -42,4 +41,4 @@ jobs:
       - name: Stop containers
         if: always()
         run: |
-          docker-compose -f docker-compose-automation.yml down
+          docker-compose -f docker-compose.yml down
