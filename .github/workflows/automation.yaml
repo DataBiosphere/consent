@@ -41,4 +41,5 @@ jobs:
       - name: Stop containers
         if: always()
         run: |
+          cd ./automation
           docker-compose -f docker-compose.yml down
