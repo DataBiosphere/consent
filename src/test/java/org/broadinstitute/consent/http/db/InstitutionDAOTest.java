@@ -95,6 +95,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
     assertEquals(1, instituteListUpdated.size());
   }
 
+  @Test
   public void testFindAllInstitutions_InstitutionWithSOs() {
     List<Institution> instituteList = institutionDAO.findAllInstitutions();
     assertEquals(0, instituteList.size());
