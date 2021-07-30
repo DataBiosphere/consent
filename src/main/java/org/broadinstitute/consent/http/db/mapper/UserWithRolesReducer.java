@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db.mapper;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
+
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Institution;
@@ -52,7 +53,9 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
     try {
       if(Objects.nonNull(rowView.getColumn("lc_id", Integer.class))) {
         LibraryCard lc = rowView.getRow(LibraryCard.class);
-        user.getLibraryCards().add(lc);
+        if(!user.getLibraryCards().stream().anyMatch(card -> card.getId() == lc.getId())) {
+          user.getLibraryCards().add(lc);
+        }
       }
     } catch(MappingException e) {
       //Ignore exceptions here, user may not have a library card issued under this instiution
