@@ -32,7 +32,6 @@ jobs:
           echo "$MEMBER" >> ./automation/src/test/resources/accounts/duos-automation-member.json
           echo "$RESEARCHER" >> ./automation/src/test/resources/accounts/duos-automation-researcher.json
           echo "$SIGNING_OFFICIAL" >> ./automation/src/test/resources/accounts/duos-automation-signing-official.json
-          ls -al ./automation/src/test/resources
           ls -al ./automation/src/test/resources/accounts
 
       - name: Run automation tests
@@ -43,5 +42,4 @@ jobs:
       - name: Stop containers
         if: always()
         run: |
-          docker ps
           docker-compose -f docker-compose-automation.yml down
