@@ -25,7 +25,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-@Path("{api : (api/)?}election/")
+@Path("api/election/")
 public class ElectionResource extends Resource {
 
     private final ElectionService electionService;

@@ -21,7 +21,7 @@ import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
 
-@Path("{api : (api/)?}dataRequest/cases")
+@Path("api/dataRequest/cases")
 public class DataRequestCasesResource extends Resource {
 
     private final ElectionService electionService;
