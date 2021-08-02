@@ -30,14 +30,16 @@ public class LibraryCardService {
 
     public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) throws Exception {
         throwIfNull(libraryCard);
-        checkForValidInstitution(libraryCard.getInstitutionId());
         checkIfCardExists(libraryCard);
+        Boolean isAdmin = user.getRoles().stream()
+            .anyMatch(ur -> ur.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
+        if (!isAdmin) {
+            libraryCard.setInstitutionId(user.getInstitutionId());
+        } else {
+            checkForValidInstitution(libraryCard.getInstitutionId());
+        }
         LibraryCard processedCard = processUserOnNewLC(libraryCard);
         Date createDate = new Date();
-        Boolean isAdmin = user.getRoles().stream().anyMatch(ur -> ur.getName().equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName()));
-        if(!isAdmin) {
-            processedCard.setInstitutionId(user.getInstitutionId());
-        }
         Integer id = this.libraryCardDAO.insertLibraryCard(
                 processedCard.getUserId(),
                 processedCard.getInstitutionId(),
@@ -185,6 +187,7 @@ public class LibraryCardService {
                 //throw error here, user is trying to associate incorrect userId with email
                 throw new ConsentConflictException();
             }
+            card.setUserName(user.getDisplayName());
         }
         return card;
     }
