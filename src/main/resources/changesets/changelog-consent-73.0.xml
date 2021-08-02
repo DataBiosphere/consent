@@ -1,0 +1,71 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="73.0" author="raejohanek">
+        <validCheckSum>ANY</validCheckSum>
+
+        <!-- temporary column for backpopulation -->
+        <addColumn tableName="data_access_request">
+            <column name="new_dar_code" type="varchar(255)" defaultValue="null"/>
+        </addColumn>
+
+
+        <sql>
+
+            <!-- Populate new_dar_code column on data_access_request table
+                 which represents the dar code for the dar collection -->
+            UPDATE data_access_request dar SET new_dar_code = subquery.new_code
+            FROM (
+              SELECT
+                CASE
+                  WHEN (data #>> '{}')::jsonb->>'darCode' IS NOT NULL THEN
+                     CASE
+                       WHEN POSITION('-A-' in  (data #>> '{}')::jsonb->>'darCode') > 0
+                         THEN SUBSTRING((data #>> '{}')::jsonb->>'darCode' from 1 for POSITION('-A-' in  (data #>> '{}')::jsonb->>'darCode') - 1)
+                       ELSE (data #>> '{}')::jsonb->>'darCode'
+                     END
+                  WHEN (data #>> '{}')::jsonb->>'dar_code' IS NOT NULL THEN
+                     CASE
+                       WHEN POSITION('-A-' in  (data #>> '{}')::jsonb->>'dar_code') > 0
+                         THEN SUBSTRING((data #>> '{}')::jsonb->>'dar_code' from 1 for POSITION('-A-' in  (data #>> '{}')::jsonb->>'dar_code') - 1)
+                       ELSE (data #>> '{}')::jsonb->>'dar_code'
+                     END
+                END AS new_code,
+                reference_id
+              FROM data_access_request dar
+              WHERE dar.draft != true) AS subquery
+            WHERE subquery.reference_id = dar.reference_id;
+
+
+            <!-- Populate dar_collection table with all distinct new_dar_code values
+                 (ignoring null values which represent draft dars) and their user id values
+                 on the data_access_request table, and an intermediate dummy value for create date -->
+             INSERT INTO dar_collection (dar_code, create_user, create_date)
+              SELECT distinct new_dar_code, user_id, NOW()::date
+              FROM data_access_request dar
+              WHERE new_dar_code IS NOT NULL;
+
+
+            <!-- Populate the correct create_date on dar_collection -->
+            UPDATE dar_collection c
+            SET create_date = (
+              SELECT dar.create_date FROM data_access_request dar
+              WHERE dar.new_dar_code = c.dar_code LIMIT 1);
+
+
+            <!-- Populate the collection_id column on the data_access_request table -->
+            UPDATE data_access_request dar
+            SET collection_id = (
+              SELECT c.collection_id FROM dar_collection c
+              WHERE dar.new_dar_code = c.dar_code);
+
+        </sql>
+
+        <!-- remove temporary column -->
+        <dropColumn tableName="data_access_request" columnName="new_dar_code" />
+
+    </changeSet>
+</databaseChangeLog>
