@@ -7,6 +7,7 @@ import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -60,16 +61,18 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
     institution.setUpdateUser(update_user);
 
     if (Objects.nonNull(rowView.getColumn("so_dacuserid", Integer.class))) {
-      User so_user = new User();
-      so_user.setDacUserId(rowView.getColumn("so_dacuserid", Integer.class));
+      SimplifiedUser so_user = new SimplifiedUser();
+      so_user = rowView.getRow(SimplifiedUser.class);
 
-      if (Objects.nonNull(rowView.getColumn("so_email", String.class))) {
-        so_user.setEmail(rowView.getColumn("so_email", String.class));
-      }
+      // so_user.setDacUserId(rowView.getColumn("so_dacuserid", Integer.class));
 
-      if (Objects.nonNull(rowView.getColumn("so_displayname", String.class))) {
-      so_user.setDisplayName(rowView.getColumn("so_displayname", String.class));
-      }
+      // if (Objects.nonNull(rowView.getColumn("so_email", String.class))) {
+      //   so_user.setEmail(rowView.getColumn("so_email", String.class));
+      // }
+
+      // if (Objects.nonNull(rowView.getColumn("so_displayname", String.class))) {
+      // so_user.setDisplayName(rowView.getColumn("so_displayname", String.class));
+      // }
 
       institution.addSigningOfficial(so_user);
     }
