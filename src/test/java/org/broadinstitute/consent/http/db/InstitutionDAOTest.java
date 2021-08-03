@@ -109,7 +109,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
     Institution institution = instituteListUpdated.get(0);
     assertEquals(1, institution.getSigningOfficials().size());
     assertEquals(user.getInstitutionId(), institution.getId());
-    assertEquals(user.getDisplayName(), institution.getSigningOfficials().get(0).getDisplayName());
+    assertEquals(user.getDisplayName(), institution.getSigningOfficials().get(0).displayName);
     
   }
 }
