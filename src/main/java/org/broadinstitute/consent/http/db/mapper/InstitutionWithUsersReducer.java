@@ -62,8 +62,15 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
     if (Objects.nonNull(rowView.getColumn("so_dacuserid", Integer.class))) {
       User so_user = new User();
       so_user.setDacUserId(rowView.getColumn("so_dacuserid", Integer.class));
-      so_user.setEmail(rowView.getColumn("so_email", String.class));
+
+      if (Objects.nonNull(rowView.getColumn("so_email", Integer.class))) {
+        so_user.setEmail(rowView.getColumn("so_email", String.class));
+      }
+
+      if (Objects.nonNull(rowView.getColumn("so_displayname", Integer.class))) {
       so_user.setDisplayName(rowView.getColumn("so_displayname", String.class));
+      }
+      
       institution.addSigningOfficial(so_user);
     }
 
