@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ForbiddenException;
 
 import java.util.Date;
 import java.util.List;
@@ -31,13 +32,11 @@ public class LibraryCardService {
     public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) throws Exception {
         throwIfNull(libraryCard);
         checkIfCardExists(libraryCard);
-        Boolean isAdmin = user.getRoles().stream()
-            .anyMatch(ur -> ur.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
+        Boolean isAdmin = checkIsAdmin(user);
         if (!isAdmin) {
             libraryCard.setInstitutionId(user.getInstitutionId());
-        } else {
-            checkForValidInstitution(libraryCard.getInstitutionId());
         }
+        checkForValidInstitution(libraryCard.getInstitutionId());
         LibraryCard processedCard = processUserOnNewLC(libraryCard);
         Date createDate = new Date();
         Integer id = this.libraryCardDAO.insertLibraryCard(
@@ -73,9 +72,15 @@ public class LibraryCardService {
         return this.libraryCardDAO.findLibraryCardById(id);
     }
 
-    public void deleteLibraryCardById(Integer id) {
-        LibraryCard libraryCard = this.libraryCardDAO.findLibraryCardById(id);
-        throwIfNull(libraryCard);
+    public void deleteLibraryCardById(Integer id, User user) {
+        Boolean isAdmin = checkIsAdmin(user);
+        LibraryCard card = findLibraryCardById(id);
+        throwIfNull(card);
+        if(!isAdmin) {
+            if(!card.getInstitutionId().equals(user.getInstitutionId())) {
+                throw new ForbiddenException("You are not authorized to delete this library card");
+            }
+        }
         this.libraryCardDAO.deleteLibraryCardById(id);
     }
 
@@ -190,5 +195,11 @@ public class LibraryCardService {
             card.setUserName(user.getDisplayName());
         }
         return card;
+    }
+
+    private Boolean checkIsAdmin(User user) {
+        return user.getRoles()
+            .stream()
+            .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
     }
 }

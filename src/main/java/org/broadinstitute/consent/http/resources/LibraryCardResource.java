@@ -108,10 +108,11 @@ public class LibraryCardResource extends Resource{
   @DELETE
   @Produces("application/json")
   @Path("/{id}")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   public Response deleteLibraryCard(@Auth AuthUser authUser, @PathParam("id") Integer id) {
+    User user = userService.findUserByEmail(authUser.getName());
     try {
-      libraryCardService.deleteLibraryCardById(id);
+      libraryCardService.deleteLibraryCardById(id, user);
       return Response.status(204).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
