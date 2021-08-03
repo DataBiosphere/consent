@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 public class Institution {
 
@@ -13,7 +14,7 @@ public class Institution {
   private String name;
   private String itDirectorName;
   private String itDirectorEmail;
-  private List<User> signingOfficials;
+  private List<SimplifiedUser> signingOfficials;
   private Date createDate;
   private Integer createUserId;
   private Date updateDate;
@@ -67,15 +68,15 @@ public class Institution {
     this.itDirectorName = itDirectorName;
   }
 
-  public List<User> getSigningOfficials() {
+  public List<SimplifiedUser> getSigningOfficials() {
     return signingOfficials;
   }
 
-  public void setSigningOfficials(List<User> signingOfficials) {
+  public void setSigningOfficials(List<SimplifiedUser> signingOfficials) {
     this.signingOfficials = signingOfficials;
   }
 
-  public void addSigningOfficial(User so) {
+  public void addSigningOfficial(SimplifiedUser so) {
     if (Objects.isNull(signingOfficials)) {
         this.setSigningOfficials(new ArrayList<>());
     }
