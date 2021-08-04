@@ -603,17 +603,6 @@
       <type>jar</type>
     </dependency>
 
-    <!--
-    Necessary until all Document -> DataAccessRequest conversions have completed
-    TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
-    TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
-    -->
-    <dependency>
-      <groupId>org.mongodb</groupId>
-      <artifactId>mongo-java-driver</artifactId>
-      <version>3.12.9</version>
-    </dependency>
-
     <dependency>
       <groupId>com.yammer.metrics</groupId>
       <artifactId>metrics-core</artifactId>
