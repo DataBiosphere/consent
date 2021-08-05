@@ -1,8 +1,12 @@
 package org.broadinstitute.consent.http.enumeration;
 
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
+import java.util.stream.Collectors;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Objects;
 
 public enum UserRoles {
@@ -57,6 +61,20 @@ public enum UserRoles {
           .stream()
           .map(UserRoles::getRoleName)
           .anyMatch(roleName::equalsIgnoreCase);
+    }
+
+    public static boolean isValidRoleId(Integer roleId) {
+        if (Objects.isNull(roleId) || roleId > 7 || roleId < 1) {
+            return false;
+        }
+        return true;
+    }
+
+    public static List<Integer> getUserRoleIdsFromUser(User user) {
+        return user.getRoles()
+          .stream()
+          .map(UserRole::getRoleId)
+          .collect(Collectors.toList());
     }
 
 }
