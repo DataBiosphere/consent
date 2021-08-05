@@ -12,7 +12,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -107,7 +106,7 @@ public class DataAccessReportsParser {
         List<Integer> dataSetIds = new ArrayList<>();
         List<String> dataSetUUIds = new ArrayList<>();
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
-            List<DatasetDetailEntry> dataSetDetails = Objects.nonNull(dar.getData().getDatasetDetail()) ? dar.getData().getDatasetDetail() : Collections.emptyList();
+            List<DatasetDetailEntry> dataSetDetails = dar.getData().getDatasetDetail();
             for (DatasetDetailEntry detail : dataSetDetails) {
                 try {
                     Integer id = Integer.parseInt(detail.getDatasetId());
