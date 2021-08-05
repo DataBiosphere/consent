@@ -121,7 +121,7 @@ public class UserResource extends Resource {
             List<Integer> currentUserRoleIds = UserRoles.getUserRoleIdsFromUser(user);
             if (UserRoles.isValidNonDACRoleId(roleId)) {
                 if (!currentUserRoleIds.contains(roleId)) {
-                    UserRole role = new UserRole(roleId, matchingRole.get().getRoleName());
+                    UserRole role = new UserRole(roleId, UserRoles.getUserRoleFromId(roleId).getRoleName());
                     userService.insertUserRoles(Collections.singletonList(role), user.getDacUserId());
                     user = userService.findUserById(userId);
                     JsonObject userJson = constructUserJsonObject(user);
