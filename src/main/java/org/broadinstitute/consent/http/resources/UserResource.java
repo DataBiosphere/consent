@@ -125,11 +125,7 @@ public class UserResource extends Resource {
                 .stream()
                 .filter(r -> r.getRoleId().equals(roleId))
                 .findFirst();
-            List<Integer> currentUserRoleIds = user
-                .getRoles()
-                .stream()
-                .map(UserRole::getRoleId)
-                .collect(Collectors.toList());
+            List<Integer> currentUserRoleIds = UserRoles.getUserRoleIdsFromUser(user);
             if (matchingRole.isPresent()) {
                 if (!currentUserRoleIds.contains(roleId)) {
                     UserRole role = new UserRole(roleId, matchingRole.get().getRoleName());
@@ -143,6 +139,27 @@ public class UserResource extends Resource {
             } else {
                 return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST).build();
             }
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @DELETE
+    @Path("/{userId}/{roleId}")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN})
+    public Response deleteRoleFromUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
+        try {
+            User user = userService.findUserById(userId);
+            if (!UserRoles.isValidRoleId(roleId)) {
+                throw new BadRequestException("Role Id must be an Integer, 1 to 7");
+            }
+            List<Integer> currentUserRoleIds = UserRoles.getUserRoleIdsFromUser(user);
+            if (!currentUserRoleIds.contains(roleId)) {
+                throw new BadRequestException("The user does not have role" + Integer.toString(roleId) + " so it cannot be removed");
+            }
+            userService.deleteUserRole(userId, roleId);
+            return Response.ok().build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
