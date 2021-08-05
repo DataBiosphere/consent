@@ -118,15 +118,8 @@ public class UserResource extends Resource {
     public Response addRoleToUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
         try {
             User user = userService.findUserById(userId);
-            List<UserRoles> allowableRoles = Stream
-                .of(UserRoles.ADMIN, UserRoles.ALUMNI, UserRoles.RESEARCHER, UserRoles.DATAOWNER, UserRoles.SIGNINGOFFICIAL)
-                .collect(Collectors.toList());
-            Optional<UserRoles> matchingRole = allowableRoles
-                .stream()
-                .filter(r -> r.getRoleId().equals(roleId))
-                .findFirst();
             List<Integer> currentUserRoleIds = UserRoles.getUserRoleIdsFromUser(user);
-            if (matchingRole.isPresent()) {
+            if (UserRoles.isValidNonDACRoleId(roleId)) {
                 if (!currentUserRoleIds.contains(roleId)) {
                     UserRole role = new UserRole(roleId, matchingRole.get().getRoleName());
                     userService.insertUserRoles(Collections.singletonList(role), user.getDacUserId());
@@ -151,8 +144,8 @@ public class UserResource extends Resource {
     public Response deleteRoleFromUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
         try {
             User user = userService.findUserById(userId);
-            if (!UserRoles.isValidRoleId(roleId)) {
-                throw new BadRequestException("Role Id must be an Integer, 1 to 7");
+            if (!UserRoles.isValidNonDACRoleId(roleId)) {
+                throw new BadRequestException("Role Id must be an Integer representing an allowed role (3 to 7)");
             }
             List<Integer> currentUserRoleIds = UserRoles.getUserRoleIdsFromUser(user);
             if (!currentUserRoleIds.contains(roleId)) {

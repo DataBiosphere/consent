@@ -3349,9 +3349,8 @@ paths:
         - name: roleId
           in: path
           description: |
-            The id of the role. 
-            MEMBER: 1
-            CHAIRPERSON: 2
+            The id of the role. Members and Chairpersons cannot be deleted this way.
+            See DAC endpoints for those roles.
             ALUMNI: 3
             ADMIN: 4
             RESEARCHER: 5

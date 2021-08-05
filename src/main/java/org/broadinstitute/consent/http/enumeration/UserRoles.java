@@ -63,8 +63,8 @@ public enum UserRoles {
           .anyMatch(roleName::equalsIgnoreCase);
     }
 
-    public static boolean isValidRoleId(Integer roleId) {
-        if (Objects.isNull(roleId) || roleId > 7 || roleId < 1) {
+    public static boolean isValidNonDACRoleId(Integer roleId) {
+        if (Objects.isNull(roleId) || roleId > 7 || roleId < 3) {
             return false;
         }
         return true;
