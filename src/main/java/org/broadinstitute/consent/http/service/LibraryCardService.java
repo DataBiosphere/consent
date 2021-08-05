@@ -31,11 +31,11 @@ public class LibraryCardService {
 
     public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) throws Exception {
         throwIfNull(libraryCard);
-        checkIfCardExists(libraryCard);
         Boolean isAdmin = checkIsAdmin(user);
         if (!isAdmin) {
             libraryCard.setInstitutionId(user.getInstitutionId());
         }
+        checkIfCardExists(libraryCard);
         checkForValidInstitution(libraryCard.getInstitutionId());
         LibraryCard processedCard = processUserOnNewLC(libraryCard);
         Date createDate = new Date();
