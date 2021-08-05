@@ -386,6 +386,9 @@ public class DataAccessRequestData {
     }
 
     public List<OntologyEntry> getOntologies() {
+        if (Objects.isNull(ontologies)) {
+            return Collections.emptyList();
+        }
         return ontologies;
     }
 
@@ -498,6 +501,9 @@ public class DataAccessRequestData {
     }
 
     public List<DatasetEntry> getDatasets() {
+        if (Objects.isNull(datasets)) {
+            return Collections.emptyList();
+        }
         return datasets;
     }
 
@@ -562,6 +568,9 @@ public class DataAccessRequestData {
     }
 
     public List<Integer> getDatasetIds() {
+        if (Objects.isNull(datasetIds)) {
+            return Collections.emptyList();
+        }
         return datasetIds;
     }
 
@@ -570,6 +579,9 @@ public class DataAccessRequestData {
     }
 
     public List<DatasetDetailEntry> getDatasetDetail() {
+        if (Objects.isNull(datasetDetail)) {
+            return Collections.emptyList();
+        }
         return datasetDetail;
     }
 
@@ -746,6 +758,9 @@ public class DataAccessRequestData {
     }
 
     public List<Collaborator> getLabCollaborators() {
+        if (Objects.isNull(labCollaborators)) {
+            return Collections.emptyList();
+        }
         return labCollaborators;
     }
 
@@ -755,6 +770,9 @@ public class DataAccessRequestData {
     }
 
     public List<Collaborator> getInternalCollaborators() {
+        if (Objects.isNull(internalCollaborators)) {
+            return Collections.emptyList();
+        }
         return internalCollaborators;
     }
 
@@ -764,6 +782,9 @@ public class DataAccessRequestData {
     }
 
     public List<Collaborator> getExternalCollaborators() {
+        if (Objects.isNull(externalCollaborators)) {
+            return Collections.emptyList();
+        }
         return externalCollaborators;
     }
 
@@ -830,8 +851,7 @@ public class DataAccessRequestData {
 
     // Validate all ontology entries
     private static void validateOntologyEntries(DataAccessRequestData data) {
-        if (Objects.nonNull(data) &&
-            Objects.nonNull(data.getOntologies())
+        if (Objects.nonNull(data)
             && !data.getOntologies().isEmpty()) {
             List<OntologyEntry> filteredEntries =
                 data.getOntologies().stream()
