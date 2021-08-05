@@ -61,8 +61,7 @@ public class PaginationToken {
 
   //constructor for response tokens
   public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, List<String> filterTerms,
-                         Integer filteredCount, Integer filteredPageCount, Integer unfilteredCount,
-                         PaginationToken previousPageToken, PaginationToken nextPageToken) {
+                         Integer filteredCount, Integer filteredPageCount, Integer unfilteredCount) {
     checkSortField(sortField);
     checkSortDirection(sortDirection);
     this.page = page;
@@ -73,13 +72,27 @@ public class PaginationToken {
     this.filteredCount = filteredCount;
     this.filteredPageCount = filteredPageCount;
     this.unfilteredCount = unfilteredCount;
-    this.previousPageToken = previousPageToken;
-    this.nextPageToken = nextPageToken;
     checkForValidNumbers();
   }
 
   public Integer getPage() {
     return this.page;
+  }
+
+  public PaginationToken generatePrevious() {
+    //generate the previous pagination token and save it
+    this.previousPageToken = null;
+    return this.previousPageToken;
+  }
+
+  public PaginationToken generateNext() {
+    //generate the next pagination token and save it
+    this.nextPageToken = null;
+    return this.nextPageToken;
+  }
+
+  public void generateHash() {
+    //generate unique identifier for this token and save it
   }
 
   public String toBase64() {
