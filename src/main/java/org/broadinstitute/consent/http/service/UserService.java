@@ -201,6 +201,10 @@ public class UserService {
         return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
     }
 
+    public void deleteUserRole(Integer dacUserId, Integer roleId) {
+        userRoleDAO.removeSingleUserRole(dacUserId, roleId);
+    }
+
     private void validateRequiredFields(User user) {
         if (Objects.isNull(user.getDisplayName()) || StringUtils.isEmpty(user.getDisplayName())) {
             throw new BadRequestException("Display Name cannot be empty");
