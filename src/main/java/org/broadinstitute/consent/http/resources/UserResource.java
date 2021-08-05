@@ -156,10 +156,12 @@ public class UserResource extends Resource {
             }
             List<Integer> currentUserRoleIds = UserRoles.getUserRoleIdsFromUser(user);
             if (!currentUserRoleIds.contains(roleId)) {
-                throw new BadRequestException("The user does not have role" + Integer.toString(roleId) + " so it cannot be removed");
+                return Response.notModified().build();
             }
             userService.deleteUserRole(userId, roleId);
-            return Response.ok().build();
+            user = userService.findUserById(userId);
+            JsonObject userJson = constructUserJsonObject(user);
+            return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

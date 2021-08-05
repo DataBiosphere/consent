@@ -319,6 +319,7 @@ public class UserResourceTest {
   public void testDeleteRoleFromUser() {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
+    initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.RESEARCHER.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
@@ -327,6 +328,7 @@ public class UserResourceTest {
   public void testDeleteRoleFromUser_InvalidRole() {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
+    initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), 8);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
@@ -335,8 +337,17 @@ public class UserResourceTest {
   public void testDeleteRoleFromUser_UserWithoutRole() {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
+    initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.ADMIN.getRoleId());
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
+  }
+
+  @Test
+  public void testDeleteRoleFromUser_UserNotFound() {
+    when(userService.findUserById(any())).thenThrow(new NotFoundException());
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, 1, UserRoles.ADMIN.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   private User createUserWithRole() {
