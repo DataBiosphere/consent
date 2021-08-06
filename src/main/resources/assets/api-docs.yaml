@@ -3336,7 +3336,7 @@ paths:
           description: User not found
         500:
           description: Server error.
-    put:
+    delete:
       summary: Delete a role from a user
       description: Delete a role from a user, specified by given userId. Available to Admin roles
       parameters:
