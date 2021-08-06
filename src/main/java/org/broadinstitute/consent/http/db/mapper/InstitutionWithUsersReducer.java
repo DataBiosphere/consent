@@ -7,6 +7,7 @@ import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -58,6 +59,13 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
 
     institution.setCreateUser(create_user);
     institution.setUpdateUser(update_user);
+
+    if (Objects.nonNull(rowView.getColumn("so_dacuserid", Integer.class))) {
+      SimplifiedUser so_user = new SimplifiedUser();
+      so_user = rowView.getRow(SimplifiedUser.class);
+      institution.addSigningOfficial(so_user);
+    }
+
   }
 
   private String getStatus(RowView r, String columnName) {

@@ -51,14 +51,29 @@ public class UserService {
     }
 
     public static class SimplifiedUser {
-        public final String displayName;
-        public final Integer userId;
-        public final String email;
+        public Integer dacUserId;
+        public String displayName;
+        public String email;
 
         public SimplifiedUser(User user) {
             this.displayName = user.getDisplayName();
-            this.userId = user.getDacUserId();
+            this.dacUserId = user.getDacUserId();
             this.email = user.getEmail();
+        }
+
+        public SimplifiedUser() {
+        }
+
+        public void setDacUserId(Integer userId) {
+            this.dacUserId = userId;
+        }
+
+        public void setDisplayName(String name) {
+            this.displayName = name;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
         }
     }
 

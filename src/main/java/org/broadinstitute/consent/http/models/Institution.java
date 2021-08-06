@@ -1,8 +1,12 @@
 package org.broadinstitute.consent.http.models;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 public class Institution {
 
@@ -10,11 +14,11 @@ public class Institution {
   private String name;
   private String itDirectorName;
   private String itDirectorEmail;
+  private List<SimplifiedUser> signingOfficials;
   private Date createDate;
   private Integer createUserId;
   private Date updateDate;
   private Integer updateUserId;
-
   private User createUser;
   private User updateUser;
 
@@ -28,6 +32,7 @@ public class Institution {
     this.name = name;
     this.itDirectorName = itDirectorName;
     this.itDirectorEmail = itDirectorEmail;
+    this.signingOfficials = new ArrayList<>();
     this.createDate = createDate;
     this.createUserId = createUserId;
     this.updateDate = this.createDate;
@@ -40,6 +45,7 @@ public class Institution {
     this.name = name;
     this.itDirectorName = itDirectorName;
     this.itDirectorEmail = itDirectorEmail;
+    this.signingOfficials = new ArrayList<>();
     this.createDate = createDate;
     this.createUserId = createUserId;
     this.updateDate = updateDate;
@@ -61,6 +67,21 @@ public class Institution {
   public void setItDirectorName(String itDirectorName) {
     this.itDirectorName = itDirectorName;
   }
+
+  public List<SimplifiedUser> getSigningOfficials() {
+    return signingOfficials;
+  }
+
+  public void setSigningOfficials(List<SimplifiedUser> signingOfficials) {
+    this.signingOfficials = signingOfficials;
+  }
+
+  public void addSigningOfficial(SimplifiedUser so) {
+    if (Objects.isNull(signingOfficials)) {
+        this.setSigningOfficials(new ArrayList<>());
+    }
+    signingOfficials.add(so);
+}
 
   public void setCreateUserId(Integer createUserId) {
     this.createUserId = createUserId;
