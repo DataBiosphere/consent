@@ -3,6 +3,9 @@ package org.broadinstitute.consent.http.enumeration;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import java.util.EnumSet;
@@ -64,10 +67,9 @@ public enum UserRoles {
     }
 
     public static boolean isValidNonDACRoleId(Integer roleId) {
-        if (Objects.isNull(roleId) || roleId > 7 || roleId < 3) {
-            return false;
-        }
-        return true;
+        List<Integer> listOfNonDacRoleIds = Arrays.asList(
+          ALUMNI.getRoleId(), ADMIN.getRoleId(), RESEARCHER.getRoleId(), DATAOWNER.getRoleId(), SIGNINGOFFICIAL.getRoleId());
+        return !Objects.isNull(roleId) && listOfNonDacRoleIds.contains(roleId);
     }
 
     public static List<Integer> getUserRoleIdsFromUser(User user) {
