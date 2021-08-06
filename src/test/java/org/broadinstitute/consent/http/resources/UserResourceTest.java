@@ -322,6 +322,8 @@ public class UserResourceTest {
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.RESEARCHER.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    User returnedUser = new User((String)response.getEntity());
+    assertEquals(user.getEmail(), returnedUser.getEmail());
   }
 
   @Test
