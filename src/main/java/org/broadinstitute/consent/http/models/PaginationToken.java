@@ -97,13 +97,25 @@ public class PaginationToken {
   public Integer getFilteredCount() {
     return this.filteredCount;
   }
+  
+  public void setFilteredCount(Integer filteredCount) {
+    this.filteredCount = filteredCount;
+  }
 
   public Integer getUnfilteredCount() {
     return this.unfilteredCount;
   }
 
+  public void setUnfilteredCount(Integer unfilteredCount) {
+    this.unfilteredCount = unfilteredCount;
+  }
+
   public Integer getFilteredPageCount() {
     return this.filteredPageCount;
+  }
+
+  public void setFilteredPageCount(Integer filteredPageCount) {
+    this.filteredPageCount = filteredPageCount;
   }
 
   public void generatePrevious() {
