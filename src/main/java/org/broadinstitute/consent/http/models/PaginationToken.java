@@ -78,22 +78,46 @@ public class PaginationToken {
   public Integer getPage() {
     return this.page;
   }
+  public Integer getPageSize() {
+    return this.pageSize;
+  }
 
-  public PaginationToken generatePrevious() {
-    //generate the previous pagination token and save it
+  public String getSortField() {
+  	return this.sortField;
+  }
+
+  public String getSortDirection() {
+    return this.sortDirection;
+  }
+
+  public List<String> getFilterTerms() {
+    return this.filterTerms;
+  }
+
+  public Integer getFilteredCount() {
+    return this.filteredCount;
+  }
+
+  public Integer getUnfilteredCount() {
+    return this.unfilteredCount;
+  }
+
+  public Integer getFilteredPageCount() {
+    return this.filteredPageCount;
+  }
+
+  public void generatePrevious() {
+    if (page == 0) {
     this.previousPageToken = null;
-    return this.previousPageToken;
+    } else {
+      this.previousPageToken = new PaginationToken(page - 1, pageSize, sortField, sortDirection, filterTerms);
+    }
   }
 
-  public PaginationToken generateNext() {
-    //generate the next pagination token and save it
-    this.nextPageToken = null;
-    return this.nextPageToken;
+  public void generateNext() {
+    this.nextPageToken = new PaginationToken(page + 1, pageSize, sortField, sortDirection, filterTerms);
   }
 
-  public void generateHash() {
-    //generate unique identifier for this token and save it
-  }
 
   public String toBase64() {
     return Base64.getEncoder().encodeToString(new Gson().toJson(this).getBytes(UTF_8));
