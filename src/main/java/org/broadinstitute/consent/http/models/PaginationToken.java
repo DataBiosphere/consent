@@ -78,6 +78,7 @@ public class PaginationToken {
   public Integer getPage() {
     return this.page;
   }
+
   public Integer getPageSize() {
     return this.pageSize;
   }
@@ -126,8 +127,14 @@ public class PaginationToken {
     }
   }
 
+  //could result in bad request if page is greater than page count but unable to do validation 
+  //in every case here because pagecount is only populated in response tokens
   public void generateNext() {
-    this.nextPageToken = new PaginationToken(page + 1, pageSize, sortField, sortDirection, filterTerms);
+    if (Objects.nonNull(filteredPageCount) && page == filteredPageCount) {
+      this.nextPageToken = null;
+    } else {
+      this.nextPageToken = new PaginationToken(page + 1, pageSize, sortField, sortDirection, filterTerms);
+    }
   }
 
 
