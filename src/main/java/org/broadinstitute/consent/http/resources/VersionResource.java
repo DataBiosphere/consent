@@ -37,7 +37,7 @@ public class VersionResource {
         return null;
     }
 
-    private class Version {
+    private static class Version {
         String hash;
         String version;
 
