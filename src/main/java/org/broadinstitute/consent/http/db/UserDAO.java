@@ -214,6 +214,19 @@ public interface UserDAO extends Transactional<UserDAO> {
     List<User> findUsersByInstitution(@Bind("institutionId") Integer institutionId);
 
     @RegisterBeanMapper(value = User.class)
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery(" SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
+                " lc.id AS lc_id , lc.user_id AS lc_user_id, " +
+                " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
+                " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, " +
+                " lc.update_user_id AS lc_update_user_id " +
+                " FROM dacuser du " +
+                " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
+                " LEFT JOIN roles r ON r.roleid = ur.role_id " +
+                " WHERE du.institution_id IS NULL")
+    List<User> getUsersWithNoInstitution();
+
+    @RegisterBeanMapper(value = User.class)
     @SqlQuery("SELECT u.dacuserid, u.displayname, u.email FROM dacuser u "
       + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
       + " LEFT JOIN roles r ON r.roleid = ur.role_id "

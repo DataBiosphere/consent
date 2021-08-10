@@ -7,6 +7,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
@@ -107,6 +108,19 @@ public class UserResource extends Resource {
             JsonObject userJson = constructUserJsonObject(user);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Path("/unassigned")
+    @Produces("application/json")
+    @RolesAllowed({SIGNINGOFFICIAL})
+    public Response getUnassignedUsers(@Auth AuthUser user) {
+        try {
+            List<User> unassignedUsers = userService.findUsersWithNoInstitution();
+            return Response.ok().entity(unassignedUsers).build();
+        } catch(Exception e) {
             return createExceptionResponse(e);
         }
     }

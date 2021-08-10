@@ -202,6 +202,10 @@ public class UserService {
         return users.stream().map(u -> new SimplifiedUser(u)).collect(Collectors.toList());
     }
 
+    public List<User> findUsersWithNoInstitution() {
+        return userDAO.getUsersWithNoInstitution();
+    }
+
     private void validateRequiredFields(User user) {
         if (Objects.isNull(user.getDisplayName()) || StringUtils.isEmpty(user.getDisplayName())) {
             throw new BadRequestException("Display Name cannot be empty");
