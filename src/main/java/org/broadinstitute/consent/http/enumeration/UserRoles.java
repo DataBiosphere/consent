@@ -1,12 +1,8 @@
 package org.broadinstitute.consent.http.enumeration;
 
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -70,13 +66,6 @@ public enum UserRoles {
         List<Integer> listOfNonDacRoleIds = Arrays.asList(
           ALUMNI.getRoleId(), ADMIN.getRoleId(), RESEARCHER.getRoleId(), DATAOWNER.getRoleId(), SIGNINGOFFICIAL.getRoleId());
         return !Objects.isNull(roleId) && listOfNonDacRoleIds.contains(roleId);
-    }
-
-    public static List<Integer> getUserRoleIdsFromUser(User user) {
-        return user.getRoles()
-          .stream()
-          .map(UserRole::getRoleId)
-          .collect(Collectors.toList());
     }
 
 }

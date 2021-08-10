@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import java.util.stream.Collectors;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -360,6 +361,13 @@ public class User {
         } else {
             return this.getRoles().stream().anyMatch((r) -> r.getRoleId().equals(role.getRoleId()));
         }
+    }
+
+    public static List<Integer> getUserRoleIdsFromUser(User user) {
+        return user.getRoles()
+          .stream()
+          .map(UserRole::getRoleId)
+          .collect(Collectors.toList());
     }
 
 }
