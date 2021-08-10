@@ -341,7 +341,9 @@ public class UserResourceTest {
     when(userService.findUserById(any())).thenReturn(user);
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.ADMIN.getRoleId());
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    User returnedUser = new User((String)response.getEntity());
+    assertEquals(user.getEmail(), returnedUser.getEmail());
   }
 
   @Test

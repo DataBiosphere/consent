@@ -3359,6 +3359,13 @@ paths:
           required: true
           schema:
             type: number
+            nullable: false
+            enum:
+              - 3
+              - 4
+              - 5
+              - 6
+              - 7
       tags:
         - User
       responses:
