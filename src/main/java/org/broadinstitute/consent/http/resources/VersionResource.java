@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import java.util.Objects;
+import com.google.gson.JsonPrimitive;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +13,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.nio.charset.Charset;
+import java.util.Objects;
 import java.util.Optional;
 
 @Path("/version")
@@ -46,10 +47,13 @@ public class VersionResource {
                 this.version = "error";
             } else {
                 JsonObject jsonObject = new Gson().fromJson(props, JsonObject.class);
-                JsonElement shortHash = jsonObject.get("git.commit.id.abbrev");
+                String shortHash = Optional
+                        .ofNullable(jsonObject.get("git.commit.id"))
+                        .orElse(new JsonPrimitive("error"))
+                        .getAsString().substring(0, 12);
                 JsonElement buildVersion = jsonObject.get("git.build.version");
-                if (Objects.nonNull(shortHash) && Objects.nonNull(buildVersion)) {
-                    this.hash = Optional.ofNullable(shortHash.getAsString()).orElse("error");
+                if (Objects.nonNull(buildVersion)) {
+                    this.hash = shortHash;
                     this.version = Optional.ofNullable(buildVersion.getAsString()).orElse("error");
                 }
             }
