@@ -3375,8 +3375,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-        304:
-          description: Not modified, User does not have given role
         400:
           description: Bad Request
         404:
