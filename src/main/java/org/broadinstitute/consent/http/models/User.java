@@ -363,8 +363,8 @@ public class User {
         }
     }
 
-    public static List<Integer> getUserRoleIdsFromUser(User user) {
-        return user.getRoles()
+    public List<Integer> getUserRoleIdsFromUser() {
+        return this.getRoles()
           .stream()
           .map(UserRole::getRoleId)
           .collect(Collectors.toList());

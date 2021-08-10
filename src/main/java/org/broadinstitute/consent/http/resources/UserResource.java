@@ -118,7 +118,7 @@ public class UserResource extends Resource {
     public Response addRoleToUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
         try {
             User user = userService.findUserById(userId);
-            List<Integer> currentUserRoleIds = User.getUserRoleIdsFromUser(user);
+            List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
             if (UserRoles.isValidNonDACRoleId(roleId)) {
                 if (!currentUserRoleIds.contains(roleId)) {
                     UserRole role = new UserRole(roleId, UserRoles.getUserRoleFromId(roleId).getRoleName());
@@ -145,9 +145,9 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserById(userId);
             if (!UserRoles.isValidNonDACRoleId(roleId)) {
-                throw new BadRequestException("Role Id must be an Integer representing an allowed role (3 to 7)");
+                throw new BadRequestException("Invalid Role Id");
             }
-            List<Integer> currentUserRoleIds = User.getUserRoleIdsFromUser(user);
+            List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
             if (!currentUserRoleIds.contains(roleId)) {
                 JsonObject userJson = constructUserJsonObject(user);
                 return Response.ok().entity(gson.toJson(userJson)).build();
