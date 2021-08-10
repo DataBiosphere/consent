@@ -118,7 +118,7 @@ public class UserResource extends Resource {
     public Response addRoleToUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
         try {
             User user = userService.findUserById(userId);
-            List<Integer> currentUserRoleIds = UserRoles.getUserRoleIdsFromUser(user);
+            List<Integer> currentUserRoleIds = User.getUserRoleIdsFromUser(user);
             if (UserRoles.isValidNonDACRoleId(roleId)) {
                 if (!currentUserRoleIds.contains(roleId)) {
                     UserRole role = new UserRole(roleId, UserRoles.getUserRoleFromId(roleId).getRoleName());
@@ -147,11 +147,13 @@ public class UserResource extends Resource {
             if (!UserRoles.isValidNonDACRoleId(roleId)) {
                 throw new BadRequestException("Role Id must be an Integer representing an allowed role (3 to 7)");
             }
-            List<Integer> currentUserRoleIds = UserRoles.getUserRoleIdsFromUser(user);
+            List<Integer> currentUserRoleIds = User.getUserRoleIdsFromUser(user);
             if (!currentUserRoleIds.contains(roleId)) {
-                return Response.notModified().build();
+                JsonObject userJson = constructUserJsonObject(user);
+                return Response.ok().entity(gson.toJson(userJson)).build();
             }
-            userService.deleteUserRole(userId, roleId);
+            User auth = userService.findUserByEmail(authUser.getName());
+            userService.deleteUserRole(auth, userId, roleId);
             user = userService.findUserById(userId);
             JsonObject userJson = constructUserJsonObject(user);
             return Response.ok().entity(gson.toJson(userJson)).build();
