@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserService {
 
@@ -39,6 +41,7 @@ public class UserService {
     private final VoteDAO voteDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
     public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO) {
@@ -201,8 +204,9 @@ public class UserService {
         return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
     }
 
-    public void deleteUserRole(Integer dacUserId, Integer roleId) {
+    public void deleteUserRole(User authUser, Integer dacUserId, Integer roleId) {
         userRoleDAO.removeSingleUserRole(dacUserId, roleId);
+        logger.info("User " + authUser.getDisplayName() + " deleted roleId: " + roleId + " from User ID: " + dacUserId);
     }
 
     private void validateRequiredFields(User user) {
