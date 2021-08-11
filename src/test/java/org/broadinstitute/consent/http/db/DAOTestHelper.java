@@ -471,7 +471,7 @@ public class DAOTestHelper {
 
     protected DataAccessRequest createDataAccessRequestV3() {
         User user = createUser();
-        Integer collection_id = darCollectionDAO.insertDarCollection("DAR-CODE", user.getDacUserId(), new Date());
+        Integer collection_id = darCollectionDAO.insertDarCollection("DAR-" + RandomUtils.nextInt(3, 5), user.getDacUserId(), new Date());
         return insertDAR(user.getDacUserId(), collection_id);
     }
 
@@ -534,7 +534,7 @@ public class DAOTestHelper {
 
     protected DarCollection createDarCollection() {
         User user = createUser();
-        Integer collection_id = darCollectionDAO.insertDarCollection("DAR-CODE", user.getDacUserId(), new Date());
+        Integer collection_id = darCollectionDAO.insertDarCollection("DAR-" + RandomUtils.nextInt(3, 5), user.getDacUserId(), new Date());
         insertDAR(user.getDacUserId(), collection_id);
         insertDAR(user.getDacUserId(), collection_id);
         insertDAR(user.getDacUserId(), collection_id);
