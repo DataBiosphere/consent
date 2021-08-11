@@ -380,6 +380,17 @@ public class UserServiceTest {
         assertEquals(3, users.size());
     }
 
+    @Test
+    public void testFindUsersWithNoInstitution() {
+        User user = generateUser();
+        when(userDAO.getUsersWithNoInstitution()).thenReturn(Collections.singletonList(user));
+        initService();
+        List<User> users = service.findUsersWithNoInstitution();
+        assertNotNull(users);
+        assertEquals(1, users.size());
+        assertEquals(user.getDacUserId(), users.get(0).getDacUserId());
+    }
+
     private User generateUser() {
         User u = new User();
         int i1 = RandomUtils.nextInt(5, 10);
