@@ -238,7 +238,7 @@ public class LibraryCardResourceTest {
 
   @Test
   public void deleteLibraryCardThrowsNotFoundException() {
-    doThrow(new NotFoundException()).when(libraryCardService).deleteLibraryCardById(anyInt());
+    doThrow(new NotFoundException()).when(libraryCardService).deleteLibraryCardById(anyInt(), any());
     initResource();
     Response response = resource.deleteLibraryCard(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());

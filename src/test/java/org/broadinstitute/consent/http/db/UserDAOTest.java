@@ -11,8 +11,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
@@ -24,6 +27,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.UserProperty;
+import org.jsoup.select.Evaluator.IsEmpty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Assert;
 import org.junit.Test;
@@ -391,6 +395,40 @@ public class UserDAOTest extends DAOTestHelper {
 
         List<User> differentInstitutionUsers = userDAO.getSOsByInstitution( institutionId + 1);
         assertEquals(0, differentInstitutionUsers.size());
+    }
+
+    @Test
+    public void testGetUsersAndCardsForSO() {
+        //create SO user
+        User soUser = createUserWithInstitution();
+        addUserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), soUser.getDacUserId());
+        //create institution memebers
+        User member = createUserForInstitution(soUser.getInstitutionId());
+        // create institution cards for institution memebers
+        LibraryCard memberCard = createLibraryCardForInstitution(member, soUser.getInstitutionId());
+        //create non institution members
+        // create institution cards for non institution members
+        LibraryCard nonMemberCard = createLCForUnregisteredUser(soUser.getInstitutionId());
+        //call DAO
+        List<User> users = userDAO.getUsersAndCardsForSO(soUser.getInstitutionId());
+        assertEquals(3, users.size());
+        users.forEach(user -> {
+            //assertions for non-member (unregistered) user and card
+            if(Objects.isNull(user.getDacUserId())) {
+                assertEquals(nonMemberCard.getId(), user.getLibraryCards().get(0).getId());
+                assertEquals(1, user.getLibraryCards().size());
+            }
+            //assertions SO user
+            else if(user.getLibraryCards().isEmpty()) {
+                assertEquals(soUser.getDacUserId(), user.getDacUserId());
+                assertEquals(0, user.getLibraryCards().size());
+            //assertions for member user and card
+            } else {
+                assertEquals(member.getDacUserId(), user.getDacUserId());
+                assertEquals(1, user.getLibraryCards().size());
+                assertEquals(memberCard.getId(), user.getLibraryCards().get(0).getId());
+            }
+        });
     }
 
     private String getRandomEmailAddress() {
