@@ -431,6 +431,15 @@ public class UserDAOTest extends DAOTestHelper {
         });
     }
 
+    @Test
+    public void testGetUsersWithNoInstitution() {
+        createUserWithInstitution();
+        User user = createUser();
+        List<User> users = userDAO.getUsersWithNoInstitution();
+        assertEquals(1, users.size());
+        assertEquals(user.getDacUserId(), users.get(0).getDacUserId());
+    }
+
     private String getRandomEmailAddress() {
         String user = RandomStringUtils.randomAlphanumeric(20);
         String domain = RandomStringUtils.randomAlphanumeric(10);
