@@ -101,7 +101,7 @@ public class UserService {
         switch(roleName) {
             case Resource.SIGNINGOFFICIAL :
                 if (Objects.nonNull(user.getInstitutionId())) {
-                    return userDAO.findUsersByInstitution(user.getInstitutionId());
+                    return userDAO.getUsersAndCardsForSO(user.getInstitutionId());
                 } else {
                     throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") is not associated with an Institution.");
                 }

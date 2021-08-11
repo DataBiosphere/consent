@@ -185,6 +185,16 @@ public interface UserDAO extends Transactional<UserDAO> {
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery("SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id " + " FROM dacuser du "
+            + " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+            + " WHERE du.institution_id = :institutionId")
+    List<User> findUsersByInstitution(@Bind("institutionId") Integer institutionId);
+
+    //SO only DAO call, returns users containing institution related lc
+    //DAO call returns users, but should be treated as a more complex LC get call
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
     @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
     @UseRowReducer(UsersAndCardsReducer.class)
     @SqlQuery(
@@ -211,7 +221,7 @@ public interface UserDAO extends Transactional<UserDAO> {
             // It seemed a bit off to let Signing Officials see library cards of users belonging to other institutions
                 " LEFT JOIN library_card lc ON lc.user_id = du.dacuserid " +
                 " WHERE du.institution_id = :institutionId OR lc.institution_id = :institutionId")
-    List<User> findUsersByInstitution(@Bind("institutionId") Integer institutionId);
+    List<User> getUsersAndCardsForSO(@Bind("institutionId") Integer institutionId);
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
