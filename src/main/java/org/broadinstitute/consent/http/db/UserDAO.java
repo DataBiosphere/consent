@@ -219,8 +219,8 @@ public interface UserDAO extends Transactional<UserDAO> {
                 " LEFT JOIN roles r ON r.roleid = ur.role_id " +
             // NOTE: I've limited the library cards to only those that belong to the institution
             // It seemed a bit off to let Signing Officials see library cards of users belonging to other institutions
-                " LEFT JOIN library_card lc ON lc.user_id = du.dacuserid " +
-                " WHERE du.institution_id = :institutionId OR lc.institution_id = :institutionId")
+                " LEFT JOIN library_card lc ON lc.user_id = du.dacuserid AND lc.institution_id = :institutionId " +
+                " WHERE du.institution_id = :institutionId")
     List<User> getUsersAndCardsForSO(@Bind("institutionId") Integer institutionId);
 
     @RegisterBeanMapper(value = User.class)
