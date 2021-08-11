@@ -69,7 +69,7 @@
         <groupId>pl.project13.maven</groupId>
         <artifactId>git-commit-id-plugin</artifactId>
         <!-- 4.0.1 seems to break when formatted as json -->
-        <version>4.0.5</version>
+        <version>4.9.10</version>
         <executions>
           <execution>
             <id>get-the-git-infos</id>
@@ -611,7 +611,7 @@
     <dependency>
       <groupId>org.mongodb</groupId>
       <artifactId>mongo-java-driver</artifactId>
-      <version>3.12.9</version>
+      <version>3.12.10</version>
     </dependency>
 
     <dependency>
