@@ -4,9 +4,12 @@ import org.broadinstitute.consent.http.db.mapper.DarCollectionReducer;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 
+import java.util.Date;
 import java.util.List;
 
 public interface DarCollectionDAO {
@@ -27,10 +30,12 @@ public interface DarCollectionDAO {
   List<DarCollection> findAllDARCollections();
 
   /**
-   * Find all DARCollections with their DataAccessRequests
+   * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given referenceId
    *
    * @return List<DataAccessRequest>
    */
+  @RegisterBeanMapper(DarCollection.class)
+  @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT * FROM dar_collection c "
       + " INNER JOIN "
@@ -42,10 +47,12 @@ public interface DarCollectionDAO {
   DarCollection findDARCollectionByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
-   * Find all DARCollections with their DataAccessRequests
+   * Find the DARCollection and all of its Data Access Requests that has the given collectionId
    *
    * @return List<DataAccessRequest>
    */
+  @RegisterBeanMapper(DarCollection.class)
+  @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT * FROM dar_collection c "
       + " LEFT JOIN "
@@ -56,5 +63,13 @@ public interface DarCollectionDAO {
       + " WHERE c.collection_id = :collectionId ")
   DarCollection findDARCollectionByCollectionId(@Bind("collectionId") String collectionId);
 
+  @SqlUpdate("INSERT INTO dar_collection " +
+    " (collection_id, dar_code, create_user, create_date) " +
+    " VALUES (:collectionId, :darCode, :createUserId, :createDate)")
+  @GetGeneratedKeys
+  Integer insertDarCollection(@Bind("collectionId") Integer collectionId,
+                            @Bind("darCode") String darCode,
+                            @Bind("createUserId") Integer createUserId,
+                            @Bind("createDate") Date createDate);
 }
 
