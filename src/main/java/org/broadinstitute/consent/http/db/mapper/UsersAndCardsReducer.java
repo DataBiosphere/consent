@@ -20,19 +20,15 @@ public class UsersAndCardsReducer implements LinkedHashMapRowReducer<String, Use
     //As such, the email would be a better id than the actual ids
     String lcEmail = rowView.getColumn("lc_user_email", String.class);
     String userEmail = rowView.getColumn("email", String.class);
-    String id = Objects.nonNull(userEmail) ? userEmail : lcEmail; 
-    User user;
-    
-    if(Objects.nonNull(rowView.getColumn("email", String.class))) {
-      user = rowView.getRow(User.class);
-    } else {
-      user = new User();
-      user.setEmail(lcEmail);
+    String email = Objects.nonNull(userEmail) ? userEmail : lcEmail; 
+    User user = map.computeIfAbsent(email, id -> rowView.getRow(User.class));
+
+    if(Objects.isNull(user.getEmail())) {
+      user.setEmail(email);
     }
     if(Objects.isNull(user.getLibraryCards())) {
       user.setLibraryCards(new ArrayList<LibraryCard>());
     }
-    map.put(id, user);
 
     try {
       if (Objects.nonNull(rowView.getColumn("status", Integer.class))) {

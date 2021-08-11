@@ -113,7 +113,7 @@ public class UserResource extends Resource {
     }
 
     @GET
-    @Path("/unassigned")
+    @Path("/institution/unassigned")
     @Produces("application/json")
     @RolesAllowed({SIGNINGOFFICIAL})
     public Response getUnassignedUsers(@Auth AuthUser user) {
