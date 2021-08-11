@@ -9,6 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+
+import java.beans.Transient;
 import java.util.stream.Collectors;
 
 import java.util.ArrayList;
@@ -363,6 +365,7 @@ public class User {
         }
     }
 
+    @Transient
     public List<Integer> getUserRoleIdsFromUser() {
         return this.getRoles()
           .stream()
