@@ -145,6 +145,12 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testInsertVersion3() {
+        DataAccessRequest dar = createDataAccessRequestV3();
+        assertNotNull(dar);
+    }
+
+    @Test
     public void testEscapedCharacters() {
         DataAccessRequest dar = createDataAccessRequestV2();
         DataAccessRequest foundDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());

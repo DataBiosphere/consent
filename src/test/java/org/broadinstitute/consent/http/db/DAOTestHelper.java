@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
@@ -72,6 +73,7 @@ public class DAOTestHelper {
     protected static UserPropertyDAO userPropertyDAO;
     protected static InstitutionDAO institutionDAO;
     protected static LibraryCardDAO libraryCardDAO;
+    protected static DarCollectionDAO darCollectionDAO;
 
     private static final List<Integer> createdDataSetIds = new ArrayList<>();
     private static final List<Integer> createdDacIds = new ArrayList<>();
@@ -81,6 +83,7 @@ public class DAOTestHelper {
     private static final List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
     private static final List<Integer> createdInstitutionIds = new ArrayList<>();
     private static final List<Integer> createdLibraryCardIds = new ArrayList<>();
+    private static final List<Integer> createdDarCollections = new ArrayList<>();
 
     String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
 
@@ -130,6 +133,7 @@ public class DAOTestHelper {
         userPropertyDAO = jdbi.onDemand(UserPropertyDAO.class);
         institutionDAO = jdbi.onDemand(InstitutionDAO.class);
         libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
+        darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
     }
 
     @AfterClass
@@ -173,6 +177,9 @@ public class DAOTestHelper {
         createdDataAccessRequestReferenceIds.forEach(d -> {
             dataAccessRequestDAO.deleteByReferenceId(d);
             matchDAO.deleteMatchesByPurposeId(d);
+        });
+        createdDarCollections.forEach(d -> {
+            darCollectionDAO.deleteByCollectionId(d);
         });
         counterDAO.deleteAll();
     }
@@ -459,16 +466,22 @@ public class DAOTestHelper {
 
     protected DataAccessRequest createDataAccessRequestV2() {
         Integer userId = createUser().getDacUserId();
-        return insertDAR(userId);
+        return insertDAR(userId, 0);
+    }
+
+    protected DataAccessRequest createDataAccessRequestV3() {
+        User user = createUser();
+        Integer collection_id = darCollectionDAO.insertDarCollection("DAR-CODE", user.getDacUserId(), new Date());
+        return insertDAR(user.getDacUserId(), collection_id);
     }
 
     protected Integer createDataAccessRequestUserWithInstitute() {
         User user = createUserWithInstitution();
-        insertDAR(user.getDacUserId());
+        insertDAR(user.getDacUserId(), 0);
         return user.getInstitutionId();
     }
 
-    private DataAccessRequest insertDAR(Integer userId) {
+    private DataAccessRequest insertDAR(Integer userId, Integer collectionId) {
         DataAccessRequestData data;
         Date now = new Date();
         try {
@@ -477,7 +490,11 @@ public class DAOTestHelper {
               Charset.defaultCharset());
             data = DataAccessRequestData.fromString(darDataString);
             String referenceId = UUID.randomUUID().toString();
-            dataAccessRequestDAO.insertVersion2(referenceId, userId, now, now, now, now, data);
+            if (collectionId == 0) {
+                dataAccessRequestDAO.insertVersion2(referenceId, userId, now, now, now, now, data);
+            } else {
+                dataAccessRequestDAO.insertVersion3(collectionId, referenceId, userId, now, now, now, now, data);
+            }
             createdDataAccessRequestReferenceIds.add(referenceId);
             return dataAccessRequestDAO.findByReferenceId(referenceId);
         } catch (IOException e) {
@@ -513,6 +530,16 @@ public class DAOTestHelper {
             fail("Unable to create a Data Access Request from sample data: " + e.getMessage());
         }
         return null;
+    }
+
+    protected DarCollection createDarCollection() {
+        User user = createUser();
+        Integer collection_id = darCollectionDAO.insertDarCollection("DAR-CODE", user.getDacUserId(), new Date());
+        insertDAR(user.getDacUserId(), collection_id);
+        insertDAR(user.getDacUserId(), collection_id);
+        insertDAR(user.getDacUserId(), collection_id);
+        createdDarCollections.add(collection_id);
+        return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
     }
 
 }

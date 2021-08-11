@@ -61,15 +61,17 @@ public interface DarCollectionDAO {
       + "    FROM data_access_request) dar "
       + " ON c.collection_id = dar.collection_id "
       + " WHERE c.collection_id = :collectionId ")
-  DarCollection findDARCollectionByCollectionId(@Bind("collectionId") String collectionId);
+  DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId);
 
   @SqlUpdate("INSERT INTO dar_collection " +
-    " (collection_id, dar_code, create_user, create_date) " +
-    " VALUES (:collectionId, :darCode, :createUserId, :createDate)")
+    " (dar_code, create_user, create_date) " +
+    " VALUES (:darCode, :createUserId, :createDate)")
   @GetGeneratedKeys
-  Integer insertDarCollection(@Bind("collectionId") Integer collectionId,
-                            @Bind("darCode") String darCode,
+  Integer insertDarCollection(@Bind("darCode") String darCode,
                             @Bind("createUserId") Integer createUserId,
                             @Bind("createDate") Date createDate);
+
+  @SqlUpdate("DELETE * FROM dar_collection WHERE collection_id = :collectionId")
+  void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
 }
 

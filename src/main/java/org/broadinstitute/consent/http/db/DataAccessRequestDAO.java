@@ -176,6 +176,32 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("data") @Json DataAccessRequestData data);
 
   /**
+   * Create new DataAccessRequest.
+   * This version supercedes `insertV2`
+   *
+   * @param collectionId Integer DarCollection
+   * @param referenceId String
+   * @param userId Integer User
+   * @param createDate Date Creation Date
+   * @param sortDate Date Sorting Date
+   * @param submissionDate Date Submission Date
+   * @param updateDate Date Update Date
+   * @param data DataAccessRequestData DAR Properties
+   */
+  @RegisterArgumentFactory(JsonArgumentFactory.class)
+  @SqlUpdate(
+    "INSERT INTO data_access_request (collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data) VALUES (:collectionId, :referenceId, :userId, :createDate, :sortDate, :submissionDate, :updateDate, to_jsonb(:data)) ")
+  void insertVersion3(
+    @Bind("collectionId") Integer collectionId,
+    @Bind("referenceId") String referenceId,
+    @Bind("userId") Integer userId,
+    @Bind("createDate") Date createDate,
+    @Bind("sortDate") Date sortDate,
+    @Bind("submissionDate") Date submissionDate,
+    @Bind("updateDate") Date updateDate,
+    @Bind("data") @Json DataAccessRequestData data);
+
+  /**
    * Insert DataAccessRequest by reference id and provided DataAccessRequestData
    *
    * @param referenceId String
