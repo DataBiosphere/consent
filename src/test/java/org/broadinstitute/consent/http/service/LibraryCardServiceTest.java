@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 
 public class LibraryCardServiceTest {
@@ -272,6 +273,19 @@ public class LibraryCardServiceTest {
                 .thenReturn(null);
         doNothing().when(libraryCardDAO).deleteLibraryCardById(any());
 
+        initService();
+        service.deleteLibraryCardById(libraryCard.getId(), user);
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void testDeleteLibraryCard_Forbidden_Error() {
+        Institution institution = testInstitution();
+        Integer modifiedId = institution.getId() + 1;
+        User user = testUser(institution.getId());
+        UserRole soRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+        user.addRole(soRole);
+        LibraryCard libraryCard = testLibraryCard(modifiedId, user.getDacUserId());
+        when(libraryCardDAO.findLibraryCardById(any())).thenReturn(libraryCard);
         initService();
         service.deleteLibraryCardById(libraryCard.getId(), user);
     }
