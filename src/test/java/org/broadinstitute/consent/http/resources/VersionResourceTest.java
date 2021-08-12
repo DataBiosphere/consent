@@ -18,7 +18,7 @@ public class VersionResourceTest {
     @Test
     public void testGetVersion() {
         Response response = resources.target("/version").request().get();
-        Assert.assertEquals(response.getStatus(), 200);
+        Assert.assertEquals(200, response.getStatus());
     }
 
 }
