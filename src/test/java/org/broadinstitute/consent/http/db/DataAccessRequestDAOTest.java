@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static junit.framework.TestCase.assertNull;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.User;
@@ -177,6 +178,19 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(institutionId);
         assertFalse(newDars.isEmpty());
         assertEquals(1, newDars.size());
+
+    }
+
+    @Test
+    public void testDeleteByCollectionId() {
+        //creates a dar with a collection ID (also creates a DarCollection)
+        DataAccessRequest dar = createDataAccessRequestV3();
+        DataAccessRequest returned = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+        assertNotNull(returned);
+        assertEquals(dar.getId(), returned.getId());
+        dataAccessRequestDAO.deleteByCollectionId(dar.getCollectionId());
+        DataAccessRequest returnedAfter = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+        assertNull(returnedAfter);
 
     }
 

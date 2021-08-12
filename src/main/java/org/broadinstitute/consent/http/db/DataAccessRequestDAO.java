@@ -152,6 +152,14 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   void deleteByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
+   * Delete all DataAccessRequests with the given collection id
+   *
+   * @param collectionId Integer
+   */
+  @SqlUpdate("DELETE FROM data_access_request WHERE collection_id = :collectionId")
+  void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
+
+  /**
    * Create new DataAccessRequest.
    * This version supercedes `insert`
    *
