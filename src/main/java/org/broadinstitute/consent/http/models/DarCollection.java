@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.jdbi.v3.json.Json;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -21,13 +21,13 @@ public class DarCollection {
   Timestamp createDate;
 
   @JsonProperty
-  User createUser;
+  Integer createUser;
 
   @JsonProperty
   Timestamp updateDate;
 
   @JsonProperty
-  User updateUser;
+  Integer updateUser;
 
   @JsonProperty
   List<DataAccessRequest> dars;
@@ -58,15 +58,15 @@ public class DarCollection {
     this.createDate = createDate;
   }
 
-  public User getCreateUser() {
+  public Integer getCreateUser() {
     return createUser;
   }
 
-  public void setCreateUser(User createUser) {
+  public void setCreateUser(Integer createUser) {
     this.createUser = createUser;
   }
 
-  public Timestamp getUpdateDate() {
+  public Date getUpdateDate() {
     return updateDate;
   }
 
@@ -74,11 +74,11 @@ public class DarCollection {
     this.updateDate = updateDate;
   }
 
-  public User getUpdateUser() {
+  public Integer getUpdateUser() {
     return updateUser;
   }
 
-  public void setUpdateUser(User updateUser) {
+  public void setUpdateUser(Integer updateUser) {
     this.updateUser = updateUser;
   }
 
