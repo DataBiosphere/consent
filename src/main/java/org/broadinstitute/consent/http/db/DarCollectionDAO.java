@@ -1,8 +1,10 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.db.mapper.DarCollectionReducer;
+import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -16,9 +18,10 @@ public interface DarCollectionDAO {
   /**
    * Find all DARCollections with their DataAccessRequests
    *
-   * @return List<DataAccessRequest>
+   * @return List<DarCollection>
    */
   @RegisterBeanMapper(DarCollection.class)
+  @RegisterRowMapper(DataAccessRequestMapper.class)
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT * FROM dar_collection c "
@@ -29,12 +32,30 @@ public interface DarCollectionDAO {
      + " ON c.collection_id = dar.dar_collection_id ")
   List<DarCollection> findAllDARCollections();
 
+
+  /**
+   * Find all DARCollections with their DataAccessRequests
+   *
+   * @return List<DarCollection>
+   */
+  @RegisterBeanMapper(DarCollection.class)
+  @RegisterRowMapper(DataAccessRequestMapper.class)
+  @UseRowReducer(DarCollectionReducer.class)
+  @SqlQuery(
+    "SELECT * FROM dar_collection c "
+      + " LEFT JOIN "
+      + "    (SELECT id, reference_id, collection_id AS dar_collection_id, draft, user_id, create_date AS dar_create_date, "
+      + "            submission_date, update_date AS dar_update_date, (data #>> '{}')::jsonb AS data "
+      + "    FROM data_access_request) dar "
+      + " ON c.collection_id = dar.dar_collection_id ")
+  List<DarCollection> findAllDARCollectionsWithFilters();
   /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given referenceId
    *
-   * @return List<DataAccessRequest>
+   * @return DarCollection
    */
   @RegisterBeanMapper(DarCollection.class)
+  @RegisterRowMapper(DataAccessRequestMapper.class)
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT * FROM dar_collection c "
@@ -49,9 +70,10 @@ public interface DarCollectionDAO {
   /**
    * Find the DARCollection and all of its Data Access Requests that has the given collectionId
    *
-   * @return List<DataAccessRequest>
+   * @return DarCollection
    */
   @RegisterBeanMapper(DarCollection.class)
+  @RegisterRowMapper(DataAccessRequestMapper.class)
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT * FROM dar_collection c "
@@ -63,6 +85,11 @@ public interface DarCollectionDAO {
       + " WHERE c.collection_id = :collectionId ")
   DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId);
 
+  /**
+   * Create a new DAR Collection with the given dar code, create user ID, and create date
+   *
+   * @return Integer, ID of newly created DarCollection
+   */
   @SqlUpdate("INSERT INTO dar_collection " +
     " (dar_code, create_user, create_date) " +
     " VALUES (:darCode, :createUserId, :createDate)")
@@ -71,7 +98,10 @@ public interface DarCollectionDAO {
                             @Bind("createUserId") Integer createUserId,
                             @Bind("createDate") Date createDate);
 
-  @SqlUpdate("DELETE * FROM dar_collection WHERE collection_id = :collectionId")
+  /**
+   * Delete the DAR Collection with the given colelction ID
+   */
+  @SqlUpdate("DELETE FROM dar_collection WHERE collection_id = :collectionId")
   void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
 }
 
