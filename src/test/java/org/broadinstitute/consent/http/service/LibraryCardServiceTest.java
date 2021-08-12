@@ -48,8 +48,6 @@ public class LibraryCardServiceTest {
         this.service = new LibraryCardService(libraryCardDAO, institutionDAO, userDAO);
     }
 
-
-
     @Test
     // Test LC create with userId and email
     public void testCreateLibraryCardFullUserDetails() throws Exception {
@@ -115,6 +113,14 @@ public class LibraryCardServiceTest {
 
         LibraryCard payload = testLibraryCard(institution.getId(), user.getDacUserId());
         service.createLibraryCard(payload, adminUser);
+    }
+
+    @Test
+    public void testCreateLibraryCardAsSO() throws Exception {
+        initService();
+        Institution institution = testInstitution();
+        User soUser = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+        soUser.setInstitutionId(institution.getId());
     }
 
     @Test(expected = ConsentConflictException.class)

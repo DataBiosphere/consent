@@ -198,6 +198,8 @@ public interface UserDAO extends Transactional<UserDAO> {
     @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
     @UseRowReducer(UsersAndCardsReducer.class)
     @SqlQuery(
+            //This portion will pull in LCs that are designated to unregistered users
+            //LCs pulled in are only from SOs institution
             "SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
             " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, " +
             " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
@@ -209,6 +211,8 @@ public interface UserDAO extends Transactional<UserDAO> {
             " LEFT JOIN roles r ON r.roleid = ur.role_id " +
             " WHERE lc.institution_id = :institutionId AND lc.user_id IS NULL " +
             " UNION " + 
+                //This portion will pull in LCs tied to users within the institution
+                //LCs pulled in are only from the SOs institution.
                 " SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
                 " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, " +
                 " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
@@ -217,8 +221,6 @@ public interface UserDAO extends Transactional<UserDAO> {
                 " FROM dacuser du " +
                 " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
                 " LEFT JOIN roles r ON r.roleid = ur.role_id " +
-            // NOTE: I've limited the library cards to only those that belong to the institution
-            // It seemed a bit off to let Signing Officials see library cards of users belonging to other institutions
                 " LEFT JOIN library_card lc ON lc.user_id = du.dacuserid AND lc.institution_id = :institutionId " +
                 " WHERE du.institution_id = :institutionId")
     List<User> getUsersAndCardsForSO(@Bind("institutionId") Integer institutionId);
