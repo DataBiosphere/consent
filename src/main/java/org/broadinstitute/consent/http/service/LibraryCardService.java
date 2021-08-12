@@ -76,10 +76,8 @@ public class LibraryCardService {
         Boolean isAdmin = checkIsAdmin(user);
         LibraryCard card = findLibraryCardById(id);
         throwIfNull(card);
-        if(!isAdmin) {
-            if(!card.getInstitutionId().equals(user.getInstitutionId())) {
-                throw new ForbiddenException("You are not authorized to delete this library card");
-            }
+        if(!isAdmin && !card.getInstitutionId().equals(user.getInstitutionId())) {
+            throw new ForbiddenException("You are not authorized to delete this library card");
         }
         this.libraryCardDAO.deleteLibraryCardById(id);
     }
