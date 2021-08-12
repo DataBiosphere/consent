@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -82,7 +83,12 @@ public class DarCollection {
     this.updateUser = updateUser;
   }
 
-  public List<DataAccessRequest> getDars() { return dars; }
+  public List<DataAccessRequest> getDars() {
+    if (Objects.isNull(dars)) {
+      return new ArrayList<>();
+    }
+    return dars;
+  }
 
   public void setDars(List<DataAccessRequest> dars) { this.dars = dars; }
 
@@ -91,7 +97,23 @@ public class DarCollection {
       this.setDars(new ArrayList<>());
     }
     dars.add(dar);
-
   }
+
+  @Override
+  public boolean equals(Object obj){
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+
+    DarCollection other = (DarCollection) obj;
+    return new EqualsBuilder()
+      .append(this.getDarCollectionId(), other.getDarCollectionId())
+      .append(this.getDarCode(), other.getDarCode())
+      .isEquals();
+  }
+
 
 }
