@@ -307,6 +307,15 @@ public class UserResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
+  @Test
+  public void testGetUnassignedUsers() {
+    List<User> users = Collections.singletonList(createUserWithRole());
+    when(userService.findUsersWithNoInstitution()).thenReturn(users);
+    initResource();
+    Response response = userResource.getUnassignedUsers(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
   private User createUserWithRole() {
     User user = new User();
     user.setDacUserId(1);

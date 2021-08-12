@@ -115,7 +115,7 @@ public class UserResource extends Resource {
     @GET
     @Path("/institution/unassigned")
     @Produces("application/json")
-    @RolesAllowed({SIGNINGOFFICIAL})
+    @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
     public Response getUnassignedUsers(@Auth AuthUser user) {
         try {
             List<User> unassignedUsers = userService.findUsersWithNoInstitution();
