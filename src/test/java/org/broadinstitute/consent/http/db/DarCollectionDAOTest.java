@@ -27,36 +27,20 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     assertEquals(3, collection.getDars().size());
   }
 
-
+  //test stubs for uncompleted DAO call
   public void testFindAllDARCollectionsWithFilters_None() {
-    DarCollection collection = createDarCollection();
-    List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
-    assertTrue(allAfter.contains(collection));
-    assertEquals(1, allAfter.size());
   }
 
   //sort field and sort direction are populated, no filter terms present
   public void testFindAllDARCollectionsWithFilters_SortField() {
-    DarCollection collection = createDarCollection();
-    List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
-    assertTrue(allAfter.contains(collection));
-    assertEquals(1, allAfter.size());
   }
 
   //sort field and sort direction are not populated, and filter terms are present
   public void testFindAllDARCollectionsWithFilters_Filter() {
-    DarCollection collection = createDarCollection();
-    List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
-    assertTrue(allAfter.contains(collection));
-    assertEquals(1, allAfter.size());
   }
 
   //sort field and sort direction are populated, and filter terms are present
   public void testFindAllDARCollectionsWithFilters_Both() {
-    DarCollection collection = createDarCollection();
-    List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
-    assertTrue(allAfter.contains(collection));
-    assertEquals(1, allAfter.size());
   }
 
   @Test

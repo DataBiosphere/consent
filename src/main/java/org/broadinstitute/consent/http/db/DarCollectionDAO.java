@@ -22,34 +22,63 @@ public interface DarCollectionDAO {
    * @return List<DarCollection>
    */
   @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class)
+  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-    "SELECT * FROM dar_collection c "
-     + " LEFT JOIN "
-     + "    (SELECT id, reference_id, collection_id AS dar_collection_id, draft, user_id, create_date AS dar_create_date, "
-     + "            submission_date, update_date AS dar_update_date, (data #>> '{}')::jsonb AS data "
-     + "    FROM data_access_request) dar "
-     + " ON c.collection_id = dar.dar_collection_id ")
+    "SELECT c.*, dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, dar.draft AS dar_draft," +
+      " dar.user_id AS dar_userId, dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date, " +
+      " dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data FROM dar_collection c "
+     + " LEFT JOIN data_access_request dar"
+     + " ON c.collection_id = dar.collection_id "
+  )
   List<DarCollection> findAllDARCollections();
 
 
   /**
-   * Find all DARCollections with their DataAccessRequests
+   * Find all DARCollections with their DataAccessRequests that match the given filters
+   *
+   * FilterTerms filter on dar project title, datasetNames, collection dar code, collection update date, and DAC
+   * SortField can be projectTitle, datasetNames, dar code, update date, or DAC
+   * SortDirection can be ASC or DESC
    *
    * @return List<DarCollection>
    */
-  @RegisterBeanMapper(DarCollection.class)
-  @RegisterRowMapper(DataAccessRequestMapper.class)
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(
-    "SELECT * FROM dar_collection c "
-      + " LEFT JOIN "
-      + "    (SELECT id, reference_id, collection_id AS dar_collection_id, draft, user_id, create_date AS dar_create_date, "
-      + "            submission_date, update_date AS dar_update_date, (data #>> '{}')::jsonb AS data "
-      + "    FROM data_access_request) dar "
-      + " ON c.collection_id = dar.dar_collection_id ")
-  List<DarCollection> findAllDARCollectionsWithFilters(String sortField, String sortDirection, List<String> filterTerms);
+
+  //this is merely a rough draft, an idea, it does not work (CONTAINS can be replaced with @>)
+  //look at changeSet 73, could do something like that: WHEN POSITION(filterTerm in  (data #>> '{}')::jsonb->>'dar_code') > 0
+  // for ANY filterTerm in filterTerms
+
+//  @RegisterBeanMapper(DarCollection.class)
+//  @RegisterRowMapper(DataAccessRequestMapper.class)
+//  @UseRowReducer(DarCollectionReducer.class)
+//  @SqlQuery(
+//    "SELECT * FROM dar_collection c "
+//      + " LEFT JOIN "
+//      + "    (SELECT id, reference_id, collection_id AS dar_collection_id, draft, user_id, create_date AS dar_create_date, "
+//      + "            submission_date, update_date AS dar_update_date, (data #>> '{}')::jsonb AS data "
+//      + "    FROM data_access_request) dar "
+//      + " ON c.collection_id = dar.dar_collection_id "
+//      + " WHERE (dar.data->>'projectTitle') AS project_title CONTAINS ANY filterTerms "
+//      + " OR ((dar.data->>'datasets')->>'labels') AS datasets CONTAINS ANY filterTerms "
+//      + " OR c.dar_code CONTAINS ANY filterTerms "
+//      + " OR format(c.update_date) CONTAINS ANY filterTerms "
+//      + " OR (SELECT name FROM dac "
+//      + "        LEFT OUTER JOIN consents c ON c.dac_id = dac.dac_id "
+//      + "        LEFT OUTER JOIN consentassociations ca ON ca.consentid = c.consentid "
+//      + "        LEFT OUTER JOIN dataset d ON ca.datasetid = d.datasetid"m
+//      + "    WHERE ((dar.data->>'datasetIds') CONTAINS d.datasetid) dacname "
+//      + "    CONTAINS ANY filterTerms "
+//      + " IF sortField = 'projectTitle' ORDER BY projectTitle :sortDirection "
+//      + " IF sortField = 'datasets' ORDER BY projectTitle :sortDirection "
+//      + " IF sortField = 'darCode' ORDER BY c.dar_code :sortDirection "
+//      + " IF sortField = 'lastUpdated' ORDER BY c.update_date :sortDirection "
+//      + " IF sortField = 'dac' ORDER BY dacname :sortDirection "
+//      + " OFFSET :offset LIMIT :limit" )
+//  List<DarCollection> findAllDARCollectionsWithFilters(@Bind("sortField") String sortField,
+//                                                       @Bind("sortDirection") String sortDirection,
+//                                                      @Bind("filterterms) List<String> filterTerms,
+//                                                      @Bind("offset") Integer offset,
+//                                                      @Bind("limit") Integer limit);
   /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given referenceId
    *
