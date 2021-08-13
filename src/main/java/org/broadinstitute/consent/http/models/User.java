@@ -10,6 +10,9 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 
+import java.beans.Transient;
+import java.util.stream.Collectors;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -53,6 +56,9 @@ public class User {
 
     @JsonProperty
     private Integer institutionId;
+
+    @JsonProperty
+    private String eraCommonsId;
 
     private Institution institution;
 
@@ -284,6 +290,14 @@ public class User {
 
     public void setInstitutionId(Integer institutionId) { this.institutionId = institutionId; }
 
+    public String getEraCommonsId() {
+        return eraCommonsId;
+    }
+
+    public void setEraCommonsId(String eraCommonsId) {
+        this.eraCommonsId = eraCommonsId;
+    }
+
     public void setInstitution(Institution institution) {
         this.institution = institution;
     }
@@ -349,6 +363,14 @@ public class User {
         } else {
             return this.getRoles().stream().anyMatch((r) -> r.getRoleId().equals(role.getRoleId()));
         }
+    }
+
+    @Transient
+    public List<Integer> getUserRoleIdsFromUser() {
+        return this.getRoles()
+          .stream()
+          .map(UserRole::getRoleId)
+          .collect(Collectors.toList());
     }
 
 }

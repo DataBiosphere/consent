@@ -20,12 +20,14 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -131,6 +133,28 @@ public class DataAccessRequestResourceTest {
 
     @Test
     public void testDescribeManageDataAccessRequestsV2() {
+        User user = new User();
+        user.setRoles(Collections.singletonList(new UserRole(4, UserRoles.ADMIN.getRoleName())));
+        DataAccessRequest dar = generateDataAccessRequest();
+        DataAccessRequestManage manage = new DataAccessRequestManage();
+        manage.setDar(dar);
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(dataAccessRequestService.describeDataAccessRequestManageV2(any(), any()))
+            .thenReturn(Collections.singletonList(manage));
+        resource = new DataAccessRequestResource(
+            dataAccessRequestService,
+            userService,
+            consentService, electionService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeManageDataAccessRequestsV2_WithRole() {
+        User researcher = new User();
+        researcher.setDacUserId(1);
+        researcher.setRoles(Arrays.asList(new UserRole(5, UserRoles.RESEARCHER.getRoleName())));
+        when(userService.findUserByEmail(any())).thenReturn(researcher);
         DataAccessRequest dar = generateDataAccessRequest();
         DataAccessRequestManage manage = new DataAccessRequestManage();
         manage.setDar(dar);
@@ -140,7 +164,7 @@ public class DataAccessRequestResourceTest {
             dataAccessRequestService,
             userService,
             consentService, electionService);
-        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of("Researcher"));
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 

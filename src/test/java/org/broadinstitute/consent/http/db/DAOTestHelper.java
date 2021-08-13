@@ -347,6 +347,7 @@ public class DAOTestHelper {
     protected User createUserForInstitution(Integer institutionId) {
         String email = RandomStringUtils.randomAlphabetic(11);
         Integer userId = userDAO.insertUser(email, "displayName", new Date());
+        createdUserIds.add(userId);
         userDAO.updateUser(email, userId, "additionalEmail", institutionId);
         return userDAO.findUserById(userId);
     }

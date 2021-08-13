@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpResponse;
-import org.apache.commons.io.FileUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.OntologyTypes;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
@@ -14,14 +13,13 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import java.io.File;
 import java.net.URLDecoder;
 import java.util.List;
 
 /**
  * Created by SantiagoSaucedo on 3/11/2016.
  */
-@Path("{api : (api/)?}ontology/")
+@Path("api/ontology/")
 public class IndexerResource extends Resource {
 
     private final IndexerService indexerService;

@@ -14,7 +14,6 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
@@ -34,7 +33,6 @@ import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.bson.Document;
 
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
@@ -104,48 +102,40 @@ public class DataAccessRequestResource extends Resource {
         return c;
     }
 
-
-    @GET
-    @Produces("application/json")
-    @Path("/manage")
-    @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
-    @Deprecated // Use describeManageDataAccessRequestsV2
-    public Response describeManageDataAccessRequests(@Auth AuthUser authUser) {
-        // If a user id is provided, ensure that is the current user.
-        try{
-            User user = userService.findUserByEmail(authUser.getName());
-            Integer userId = user.getDacUserId();
-            List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManage(userId, authUser);
-            return Response.ok().entity(dars).build();
-        } catch(Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
     @GET
     @Produces("application/json")
     @Path("/manage/v2")
-    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL})
+    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
     public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser, @QueryParam("roleName") Optional<String> roleName) {
         try {
             User user = userService.findUserByEmail(authUser.getName());
             String roleNameValue = roleName.orElse(null);
-            if (Objects.nonNull(roleNameValue)) {
-                boolean valid = UserRoles.isValidRole(roleNameValue);
-                if (valid) {
-                    //if the roleName is SO and the user does not have that role throw an exception
-                    if (roleNameValue.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-                        if (!user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
-                           throw new NotFoundException("User: " + user.getDisplayName() + ", " + " does not have Signing Official role.");
-                       }
-                   } else {
-                        throw new BadRequestException("Signing Official Role is the only role supported at this time");
-                    }
-                } else {
+            UserRoles queriedUserRole = UserRoles.getUserRoleFromName(roleNameValue);
+            if (roleName.isPresent()) {
+                //if a roleName was passed in but it is not in the UserRoles enum throw exception
+                if (Objects.isNull(queriedUserRole)) {
                     throw new BadRequestException("Invalid role name: " + roleNameValue);
+                } else {
+                    //if there is a valid roleName but it is not SO or Researcher then throw an exception
+                    if (queriedUserRole != UserRoles.RESEARCHER && queriedUserRole != UserRoles.SIGNINGOFFICIAL) {
+                        throw new BadRequestException("Unsupported role name: " +  queriedUserRole.getRoleName());
+                    }
+                    //if the user does not have the given roleName throw NotFoundException
+                    if (!user.hasUserRole(queriedUserRole)) {
+                        throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " +  queriedUserRole.getRoleName() + " role.");
+                    }
+                }
+            //if no roleName was passed in, find the user's role
+            } else {
+                if (user.hasUserRole(UserRoles.ADMIN)) {
+                    queriedUserRole = UserRoles.ADMIN;
+                } else if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
+                    queriedUserRole = UserRoles.CHAIRPERSON;
+                } else if (user.hasUserRole(UserRoles.MEMBER)) {
+                    queriedUserRole = UserRoles.MEMBER;
                 }
             }
-            List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(user, roleNameValue);
+            List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(user, queriedUserRole);
             return Response.ok().entity(dars).build();
         } catch(Exception e) {
             return createExceptionResponse(e);
@@ -185,7 +175,7 @@ public class DataAccessRequestResource extends Resource {
      */
     private Optional<Integer> getDatasetIdForDarId(String id) {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-        List<Integer> datasetIdList = (Objects.nonNull(dar.getData()) && Objects.nonNull(dar.getData().getDatasetIds())) ?
+        List<Integer> datasetIdList = (Objects.nonNull(dar.getData())) ?
                 dar.getData().getDatasetIds() :
                 Collections.emptyList();
         if (datasetIdList == null || datasetIdList.isEmpty()) {

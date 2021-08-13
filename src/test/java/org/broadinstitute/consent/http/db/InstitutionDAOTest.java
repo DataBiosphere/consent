@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
-
-import com.google.gson.Gson;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Institution;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -94,5 +93,23 @@ public class InstitutionDAOTest extends DAOTestHelper {
     createInstitution();
     List<Institution> instituteListUpdated = institutionDAO.findAllInstitutions();
     assertEquals(1, instituteListUpdated.size());
+  }
+
+  @Test
+  public void testFindAllInstitutions_InstitutionWithSOs() {
+    List<Institution> instituteList = institutionDAO.findAllInstitutions();
+    assertEquals(0, instituteList.size());
+
+    //inserts institution, inserts user with that institution id and SO role
+    User user = createUserWithInstitution();
+
+    List<Institution> instituteListUpdated = institutionDAO.findAllInstitutions();
+    assertEquals(1, instituteListUpdated.size());
+
+    Institution institution = instituteListUpdated.get(0);
+    assertEquals(1, institution.getSigningOfficials().size());
+    assertEquals(user.getInstitutionId(), institution.getId());
+    assertEquals(user.getDisplayName(), institution.getSigningOfficials().get(0).displayName);
+    
   }
 }

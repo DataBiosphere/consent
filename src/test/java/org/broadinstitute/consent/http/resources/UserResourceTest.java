@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -277,26 +279,32 @@ public class UserResourceTest {
     assertEquals(400, response.getStatus());
   }
 
+  @SuppressWarnings({"unchecked"})
   @Test
   public void testGetSOsForInstitution() {
     User user = createUserWithInstitution();
     User so = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.findSOsByInstitutionId(any())).thenReturn(Arrays.asList(userService.new SimplifiedUser(so), userService.new SimplifiedUser(so)));
+    when(userService.findSOsByInstitutionId(any())).thenReturn(Arrays.asList(new UserService.SimplifiedUser(so), new UserService.SimplifiedUser(so)));
     initResource();
     Response response = userResource.getSOsForInstitution(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    var body = (List<UserService.SimplifiedUser>) response.getEntity();
+    assertFalse(body.isEmpty());
+    assertEquals(so.getDisplayName(), body.get(0).displayName);
   }
 
+  @SuppressWarnings("rawtypes")
   @Test
   public void testGetSOsForInstitution_NoInstitution() {
     User user = createUserWithRole();
-    User so = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.findSOsByInstitutionId(any())).thenReturn(Arrays.asList(userService.new SimplifiedUser(so), userService.new SimplifiedUser(so)));
+    when(userService.findSOsByInstitutionId(any())).thenReturn(Collections.emptyList());
     initResource();
     Response response = userResource.getSOsForInstitution(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    var body = (List) response.getEntity();
+    assertTrue(body.isEmpty());
   }
 
   @Test
@@ -314,6 +322,45 @@ public class UserResourceTest {
     initResource();
     Response response = userResource.getUnassignedUsers(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testDeleteRoleFromUser() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.RESEARCHER.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    User returnedUser = new User((String)response.getEntity());
+    assertEquals(user.getEmail(), returnedUser.getEmail());
+  }
+
+  @Test
+  public void testDeleteRoleFromUser_InvalidRole() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), 8);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testDeleteRoleFromUser_UserWithoutRole() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.ADMIN.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    User returnedUser = new User((String)response.getEntity());
+    assertEquals(user.getEmail(), returnedUser.getEmail());
+  }
+
+  @Test
+  public void testDeleteRoleFromUser_UserNotFound() {
+    when(userService.findUserById(any())).thenThrow(new NotFoundException());
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, 1, UserRoles.ADMIN.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   private User createUserWithRole() {

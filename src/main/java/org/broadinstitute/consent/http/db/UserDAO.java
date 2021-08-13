@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.db.mapper.UsersAndCardsReducer;
-import org.broadinstitute.consent.http.db.mapper.UserWithPropertiesReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -33,7 +31,8 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, u.institution_id, "
-        + "     i.institution_id as i_id, i.institution_name as i_name, " 
+        + "     u.era_commons_id, "
+        + "     i.institution_id as i_id, i.institution_name as i_name, "
         + "     i.it_director_name as i_it_director_name, i.it_director_email as i_it_director_email, "
         + "     i.create_date as i_create_date, i.update_date as i_update_date, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name  "
@@ -43,18 +42,6 @@ public interface UserDAO extends Transactional<UserDAO> {
         + " LEFT JOIN institution i ON u.institution_id = i.institution_id"
         + " WHERE u.dacuserid = :dacUserId")
     User findUserById(@Bind("dacUserId") Integer dacUserId);
-
-    @RegisterBeanMapper(value = User.class)
-    @RegisterBeanMapper(value = UserProperty.class)
-    @UseRowReducer(UserWithPropertiesReducer.class)
-    @SqlQuery("SELECT "
-        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.status, u.rationale, u.institution_id, "
-        + "     p.propertykey, p.propertyvalue"
-        + " FROM dacuser u "
-        + " LEFT JOIN user_property p ON p.userid = u.dacuserid "
-        + " WHERE u.dacuserid = :dacUserId")
-    User findUserWithPropertiesById(@Bind("dacUserId") Integer dacUserId);
 
     @RegisterBeanMapper(value = User.class)
     @UseRowReducer(UserWithRolesReducer.class)
@@ -67,6 +54,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, u.institution_id, "
+        + "     u.era_commons_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
@@ -95,6 +83,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, u.institution_id, "
+        + "     u.era_commons_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
@@ -113,10 +102,6 @@ public interface UserDAO extends Transactional<UserDAO> {
                        @Bind("id") Integer id,
                        @Bind("additionalEmail") String additionalEmail,
                        @Bind("institutionId") Integer institutionId);
-
-    @Deprecated // Use deleteUserById instead
-    @SqlUpdate("DELETE FROM dacuser WHERE LOWER(email) = LOWER(:email)")
-    void deleteUserByEmail(@Bind("email") String email);
 
     @SqlUpdate("delete from dacuser where dacuserid = :id")
     void deleteUserById(@Bind("id") Integer id);
@@ -152,6 +137,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, u.institution_id, "
+        + "     u.era_commons_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
@@ -242,5 +228,10 @@ public interface UserDAO extends Transactional<UserDAO> {
       + " WHERE LOWER(r.name) = 'signingofficial' "
       + " AND u.institution_id = :institutionId")
     List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
+
+    @SqlUpdate("UPDATE dacuser SET " +
+      " era_commons_id = :eraCommonsId " +
+      " WHERE dacuserid = :userId")
+    void updateEraCommonsId(@Bind("userId") Integer userId, @Bind("eraCommonsId") String eraCommonsId);
 
 }

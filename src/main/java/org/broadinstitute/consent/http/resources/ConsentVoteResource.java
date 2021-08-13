@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 
-@Path("{api : (api/)?}consent/{consentId}/vote")
+@Path("api/consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
 
     private final EmailNotifierService emailNotifierService;

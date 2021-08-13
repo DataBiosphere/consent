@@ -1,0 +1,45 @@
+name: automation
+on: [ pull_request ]
+
+jobs:
+  automation-tests:
+    name: Automation Tests
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Log Actor
+        run: echo "${{ github.actor }}"
+
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Setup paths
+        run: |
+          mkdir -p automation/src/test/resources/accounts
+          mkdir -p target
+
+      - name: Render configs
+        env:
+          ADMIN: ${{ secrets.DUOS_AUTOMATION_ADMIN }}
+          CHAIR: ${{ secrets.DUOS_AUTOMATION_CHAIR }}
+          MEMBER: ${{ secrets.DUOS_AUTOMATION_MEMBER }}
+          RESEARCHER: ${{ secrets.DUOS_AUTOMATION_RESEARCHER }}
+          SIGNING_OFFICIAL: ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL }}
+        run: |
+          echo "$ADMIN" >> ./automation/src/test/resources/accounts/duos-automation-admin.json
+          echo "$CHAIR" >> ./automation/src/test/resources/accounts/duos-automation-chair.json
+          echo "$MEMBER" >> ./automation/src/test/resources/accounts/duos-automation-member.json
+          echo "$RESEARCHER" >> ./automation/src/test/resources/accounts/duos-automation-researcher.json
+          echo "$SIGNING_OFFICIAL" >> ./automation/src/test/resources/accounts/duos-automation-signing-official.json
+          ls -al ./automation/src/test/resources/accounts
+
+      - name: Run automation tests
+        run: |
+          cd ./automation
+          docker-compose -f docker-compose.yml up --quiet-pull --abort-on-container-exit --exit-code-from automation-tests
+
+      - name: Stop containers
+        if: always()
+        run: |
+          cd ./automation
+          docker-compose -f docker-compose.yml down

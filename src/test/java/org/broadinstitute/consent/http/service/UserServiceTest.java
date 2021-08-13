@@ -354,7 +354,7 @@ public class UserServiceTest {
     public void testGetUsersByUserRole_SO() {
         User u = generateUser();
         u.setInstitutionId(1);
-        when(userDAO.findUsersByInstitution(1)).thenReturn(Arrays.asList(new User(), new User(), new User()));
+        when(userDAO.getUsersAndCardsForSO(1)).thenReturn(Arrays.asList(new User(), new User(), new User()));
         initService();
 
         List<User> users = service.getUsersByUserRole(u, "SigningOfficial");

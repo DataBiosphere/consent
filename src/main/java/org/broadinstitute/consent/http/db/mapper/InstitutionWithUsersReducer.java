@@ -7,6 +7,7 @@ import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -45,6 +46,7 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
     update_user.setAdditionalEmail(rowView.getColumn("u2_additional_email", String.class));
     update_user.setEmailPreference(rowView.getColumn("u2_email_preference", Boolean.class));
     update_user.setRationale(rowView.getColumn("u2_rationale", String.class));
+    update_user.setEraCommonsId(rowView.getColumn("u2_era_commons_id", String.class));
 
     // Status is an enum type and we need to get the string value
     try {
@@ -57,6 +59,13 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
 
     institution.setCreateUser(create_user);
     institution.setUpdateUser(update_user);
+
+    if (Objects.nonNull(rowView.getColumn("so_dacuserid", Integer.class))) {
+      SimplifiedUser so_user = new SimplifiedUser();
+      so_user = rowView.getRow(SimplifiedUser.class);
+      institution.addSigningOfficial(so_user);
+    }
+
   }
 
   private String getStatus(RowView r, String columnName) {

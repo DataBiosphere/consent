@@ -147,6 +147,7 @@ hs_err_pid*
 automation/src/test/resources/application.conf
 automation/src/test/resources/logback.xml
 automation/src/test/resources/accounts/*.json
+automation/.bsp/*
 
 ## APP
 

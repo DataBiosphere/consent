@@ -23,7 +23,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
 import org.broadinstitute.consent.http.service.UserService;
 
-@Path("{api : (api/)?}approvalExpirationTime")
+@Path("api/approvalExpirationTime")
 public class ApprovalExpirationTimeResource extends Resource {
 
   private final ApprovalExpirationTimeService approvalExpirationTimeService;

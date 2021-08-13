@@ -1,7 +1,27 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.resources.Resource;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -10,26 +30,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.InstitutionDAO;
-import org.broadinstitute.consent.http.db.LibraryCardDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.LibraryCard;
-import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.resources.Resource;
-import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
-import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserService {
 
@@ -39,6 +41,7 @@ public class UserService {
     private final VoteDAO voteDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
     public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO) {
@@ -50,16 +53,31 @@ public class UserService {
         this.libraryCardDAO = libraryCardDAO;
     }
 
-    public class SimplifiedUser {
-        public final String displayName;
-        public final Integer userId;
-        public final String email;
+    public static class SimplifiedUser {
+        public Integer dacUserId;
+        public String displayName;
+        public String email;
 
         public SimplifiedUser(User user) {
             this.displayName = user.getDisplayName();
-            this.userId = user.getDacUserId();
+            this.dacUserId = user.getDacUserId();
             this.email = user.getEmail();
-        };
+        }
+
+        public SimplifiedUser() {
+        }
+
+        public void setDacUserId(Integer userId) {
+            this.dacUserId = userId;
+        }
+
+        public void setDisplayName(String name) {
+            this.displayName = name;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
     }
 
     public User createUser(User user) {
@@ -106,9 +124,8 @@ public class UserService {
                     throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") is not associated with an Institution.");
                 }
             case Resource.ADMIN :
-                List<User> users = new ArrayList<>(userDAO.findUsers());
-                return users;
-        } 
+                return new ArrayList<>(userDAO.findUsers());
+        }
         return Collections.emptyList();
     }
 
@@ -131,7 +148,7 @@ public class UserService {
             voteDAO.removeVotesByIds(voteIds);
         }
         userPropertyDAO.deleteAllPropertiesByUser(user.getDacUserId());
-        userDAO.deleteUserByEmail(email);
+        userDAO.deleteUserById(user.getDacUserId());
     }
 
     public List<UserProperty> findAllUserProperties(Integer userId) {
@@ -199,7 +216,12 @@ public class UserService {
         }
 
         List<User> users = userDAO.getSOsByInstitution(institutionId);
-        return users.stream().map(u -> new SimplifiedUser(u)).collect(Collectors.toList());
+        return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    }
+
+    public void deleteUserRole(User authUser, Integer dacUserId, Integer roleId) {
+        userRoleDAO.removeSingleUserRole(dacUserId, roleId);
+        logger.info("User " + authUser.getDisplayName() + " deleted roleId: " + roleId + " from User ID: " + dacUserId);
     }
 
     public List<User> findUsersWithNoInstitution() {
@@ -246,7 +268,6 @@ public class UserService {
         }
 
         libraryCards
-                .stream()
                 .forEach(lc -> {
                     lc.setUserId(user.getDacUserId());
 
