@@ -55,4 +55,9 @@ public class AuthUser implements Principal {
         this.email = email;
         return this;
     }
+
+    public AuthUser setName(String name) {
+        this.name = name;
+        return this;
+    }
 }
