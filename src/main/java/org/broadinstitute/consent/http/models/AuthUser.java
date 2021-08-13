@@ -6,58 +6,57 @@ import java.security.Principal;
 
 public class AuthUser implements Principal {
 
-    private String authToken;
-    private String email;
-    private String name;
-    private GoogleUser googleUser;
+  private String authToken;
+  private String email;
+  private GoogleUser googleUser;
+  private String name;
 
-    public AuthUser() {
-    }
+  public AuthUser() {}
 
-    public AuthUser(String email) {
-        this.email = email;
-    }
+  public AuthUser(String email) {
+    this.email = email;
+  }
 
-    public AuthUser(GoogleUser googleUser) {
-        this.name = googleUser.getName();
-        this.email = googleUser.getEmail();
-        this.googleUser = googleUser;
-    }
+  public AuthUser(GoogleUser googleUser) {
+    this.name = googleUser.getName();
+    this.email = googleUser.getEmail();
+    this.googleUser = googleUser;
+  }
 
-    public String getEmail() {
-        return email;
-    }
+  public String getAuthToken() {
+    return authToken;
+  }
 
-    public GoogleUser getGoogleUser() {
-        return googleUser;
-    }
+  public AuthUser setAuthToken(String authToken) {
+    this.authToken = authToken;
+    return this;
+  }
 
-    public String getAuthToken() {
-        return authToken;
-    }
+  public String getEmail() {
+    return email;
+  }
 
-    @Override
-    public String getName() {
-        return name;
-    }
+  public AuthUser setEmail(String email) {
+    this.email = email;
+    return this;
+  }
 
-    public AuthUser setAuthToken(String authToken) {
-        this.authToken = authToken;
-        return this;
-    }
+  public GoogleUser getGoogleUser() {
+    return googleUser;
+  }
 
-    public AuthUser setGoogleUser(GoogleUser googleUser) {
-        this.googleUser = googleUser;
-        return this;
-    }
+  public AuthUser setGoogleUser(GoogleUser googleUser) {
+    this.googleUser = googleUser;
+    return this;
+  }
 
-    public AuthUser setEmail(String email) {
-        this.email = email;
-        return this;
-    }
+  @Override
+  public String getName() {
+    return name;
+  }
 
-    public AuthUser setName(String name) {
-        this.name = name;
-        return this;
-    }
+  public AuthUser setName(String name) {
+    this.name = name;
+    return this;
+  }
 }
