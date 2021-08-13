@@ -155,7 +155,7 @@ public class DatasetResource extends Resource {
     @PermitAll
     public Response describeDataSets(@Auth AuthUser authUser) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             Collection<DatasetDTO> dataSetList = datasetService.describeDatasets(user.getDacUserId());
             return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
         } catch (Exception e) {
@@ -266,7 +266,7 @@ public class DatasetResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer dataSetId, @Context UriInfo info) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             datasetService.deleteDataset(dataSetId, user.getDacUserId());
             return Response.ok().build();
         } catch (Exception e) {
@@ -306,7 +306,7 @@ public class DatasetResource extends Resource {
     @PermitAll
     public Response datasetAutocomplete(@Auth AuthUser authUser, @PathParam("partial") String partial){
         try {
-            User dacUser = userService.findUserByEmail(authUser.getName());
+            User dacUser = userService.findUserByEmail(authUser.getEmail());
             Integer dacUserId = dacUser.getDacUserId();
             List<Map<String, String>> datasets = datasetService.autoCompleteDatasets(partial, dacUserId);
             return Response.ok(datasets, MediaType.APPLICATION_JSON).build();

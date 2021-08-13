@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 public class NihService {
 
@@ -38,7 +37,7 @@ public class NihService {
             userDAO.updateEraCommonsId(userId, nihAccount.getNihUsername());
             return updatedProps;
         } else {
-            throw new BadRequestException("Invalid NIH UserName for user : " + authUser.getName());
+            throw new BadRequestException("Invalid NIH UserName for user : " + authUser.getEmail());
         }
     }
 
