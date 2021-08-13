@@ -24,7 +24,7 @@ public class DarCollectionReducer implements LinkedHashMapRowReducer<Integer, Da
         id -> rowView.getRow(DarCollection.class));
 
       try{
-        if(Objects.nonNull(collection) && Objects.nonNull(rowView.getColumn("id", Integer.class))) {
+        if(Objects.nonNull(collection) && Objects.nonNull(rowView.getColumn("dar_id", Integer.class))) {
           dar = rowView.getRow(DataAccessRequest.class);
 
 //          String darDataString = resultSet.getObject("data", PGobject.class).getValue();
@@ -43,10 +43,7 @@ public class DarCollectionReducer implements LinkedHashMapRowReducer<Integer, Da
 //              throw new SQLException(message);
 //            }
 //          }
-          //aliased fields must be set directly
-          dar.setCollectionId(rowView.getColumn("dar_collection_id", Integer.class));
-          dar.setCreateDate(rowView.getColumn("dar_create_date", Timestamp.class));
-          dar.setUpdateDate(rowView.getColumn("dar_update_date", Timestamp.class));
+
         }
       } catch(MappingException e) {
         //ignore any exceptions

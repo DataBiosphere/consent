@@ -1,11 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.db.mapper.DarCollectionReducer;
-import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -16,6 +14,14 @@ import java.util.Date;
 import java.util.List;
 
 public interface DarCollectionDAO {
+
+  String getCollectionAndDars =
+    " SELECT c.*, dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
+    "        dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
+    "        dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
+    "        dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
+    " FROM dar_collection c, data_access_request dar ";
+
   /**
    * Find all DARCollections with their DataAccessRequests
    *
@@ -25,11 +31,7 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-    "SELECT c.*, dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, dar.draft AS dar_draft," +
-      " dar.user_id AS dar_userId, dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date, " +
-      " dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data FROM dar_collection c "
-     + " LEFT JOIN data_access_request dar"
-     + " ON c.collection_id = dar.collection_id "
+    getCollectionAndDars + " WHERE c.collection_id = dar.collection_id"
   )
   List<DarCollection> findAllDARCollections();
 
@@ -85,17 +87,12 @@ public interface DarCollectionDAO {
    *
    * @return DarCollection
    */
-  @RegisterBeanMapper(DarCollection.class)
-  @RegisterBeanMapper(DataAccessRequest.class)
+  @RegisterBeanMapper(value = DarCollection.class)
+  @RegisterBeanMapper(value = DataAccessRequest.class,  prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-    "SELECT * FROM dar_collection c "
-      + " INNER JOIN "
-      + "    (SELECT id, reference_id, collection_id AS dar_collection_id, draft, user_id, create_date AS dar_create_date, "
-      + "            submission_date, update_date AS dar_update_date, (data #>> '{}')::jsonb AS data "
-      + "    FROM data_access_request"
-      + "    WHERE reference_id = :referenceId) dar "
-      + " ON c.collection_id = dar.dar_collection_id ")
+     getCollectionAndDars +
+     " WHERE c.collection_id = (SELECT collection_id FROM data_access_request WHERE reference_id = :referenceId )")
   DarCollection findDARCollectionByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
@@ -103,17 +100,11 @@ public interface DarCollectionDAO {
    *
    * @return DarCollection
    */
-  @RegisterBeanMapper(DarCollection.class)
-  @RegisterBeanMapper(DataAccessRequest.class)
+  @RegisterBeanMapper(value = DarCollection.class)
+  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-    "SELECT * FROM dar_collection c "
-      + " LEFT JOIN "
-      + "    (SELECT id, reference_id, collection_id AS dar_collection_id, draft, user_id, create_date AS dar_create_date, "
-      + "            submission_date, update_date AS dar_update_date, (data #>> '{}')::jsonb AS data "
-      + "    FROM data_access_request) dar "
-      + " ON c.collection_id = dar.dar_collection_id "
-      + " WHERE c.collection_id = :collectionId ")
+      getCollectionAndDars +  " WHERE c.collection_id = dar.collection_id AND c.collection_id = :collectionId ")
   DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId);
 
   /**
