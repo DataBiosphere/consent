@@ -79,13 +79,14 @@ public interface DarCollectionDAO {
 //                                                      @Bind("filterterms) List<String> filterTerms,
 //                                                      @Bind("offset") Integer offset,
 //                                                      @Bind("limit") Integer limit);
+
   /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given referenceId
    *
    * @return DarCollection
    */
   @RegisterBeanMapper(DarCollection.class)
-  @RegisterRowMapper(DataAccessRequestMapper.class)
+  @RegisterBeanMapper(DataAccessRequest.class)
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT * FROM dar_collection c "
@@ -103,7 +104,7 @@ public interface DarCollectionDAO {
    * @return DarCollection
    */
   @RegisterBeanMapper(DarCollection.class)
-  @RegisterRowMapper(DataAccessRequestMapper.class)
+  @RegisterBeanMapper(DataAccessRequest.class)
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT * FROM dar_collection c "
