@@ -15,6 +15,7 @@ import org.postgresql.util.PSQLState;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DarCollectionDAOTest extends DAOTestHelper  {
 
@@ -49,7 +50,8 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
     assertNotNull(collection);
     assertEquals(dar.getCollectionId(), collection.getDarCollectionId());
-    //assertTrue(collection.getDars().contains(dar));
+    List<String> ids = collection.getDars().stream().map(d -> d.getReferenceId()).collect(Collectors.toList());
+    assertTrue(ids.contains(dar.getReferenceId()));
   }
 
   @Test

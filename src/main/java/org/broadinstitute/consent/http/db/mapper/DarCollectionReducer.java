@@ -1,16 +1,12 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import com.google.gson.JsonSyntaxException;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
-import org.postgresql.util.PGobject;
 
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Objects;
 
@@ -26,24 +22,8 @@ public class DarCollectionReducer implements LinkedHashMapRowReducer<Integer, Da
       try{
         if(Objects.nonNull(collection) && Objects.nonNull(rowView.getColumn("dar_id", Integer.class))) {
           dar = rowView.getRow(DataAccessRequest.class);
-
-//          String darDataString = resultSet.getObject("data", PGobject.class).getValue();
-//          if (Objects.nonNull(darDataString)) {
-//            // Handle nested quotes
-//            String quoteFixedDataString = darDataString.replaceAll("\\\\\"", "'");
-//            // Inserted json data ends up double-escaped via standard jdbi insert.
-//            String escapedDataString = unescapeJava(quoteFixedDataString);
-//            try {
-//              DataAccessRequestData data = DataAccessRequestData.fromString(escapedDataString);
-//              data.setReferenceId(dar.getReferenceId());
-//              dar.setData(data);
-//            } catch (JsonSyntaxException | NullPointerException e) {
-//              String message = "Unable to parse Data Access Request, reference id: " + dar.getReferenceId() + "; error: " + e.getMessage();
-//              logger.error(message);
-//              throw new SQLException(message);
-//            }
-//          }
-
+          DataAccessRequestData data = RowMapperHelper.translate(rowView.getColumn("data", String.class));
+          dar.setData(data);
         }
       } catch(MappingException e) {
         //ignore any exceptions
