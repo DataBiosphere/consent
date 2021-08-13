@@ -471,7 +471,8 @@ public class DAOTestHelper {
 
     protected DataAccessRequest createDataAccessRequestV3() {
         User user = createUser();
-        Integer collection_id = darCollectionDAO.insertDarCollection("DAR-" + RandomUtils.nextInt(3, 5), user.getDacUserId(), new Date());
+        Integer collection_id = darCollectionDAO.insertDarCollection("DAR-" + RandomUtils.nextInt(100, 1000), user.getDacUserId(), new Date());
+        createdDarCollections.add(collection_id);
         return insertDAR(user.getDacUserId(), collection_id);
     }
 

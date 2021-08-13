@@ -13,6 +13,7 @@ public class DAOContainer {
   private CounterDAO counterDAO;
   private DacDAO dacDAO;
   private DataAccessRequestDAO dataAccessRequestDAO;
+  private DarCollectionDAO darCollectionDAO;
   private DatasetAssociationDAO datasetAssociationDAO;
   private DatasetDAO datasetDAO;
   private ElectionDAO electionDAO;
@@ -74,6 +75,15 @@ public class DAOContainer {
   public void setDataAccessRequestDAO(
       DataAccessRequestDAO dataAccessRequestDAO) {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
+  }
+
+  public DarCollectionDAO getDarCollectionDAO() {
+    return darCollectionDAO;
+  }
+
+  public void setDarCollectionDAO(
+    DarCollectionDAO darCollectionDAO) {
+    this.darCollectionDAO = darCollectionDAO;
   }
 
   public DatasetAssociationDAO getDatasetAssociationDAO() {

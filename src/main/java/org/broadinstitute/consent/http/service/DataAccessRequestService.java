@@ -27,6 +27,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -64,6 +65,7 @@ public class DataAccessRequestService {
     private final DacDAO dacDAO;
     private final DatasetDAO dataSetDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
+    private final DarCollectionDAO darCollectionDAO;
     private final ElectionDAO electionDAO;
     private final MatchDAO matchDAO;
     private final UserDAO userDAO;
@@ -81,6 +83,7 @@ public class DataAccessRequestService {
         this.counterService = counterService;
         this.dacDAO = container.getDacDAO();
         this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
+        this.darCollectionDAO = container.getDarCollectionDAO();
         this.dataSetDAO = container.getDatasetDAO();
         this.electionDAO = container.getElectionDAO();
         this.matchDAO = container.getMatchDAO();
@@ -410,6 +413,9 @@ public class DataAccessRequestService {
             dar.getSubmissionDate(),
             now,
             dar.getData());
+        if (Objects.nonNull(dar.getCollectionId())) {
+            darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getDacUserId(), now);
+        }
         return findByReferenceId(dar.getReferenceId());
     }
 

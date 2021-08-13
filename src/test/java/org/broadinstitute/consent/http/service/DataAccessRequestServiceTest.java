@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -64,6 +66,8 @@ public class DataAccessRequestServiceTest {
     @Mock
     private DataAccessRequestDAO dataAccessRequestDAO;
     @Mock
+    private DarCollectionDAO darCollectionDAO;
+    @Mock
     private DacDAO dacDAO;
     @Mock
     private UserDAO userDAO;
@@ -96,6 +100,7 @@ public class DataAccessRequestServiceTest {
         DAOContainer container = new DAOContainer();
         container.setConsentDAO(consentDAO);
         container.setDataAccessRequestDAO(dataAccessRequestDAO);
+        container.setDarCollectionDAO(darCollectionDAO);
         container.setInstitutionDAO(institutionDAO);
         container.setDacDAO(dacDAO);
         container.setUserDAO(userDAO);
@@ -201,10 +206,25 @@ public class DataAccessRequestServiceTest {
     @Test
     public void testUpdateByReferenceIdVersion2() {
         DataAccessRequest dar = generateDataAccessRequest();
+        dar.setCollectionId(RandomUtils.nextInt(0, 100));
         User user = new User(1, "email@test.org", "Display Name", new Date());
         dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(),
             any(), any(), any(), any());
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        initService();
+        DataAccessRequest newDar = service.updateByReferenceIdVersion2(user, dar);
+        assertNotNull(newDar);
+    }
+
+    @Test
+    public void testUpdateByReferenceIdVersion2_WithCollection() {
+        DataAccessRequest dar = generateDataAccessRequest();
+        User user = new User(1, "email@test.org", "Display Name", new Date());
+        dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(),
+          any(), any(), any(), any());
+        doNothing().when(darCollectionDAO).updateDarCollection(any(), any(), any());
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         initService();
         DataAccessRequest newDar = service.updateByReferenceIdVersion2(user, dar);
