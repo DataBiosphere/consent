@@ -32,6 +32,7 @@ public class LibraryCardService {
     public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) throws Exception {
         throwIfNull(libraryCard);
         Boolean isAdmin = checkIsAdmin(user);
+        //If user is not an admin, use user's institutionId rather than the value provided in the payload
         if (!isAdmin) {
             libraryCard.setInstitutionId(user.getInstitutionId());
         }
@@ -76,6 +77,7 @@ public class LibraryCardService {
         Boolean isAdmin = checkIsAdmin(user);
         LibraryCard card = findLibraryCardById(id);
         throwIfNull(card);
+        //If user is not an admin and LC institutionID doesn't match the users's throw a ForbiddenException
         if(!isAdmin && !card.getInstitutionId().equals(user.getInstitutionId())) {
             throw new ForbiddenException("You are not authorized to delete this library card");
         }

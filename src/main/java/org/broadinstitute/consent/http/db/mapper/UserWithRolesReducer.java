@@ -23,6 +23,7 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
         map.computeIfAbsent(
             rowView.getColumn("dacuserid", Integer.class),
             id -> rowView.getRow(User.class));
+    //ensure that empty LC array is initialized on user row
     if(Objects.isNull(user.getLibraryCards())) {
       user.setLibraryCards(new ArrayList<LibraryCard>());
     }
@@ -50,6 +51,9 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
     } catch(MappingException e) {
       //Ignore institution mapping errors, possible for new users to not have an institution
     }
+    //user role join can cause duplication of data if done in tandem with joins on other tables
+    //ex) The same LC can end up being repeated multiple times
+    //Below only adds LC if not currently saved on the array
     try {
       if(Objects.nonNull(rowView.getColumn("lc_id", Integer.class))) {
         LibraryCard lc = rowView.getRow(LibraryCard.class);

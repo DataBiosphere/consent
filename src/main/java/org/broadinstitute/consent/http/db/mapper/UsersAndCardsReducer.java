@@ -15,14 +15,19 @@ import org.jdbi.v3.core.result.RowView;
 public class UsersAndCardsReducer implements LinkedHashMapRowReducer<String, User> {
   @Override
   public void accumulate(Map<String, User> map, RowView rowView) {
-    //possible conflict between user ids and lc ids (can share ids between the two but not be related)
-    //However, email addresses do not have this issue (lc_user_email and user_email should be the same)
-    //As such, the email would be a better id than the actual ids
+    //Reduces addresses situation where SO console lists LCs in the context of the associated user
+    //At the same time, SOs can issue cards to users that have yet to join DUOS (custom email input)
+    //As such userIds alone can't be used as a map index
+    //Also userIds and LC ids can't be used interchangebly as an index either (possible conflict)
+    //Emails are unique among users and lcs, and an email tied to an lc corresponds to the email on the user model
+    //As such, emails are ideal for the map index.
     String lcEmail = rowView.getColumn("lc_user_email", String.class);
     String userEmail = rowView.getColumn("email", String.class);
     String email = Objects.nonNull(userEmail) ? userEmail : lcEmail; 
     User user = map.computeIfAbsent(email, id -> rowView.getRow(User.class));
 
+    //Unlike the other user reducers, a null user should be processed due to an accompanied LC
+    //As such use the LC to initialize some attributes (user email and LC array)
     if(Objects.isNull(user.getEmail())) {
       user.setEmail(email);
     }
@@ -51,8 +56,7 @@ public class UsersAndCardsReducer implements LinkedHashMapRowReducer<String, Use
         user.setInstitution(institution);
       }
     } catch (MappingException e) {
-      // Ignore institution mapping errors, possible for new users to not have an
-      // institution
+      // Ignore institution mapping errors, possible for new users to not have an institution
     }
     try {
       if (Objects.nonNull(rowView.getColumn("lc_id", Integer.class))) {
@@ -64,8 +68,7 @@ public class UsersAndCardsReducer implements LinkedHashMapRowReducer<String, Use
         }
       }
     } catch (MappingException e) {
-      // Ignore exceptions here, user may not have a library card issued under this
-      // instiution
+      // Ignore exceptions here, user may not have a library card issued
     }
   }
 

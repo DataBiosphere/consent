@@ -197,8 +197,8 @@ public interface UserDAO extends Transactional<UserDAO> {
             " LEFT JOIN roles r ON r.roleid = ur.role_id " +
             " WHERE lc.institution_id = :institutionId AND lc.user_id IS NULL " +
             " UNION " + 
-                //This portion will pull in LCs tied to users within the institution
-                //LCs pulled in are only from the SOs institution.
+                //This portion will pull in users tied to the institution
+                //Users will come with LCs issued by SOs institution (if any)
                 " SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
                 " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, " +
                 " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
@@ -211,6 +211,9 @@ public interface UserDAO extends Transactional<UserDAO> {
                 " WHERE du.institution_id = :institutionId")
     List<User> getUsersAndCardsForSO(@Bind("institutionId") Integer institutionId);
 
+    //SO only endpoint (so far)
+    //Meant to pull in users that have not yet been assigned an institution
+    //(SOs can assign LCs to these users as well)
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)

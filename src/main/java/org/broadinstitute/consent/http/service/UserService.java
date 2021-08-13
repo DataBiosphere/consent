@@ -117,6 +117,9 @@ public class UserService {
 
     public List<User> getUsersByUserRole(User user, String roleName) {
         switch(roleName) {
+            //SigningOfficial console is technically pulling LCs, it's just bringing associated users along for the ride
+            //However LCs can be created for users not yet registered in the system
+            //As such a more specialzed query is needed to produce the proper listing
             case Resource.SIGNINGOFFICIAL :
                 if (Objects.nonNull(user.getInstitutionId())) {
                     return userDAO.getUsersAndCardsForSO(user.getInstitutionId());
