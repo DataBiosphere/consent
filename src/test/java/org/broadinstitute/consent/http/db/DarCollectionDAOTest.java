@@ -4,6 +4,7 @@ package org.broadinstitute.consent.http.db;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.User;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -19,6 +20,39 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
 
   @Test
   public void testFindAllDARCollections() {
+    DarCollection collection = createDarCollection();
+    List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
+    assertTrue(allAfter.contains(collection));
+    assertEquals(1, allAfter.size());
+    assertEquals(3, collection.getDars().size());
+  }
+
+
+  public void testFindAllDARCollectionsWithFilters_None() {
+    DarCollection collection = createDarCollection();
+    List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
+    assertTrue(allAfter.contains(collection));
+    assertEquals(1, allAfter.size());
+  }
+
+  //sort field and sort direction are populated, no filter terms present
+  public void testFindAllDARCollectionsWithFilters_SortField() {
+    DarCollection collection = createDarCollection();
+    List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
+    assertTrue(allAfter.contains(collection));
+    assertEquals(1, allAfter.size());
+  }
+
+  //sort field and sort direction are not populated, and filter terms are present
+  public void testFindAllDARCollectionsWithFilters_Filter() {
+    DarCollection collection = createDarCollection();
+    List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
+    assertTrue(allAfter.contains(collection));
+    assertEquals(1, allAfter.size());
+  }
+
+  //sort field and sort direction are populated, and filter terms are present
+  public void testFindAllDARCollectionsWithFilters_Both() {
     DarCollection collection = createDarCollection();
     List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
     assertTrue(allAfter.contains(collection));
@@ -63,6 +97,8 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     assertTrue(allBefore.isEmpty());
     DarCollection collection = createDarCollection();
     assertNotNull(collection);
+    List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
+    assertTrue(allAfter.contains(collection));
   }
 
   @Test
@@ -78,6 +114,36 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
       darCollectionDAO.insertDarCollection("darCode", userId, new Date());
     } catch (Exception e) {
       assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException)e.getCause()).getSQLState());
+    }
+  }
+
+  @Test
+  public void testUpdateDARCollection() {
+    DarCollection collection = createDarCollection();
+    assertNotNull(collection);
+    assertNull(collection.getUpdateDate());
+    assertNull(collection.getUpdateUser());
+    User user = createUser();
+    Date date = new Date();
+    darCollectionDAO.updateDarCollection(collection.getDarCollectionId(), user.getDacUserId(), date);
+    DarCollection updated = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+    assertEquals(user.getDacUserId(), updated.getUpdateUser());
+    assertEquals(date, updated.getUpdateDate());
+  }
+
+  @Test
+  public void testUpdateDarCollectionNegative() {
+    Integer userId = createUser().getDacUserId();
+    try {
+      darCollectionDAO.updateDarCollection(0, userId, new Date());
+    } catch (Exception e) {
+      assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException)e.getCause()).getSQLState());
+    }
+    try {
+      DarCollection collection = createDarCollection();
+      darCollectionDAO.updateDarCollection(collection.getDarCollectionId(), 0, new Date());
+    } catch (Exception e) {
+      assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException)e.getCause()).getSQLState());
     }
   }
 

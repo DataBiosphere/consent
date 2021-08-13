@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.db.mapper.DarCollectionReducer;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -20,8 +21,8 @@ public interface DarCollectionDAO {
    *
    * @return List<DarCollection>
    */
-  @RegisterBeanMapper(DarCollection.class)
-  @RegisterRowMapper(DataAccessRequestMapper.class)
+  @RegisterBeanMapper(value = DarCollection.class)
+  @RegisterBeanMapper(value = DataAccessRequest.class)
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT * FROM dar_collection c "
@@ -48,7 +49,7 @@ public interface DarCollectionDAO {
       + "            submission_date, update_date AS dar_update_date, (data #>> '{}')::jsonb AS data "
       + "    FROM data_access_request) dar "
       + " ON c.collection_id = dar.dar_collection_id ")
-  List<DarCollection> findAllDARCollectionsWithFilters();
+  List<DarCollection> findAllDARCollectionsWithFilters(String sortField, String sortDirection, List<String> filterTerms);
   /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given referenceId
    *
@@ -99,7 +100,15 @@ public interface DarCollectionDAO {
                             @Bind("createDate") Date createDate);
 
   /**
-   * Delete the DAR Collection with the given colelction ID
+   * Update the update user and update date of the DAR Collection with the given collection ID
+   */
+  @SqlUpdate("UPDATE dar_collection SET update_user = :updateUserId, update_date = :updateDate WHERE collection_id = :collectionId")
+  void updateDarCollection(@Bind("collectionId") Integer collectionId,
+                           @Bind("updateUserId") Integer updateUserId,
+                           @Bind("updateDate") Date updateDate);
+
+  /**
+   * Delete the DAR Collection with the given collection ID
    */
   @SqlUpdate("DELETE FROM dar_collection WHERE collection_id = :collectionId")
   void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
