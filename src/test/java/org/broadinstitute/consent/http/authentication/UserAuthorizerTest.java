@@ -28,8 +28,8 @@ public class UserAuthorizerTest {
     @Before
     public void setUp() {
         openMocks(this);
-        when(authorizedUser.getName()).thenReturn("Authorized User");
-        when(unauthorizedUser.getName()).thenReturn("Unauthorized User");
+        when(authorizedUser.getEmail()).thenReturn("Authorized User");
+        when(unauthorizedUser.getEmail()).thenReturn("Unauthorized User");
         when(userRoleDAO.findRoleNamesByUserEmail("Authorized User")).thenReturn(Collections.singletonList(getChairpersonRole().getName()));
         when(userRoleDAO.findRoleNamesByUserEmail("Unauthorized User")).thenReturn(Collections.singletonList(getChairpersonRole().getName()));
         authorizer = new UserAuthorizer(userRoleDAO);

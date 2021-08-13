@@ -83,7 +83,7 @@ public class DataUseLetterResource extends Resource {
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = consentService.updateConsentDul(consentId, dulUrl, name);
-            User dacUser = userService.findUserByEmail(user.getName());
+            User dacUser = userService.findUserByEmail(user.getEmail());
             auditService.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             return consent;
         } catch (UnknownIdentifierException e) {

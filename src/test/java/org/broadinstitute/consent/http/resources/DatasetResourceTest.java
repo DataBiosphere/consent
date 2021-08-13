@@ -168,7 +168,7 @@ public class DatasetResourceTest {
     @Test
     public void testDatasetAutocomplete() {
         List<Map<String, String>> autocompleteMap = Collections.singletonList(Collections.EMPTY_MAP);
-        when(authUser.getName()).thenReturn("testauthuser@test.com");
+        when(authUser.getEmail()).thenReturn("testauthuser@test.com");
         when(userService.findUserByEmail(anyString())).thenReturn(dacUser);
         when(dacUser.getDacUserId()).thenReturn(0);
         when(datasetService.autoCompleteDatasets(anyString(), anyInt())).thenReturn(autocompleteMap);
@@ -180,7 +180,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDescribeDatasetsSuccess() {
-        when(authUser.getName()).thenReturn("authUserEmail");
+        when(authUser.getEmail()).thenReturn("authUserEmail");
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
         when(datasetService.describeDatasets(anyInt())).thenReturn(Collections.emptySet());
         initResource();
