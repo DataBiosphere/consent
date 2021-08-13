@@ -7,24 +7,24 @@ import java.security.Principal;
 public class AuthUser implements Principal {
 
     private String authToken;
-    private String name;
+    private String email;
     private GoogleUser googleUser;
 
     public AuthUser() {
     }
 
-    public AuthUser(String name) {
-        this.name = name;
+    public AuthUser(String email) {
+        this.email = email;
     }
 
     public AuthUser(GoogleUser googleUser) {
-        this.name = googleUser.getEmail();
+        this.email = googleUser.getEmail();
         this.googleUser = googleUser;
     }
 
     @Override
     public String getName() {
-        return name;
+        return email;
     }
 
     public GoogleUser getGoogleUser() {
@@ -45,8 +45,8 @@ public class AuthUser implements Principal {
         return this;
     }
 
-    public AuthUser setName(String name) {
-        this.name = name;
+    public AuthUser setEmail(String email) {
+        this.email = email;
         return this;
     }
 }
