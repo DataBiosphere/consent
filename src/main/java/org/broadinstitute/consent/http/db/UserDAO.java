@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
-import org.broadinstitute.consent.http.db.mapper.UsersAndCardsReducer;
+import org.broadinstitute.consent.http.db.mapper.UnregisteredUsersWithCardsReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -177,39 +177,33 @@ public interface UserDAO extends Transactional<UserDAO> {
             + " WHERE du.institution_id = :institutionId")
     List<User> findUsersByInstitution(@Bind("institutionId") Integer institutionId);
 
-    //SO only DAO call, returns users containing institution related lc
-    //DAO call returns users, but should be treated as a more complex LC get call
+    @RegisterBeanMapper(value = LibraryCard.class)
+    @UseRowReducer(UnregisteredUsersWithCardsReducer.class) //Need a different RowReducer
+    @SqlQuery(
+        "SELECT * FROM library_card lc WHERE lc.user_id IS NULL AND lc.institution_id = :institutionId"
+    )
+    List<User> getCardsForUnregisteredUsers(@Bind("institutionId") Integer institutionId);
+
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
     @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
-    @UseRowReducer(UsersAndCardsReducer.class)
+    @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery(
-            //This portion will pull in LCs that are designated to unregistered users
-            //LCs pulled in are only from SOs institution
-            "SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
+            //This will pull in users tied to the institution
+            //Users will come with LCs issued by SOs institution (if any)
+            " SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
             " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, " +
             " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
             " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, " +
             " lc.update_user_id AS lc_update_user_id " +
             " FROM dacuser du " +
-            " RIGHT JOIN library_card lc ON lc.user_id = du.dacuserid " + 
             " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
             " LEFT JOIN roles r ON r.roleid = ur.role_id " +
-            " WHERE lc.institution_id = :institutionId AND lc.user_id IS NULL " +
-            " UNION " + 
-                //This portion will pull in users tied to the institution
-                //Users will come with LCs issued by SOs institution (if any)
-                " SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
-                " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, " +
-                " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
-                " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, " +
-                " lc.update_user_id AS lc_update_user_id " +
-                " FROM dacuser du " +
-                " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
-                " LEFT JOIN roles r ON r.roleid = ur.role_id " +
-                " LEFT JOIN library_card lc ON lc.user_id = du.dacuserid AND lc.institution_id = :institutionId " +
-                " WHERE du.institution_id = :institutionId")
-    List<User> getUsersAndCardsForSO(@Bind("institutionId") Integer institutionId);
+            " LEFT JOIN library_card lc ON lc.user_id = du.dacuserid AND lc.institution_id = :institutionId " +
+            " WHERE du.institution_id = :institutionId")
+    List<User> getUsersFromInstitutionWithCards(@Bind("institutionId") Integer institutionId);
+
+    @RegisterBeanMapper(value = User.class)
 
     //SO only endpoint (so far)
     //Meant to pull in users that have not yet been assigned an institution

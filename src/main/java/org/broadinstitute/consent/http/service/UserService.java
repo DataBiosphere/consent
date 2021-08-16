@@ -121,8 +121,12 @@ public class UserService {
             //However LCs can be created for users not yet registered in the system
             //As such a more specialzed query is needed to produce the proper listing
             case Resource.SIGNINGOFFICIAL :
+                Integer institutionId = user.getInstitutionId();
                 if (Objects.nonNull(user.getInstitutionId())) {
-                    return userDAO.getUsersAndCardsForSO(user.getInstitutionId());
+                    List<User> institutionUsers = userDAO.getUsersFromInstitutionWithCards(institutionId);
+                    List<User> unregisteredUsers = userDAO.getCardsForUnregisteredUsers(institutionId);
+                    return Stream.concat(institutionUsers.stream(), unregisteredUsers.stream())
+                        .collect(Collectors.toList());
                 } else {
                     throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") is not associated with an Institution.");
                 }

@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -359,19 +358,6 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindUsersWithCardsByInstitution() {
-        User user = createUser();
-        LibraryCard targetCard = createLibraryCard(user);
-        Integer institutionId = targetCard.getInstitutionId();
-        userDAO.updateUser(user.getDisplayName(), user.getDacUserId(), user.getEmail(), institutionId);
-        createLibraryCard(user); //create another card for user for another institution
-        List<User> userWithCardList = userDAO.getUsersAndCardsForSO(institutionId);
-        User userResponse = userWithCardList.get(0);
-        assertEquals(userResponse.getLibraryCards().size(), 1);
-        assertEquals(userResponse.getLibraryCards().get(0).getInstitutionId(), institutionId);
-    }
-
-    @Test
     public void testGetSOsByInstitution() {
         //user with institutionId and SO role
         User user = createUserWithInstitution();
@@ -388,37 +374,34 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testGetUsersAndCardsForSO() {
-        //create SO user
-        User soUser = createUserWithInstitution();
-        addUserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), soUser.getDacUserId());
-        //create institution memebers
-        User member = createUserForInstitution(soUser.getInstitutionId());
-        // create institution cards for institution memebers
-        LibraryCard memberCard = createLibraryCardForInstitution(member, soUser.getInstitutionId());
-        //create non institution members
-        // create institution cards for non institution members
-        LibraryCard nonMemberCard = createLCForUnregisteredUser(soUser.getInstitutionId());
-        //call DAO
-        List<User> users = userDAO.getUsersAndCardsForSO(soUser.getInstitutionId());
-        assertEquals(3, users.size());
-        users.forEach(user -> {
-            //assertions for non-member (unregistered) user and card
-            if(Objects.isNull(user.getDacUserId())) {
-                assertEquals(nonMemberCard.getId(), user.getLibraryCards().get(0).getId());
-                assertEquals(1, user.getLibraryCards().size());
-            }
-            //assertions SO user
-            else if(user.getLibraryCards().isEmpty()) {
-                assertEquals(soUser.getDacUserId(), user.getDacUserId());
-                assertEquals(0, user.getLibraryCards().size());
-            //assertions for member user and card
-            } else {
-                assertEquals(member.getDacUserId(), user.getDacUserId());
-                assertEquals(1, user.getLibraryCards().size());
-                assertEquals(memberCard.getId(), user.getLibraryCards().get(0).getId());
-            }
-        });
+    public void testGetCardsForUnregisteredUsers() {
+        Institution institution = createInstitution();
+        LibraryCard card = createLCForUnregisteredUser(institution.getId());
+        List<User> users = userDAO.getCardsForUnregisteredUsers(institution.getId());
+        assertEquals(1, users.size());
+        User user = users.get(0);
+        List<LibraryCard> cards = user.getLibraryCards();
+        LibraryCard userCard = cards.get(0);
+
+        assertEquals(card.getUserEmail(), user.getEmail());
+        assertEquals(1, cards.size());
+        assertEquals(card.getId(), userCard.getId());
+        assertEquals(null, card.getUserId());
+    }
+
+    @Test
+    public void testGetUsersFromInstitutionWithCards() {
+        LibraryCard card = createLibraryCard();
+        Integer institutionId = card.getInstitutionId();
+        Integer userId = card.getUserId();
+        List<User> users = userDAO.getUsersFromInstitutionWithCards(institutionId);
+        assertEquals(1, users.size());
+        User returnedUser = users.get(0);
+        assertEquals(userId, returnedUser.getDacUserId());
+
+        LibraryCard returnedCard = returnedUser.getLibraryCards().get(0);
+        assertEquals(card.getId(), returnedCard.getId());
+        assertEquals(userId, returnedCard.getUserId());
     }
 
     @Test

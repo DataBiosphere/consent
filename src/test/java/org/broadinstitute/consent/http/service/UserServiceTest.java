@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -354,12 +355,13 @@ public class UserServiceTest {
     public void testGetUsersByUserRole_SO() {
         User u = generateUser();
         u.setInstitutionId(1);
-        when(userDAO.getUsersAndCardsForSO(1)).thenReturn(Arrays.asList(new User(), new User(), new User()));
+        when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(Arrays.asList(new User()));
+        when(userDAO.getCardsForUnregisteredUsers(anyInt())).thenReturn(Arrays.asList(new User()));
         initService();
 
         List<User> users = service.getUsersByUserRole(u, "SigningOfficial");
         assertNotNull(users);
-        assertEquals(3, users.size());
+        assertEquals(2, users.size());
     }
 
     @Test(expected = NotFoundException.class)

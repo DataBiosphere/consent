@@ -283,19 +283,6 @@ public class LibraryCardServiceTest {
         service.deleteLibraryCardById(libraryCard.getId(), user);
     }
 
-    @Test(expected = ForbiddenException.class)
-    public void testDeleteLibraryCard_Forbidden_Error() {
-        Institution institution = testInstitution();
-        Integer modifiedId = institution.getId() + 1;
-        User user = testUser(institution.getId());
-        UserRole soRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
-        user.addRole(soRole);
-        LibraryCard libraryCard = testLibraryCard(modifiedId, user.getDacUserId());
-        when(libraryCardDAO.findLibraryCardById(any())).thenReturn(libraryCard);
-        initService();
-        service.deleteLibraryCardById(libraryCard.getId(), user);
-    }
-
     @Test(expected = NotFoundException.class)
     public void testFindLibraryCardById_NotFound() {
         when(libraryCardDAO.findLibraryCardById(any()))

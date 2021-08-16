@@ -40,9 +40,16 @@ public class LibraryCardResourceTest {
     new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())
   );
   private final User user = new User(1, authUser.getName(), "Display Name", new Date(), adminRoles, authUser.getName());
+
   private final User lcUser = new User(2, "testuser@gmail.com", "Test User", new Date(), Collections.singletonList(
           new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())
   ), "testuser@gmail.com");
+
+  private final User SOUser = new User(2, "testuser@gmail.com", "Test User", new Date(),
+      Collections.singletonList(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())),
+      "testuser@gmail.com"
+    );
+
   private LibraryCardResource resource;
 
   @Mock private UserService userService;
@@ -57,6 +64,14 @@ public class LibraryCardResourceTest {
     mockCard.setCreateUserId(1);
     mockCard.setUserEmail(lcUser.getEmail());
     return mockCard;
+  }
+
+  private User mockSOUser() {
+    User mockUser = new User(2, "testuser@gmail.com", "Test User", new Date(),
+        Collections.singletonList(
+            new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())),
+        "testuser@gmail.com");
+    return mockUser;
   }
 
   private void initResource() {
@@ -231,16 +246,39 @@ public class LibraryCardResourceTest {
 
   @Test
   public void deleteLibraryCard() {
+    LibraryCard card = mockLibraryCardSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
     initResource();
+
     Response response = resource.deleteLibraryCard(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
   }
 
   @Test
   public void deleteLibraryCardThrowsNotFoundException() {
+    LibraryCard card = mockLibraryCardSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
     doThrow(new NotFoundException()).when(libraryCardService).deleteLibraryCardById(anyInt(), any());
     initResource();
+
     Response response = resource.deleteLibraryCard(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void deleteLibraryCardThrowsForbiddenException() {
+    LibraryCard card = mockLibraryCardSetup();
+    User soUser = mockSOUser();
+    soUser.setInstitutionId(1);
+    card.setInstitutionId(2);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(soUser);
+    when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
+
+    initResource();
+    Response response = resource.deleteLibraryCard(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
   }
 }

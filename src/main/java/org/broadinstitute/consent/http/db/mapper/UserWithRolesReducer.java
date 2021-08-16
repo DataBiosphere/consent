@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 
@@ -23,10 +22,6 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
         map.computeIfAbsent(
             rowView.getColumn("dacuserid", Integer.class),
             id -> rowView.getRow(User.class));
-    //ensure that empty LC array is initialized on user row
-    if(Objects.isNull(user.getLibraryCards())) {
-      user.setLibraryCards(new ArrayList<LibraryCard>());
-    }
     // Status is an enum type and we need to get the string value
     try {
       if (Objects.nonNull(rowView.getColumn("status", Integer.class))) {
@@ -57,8 +52,8 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
     try {
       if(Objects.nonNull(rowView.getColumn("lc_id", Integer.class))) {
         LibraryCard lc = rowView.getRow(LibraryCard.class);
-        if(!user.getLibraryCards().stream().anyMatch(card -> card.getId() == lc.getId())) {
-          user.getLibraryCards().add(lc);
+        if(Objects.isNull(user.getLibraryCards()) || !user.getLibraryCards().stream().anyMatch(card -> card.getId() == lc.getId())) {
+          user.addLibraryCard(lc);
         }
       }
     } catch(MappingException e) {
