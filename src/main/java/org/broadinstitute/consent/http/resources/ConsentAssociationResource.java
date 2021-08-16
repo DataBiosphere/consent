@@ -55,7 +55,7 @@ public class ConsentAssociationResource extends Resource {
                 }
             }
             logger().debug(msg);
-            User dacUser = userService.findUserByEmail(user.getName());
+            User dacUser = userService.findUserByEmail(user.getEmail());
             List<ConsentAssociation> result = consentService.createAssociation(consentId, body, dacUser.getEmail());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
@@ -81,7 +81,7 @@ public class ConsentAssociationResource extends Resource {
                 }
             }
             logger().debug(msg);
-            List<ConsentAssociation> result = consentService.updateAssociation(consentId, body, user.getName());
+            List<ConsentAssociation> result = consentService.updateAssociation(consentId, body, user.getEmail());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         }catch (Exception e) {

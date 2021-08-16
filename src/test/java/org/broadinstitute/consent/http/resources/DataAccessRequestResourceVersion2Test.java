@@ -56,7 +56,7 @@ public class DataAccessRequestResourceVersion2Test {
 
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final List<UserRole> roles = Collections.singletonList(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-  private final User user = new User(1, authUser.getName(), "Display Name", new Date(), roles, authUser.getName());
+  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), roles, authUser.getEmail());
 
   private DataAccessRequestResourceVersion2 resource;
 
@@ -130,7 +130,7 @@ public class DataAccessRequestResourceVersion2Test {
 
   @Test
   public void testUpdateByReferenceIdForbidden() {
-    User invalidUser = new User(1000, authUser.getName(), "Display Name", new Date());
+    User invalidUser = new User(1000, authUser.getEmail(), "Display Name", new Date());
     DataAccessRequest dar = generateDataAccessRequest();
     try {
       when(userService.findUserByEmail(any())).thenReturn(invalidUser);
@@ -173,7 +173,7 @@ public class DataAccessRequestResourceVersion2Test {
 
   @Test
   public void testUpdatePartialDataAccessRequestForbidden() {
-    User invalidUser = new User(1000, authUser.getName(), "Display Name", new Date());
+    User invalidUser = new User(1000, authUser.getEmail(), "Display Name", new Date());
     DataAccessRequest dar = generateDataAccessRequest();
     when(userService.findUserByEmail(any())).thenReturn(invalidUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);

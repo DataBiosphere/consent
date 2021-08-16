@@ -50,7 +50,7 @@ public class ApprovalExpirationTimeResourceTest {
     }
 
     private void initResource() {
-        when(authUser.getName()).thenReturn("auth user name");
+        when(authUser.getEmail()).thenReturn("auth user name");
         when(user.getDacUserId()).thenReturn(1);
         when(user.getDisplayName()).thenReturn("display name");
         when(userService.findUserByEmail(any())).thenReturn(user);

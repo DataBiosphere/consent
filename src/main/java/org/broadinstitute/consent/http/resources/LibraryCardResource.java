@@ -79,7 +79,7 @@ public class LibraryCardResource extends Resource{
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   public Response createLibraryCard(@Auth AuthUser authUser, String libraryCard) {
     try{
-      User admin = userService.findUserByEmail(authUser.getName());
+      User admin = userService.findUserByEmail(authUser.getEmail());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
       payload.setCreateUserId(admin.getDacUserId());
       LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload);
@@ -96,7 +96,7 @@ public class LibraryCardResource extends Resource{
   @RolesAllowed(ADMIN)
   public Response updateLibraryCard(@Auth AuthUser authUser, @PathParam("id") Integer id, String libraryCard) {
     try {
-      User user = userService.findUserByEmail(authUser.getName());
+      User user = userService.findUserByEmail(authUser.getEmail());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
       LibraryCard updatedLibraryCard = libraryCardService.updateLibraryCard(payload, id, user.getDacUserId());
       return Response.ok().entity(updatedLibraryCard).build();

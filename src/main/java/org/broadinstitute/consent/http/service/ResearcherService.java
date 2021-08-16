@@ -146,9 +146,9 @@ public class ResearcherService {
     }
 
     private User validateAuthUser(AuthUser authUser) {
-        User user = userDAO.findUserByEmail(authUser.getName());
+        User user = userDAO.findUserByEmail(authUser.getEmail());
         if (user == null) {
-            throw new NotFoundException("Auth User with email: " + authUser.getName() + " does not exist");
+            throw new NotFoundException("Auth User with email: " + authUser.getEmail() + " does not exist");
         }
         return user;
     }

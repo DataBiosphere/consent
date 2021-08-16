@@ -35,7 +35,7 @@ public class NihAccountResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser authUser) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, authUser, user.getDacUserId());
             return Response.ok(authUserProps).build();
         } catch (Exception e){
@@ -48,7 +48,7 @@ public class NihAccountResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response deleteNihAccount(@Auth AuthUser user) {
         try {
-            User dacUser = userService.findUserByEmail(user.getName());
+            User dacUser = userService.findUserByEmail(user.getEmail());
             nihService.deleteNihAccountById(dacUser.getDacUserId());
             return Response.ok().build();
         } catch (Exception e) {

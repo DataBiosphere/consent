@@ -130,7 +130,7 @@ public class ResearcherResource extends Resource {
         GoogleUser googleUser = user.getGoogleUser();
         User dacUser = userService.findUserByEmail(googleUser.getEmail());
         if (dacUser == null) {
-            throw new NotFoundException("Unable to find user :" + user.getName());
+            throw new NotFoundException("Unable to find user :" + user.getEmail());
         }
         return dacUser;
     }

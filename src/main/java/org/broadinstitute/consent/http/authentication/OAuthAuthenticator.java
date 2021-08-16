@@ -33,7 +33,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
         try {
             validateAudience(bearer);
             GoogleUser googleUser = getUserInfo(bearer);
-            AuthUser user = new AuthUser(googleUser);
+            AuthUser user = new AuthUser(googleUser).setAuthToken(bearer);
             return Optional.of(user);
         } catch (Exception e) {
             logger.error("Error authenticating credentials: " + e.getMessage());

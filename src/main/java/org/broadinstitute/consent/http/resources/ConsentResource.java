@@ -70,7 +70,7 @@ public class ConsentResource extends Resource {
     @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
     public Response createConsent(@Context UriInfo info, Consent rec, @Auth AuthUser user) {
         try {
-            User dacUser = userService.findUserByEmail(user.getName());
+            User dacUser = userService.findUserByEmail(user.getEmail());
             if(rec.getUseRestriction() != null){
                 useRestrictionValidator.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
             }
@@ -107,7 +107,7 @@ public class ConsentResource extends Resource {
             if (updated.getDataUseLetter() != null) {
                 checkValidDUL(updated);
             }
-            User dacUser = userService.findUserByEmail(user.getName());
+            User dacUser = userService.findUserByEmail(user.getEmail());
             updated = consentService.update(id, updated);
             auditService.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             matchService.reprocessMatchesForConsent(id);

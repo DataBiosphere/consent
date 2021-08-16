@@ -46,7 +46,7 @@ public class ApprovalExpirationTimeResource extends Resource {
       ApprovalExpirationTime approvalExpirationTime) {
     URI uri;
     try {
-      User user = userService.findUserByEmail(authUser.getName());
+      User user = userService.findUserByEmail(authUser.getEmail());
       approvalExpirationTime.setUserId(user.getDacUserId());
       ApprovalExpirationTime newApprovalExpirationTime = approvalExpirationTimeService.create(approvalExpirationTime);
       uri = info.getRequestUriBuilder().path("{id}").build(newApprovalExpirationTime.getId());
@@ -92,7 +92,7 @@ public class ApprovalExpirationTimeResource extends Resource {
       ApprovalExpirationTime approvalExpirationTime,
       @PathParam("id") Integer id) {
     try {
-      User user = userService.findUserByEmail(authUser.getName());
+      User user = userService.findUserByEmail(authUser.getEmail());
       approvalExpirationTime.setUserId(user.getDacUserId());
       URI uri = info.getRequestUriBuilder().path("{id}").build(id);
       ApprovalExpirationTime updatedApprovalExpirationTime = approvalExpirationTimeService.update(approvalExpirationTime, id);
