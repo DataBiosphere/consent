@@ -3236,7 +3236,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
         500:
           description: Internal Server Error
   /api/user/signing-officials:
