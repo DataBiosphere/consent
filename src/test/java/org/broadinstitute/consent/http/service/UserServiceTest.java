@@ -357,11 +357,12 @@ public class UserServiceTest {
         u.setInstitutionId(1);
         when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(Arrays.asList(new User()));
         when(userDAO.getCardsForUnregisteredUsers(anyInt())).thenReturn(Arrays.asList(new User()));
+        when(userDAO.getUsersOutsideInstitutionWithCards(anyInt())).thenReturn(Arrays.asList(new User()));
         initService();
 
         List<User> users = service.getUsersByUserRole(u, "SigningOfficial");
         assertNotNull(users);
-        assertEquals(2, users.size());
+        assertEquals(3, users.size());
     }
 
     @Test(expected = NotFoundException.class)

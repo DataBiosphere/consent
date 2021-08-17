@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -402,6 +403,20 @@ public class UserDAOTest extends DAOTestHelper {
         LibraryCard returnedCard = returnedUser.getLibraryCards().get(0);
         assertEquals(card.getId(), returnedCard.getId());
         assertEquals(userId, returnedCard.getUserId());
+    }
+
+    @Test
+    public void testGetUsersOutsideInstitutionWithCards() {
+        User user = createUser();
+        LibraryCard card = createLibraryCard(user);
+        Integer institutionId = card.getInstitutionId();
+        List<User> users = userDAO.getUsersOutsideInstitutionWithCards(institutionId);
+        assertEquals(1, users.size());
+        User outsideUser = users.get(0);
+        assertEquals(user.getDacUserId(), outsideUser.getDacUserId());
+        LibraryCard outsideCard = outsideUser.getLibraryCards().get(0);
+        assertEquals(outsideCard.getId(), card.getId());
+        assertEquals(outsideCard.getUserId(), user.getDacUserId());
     }
 
     @Test
