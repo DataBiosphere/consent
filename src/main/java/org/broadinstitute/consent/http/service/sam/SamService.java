@@ -20,12 +20,6 @@ public class SamService {
     this.configuration = configuration;
   }
 
-  /**
-   * Make this call before any Sam API call. This will check to see if the user exists, and if not,
-   * create them in Sam.
-   *
-   * @param authUser The AuthUser
-   */
   public HttpResponse getResourceTypes(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(getV1ResourceTypesUrl());
     HttpRequest request = buildGetRequest(genericUrl, authUser);
