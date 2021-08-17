@@ -3518,28 +3518,6 @@ paths:
           description: The properties were deleted. No response object, just 200 response.
         404:
           description: The requested user doesn't exist in the system
-  /api/researcher/{userId}/dar:
-    get:
-      summary: Returns the researcher properties that are part of a Data Access Request
-      description: Describes all the properties that are taken from the researcher information to fill automatically a DAR request.
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-      tags:
-        - User
-        - Researcher
-      responses:
-        200:
-          description: Returns the user properties. Map<String, String> format
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserProperties'
-        404:
-          description: The requested user doesnt exist in the system
   /api/nih:
     delete:
       summary: Delete Era Commons Account
