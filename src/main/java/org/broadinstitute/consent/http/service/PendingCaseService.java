@@ -63,7 +63,7 @@ public class PendingCaseService {
     }
 
     public List<PendingCase> describeConsentPendingCases(AuthUser authUser) throws NotFoundException {
-        User user = userService.findUserByEmail(authUser.getName());
+        User user = userService.findUserByEmail(authUser.getEmail());
         List<Integer> roleIds = user.getRoles().stream().
                 map(UserRole::getRoleId).
                 collect(Collectors.toList());
@@ -97,7 +97,7 @@ public class PendingCaseService {
     }
 
     public List<PendingCase> describeDataRequestPendingCases(AuthUser authUser) throws NotFoundException {
-        User user = userService.findUserByEmail(authUser.getName());
+        User user = userService.findUserByEmail(authUser.getEmail());
         Integer dacUserId = user.getDacUserId();
         boolean isChair = dacService.isAuthUserChair(authUser);
         List<Election> unfilteredElections = isChair ?

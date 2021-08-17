@@ -135,12 +135,11 @@ public class UseRestrictionConverter {
             //
             //    Diseases related entries
             //
-            if (Objects.nonNull(dar.getData().getOntologies())) {
-                List<String> ontologies = dar.getData().getOntologies()
-                    .stream().map(OntologyEntry::getId).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(ontologies)) {
-                    dataUse.setDiseaseRestrictions(ontologies);
-                }
+        
+            List<String> ontologies = dar.getData().getOntologies()
+                .stream().map(OntologyEntry::getId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(ontologies)) {
+                dataUse.setDiseaseRestrictions(ontologies);
             }
 
             //

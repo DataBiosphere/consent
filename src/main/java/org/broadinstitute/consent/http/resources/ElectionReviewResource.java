@@ -71,7 +71,7 @@ public class ElectionReviewResource extends Resource {
         Election consentElection = electionService.getConsentElectionByDARElectionId(election.getElectionId());
         DataAccessRequest dar = darService.findByReferenceId(election.getReferenceId());
         List<Integer> dataSetId = new ArrayList<>();
-        if (Objects.nonNull(dar) && Objects.nonNull(dar.getData()) && Objects.nonNull(dar.getData().getDatasetIds())) {
+        if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
             dataSetId.addAll(dar.getData().getDatasetIds());
         }
         Consent consent = consentService.getConsentFromDatasetID(dataSetId.get(0));

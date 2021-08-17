@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserService {
 
@@ -39,6 +41,7 @@ public class UserService {
     private final VoteDAO voteDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
     public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO) {
@@ -51,14 +54,29 @@ public class UserService {
     }
 
     public static class SimplifiedUser {
-        public final String displayName;
-        public final Integer userId;
-        public final String email;
+        public Integer dacUserId;
+        public String displayName;
+        public String email;
 
         public SimplifiedUser(User user) {
             this.displayName = user.getDisplayName();
-            this.userId = user.getDacUserId();
+            this.dacUserId = user.getDacUserId();
             this.email = user.getEmail();
+        }
+
+        public SimplifiedUser() {
+        }
+
+        public void setDacUserId(Integer userId) {
+            this.dacUserId = userId;
+        }
+
+        public void setDisplayName(String name) {
+            this.displayName = name;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
         }
     }
 
@@ -199,6 +217,11 @@ public class UserService {
 
         List<User> users = userDAO.getSOsByInstitution(institutionId);
         return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    }
+
+    public void deleteUserRole(User authUser, Integer dacUserId, Integer roleId) {
+        userRoleDAO.removeSingleUserRole(dacUserId, roleId);
+        logger.info("User " + authUser.getDisplayName() + " deleted roleId: " + roleId + " from User ID: " + dacUserId);
     }
 
     private void validateRequiredFields(User user) {

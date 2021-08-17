@@ -76,7 +76,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @PermitAll
   public Response getDataAccessRequests(@Auth AuthUser authUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getName());
+      User user = userService.findUserByEmail(authUser.getEmail());
       List<DataAccessRequest> dars = dataAccessRequestService.getDataAccessRequestsByUserRole(user);
       return Response.ok().entity(dars).build();
     } catch (Exception e) {
@@ -91,7 +91,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   public Response createDataAccessRequest(
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
-      User user = findUserByEmail(authUser.getName());
+      User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest newDar = populateDarFromJsonString(user, dar);
       List<DataAccessRequest> results =
           dataAccessRequestService.createDataAccessRequest(user, newDar);
@@ -145,7 +145,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   public Response updateByReferenceId(
       @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
     try {
-      User user = findUserByEmail(authUser.getName());
+      User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
@@ -168,7 +168,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @RolesAllowed(RESEARCHER)
   public Response getDraftDataAccessRequests(@Auth AuthUser authUser) {
     try {
-      User user = findUserByEmail(authUser.getName());
+      User user = findUserByEmail(authUser.getEmail());
       List<DataAccessRequest> draftDars = dataAccessRequestService.findAllDraftDataAccessRequestsByUser(user.getDacUserId());
       return Response.ok().entity(draftDars).build();
     } catch (Exception e) {
@@ -182,7 +182,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @RolesAllowed(RESEARCHER)
   public Response getDraftDar(@Auth AuthUser authUser, @PathParam("referenceId") String id) {
     try {
-      User user = findUserByEmail(authUser.getName());
+      User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
       if (dar.getUserId().equals(user.getDacUserId())) {
         return Response.ok().entity(dar).build();
@@ -201,7 +201,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   public Response createDraftDataAccessRequest(
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
-      User user = findUserByEmail(authUser.getName());
+      User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest newDar = populateDarFromJsonString(user, dar);
       DataAccessRequest result =
           dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
@@ -218,7 +218,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @RolesAllowed(RESEARCHER)
   public Response getDraftManageDataAccessRequests(@Auth AuthUser authUser) {
     try {
-      User user = findUserByEmail(authUser.getName());
+      User user = findUserByEmail(authUser.getEmail());
       List<DataAccessRequestManage> partials = dataAccessRequestService.getDraftDataAccessRequestManage(user.getDacUserId());
       return Response.ok().entity(partials).build();
     } catch (Exception e) {
@@ -234,7 +234,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   public Response updatePartialDataAccessRequest(
       @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
     try {
-      User user = findUserByEmail(authUser.getName());
+      User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
@@ -258,7 +258,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @Auth AuthUser authUser,
       @PathParam("referenceId") String referenceId) {
     try {
-      User user = findUserByEmail(authUser.getName());
+      User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       if (Objects.nonNull(dar.getData().getIrbDocumentLocation()) &&
@@ -288,7 +288,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @FormDataParam("file") InputStream uploadInputStream,
       @FormDataParam("file") FormDataContentDisposition fileDetail) {
     try {
-      User user = findUserByEmail(authUser.getName());
+      User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       DataAccessRequest updatedDar = updateDarWithDocumentContents(DarDocumentType.IRB, user, dar, uploadInputStream, fileDetail);
@@ -306,7 +306,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @Auth AuthUser authUser,
       @PathParam("referenceId") String referenceId) {
     try {
-      User user = findUserByEmail(authUser.getName());
+      User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       if (Objects.nonNull(dar.getData().getCollaborationLetterLocation()) &&
@@ -336,7 +336,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @FormDataParam("file") InputStream uploadInputStream,
       @FormDataParam("file") FormDataContentDisposition fileDetail) {
     try {
-      User user = findUserByEmail(authUser.getName());
+      User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       DataAccessRequest updatedDar = updateDarWithDocumentContents(DarDocumentType.COLLABORATION, user, dar, uploadInputStream, fileDetail);
@@ -470,7 +470,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
    */
   private void validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser, String referenceId) {
     DataAccessRequest dataAccessRequest = getDarById(referenceId);
-    User user = findUserByEmail(authUser.getName());
+    User user = findUserByEmail(authUser.getEmail());
     if (Objects.nonNull(dataAccessRequest.getUserId()) && dataAccessRequest.getUserId() > 0) {
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
     } else {

@@ -60,7 +60,7 @@ public class ResearcherServiceTest {
         googleUser.setEmail("test@gmail.com");
         authUser = new AuthUser(googleUser);
         user = new User();
-        user.setEmail(authUser.getName());
+        user.setEmail(authUser.getEmail());
         user.setDacUserId(RandomUtils.nextInt(1, 10));
         user.setDisplayName(RandomStringUtils.random(10));
 

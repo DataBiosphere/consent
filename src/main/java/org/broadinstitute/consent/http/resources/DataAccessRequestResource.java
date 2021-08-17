@@ -108,7 +108,7 @@ public class DataAccessRequestResource extends Resource {
     @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
     public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser, @QueryParam("roleName") Optional<String> roleName) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             String roleNameValue = roleName.orElse(null);
             UserRoles queriedUserRole = UserRoles.getUserRoleFromName(roleNameValue);
             if (roleName.isPresent()) {
@@ -175,7 +175,7 @@ public class DataAccessRequestResource extends Resource {
      */
     private Optional<Integer> getDatasetIdForDarId(String id) {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-        List<Integer> datasetIdList = (Objects.nonNull(dar.getData()) && Objects.nonNull(dar.getData().getDatasetIds())) ?
+        List<Integer> datasetIdList = (Objects.nonNull(dar.getData())) ?
                 dar.getData().getDatasetIds() :
                 Collections.emptyList();
         if (datasetIdList == null || datasetIdList.isEmpty()) {
@@ -223,7 +223,7 @@ public class DataAccessRequestResource extends Resource {
      */
     private void validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser, String referenceId) {
         DataAccessRequest dataAccessRequest = findDataAccessRequestById(referenceId);
-        User user = findUserByEmail(authUser.getName());
+        User user = findUserByEmail(authUser.getEmail());
         if (Objects.nonNull(dataAccessRequest.getUserId()) && dataAccessRequest.getUserId() > 0) {
             super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
         } else {

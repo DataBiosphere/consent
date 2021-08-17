@@ -25,7 +25,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -224,7 +223,7 @@ public class DacResourceTest {
         when(dacService.findById(any())).thenReturn(dac);
         User admin = buildAdmin(authUser);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(admin);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(admin);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         Response response = dacResource.addDacMember(authUser, dac.getDacId(), member.getDacUserId());
@@ -237,7 +236,7 @@ public class DacResourceTest {
         Dac dac = buildDac(chair);
         when(dacService.findById(any())).thenReturn(dac);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         Response response = dacResource.addDacMember(authUser, dac.getDacId(), member.getDacUserId());
@@ -250,7 +249,7 @@ public class DacResourceTest {
         Dac dac = buildDac(null);
         when(dacService.findById(any())).thenReturn(dac);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         dacResource.addDacMember(authUser, dac.getDacId(), member.getDacUserId());
@@ -262,7 +261,7 @@ public class DacResourceTest {
         when(dacService.findById(any())).thenReturn(dac);
         User admin = buildAdmin(authUser);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(admin);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(admin);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         Response response = dacResource.removeDacMember(authUser, dac.getDacId(), member.getDacUserId());
@@ -275,7 +274,7 @@ public class DacResourceTest {
         Dac dac = buildDac(chair);
         when(dacService.findById(any())).thenReturn(dac);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         Response response = dacResource.removeDacMember(authUser, dac.getDacId(), member.getDacUserId());
@@ -288,7 +287,7 @@ public class DacResourceTest {
         Dac dac = buildDac(null);
         when(dacService.findById(any())).thenReturn(dac);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         dacResource.removeDacMember(authUser, dac.getDacId(), member.getDacUserId());
@@ -300,7 +299,7 @@ public class DacResourceTest {
         when(dacService.findById(any())).thenReturn(dac);
         User admin = buildAdmin(authUser);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(admin);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(admin);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         Response response = dacResource.addDacChair(authUser, dac.getDacId(), member.getDacUserId());
@@ -313,7 +312,7 @@ public class DacResourceTest {
         Dac dac = buildDac(chair);
         when(dacService.findById(any())).thenReturn(dac);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         Response response = dacResource.addDacChair(authUser, dac.getDacId(), member.getDacUserId());
@@ -326,7 +325,7 @@ public class DacResourceTest {
         Dac dac = buildDac(null);
         when(dacService.findById(any())).thenReturn(dac);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         dacResource.addDacChair(authUser, dac.getDacId(), member.getDacUserId());
@@ -338,7 +337,7 @@ public class DacResourceTest {
         when(dacService.findById(any())).thenReturn(dac);
         User admin = buildAdmin(authUser);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(admin);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(admin);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         Response response = dacResource.removeDacChair(authUser, dac.getDacId(), member.getDacUserId());
@@ -351,7 +350,7 @@ public class DacResourceTest {
         Dac dac = buildDac(chair);
         when(dacService.findById(any())).thenReturn(dac);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         Response response = dacResource.removeDacChair(authUser, dac.getDacId(), member.getDacUserId());
@@ -364,7 +363,7 @@ public class DacResourceTest {
         Dac dac = buildDac(null);
         when(dacService.findById(any())).thenReturn(dac);
         User member = buildUser();
-        when(userService.findUserByEmail(authUser.getName())).thenReturn(chair);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
         when(dacService.findUserById(member.getDacUserId())).thenReturn(member);
 
         dacResource.removeDacChair(authUser, dac.getDacId(), member.getDacUserId());
@@ -389,7 +388,7 @@ public class DacResourceTest {
     private User buildAdmin(AuthUser authUser) {
         User user = buildUser();
         user.setDacUserId(RandomUtils.nextInt());
-        user.setEmail(authUser.getName());
+        user.setEmail(authUser.getEmail());
         UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         user.setRoles(Collections.singletonList(admin));
         return user;
@@ -398,7 +397,7 @@ public class DacResourceTest {
     private User buildChair(AuthUser authUser) {
         User user = buildUser();
         user.setDacUserId(RandomUtils.nextInt());
-        user.setEmail(authUser.getName());
+        user.setEmail(authUser.getEmail());
         UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         user.setRoles(Collections.singletonList(chair));
         return user;

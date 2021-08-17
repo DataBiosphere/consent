@@ -233,7 +233,7 @@ public class DataRequestVoteResource extends Resource {
     // Chairs, Members, and Data Owners should only be able to update their own votes
     // while Admins can make updates to anyone's vote.
     private void validateUserAndVoteId(AuthUser authUser, Integer voteId) throws NotFoundException {
-        User user = userService.findUserByEmail(authUser.getName());
+        User user = userService.findUserByEmail(authUser.getEmail());
         Vote existingVote = voteService.findVoteById(voteId);
         validateAuthedRoleUser(
                 Collections.singletonList(UserRoles.ADMIN),

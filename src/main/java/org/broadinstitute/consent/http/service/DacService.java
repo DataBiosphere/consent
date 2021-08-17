@@ -35,9 +35,6 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
 
 public class DacService {
 
@@ -252,17 +249,17 @@ public class DacService {
     }
 
     boolean isAuthUserAdmin(AuthUser authUser) {
-        User user = userDAO.findUserByEmailAndRoleId(authUser.getName(), UserRoles.ADMIN.getRoleId());
+        User user = userDAO.findUserByEmailAndRoleId(authUser.getEmail(), UserRoles.ADMIN.getRoleId());
         return user != null;
     }
 
     boolean isAuthUserChair(AuthUser authUser) {
-        User user = userDAO.findUserByEmailAndRoleId(authUser.getName(), UserRoles.CHAIRPERSON.getRoleId());
+        User user = userDAO.findUserByEmailAndRoleId(authUser.getEmail(), UserRoles.CHAIRPERSON.getRoleId());
         return user != null;
     }
 
     private List<Integer> getDacIdsForUser(AuthUser authUser) {
-        return dacDAO.findDacsForEmail(authUser.getName())
+        return dacDAO.findDacsForEmail(authUser.getEmail())
                 .stream()
                 .filter(Objects::nonNull)
                 .map(Dac::getDacId)
@@ -335,7 +332,7 @@ public class DacService {
             return elections;
         }
 
-        List<Integer> userDataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).
+        List<Integer> userDataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()).
                 stream().
                 map(DataSet::getDataSetId).
                 collect(Collectors.toList());

@@ -124,8 +124,8 @@ public class DarDecisionMetrics implements DecisionMetrics {
       (Objects.nonNull(dar.getData())) ?
         (int) Streams
           .concat(
-            CollectionUtils.emptyIfNull(dar.getData().getLabCollaborators()).stream(),
-            CollectionUtils.emptyIfNull(dar.getData().getInternalCollaborators()).stream())
+            dar.getData().getLabCollaborators().stream(),
+            dar.getData().getInternalCollaborators().stream())
           .filter(Objects::nonNull)
           .map(Collaborator::getEmail)
           .filter(Objects::nonNull)

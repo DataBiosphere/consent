@@ -2844,7 +2844,8 @@ paths:
         - Institutions
       responses:
         200:
-          description: Returns all institutions. If no results are found, an empty array is returned.
+          description: Returns all institutions, along with their create user, update user, and signing official users if there are any.
+            If no results are found, an empty array is returned.
             Admin will see all details while non-Admins will only see a subset.
         500:
           description: Internal Server Error
@@ -3330,6 +3331,51 @@ paths:
                 $ref: '#/components/schemas/User'
         304:
           description: Not modified
+        400:
+          description: Bad Request
+        404:
+          description: User not found
+        500:
+          description: Server error.
+    delete:
+      summary: Delete a role from a user
+      description: Delete a role from a user, specified by given userId. Available to Admin roles
+      parameters:
+        - name: userId
+          in: path
+          description: The id of the user
+          required: true
+          schema:
+            type: number
+        - name: roleId
+          in: path
+          description: |
+            The id of the role. Members and Chairpersons cannot be deleted this way.
+            See DAC endpoints for those roles.
+            ALUMNI: 3
+            ADMIN: 4
+            RESEARCHER: 5
+            DATAOWNER: 6
+            SIGNINGOFFICIAL: 7
+          required: true
+          schema:
+            type: number
+            nullable: false
+            enum:
+              - 3
+              - 4
+              - 5
+              - 6
+              - 7
+      tags:
+        - User
+      responses:
+        200:
+          description: Updated user along with researcher properties and library cards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
         400:
           description: Bad Request
         404:

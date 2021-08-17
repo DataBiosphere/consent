@@ -10,9 +10,6 @@ import io.dropwizard.auth.Auth;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.Objects;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -42,7 +39,7 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
-@Path("{api : (api/)?}user")
+@Path("api/user")
 public class UserResource extends Resource {
 
     private final UserService userService;
@@ -62,7 +59,7 @@ public class UserResource extends Resource {
     @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
     public Response getUsers(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             boolean valid = UserRoles.isValidRole(roleName);
             if (valid) {
                 //if there is a valid roleName but it is not SO or Admin then throw an exception
@@ -89,7 +86,7 @@ public class UserResource extends Resource {
     @PermitAll
     public Response getUser(@Auth AuthUser authUser) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             JsonObject userJson = constructUserJsonObject(user);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
@@ -118,21 +115,10 @@ public class UserResource extends Resource {
     public Response addRoleToUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
         try {
             User user = userService.findUserById(userId);
-            List<UserRoles> allowableRoles = Stream
-                .of(UserRoles.ADMIN, UserRoles.ALUMNI, UserRoles.RESEARCHER, UserRoles.DATAOWNER, UserRoles.SIGNINGOFFICIAL)
-                .collect(Collectors.toList());
-            Optional<UserRoles> matchingRole = allowableRoles
-                .stream()
-                .filter(r -> r.getRoleId().equals(roleId))
-                .findFirst();
-            List<Integer> currentUserRoleIds = user
-                .getRoles()
-                .stream()
-                .map(UserRole::getRoleId)
-                .collect(Collectors.toList());
-            if (matchingRole.isPresent()) {
+            List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
+            if (UserRoles.isValidNonDACRoleId(roleId)) {
                 if (!currentUserRoleIds.contains(roleId)) {
-                    UserRole role = new UserRole(roleId, matchingRole.get().getRoleName());
+                    UserRole role = new UserRole(roleId, UserRoles.getUserRoleFromId(roleId).getRoleName());
                     userService.insertUserRoles(Collections.singletonList(role), user.getDacUserId());
                     user = userService.findUserById(userId);
                     JsonObject userJson = constructUserJsonObject(user);
@@ -143,6 +129,31 @@ public class UserResource extends Resource {
             } else {
                 return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST).build();
             }
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @DELETE
+    @Path("/{userId}/{roleId}")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN})
+    public Response deleteRoleFromUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
+        try {
+            User user = userService.findUserById(userId);
+            if (!UserRoles.isValidNonDACRoleId(roleId)) {
+                throw new BadRequestException("Invalid Role Id");
+            }
+            List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
+            if (!currentUserRoleIds.contains(roleId)) {
+                JsonObject userJson = constructUserJsonObject(user);
+                return Response.ok().entity(gson.toJson(userJson)).build();
+            }
+            User auth = userService.findUserByEmail(authUser.getEmail());
+            userService.deleteUserRole(auth, userId, roleId);
+            user = userService.findUserById(userId);
+            JsonObject userJson = constructUserJsonObject(user);
+            return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -198,7 +209,7 @@ public class UserResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response getSOsForInstitution(@Auth AuthUser authUser) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             if (Objects.nonNull(user.getInstitutionId())) {
                 List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
                 return Response.ok().entity(signingOfficials).build();
