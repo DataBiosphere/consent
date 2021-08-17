@@ -39,9 +39,6 @@ public class ResearcherServiceTest {
     private UserDAO userDAO;
 
     @Mock
-    private InstitutionDAO institutionDAO;
-
-    @Mock
     private EmailNotifierService emailNotifierService;
 
     @Mock
@@ -68,7 +65,7 @@ public class ResearcherServiceTest {
     }
 
     private void initService() {
-        service = new ResearcherService(userPropertyDAO, userDAO, institutionDAO, emailNotifierService, userService);
+        service = new ResearcherService(userPropertyDAO, userDAO, emailNotifierService, userService);
     }
 
     @Test
