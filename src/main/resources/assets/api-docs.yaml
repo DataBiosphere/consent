@@ -3267,6 +3267,58 @@ paths:
           description: User not found
         500:
           description: Server error.
+    post:
+      summary: Create user properties.
+      description: Create properties for the current user.
+      parameters:
+        - name: userProperties
+          in: body
+          required: true
+          description: Map<String, String> for user properties.
+          schema:
+            $ref: '#/components/schemas/UserProperties'
+      tags:
+        - User
+      responses:
+        201:
+          description: The user properties were created.
+        400:
+          description: Malformed entity.
+        409:
+          description: Unsupported operation.
+        500:
+          description: Server error.
+    put:
+      summary: Update user properties
+      description: Updates a user.
+      parameters:
+        - name: validate
+          in: query
+          description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
+          required: true
+          schema:
+            type: boolean
+        - name: userProperties
+          in: body
+          required: true
+          description: Map<String, String> for user properties.
+          schema:
+            $ref: '#/components/schemas/UserProperties'
+      tags:
+        - User
+      responses:
+        200:
+          description: The user was updated, and returns the properties.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Malformed researcher entity.
+        404:
+          description: The requested user doesn't exist in the system.
+        500:
+          description: Server error.
   /api/user/role/{roleName}:
     get:
       summary: Get a list of users that you have access to based on your role
@@ -3423,6 +3475,7 @@ paths:
           description: Server error.
   /api/researcher:
     post:
+      deprecated: true
       summary: Create researcher properties.
       description: Create researcher properties for the current user.
       parameters:
@@ -3445,6 +3498,7 @@ paths:
         500:
           description: Server error.
     put:
+      deprecated: true
       summary: Update researcher.
       description: Updates a researcher user.
       parameters:

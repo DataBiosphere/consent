@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.LibraryCardService;
+import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,6 +46,8 @@ public class UserResourceTest {
   @Mock private UserService userService;
 
   @Mock private LibraryCardService libraryCardService;
+
+  @Mock private ResearcherService researcherService;
 
   private UserResource userResource;
 
@@ -69,7 +72,7 @@ public class UserResourceTest {
   }
 
   private void initResource() {
-    userResource = new UserResource(userService, libraryCardService);
+    userResource = new UserResource(researcherService, userService, libraryCardService);
   }
 
   @Test
