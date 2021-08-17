@@ -60,7 +60,7 @@ public class UserResource extends Resource {
     @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
     public Response getUsers(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             boolean valid = UserRoles.isValidRole(roleName);
             if (valid) {
                 //if there is a valid roleName but it is not SO or Admin then throw an exception
@@ -87,7 +87,7 @@ public class UserResource extends Resource {
     @PermitAll
     public Response getUser(@Auth AuthUser authUser) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             JsonObject userJson = constructUserJsonObject(user);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
@@ -163,7 +163,7 @@ public class UserResource extends Resource {
                 JsonObject userJson = constructUserJsonObject(user);
                 return Response.ok().entity(gson.toJson(userJson)).build();
             }
-            User auth = userService.findUserByEmail(authUser.getName());
+            User auth = userService.findUserByEmail(authUser.getEmail());
             userService.deleteUserRole(auth, userId, roleId);
             user = userService.findUserById(userId);
             JsonObject userJson = constructUserJsonObject(user);
@@ -223,7 +223,7 @@ public class UserResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response getSOsForInstitution(@Auth AuthUser authUser) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             if (Objects.nonNull(user.getInstitutionId())) {
                 List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
                 return Response.ok().entity(signingOfficials).build();

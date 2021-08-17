@@ -81,7 +81,7 @@ public class LibraryCardResource extends Resource{
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   public Response createLibraryCard(@Auth AuthUser authUser, String libraryCard) {
     try{
-      User user = userService.findUserByEmail(authUser.getName());
+      User user = userService.findUserByEmail(authUser.getEmail());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
       payload.setCreateUserId(user.getDacUserId());
       LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload, user);
@@ -98,7 +98,7 @@ public class LibraryCardResource extends Resource{
   @RolesAllowed(ADMIN)
   public Response updateLibraryCard(@Auth AuthUser authUser, @PathParam("id") Integer id, String libraryCard) {
     try {
-      User user = userService.findUserByEmail(authUser.getName());
+      User user = userService.findUserByEmail(authUser.getEmail());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
       LibraryCard updatedLibraryCard = libraryCardService.updateLibraryCard(payload, id, user.getDacUserId());
       return Response.ok().entity(updatedLibraryCard).build();
@@ -112,7 +112,7 @@ public class LibraryCardResource extends Resource{
   @Path("/{id}")
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   public Response deleteLibraryCard(@Auth AuthUser authUser, @PathParam("id") Integer id) {
-    User user = userService.findUserByEmail(authUser.getName());
+    User user = userService.findUserByEmail(authUser.getEmail());
     LibraryCard card = libraryCardService.findLibraryCardById(id);
     try {
       // If user is not an admin and LC institutionID doesn't match the users's throw an exception

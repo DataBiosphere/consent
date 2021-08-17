@@ -39,16 +39,10 @@ public class LibraryCardResourceTest {
   private final List<UserRole> adminRoles = Collections.singletonList(
     new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())
   );
-  private final User user = new User(1, authUser.getName(), "Display Name", new Date(), adminRoles, authUser.getName());
-
+  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRoles, authUser.getEmail());
   private final User lcUser = new User(2, "testuser@gmail.com", "Test User", new Date(), Collections.singletonList(
           new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())
   ), "testuser@gmail.com");
-
-  private final User SOUser = new User(2, "testuser@gmail.com", "Test User", new Date(),
-      Collections.singletonList(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())),
-      "testuser@gmail.com"
-    );
 
   private LibraryCardResource resource;
 
@@ -142,7 +136,7 @@ public class LibraryCardResourceTest {
   public void testCreateLibraryCard() throws Exception {
     LibraryCard mockCard = mockLibraryCardSetup();
     String payload = new Gson().toJson(mockCard);
-    when(userService.findUserByEmail(authUser.getName())).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenReturn(mockCard);
     initResource();
     Response response = resource.createLibraryCard(authUser, payload);

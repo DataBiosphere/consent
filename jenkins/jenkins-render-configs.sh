@@ -24,7 +24,8 @@ secretPath="/secret/dsde/firecloud/${ENV}/consent/automation"
 listOfRoles="admin
 chair
 member
-researcher"
+researcher
+signing-official"
 
 for role in $listOfRoles; do
   echo "Writing $role file from $secretPath/duos-automation-$role.json"

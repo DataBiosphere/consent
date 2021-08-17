@@ -120,7 +120,7 @@ public class DataAccessRequestServiceTest {
         ds.setConsentName(dar.getReferenceId());
         ds.setDataSetId(1);
         ds.setName("test dataset");
-        when(dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()))
+        when(dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()))
                 .thenReturn(Collections.singletonList(ds));
         initService();
 
@@ -156,7 +156,7 @@ public class DataAccessRequestServiceTest {
 
         service.cancelDataAccessRequest(dar.getReferenceId());
     }
-    
+
     @Test(expected = NotFoundException.class)
     public void testCancelDataAccessRequestNotFound() {
         DataAccessRequest dar = generateDataAccessRequest();

@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 
 public class LibraryCardServiceTest {

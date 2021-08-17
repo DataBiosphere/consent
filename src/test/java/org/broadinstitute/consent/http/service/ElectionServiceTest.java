@@ -234,7 +234,7 @@ public class ElectionServiceTest {
         electionStubs();
         voteStubs();
 
-        when(dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()))
+        when(dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()))
                 .thenReturn(Arrays.asList(sampleDataset1));
         when(dataAccessRequestDAO.findByReferenceIds(any()))
                 .thenReturn(Arrays.asList(sampleDataAccessRequest1));
