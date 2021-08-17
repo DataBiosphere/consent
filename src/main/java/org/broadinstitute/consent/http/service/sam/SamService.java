@@ -1,23 +1,22 @@
 package org.broadinstitute.consent.http.service.sam;
 
-import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.configurations.SamConfiguration;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 
+@SuppressWarnings("unused")
 public class SamService {
 
-  private final SamConfiguration configuration;
+  private final ServicesConfiguration configuration;
 
   @Inject
-  public SamService(SamConfiguration configuration) {
+  public SamService(ServicesConfiguration configuration) {
     this.configuration = configuration;
   }
 
@@ -27,17 +26,10 @@ public class SamService {
    *
    * @param authUser The AuthUser
    */
-  private void validateUser(AuthUser authUser) throws Exception {
-    GenericUrl genericUrl = new GenericUrl(configuration.getRegisterSelfUrl());
+  public HttpResponse getResourceTypes(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(getV1ResourceTypesUrl());
     HttpRequest request = buildGetRequest(genericUrl, authUser);
-    HttpResponse response = request.execute();
-    if (response.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
-      GenericUrl postUrl = new GenericUrl(configuration.postRegisterSelfUrl());
-      HttpContent content = new EmptyContent();
-      HttpRequest postRequest = buildPostRequest(postUrl, content, authUser);
-      HttpResponse postResponse = postRequest.execute();
-      assert postResponse.getStatusCode() == HttpStatusCodes.STATUS_CODE_CREATED;
-    }
+    return request.execute();
   }
 
   private HttpRequest buildGetRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
@@ -69,5 +61,9 @@ public class SamService {
     HttpRequest request = transport.createRequestFactory().buildDeleteRequest(genericUrl);
     request.getHeaders().setAuthorization("Bearer " + authUser.getAuthToken());
     return request;
+  }
+
+  private String getV1ResourceTypesUrl() {
+    return configuration.getSamUrl() + "/api/config/v1/resourceTypes";
   }
 }

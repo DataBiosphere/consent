@@ -10,6 +10,9 @@ public class ServicesConfiguration {
     @NotNull
     private String localURL;
 
+    @NotNull
+    private String samUrl;
+
     private final String MATCH = "match";
 
     private final String VALIDATE_USE_RESTRICTION = "validate/userestriction";
@@ -42,4 +45,11 @@ public class ServicesConfiguration {
         return getOntologyURL() + "schemas/data-use/dar/translate";
     }
 
+    public String getSamUrl() {
+        return samUrl;
+    }
+
+    public void setSamUrl(String samUrl) {
+        this.samUrl = samUrl;
+    }
 }
