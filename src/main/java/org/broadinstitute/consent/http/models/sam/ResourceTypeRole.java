@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.models.sam;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class ResourceTypeRole {
 
@@ -18,6 +21,13 @@ public class ResourceTypeRole {
     this.actions = actions;
   }
 
+  public void addAction(String action) {
+    if (Objects.isNull(this.actions)) {
+      this.actions = new ArrayList<>();
+    }
+    this.actions.add(action);
+  }
+
   public Map<String, List<String>> getDescendantRoles() {
     return descendantRoles;
   }
@@ -26,12 +36,26 @@ public class ResourceTypeRole {
     this.descendantRoles = descendantRoles;
   }
 
+  public void addDescendantRole(Map.Entry<String, List<String>> descendantRole) {
+    if (Objects.isNull(this.descendantRoles)) {
+      this.descendantRoles = new HashMap<>();
+    }
+    this.descendantRoles.put(descendantRole.getKey(), descendantRole.getValue());
+  }
+
   public List<String> getIncludedRoles() {
     return includedRoles;
   }
 
   public void setIncludedRoles(List<String> includedRoles) {
     this.includedRoles = includedRoles;
+  }
+
+  public void addIncludedRole(String includedRole) {
+    if (Objects.isNull(this.includedRoles)) {
+      this.includedRoles = new ArrayList<>();
+    }
+    includedRoles.add(includedRole);
   }
 
   public String getRoleName() {

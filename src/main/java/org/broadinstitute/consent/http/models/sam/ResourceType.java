@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.models.sam;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ResourceType {
 
@@ -16,6 +18,13 @@ public class ResourceType {
 
   public void setActionPatterns(List<ActionPattern> actionPatterns) {
     this.actionPatterns = actionPatterns;
+  }
+
+  public void addActionPattern(ActionPattern actionPattern) {
+    if ( Objects.isNull(this.actionPatterns)) {
+      this.actionPatterns = new ArrayList<>();
+    }
+    this.actionPatterns.add(actionPattern);
   }
 
   public String getName() {
@@ -48,5 +57,12 @@ public class ResourceType {
 
   public void setRoles(List<ResourceTypeRole> roles) {
     this.roles = roles;
+  }
+
+  public void addRole(ResourceTypeRole role) {
+    if (Objects.isNull(this.roles)) {
+      this.roles = new ArrayList<>();
+    }
+    this.roles.add(role);
   }
 }
