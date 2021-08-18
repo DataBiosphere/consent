@@ -316,6 +316,15 @@ public class UserResourceTest {
   }
 
   @Test
+  public void testGetUnassignedUsers() {
+    List<User> users = Collections.singletonList(createUserWithRole());
+    when(userService.findUsersWithNoInstitution()).thenReturn(users);
+    initResource();
+    Response response = userResource.getUnassignedUsers(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
   public void testDeleteRoleFromUser() {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
