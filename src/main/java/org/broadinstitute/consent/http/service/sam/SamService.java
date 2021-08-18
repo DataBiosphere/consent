@@ -6,9 +6,16 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.sam.ResourceType;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("unused")
 public class SamService {
@@ -20,12 +27,13 @@ public class SamService {
     this.configuration = configuration;
   }
 
-  public String getResourceTypes(AuthUser authUser) throws Exception {
+  public List<ResourceType> getResourceTypes(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(getV1ResourceTypesUrl());
     HttpRequest request = buildGetRequest(genericUrl, authUser);
     HttpResponse response = request.execute();
     String body = response.parseAsString();
-    return body;
+    Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>(){}.getType();
+    return new Gson().fromJson(body, resourceTypesListType);
   }
 
   private HttpRequest buildGetRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
