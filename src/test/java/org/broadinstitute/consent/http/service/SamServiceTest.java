@@ -27,6 +27,8 @@ public class SamServiceTest implements WithMockServer {
 
   private SamService service;
 
+  private MockServerClient mockServerClient;
+
   @Mock
   private AuthUser authUser;
 
@@ -36,6 +38,7 @@ public class SamServiceTest implements WithMockServer {
   @Before
   public void setUp() throws Exception {
     MockitoAnnotations.openMocks(this);
+    mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
     ServicesConfiguration config = new ServicesConfiguration();
     config.setSamUrl("http://" + container.getHost() + ":" + container.getServerPort());
     service = new SamService(config);
@@ -43,7 +46,6 @@ public class SamServiceTest implements WithMockServer {
 
   @Test
   public void testGetResourceTypes() throws Exception {
-    MockServerClient mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
     List<ResourceType> mockResponseList = new ArrayList<>();
     ResourceType resourceType = new ResourceType();
     resourceType.setName(RandomStringUtils.random(10));
