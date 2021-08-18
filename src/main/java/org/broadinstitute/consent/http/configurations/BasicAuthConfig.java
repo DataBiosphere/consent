@@ -1,10 +1,12 @@
 package org.broadinstitute.consent.http.configurations;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.broadinstitute.consent.http.authentication.BasicUser;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BasicAuthConfig {
 
 
