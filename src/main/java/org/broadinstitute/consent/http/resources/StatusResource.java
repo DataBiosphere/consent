@@ -10,6 +10,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -48,8 +49,9 @@ public class StatusResource {
     }
 
     private Map<String, Object> formatResults(Map<String, HealthCheck.Result> results) {
-        Map<String, Object> formattedResults = new TreeMap<>();
-        formattedResults.putAll(results);
+        // Order is important so we put Ok and Degraded states at the beginning of the map and
+        // add all other entries after that.
+        Map<String, Object> formattedResults = new LinkedHashMap<>();
         boolean healthy = false;
         HealthCheck.Result postgresql = results.getOrDefault(DB_ENV, HealthCheck.Result.unhealthy("Unable to access postgresql database"));
         if (postgresql.isHealthy()) {
@@ -65,6 +67,7 @@ public class StatusResource {
                 || !ontology.isHealthy()
                 || !sam.isHealthy());
         formattedResults.put(DEGRADED, degraded);
+        formattedResults.putAll(results);
         return formattedResults;
     }
 

@@ -8,11 +8,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 import java.nio.charset.Charset;
-import java.util.LinkedHashMap;
 
 public class SamHealthCheck extends HealthCheck implements Managed {
 
