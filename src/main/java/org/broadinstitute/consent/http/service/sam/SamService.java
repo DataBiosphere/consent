@@ -17,7 +17,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("unused")
 public class SamService {
 
   private final ServicesConfiguration configuration;
@@ -29,21 +28,21 @@ public class SamService {
 
   public List<ResourceType> getResourceTypes(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(getV1ResourceTypesUrl());
-    HttpRequest request = buildGetRequest(genericUrl, authUser);
+    HttpRequest request = getRequest(genericUrl, authUser);
     HttpResponse response = request.execute();
     String body = response.parseAsString();
-    Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>(){}.getType();
+    Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>() {}.getType();
     return new Gson().fromJson(body, resourceTypesListType);
   }
 
-  private HttpRequest buildGetRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
+  private HttpRequest getRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
     HttpTransport transport = new NetHttpTransport();
     HttpRequest request = transport.createRequestFactory().buildGetRequest(genericUrl);
     request.getHeaders().setAuthorization("Bearer " + authUser.getAuthToken());
     return request;
   }
 
-  private HttpRequest buildPostRequest(
+  private HttpRequest postRequest(
       GenericUrl genericUrl, HttpContent content, AuthUser authUser) throws Exception {
     HttpTransport transport = new NetHttpTransport();
     HttpRequest request = transport.createRequestFactory().buildPostRequest(genericUrl, content);
@@ -51,7 +50,7 @@ public class SamService {
     return request;
   }
 
-  private HttpRequest buildPutRequest(GenericUrl genericUrl, HttpContent content, AuthUser authUser)
+  private HttpRequest putRequest(GenericUrl genericUrl, HttpContent content, AuthUser authUser)
       throws Exception {
     HttpTransport transport = new NetHttpTransport();
     HttpRequest request = transport.createRequestFactory().buildPutRequest(genericUrl, content);
@@ -59,7 +58,7 @@ public class SamService {
     return request;
   }
 
-  private HttpRequest buildDeleteRequest(GenericUrl genericUrl, AuthUser authUser)
+  private HttpRequest deleteRequest(GenericUrl genericUrl, AuthUser authUser)
       throws Exception {
     HttpTransport transport = new NetHttpTransport();
     HttpRequest request = transport.createRequestFactory().buildDeleteRequest(genericUrl);
