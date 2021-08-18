@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.configurations;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import javax.validation.constraints.NotNull;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ServicesConfiguration {
 
     @NotNull
@@ -9,6 +12,8 @@ public class ServicesConfiguration {
 
     @NotNull
     private String localURL;
+
+    private String samUrl;
 
     private final String MATCH = "match";
 
@@ -42,4 +47,11 @@ public class ServicesConfiguration {
         return getOntologyURL() + "schemas/data-use/dar/translate";
     }
 
+    public String getSamUrl() {
+        return samUrl;
+    }
+
+    public void setSamUrl(String samUrl) {
+        this.samUrl = samUrl;
+    }
 }
