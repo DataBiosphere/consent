@@ -2,11 +2,17 @@ package org.broadinstitute.consent.http.health;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.gson.Gson;
 import io.dropwizard.lifecycle.Managed;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+
+import java.nio.charset.Charset;
+import java.util.LinkedHashMap;
 
 public class SamHealthCheck extends HealthCheck implements Managed {
 
@@ -24,8 +30,14 @@ public class SamHealthCheck extends HealthCheck implements Managed {
             String statusUrl = configuration.getSamUrl() + "status";
             HttpGet httpGet = new HttpGet(statusUrl);
             try (CloseableHttpResponse response = clientUtil.getHttpResponse(httpGet)) {
+                String content = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
+                SamStatus samStatus = new Gson().fromJson(content, SamStatus.class);
                 if (response.getStatusLine().getStatusCode() == HttpStatusCodes.STATUS_CODE_OK) {
-                    return Result.healthy();
+                    return Result.builder()
+                            .withDetail(StatusResource.OK, samStatus.ok)
+                            .withDetail("systems", samStatus.systems)
+                            .healthy()
+                            .build();
                 } else {
                     return Result.unhealthy("Sam status is unhealthy: " + response.getStatusLine());
                 }
@@ -45,5 +57,10 @@ public class SamHealthCheck extends HealthCheck implements Managed {
     @Override
     public void stop() throws Exception {
 
+    }
+
+    private static class SamStatus {
+        boolean ok;
+        LinkedHashMap systems;
     }
 }
