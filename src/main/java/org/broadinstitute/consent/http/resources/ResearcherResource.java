@@ -112,20 +112,6 @@ public class ResearcherResource extends Resource {
         }
     }
 
-    @GET
-    @Path("{userId}/dar")
-    @Produces("application/json")
-    @RolesAllowed({ADMIN, RESEARCHER})
-    public Response getResearcherPropertiesForDAR(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
-        try {
-            List<UserRoles> authedRoles = Collections.singletonList(UserRoles.ADMIN);
-            validateAuthedRoleUser(authedRoles, findByAuthUser(authUser), userId);
-            return Response.ok(researcherService.describeResearcherPropertiesForDAR(userId)).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
     private User findByAuthUser(AuthUser user) {
         GoogleUser googleUser = user.getGoogleUser();
         User dacUser = userService.findUserByEmail(googleUser.getEmail());

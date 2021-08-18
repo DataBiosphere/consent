@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -354,7 +355,9 @@ public class UserServiceTest {
     public void testGetUsersByUserRole_SO() {
         User u = generateUser();
         u.setInstitutionId(1);
-        when(userDAO.findUsersByInstitution(1)).thenReturn(Arrays.asList(new User(), new User(), new User()));
+        when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(Arrays.asList(new User()));
+        when(userDAO.getCardsForUnregisteredUsers(anyInt())).thenReturn(Arrays.asList(new User()));
+        when(userDAO.getUsersOutsideInstitutionWithCards(anyInt())).thenReturn(Arrays.asList(new User()));
         initService();
 
         List<User> users = service.getUsersByUserRole(u, "SigningOfficial");
@@ -378,6 +381,17 @@ public class UserServiceTest {
         List<User> users = service.getUsersByUserRole(u, "Admin");
         assertNotNull(users);
         assertEquals(3, users.size());
+    }
+
+    @Test
+    public void testFindUsersWithNoInstitution() {
+        User user = generateUser();
+        when(userDAO.getUsersWithNoInstitution()).thenReturn(Collections.singletonList(user));
+        initService();
+        List<User> users = service.findUsersWithNoInstitution();
+        assertNotNull(users);
+        assertEquals(1, users.size());
+        assertEquals(user.getDacUserId(), users.get(0).getDacUserId());
     }
 
     private User generateUser() {

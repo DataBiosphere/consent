@@ -18,7 +18,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
-import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -37,9 +36,6 @@ public class ResearcherServiceTest {
 
     @Mock
     private UserDAO userDAO;
-
-    @Mock
-    private InstitutionDAO institutionDAO;
 
     @Mock
     private EmailNotifierService emailNotifierService;
@@ -68,7 +64,7 @@ public class ResearcherServiceTest {
     }
 
     private void initService() {
-        service = new ResearcherService(userPropertyDAO, userDAO, institutionDAO, emailNotifierService, userService);
+        service = new ResearcherService(userPropertyDAO, userDAO, emailNotifierService, userService);
     }
 
     @Test

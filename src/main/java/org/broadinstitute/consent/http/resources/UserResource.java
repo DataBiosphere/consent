@@ -114,6 +114,19 @@ public class UserResource extends Resource {
         }
     }
 
+    @GET
+    @Path("/institution/unassigned")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
+    public Response getUnassignedUsers(@Auth AuthUser user) {
+        try {
+            List<User> unassignedUsers = userService.findUsersWithNoInstitution();
+            return Response.ok().entity(unassignedUsers).build();
+        } catch(Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
     @PUT
     @Path("/{userId}/{roleId}")
     @Produces("application/json")
@@ -221,38 +234,6 @@ public class UserResource extends Resource {
                 return Response.ok().entity(signingOfficials).build();
             }
             return Response.ok().entity(Collections.emptyList()).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
-    @POST
-    @Consumes("application/json")
-    @Path("/{userId}")
-    @PermitAll
-    public Response registerProperties(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @Context UriInfo info, Map<String, String> researcherPropertiesMap) {
-        try {
-            User user = userService.findUserById(userId);
-            // TODO: validate user id === auth user
-            researcherService.setProperties(researcherPropertiesMap, authUser);
-            // TODO: refetch user
-            return Response.created(info.getRequestUriBuilder().build()).entity(user).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
-    @PUT
-    @Consumes("application/json")
-    @Path("/{userId}")
-    @PermitAll
-    public Response updateProperties(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @QueryParam("validate") Boolean validate, Map<String, String> researcherProperties) {
-        try {
-            User user = userService.findUserById(userId);
-            // TODO: validate user id === auth user
-            researcherService.updateProperties(researcherProperties, authUser, validate);
-            // TODO: refetch user
-            return Response.ok(user).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

@@ -168,40 +168,4 @@ public class ResearcherResourceTest {
         Assert.assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response2.getStatus());
     }
 
-    @Test
-    public void testGetResearcherPropertiesForDARAdmin() {
-        when(researcherService.describeResearcherPropertiesMap(any())).thenReturn(new HashMap<>());
-        User authedUser = new User();
-        authedUser.setDacUserId(1);
-        authedUser.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-        when(userService.findUserByEmail(anyString())).thenReturn(authedUser);
-        initResource();
-
-        // Request properties for self
-        Response response1 = resource.getResearcherPropertiesForDAR(authUser, 1);
-        Assert.assertEquals(Response.Status.OK.getStatusCode(), response1.getStatus());
-
-        // Request properties for a different user id
-        Response response2 = resource.getResearcherPropertiesForDAR(authUser, 2);
-        Assert.assertEquals(Response.Status.OK.getStatusCode(), response2.getStatus());
-    }
-
-    @Test
-    public void testGetResearcherPropertiesForDARResearcher() {
-        when(researcherService.describeResearcherPropertiesMap(any())).thenReturn(new HashMap<>());
-        User authedUser = new User();
-        authedUser.setDacUserId(1);
-        authedUser.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-        when(userService.findUserByEmail(anyString())).thenReturn(authedUser);
-        initResource();
-
-        // Request properties for self
-        Response response1 = resource.getResearcherPropertiesForDAR(authUser, 1);
-        Assert.assertEquals(Response.Status.OK.getStatusCode(), response1.getStatus());
-
-        // Request properties for a different user id
-        Response response2 = resource.getResearcherPropertiesForDAR(authUser, 2);
-        Assert.assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response2.getStatus());
-    }
-
 }

@@ -334,6 +334,13 @@ public class User {
         this.getProperties().add(userProp);
     }
 
+    public void addLibraryCard(LibraryCard card) {
+        if(Objects.isNull(this.getLibraryCards())) {
+            this.setLibraryCards(new ArrayList<LibraryCard>());
+        }
+        this.getLibraryCards().add(card);
+    }
+
     @Override
     public int hashCode(){
         return  dacUserId;

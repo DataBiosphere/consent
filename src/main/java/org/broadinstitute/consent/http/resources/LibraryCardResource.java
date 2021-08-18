@@ -8,6 +8,7 @@ import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -15,6 +16,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -79,10 +81,10 @@ public class LibraryCardResource extends Resource{
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   public Response createLibraryCard(@Auth AuthUser authUser, String libraryCard) {
     try{
-      User admin = userService.findUserByEmail(authUser.getEmail());
+      User user = userService.findUserByEmail(authUser.getEmail());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
-      payload.setCreateUserId(admin.getDacUserId());
-      LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload);
+      payload.setCreateUserId(user.getDacUserId());
+      LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload, user);
       return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(newLibraryCard).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
@@ -108,13 +110,25 @@ public class LibraryCardResource extends Resource{
   @DELETE
   @Produces("application/json")
   @Path("/{id}")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   public Response deleteLibraryCard(@Auth AuthUser authUser, @PathParam("id") Integer id) {
+    User user = userService.findUserByEmail(authUser.getEmail());
+    LibraryCard card = libraryCardService.findLibraryCardById(id);
     try {
-      libraryCardService.deleteLibraryCardById(id);
+      // If user is not an admin and LC institutionID doesn't match the users's throw an exception
+      if (!checkIsAdmin(user) && !card.getInstitutionId().equals(user.getInstitutionId())) {
+        throw new ForbiddenException("You are not authorized to delete this library card");
+      }
+      libraryCardService.deleteLibraryCardById(id, user);
       return Response.status(204).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private Boolean checkIsAdmin(User user) {
+    return user.getRoles()
+      .stream()
+      .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
   }
 }

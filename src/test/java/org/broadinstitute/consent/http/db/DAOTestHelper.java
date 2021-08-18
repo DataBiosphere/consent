@@ -340,7 +340,14 @@ public class DAOTestHelper {
         addUserRole(7, userId);
         createdInstitutionIds.add(institutionId);
         createdUserIds.add(userId);
-        createdInstitutionIds.add(institutionId);
+        return userDAO.findUserById(userId);
+    }
+
+    protected User createUserForInstitution(Integer institutionId) {
+        String email = RandomStringUtils.randomAlphabetic(11);
+        Integer userId = userDAO.insertUser(email, "displayName", new Date());
+        createdUserIds.add(userId);
+        userDAO.updateUser(email, userId, "additionalEmail", institutionId);
         return userDAO.findUserById(userId);
     }
 
@@ -395,6 +402,7 @@ public class DAOTestHelper {
                 institution.getItDirectorEmail(),
                 updateUser.getDacUserId(),
                 new Date());
+        createdUserIds.add(updateUser.getDacUserId());
         createdInstitutionIds.add(id);
         return institutionDAO.findInstitutionById(id);
     }
@@ -424,8 +432,8 @@ public class DAOTestHelper {
     }
 
     protected LibraryCard createLibraryCard() {
-        Integer userId = createUser().getDacUserId();
         Integer institutionId = createInstitution().getId();
+        Integer userId = createUserForInstitution(institutionId).getDacUserId();
         String stringValue = "value";
         Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue, userId, new Date());
         createdLibraryCardIds.add(id);
@@ -436,6 +444,22 @@ public class DAOTestHelper {
         Integer institutionId = createInstitution().getId();
         String stringValue = "value";
         Integer id = libraryCardDAO.insertLibraryCard(user.getDacUserId(), institutionId, stringValue, user.getDisplayName(), user.getEmail(), user.getDacUserId(), new Date());
+        createdLibraryCardIds.add(id);
+        return libraryCardDAO.findLibraryCardById(id);
+    }
+    
+    protected LibraryCard createLCForUnregisteredUser(Integer institutionId) {
+        Integer createUserId = createUser().getDacUserId();
+        String email = RandomStringUtils.randomAlphabetic(10);
+        Integer id = libraryCardDAO.insertLibraryCard(null, institutionId, null, null, email, createUserId, new Date());
+        createdLibraryCardIds.add(id);
+        return libraryCardDAO.findLibraryCardById(id);
+    }
+
+    protected LibraryCard createLibraryCardForInstitution(User user, Integer institutionId) {
+        String stringValue = "value";
+        Integer id = libraryCardDAO.insertLibraryCard(user.getDacUserId(), institutionId, stringValue,
+                user.getDisplayName(), user.getEmail(), user.getDacUserId(), new Date());
         createdLibraryCardIds.add(id);
         return libraryCardDAO.findLibraryCardById(id);
     }

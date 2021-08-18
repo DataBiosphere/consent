@@ -4,11 +4,13 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ForbiddenException;
 
 import java.util.Date;
 import java.util.List;
@@ -27,10 +29,15 @@ public class LibraryCardService {
         this.userDAO = userDAO;
     }
 
-    public LibraryCard createLibraryCard(LibraryCard libraryCard) throws Exception {
+    public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) throws Exception {
         throwIfNull(libraryCard);
-        checkForValidInstitution(libraryCard.getInstitutionId());
+        Boolean isAdmin = checkIsAdmin(user);
+        //If user is not an admin, use user's institutionId rather than the value provided in the payload
+        if (!isAdmin && libraryCard.getInstitutionId() != user.getInstitutionId()) {
+            throw new BadRequestException("Card payload not valid");
+        }
         checkIfCardExists(libraryCard);
+        checkForValidInstitution(libraryCard.getInstitutionId());
         LibraryCard processedCard = processUserOnNewLC(libraryCard);
         Date createDate = new Date();
         Integer id = this.libraryCardDAO.insertLibraryCard(
@@ -66,9 +73,10 @@ public class LibraryCardService {
         return this.libraryCardDAO.findLibraryCardById(id);
     }
 
-    public void deleteLibraryCardById(Integer id) {
-        LibraryCard libraryCard = this.libraryCardDAO.findLibraryCardById(id);
-        throwIfNull(libraryCard);
+    public void deleteLibraryCardById(Integer id, User user) {
+        Boolean isAdmin = checkIsAdmin(user);
+        LibraryCard card = findLibraryCardById(id);
+        throwIfNull(card);
         this.libraryCardDAO.deleteLibraryCardById(id);
     }
 
@@ -180,7 +188,14 @@ public class LibraryCardService {
                 //throw error here, user is trying to associate incorrect userId with email
                 throw new ConsentConflictException();
             }
+            card.setUserName(user.getDisplayName());
         }
         return card;
+    }
+
+    private Boolean checkIsAdmin(User user) {
+        return user.getRoles()
+            .stream()
+            .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
     }
 }
