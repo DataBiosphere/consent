@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.cloud.storage.Bucket;
+import org.broadinstitute.consent.http.health.GCSHealthCheck;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

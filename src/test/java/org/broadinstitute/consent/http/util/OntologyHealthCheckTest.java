@@ -12,7 +12,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.service.ontology.OntologyHealthCheck;
+import org.broadinstitute.consent.http.health.OntologyHealthCheck;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

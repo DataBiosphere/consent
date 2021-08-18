@@ -28,12 +28,13 @@ import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
 import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
-import org.broadinstitute.consent.http.cloudstore.GCSHealthCheck;
+import org.broadinstitute.consent.http.health.GCSHealthCheck;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
+import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.resources.ApprovalExpirationTimeResource;
 import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
@@ -90,11 +91,11 @@ import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.service.ontology.ElasticSearchHealthCheck;
+import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontology.IndexerService;
 import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
-import org.broadinstitute.consent.http.service.ontology.OntologyHealthCheck;
+import org.broadinstitute.consent.http.health.OntologyHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
@@ -190,6 +191,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(gcsService));
         env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
         env.healthChecks().register("ontology", new OntologyHealthCheck(clientUtil, config.getServicesConfiguration()));
+        env.healthChecks().register("sam", new SamHealthCheck(clientUtil, config.getServicesConfiguration()));
 
         final StoreOntologyService storeOntologyService = new StoreOntologyService(
                 googleStore,

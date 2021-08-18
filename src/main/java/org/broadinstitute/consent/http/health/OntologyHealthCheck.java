@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service.ontology;
+package org.broadinstitute.consent.http.health;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
