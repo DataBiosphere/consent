@@ -20,10 +20,12 @@ public class SamService {
     this.configuration = configuration;
   }
 
-  public HttpResponse getResourceTypes(AuthUser authUser) throws Exception {
+  public String getResourceTypes(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(getV1ResourceTypesUrl());
     HttpRequest request = buildGetRequest(genericUrl, authUser);
-    return request.execute();
+    HttpResponse response = request.execute();
+    String body = response.parseAsString();
+    return body;
   }
 
   private HttpRequest buildGetRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
