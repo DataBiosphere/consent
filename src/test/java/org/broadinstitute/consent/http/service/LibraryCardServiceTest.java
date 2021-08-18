@@ -216,6 +216,16 @@ public class LibraryCardServiceTest {
         service.createLibraryCard(null, adminUser);
     }
 
+    @Test(expected = BadRequestException.class)
+    public void testCreateLibraryCard_InvalidInstitutionId() throws Exception {
+        User soUser = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+        soUser.setInstitutionId(1);
+        LibraryCard card = testLibraryCard(2, 2);
+        card.setInstitutionId(2);
+        initService();
+        service.createLibraryCard(card, soUser);
+    }
+
 
     @Test
     public void testUpdateLibraryCard() {
