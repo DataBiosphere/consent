@@ -126,6 +126,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
 
+    public static final String GCS_CHECK = "google-cloud-storage";
+    public static final String ES_CHECK = "elastic-search";
+    public static final String ONTOLOGY_CHECK = "ontology";
+    public static final String SAM_CHECK = "sam";
+
     public static void main(String[] args) throws Exception {
         LOGGER.info("Starting Consent Application");
         try {
@@ -188,10 +193,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         configureCors(env);
 
         // Health Checks
-        env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(gcsService));
-        env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
-        env.healthChecks().register("ontology", new OntologyHealthCheck(clientUtil, config.getServicesConfiguration()));
-        env.healthChecks().register("sam", new SamHealthCheck(clientUtil, config.getServicesConfiguration()));
+        env.healthChecks().register(GCS_CHECK, new GCSHealthCheck(gcsService));
+        env.healthChecks().register(ES_CHECK, new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
+        env.healthChecks().register(ONTOLOGY_CHECK, new OntologyHealthCheck(clientUtil, config.getServicesConfiguration()));
+        env.healthChecks().register(SAM_CHECK, new SamHealthCheck(clientUtil, config.getServicesConfiguration()));
 
         final StoreOntologyService storeOntologyService = new StoreOntologyService(
                 googleStore,
