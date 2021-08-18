@@ -34,7 +34,7 @@ public class SamHealthCheck extends HealthCheck implements Managed {
                 SamStatus samStatus = new Gson().fromJson(content, SamStatus.class);
                 if (response.getStatusLine().getStatusCode() == HttpStatusCodes.STATUS_CODE_OK) {
                     return Result.builder()
-                            .withDetail(StatusResource.OK, samStatus.ok)
+                            .withDetail("ok", samStatus.ok)
                             .withDetail("systems", samStatus.systems)
                             .healthy()
                             .build();
@@ -61,6 +61,6 @@ public class SamHealthCheck extends HealthCheck implements Managed {
 
     private static class SamStatus {
         boolean ok;
-        LinkedHashMap systems;
+        Object systems;
     }
 }
