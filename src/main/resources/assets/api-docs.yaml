@@ -3580,7 +3580,7 @@ paths:
         - Sam
       responses:
         200:
-          description: Dataset Metrics
+          description: Sam Resource Types
           content:
             application/json:
               schema:
