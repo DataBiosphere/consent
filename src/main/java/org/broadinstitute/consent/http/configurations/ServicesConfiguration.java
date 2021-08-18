@@ -13,6 +13,7 @@ public class ServicesConfiguration {
     @NotNull
     private String localURL;
 
+    @NotNull
     private String samUrl;
 
     private final String MATCH = "match";
