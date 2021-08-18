@@ -29,7 +29,7 @@ public class SamResource extends Resource {
   public Response getResourceTypes(@Auth AuthUser authUser) {
       try {
           List<ResourceType> types = samService.getResourceTypes(authUser);
-          // Use Gson to deserialize the entity
+          //  Jackson is the default - use Gson to serialize the entity
           return Response.ok().entity(new Gson().toJson(types)).build();
       } catch (Exception e) {
           return createExceptionResponse(e);
