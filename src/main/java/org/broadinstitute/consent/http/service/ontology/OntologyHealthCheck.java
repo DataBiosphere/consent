@@ -1,17 +1,12 @@
-package org.broadinstitute.consent.http.health;
+package org.broadinstitute.consent.http.service.ontology;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
-
-import java.nio.charset.Charset;
-import java.util.LinkedHashMap;
 
 public class OntologyHealthCheck extends HealthCheck implements Managed {
 
@@ -29,14 +24,8 @@ public class OntologyHealthCheck extends HealthCheck implements Managed {
       String statusUrl = servicesConfiguration.getOntologyURL() + "status";
       HttpGet httpGet = new HttpGet(statusUrl);
       try (CloseableHttpResponse response = clientUtil.getHttpResponse(httpGet)) {
-        String content = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
-        Object ontologyStatus = new Gson().fromJson(content, Object.class);
         if (response.getStatusLine().getStatusCode() == HttpStatusCodes.STATUS_CODE_OK) {
-          return Result.builder()
-                  .withDetail("ok", true)
-                  .withDetail("systems", ontologyStatus)
-                  .healthy()
-                  .build();
+          return Result.healthy();
         } else {
           return Result.unhealthy("Ontology status is unhealthy: " + response.getStatusLine());
         }
