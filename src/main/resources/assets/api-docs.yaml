@@ -3209,7 +3209,7 @@ paths:
 
   /api/user:
     post:
-      summary: createResearcher
+      summary: Create User
       description: Create a user with RESEARCHER role using the user's current authentication status.
       tags:
         - User
