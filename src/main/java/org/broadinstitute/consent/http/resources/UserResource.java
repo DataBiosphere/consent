@@ -243,10 +243,10 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Path("/profile")
     @PermitAll
-    public Response registerProperties(@Auth AuthUser authUser, @Context UriInfo info, Map<String, String> researcherPropertiesMap) {
+    public Response registerProperties(@Auth AuthUser authUser, @Context UriInfo info, Map<String, String> userPropertiesMap) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            researcherService.setProperties(researcherPropertiesMap, authUser);
+            researcherService.setProperties(userPropertiesMap, authUser);
             User updatedUser = userService.findUserById(user.getDacUserId());
             JsonObject userJson = constructUserJsonObject(updatedUser);
             return Response.created(info.getRequestUriBuilder().build()).entity(gson.toJson(userJson)).build();
@@ -259,10 +259,10 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Path("/profile")
     @PermitAll
-    public Response updateProperties(@Auth AuthUser authUser, @QueryParam("validate") Boolean validate, Map<String, String> researcherProperties) {
+    public Response updateProperties(@Auth AuthUser authUser, @QueryParam("validate") Boolean validate, Map<String, String> userProperties) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            researcherService.updateProperties(researcherProperties, authUser, validate);
+            researcherService.updateProperties(userProperties, authUser, validate);
             User updatedUser = userService.findUserById(user.getDacUserId());
             JsonObject userJson = constructUserJsonObject(updatedUser);
             return Response.ok().entity(gson.toJson(userJson)).build();
