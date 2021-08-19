@@ -28,7 +28,7 @@ public class SamHealthCheck extends HealthCheck implements Managed {
             String statusUrl = configuration.getSamUrl() + "status";
             HttpGet httpGet = new HttpGet(statusUrl);
             try (CloseableHttpResponse response = clientUtil.getHttpResponse(httpGet)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatusCodes.STATUS_CODE_OK) {
+                if (HttpStatusCodes.STATUS_CODE_OK == response.getStatusLine().getStatusCode()) {
                     String content = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
                     SamStatus samStatus = new Gson().fromJson(content, SamStatus.class);
                     return Result.builder()
