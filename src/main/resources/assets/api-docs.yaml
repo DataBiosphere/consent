@@ -3621,6 +3621,21 @@ paths:
           description: Returns eRA Commons Account information. Map<String, String> format
         404:
           description: The user doesn't exist in the system
+  /api/sam/resource-types:
+    get:
+      summary: Sam Resource Types
+      description: Sam Resource Types
+      tags:
+        - Sam
+      responses:
+        200:
+          description: Sam Resource Types
+          content:
+            application/json:
+              schema:
+                type: object
+        500:
+          description: Internal Server Error
   /metrics/dac/decision:
     get:
       summary: Dac Decision Metrics

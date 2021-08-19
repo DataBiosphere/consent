@@ -7,8 +7,6 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
-import javax.ws.rs.client.Client;
-
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
@@ -20,8 +18,8 @@ import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -58,10 +56,13 @@ import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.service.sam.SamService;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
+
+import javax.ws.rs.client.Client;
 
 public class ConsentModule extends AbstractModule {
 
@@ -173,7 +174,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    OAuthAuthenticator providesOAuthAuthenicator() {
+    OAuthAuthenticator providesOAuthAuthenticator() {
         return new OAuthAuthenticator(providesClient());
     }
 
@@ -511,4 +512,8 @@ public class ConsentModule extends AbstractModule {
         );
     }
 
+    @Provides
+    SamService providesSamService() {
+        return new SamService(config.getServicesConfiguration());
+    }
 }

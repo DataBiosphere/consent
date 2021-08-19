@@ -64,6 +64,7 @@ import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
 import org.broadinstitute.consent.http.resources.NihAccountResource;
 import org.broadinstitute.consent.http.resources.ResearcherResource;
+import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.resources.SwaggerResource;
 import org.broadinstitute.consent.http.resources.UserResource;
@@ -95,6 +96,7 @@ import org.broadinstitute.consent.http.service.ontology.IndexerService;
 import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
 import org.broadinstitute.consent.http.service.ontology.OntologyHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
+import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
 import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
@@ -179,6 +181,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final MatchService matchService = injector.getProvider(MatchService.class).get();
         final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
         final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class).get();
+        final SamService samService = injector.getProvider(SamService.class).get();
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
@@ -235,6 +238,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new MetricsResource(metricsService));
         env.jersey().register(new UserResource(researcherService, userService, libraryCardService));
         env.jersey().register(new ResearcherResource(researcherService, userService, libraryCardService));
+        env.jersey().register(new SamResource(samService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
         env.jersey().register(new NihAccountResource(nihService, userService));
         env.jersey().register(injector.getInstance(VersionResource.class));
