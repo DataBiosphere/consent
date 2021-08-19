@@ -239,6 +239,38 @@ public class UserResource extends Resource {
         }
     }
 
+    @POST
+    @Consumes("application/json")
+    @Path("/{userId}")
+    @PermitAll
+    public Response registerProperties(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @Context UriInfo info, Map<String, String> researcherPropertiesMap) {
+        try {
+            User user = userService.findUserById(userId);
+            // TODO: validate user id === auth user
+            researcherService.setProperties(researcherPropertiesMap, authUser);
+            // TODO: refetch user
+            return Response.created(info.getRequestUriBuilder().build()).entity(user).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
+    @Consumes("application/json")
+    @Path("/{userId}")
+    @PermitAll
+    public Response updateProperties(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @QueryParam("validate") Boolean validate, Map<String, String> researcherProperties) {
+        try {
+            User user = userService.findUserById(userId);
+            // TODO: validate user id === auth user
+            researcherService.updateProperties(researcherProperties, authUser, validate);
+            // TODO: refetch user
+            return Response.ok(user).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
     /**
      * Convenience method for a generic user object with custom properties added
      * @param user The User
