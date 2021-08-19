@@ -3306,13 +3306,13 @@ paths:
     post:
       summary: Create user properties.
       description: Create properties for the current user.
-      parameters:
-        - name: userProperties
-          in: body
-          required: true
-          description: Map<String, String> for user properties.
-          schema:
-            $ref: '#/components/schemas/UserProperties'
+      requestBody:
+        description: Map<String, String> for user properties.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProperties'
       tags:
         - User
       responses:
@@ -3327,6 +3327,13 @@ paths:
     put:
       summary: Update user properties
       description: Updates a user.
+      requestBody:
+        description: Map<String, String> for user properties.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProperties'
       parameters:
         - name: validate
           in: query
@@ -3334,12 +3341,6 @@ paths:
           required: true
           schema:
             type: boolean
-        - name: userProperties
-          in: body
-          required: true
-          description: Map<String, String> for user properties.
-          schema:
-            $ref: '#/components/schemas/UserProperties'
       tags:
         - User
       responses:
