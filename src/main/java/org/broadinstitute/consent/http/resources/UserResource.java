@@ -241,15 +241,15 @@ public class UserResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    @Path("/{userId}")
+    @Path("/profile")
     @PermitAll
-    public Response registerProperties(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @Context UriInfo info, Map<String, String> researcherPropertiesMap) {
+    public Response registerProperties(@Auth AuthUser authUser, @Context UriInfo info, Map<String, String> researcherPropertiesMap) {
         try {
-            User user = userService.findUserById(userId);
-            // TODO: validate user id === auth user
+            User user = userService.findUserByEmail(authUser.getEmail());
             researcherService.setProperties(researcherPropertiesMap, authUser);
-            // TODO: refetch user
-            return Response.created(info.getRequestUriBuilder().build()).entity(user).build();
+            User updatedUser = userService.findUserById(user.getDacUserId());
+            JsonObject userJson = constructUserJsonObject(updatedUser);
+            return Response.created(info.getRequestUriBuilder().build()).entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -257,15 +257,15 @@ public class UserResource extends Resource {
 
     @PUT
     @Consumes("application/json")
-    @Path("/{userId}")
+    @Path("/profile")
     @PermitAll
-    public Response updateProperties(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @QueryParam("validate") Boolean validate, Map<String, String> researcherProperties) {
+    public Response updateProperties(@Auth AuthUser authUser, @QueryParam("validate") Boolean validate, Map<String, String> researcherProperties) {
         try {
-            User user = userService.findUserById(userId);
-            // TODO: validate user id === auth user
+            User user = userService.findUserByEmail(authUser.getEmail());
             researcherService.updateProperties(researcherProperties, authUser, validate);
-            // TODO: refetch user
-            return Response.ok(user).build();
+            User updatedUser = userService.findUserById(user.getDacUserId());
+            JsonObject userJson = constructUserJsonObject(updatedUser);
+            return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

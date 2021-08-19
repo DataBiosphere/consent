@@ -3303,6 +3303,7 @@ paths:
           description: User not found
         500:
           description: Server error.
+  /api/user/profile:
     post:
       summary: Create user properties.
       description: Create properties for the current user.
