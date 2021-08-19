@@ -40,7 +40,7 @@ public class SamServiceTest implements WithMockServer {
     MockitoAnnotations.openMocks(this);
     mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
     ServicesConfiguration config = new ServicesConfiguration();
-    config.setSamUrl("http://" + container.getHost() + ":" + container.getServerPort());
+    config.setSamUrl("http://" + container.getHost() + ":" + container.getServerPort() + "/");
     service = new SamService(config);
   }
 
