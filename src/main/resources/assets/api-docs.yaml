@@ -3600,7 +3600,6 @@ paths:
       description: Removes only Era Commons Account related information from the logued user, requesting this action
       tags:
         - User
-        - Researcher
         - eRA Commons
         - Nih
       responses:
