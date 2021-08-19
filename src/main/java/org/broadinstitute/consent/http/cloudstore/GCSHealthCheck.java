@@ -1,8 +1,7 @@
-package org.broadinstitute.consent.http.health;
+package org.broadinstitute.consent.http.cloudstore;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.cloud.storage.Bucket;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
 
 public class GCSHealthCheck extends HealthCheck {
 

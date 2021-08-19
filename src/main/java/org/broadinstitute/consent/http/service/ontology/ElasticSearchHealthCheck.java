@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.health;
+package org.broadinstitute.consent.http.service.ontology;
 
 import static org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport.jsonHeader;
 
@@ -9,7 +9,6 @@ import io.dropwizard.lifecycle.Managed;
 import java.nio.charset.Charset;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
-import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
