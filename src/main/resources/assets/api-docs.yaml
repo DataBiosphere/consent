@@ -3506,7 +3506,6 @@ paths:
           schema:
             $ref: '#/components/schemas/UserProperties'
       tags:
-        - User
         - Researcher
       responses:
         201:
@@ -3537,7 +3536,6 @@ paths:
           schema:
             $ref: '#/components/schemas/UserProperties'
       tags:
-        - User
         - Researcher
       responses:
         200:
