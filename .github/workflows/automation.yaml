@@ -36,7 +36,7 @@ jobs:
       - name: Run automation tests
         run: |
           cd ./automation
-          docker-compose up --remove-orphans --no-recreate --quiet-pull --abort-on-container-exit --exit-code-from automation-tests
+          docker-compose up --quiet-pull --abort-on-container-exit --exit-code-from automation-tests
 
       - name: Stop containers
         if: always()
