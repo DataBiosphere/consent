@@ -1,16 +1,16 @@
-package org.broadinstitute.consent.http.cloudstore;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
+package org.broadinstitute.consent.http.health;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.cloud.storage.Bucket;
-import org.broadinstitute.consent.http.health.GCSHealthCheck;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 public class GCSHealthCheckTest {
 
@@ -24,7 +24,7 @@ public class GCSHealthCheckTest {
 
     @Before
     public void setUpClass() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         healthCheck = new GCSHealthCheck(store);
     }
 
