@@ -15,8 +15,8 @@ services:
 
   consent-app:
     image: consent
-    logging:
-      driver: none
+#    logging:
+#      driver: none
     depends_on:
       - consent-postgres
     build:
@@ -38,5 +38,6 @@ services:
       context: ./
       dockerfile: Dockerfile
     volumes:
+      - ./target:/app/target
       - ./configs/application.conf:/app/src/test/resources/application.conf
       - ./configs/logback.xml:/app/src/test/resources/logback.xml

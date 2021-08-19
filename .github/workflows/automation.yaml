@@ -16,7 +16,7 @@ jobs:
       - name: Setup paths
         run: |
           mkdir -p automation/src/test/resources/accounts
-          mkdir -p target
+          mkdir -p automation/target
 
       - name: Render configs
         env:
