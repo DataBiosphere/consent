@@ -15,8 +15,6 @@ services:
 
   consent-app:
     image: consent
-#    logging:
-#      driver: none
     depends_on:
       - consent-postgres
     build:
