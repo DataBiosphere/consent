@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models.sam;
 
+import com.google.gson.Gson;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -64,5 +66,10 @@ public class ResourceType {
       this.roles = new ArrayList<>();
     }
     this.roles.add(role);
+  }
+
+  @Override
+  public String toString() {
+    return new Gson().toJson(this);
   }
 }

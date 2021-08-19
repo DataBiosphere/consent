@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.sam;
 
+import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
@@ -10,9 +11,15 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.SamSelfDiagnostics;
+import org.broadinstitute.consent.http.models.sam.SamUserInfo;
 
+import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +42,57 @@ public class SamService {
     return new Gson().fromJson(body, resourceTypesListType);
   }
 
+  public SamUserInfo getRegistrationInfo(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(getRegisterUserV2SelfInfoUrl());
+    HttpRequest request = getRequest(genericUrl, authUser);
+    HttpResponse response;
+    try {
+      response = request.execute();
+      if (!response.isSuccessStatusCode()) {
+        throw new ServerErrorException(response.getStatusCode());
+      }
+    } catch (Exception e) {
+      throw new ServerErrorException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+    String body = response.parseAsString();
+    return new Gson().fromJson(body, SamUserInfo.class);
+  }
+
+  public SamSelfDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(getV2SelfDiagnosticsUrl());
+    HttpRequest request = getRequest(genericUrl, authUser);
+    HttpResponse response;
+    try {
+      response = request.execute();
+      if (!response.isSuccessStatusCode()) {
+        throw new ServerErrorException(response.getStatusCode());
+      }
+    } catch (Exception e) {
+      throw new ServerErrorException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+    String body = response.parseAsString();
+    return new Gson().fromJson(body, SamSelfDiagnostics.class);
+  }
+
+  public SamUserInfo postRegistrationInfo(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(postRegisterUserV2SelfUrl());
+    HttpRequest request = postRequest(genericUrl, new EmptyContent(), authUser);
+    HttpResponse response;
+    try {
+      response = request.execute();
+      if (!response.isSuccessStatusCode()) {
+        if (Response.Status.CONFLICT.getStatusCode() == response.getStatusCode()) {
+          throw new ConsentConflictException(response.getStatusMessage());
+        }
+        throw new ServerErrorException(response.getStatusCode());
+      }
+    } catch (Exception e) {
+      throw new ServerErrorException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+    String body = response.parseAsString();
+    return new Gson().fromJson(body, SamUserInfo.class);
+  }
+
   private HttpRequest getRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
     HttpTransport transport = new NetHttpTransport();
     HttpRequest request = transport.createRequestFactory().buildGetRequest(genericUrl);
@@ -42,10 +100,11 @@ public class SamService {
     return request;
   }
 
-  private HttpRequest postRequest(
-      GenericUrl genericUrl, HttpContent content, AuthUser authUser) throws Exception {
+  private HttpRequest postRequest(GenericUrl genericUrl, HttpContent content, AuthUser authUser)
+      throws Exception {
     HttpTransport transport = new NetHttpTransport();
     HttpRequest request = transport.createRequestFactory().buildPostRequest(genericUrl, content);
+    request.getHeaders().setAccept(MediaType.APPLICATION_JSON);
     request.getHeaders().setAuthorization("Bearer " + authUser.getAuthToken());
     return request;
   }
@@ -54,12 +113,12 @@ public class SamService {
       throws Exception {
     HttpTransport transport = new NetHttpTransport();
     HttpRequest request = transport.createRequestFactory().buildPutRequest(genericUrl, content);
+    request.getHeaders().setAccept(MediaType.APPLICATION_JSON);
     request.getHeaders().setAuthorization("Bearer " + authUser.getAuthToken());
     return request;
   }
 
-  private HttpRequest deleteRequest(GenericUrl genericUrl, AuthUser authUser)
-      throws Exception {
+  private HttpRequest deleteRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
     HttpTransport transport = new NetHttpTransport();
     HttpRequest request = transport.createRequestFactory().buildDeleteRequest(genericUrl);
     request.getHeaders().setAuthorization("Bearer " + authUser.getAuthToken());
@@ -68,5 +127,17 @@ public class SamService {
 
   private String getV1ResourceTypesUrl() {
     return configuration.getSamUrl() + "api/config/v1/resourceTypes";
+  }
+
+  private String getRegisterUserV2SelfInfoUrl() {
+    return configuration.getSamUrl() + "register/user/v2/self/info";
+  }
+
+  private String getV2SelfDiagnosticsUrl() {
+    return configuration.getSamUrl() + "register/user/v2/self/diagnostics";
+  }
+
+  private String postRegisterUserV2SelfUrl() {
+    return configuration.getSamUrl() + "register/user/v2/self";
   }
 }
