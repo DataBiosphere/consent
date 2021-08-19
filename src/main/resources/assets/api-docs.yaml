@@ -3207,6 +3207,25 @@ paths:
         500:
           description: Server error.
 
+  /api/user:
+    post:
+      summary: createResearcher
+      description: Create a user with RESEARCHER role using the user's current authentication status.
+      tags:
+        - User
+      responses:
+        200:
+          description: Returns the created user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Unable to validate the user's google identity.
+        409:
+          description: User should be unique
+        500:
+          description: Server error.
   /api/user/me:
     get:
       summary: Find currently authenticated user
@@ -3228,9 +3247,9 @@ paths:
     get:
       summary: Find users that do not belong to an institution
       description: Find users that do not belong to an institution
-      tags: 
+      tags:
         - User
-      responses: 
+      responses:
         200:
           description: An array of users that do not belong to an institution
           content:
@@ -3260,12 +3279,12 @@ paths:
           description: User not found
         500:
           description: Server error.
-  /api/user/{id}:
+  /api/user/{userId}:
     get:
       summary: Find user by id
       description: Finds user by the user id. Available to Admin, Chair, and Member roles
       parameters:
-        - name: id
+        - name: userId
           in: path
           description: The id of the user
           required: true
@@ -3471,30 +3490,13 @@ paths:
             application/json:
               schema:
                 type: string
-  /api/user:
-    post:
-      summary: createResearcher
-      description: Create a user with RESEARCHER role using the user's current authentication status.
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the created user.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        400:
-          description: Unable to validate the user's google identity.
-        409:
-          description: User should be unique
-        500:
-          description: Server error.
   /api/researcher:
     post:
       deprecated: true
       summary: Create researcher properties.
-      description: Create researcher properties for the current user.
+      description: |
+        Deprecated - use POST /api/user/{userId}
+        Create researcher properties for the current user.
       parameters:
         - name: researcherProperties
           in: body
@@ -3517,7 +3519,9 @@ paths:
     put:
       deprecated: true
       summary: Update researcher.
-      description: Updates a researcher user.
+      description: |
+        Deprecated - use PUT /api/user/{userId}
+        Updates a researcher user.
       parameters:
         - name: validate
           in: query
