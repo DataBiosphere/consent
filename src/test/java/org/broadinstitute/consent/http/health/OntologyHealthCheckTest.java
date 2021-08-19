@@ -6,7 +6,6 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.StringEntity;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.health.OntologyHealthCheck;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.junit.Before;
 import org.junit.Test;
