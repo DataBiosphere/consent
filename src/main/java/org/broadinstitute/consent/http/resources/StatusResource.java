@@ -20,6 +20,7 @@ public class StatusResource {
 
     public static final String OK = "ok";
     public static final String DEGRADED = "degraded";
+    public static final String SYSTEMS = "systems";
 
     private Logger logger() {
         return LoggerFactory.getLogger(this.getClass());
@@ -66,7 +67,7 @@ public class StatusResource {
                 || !ontology.isHealthy()
                 || !sam.isHealthy());
         formattedResults.put(DEGRADED, degraded);
-        formattedResults.putAll(results);
+        formattedResults.put(SYSTEMS, results);
         return formattedResults;
     }
 

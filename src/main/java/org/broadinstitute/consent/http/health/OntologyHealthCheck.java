@@ -8,17 +8,18 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 import java.nio.charset.Charset;
-import java.util.LinkedHashMap;
 
 public class OntologyHealthCheck extends HealthCheck implements Managed {
 
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration servicesConfiguration;
 
-  public OntologyHealthCheck(HttpClientUtil clientUtil, ServicesConfiguration servicesConfiguration) {
+  public OntologyHealthCheck(
+      HttpClientUtil clientUtil, ServicesConfiguration servicesConfiguration) {
     this.clientUtil = clientUtil;
     this.servicesConfiguration = servicesConfiguration;
   }
@@ -29,14 +30,15 @@ public class OntologyHealthCheck extends HealthCheck implements Managed {
       String statusUrl = servicesConfiguration.getOntologyURL() + "status";
       HttpGet httpGet = new HttpGet(statusUrl);
       try (CloseableHttpResponse response = clientUtil.getHttpResponse(httpGet)) {
-        String content = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
-        Object ontologyStatus = new Gson().fromJson(content, Object.class);
         if (response.getStatusLine().getStatusCode() == HttpStatusCodes.STATUS_CODE_OK) {
+          String content =
+              IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
+          Object ontologyStatus = new Gson().fromJson(content, Object.class);
           return Result.builder()
-                  .withDetail("ok", true)
-                  .withDetail("systems", ontologyStatus)
-                  .healthy()
-                  .build();
+              .withDetail(StatusResource.OK, true)
+              .withDetail(StatusResource.SYSTEMS, ontologyStatus)
+              .healthy()
+              .build();
         } else {
           return Result.unhealthy("Ontology status is unhealthy: " + response.getStatusLine());
         }
@@ -50,11 +52,9 @@ public class OntologyHealthCheck extends HealthCheck implements Managed {
 
   @Override
   public void start() {
-    // no-op
   }
 
   @Override
   public void stop() {
-    // no-op
   }
 }
