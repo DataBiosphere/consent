@@ -3579,7 +3579,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schema/SamUserInfo'
+                $ref: '#/components/schemas/SamUserInfo'
         409:
           description: Conflict, user exists
         500:
@@ -3613,7 +3613,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schema/SamUserInfo'
+                $ref: '#/components/schemas/SamUserInfo'
         404:
           description: User not found
         500:

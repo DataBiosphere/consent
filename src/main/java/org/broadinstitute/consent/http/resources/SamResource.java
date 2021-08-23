@@ -45,8 +45,8 @@ public class SamResource extends Resource {
   @Produces("application/json")
   public Response postRegistrationInfo(@Auth AuthUser authUser, @Context UriInfo uriInfo) {
     try {
+      URI location = URI.create(uriInfo.getBaseUri() + "/api/sam/register/self/info");
       SamUserInfo userInfo = samService.postRegistrationInfo(authUser);
-      URI location = URI.create(uriInfo.getPath() + "/api/user/me");
       return Response.created(location).entity(userInfo.toString()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
