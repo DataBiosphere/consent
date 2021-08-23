@@ -12,24 +12,27 @@ public class SamUserInfo {
     return userSubjectId;
   }
 
-  public void setUserSubjectId(String userSubjectId) {
+  public SamUserInfo setUserSubjectId(String userSubjectId) {
     this.userSubjectId = userSubjectId;
+    return this;
   }
 
   public String getUserEmail() {
     return userEmail;
   }
 
-  public void setUserEmail(String userEmail) {
+  public SamUserInfo setUserEmail(String userEmail) {
     this.userEmail = userEmail;
+    return this;
   }
 
   public Boolean getEnabled() {
     return enabled;
   }
 
-  public void setEnabled(Boolean enabled) {
+  public SamUserInfo setEnabled(Boolean enabled) {
     this.enabled = enabled;
+    return this;
   }
 
   @Override

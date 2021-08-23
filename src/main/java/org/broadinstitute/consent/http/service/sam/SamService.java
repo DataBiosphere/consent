@@ -11,32 +11,32 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.SamSelfDiagnostics;
 import org.broadinstitute.consent.http.models.sam.SamUserInfo;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
 
-import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SamService {
 
+  private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
 
   @Inject
   public SamService(ServicesConfiguration configuration) {
+    this.clientUtil = new HttpClientUtil();
     this.configuration = configuration;
   }
 
   public List<ResourceType> getResourceTypes(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(getV1ResourceTypesUrl());
     HttpRequest request = getRequest(genericUrl, authUser);
-    HttpResponse response = request.execute();
+    HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
     Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>() {}.getType();
     return new Gson().fromJson(body, resourceTypesListType);
@@ -45,15 +45,7 @@ public class SamService {
   public SamUserInfo getRegistrationInfo(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(getRegisterUserV2SelfInfoUrl());
     HttpRequest request = getRequest(genericUrl, authUser);
-    HttpResponse response;
-    try {
-      response = request.execute();
-      if (!response.isSuccessStatusCode()) {
-        throw new ServerErrorException(response.getStatusCode());
-      }
-    } catch (Exception e) {
-      throw new ServerErrorException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-    }
+    HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
     return new Gson().fromJson(body, SamUserInfo.class);
   }
@@ -61,15 +53,7 @@ public class SamService {
   public SamSelfDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(getV2SelfDiagnosticsUrl());
     HttpRequest request = getRequest(genericUrl, authUser);
-    HttpResponse response;
-    try {
-      response = request.execute();
-      if (!response.isSuccessStatusCode()) {
-        throw new ServerErrorException(response.getStatusCode());
-      }
-    } catch (Exception e) {
-      throw new ServerErrorException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-    }
+    HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
     return new Gson().fromJson(body, SamSelfDiagnostics.class);
   }
@@ -77,18 +61,7 @@ public class SamService {
   public SamUserInfo postRegistrationInfo(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(postRegisterUserV2SelfUrl());
     HttpRequest request = postRequest(genericUrl, new EmptyContent(), authUser);
-    HttpResponse response;
-    try {
-      response = request.execute();
-      if (!response.isSuccessStatusCode()) {
-        if (Response.Status.CONFLICT.getStatusCode() == response.getStatusCode()) {
-          throw new ConsentConflictException(response.getStatusMessage());
-        }
-        throw new ServerErrorException(response.getStatusCode());
-      }
-    } catch (Exception e) {
-      throw new ServerErrorException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-    }
+    HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
     return new Gson().fromJson(body, SamUserInfo.class);
   }

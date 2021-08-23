@@ -12,24 +12,27 @@ public class SamSelfDiagnostics {
         return enabled;
     }
 
-    public void setEnabled(Boolean enabled) {
+    public SamSelfDiagnostics setEnabled(Boolean enabled) {
         this.enabled = enabled;
+        return this;
     }
 
     public Boolean getInAllUsersGroup() {
         return inAllUsersGroup;
     }
 
-    public void setInAllUsersGroup(Boolean inAllUsersGroup) {
+    public SamSelfDiagnostics setInAllUsersGroup(Boolean inAllUsersGroup) {
         this.inAllUsersGroup = inAllUsersGroup;
+        return this;
     }
 
     public Boolean getInGoogleProxyGroup() {
         return inGoogleProxyGroup;
     }
 
-    public void setInGoogleProxyGroup(Boolean inGoogleProxyGroup) {
+    public SamSelfDiagnostics setInGoogleProxyGroup(Boolean inGoogleProxyGroup) {
         this.inGoogleProxyGroup = inGoogleProxyGroup;
+        return this;
     }
 
     @Override

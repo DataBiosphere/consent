@@ -10,23 +10,26 @@ public class ActionPattern {
     return authDomainConstrainable;
   }
 
-  public void setAuthDomainConstrainable(Boolean authDomainConstrainable) {
+  public ActionPattern setAuthDomainConstrainable(Boolean authDomainConstrainable) {
     this.authDomainConstrainable = authDomainConstrainable;
+    return this;
   }
 
   public String getDescription() {
     return description;
   }
 
-  public void setDescription(String description) {
+  public ActionPattern setDescription(String description) {
     this.description = description;
+    return this;
   }
 
   public String getValue() {
     return value;
   }
 
-  public void setValue(String value) {
+  public ActionPattern setValue(String value) {
     this.value = value;
+    return this;
   }
 }
