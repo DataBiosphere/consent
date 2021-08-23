@@ -1,4 +1,16 @@
-package org.broadinstitute.consent.http.util;
+package org.broadinstitute.consent.http.health;
+
+import com.codahale.metrics.health.HealthCheck;
+import com.google.api.client.http.HttpStatusCodes;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.entity.StringEntity;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -7,18 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.google.api.client.http.HttpStatusCodes;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.service.ontology.OntologyHealthCheck;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-public class OntologyHealthCheckTest {
+public class SamHealthCheckTest {
 
   @Mock private HttpClientUtil clientUtil;
 
@@ -28,25 +29,29 @@ public class OntologyHealthCheckTest {
 
   @Mock private ServicesConfiguration servicesConfiguration;
 
-  private OntologyHealthCheck healthCheck;
+  private SamHealthCheck healthCheck;
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
   }
 
   private void initHealthCheck() {
     try {
+      when(response.getEntity())
+          .thenReturn(
+              new StringEntity(
+                  "{\"ok\":true,\"systems\":{\"GooglePubSub\": {\"ok\": true},\"Database\": {\"ok\": true},\"GoogleGroups\": {\"ok\": true},\"GoogleIam\": {\"ok\": true},\"OpenDJ\": {\"ok\": true}}}"));
       when(clientUtil.getHttpResponse(any())).thenReturn(response);
-      when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
-      healthCheck = new OntologyHealthCheck(clientUtil, servicesConfiguration);
+      when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
+      healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);
     } catch (Exception e) {
       fail(e.getMessage());
     }
   }
 
   @Test
-  public void testCheckSuccess() {
+  public void testCheckSuccess() throws Exception {
     when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     when(response.getStatusLine()).thenReturn(statusLine);
     initHealthCheck();
@@ -56,7 +61,7 @@ public class OntologyHealthCheckTest {
   }
 
   @Test
-  public void testCheckFailure() {
+  public void testCheckFailure() throws Exception {
     when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     when(response.getStatusLine()).thenReturn(statusLine);
     initHealthCheck();
@@ -66,7 +71,7 @@ public class OntologyHealthCheckTest {
   }
 
   @Test
-  public void testCheckException() {
+  public void testCheckException() throws Exception {
     doThrow(new RuntimeException()).when(response).getStatusLine();
     initHealthCheck();
 

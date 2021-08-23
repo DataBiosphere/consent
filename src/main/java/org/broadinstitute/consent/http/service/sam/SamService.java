@@ -67,6 +67,6 @@ public class SamService {
   }
 
   private String getV1ResourceTypesUrl() {
-    return configuration.getSamUrl() + "/api/config/v1/resourceTypes";
+    return configuration.getSamUrl() + "api/config/v1/resourceTypes";
   }
 }
