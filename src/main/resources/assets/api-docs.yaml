@@ -3569,8 +3569,8 @@ paths:
           description: The user doesn't exist in the system
   /api/sam/register/self:
     post:
-      summary: Create current user in the Sam system using login credentials
-      description: Create current user in the Sam system using login credentials
+      summary: Create current user in the Sam system using current login credentials
+      description: Create current user in the Sam system using current login credentials
       tags:
         - Sam
       responses:
