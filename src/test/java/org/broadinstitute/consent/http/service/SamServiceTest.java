@@ -19,7 +19,6 @@ import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.testcontainers.containers.MockServerContainer;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -68,7 +67,7 @@ public class SamServiceTest implements WithMockServer {
   public void testGetRegistrationInfo() throws Exception {
     SamUserInfo userInfo = new SamUserInfo()
             .setUserEmail("test@test.org")
-            .setUserSubjectId(RandomStringUtils.random(10, false, false))
+            .setUserSubjectId(RandomStringUtils.random(10, false, true))
             .setEnabled(RandomUtils.nextBoolean());
     mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(userInfo.toString()));
 
@@ -96,6 +95,16 @@ public class SamServiceTest implements WithMockServer {
 
   @Test
   public void testPostRegistrationInfo() throws Exception {
+    SamUserInfo userInfo = new SamUserInfo()
+            .setUserEmail("test@test.org")
+            .setUserSubjectId(RandomStringUtils.random(10, false, true))
+            .setEnabled(RandomUtils.nextBoolean());
+    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(userInfo.toString()));
 
+    SamUserInfo authUserUserInfo = service.postRegistrationInfo(authUser);
+    assertNotNull(authUserUserInfo);
+    assertEquals(userInfo.getUserEmail(), authUserUserInfo.getUserEmail());
+    assertEquals(userInfo.getEnabled(), authUserUserInfo.getEnabled());
+    assertEquals(userInfo.getUserSubjectId(), authUserUserInfo.getUserSubjectId());
   }
 }
