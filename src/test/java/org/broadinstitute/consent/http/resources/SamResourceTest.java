@@ -1,6 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.HttpStatusCodes;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.sam.SamSelfDiagnostics;
+import org.broadinstitute.consent.http.models.sam.SamUserInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.Before;
 import org.junit.Test;
@@ -8,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
@@ -19,6 +25,8 @@ public class SamResourceTest {
   @Mock AuthUser authUser;
 
   @Mock SamService service;
+
+  @Mock UriInfo uriInfo;
 
   SamResource resource;
 
@@ -36,6 +44,42 @@ public class SamResourceTest {
     when(service.getResourceTypes(any())).thenReturn(Collections.emptyList());
     initResource();
     Response response = resource.getResourceTypes(authUser);
-    assertEquals(200, response.getStatus());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testPostRegistrationInfo() throws Exception {
+    SamUserInfo userInfo = new SamUserInfo()
+            .setUserEmail("test@test.org")
+            .setUserSubjectId(RandomStringUtils.random(10, false, true))
+            .setEnabled(RandomUtils.nextBoolean());
+    when(service.postRegistrationInfo(any())).thenReturn(userInfo);
+    initResource();
+    Response response = resource.postRegistrationInfo(authUser, uriInfo);
+    assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+  }
+
+  @Test
+  public void testGetSelfDiagnostics() throws Exception {
+    SamSelfDiagnostics diagnostics = new SamSelfDiagnostics()
+            .setEnabled(RandomUtils.nextBoolean())
+            .setInAllUsersGroup(RandomUtils.nextBoolean())
+            .setInGoogleProxyGroup(RandomUtils.nextBoolean());
+    when(service.getSelfDiagnostics(any())).thenReturn(diagnostics);
+    initResource();
+    Response response = resource.getSelfDiagnostics(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testGetRegistrationInfo() throws Exception {
+    SamUserInfo userInfo = new SamUserInfo()
+            .setUserEmail("test@test.org")
+            .setUserSubjectId(RandomStringUtils.random(10, false, true))
+            .setEnabled(RandomUtils.nextBoolean());
+    when(service.getRegistrationInfo(any())).thenReturn(userInfo);
+    initResource();
+    Response response = resource.getRegistrationInfo(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 }

@@ -12,7 +12,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 import java.util.List;
 
 @Path("api/sam")
@@ -40,10 +43,11 @@ public class SamResource extends Resource {
   @Path("register/self")
   @POST
   @Produces("application/json")
-  public Response postRegistrationInfo(@Auth AuthUser authUser) {
+  public Response postRegistrationInfo(@Auth AuthUser authUser, @Context UriInfo uriInfo) {
     try {
       SamUserInfo userInfo = samService.postRegistrationInfo(authUser);
-      return Response.ok().entity(userInfo.toString()).build();
+      URI location = URI.create(uriInfo.getPath() + "/api/user/me");
+      return Response.created(location).entity(userInfo.toString()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
