@@ -31,7 +31,7 @@ public class SamService {
   }
 
   public List<ResourceType> getResourceTypes(AuthUser authUser) throws Exception {
-    GenericUrl genericUrl = new GenericUrl(getV1ResourceTypesUrl());
+    GenericUrl genericUrl = new GenericUrl(configuration.getV1ResourceTypesUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
@@ -40,7 +40,7 @@ public class SamService {
   }
 
   public UserStatusInfo getRegistrationInfo(AuthUser authUser) throws Exception {
-    GenericUrl genericUrl = new GenericUrl(getRegisterUserV2SelfInfoUrl());
+    GenericUrl genericUrl = new GenericUrl(configuration.getRegisterUserV2SelfInfoUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
@@ -48,7 +48,7 @@ public class SamService {
   }
 
   public UserStatusDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
-    GenericUrl genericUrl = new GenericUrl(getV2SelfDiagnosticsUrl());
+    GenericUrl genericUrl = new GenericUrl(configuration.getV2SelfDiagnosticsUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
@@ -56,26 +56,10 @@ public class SamService {
   }
 
   public UserStatus postRegistrationInfo(AuthUser authUser) throws Exception {
-    GenericUrl genericUrl = new GenericUrl(postRegisterUserV2SelfUrl());
+    GenericUrl genericUrl = new GenericUrl(configuration.postRegisterUserV2SelfUrl());
     HttpRequest request = clientUtil.buildPostRequest(genericUrl, new EmptyContent(), authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatus.class);
-  }
-
-  private String getV1ResourceTypesUrl() {
-    return configuration.getSamUrl() + "api/config/v1/resourceTypes";
-  }
-
-  private String getRegisterUserV2SelfInfoUrl() {
-    return configuration.getSamUrl() + "register/user/v2/self/info";
-  }
-
-  private String getV2SelfDiagnosticsUrl() {
-    return configuration.getSamUrl() + "register/user/v2/self/diagnostics";
-  }
-
-  private String postRegisterUserV2SelfUrl() {
-    return configuration.getSamUrl() + "register/user/v2/self";
   }
 }

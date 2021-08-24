@@ -7,52 +7,61 @@ import javax.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServicesConfiguration {
 
-    @NotNull
-    private String ontologyURL;
+  @NotNull private String ontologyURL;
 
-    @NotNull
-    private String localURL;
+  @NotNull private String localURL;
 
-    @NotNull
-    private String samUrl;
+  @NotNull private String samUrl;
 
-    private final String MATCH = "match";
+  public String getOntologyURL() {
+    return ontologyURL;
+  }
 
-    private final String VALIDATE_USE_RESTRICTION = "validate/userestriction";
+  public void setOntologyURL(String ontologyURL) {
+    this.ontologyURL = ontologyURL;
+  }
 
-    public String getOntologyURL() {
-        return ontologyURL;
-    }
+  public String getLocalURL() {
+    return localURL;
+  }
 
-    public void setOntologyURL(String ontologyURL) {
-        this.ontologyURL = ontologyURL;
-    }
+  public void setLocalURL(String localURL) {
+    this.localURL = localURL;
+  }
 
-    public String getLocalURL() {
-        return localURL;
-    }
+  public String getMatchURL() {
+    return getOntologyURL() + "match";
+  }
 
-    public void setLocalURL(String localURL) {
-        this.localURL = localURL;
-    }
+  public String getValidateUseRestrictionURL() {
+    return getOntologyURL() + "validate/userestriction";
+  }
 
-    public String getMatchURL() {
-        return getOntologyURL() + MATCH;
-    }
+  public String getDARTranslateUrl() {
+    return getOntologyURL() + "schemas/data-use/dar/translate";
+  }
 
-    public String getValidateUseRestrictionURL() {
-        return getOntologyURL() + VALIDATE_USE_RESTRICTION;
-    }
+  public String getSamUrl() {
+    return samUrl;
+  }
 
-    public String getDARTranslateUrl() {
-        return getOntologyURL() + "schemas/data-use/dar/translate";
-    }
+  public void setSamUrl(String samUrl) {
+    this.samUrl = samUrl;
+  }
 
-    public String getSamUrl() {
-        return samUrl;
-    }
+  public String getV1ResourceTypesUrl() {
+    return getSamUrl() + "api/config/v1/resourceTypes";
+  }
 
-    public void setSamUrl(String samUrl) {
-        this.samUrl = samUrl;
-    }
+  public String getRegisterUserV2SelfInfoUrl() {
+    return getSamUrl() + "register/user/v2/self/info";
+  }
+
+  public String getV2SelfDiagnosticsUrl() {
+    return getSamUrl() + "register/user/v2/self/diagnostics";
+  }
+
+  public String postRegisterUserV2SelfUrl() {
+    return getSamUrl() + "register/user/v2/self";
+  }
 }
