@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.models.sam;
 
 import com.google.gson.Gson;
 
-public class SamUserInfo {
+public class UserStatusInfo {
 
   String userSubjectId;
   String userEmail;
@@ -12,7 +12,7 @@ public class SamUserInfo {
     return userSubjectId;
   }
 
-  public SamUserInfo setUserSubjectId(String userSubjectId) {
+  public UserStatusInfo setUserSubjectId(String userSubjectId) {
     this.userSubjectId = userSubjectId;
     return this;
   }
@@ -21,7 +21,7 @@ public class SamUserInfo {
     return userEmail;
   }
 
-  public SamUserInfo setUserEmail(String userEmail) {
+  public UserStatusInfo setUserEmail(String userEmail) {
     this.userEmail = userEmail;
     return this;
   }
@@ -30,7 +30,7 @@ public class SamUserInfo {
     return enabled;
   }
 
-  public SamUserInfo setEnabled(Boolean enabled) {
+  public UserStatusInfo setEnabled(Boolean enabled) {
     this.enabled = enabled;
     return this;
   }

@@ -5,7 +5,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
-import org.broadinstitute.consent.http.models.sam.SamUserInfo;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +49,7 @@ public class SamResourceTest {
 
   @Test
   public void testPostRegistrationInfo() throws Exception {
-    SamUserInfo userInfo = new SamUserInfo()
+    UserStatusInfo userInfo = new UserStatusInfo()
             .setUserEmail("test@test.org")
             .setUserSubjectId(RandomStringUtils.random(10, false, true))
             .setEnabled(RandomUtils.nextBoolean());
@@ -73,7 +73,7 @@ public class SamResourceTest {
 
   @Test
   public void testGetRegistrationInfo() throws Exception {
-    SamUserInfo userInfo = new SamUserInfo()
+    UserStatusInfo userInfo = new UserStatusInfo()
             .setUserEmail("test@test.org")
             .setUserSubjectId(RandomStringUtils.random(10, false, true))
             .setEnabled(RandomUtils.nextBoolean());

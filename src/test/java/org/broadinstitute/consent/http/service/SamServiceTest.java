@@ -8,7 +8,7 @@ import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
-import org.broadinstitute.consent.http.models.sam.SamUserInfo;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.Before;
 import org.junit.Rule;
@@ -65,13 +65,13 @@ public class SamServiceTest implements WithMockServer {
 
   @Test
   public void testGetRegistrationInfo() throws Exception {
-    SamUserInfo userInfo = new SamUserInfo()
+    UserStatusInfo userInfo = new UserStatusInfo()
             .setUserEmail("test@test.org")
             .setUserSubjectId(RandomStringUtils.random(10, false, true))
             .setEnabled(RandomUtils.nextBoolean());
     mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(userInfo.toString()));
 
-    SamUserInfo authUserUserInfo = service.getRegistrationInfo(authUser);
+    UserStatusInfo authUserUserInfo = service.getRegistrationInfo(authUser);
     assertNotNull(authUserUserInfo);
     assertEquals(userInfo.getUserEmail(), authUserUserInfo.getUserEmail());
     assertEquals(userInfo.getEnabled(), authUserUserInfo.getEnabled());
@@ -95,13 +95,13 @@ public class SamServiceTest implements WithMockServer {
 
   @Test
   public void testPostRegistrationInfo() throws Exception {
-    SamUserInfo userInfo = new SamUserInfo()
+    UserStatusInfo userInfo = new UserStatusInfo()
             .setUserEmail("test@test.org")
             .setUserSubjectId(RandomStringUtils.random(10, false, true))
             .setEnabled(RandomUtils.nextBoolean());
     mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(userInfo.toString()));
 
-    SamUserInfo authUserUserInfo = service.postRegistrationInfo(authUser);
+    UserStatusInfo authUserUserInfo = service.postRegistrationInfo(authUser);
     assertNotNull(authUserUserInfo);
     assertEquals(userInfo.getUserEmail(), authUserUserInfo.getUserEmail());
     assertEquals(userInfo.getEnabled(), authUserUserInfo.getEnabled());

@@ -14,7 +14,7 @@ import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
-import org.broadinstitute.consent.http.models.sam.SamUserInfo;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 import javax.ws.rs.core.MediaType;
@@ -42,12 +42,12 @@ public class SamService {
     return new Gson().fromJson(body, resourceTypesListType);
   }
 
-  public SamUserInfo getRegistrationInfo(AuthUser authUser) throws Exception {
+  public UserStatusInfo getRegistrationInfo(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(getRegisterUserV2SelfInfoUrl());
     HttpRequest request = getRequest(genericUrl, authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
-    return new Gson().fromJson(body, SamUserInfo.class);
+    return new Gson().fromJson(body, UserStatusInfo.class);
   }
 
   public UserStatusDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
@@ -58,12 +58,12 @@ public class SamService {
     return new Gson().fromJson(body, UserStatusDiagnostics.class);
   }
 
-  public SamUserInfo postRegistrationInfo(AuthUser authUser) throws Exception {
+  public UserStatusInfo postRegistrationInfo(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(postRegisterUserV2SelfUrl());
     HttpRequest request = postRequest(genericUrl, new EmptyContent(), authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
-    return new Gson().fromJson(body, SamUserInfo.class);
+    return new Gson().fromJson(body, UserStatusInfo.class);
   }
 
   private HttpRequest getRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
