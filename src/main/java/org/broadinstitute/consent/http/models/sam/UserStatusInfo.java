@@ -7,9 +7,9 @@ import com.google.gson.Gson;
  */
 public class UserStatusInfo {
 
-  String userSubjectId;
-  String userEmail;
-  Boolean enabled;
+  private String userSubjectId;
+  private String userEmail;
+  private Boolean enabled;
 
   public String getUserSubjectId() {
     return userSubjectId;

@@ -7,8 +7,8 @@ import com.google.gson.Gson;
  */
 public class UserStatus {
 
-    UserInfo userInfo;
-    Enabled enabled;
+    private UserInfo userInfo;
+    private Enabled enabled;
 
     public UserInfo getUserInfo() {
         return userInfo;
@@ -29,12 +29,20 @@ public class UserStatus {
     }
 
     public static class UserInfo {
-        String userSubjectId;
-        String userEmail;
+        private String userSubjectId;
+        private String userEmail;
+
+        public String getUserSubjectId() {
+            return userSubjectId;
+        }
 
         public UserInfo setUserSubjectId(String userSubjectId) {
             this.userSubjectId = userSubjectId;
             return this;
+        }
+
+        public String getUserEmail() {
+            return userEmail;
         }
 
         public UserInfo setUserEmail(String userEmail) {
@@ -43,18 +51,30 @@ public class UserStatus {
         }
     }
     public static class Enabled {
-        Boolean ldap;
-        Boolean allUsersGroup;
-        Boolean google;
+        private Boolean ldap;
+        private Boolean allUsersGroup;
+        private Boolean google;
+
+        public Boolean getLdap() {
+            return ldap;
+        }
 
         public Enabled setLdap(Boolean ldap) {
             this.ldap = ldap;
             return this;
         }
 
+        public Boolean getAllUsersGroup() {
+            return allUsersGroup;
+        }
+
         public Enabled setAllUsersGroup(Boolean allUsersGroup) {
             this.allUsersGroup = allUsersGroup;
             return this;
+        }
+
+        public Boolean getGoogle() {
+            return google;
         }
 
         public Enabled setGoogle(Boolean google) {

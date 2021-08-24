@@ -7,9 +7,9 @@ import com.google.gson.Gson;
  */
 public class UserStatusDiagnostics {
 
-    Boolean enabled;
-    Boolean inAllUsersGroup;
-    Boolean inGoogleProxyGroup;
+    private Boolean enabled;
+    private Boolean inAllUsersGroup;
+    private Boolean inGoogleProxyGroup;
 
     public Boolean getEnabled() {
         return enabled;
