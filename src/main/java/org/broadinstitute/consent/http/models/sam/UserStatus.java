@@ -2,6 +2,9 @@ package org.broadinstitute.consent.http.models.sam;
 
 import com.google.gson.Gson;
 
+/**
+ * This represents the Sam response when a new user is created via POST /register/user/v2/self
+ */
 public class UserStatus {
 
     UserInfo userInfo;

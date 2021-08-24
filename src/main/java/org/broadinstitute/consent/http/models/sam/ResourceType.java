@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * This represents the Sam response to GET /api/config/v1/resourceTypes
+ */
 public class ResourceType {
 
   private List<ActionPattern> actionPatterns;
@@ -14,24 +17,9 @@ public class ResourceType {
   private Boolean reuseIds;
   private List<ResourceTypeRole> roles;
 
-  public List<ActionPattern> getActionPatterns() {
-    return actionPatterns;
-  }
-
   public ResourceType setActionPatterns(List<ActionPattern> actionPatterns) {
     this.actionPatterns = actionPatterns;
     return this;
-  }
-
-  public void addActionPattern(ActionPattern actionPattern) {
-    if ( Objects.isNull(this.actionPatterns)) {
-      this.actionPatterns = new ArrayList<>();
-    }
-    this.actionPatterns.add(actionPattern);
-  }
-
-  public String getName() {
-    return name;
   }
 
   public ResourceType setName(String name) {
@@ -39,17 +27,9 @@ public class ResourceType {
     return this;
   }
 
-  public String getOwnerRoleName() {
-    return ownerRoleName;
-  }
-
   public ResourceType setOwnerRoleName(String ownerRoleName) {
     this.ownerRoleName = ownerRoleName;
     return this;
-  }
-
-  public Boolean getReuseIds() {
-    return reuseIds;
   }
 
   public ResourceType setReuseIds(Boolean reuseIds) {
@@ -57,20 +37,9 @@ public class ResourceType {
     return this;
   }
 
-  public List<ResourceTypeRole> getRoles() {
-    return roles;
-  }
-
   public ResourceType setRoles(List<ResourceTypeRole> roles) {
     this.roles = roles;
     return this;
-  }
-
-  public void addRole(ResourceTypeRole role) {
-    if (Objects.isNull(this.roles)) {
-      this.roles = new ArrayList<>();
-    }
-    this.roles.add(role);
   }
 
   @Override

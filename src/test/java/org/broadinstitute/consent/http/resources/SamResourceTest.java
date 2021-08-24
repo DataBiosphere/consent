@@ -4,6 +4,9 @@ import com.google.api.client.http.HttpStatusCodes;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.sam.ActionPattern;
+import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.ResourceTypeRole;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -42,7 +45,23 @@ public class SamResourceTest {
 
   @Test
   public void testGetResourceTypes() throws Exception {
-    when(service.getResourceTypes(any())).thenReturn(Collections.emptyList());
+    ActionPattern pattern = new ActionPattern()
+            .setAuthDomainConstrainable(true)
+            .setDescription("description")
+            .setValue("value");
+    ResourceTypeRole role = new ResourceTypeRole()
+            .setRoleName("roleName")
+            .setActions(Collections.singletonList("action"))
+            .setDescendantRoles(Collections.emptyMap())
+            .setIncludedRoles(Collections.emptyList())
+            .setIncludedRoles(Collections.emptyList());
+    ResourceType type = new ResourceType()
+            .setName("name")
+            .setReuseIds(true)
+            .setOwnerRoleName("ownerRoleName")
+            .setActionPatterns(Collections.singletonList(pattern))
+            .setRoles(Collections.singletonList(role));
+    when(service.getResourceTypes(any())).thenReturn(Collections.singletonList(type));
     initResource();
     Response response = resource.getResourceTypes(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
