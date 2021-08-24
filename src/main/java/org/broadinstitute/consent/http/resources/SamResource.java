@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
@@ -46,8 +47,8 @@ public class SamResource extends Resource {
   public Response postRegistrationInfo(@Auth AuthUser authUser, @Context UriInfo uriInfo) {
     try {
       URI location = URI.create(uriInfo.getBaseUri() + "/api/sam/register/self/info");
-      UserStatusInfo userInfo = samService.postRegistrationInfo(authUser);
-      return Response.created(location).entity(userInfo.toString()).build();
+      UserStatus userStatus = samService.postRegistrationInfo(authUser);
+      return Response.created(location).entity(userStatus.toString()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

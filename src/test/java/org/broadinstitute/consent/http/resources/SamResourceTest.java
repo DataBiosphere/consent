@@ -4,6 +4,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
@@ -49,11 +50,10 @@ public class SamResourceTest {
 
   @Test
   public void testPostRegistrationInfo() throws Exception {
-    UserStatusInfo userInfo = new UserStatusInfo()
-            .setUserEmail("test@test.org")
-            .setUserSubjectId(RandomStringUtils.random(10, false, true))
-            .setEnabled(RandomUtils.nextBoolean());
-    when(service.postRegistrationInfo(any())).thenReturn(userInfo);
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true).setLdap(true);
+    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+    when(service.postRegistrationInfo(any())).thenReturn(status);
     initResource();
     Response response = resource.postRegistrationInfo(authUser, uriInfo);
     assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());

@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
@@ -95,16 +96,12 @@ public class SamServiceTest implements WithMockServer {
 
   @Test
   public void testPostRegistrationInfo() throws Exception {
-    UserStatusInfo userInfo = new UserStatusInfo()
-            .setUserEmail("test@test.org")
-            .setUserSubjectId(RandomStringUtils.random(10, false, true))
-            .setEnabled(RandomUtils.nextBoolean());
-    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(userInfo.toString()));
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true).setLdap(true);
+    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(status.toString()));
 
-    UserStatusInfo authUserUserInfo = service.postRegistrationInfo(authUser);
-    assertNotNull(authUserUserInfo);
-    assertEquals(userInfo.getUserEmail(), authUserUserInfo.getUserEmail());
-    assertEquals(userInfo.getEnabled(), authUserUserInfo.getEnabled());
-    assertEquals(userInfo.getUserSubjectId(), authUserUserInfo.getUserSubjectId());
+    UserStatus userStatus = service.postRegistrationInfo(authUser);
+    assertNotNull(userStatus);
   }
 }
