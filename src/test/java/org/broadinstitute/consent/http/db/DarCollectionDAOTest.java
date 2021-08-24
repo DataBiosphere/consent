@@ -4,6 +4,7 @@ package org.broadinstitute.consent.http.db;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -149,4 +150,14 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
       assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException)e.getCause()).getSQLState());
     }
   }
+
+  @Test
+  public void testFindAllDARCollectionsWithFilters_NonetionsWithFilters_ProjectTitleFilter() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataAccessRequestData data = dar.getData();
+
+    String projectTitle = data.getProjectTitle();
+    List<DarCollection> collection = darCollectionDAO.findAllDARCollectionsWithFilters("", projectTitle, "", "", "", "projectTitle", "DESC", 0, 10);
+    assertEquals(1, collection.size());
+  };
 }
