@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
-import org.broadinstitute.consent.http.models.sam.SamSelfDiagnostics;
+import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.SamUserInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.Before;
@@ -80,13 +80,13 @@ public class SamServiceTest implements WithMockServer {
 
   @Test
   public void testGetSelfDiagnostics() throws Exception {
-    SamSelfDiagnostics diagnostics = new SamSelfDiagnostics()
+    UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
             .setEnabled(RandomUtils.nextBoolean())
             .setInAllUsersGroup(RandomUtils.nextBoolean())
             .setInGoogleProxyGroup(RandomUtils.nextBoolean());
     mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(diagnostics.toString()));
 
-    SamSelfDiagnostics userDiagnostics = service.getSelfDiagnostics(authUser);
+    UserStatusDiagnostics userDiagnostics = service.getSelfDiagnostics(authUser);
     assertNotNull(userDiagnostics);
     assertEquals(diagnostics.getEnabled(), userDiagnostics.getEnabled());
     assertEquals(diagnostics.getInAllUsersGroup(), userDiagnostics.getInAllUsersGroup());

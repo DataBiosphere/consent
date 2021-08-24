@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.models.sam;
 
 import com.google.gson.Gson;
 
-public class SamSelfDiagnostics {
+public class UserStatusDiagnostics {
 
     Boolean enabled;
     Boolean inAllUsersGroup;
@@ -12,7 +12,7 @@ public class SamSelfDiagnostics {
         return enabled;
     }
 
-    public SamSelfDiagnostics setEnabled(Boolean enabled) {
+    public UserStatusDiagnostics setEnabled(Boolean enabled) {
         this.enabled = enabled;
         return this;
     }
@@ -21,7 +21,7 @@ public class SamSelfDiagnostics {
         return inAllUsersGroup;
     }
 
-    public SamSelfDiagnostics setInAllUsersGroup(Boolean inAllUsersGroup) {
+    public UserStatusDiagnostics setInAllUsersGroup(Boolean inAllUsersGroup) {
         this.inAllUsersGroup = inAllUsersGroup;
         return this;
     }
@@ -30,7 +30,7 @@ public class SamSelfDiagnostics {
         return inGoogleProxyGroup;
     }
 
-    public SamSelfDiagnostics setInGoogleProxyGroup(Boolean inGoogleProxyGroup) {
+    public UserStatusDiagnostics setInGoogleProxyGroup(Boolean inGoogleProxyGroup) {
         this.inGoogleProxyGroup = inGoogleProxyGroup;
         return this;
     }

@@ -13,7 +13,7 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
-import org.broadinstitute.consent.http.models.sam.SamSelfDiagnostics;
+import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.SamUserInfo;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
@@ -50,12 +50,12 @@ public class SamService {
     return new Gson().fromJson(body, SamUserInfo.class);
   }
 
-  public SamSelfDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
+  public UserStatusDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(getV2SelfDiagnosticsUrl());
     HttpRequest request = getRequest(genericUrl, authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
-    return new Gson().fromJson(body, SamSelfDiagnostics.class);
+    return new Gson().fromJson(body, UserStatusDiagnostics.class);
   }
 
   public SamUserInfo postRegistrationInfo(AuthUser authUser) throws Exception {

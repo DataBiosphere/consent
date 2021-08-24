@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
-import org.broadinstitute.consent.http.models.sam.SamSelfDiagnostics;
+import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.SamUserInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
 
@@ -58,7 +58,7 @@ public class SamResource extends Resource {
   @Produces("application/json")
   public Response getSelfDiagnostics(@Auth AuthUser authUser) {
     try {
-      SamSelfDiagnostics selfDiagnostics = samService.getSelfDiagnostics(authUser);
+      UserStatusDiagnostics selfDiagnostics = samService.getSelfDiagnostics(authUser);
       return Response.ok().entity(selfDiagnostics.toString()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

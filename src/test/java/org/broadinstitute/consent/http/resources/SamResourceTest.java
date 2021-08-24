@@ -4,7 +4,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.sam.SamSelfDiagnostics;
+import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.SamUserInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.Before;
@@ -61,7 +61,7 @@ public class SamResourceTest {
 
   @Test
   public void testGetSelfDiagnostics() throws Exception {
-    SamSelfDiagnostics diagnostics = new SamSelfDiagnostics()
+    UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
             .setEnabled(RandomUtils.nextBoolean())
             .setInAllUsersGroup(RandomUtils.nextBoolean())
             .setInGoogleProxyGroup(RandomUtils.nextBoolean());
