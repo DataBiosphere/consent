@@ -2,9 +2,7 @@ package org.broadinstitute.consent.http.models.sam;
 
 import com.google.gson.Gson;
 
-/**
- * This represents part of the Sam response to GET /api/config/v1/resourceTypes
- */
+/** This represents part of the Sam response to GET /api/config/v1/resourceTypes */
 public class ActionPattern {
 
   private Boolean authDomainConstrainable;

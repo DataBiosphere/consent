@@ -4,9 +4,7 @@ import com.google.gson.Gson;
 
 import java.util.List;
 
-/**
- * This represents the Sam response to GET /api/config/v1/resourceTypes
- */
+/** This represents the Sam response to GET /api/config/v1/resourceTypes */
 public class ResourceType {
 
   private List<ActionPattern> actionPatterns;

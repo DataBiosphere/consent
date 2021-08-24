@@ -5,9 +5,7 @@ import com.google.gson.Gson;
 import java.util.List;
 import java.util.Map;
 
-/**
- * This represents part of the Sam response to GET /api/config/v1/resourceTypes
- */
+/** This represents part of the Sam response to GET /api/config/v1/resourceTypes */
 public class ResourceTypeRole {
 
   private List<String> actions;
