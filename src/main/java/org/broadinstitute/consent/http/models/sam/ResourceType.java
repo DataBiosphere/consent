@@ -1,9 +1,10 @@
 package org.broadinstitute.consent.http.models.sam;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import com.google.gson.Gson;
 
+import java.util.List;
+
+/** This represents the Sam response to GET /api/config/v1/resourceTypes */
 public class ResourceType {
 
   private List<ActionPattern> actionPatterns;
@@ -16,53 +17,49 @@ public class ResourceType {
     return actionPatterns;
   }
 
-  public void setActionPatterns(List<ActionPattern> actionPatterns) {
+  public ResourceType setActionPatterns(List<ActionPattern> actionPatterns) {
     this.actionPatterns = actionPatterns;
-  }
-
-  public void addActionPattern(ActionPattern actionPattern) {
-    if ( Objects.isNull(this.actionPatterns)) {
-      this.actionPatterns = new ArrayList<>();
-    }
-    this.actionPatterns.add(actionPattern);
+    return this;
   }
 
   public String getName() {
     return name;
   }
 
-  public void setName(String name) {
+  public ResourceType setName(String name) {
     this.name = name;
+    return this;
   }
 
   public String getOwnerRoleName() {
     return ownerRoleName;
   }
 
-  public void setOwnerRoleName(String ownerRoleName) {
+  public ResourceType setOwnerRoleName(String ownerRoleName) {
     this.ownerRoleName = ownerRoleName;
+    return this;
   }
 
   public Boolean getReuseIds() {
     return reuseIds;
   }
 
-  public void setReuseIds(Boolean reuseIds) {
+  public ResourceType setReuseIds(Boolean reuseIds) {
     this.reuseIds = reuseIds;
+    return this;
   }
 
   public List<ResourceTypeRole> getRoles() {
     return roles;
   }
 
-  public void setRoles(List<ResourceTypeRole> roles) {
+  public ResourceType setRoles(List<ResourceTypeRole> roles) {
     this.roles = roles;
+    return this;
   }
 
-  public void addRole(ResourceTypeRole role) {
-    if (Objects.isNull(this.roles)) {
-      this.roles = new ArrayList<>();
-    }
-    this.roles.add(role);
+  @Override
+  public String toString() {
+    return new Gson().toJson(this);
   }
 }
