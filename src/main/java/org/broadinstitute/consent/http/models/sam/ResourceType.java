@@ -17,9 +17,17 @@ public class ResourceType {
   private Boolean reuseIds;
   private List<ResourceTypeRole> roles;
 
+  public List<ActionPattern> getActionPatterns() {
+    return actionPatterns;
+  }
+
   public ResourceType setActionPatterns(List<ActionPattern> actionPatterns) {
     this.actionPatterns = actionPatterns;
     return this;
+  }
+
+  public String getName() {
+    return name;
   }
 
   public ResourceType setName(String name) {
@@ -27,14 +35,26 @@ public class ResourceType {
     return this;
   }
 
+  public String getOwnerRoleName() {
+    return ownerRoleName;
+  }
+
   public ResourceType setOwnerRoleName(String ownerRoleName) {
     this.ownerRoleName = ownerRoleName;
     return this;
   }
 
+  public Boolean getReuseIds() {
+    return reuseIds;
+  }
+
   public ResourceType setReuseIds(Boolean reuseIds) {
     this.reuseIds = reuseIds;
     return this;
+  }
+
+  public List<ResourceTypeRole> getRoles() {
+    return roles;
   }
 
   public ResourceType setRoles(List<ResourceTypeRole> roles) {

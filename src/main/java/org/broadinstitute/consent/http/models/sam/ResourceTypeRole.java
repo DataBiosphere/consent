@@ -12,9 +12,17 @@ public class ResourceTypeRole {
   private List<String> includedRoles;
   private String roleName;
 
+  public List<String> getActions() {
+    return actions;
+  }
+
   public ResourceTypeRole setActions(List<String> actions) {
     this.actions = actions;
     return this;
+  }
+
+  public Map<String, List<String>> getDescendantRoles() {
+    return descendantRoles;
   }
 
   public ResourceTypeRole setDescendantRoles(Map<String, List<String>> descendantRoles) {
@@ -22,9 +30,17 @@ public class ResourceTypeRole {
     return this;
   }
 
+  public List<String> getIncludedRoles() {
+    return includedRoles;
+  }
+
   public ResourceTypeRole setIncludedRoles(List<String> includedRoles) {
     this.includedRoles = includedRoles;
     return this;
+  }
+
+  public String getRoleName() {
+    return roleName;
   }
 
   public ResourceTypeRole setRoleName(String roleName) {

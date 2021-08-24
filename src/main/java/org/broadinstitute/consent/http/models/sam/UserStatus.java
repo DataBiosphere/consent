@@ -10,9 +10,17 @@ public class UserStatus {
     UserInfo userInfo;
     Enabled enabled;
 
+    public UserInfo getUserInfo() {
+        return userInfo;
+    }
+
     public UserStatus setUserInfo(UserInfo userInfo) {
         this.userInfo = userInfo;
         return this;
+    }
+
+    public Enabled getEnabled() {
+        return enabled;
     }
 
     public UserStatus setEnabled(Enabled enabled) {
