@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -37,7 +38,7 @@ public interface DarCollectionDAO {
 
   final String projectSortFilterQuery = 
     getCollectionAndDars + filterQuery + 
-    "ORDER BY projectTitle DESC " +
+    "ORDER BY <sortField> <sortOrder> " +
     "LIMIT :limit OFFSET :offset";
   
   /**
@@ -80,7 +81,9 @@ public interface DarCollectionDAO {
                                                     @Bind("darCodeSearchTerm") String darCodeSearchTerm,
                                                     @Bind("datasetSearchTerm") String datasetSearchTerm,
                                                     @Bind("offset") Integer offset,
-                                                    @Bind("limit") Integer limit);
+                                                    @Bind("limit") Integer limit,
+                                                    @Define("sortField") String sortField,
+                                                    @Define("sortOrder") String sortOrder);
 
   /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given referenceId

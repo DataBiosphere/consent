@@ -158,7 +158,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     DataAccessRequestData data = dar.getData();
     String projectTitle = data.getProjectTitle();
 
-    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", projectTitle.substring(0,5), "", "", "", 0, 10);
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", projectTitle.substring(0,5), "", "", "", 0, 10, "projectTitle", "ASC");
     assertEquals(1, collections.size());
     DarCollection targetCollection = collections.get(0);
     assertEquals(1, targetCollection.getDars().size());
