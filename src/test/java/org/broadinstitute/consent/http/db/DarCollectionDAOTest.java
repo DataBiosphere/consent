@@ -153,11 +153,16 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
 
   @Test
   public void testFindAllDARCollectionsWithFilters_NonetionsWithFilters_ProjectTitleFilter() {
+
     DataAccessRequest dar = createDataAccessRequestV3();
     DataAccessRequestData data = dar.getData();
-
     String projectTitle = data.getProjectTitle();
-    List<DarCollection> collection = darCollectionDAO.findAllDARCollectionsWithFilters("", projectTitle, "", "", "", "projectTitle", "DESC", 0, 10);
-    assertEquals(1, collection.size());
+
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", projectTitle.substring(0,5), "", "", "", 0, 10);
+    assertEquals(1, collections.size());
+    DarCollection targetCollection = collections.get(0);
+    assertEquals(1, targetCollection.getDars().size());
+    DataAccessRequest targetDar = targetCollection.getDars().get(0);
+    assertEquals(dar.getId(), targetDar.getId());
   };
 }
