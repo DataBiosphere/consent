@@ -152,17 +152,38 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   }
 
   @Test
-  public void testFindAllDARCollectionsWithFilters_NonetionsWithFilters_ProjectTitleFilter() {
+  public void testFindAllDARCollectionsWithFilters_ProjectTitleFilter() {
 
     DataAccessRequest dar = createDataAccessRequestV3();
     DataAccessRequestData data = dar.getData();
     String projectTitle = data.getProjectTitle();
+    String testTerm = generateTestTerm(projectTitle);
 
-    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", projectTitle.substring(0,5), "", "", "", 0, 10, "projectTitle", "ASC");
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", testTerm, "", "", "", 0, 10, "projectTitle", "ASC");
     assertEquals(1, collections.size());
     DarCollection targetCollection = collections.get(0);
     assertEquals(1, targetCollection.getDars().size());
     DataAccessRequest targetDar = targetCollection.getDars().get(0);
     assertEquals(dar.getId(), targetDar.getId());
-  };
-}
+  }
+
+@Test
+public void testFindAllDARCollectionsWithFilters_InstitutionFilter() {
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataAccessRequestData data = dar.getData();
+    String institution = data.getInstitution();
+    String testTerm = generateTestTerm(institution);
+
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort(testTerm, "", "", "", "", 0, 10, "projectTitle", "ASC");
+    assertEquals(1, collections.size());
+    DarCollection targetCollection = collections.get(0);
+    assertEquals(1, targetCollection.getDars().size());
+    DataAccessRequest targetDar = targetCollection.getDars().get(0);
+    assertEquals(dar.getId(), targetDar.getId());
+  }
+
+  private final String generateTestTerm(String targetString) {
+    return "(?=.*" + targetString.substring(0, 5) + ")";
+  }
+};
