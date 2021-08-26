@@ -14,13 +14,10 @@ import org.junit.Test;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
-import java.util.Collections;
 import java.util.Date;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.AssertTrue;
 
 public class DarCollectionDAOTest extends DAOTestHelper  {
 
