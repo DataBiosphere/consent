@@ -466,23 +466,24 @@ public class DAOTestHelper {
 
     protected DataAccessRequest createDataAccessRequestV2() {
         Integer userId = createUser().getDacUserId();
-        return insertDAR(userId, 0);
+        return insertDAR(userId, 0, "");
     }
 
     protected DataAccessRequest createDataAccessRequestV3() {
         User user = createUser();
-        Integer collection_id = darCollectionDAO.insertDarCollection("DAR-" + RandomUtils.nextInt(100, 1000), user.getDacUserId(), new Date());
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         createdDarCollections.add(collection_id);
-        return insertDAR(user.getDacUserId(), collection_id);
+        return insertDAR(user.getDacUserId(), collection_id, darCode);
     }
 
     protected Integer createDataAccessRequestUserWithInstitute() {
         User user = createUserWithInstitution();
-        insertDAR(user.getDacUserId(), 0);
+        insertDAR(user.getDacUserId(), 0, "");
         return user.getInstitutionId();
     }
 
-    private DataAccessRequest insertDAR(Integer userId, Integer collectionId) {
+    private DataAccessRequest insertDAR(Integer userId, Integer collectionId, String darCode) {
         DataAccessRequestData data;
         Date now = new Date();
         try {
@@ -490,6 +491,7 @@ public class DAOTestHelper {
               new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
               Charset.defaultCharset());
             data = DataAccessRequestData.fromString(darDataString);
+            data.setDarCode(darCode);
             String referenceId = UUID.randomUUID().toString();
             if (collectionId == 0) {
                 dataAccessRequestDAO.insertVersion2(referenceId, userId, now, now, now, now, data);
@@ -535,10 +537,11 @@ public class DAOTestHelper {
 
     protected DarCollection createDarCollection() {
         User user = createUser();
-        Integer collection_id = darCollectionDAO.insertDarCollection("DAR-" + RandomUtils.nextInt(0, 1000), user.getDacUserId(), new Date());
-        insertDAR(user.getDacUserId(), collection_id);
-        insertDAR(user.getDacUserId(), collection_id);
-        insertDAR(user.getDacUserId(), collection_id);
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        insertDAR(user.getDacUserId(), collection_id, darCode);
+        insertDAR(user.getDacUserId(), collection_id, darCode);
+        insertDAR(user.getDacUserId(), collection_id, darCode);
         createdDarCollections.add(collection_id);
         return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
     }

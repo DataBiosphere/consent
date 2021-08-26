@@ -14,9 +14,13 @@ import org.junit.Test;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.validation.constraints.AssertTrue;
 
 public class DarCollectionDAOTest extends DAOTestHelper  {
 
@@ -27,22 +31,6 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     assertTrue(allAfter.contains(collection));
     assertEquals(1, allAfter.size());
     assertEquals(3, collection.getDars().size());
-  }
-
-  //test stubs for uncompleted DAO call
-  public void testFindAllDARCollectionsWithFilters_None() {
-  }
-
-  //sort field and sort direction are populated, no filter terms present
-  public void testFindAllDARCollectionsWithFilters_SortField() {
-  }
-
-  //sort field and sort direction are not populated, and filter terms are present
-  public void testFindAllDARCollectionsWithFilters_Filter() {
-  }
-
-  //sort field and sort direction are populated, and filter terms are present
-  public void testFindAllDARCollectionsWithFilters_Both() {
   }
 
   @Test
@@ -150,16 +138,31 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
       assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException)e.getCause()).getSQLState());
     }
   }
+  @Test
+  public void testFindAllDARCollectionsWithFilters_SortField() {
+    createDataAccessRequestV3(); // create first collection w DAR
+    createDataAccessRequestV3(); // create second collection w DAR
+
+    List<DarCollection> collectionsResult = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", "",
+        "", "", "", 0, 10, "dar_code", "ASC");
+
+    assertEquals(2, collectionsResult.size());
+    
+    DataAccessRequest darOne = collectionsResult.get(0).getDars().get(0);
+    DataAccessRequest darTwo = collectionsResult.get(1).getDars().get(0);
+    Integer comparatorValue = darOne.getData().getDarCode().compareTo(darTwo.getData().getDarCode());
+    assertTrue(comparatorValue < 0);
+  }
 
   @Test
-  public void testFindAllDARCollectionsWithFilters_ProjectTitleFilter() {
+  public void testFindAllDARCollectionsWithFilters_ProjectTitleTerm() {
 
     DataAccessRequest dar = createDataAccessRequestV3();
     DataAccessRequestData data = dar.getData();
     String projectTitle = data.getProjectTitle();
     String testTerm = generateTestTerm(projectTitle);
 
-    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", testTerm, "", "", "", 0, 10, "projectTitle", "ASC");
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", testTerm, "", "", "", 0, 10, "dar_code", "ASC");
     assertEquals(1, collections.size());
     DarCollection targetCollection = collections.get(0);
     assertEquals(1, targetCollection.getDars().size());
@@ -168,14 +171,14 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   }
 
 @Test
-public void testFindAllDARCollectionsWithFilters_InstitutionFilter() {
+public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
 
     DataAccessRequest dar = createDataAccessRequestV3();
     DataAccessRequestData data = dar.getData();
     String institution = data.getInstitution();
     String testTerm = generateTestTerm(institution);
 
-    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort(testTerm, "", "", "", "", 0, 10, "projectTitle", "ASC");
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort(testTerm, "", "", "", "", 0, 10, "dar_code", "ASC");
     assertEquals(1, collections.size());
     DarCollection targetCollection = collections.get(0);
     assertEquals(1, targetCollection.getDars().size());
@@ -183,7 +186,138 @@ public void testFindAllDARCollectionsWithFilters_InstitutionFilter() {
     assertEquals(dar.getId(), targetDar.getId());
   }
 
+  @Test
+  public void testFindAllDARCollectionsWithFilters_DatasetTerm() {
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataAccessRequestData data = dar.getData();
+    String datasetLabel = data.getDatasets().get(0).getLabel();
+    String testTerm = generateTestTerm(datasetLabel);
+
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", "", "", "", testTerm, 0, 10, "dar_code", "ASC");
+    assertEquals(1, collections.size());
+    DarCollection targetCollection = collections.get(0);
+    assertEquals(1, targetCollection.getDars().size());
+    DataAccessRequest targetDar = targetCollection.getDars().get(0);
+    assertEquals(dar.getId(), targetDar.getId());
+  }
+
+  @Test
+  public void testFindAllDARCollectionsWithFilters_DarCodeTerm() {
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataAccessRequestData data = dar.getData();
+    String darCode = data.getDarCode();
+    String testTerm = generateTestTerm(darCode);
+
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", "", "", testTerm, "", 0, 10, "dar_code", "ASC");
+    assertEquals(1, collections.size());
+    DarCollection targetCollection = collections.get(0);
+    assertEquals(1, targetCollection.getDars().size());
+    DataAccessRequest targetDar = targetCollection.getDars().get(0);
+    assertEquals(dar.getId(), targetDar.getId());
+  }
+
+  @Test
+  public void testFindAllDARCollectionssWithFilters_ResearcherTerm() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataAccessRequestData data = dar.getData();
+    String researcherTerm = data.getResearcher().substring(0, 5);
+    String testTerm = generateTestTerm(researcherTerm);
+
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", "", testTerm,
+        "", "", 0, 10, "dar_code", "ASC");
+    assertEquals(1, collections.size());
+    DarCollection targetCollection = collections.get(0);
+    assertEquals(1, targetCollection.getDars().size());
+    DataAccessRequest targetDar = targetCollection.getDars().get(0);
+    assertEquals(dar.getId(), targetDar.getId());
+  }
+
+  @Test
+  public void testFindAllDarCollectionsWithFilters_sortDirectionTerm_DESC() {
+    createDataAccessRequestV3(); //create first collection w DAR
+    createDataAccessRequestV3(); //create second collection w DAR
+
+    List<DarCollection> collections =  darCollectionDAO.findAllDARCollections();
+    collections.sort((a,b) -> -1 * (a.getDarCode().compareToIgnoreCase(b.getDarCode())));
+
+    List<DarCollection> collectionsResult = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", "",
+        "", "", "", 0, 10, "dar_code", "DESC");
+    
+    assertEquals(2, collectionsResult.size());
+    assertEquals(collectionsResult.get(0).getDarCode(), collections.get(0).getDarCode());
+
+    DataAccessRequest darResultOne = collectionsResult.get(0).getDars().get(0);
+    DataAccessRequest darResultTwo = collectionsResult.get(1).getDars().get(0);
+    DataAccessRequest expectedDarOne = collections.get(0).getDars().get(0);
+    DataAccessRequest expectedDarTwo = collections.get(1).getDars().get(0);
+    assertEquals(expectedDarOne.getId(), darResultOne.getId());
+    assertEquals(expectedDarTwo.getId(), darResultTwo.getId());
+
+  }
+
+  @Test
+  public void testFindAllDarCollectionsWithFilters_sortDirectionTerm_ASC() {
+    createDataAccessRequestV3(); // create first collection w DAR
+    createDataAccessRequestV3(); // create second collection w DAR
+
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollections();
+    collections.sort((a, b) -> (a.getDarCode().compareToIgnoreCase(b.getDarCode())));
+
+    List<DarCollection> collectionsResult = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", "",
+        "", "", "", 0, 10, "dar_code", "ASC");
+
+    assertEquals(2, collectionsResult.size());
+    assertEquals(collectionsResult.get(0).getDarCode(), collections.get(0).getDarCode());
+
+    DataAccessRequest darResultOne = collectionsResult.get(0).getDars().get(0);
+    DataAccessRequest darResultTwo = collectionsResult.get(1).getDars().get(0);
+    DataAccessRequest expectedDarOne = collections.get(0).getDars().get(0);
+    DataAccessRequest expectedDarTwo = collections.get(1).getDars().get(0);
+    assertEquals(expectedDarOne.getId(), darResultOne.getId());
+    assertEquals(expectedDarTwo.getId(), darResultTwo.getId());
+  }
+
+  @Test
+  public void testFindAllDarCollectionsWithFilters_Limit() {
+    createDataAccessRequestV3(); // create first collection w DAR
+    createDataAccessRequestV3(); // create second collection w DAR
+
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollections();
+    collections.sort((a, b) -> (a.getDarCode().compareToIgnoreCase(b.getDarCode())));
+
+    List<DarCollection> collectionsResult = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", "",
+        "", "", "", 0, 1, "dar_code", "ASC");
+
+    assertEquals(1, collectionsResult.size());
+    assertEquals(collectionsResult.get(0).getDarCode(), collections.get(0).getDarCode());
+
+    DataAccessRequest darResult = collectionsResult.get(0).getDars().get(0);
+    DataAccessRequest expectedDar = collections.get(0).getDars().get(0);
+    assertEquals(expectedDar.getId(), darResult.getId());
+  }
+
+  @Test
+  public void testFindAllDarCollectionsWithFilters_Offset() {
+    createDataAccessRequestV3(); // create first collection w DAR
+    createDataAccessRequestV3(); // create second collection w DAR
+
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollections();
+    collections.sort((a, b) -> (a.getDarCode().compareToIgnoreCase(b.getDarCode())));
+
+    List<DarCollection> collectionsResult = darCollectionDAO.findAllDARCollectionsWithFiltersAndProjectTitleSort("", "",
+        "", "", "", 1, 1, "dar_code", "ASC");
+
+    assertEquals(1, collectionsResult.size());
+    assertEquals(collectionsResult.get(0).getDarCode(), collections.get(1).getDarCode());
+
+    DataAccessRequest darResult = collectionsResult.get(0).getDars().get(0);
+    DataAccessRequest expectedDar = collections.get(1).getDars().get(0);
+    assertEquals(expectedDar.getId(), darResult.getId());
+  }
+
   private final String generateTestTerm(String targetString) {
-    return "(?=.*" + targetString.substring(0, 5) + ")";
+    return "(?=.*" + targetString.substring(0, 4) + ")";
   }
 };
