@@ -314,6 +314,27 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     assertEquals(expectedDar.getId(), darResult.getId());
   }
 
+  @Test
+  public void testFindAllDARCollectionsCreatedByUserId(){
+    DarCollection collection = createDarCollection();
+    List<DataAccessRequest> dars = collection.getDars();
+    createDarCollection(); //create new collection associated with different user
+    Integer userId = collection.getCreateUser();
+    List<DarCollection> collectionResult = darCollectionDAO.findDARCollectionsCreatedByUserId(userId);
+    assertEquals(1, collectionResult.size());
+    assertEquals(userId, collectionResult.get(0).getCreateUser());
+
+    List<DataAccessRequest> darsResult = collectionResult.get(0).getDars();
+    assertEquals(dars.size(), darsResult.size());
+
+    for (int i = 0; i < dars.size(); i++) {
+      DataAccessRequest darOriginal = dars.get(i);
+      DataAccessRequest darResults = darsResult.get(i);
+      assertEquals(darOriginal.getId(), darResults.getId());
+      assertEquals(collection.getDarCode(), darResults.getData().getDarCode());
+    }
+  }
+
   private final String generateTestTerm(String targetString) {
     return "(?=.*" + targetString.substring(0, 4) + ")";
   }

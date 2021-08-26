@@ -59,6 +59,17 @@ public interface DarCollectionDAO {
   )
   List<DarCollection> findAllDARCollections();
 
+  @RegisterBeanMapper(value = DarCollection.class)
+  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
+  @UseRowReducer(DarCollectionReducer.class)
+  @SqlQuery(" SELECT c.*, dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
+      + "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, "
+      + "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
+      + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data "
+      + "FROM dar_collection c, data_access_request dar " 
+      + "WHERE c.collection_id = dar.collection_id "
+      + "AND c.create_user = :userId")
+  List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
 
   /**
    * Find all DARCollections with their DataAccessRequests that match the given filters
