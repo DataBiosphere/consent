@@ -74,7 +74,7 @@ public interface DarCollectionDAO {
  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
  @UseRowReducer(DarCollectionReducer.class)
  @SqlQuery(projectSortFilterQuery)
- List<DarCollection> findAllDARCollectionsWithFiltersAndProjectTitleSort(
+ List<DarCollection> findAllDARCollectionsWithFilters(
                                                     @Bind("institutionSearchTerm") String institutionSearchTerm,
                                                     @Bind("projectSearchTerm") String projectSearchTerm,
                                                     @Bind("researcherSearchTerm") String researcherSearchTerm,
