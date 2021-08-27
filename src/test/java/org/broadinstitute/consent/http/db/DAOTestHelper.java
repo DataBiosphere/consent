@@ -341,9 +341,10 @@ public class DAOTestHelper {
     protected User createUserWithInstitution() {
         int i1 = RandomUtils.nextInt(5, 10);
         String email = RandomStringUtils.randomAlphabetic(i1);
-        Integer userId = userDAO.insertUser(email, "display name", new Date());
-        Integer institutionId = institutionDAO.insertInstitution("name", "itdirectorName", "itDirectorEmail", userId, new Date());
-        userDAO.updateUser("display name", userId, email, institutionId);
+        String name = RandomStringUtils.randomAlphabetic(10);
+        Integer userId = userDAO.insertUser(email, name, new Date());
+        Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphanumeric(10), "itdirectorName", "itDirectorEmail", userId, new Date());
+        userDAO.updateUser(name, userId, email, institutionId);
         addUserRole(7, userId);
         createdInstitutionIds.add(institutionId);
         createdUserIds.add(userId);
@@ -470,7 +471,7 @@ public class DAOTestHelper {
     }
 
     protected DataAccessRequest createDataAccessRequestV3() {
-        User user = createUser();
+        User user = createUserWithInstitution();
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         createdDarCollections.add(collection_id);

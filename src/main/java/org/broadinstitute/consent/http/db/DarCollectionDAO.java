@@ -17,20 +17,20 @@ import java.util.List;
 public interface DarCollectionDAO {
 
   final String getCollectionAndDars =
-      "SELECT c.*, dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
+      "SELECT c.*, i.institution_name, u.displayname AS researcher, dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
           "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
           "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
           "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, " +
-          "(dar.data #>> '{}')::jsonb ->> 'institution' as institution, " + 
-          "(dar.data #>> '{}')::jsonb ->> 'researcher' as researcher, " +
           "(dar.data #>> '{}')::jsonb ->> 'projectTitle' as projectTitle " +
       "FROM dar_collection c " + 
+      "INNER JOIN dacuser u ON u.dacuserid = c.create_user " +
+      "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
       "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id ";
   
   final String filterQuery = 
-    "WHERE (dar.data #>> '{}')::jsonb ->> 'institution' ~* :institutionSearchTerm " +
+    "WHERE COALESCE(i.institution_name, '') ~* :institutionSearchTerm " +
     "AND (dar.data #>> '{}')::jsonb ->> 'projectTitle' ~* :projectSearchTerm " +
-    "AND (dar.data #>> '{}')::jsonb ->> 'researcher' ~* :researcherSearchTerm " +
+    "AND u.displayname ~* :researcherSearchTerm " +
     "AND c.dar_code ~* :darCodeSearchTerm " + 
     "AND EXISTS " +
         "(SELECT FROM jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasets') dataset " +

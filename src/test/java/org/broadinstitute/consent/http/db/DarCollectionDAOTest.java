@@ -5,6 +5,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -171,9 +172,9 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
 public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
 
     DataAccessRequest dar = createDataAccessRequestV3();
-    DataAccessRequestData data = dar.getData();
-    String institution = data.getInstitution();
-    String testTerm = generateTestTerm(institution);
+    User user = userDAO.findUserById(dar.getUserId());
+    Institution institution = institutionDAO.findInstitutionById(user.getInstitutionId());
+    String testTerm = generateTestTerm(institution.getName());
 
     List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFilters(testTerm, "", "", "", "", 0, 10, "dar_code", "ASC");
     assertEquals(1, collections.size());
@@ -218,8 +219,8 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
   @Test
   public void testFindAllDARCollectionssWithFilters_ResearcherTerm() {
     DataAccessRequest dar = createDataAccessRequestV3();
-    DataAccessRequestData data = dar.getData();
-    String researcherTerm = data.getResearcher().substring(0, 5);
+    User user = userDAO.findUserById(dar.getUserId());
+    String researcherTerm = user.getDisplayName();
     String testTerm = generateTestTerm(researcherTerm);
 
     List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFilters("", "", testTerm,
