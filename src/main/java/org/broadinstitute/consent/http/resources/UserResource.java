@@ -282,10 +282,12 @@ public class UserResource extends Resource {
         JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
         JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
         JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
-        JsonObject userInfoStatusJson = gson.toJsonTree(authUser.getUserStatusInfo()).getAsJsonObject();
         userJson.add("researcherProperties", propsJson);
         userJson.add("libraryCards", entriesJson);
-        userJson.add("userInfoStatus", userInfoStatusJson);
+        if (Objects.nonNull(authUser.getUserStatusInfo())) {
+            JsonObject userInfoStatusJson = gson.toJsonTree(authUser.getUserStatusInfo()).getAsJsonObject();
+            userJson.add("userInfoStatus", userInfoStatusJson);
+        }
         return userJson;
     }
 
