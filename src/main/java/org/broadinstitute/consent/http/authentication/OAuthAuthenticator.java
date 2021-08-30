@@ -6,6 +6,8 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.sam.SamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,11 +23,13 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
     private static final String TOKEN_INFO_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=";
     private static final String USER_INFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo?access_token=";
     private static final Logger logger = LoggerFactory.getLogger(OAuthAuthenticator.class);
-    private Client client;
+    private final Client client;
+    private final SamService samService;
 
     @Inject
-    public OAuthAuthenticator(Client client) {
+    public OAuthAuthenticator(Client client, SamService samService) {
         this.client = client;
+        this.samService = samService;
     }
 
     @Override
@@ -34,11 +38,28 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
             validateAudience(bearer);
             GoogleUser googleUser = getUserInfo(bearer);
             AuthUser user = new AuthUser(googleUser).setAuthToken(bearer);
-            return Optional.of(user);
+            AuthUser userWithStatus = getUserWithStatusInfo(user);
+            return Optional.of(userWithStatus);
         } catch (Exception e) {
             logger.error("Error authenticating credentials: " + e.getMessage());
             return Optional.empty();
         }
+    }
+
+    /**
+     * Attempt to get the registration status of the current user and set the value on AuthUser
+     *
+     * @param authUser The AuthUser
+     * @return A cloned AuthUser with Sam registration status
+     */
+    private AuthUser getUserWithStatusInfo(AuthUser authUser) {
+        try {
+            UserStatusInfo userStatusInfo = samService.getRegistrationInfo(authUser);
+            return authUser.deepCopy().setUserStatusInfo(userStatusInfo);
+        } catch (Throwable e) {
+            logger.error("Exception retrieving Sam user info for '" + authUser.getEmail() + "': " + e.getMessage());
+        }
+        return authUser;
     }
 
     private void validateAudience(String bearer) throws AuthenticationException {
