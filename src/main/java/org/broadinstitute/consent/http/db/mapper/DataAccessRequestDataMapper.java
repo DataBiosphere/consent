@@ -14,7 +14,7 @@ public class DataAccessRequestDataMapper implements RowMapper<DataAccessRequestD
     @Override
     public DataAccessRequestData map(ResultSet resultSet, StatementContext statementContext) throws SQLException {
         String darDataString = resultSet.getObject("data", PGobject.class).getValue();
-        DataAccessRequestData data = RowMapperHelper.translate(darDataString);
+        DataAccessRequestData data = translate(darDataString);
         return data;
     }
 

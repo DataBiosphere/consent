@@ -10,7 +10,7 @@ import org.jdbi.v3.core.result.RowView;
 import java.util.Map;
 import java.util.Objects;
 
-public class DarCollectionReducer implements LinkedHashMapRowReducer<Integer, DarCollection> {
+public class DarCollectionReducer implements LinkedHashMapRowReducer<Integer, DarCollection>, RowMapperHelper {
 
     @Override
     public void accumulate(Map<Integer, DarCollection> map, RowView rowView) {
@@ -22,7 +22,7 @@ public class DarCollectionReducer implements LinkedHashMapRowReducer<Integer, Da
       try{
         if(Objects.nonNull(collection) && Objects.nonNull(rowView.getColumn("dar_id", Integer.class))) {
           dar = rowView.getRow(DataAccessRequest.class);
-          DataAccessRequestData data = RowMapperHelper.translate(rowView.getColumn("data", String.class));
+          DataAccessRequestData data = translate(rowView.getColumn("data", String.class));
           dar.setData(data);
         }
       } catch(MappingException e) {
