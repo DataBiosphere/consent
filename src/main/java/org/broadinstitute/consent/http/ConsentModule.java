@@ -175,7 +175,7 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     OAuthAuthenticator providesOAuthAuthenticator() {
-        return new OAuthAuthenticator(providesClient());
+        return new OAuthAuthenticator(providesClient(), providesSamService());
     }
 
     @Provides

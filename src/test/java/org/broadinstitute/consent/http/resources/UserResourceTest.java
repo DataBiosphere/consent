@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -43,6 +44,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class UserResourceTest {
 
@@ -58,6 +60,8 @@ public class UserResourceTest {
 
   @Mock private UriBuilder uriBuilder;
 
+  @Mock private UserStatusInfo userStatusInfo;
+
   private final String TEST_EMAIL = "test@gmail.com";
 
   private AuthUser authUser;
@@ -67,8 +71,10 @@ public class UserResourceTest {
     GoogleUser googleUser = new GoogleUser();
     googleUser.setName("Test User");
     googleUser.setEmail(TEST_EMAIL);
-    authUser = new AuthUser(googleUser);
-    MockitoAnnotations.initMocks(this);
+    authUser = new AuthUser(googleUser)
+            .setAuthToken("auth-token")
+            .setUserStatusInfo(userStatusInfo);
+    openMocks(this);
     when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
     when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
     when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/dacuser/api"));

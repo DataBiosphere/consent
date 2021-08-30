@@ -93,7 +93,7 @@ public class UserResource extends Resource {
     public Response getUser(@Auth AuthUser authUser) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            JsonObject userJson = constructUserJsonObject(user);
+            JsonObject userJson = constructUserJsonObject(authUser, user);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -107,7 +107,7 @@ public class UserResource extends Resource {
     public Response getUserById(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
         try {
             User user = userService.findUserById(userId);
-            JsonObject userJson = constructUserJsonObject(user);
+            JsonObject userJson = constructUserJsonObject(authUser, user);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -140,7 +140,7 @@ public class UserResource extends Resource {
                     UserRole role = new UserRole(roleId, UserRoles.getUserRoleFromId(roleId).getRoleName());
                     userService.insertUserRoles(Collections.singletonList(role), user.getDacUserId());
                     user = userService.findUserById(userId);
-                    JsonObject userJson = constructUserJsonObject(user);
+                    JsonObject userJson = constructUserJsonObject(authUser, user);
                     return Response.ok().entity(gson.toJson(userJson)).build();
                 } else {
                     return Response.notModified().build();
@@ -165,13 +165,13 @@ public class UserResource extends Resource {
             }
             List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
             if (!currentUserRoleIds.contains(roleId)) {
-                JsonObject userJson = constructUserJsonObject(user);
+                JsonObject userJson = constructUserJsonObject(authUser, user);
                 return Response.ok().entity(gson.toJson(userJson)).build();
             }
             User auth = userService.findUserByEmail(authUser.getEmail());
             userService.deleteUserRole(auth, userId, roleId);
             user = userService.findUserById(userId);
-            JsonObject userJson = constructUserJsonObject(user);
+            JsonObject userJson = constructUserJsonObject(authUser, user);
             return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -248,7 +248,7 @@ public class UserResource extends Resource {
             User user = userService.findUserByEmail(authUser.getEmail());
             researcherService.setProperties(userPropertiesMap, authUser);
             User updatedUser = userService.findUserById(user.getDacUserId());
-            JsonObject userJson = constructUserJsonObject(updatedUser);
+            JsonObject userJson = constructUserJsonObject(authUser, updatedUser);
             return Response.created(info.getRequestUriBuilder().build()).entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -264,7 +264,7 @@ public class UserResource extends Resource {
             User user = userService.findUserByEmail(authUser.getEmail());
             researcherService.updateProperties(userProperties, authUser, validate);
             User updatedUser = userService.findUserById(user.getDacUserId());
-            JsonObject userJson = constructUserJsonObject(updatedUser);
+            JsonObject userJson = constructUserJsonObject(authUser, updatedUser);
             return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -276,7 +276,7 @@ public class UserResource extends Resource {
      * @param user The User
      * @return JsonObject version of the user with researcher properties and library card entries
      */
-    private JsonObject constructUserJsonObject(User user) {
+    private JsonObject constructUserJsonObject(AuthUser authUser, User user) {
         List<UserProperty> props = userService.findAllUserProperties(user.getDacUserId());
         List<LibraryCard> entries = libraryCardService.findLibraryCardsByUserId(user.getDacUserId());
         JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
@@ -284,6 +284,10 @@ public class UserResource extends Resource {
         JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
         userJson.add("researcherProperties", propsJson);
         userJson.add("libraryCards", entriesJson);
+        if (Objects.nonNull(authUser.getUserStatusInfo())) {
+            JsonObject userStatusInfoJson = gson.toJsonTree(authUser.getUserStatusInfo()).getAsJsonObject();
+            userJson.add("userStatusInfo", userStatusInfoJson);
+        }
         return userJson;
     }
 
