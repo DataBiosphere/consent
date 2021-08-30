@@ -54,8 +54,8 @@ public interface DarCollectionDAO {
         "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
         "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
         "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
-        "FROM dar_collection c, data_access_request dar " +
-    " WHERE c.collection_id = dar.collection_id"
+        "FROM dar_collection c " +
+        "INNER JOIN data_access_request dar on c.collection_id = dar.collection_id;"
   )
   List<DarCollection> findAllDARCollections();
 
@@ -66,8 +66,8 @@ public interface DarCollectionDAO {
       + "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, "
       + "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
       + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data "
-      + "FROM dar_collection c, data_access_request dar " 
-      + "WHERE c.collection_id = dar.collection_id "
+      + "FROM dar_collection c " 
+      + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "AND c.create_user_id = :userId")
   List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
 
