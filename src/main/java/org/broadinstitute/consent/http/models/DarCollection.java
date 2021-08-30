@@ -22,7 +22,7 @@ public class DarCollection {
   Timestamp createDate;
 
   @JsonProperty
-  Integer createUser;
+  Integer createUserId;
 
   @JsonProperty
   Timestamp updateDate;
@@ -59,12 +59,12 @@ public class DarCollection {
     this.createDate = createDate;
   }
 
-  public Integer getCreateUser() {
-    return createUser;
+  public Integer getCreateUserId() {
+    return createUserId;
   }
 
-  public void setCreateUser(Integer createUser) {
-    this.createUser = createUser;
+  public void setCreateUserId(Integer createUserId) {
+    this.createUserId = createUserId;
   }
 
   public Date getUpdateDate() {

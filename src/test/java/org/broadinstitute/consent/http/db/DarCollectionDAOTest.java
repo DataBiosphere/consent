@@ -55,7 +55,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
     assertNotNull(returned);
     assertEquals(collection.getDarCode(), returned.getDarCode());
-    assertEquals(collection.getCreateUser(), returned.getCreateUser());
+    assertEquals(collection.getCreateUserId(), returned.getCreateUserId());
   }
 
   @Test
@@ -320,10 +320,10 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     DarCollection collection = createDarCollection();
     List<DataAccessRequest> dars = collection.getDars();
     createDarCollection(); //create new collection associated with different user
-    Integer userId = collection.getCreateUser();
+    Integer userId = collection.getCreateUserId();
     List<DarCollection> collectionResult = darCollectionDAO.findDARCollectionsCreatedByUserId(userId);
     assertEquals(1, collectionResult.size());
-    assertEquals(userId, collectionResult.get(0).getCreateUser());
+    assertEquals(userId, collectionResult.get(0).getCreateUserId());
 
     List<DataAccessRequest> darsResult = collectionResult.get(0).getDars();
     assertEquals(dars.size(), darsResult.size());

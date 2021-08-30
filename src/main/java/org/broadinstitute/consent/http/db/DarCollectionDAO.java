@@ -23,7 +23,7 @@ public interface DarCollectionDAO {
           "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, " +
           "(dar.data #>> '{}')::jsonb ->> 'projectTitle' as projectTitle " +
       "FROM dar_collection c " + 
-      "INNER JOIN dacuser u ON u.dacuserid = c.create_user " +
+      "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id " +
       "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
       "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id ";
   
@@ -68,7 +68,7 @@ public interface DarCollectionDAO {
       + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data "
       + "FROM dar_collection c, data_access_request dar " 
       + "WHERE c.collection_id = dar.collection_id "
-      + "AND c.create_user = :userId")
+      + "AND c.create_user_id = :userId")
   List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
 
   /**
@@ -133,7 +133,7 @@ public interface DarCollectionDAO {
    * @return Integer, ID of newly created DarCollection
    */
   @SqlUpdate("INSERT INTO dar_collection " +
-    " (dar_code, create_user, create_date) " +
+    " (dar_code, create_user_id, create_date) " +
     " VALUES (:darCode, :createUserId, :createDate)")
   @GetGeneratedKeys
   Integer insertDarCollection(@Bind("darCode") String darCode,

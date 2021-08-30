@@ -17,6 +17,6 @@
         <addColumn tableName="dar_collection">
             <column name="update_date" type="timestamp"/>
         </addColumn>
-
+        <renameColumn tableName="dar_collection" oldColumnName="create_user" newColumnName="create_user_id" />
     </changeSet>
 </databaseChangeLog>
