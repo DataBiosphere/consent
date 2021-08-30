@@ -28,7 +28,7 @@ public class DarCollection {
   Timestamp updateDate;
 
   @JsonProperty
-  Integer updateUser;
+  Integer updateUserId;
 
   @JsonProperty
   List<DataAccessRequest> dars;
@@ -75,12 +75,12 @@ public class DarCollection {
     this.updateDate = updateDate;
   }
 
-  public Integer getUpdateUser() {
-    return updateUser;
+  public Integer getUpdateUserId() {
+    return updateUserId;
   }
 
-  public void setUpdateUser(Integer updateUser) {
-    this.updateUser = updateUser;
+  public void setUpdateUserId(Integer updateUserId) {
+    this.updateUserId = updateUserId;
   }
 
   public List<DataAccessRequest> getDars() {

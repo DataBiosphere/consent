@@ -12,7 +12,7 @@
         <dropColumn tableName="dar_collection" columnName="update_user"/>
         <dropColumn tableName="dar_collection" columnName="update_date"/>
         <addColumn tableName="dar_collection">
-            <column name="update_user" type="bigint"/>
+            <column name="update_user_id" type="bigint"/>
         </addColumn>
         <addColumn tableName="dar_collection">
             <column name="update_date" type="timestamp"/>

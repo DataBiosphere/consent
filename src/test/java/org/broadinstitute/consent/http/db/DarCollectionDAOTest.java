@@ -95,12 +95,12 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     DarCollection collection = createDarCollection();
     assertNotNull(collection);
     assertNull(collection.getUpdateDate());
-    assertNull(collection.getUpdateUser());
+    assertNull(collection.getUpdateUserId());
     User user = createUser();
     Date date = new Date();
     darCollectionDAO.updateDarCollection(collection.getDarCollectionId(), user.getDacUserId(), date);
     DarCollection updated = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
-    assertEquals(user.getDacUserId(), updated.getUpdateUser());
+    assertEquals(user.getDacUserId(), updated.getUpdateUserId());
     assertEquals(date, updated.getUpdateDate());
   }
 

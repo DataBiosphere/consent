@@ -25,7 +25,7 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
         dar.setSubmissionDate(resultSet.getTimestamp("submission_date"));
         dar.setUpdateDate(resultSet.getTimestamp("update_date"));
         String darDataString = resultSet.getObject("data", PGobject.class).getValue();
-        DataAccessRequestData data = translate(darDataString);
+        DataAccessRequestData data = RowMapperHelper.translate(darDataString);
         dar.setData(data);
         return dar;
     }

@@ -143,7 +143,7 @@ public interface DarCollectionDAO {
   /**
    * Update the update user and update date of the DAR Collection with the given collection ID
    */
-  @SqlUpdate("UPDATE dar_collection SET update_user = :updateUserId, update_date = :updateDate WHERE collection_id = :collectionId")
+  @SqlUpdate("UPDATE dar_collection SET update_user_id = :updateUserId, update_date = :updateDate WHERE collection_id = :collectionId")
   void updateDarCollection(@Bind("collectionId") Integer collectionId,
                            @Bind("updateUserId") Integer updateUserId,
                            @Bind("updateDate") Date updateDate);
