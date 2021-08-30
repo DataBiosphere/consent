@@ -7,11 +7,19 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.LibraryCardService;
+import org.broadinstitute.consent.http.service.ResearcherService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -24,31 +32,28 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.LibraryCard;
-import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.LibraryCardService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Path("api/user")
 public class UserResource extends Resource {
 
     private final UserService userService;
+    private final ResearcherService researcherService;
     private final LibraryCardService libraryCardService;
     private final Gson gson;
 
     @Inject
-    public UserResource(UserService userService, LibraryCardService libraryCardService) {
+    public UserResource(ResearcherService researcherService, UserService userService, LibraryCardService libraryCardService) {
+        this.researcherService = researcherService;
         this.userService = userService;
         this.libraryCardService = libraryCardService;
         this.gson = new Gson();
@@ -229,6 +234,38 @@ public class UserResource extends Resource {
                 return Response.ok().entity(signingOfficials).build();
             }
             return Response.ok().entity(Collections.emptyList()).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @POST
+    @Consumes("application/json")
+    @Path("/profile")
+    @PermitAll
+    public Response registerProperties(@Auth AuthUser authUser, @Context UriInfo info, Map<String, String> userPropertiesMap) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            researcherService.setProperties(userPropertiesMap, authUser);
+            User updatedUser = userService.findUserById(user.getDacUserId());
+            JsonObject userJson = constructUserJsonObject(updatedUser);
+            return Response.created(info.getRequestUriBuilder().build()).entity(gson.toJson(userJson)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
+    @Consumes("application/json")
+    @Path("/profile")
+    @PermitAll
+    public Response updateProperties(@Auth AuthUser authUser, @QueryParam("validate") Boolean validate, Map<String, String> userProperties) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            researcherService.updateProperties(userProperties, authUser, validate);
+            User updatedUser = userService.findUserById(user.getDacUserId());
+            JsonObject userJson = constructUserJsonObject(updatedUser);
+            return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

@@ -3207,6 +3207,25 @@ paths:
         500:
           description: Server error.
 
+  /api/user:
+    post:
+      summary: Create User
+      description: Create a user with RESEARCHER role using the user's current authentication status.
+      tags:
+        - User
+      responses:
+        200:
+          description: Returns the created user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Unable to validate the user's google identity.
+        409:
+          description: User should be unique
+        500:
+          description: Server error.
   /api/user/me:
     get:
       summary: Find currently authenticated user
@@ -3260,12 +3279,12 @@ paths:
           description: User not found
         500:
           description: Server error.
-  /api/user/{id}:
+  /api/user/{userId}:
     get:
       summary: Find user by id
       description: Finds user by the user id. Available to Admin, Chair, and Member roles
       parameters:
-        - name: id
+        - name: userId
           in: path
           description: The id of the user
           required: true
@@ -3282,6 +3301,60 @@ paths:
                 $ref: '#/components/schemas/User'
         404:
           description: User not found
+        500:
+          description: Server error.
+  /api/user/profile:
+    post:
+      summary: Create user properties.
+      description: Create properties for the current user.
+      requestBody:
+        description: Map<String, String> for user properties.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProperties'
+      tags:
+        - User
+      responses:
+        201:
+          description: The user properties were created.
+        400:
+          description: Malformed entity.
+        409:
+          description: Unsupported operation.
+        500:
+          description: Server error.
+    put:
+      summary: Update user properties
+      description: Updates a user.
+      requestBody:
+        description: Map<String, String> for user properties.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProperties'
+      parameters:
+        - name: validate
+          in: query
+          description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
+          required: true
+          schema:
+            type: boolean
+      tags:
+        - User
+      responses:
+        200:
+          description: The user was updated, and returns the properties.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Malformed researcher entity.
+        404:
+          description: The requested user doesn't exist in the system.
         500:
           description: Server error.
   /api/user/role/{roleName}:
@@ -3419,29 +3492,13 @@ paths:
             application/json:
               schema:
                 type: string
-  /api/user:
-    post:
-      summary: createResearcher
-      description: Create a user with RESEARCHER role using the user's current authentication status.
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the created user.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        400:
-          description: Unable to validate the user's google identity.
-        409:
-          description: User should be unique
-        500:
-          description: Server error.
   /api/researcher:
     post:
+      deprecated: true
       summary: Create researcher properties.
-      description: Create researcher properties for the current user.
+      description: |
+        Deprecated - use POST /api/user/{userId}
+        Create researcher properties for the current user.
       parameters:
         - name: researcherProperties
           in: body
@@ -3450,7 +3507,6 @@ paths:
           schema:
             $ref: '#/components/schemas/UserProperties'
       tags:
-        - User
         - Researcher
       responses:
         201:
@@ -3462,8 +3518,11 @@ paths:
         500:
           description: Server error.
     put:
+      deprecated: true
       summary: Update researcher.
-      description: Updates a researcher user.
+      description: |
+        Deprecated - use PUT /api/user/{userId}
+        Updates a researcher user.
       parameters:
         - name: validate
           in: query
@@ -3478,7 +3537,6 @@ paths:
           schema:
             $ref: '#/components/schemas/UserProperties'
       tags:
-        - User
         - Researcher
       responses:
         200:
@@ -3541,7 +3599,6 @@ paths:
       description: Removes only Era Commons Account related information from the logued user, requesting this action
       tags:
         - User
-        - Researcher
         - eRA Commons
         - Nih
       responses:

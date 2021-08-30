@@ -52,6 +52,7 @@ public class ResearcherResource extends Resource {
     @POST
     @Consumes("application/json")
     @PermitAll
+    @Deprecated // Use UserResource.registerProperties
     public Response registerProperties(@Auth AuthUser user, @Context UriInfo info, Map<String, String> researcherPropertiesMap) {
         try {
             List<UserProperty> props = researcherService.setProperties(researcherPropertiesMap, user);
@@ -64,6 +65,7 @@ public class ResearcherResource extends Resource {
     @PUT
     @Consumes("application/json")
     @PermitAll
+    @Deprecated // Use UserResource.updateProperties
     public Response updateProperties(@Auth AuthUser user, @QueryParam("validate") Boolean validate, Map<String, String> researcherProperties) {
         try {
             List<UserProperty> props = researcherService.updateProperties(researcherProperties, user, validate);
