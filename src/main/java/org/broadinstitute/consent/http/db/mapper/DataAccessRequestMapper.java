@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -16,7 +17,10 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
         dar.setId(resultSet.getInt("id"));
         dar.setReferenceId(resultSet.getString("reference_id"));
         if (hasColumn(resultSet, "collection_id")) {
-            dar.setCollectionId(resultSet.getInt("collection_id"));
+            int collectionId = resultSet.getInt("collection_id");
+            if(!resultSet.wasNull()) {
+                dar.setCollectionId(collectionId);
+            }
         }
         dar.setDraft(resultSet.getBoolean("draft"));
         dar.setUserId(resultSet.getInt("user_id"));
