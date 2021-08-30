@@ -39,7 +39,7 @@ public interface RowMapperHelper {
     return StringEscapeUtils.unescapeJava(StringEscapeUtils.unescapeJava(value));
   }
 
-  static DataAccessRequestData translate(String darDataString) {
+  default DataAccessRequestData translate(String darDataString) {
     DataAccessRequestData data = null;
     if (Objects.nonNull(darDataString)) {
       // Handle nested quotes
