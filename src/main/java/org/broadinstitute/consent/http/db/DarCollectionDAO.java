@@ -124,7 +124,7 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-      getCollectionAndDars +  " WHERE c.collection_id = dar.collection_id AND c.collection_id = :collectionId ")
+      getCollectionAndDars +  " WHERE c.collection_id = :collectionId ")
   DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId);
 
   /**
