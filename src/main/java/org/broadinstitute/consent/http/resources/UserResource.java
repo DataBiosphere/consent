@@ -100,10 +100,10 @@ public class UserResource extends Resource {
     public Response getUser(@Auth AuthUser authUser) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            JsonObject userJson = constructUserJsonObject(authUser, user);
-            if (!userJson.has(USER_STATUS_INFO_FIELD)) {
+            if (Objects.isNull(authUser.getUserStatusInfo())) {
                 samService.asyncPostRegistrationInfo(authUser);
             }
+            JsonObject userJson = constructUserJsonObject(authUser, user);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
