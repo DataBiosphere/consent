@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http;
 
 import org.mockserver.configuration.ConfigurationProperties;
+import org.slf4j.event.Level;
 import org.testcontainers.containers.MockServerContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -26,9 +27,14 @@ public interface WithMockServer {
     return container.getEndpoint() + "/";
   }
 
+  /**
+   * Call this method to log requests/responses. It adds a good amount of non-mock-server related
+   * logging which can be ignored.
+   */
+  @SuppressWarnings("unused")
   default void setDebugLogging() {
     try {
-      ConfigurationProperties.logLevel("DEBUG");
+      ConfigurationProperties.logLevel(Level.DEBUG.name());
       String loggingConfiguration = "" +
               "handlers=org.mockserver.logging.StandardOutConsoleHandler\n" +
               "org.mockserver.logging.StandardOutConsoleHandler.level=ALL\n" +
