@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.sam.SamService;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -46,17 +47,19 @@ import java.util.Objects;
 @Path("api/user")
 public class UserResource extends Resource {
 
+    private final LibraryCardService libraryCardService;
     private final UserService userService;
     private final ResearcherService researcherService;
-    private final LibraryCardService libraryCardService;
-    private final Gson gson;
+    private final Gson gson = new Gson();
+    private final SamService samService;
 
     @Inject
-    public UserResource(ResearcherService researcherService, UserService userService, LibraryCardService libraryCardService) {
-        this.researcherService = researcherService;
-        this.userService = userService;
+    public UserResource(LibraryCardService libraryCardService, ResearcherService researcherService,
+                        SamService samService, UserService userService) {
         this.libraryCardService = libraryCardService;
-        this.gson = new Gson();
+        this.researcherService = researcherService;
+        this.samService = samService;
+        this.userService = userService;
     }
 
     @GET
