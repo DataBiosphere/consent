@@ -32,6 +32,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -160,6 +161,7 @@ public class SamServiceTest implements WithMockServer {
    * This test doesn't technically work due to some sort of async issue.
    * The response is terminated before the http request can finish executing.
    * The response completes as expected in the non-async case (see #testPostRegistrationInfo()).
+   * In practice, the async calls work as expected.
    */
   @Test
   public void testAsyncPostRegistrationInfo() {
@@ -168,6 +170,10 @@ public class SamServiceTest implements WithMockServer {
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
     mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(status.toString()));
 
-    service.asyncPostRegistrationInfo(authUser);
+    try {
+      service.asyncPostRegistrationInfo(authUser);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 }
