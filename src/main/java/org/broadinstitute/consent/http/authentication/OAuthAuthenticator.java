@@ -86,7 +86,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
                     request(MediaType.APPLICATION_JSON_TYPE).
                     get(Response.class);
             String result = response.readEntity(String.class);
-            tokenInfo = new ObjectMapper().readValue(result, new TypeReference<HashMap<String, Object>>() {});
+            tokenInfo = new ObjectMapper().readValue(result, new TypeReference<>() {});
         } catch (Exception e) {
             logger.error("Error validating access token: " + e.getMessage());
             unauthorized(accessToken);
