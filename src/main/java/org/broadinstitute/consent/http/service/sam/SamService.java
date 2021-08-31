@@ -80,11 +80,7 @@ public class SamService {
   public void asyncPostRegistrationInfo(AuthUser authUser) {
     ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(executorService);
     ListenableFuture<UserStatus> userStatusFuture =
-        listeningExecutorService.submit(() -> {
-          UserStatus userStatus = postRegistrationInfo(authUser);
-          Thread.sleep(10000);
-          return userStatus;
-        });
+        listeningExecutorService.submit(() -> postRegistrationInfo(authUser));
     Futures.addCallback(
         userStatusFuture,
         new FutureCallback<>() {
