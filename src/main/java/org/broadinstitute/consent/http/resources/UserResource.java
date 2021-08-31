@@ -47,8 +47,8 @@ import java.util.Objects;
 @Path("api/user")
 public class UserResource extends Resource {
 
-    public static final String LIBRARY_CARDS_FIELD = "libraryCards";
-    public static final String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
+    private final static String LIBRARY_CARDS_FIELD = "libraryCards";
+    private final static String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
     private final static String USER_STATUS_INFO_FIELD = "userStatusInfo";
 
     private final LibraryCardService libraryCardService;
