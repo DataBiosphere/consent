@@ -62,4 +62,9 @@ public class SamService {
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatus.class);
   }
+
+  public void asyncPostRegistrationInfo(AuthUser authUser) throws Exception {
+
+  }
+
 }

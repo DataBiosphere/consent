@@ -47,6 +47,10 @@ import java.util.Objects;
 @Path("api/user")
 public class UserResource extends Resource {
 
+    public static final String LIBRARY_CARDS_FIELD = "libraryCards";
+    public static final String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
+    private final static String USER_STATUS_INFO_FIELD = "userStatusInfo";
+
     private final LibraryCardService libraryCardService;
     private final UserService userService;
     private final ResearcherService researcherService;
@@ -97,6 +101,9 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             JsonObject userJson = constructUserJsonObject(authUser, user);
+            if (!userJson.has(USER_STATUS_INFO_FIELD)) {
+                samService.asyncPostRegistrationInfo(authUser);
+            }
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -285,11 +292,11 @@ public class UserResource extends Resource {
         JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
         JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
         JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
-        userJson.add("researcherProperties", propsJson);
-        userJson.add("libraryCards", entriesJson);
+        userJson.add(RESEARCHER_PROPERTIES_FIELD, propsJson);
+        userJson.add(LIBRARY_CARDS_FIELD, entriesJson);
         if (Objects.nonNull(authUser.getUserStatusInfo())) {
             JsonObject userStatusInfoJson = gson.toJsonTree(authUser.getUserStatusInfo()).getAsJsonObject();
-            userJson.add("userStatusInfo", userStatusInfoJson);
+            userJson.add(USER_STATUS_INFO_FIELD, userStatusInfoJson);
         }
         return userJson;
     }
