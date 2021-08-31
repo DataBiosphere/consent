@@ -4,6 +4,11 @@ import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -14,18 +19,27 @@ import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SamService {
 
+  private final ExecutorService executorService;
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   @Inject
   public SamService(ServicesConfiguration configuration) {
+    this.executorService = Executors.newCachedThreadPool();
     this.clientUtil = new HttpClientUtil();
     this.configuration = configuration;
   }
@@ -63,8 +77,27 @@ public class SamService {
     return new Gson().fromJson(body, UserStatus.class);
   }
 
-  public void asyncPostRegistrationInfo(AuthUser authUser) throws Exception {
+  public void asyncPostRegistrationInfo(AuthUser authUser) {
+    ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(executorService);
+    ListenableFuture<UserStatus> userStatusFuture =
+        listeningExecutorService.submit(() -> {
+          UserStatus userStatus = postRegistrationInfo(authUser);
+          Thread.sleep(10000);
+          return userStatus;
+        });
+    Futures.addCallback(
+        userStatusFuture,
+        new FutureCallback<>() {
+          @Override
+          public void onSuccess(@Nullable UserStatus userStatus) {
+            logger.info("Successfully registered user in Sam: " + authUser.getEmail());
+          }
 
+          @Override
+          public void onFailure(@NonNull Throwable throwable) {
+            logger.error(throwable.getMessage());
+          }
+        },
+        listeningExecutorService);
   }
-
 }

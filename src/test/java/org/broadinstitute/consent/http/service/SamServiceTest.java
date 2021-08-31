@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
+import org.mockserver.model.HttpResponse;
 import org.testcontainers.containers.MockServerContainer;
 
 import java.util.Collections;
@@ -103,5 +104,20 @@ public class SamServiceTest implements WithMockServer {
 
     UserStatus userStatus = service.postRegistrationInfo(authUser);
     assertNotNull(userStatus);
+  }
+
+  /**
+   * This test doesn't technically work due to some sort of async issue.
+   * The response is terminated before the http request can finish executing.
+   * The response completes as expected in the non-async case (see #testPostRegistrationInfo()).
+   */
+  @Test
+  public void testAsyncPostRegistrationInfo() {
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true).setLdap(true);
+    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(status.toString()));
+
+    service.asyncPostRegistrationInfo(authUser);
   }
 }

@@ -44,23 +44,28 @@ public class HttpClientUtil {
     return request;
   }
 
-  public HttpResponse handleHttpRequest(HttpRequest request) throws Exception {
-    HttpResponse response = request.setThrowExceptionOnExecuteError(false).execute();
-    if (Objects.nonNull(response)) {
-      switch (response.getStatusCode()) {
-        case HttpStatusCodes.STATUS_CODE_BAD_REQUEST:
-          throw new BadRequestException(response.getStatusMessage());
-        case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED:
-          throw new NotAuthorizedException(response.getStatusMessage());
-        case HttpStatusCodes.STATUS_CODE_FORBIDDEN:
-          throw new ForbiddenException(response.getStatusMessage());
-        case HttpStatusCodes.STATUS_CODE_NOT_FOUND:
-          throw new NotFoundException(response.getStatusMessage());
-        case HttpStatusCodes.STATUS_CODE_CONFLICT:
-          throw new ConsentConflictException(response.getStatusMessage());
-        default:
-          return response;
+  public HttpResponse handleHttpRequest(HttpRequest request) {
+    try {
+      request.setThrowExceptionOnExecuteError(false);
+      HttpResponse response = request.execute();
+      if (Objects.nonNull(response)) {
+        switch (response.getStatusCode()) {
+          case HttpStatusCodes.STATUS_CODE_BAD_REQUEST:
+            throw new BadRequestException(response.getStatusMessage());
+          case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED:
+            throw new NotAuthorizedException(response.getStatusMessage());
+          case HttpStatusCodes.STATUS_CODE_FORBIDDEN:
+            throw new ForbiddenException(response.getStatusMessage());
+          case HttpStatusCodes.STATUS_CODE_NOT_FOUND:
+            throw new NotFoundException(response.getStatusMessage());
+          case HttpStatusCodes.STATUS_CODE_CONFLICT:
+            throw new ConsentConflictException(response.getStatusMessage());
+          default:
+            return response;
+        }
       }
+    } catch (IOException e) {
+      throw new ServerErrorException("Server Error", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     }
     throw new ServerErrorException("Server Error", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
   }
