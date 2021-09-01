@@ -21,4 +21,4 @@ jobs:
           MAVEN_OPTS: -Dmaven.test.skip=true -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
           mvn -v
-          mvn clean package
+          mvn clean package --no-transfer-progress
