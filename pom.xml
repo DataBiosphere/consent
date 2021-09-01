@@ -198,7 +198,7 @@
             <filter>
               <artifact>*:*</artifact>
               <excludes>
-                <exclude>**/*.html</exclude>
+                <exclude>about.html</exclude>
                 <exclude>**/LICENSE*</exclude>
                 <exclude>**/pom.properties</exclude>
                 <exclude>**/pom.xml</exclude>
