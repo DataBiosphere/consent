@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
@@ -89,6 +90,7 @@ public class ConsentModule extends AbstractModule {
     private final WorkspaceAuditDAO workspaceAuditDAO;
     private final AssociationDAO associationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
+    private final DarCollectionDAO darCollectionDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
 
@@ -123,6 +125,7 @@ public class ConsentModule extends AbstractModule {
         this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
         this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
+        this.darCollectionDAO = this.jdbi.onDemand(DarCollectionDAO.class);
         this.institutionDAO = this.jdbi.onDemand((InstitutionDAO.class));
         this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
     }
@@ -142,6 +145,7 @@ public class ConsentModule extends AbstractModule {
         container.setCounterDAO(providesCounterDAO());
         container.setDacDAO(providesDacDAO());
         container.setDataAccessRequestDAO(providesDataAccessRequestDAO());
+        container.setDarCollectionDAO(providesDARCollectionDAO());
         container.setDatasetAssociationDAO(providesDatasetAssociationDAO());
         container.setDatasetDAO(providesDataSetDAO());
         container.setElectionDAO(providesElectionDAO());
@@ -325,6 +329,11 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DataAccessRequestDAO providesDataAccessRequestDAO() {
         return dataAccessRequestDAO;
+    }
+
+    @Provides
+    DarCollectionDAO providesDARCollectionDAO() {
+        return darCollectionDAO;
     }
 
     @Provides
