@@ -192,18 +192,20 @@
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.2.4</version>
         <configuration>
+          <minimizeJar>true</minimizeJar>
           <finalName>consent</finalName>
           <createDependencyReducedPom>true</createDependencyReducedPom>
           <filters>
             <filter>
               <artifact>*:*</artifact>
               <excludes>
-                <exclude>module-info.class</exclude>
-                <exclude>about.html</exclude>
-                <exclude>LICENSE</exclude>
+                <exclude>**/*.html</exclude>
+                <exclude>**/LICENSE*</exclude>
+                <exclude>**/pom.properties</exclude>
+                <exclude>**/pom.xml</exclude>
+                <exclude>**/module-info.class</exclude>
                 <exclude>META-INF/DEPENDENCIES</exclude>
                 <exclude>META-INF/license</exclude>
-                <exclude>META-INF/LICENSE*</exclude>
                 <exclude>META-INF/MANIFEST*</exclude>
                 <exclude>META-INF/NOTICE*</exclude>
                 <exclude>META-INF/*.SF</exclude>
