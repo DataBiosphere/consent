@@ -198,11 +198,17 @@
             <filter>
               <artifact>*:*</artifact>
               <excludes>
+                <exclude>module-info.class</exclude>
+                <exclude>about.html</exclude>
+                <exclude>LICENSE</exclude>
+                <exclude>META-INF/DEPENDENCIES</exclude>
+                <exclude>META-INF/license</exclude>
+                <exclude>META-INF/LICENSE*</exclude>
+                <exclude>META-INF/MANIFEST*</exclude>
+                <exclude>META-INF/NOTICE*</exclude>
                 <exclude>META-INF/*.SF</exclude>
                 <exclude>META-INF/*.DSA</exclude>
                 <exclude>META-INF/*.RSA</exclude>
-                <exclude>META-INF/LICENSE</exclude>
-                <exclude>META-INF/license</exclude>
               </excludes>
             </filter>
           </filters>
