@@ -11,18 +11,17 @@ jobs:
         run: echo "${{ github.actor }}"
 
       # For all dependabot PRs, add a sleep time from 0-9 minutes to reduce
-      # the contention on secrets from multiple, simultaneous dependabot PRs
-      - name: Calculate Sleep
+      # the contention on pulling repo secrets from multiple, simultaneous PRs
+      - name: Calculate Sleep if Dependabot
         id: sleep
-        if: github.actor == 'rushtong'
+        if: github.actor == 'dependabot[bot]'
         shell: bash
-        run: echo "::set-output name=sleep::$(($GITHUB_RUN_NUMBER % 10))"
-
+        run: echo "::set-output name=minutes::$(($GITHUB_RUN_NUMBER % 10))"
       - name: Sleep if Dependabot
-        if: github.actor == 'rushtong'
+        if: github.actor == 'dependabot[bot]'
         uses: whatnick/wait-action@master
         with:
-          time: '${{ steps.sleep.outputs.sleep }}m'
+          time: '${{ steps.sleep.outputs.minutes }}m'
 
       - name: Checkout
         uses: actions/checkout@v1
