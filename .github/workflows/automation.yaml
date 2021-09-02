@@ -10,14 +10,15 @@ jobs:
       - name: Log Actor
         run: echo "${{ github.actor }}"
 
-      - name: Sleep if Dependabot
-#        if: github.actor == 'dependabot[bot]'
-#       TODO: Change this to dependabot when functional
-        if: github.actor == 'rushtong'
+      - name: Log ENV
         run: |
           echo "GITHUB_RUN_NUMBER: ${{ github.GITHUB_RUN_NUMBER }}"
           echo "GITHUB_JOB: ${{ github.GITHUB_JOB }}"
           echo "GITHUB_RUN_ID: ${{ github.GITHUB_RUN_ID }}"
+
+      - name: Sleep if Dependabot
+#        if: github.actor == 'dependabot[bot]'
+#       TODO: Change this to dependabot when functional
         uses: whatnick/wait-action@master
         with:
           time: '1s'
