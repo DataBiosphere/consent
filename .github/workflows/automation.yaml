@@ -12,13 +12,13 @@ jobs:
 
       - name: Log ENV
         run: |
-          echo "GITHUB_RUN_NUMBER: ${{ github.GITHUB_RUN_NUMBER }}"
-          echo "GITHUB_JOB: ${{ github.GITHUB_JOB }}"
-          echo "GITHUB_RUN_ID: ${{ github.GITHUB_RUN_ID }}"
+          echo "GITHUB_RUN_NUMBER: ${{ GITHUB_RUN_NUMBER }}"
+          echo "GITHUB_JOB: ${{ GITHUB_JOB }}"
+          echo "GITHUB_RUN_ID: ${{ GITHUB_RUN_ID }}"
 
       - name: Sleep if Dependabot
-#        if: github.actor == 'dependabot[bot]'
-#       TODO: Change this to dependabot when functional
+        # TODO: Change this to dependabot when functional
+        # if: github.actor == 'dependabot[bot]'
         uses: whatnick/wait-action@master
         with:
           time: '1s'
