@@ -19,45 +19,46 @@ jobs:
           echo "GITHUB_JOB: $GITHUB_JOB"
           echo "GITHUB_RUN_ID: $GITHUB_RUN_ID"
           bash -c 'echo $(($GITHUB_RUN_NUMBER % 10))'
-          echo "::set-output name=sleep::bash -c 'echo $(($GITHUB_RUN_NUMBER % 10))'"
-          echo "sleep var is: ${{ steps.sleep-calculation.outputs.sleep }}"
+          echo $(($GITHUB_RUN_NUMBER % 10))
+          echo "::set-output name=sleep::$(($GITHUB_RUN_NUMBER % 10))"
 
       - name: Sleep if Dependabot
         if: github.actor == 'rushtong'
         uses: whatnick/wait-action@master
         with:
-          time: '1s'
+          time: '${{ steps.sleep-calculation.outputs.sleep }}m'
 
-      - name: Checkout
-        uses: actions/checkout@v1
-
-      - name: Setup paths
-        run: |
-          mkdir -p automation/src/test/resources/accounts
-          mkdir -p automation/target
-
-      - name: Render configs
-        env:
-          ADMIN: ${{ secrets.DUOS_AUTOMATION_ADMIN }}
-          CHAIR: ${{ secrets.DUOS_AUTOMATION_CHAIR }}
-          MEMBER: ${{ secrets.DUOS_AUTOMATION_MEMBER }}
-          RESEARCHER: ${{ secrets.DUOS_AUTOMATION_RESEARCHER }}
-          SIGNING_OFFICIAL: ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL }}
-        run: |
-          echo "$ADMIN" >> ./automation/src/test/resources/accounts/duos-automation-admin.json
-          echo "$CHAIR" >> ./automation/src/test/resources/accounts/duos-automation-chair.json
-          echo "$MEMBER" >> ./automation/src/test/resources/accounts/duos-automation-member.json
-          echo "$RESEARCHER" >> ./automation/src/test/resources/accounts/duos-automation-researcher.json
-          echo "$SIGNING_OFFICIAL" >> ./automation/src/test/resources/accounts/duos-automation-signing-official.json
-          ls -al ./automation/src/test/resources/accounts
-
-      - name: Run automation tests
-        run: |
-          cd ./automation
-          docker-compose up --abort-on-container-exit --exit-code-from automation-tests
-
-      - name: Stop containers
-        if: always()
-        run: |
-          cd ./automation
-          docker-compose -f docker-compose.yml down
+# TODO: Renable
+#      - name: Checkout
+#        uses: actions/checkout@v1
+#
+#      - name: Setup paths
+#        run: |
+#          mkdir -p automation/src/test/resources/accounts
+#          mkdir -p automation/target
+#
+#      - name: Render configs
+#        env:
+#          ADMIN: ${{ secrets.DUOS_AUTOMATION_ADMIN }}
+#          CHAIR: ${{ secrets.DUOS_AUTOMATION_CHAIR }}
+#          MEMBER: ${{ secrets.DUOS_AUTOMATION_MEMBER }}
+#          RESEARCHER: ${{ secrets.DUOS_AUTOMATION_RESEARCHER }}
+#          SIGNING_OFFICIAL: ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL }}
+#        run: |
+#          echo "$ADMIN" >> ./automation/src/test/resources/accounts/duos-automation-admin.json
+#          echo "$CHAIR" >> ./automation/src/test/resources/accounts/duos-automation-chair.json
+#          echo "$MEMBER" >> ./automation/src/test/resources/accounts/duos-automation-member.json
+#          echo "$RESEARCHER" >> ./automation/src/test/resources/accounts/duos-automation-researcher.json
+#          echo "$SIGNING_OFFICIAL" >> ./automation/src/test/resources/accounts/duos-automation-signing-official.json
+#          ls -al ./automation/src/test/resources/accounts
+#
+#      - name: Run automation tests
+#        run: |
+#          cd ./automation
+#          docker-compose up --abort-on-container-exit --exit-code-from automation-tests
+#
+#      - name: Stop containers
+#        if: always()
+#        run: |
+#          cd ./automation
+#          docker-compose -f docker-compose.yml down
