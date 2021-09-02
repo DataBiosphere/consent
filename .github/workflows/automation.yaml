@@ -11,12 +11,15 @@ jobs:
         run: echo "${{ github.actor }}"
 
       - name: Log ENV
+        if: github.actor == 'rushtong'
         run: |
           echo "GITHUB_RUN_NUMBER: $GITHUB_RUN_NUMBER"
+          echo $GITHUB_RUN_NUMBER % 2
           echo "GITHUB_JOB: $GITHUB_JOB"
           echo "GITHUB_RUN_ID: $GITHUB_RUN_ID"
 
       - name: Sleep if Dependabot
+        if: github.actor == 'rushtong'
         uses: whatnick/wait-action@master
         with:
           time: '1s'
