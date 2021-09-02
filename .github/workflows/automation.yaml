@@ -11,12 +11,16 @@ jobs:
         run: echo "${{ github.actor }}"
 
       - name: Log ENV
+        id: sleep-calculation
         if: github.actor == 'rushtong'
+        shell: bash
         run: |
           echo "GITHUB_RUN_NUMBER: $GITHUB_RUN_NUMBER"
-          echo $GITHUB_RUN_NUMBER % 2
           echo "GITHUB_JOB: $GITHUB_JOB"
           echo "GITHUB_RUN_ID: $GITHUB_RUN_ID"
+          bash -c 'echo $(($GITHUB_RUN_NUMBER % 10))'
+          echo "::set-output name=sleep::bash -c 'echo $(($GITHUB_RUN_NUMBER % 10))'"
+          echo "sleep var is: ${{ steps.sleep-calculation.outputs.sleep }}"
 
       - name: Sleep if Dependabot
         if: github.actor == 'rushtong'
