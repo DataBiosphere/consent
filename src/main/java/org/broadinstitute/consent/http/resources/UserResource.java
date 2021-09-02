@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.sam.SamService;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -46,17 +47,23 @@ import java.util.Objects;
 @Path("api/user")
 public class UserResource extends Resource {
 
+    private final static String LIBRARY_CARDS_FIELD = "libraryCards";
+    private final static String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
+    private final static String USER_STATUS_INFO_FIELD = "userStatusInfo";
+
+    private final LibraryCardService libraryCardService;
     private final UserService userService;
     private final ResearcherService researcherService;
-    private final LibraryCardService libraryCardService;
-    private final Gson gson;
+    private final Gson gson = new Gson();
+    private final SamService samService;
 
     @Inject
-    public UserResource(ResearcherService researcherService, UserService userService, LibraryCardService libraryCardService) {
-        this.researcherService = researcherService;
-        this.userService = userService;
+    public UserResource(LibraryCardService libraryCardService, ResearcherService researcherService,
+                        SamService samService, UserService userService) {
         this.libraryCardService = libraryCardService;
-        this.gson = new Gson();
+        this.researcherService = researcherService;
+        this.samService = samService;
+        this.userService = userService;
     }
 
     @GET
@@ -93,6 +100,9 @@ public class UserResource extends Resource {
     public Response getUser(@Auth AuthUser authUser) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
+            if (Objects.isNull(authUser.getUserStatusInfo())) {
+                samService.asyncPostRegistrationInfo(authUser);
+            }
             JsonObject userJson = constructUserJsonObject(authUser, user);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
@@ -282,11 +292,11 @@ public class UserResource extends Resource {
         JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
         JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
         JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
-        userJson.add("researcherProperties", propsJson);
-        userJson.add("libraryCards", entriesJson);
+        userJson.add(RESEARCHER_PROPERTIES_FIELD, propsJson);
+        userJson.add(LIBRARY_CARDS_FIELD, entriesJson);
         if (Objects.nonNull(authUser.getUserStatusInfo())) {
             JsonObject userStatusInfoJson = gson.toJsonTree(authUser.getUserStatusInfo()).getAsJsonObject();
-            userJson.add("userStatusInfo", userStatusInfoJson);
+            userJson.add(USER_STATUS_INFO_FIELD, userStatusInfoJson);
         }
         return userJson;
     }

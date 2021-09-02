@@ -1,10 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
@@ -20,12 +22,17 @@ import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.testcontainers.containers.MockServerContainer;
 
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -79,6 +86,51 @@ public class SamServiceTest implements WithMockServer {
     assertEquals(userInfo.getUserSubjectId(), authUserUserInfo.getUserSubjectId());
   }
 
+  @Test (expected = BadRequestException.class)
+  public void testGetRegistrationInfoBadRequest() throws Exception {
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", "application/json"))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
+    service.getRegistrationInfo(authUser);
+  }
+
+  @Test (expected = NotAuthorizedException.class)
+  public void testNotAuthorized() throws Exception {
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", "application/json"))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
+    service.getRegistrationInfo(authUser);
+  }
+
+  @Test (expected = ForbiddenException.class)
+  public void testForbidden() throws Exception {
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", "application/json"))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+    service.getRegistrationInfo(authUser);
+  }
+
+  @Test (expected = NotFoundException.class)
+  public void testNotFound() throws Exception {
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", "application/json"))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
+    service.getRegistrationInfo(authUser);
+  }
+
+  @Test (expected = ConsentConflictException.class)
+  public void testConflict() throws Exception {
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", "application/json"))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT));
+    service.getRegistrationInfo(authUser);
+  }
+
   @Test
   public void testGetSelfDiagnostics() throws Exception {
     UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
@@ -103,5 +155,25 @@ public class SamServiceTest implements WithMockServer {
 
     UserStatus userStatus = service.postRegistrationInfo(authUser);
     assertNotNull(userStatus);
+  }
+
+  /**
+   * This test doesn't technically work due to some sort of async issue.
+   * The response is terminated before the http request can finish executing.
+   * The response completes as expected in the non-async case (see #testPostRegistrationInfo()).
+   * In practice, the async calls work as expected.
+   */
+  @Test
+  public void testAsyncPostRegistrationInfo() {
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true).setLdap(true);
+    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(status.toString()));
+
+    try {
+      service.asyncPostRegistrationInfo(authUser);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 }

@@ -14,11 +14,11 @@ import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -54,6 +54,8 @@ public class UserResourceTest {
 
   @Mock private ResearcherService researcherService;
 
+  @Mock private SamService samService;
+
   private UserResource userResource;
 
   @Mock private UriInfo uriInfo;
@@ -81,7 +83,7 @@ public class UserResourceTest {
   }
 
   private void initResource() {
-    userResource = new UserResource(researcherService, userService, libraryCardService);
+    userResource = new UserResource(libraryCardService, researcherService, samService, userService);
   }
 
   @Test

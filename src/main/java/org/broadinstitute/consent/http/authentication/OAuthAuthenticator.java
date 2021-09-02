@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.service.sam.SamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -56,6 +57,8 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
         try {
             UserStatusInfo userStatusInfo = samService.getRegistrationInfo(authUser);
             return authUser.deepCopy().setUserStatusInfo(userStatusInfo);
+        } catch (NotFoundException e) {
+            logger.warn("User not found: '" + authUser.getEmail());
         } catch (Throwable e) {
             logger.error("Exception retrieving Sam user info for '" + authUser.getEmail() + "': " + e.getMessage());
         }
@@ -83,7 +86,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
                     request(MediaType.APPLICATION_JSON_TYPE).
                     get(Response.class);
             String result = response.readEntity(String.class);
-            tokenInfo = new ObjectMapper().readValue(result, new TypeReference<HashMap<String, Object>>() {});
+            tokenInfo = new ObjectMapper().readValue(result, new TypeReference<>() {});
         } catch (Exception e) {
             logger.error("Error validating access token: " + e.getMessage());
             unauthorized(accessToken);
