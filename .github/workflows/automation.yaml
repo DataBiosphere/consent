@@ -10,55 +10,50 @@ jobs:
       - name: Log Actor
         run: echo "${{ github.actor }}"
 
-      - name: Log ENV
-        id: sleep-calculation
+      # For all dependabot PRs, add a sleep time from 0-9 minutes to reduce
+      # the contention on secrets from multiple, simultaneous dependabot PRs
+      - name: Calculate Sleep
+        id: sleep
         if: github.actor == 'rushtong'
         shell: bash
-        run: |
-          echo "GITHUB_RUN_NUMBER: $GITHUB_RUN_NUMBER"
-          echo "GITHUB_JOB: $GITHUB_JOB"
-          echo "GITHUB_RUN_ID: $GITHUB_RUN_ID"
-          bash -c 'echo $(($GITHUB_RUN_NUMBER % 10))'
-          echo $(($GITHUB_RUN_NUMBER % 10))
-          echo "::set-output name=sleep::$(($GITHUB_RUN_NUMBER % 10))"
+        run: echo "::set-output name=sleep::$(($GITHUB_RUN_NUMBER % 10))"
 
       - name: Sleep if Dependabot
         if: github.actor == 'rushtong'
         uses: whatnick/wait-action@master
         with:
-          time: '${{ steps.sleep-calculation.outputs.sleep }}m'
+          time: '${{ steps.sleep.outputs.sleep }}m'
 
-# TODO: Renable
-#      - name: Checkout
-#        uses: actions/checkout@v1
-#
-#      - name: Setup paths
-#        run: |
-#          mkdir -p automation/src/test/resources/accounts
-#          mkdir -p automation/target
-#
-#      - name: Render configs
-#        env:
-#          ADMIN: ${{ secrets.DUOS_AUTOMATION_ADMIN }}
-#          CHAIR: ${{ secrets.DUOS_AUTOMATION_CHAIR }}
-#          MEMBER: ${{ secrets.DUOS_AUTOMATION_MEMBER }}
-#          RESEARCHER: ${{ secrets.DUOS_AUTOMATION_RESEARCHER }}
-#          SIGNING_OFFICIAL: ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL }}
-#        run: |
-#          echo "$ADMIN" >> ./automation/src/test/resources/accounts/duos-automation-admin.json
-#          echo "$CHAIR" >> ./automation/src/test/resources/accounts/duos-automation-chair.json
-#          echo "$MEMBER" >> ./automation/src/test/resources/accounts/duos-automation-member.json
-#          echo "$RESEARCHER" >> ./automation/src/test/resources/accounts/duos-automation-researcher.json
-#          echo "$SIGNING_OFFICIAL" >> ./automation/src/test/resources/accounts/duos-automation-signing-official.json
-#          ls -al ./automation/src/test/resources/accounts
-#
-#      - name: Run automation tests
-#        run: |
-#          cd ./automation
-#          docker-compose up --abort-on-container-exit --exit-code-from automation-tests
-#
-#      - name: Stop containers
-#        if: always()
-#        run: |
-#          cd ./automation
-#          docker-compose -f docker-compose.yml down
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Setup paths
+        run: |
+          mkdir -p automation/src/test/resources/accounts
+          mkdir -p automation/target
+
+      - name: Render configs
+        env:
+          ADMIN: ${{ secrets.DUOS_AUTOMATION_ADMIN }}
+          CHAIR: ${{ secrets.DUOS_AUTOMATION_CHAIR }}
+          MEMBER: ${{ secrets.DUOS_AUTOMATION_MEMBER }}
+          RESEARCHER: ${{ secrets.DUOS_AUTOMATION_RESEARCHER }}
+          SIGNING_OFFICIAL: ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL }}
+        run: |
+          echo "$ADMIN" >> ./automation/src/test/resources/accounts/duos-automation-admin.json
+          echo "$CHAIR" >> ./automation/src/test/resources/accounts/duos-automation-chair.json
+          echo "$MEMBER" >> ./automation/src/test/resources/accounts/duos-automation-member.json
+          echo "$RESEARCHER" >> ./automation/src/test/resources/accounts/duos-automation-researcher.json
+          echo "$SIGNING_OFFICIAL" >> ./automation/src/test/resources/accounts/duos-automation-signing-official.json
+          ls -al ./automation/src/test/resources/accounts
+
+      - name: Run automation tests
+        run: |
+          cd ./automation
+          docker-compose up --abort-on-container-exit --exit-code-from automation-tests
+
+      - name: Stop containers
+        if: always()
+        run: |
+          cd ./automation
+          docker-compose -f docker-compose.yml down
