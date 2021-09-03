@@ -27,7 +27,7 @@ object Settings {
     )
 
   lazy val rootSettings: Seq[Def.Setting[_]] = commonSettings ++ List(
-    name := "consent",
+    name := "consent-automation",
     libraryDependencies ++= rootDependencies
   )
 
