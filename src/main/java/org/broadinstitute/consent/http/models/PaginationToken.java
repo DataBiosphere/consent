@@ -11,6 +11,8 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class PaginationToken {
 
@@ -98,7 +100,7 @@ public class PaginationToken {
   public Integer getFilteredCount() {
     return this.filteredCount;
   }
-  
+
   public void setFilteredCount(Integer filteredCount) {
     this.filteredCount = filteredCount;
   }
@@ -127,7 +129,7 @@ public class PaginationToken {
     }
   }
 
-  //could result in bad request if page is greater than page count but unable to do validation 
+  //could result in bad request if page is greater than page count but unable to do validation
   //in every case here because pagecount is only populated in response tokens
   public void generateNext() {
     if (Objects.nonNull(filteredPageCount) && page == filteredPageCount) {
@@ -180,5 +182,32 @@ public class PaginationToken {
     if (Objects.nonNull(filteredPageCount) && page > filteredCount) {
       throw new BadRequestException("Page cannot be greater than filtered page count");
     }
+  }
+
+  /**
+   * Generate an ordered sequence of tokens from self.
+   *
+   * @return Ordered list of PaginationTokens
+   */
+  public List<PaginationToken> createListOfPaginationTokensFromSelf() {
+    int currentPage = this.getPage();
+    int lastPage = this.getFilteredPageCount();
+    return IntStream.rangeClosed(1, lastPage)
+        .mapToObj(
+            i -> {
+              if (i == currentPage) {
+                return this;
+              }
+              return new PaginationToken(
+                  i,
+                  this.getPageSize(),
+                  this.getSortField(),
+                  this.getSortDirection(),
+                  this.getFilterTerms(),
+                  this.getFilteredCount(),
+                  this.getFilteredPageCount(),
+                  this.getUnfilteredCount());
+            })
+        .collect(Collectors.toList());
   }
 }

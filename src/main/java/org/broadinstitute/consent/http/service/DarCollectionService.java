@@ -10,8 +10,6 @@ import org.broadinstitute.consent.http.models.User;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class DarCollectionService {
 
@@ -23,7 +21,7 @@ public class DarCollectionService {
   }
 
   public List<DarCollection> getAllCollections() {
-    return Collections.emptyList();
+    return darCollectionDAO.findAllDARCollections();
   }
 
   public ImmutablePair<List<DarCollection>, List<PaginationToken>> getCollectionsWithFilters(
@@ -34,35 +32,7 @@ public class DarCollectionService {
     // 3. Slice that filtered list of ids based on token page # + count per page
     // 4. Get the collections for that list of ids: Query #3
     // 5. Update the token info with new counts if different
-    return ImmutablePair.of(Collections.emptyList(), makePaginationTokensFromToken(token));
-  }
-
-  /**
-   * Generate an ordered sequence of tokens from the current token.
-   *
-   * @param token Current PaginationToken
-   * @return Ordered list of PaginationTokens
-   */
-  private List<PaginationToken> makePaginationTokensFromToken(PaginationToken token) {
-    int currentPage = token.getPage();
-    int lastPage = token.getFilteredPageCount();
-    return IntStream.rangeClosed(1, lastPage)
-        .mapToObj(
-            i -> {
-              if (i == currentPage) {
-                return token;
-              }
-              return new PaginationToken(
-                  i,
-                  token.getPageSize(),
-                  token.getSortField(),
-                  token.getSortDirection(),
-                  token.getFilterTerms(),
-                  token.getFilteredCount(),
-                  token.getFilteredPageCount(),
-                  token.getUnfilteredCount());
-            })
-        .collect(Collectors.toList());
+    return ImmutablePair.of(Collections.emptyList(), token.createListOfPaginationTokensFromSelf());
   }
 
   public DarCollection getByReferenceId(String referenceId) {
@@ -78,16 +48,17 @@ public class DarCollectionService {
   }
 
   public DarCollection createDarCollection(String darCode, User user) {
-    Integer collectionId =
-        darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+    Integer collectionId = darCollectionDAO
+            .insertDarCollection(darCode, user.getDacUserId(), new Date());
     return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
   }
 
-  public void deleteDarCollectionById(Integer darCollectionId) {
-    darCollectionDAO.deleteByCollectionId(darCollectionId);
+  public void deleteDarCollectionById(Integer collectionId) {
+    darCollectionDAO.deleteByCollectionId(collectionId);
   }
 
-  public DarCollection updateDarCollection(Integer darCollectionId, User user) {
+  public DarCollection updateDarCollection(Integer collectionId, User user) {
+    darCollectionDAO.updateDarCollection(collectionId,user.getDacUserId(), new Date());
     return null;
   }
 }
