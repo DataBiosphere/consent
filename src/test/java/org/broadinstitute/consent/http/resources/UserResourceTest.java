@@ -1,6 +1,41 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserFields;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.LibraryCardService;
+import org.broadinstitute.consent.http.service.ResearcherService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.sam.SamService;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -9,36 +44,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.stream.Collectors;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserFields;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.LibraryCard;
-import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.service.LibraryCardService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class UserResourceTest {
 
@@ -46,11 +52,17 @@ public class UserResourceTest {
 
   @Mock private LibraryCardService libraryCardService;
 
+  @Mock private ResearcherService researcherService;
+
+  @Mock private SamService samService;
+
   private UserResource userResource;
 
   @Mock private UriInfo uriInfo;
 
   @Mock private UriBuilder uriBuilder;
+
+  @Mock private UserStatusInfo userStatusInfo;
 
   private final String TEST_EMAIL = "test@gmail.com";
 
@@ -61,15 +73,17 @@ public class UserResourceTest {
     GoogleUser googleUser = new GoogleUser();
     googleUser.setName("Test User");
     googleUser.setEmail(TEST_EMAIL);
-    authUser = new AuthUser(googleUser);
-    MockitoAnnotations.initMocks(this);
+    authUser = new AuthUser(googleUser)
+            .setAuthToken("auth-token")
+            .setUserStatusInfo(userStatusInfo);
+    openMocks(this);
     when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
     when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
     when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/dacuser/api"));
   }
 
   private void initResource() {
-    userResource = new UserResource(userService, libraryCardService);
+    userResource = new UserResource(libraryCardService, researcherService, samService, userService);
   }
 
   @Test
@@ -313,6 +327,80 @@ public class UserResourceTest {
     initResource();
     Response response = userResource.getSOsForInstitution(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void testGetUnassignedUsers() {
+    List<User> users = Collections.singletonList(createUserWithRole());
+    when(userService.findUsersWithNoInstitution()).thenReturn(users);
+    initResource();
+    Response response = userResource.getUnassignedUsers(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testDeleteRoleFromUser() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.RESEARCHER.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    User returnedUser = new User((String)response.getEntity());
+    assertEquals(user.getEmail(), returnedUser.getEmail());
+  }
+
+  @Test
+  public void testDeleteRoleFromUser_InvalidRole() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), 8);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testDeleteRoleFromUser_UserWithoutRole() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.ADMIN.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    User returnedUser = new User((String)response.getEntity());
+    assertEquals(user.getEmail(), returnedUser.getEmail());
+  }
+
+  @Test
+  public void testDeleteRoleFromUser_UserNotFound() {
+    when(userService.findUserById(any())).thenThrow(new NotFoundException());
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, 1, UserRoles.ADMIN.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void testRegisterProperties() {
+    User user = createUserWithRole();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(researcherService.setProperties(any(), any())).thenReturn(Collections.emptyList());
+    when(userService.findUserById(any())).thenReturn(user);
+    initResource();
+
+    Map<String, String> propMap = new HashMap<>();
+    Response response = userResource.registerProperties(authUser, uriInfo, propMap);
+    assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateProperties() {
+    User user = createUserWithRole();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(researcherService.updateProperties(any(), any(), any())).thenReturn(Collections.emptyList());
+    when(userService.findUserById(any())).thenReturn(user);
+    initResource();
+
+    Map<String, String> propMap = new HashMap<>();
+    Response response = userResource.updateProperties(authUser, false, propMap);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   private User createUserWithRole() {

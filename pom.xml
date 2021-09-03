@@ -11,8 +11,8 @@
 
   <properties>
     <java.version>11</java.version>
-    <liquibase.version>4.4.2</liquibase.version>
-    <dropwizard.version>2.0.24</dropwizard.version>
+    <liquibase.version>4.4.3</liquibase.version>
+    <dropwizard.version>2.0.25</dropwizard.version>
     <owl.version>5.1.19</owl.version>
     <postgres.version>42.2.23</postgres.version>
     <rdf4j-rio.version>3.7.2</rdf4j-rio.version>
@@ -198,11 +198,18 @@
             <filter>
               <artifact>*:*</artifact>
               <excludes>
+                <exclude>about.html</exclude>
+                <exclude>**/LICENSE*</exclude>
+                <exclude>**/pom.properties</exclude>
+                <exclude>**/pom.xml</exclude>
+                <exclude>**/module-info.class</exclude>
+                <exclude>META-INF/DEPENDENCIES</exclude>
+                <exclude>META-INF/license</exclude>
+                <exclude>META-INF/MANIFEST*</exclude>
+                <exclude>META-INF/NOTICE*</exclude>
                 <exclude>META-INF/*.SF</exclude>
                 <exclude>META-INF/*.DSA</exclude>
                 <exclude>META-INF/*.RSA</exclude>
-                <exclude>META-INF/LICENSE</exclude>
-                <exclude>META-INF/license</exclude>
               </excludes>
             </filter>
           </filters>
@@ -230,7 +237,7 @@
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
-        <version>6.2.2</version>
+        <version>6.3.1</version>
         <executions>
           <execution>
             <goals>
@@ -294,14 +301,14 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.12.4</version>
+      <version>2.12.5</version>
     </dependency>
 
     <!-- Addressing OWASP warning: https://nvd.nist.gov/vuln/detail/CVE-2020-25649 -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>2.12.4</version>
+      <version>2.12.5</version>
     </dependency>
 
     <dependency>
@@ -320,7 +327,7 @@
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>sendgrid-java</artifactId>
-      <version>4.7.3</version>
+      <version>4.7.4</version>
       <exclusions>
           <exclusion>
               <groupId>com.fasterxml.jackson.core</groupId>
@@ -459,7 +466,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>3.11.2</version>
+      <version>3.12.4</version>
       <scope>test</scope>
     </dependency>
 
@@ -484,7 +491,7 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-      <version>1.14.1</version>
+      <version>1.14.2</version>
       <scope>test</scope>
     </dependency>
 
@@ -563,7 +570,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>1.118.0</version>
+      <version>2.1.0</version>
     </dependency>
 
     <dependency>
@@ -593,7 +600,7 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.8.7</version>
+      <version>2.8.8</version>
     </dependency>
 
     <dependency>
@@ -615,12 +622,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.yammer.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-      <version>3.0.0-BETA1</version>
-    </dependency>
-
-    <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
       <version>20210307</version>
@@ -630,7 +631,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>7.14.0</version>
+      <version>7.14.1</version>
     </dependency>
 
     <!-- See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/11441966 -->

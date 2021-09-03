@@ -7,13 +7,20 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.Objects;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.LibraryCardService;
+import org.broadinstitute.consent.http.service.ResearcherService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.sam.SamService;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -26,34 +33,37 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.LibraryCard;
-import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.LibraryCardService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Path("api/user")
 public class UserResource extends Resource {
 
-    private final UserService userService;
+    private final static String LIBRARY_CARDS_FIELD = "libraryCards";
+    private final static String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
+    private final static String USER_STATUS_INFO_FIELD = "userStatusInfo";
+
     private final LibraryCardService libraryCardService;
-    private final Gson gson;
+    private final UserService userService;
+    private final ResearcherService researcherService;
+    private final Gson gson = new Gson();
+    private final SamService samService;
 
     @Inject
-    public UserResource(UserService userService, LibraryCardService libraryCardService) {
-        this.userService = userService;
+    public UserResource(LibraryCardService libraryCardService, ResearcherService researcherService,
+                        SamService samService, UserService userService) {
         this.libraryCardService = libraryCardService;
-        this.gson = new Gson();
+        this.researcherService = researcherService;
+        this.samService = samService;
+        this.userService = userService;
     }
 
     @GET
@@ -62,7 +72,7 @@ public class UserResource extends Resource {
     @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
     public Response getUsers(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             boolean valid = UserRoles.isValidRole(roleName);
             if (valid) {
                 //if there is a valid roleName but it is not SO or Admin then throw an exception
@@ -89,8 +99,11 @@ public class UserResource extends Resource {
     @PermitAll
     public Response getUser(@Auth AuthUser authUser) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
-            JsonObject userJson = constructUserJsonObject(user);
+            User user = userService.findUserByEmail(authUser.getEmail());
+            if (Objects.isNull(authUser.getUserStatusInfo())) {
+                samService.asyncPostRegistrationInfo(authUser);
+            }
+            JsonObject userJson = constructUserJsonObject(authUser, user);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -104,9 +117,22 @@ public class UserResource extends Resource {
     public Response getUserById(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
         try {
             User user = userService.findUserById(userId);
-            JsonObject userJson = constructUserJsonObject(user);
+            JsonObject userJson = constructUserJsonObject(authUser, user);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Path("/institution/unassigned")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
+    public Response getUnassignedUsers(@Auth AuthUser user) {
+        try {
+            List<User> unassignedUsers = userService.findUsersWithNoInstitution();
+            return Response.ok().entity(unassignedUsers).build();
+        } catch(Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -118,24 +144,13 @@ public class UserResource extends Resource {
     public Response addRoleToUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
         try {
             User user = userService.findUserById(userId);
-            List<UserRoles> allowableRoles = Stream
-                .of(UserRoles.ADMIN, UserRoles.ALUMNI, UserRoles.RESEARCHER, UserRoles.DATAOWNER, UserRoles.SIGNINGOFFICIAL)
-                .collect(Collectors.toList());
-            Optional<UserRoles> matchingRole = allowableRoles
-                .stream()
-                .filter(r -> r.getRoleId().equals(roleId))
-                .findFirst();
-            List<Integer> currentUserRoleIds = user
-                .getRoles()
-                .stream()
-                .map(UserRole::getRoleId)
-                .collect(Collectors.toList());
-            if (matchingRole.isPresent()) {
+            List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
+            if (UserRoles.isValidNonDACRoleId(roleId)) {
                 if (!currentUserRoleIds.contains(roleId)) {
-                    UserRole role = new UserRole(roleId, matchingRole.get().getRoleName());
+                    UserRole role = new UserRole(roleId, UserRoles.getUserRoleFromId(roleId).getRoleName());
                     userService.insertUserRoles(Collections.singletonList(role), user.getDacUserId());
                     user = userService.findUserById(userId);
-                    JsonObject userJson = constructUserJsonObject(user);
+                    JsonObject userJson = constructUserJsonObject(authUser, user);
                     return Response.ok().entity(gson.toJson(userJson)).build();
                 } else {
                     return Response.notModified().build();
@@ -143,6 +158,31 @@ public class UserResource extends Resource {
             } else {
                 return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST).build();
             }
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @DELETE
+    @Path("/{userId}/{roleId}")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN})
+    public Response deleteRoleFromUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
+        try {
+            User user = userService.findUserById(userId);
+            if (!UserRoles.isValidNonDACRoleId(roleId)) {
+                throw new BadRequestException("Invalid Role Id");
+            }
+            List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
+            if (!currentUserRoleIds.contains(roleId)) {
+                JsonObject userJson = constructUserJsonObject(authUser, user);
+                return Response.ok().entity(gson.toJson(userJson)).build();
+            }
+            User auth = userService.findUserByEmail(authUser.getEmail());
+            userService.deleteUserRole(auth, userId, roleId);
+            user = userService.findUserById(userId);
+            JsonObject userJson = constructUserJsonObject(authUser, user);
+            return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -198,7 +238,7 @@ public class UserResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response getSOsForInstitution(@Auth AuthUser authUser) {
         try {
-            User user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getEmail());
             if (Objects.nonNull(user.getInstitutionId())) {
                 List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
                 return Response.ok().entity(signingOfficials).build();
@@ -209,19 +249,55 @@ public class UserResource extends Resource {
         }
     }
 
+    @POST
+    @Consumes("application/json")
+    @Path("/profile")
+    @PermitAll
+    public Response registerProperties(@Auth AuthUser authUser, @Context UriInfo info, Map<String, String> userPropertiesMap) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            researcherService.setProperties(userPropertiesMap, authUser);
+            User updatedUser = userService.findUserById(user.getDacUserId());
+            JsonObject userJson = constructUserJsonObject(authUser, updatedUser);
+            return Response.created(info.getRequestUriBuilder().build()).entity(gson.toJson(userJson)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
+    @Consumes("application/json")
+    @Path("/profile")
+    @PermitAll
+    public Response updateProperties(@Auth AuthUser authUser, @QueryParam("validate") Boolean validate, Map<String, String> userProperties) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            researcherService.updateProperties(userProperties, authUser, validate);
+            User updatedUser = userService.findUserById(user.getDacUserId());
+            JsonObject userJson = constructUserJsonObject(authUser, updatedUser);
+            return Response.ok().entity(gson.toJson(userJson)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
     /**
      * Convenience method for a generic user object with custom properties added
      * @param user The User
      * @return JsonObject version of the user with researcher properties and library card entries
      */
-    private JsonObject constructUserJsonObject(User user) {
+    private JsonObject constructUserJsonObject(AuthUser authUser, User user) {
         List<UserProperty> props = userService.findAllUserProperties(user.getDacUserId());
         List<LibraryCard> entries = libraryCardService.findLibraryCardsByUserId(user.getDacUserId());
         JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
         JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
         JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
-        userJson.add("researcherProperties", propsJson);
-        userJson.add("libraryCards", entriesJson);
+        userJson.add(RESEARCHER_PROPERTIES_FIELD, propsJson);
+        userJson.add(LIBRARY_CARDS_FIELD, entriesJson);
+        if (Objects.nonNull(authUser.getUserStatusInfo())) {
+            JsonObject userStatusInfoJson = gson.toJsonTree(authUser.getUserStatusInfo()).getAsJsonObject();
+            userJson.add(USER_STATUS_INFO_FIELD, userStatusInfoJson);
+        }
         return userJson;
     }
 

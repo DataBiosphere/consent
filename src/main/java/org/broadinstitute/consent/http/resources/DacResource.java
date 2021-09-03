@@ -252,7 +252,7 @@ public class DacResource extends Resource {
      * @throws NotAuthorizedException Not authorized
      */
     private void checkUserRoleInDac(Dac dac, AuthUser authUser) throws NotAuthorizedException {
-        User user = userService.findUserByEmail(authUser.getName());
+        User user = userService.findUserByEmail(authUser.getEmail());
         if (user.getRoles().stream().anyMatch(ur -> ur.getRoleId().equals(UserRoles.ADMIN.getRoleId()))) {
             return;
         }

@@ -45,7 +45,7 @@ public class InstitutionResource extends Resource {
   @PermitAll
   public Response getInstitutions(@Auth AuthUser authUser) {
     try{
-      User user = userService.findUserByEmail(authUser.getName());
+      User user = userService.findUserByEmail(authUser.getEmail());
       Boolean isAdmin = institutionUtil.checkIfAdmin(user);
       Gson gson = institutionUtil.getGsonBuilder(isAdmin);
       List<Institution> institutions = institutionService.findAllInstitutions();
@@ -61,14 +61,14 @@ public class InstitutionResource extends Resource {
   @PermitAll
   public Response getInstitution(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     try{
-      User user = userService.findUserByEmail(authUser.getName());
+      User user = userService.findUserByEmail(authUser.getEmail());
       Boolean isAdmin = institutionUtil.checkIfAdmin(user);
       Gson gson = institutionUtil.getGsonBuilder(isAdmin);
       Institution institution = institutionService.findInstitutionById(id);
       return Response.ok().entity(gson.toJson(institution)).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
-    } 
+    }
   }
 
   @POST
@@ -77,7 +77,7 @@ public class InstitutionResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response createInstitution(@Auth AuthUser authUser, String institution) {
     try{
-      User user = userService.findUserByEmail(authUser.getName());
+      User user = userService.findUserByEmail(authUser.getEmail());
       Institution payload = new Gson().fromJson(institution, Institution.class);
       Institution newInstitution = institutionService.createInstitution(payload, user.getDacUserId());
       return Response.ok().entity(newInstitution).build();
@@ -93,7 +93,7 @@ public class InstitutionResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response updateInstitution(@Auth AuthUser authUser, @PathParam("id") Integer id, String institution) {
     try{
-      User user = userService.findUserByEmail(authUser.getName());
+      User user = userService.findUserByEmail(authUser.getEmail());
       Institution payload = new Gson().fromJson(institution, Institution.class);
       Institution updatedInstitution = institutionService.updateInstitutionById(payload, id, user.getDacUserId());
       return Response.ok().entity(updatedInstitution).build();

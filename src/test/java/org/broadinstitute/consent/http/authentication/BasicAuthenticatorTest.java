@@ -38,7 +38,7 @@ public class BasicAuthenticatorTest {
     public void testAuthenticateSuccessful() throws Exception {
         BasicCredentials credentials = new BasicCredentials("testUser", "testPassword");
         Optional<AuthUser> user = authenticator.authenticate(credentials);
-        assertTrue(user.get().getName().equals(basicAuths.getUsers().get(0).getUser()));
+        assertTrue(user.get().getEmail().equals(basicAuths.getUsers().get(0).getUser()));
     }
 
     @Test

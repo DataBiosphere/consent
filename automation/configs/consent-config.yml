@@ -28,8 +28,9 @@ logging:
   loggers:
     "org.broadinstitute.consent.http.cloudstore.GCSService": OFF
 services:
-    ontologyURL: https://consent-ontology.dsde-dev.broadinstitute.org/
-    localURL: http://localhost:8000/#/
+  localURL: http://localhost:8000/#/
+  ontologyURL: https://consent-ontology.dsde-dev.broadinstitute.org/
+  samUrl: https://sam.dsde-dev.broadinstitute.org/
 mailConfiguration:
   activateEmailNotifications: false
   googleAccount: test@gmail.com

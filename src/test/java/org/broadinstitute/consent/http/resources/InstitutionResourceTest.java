@@ -39,8 +39,8 @@ public class InstitutionResourceTest {
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final List<UserRole> adminRoles = Collections.singletonList(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
   private final List<UserRole> researcherRoles = Collections.singletonList(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-  private final User adminUser = new User(1, authUser.getName(), "Display Name", new Date(), adminRoles, authUser.getName());
-  private final User researcherUser = new User(1, authUser.getName(), "Display Name", new Date(), researcherRoles, authUser.getName());
+  private final User adminUser = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRoles, authUser.getEmail());
+  private final User researcherUser = new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRoles, authUser.getEmail());
 
   @Mock private InstitutionService institutionService;
   @Mock private UserService userService;
@@ -128,7 +128,7 @@ public class InstitutionResourceTest {
     Response response = resource.getInstitution(authUser, 1);
     assertEquals(404, response.getStatus());
   }
-  
+
 
   @Test
   public void testCreateInstitution() {
@@ -211,13 +211,13 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testDeleteInstitution() { 
+  public void testDeleteInstitution() {
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     initResource();
     Response response = resource.deleteInstitution(authUser, 1);
     assertEquals(204, response.getStatus());
   }
-  
+
   @Test
   public void testDeleteInstitutionNotFound() {
     Exception error = new NotFoundException("Institution not found");

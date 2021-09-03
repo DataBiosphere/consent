@@ -20,7 +20,7 @@ jobs:
         if: github.actor == 'dependabot[bot]'
         env:
           MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
-        run: mvn clean test
+        run: mvn clean test --no-transfer-progress
       - name: Test Report
         if: github.actor != 'dependabot[bot]'
         env:
@@ -28,4 +28,4 @@ jobs:
           MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
           mvn -v
-          mvn clean jacoco:prepare-agent test jacoco:report coveralls:report -DrepoToken=$COVERALLS_TOKEN
+          mvn clean jacoco:prepare-agent test jacoco:report coveralls:report -DrepoToken=$COVERALLS_TOKEN --no-transfer-progress

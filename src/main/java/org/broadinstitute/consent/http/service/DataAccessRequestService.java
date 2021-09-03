@@ -573,7 +573,7 @@ public class DataAccessRequestService {
         if (dacService.isAuthUserAdmin(authUser)) {
             return activeDars;
         }
-        List<Integer> dataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).stream().
+        List<Integer> dataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()).stream().
                 map(DataSet::getDataSetId).
                 collect(Collectors.toList());
         return activeDars.stream().

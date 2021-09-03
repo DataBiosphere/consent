@@ -1,8 +1,14 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
+import org.broadinstitute.consent.http.db.mapper.UnregisteredUsersWithCardsReducer;
+import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
@@ -14,11 +20,6 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 
 @SuppressWarnings("SqlDialectInspection")
 public interface UserDAO extends Transactional<UserDAO> {
@@ -171,12 +172,69 @@ public interface UserDAO extends Transactional<UserDAO> {
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
-    @SqlQuery("SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id " +
+    @SqlQuery("SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id " 
+            + " FROM dacuser du "
+            + " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+            + " WHERE du.institution_id = :institutionId")
+    List<User> findUsersByInstitution(@Bind("institutionId") Integer institutionId);
+
+    @RegisterBeanMapper(value = LibraryCard.class)
+    @UseRowReducer(UnregisteredUsersWithCardsReducer.class)
+    @SqlQuery(
+        "SELECT * FROM library_card lc WHERE lc.user_id IS NULL AND lc.institution_id = :institutionId"
+    )
+    List<User> getCardsForUnregisteredUsers(@Bind("institutionId") Integer institutionId);
+
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery(
+    " SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, "
+        + " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, "
+        + " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, "
+        + " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, "
+        + " lc.update_user_id AS lc_update_user_id " 
+    + " FROM dacuser du"
+    + " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " 
+    + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+    + " INNER JOIN library_card lc ON lc.user_id = du.dacuserid "
+    + " WHERE (du.institution_id != :institutionId OR du.institution_id IS NULL) AND lc.institution_id = :institutionId")
+    List<User> getUsersOutsideInstitutionWithCards(@Bind("institutionId") Integer institutionId);
+
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery(
+            //This will pull in users tied to the institution
+            //Users will come with LCs issued by SOs institution (if any)
+            " SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
+                " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, " +
+                " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
+                " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, " +
+                " lc.update_user_id AS lc_update_user_id " +
             " FROM dacuser du " +
             " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
             " LEFT JOIN roles r ON r.roleid = ur.role_id " +
+            " LEFT JOIN library_card lc ON lc.user_id = du.dacuserid AND lc.institution_id = :institutionId " +
             " WHERE du.institution_id = :institutionId")
-    List<User> findUsersByInstitution(@Bind("institutionId") Integer institutionId);
+    List<User> getUsersFromInstitutionWithCards(@Bind("institutionId") Integer institutionId);
+
+    @RegisterBeanMapper(value = User.class)
+
+    //SO only endpoint (so far)
+    //Meant to pull in users that have not yet been assigned an institution
+    //(SOs can assign LCs to these users as well)
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery(" SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id " +
+                " FROM dacuser du " +
+                " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
+                " LEFT JOIN roles r ON r.roleid = ur.role_id " +
+                " WHERE du.institution_id IS NULL")
+    List<User> getUsersWithNoInstitution();
 
     @RegisterBeanMapper(value = User.class)
     @SqlQuery("SELECT u.dacuserid, u.displayname, u.email FROM dacuser u "

@@ -52,6 +52,7 @@ public class ResearcherResource extends Resource {
     @POST
     @Consumes("application/json")
     @PermitAll
+    @Deprecated // Use UserResource.registerProperties
     public Response registerProperties(@Auth AuthUser user, @Context UriInfo info, Map<String, String> researcherPropertiesMap) {
         try {
             List<UserProperty> props = researcherService.setProperties(researcherPropertiesMap, user);
@@ -64,6 +65,7 @@ public class ResearcherResource extends Resource {
     @PUT
     @Consumes("application/json")
     @PermitAll
+    @Deprecated // Use UserResource.updateProperties
     public Response updateProperties(@Auth AuthUser user, @QueryParam("validate") Boolean validate, Map<String, String> researcherProperties) {
         try {
             List<UserProperty> props = researcherService.updateProperties(researcherProperties, user, validate);
@@ -112,25 +114,11 @@ public class ResearcherResource extends Resource {
         }
     }
 
-    @GET
-    @Path("{userId}/dar")
-    @Produces("application/json")
-    @RolesAllowed({ADMIN, RESEARCHER})
-    public Response getResearcherPropertiesForDAR(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
-        try {
-            List<UserRoles> authedRoles = Collections.singletonList(UserRoles.ADMIN);
-            validateAuthedRoleUser(authedRoles, findByAuthUser(authUser), userId);
-            return Response.ok(researcherService.describeResearcherPropertiesForDAR(userId)).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
     private User findByAuthUser(AuthUser user) {
         GoogleUser googleUser = user.getGoogleUser();
         User dacUser = userService.findUserByEmail(googleUser.getEmail());
         if (dacUser == null) {
-            throw new NotFoundException("Unable to find user :" + user.getName());
+            throw new NotFoundException("Unable to find user :" + user.getEmail());
         }
         return dacUser;
     }

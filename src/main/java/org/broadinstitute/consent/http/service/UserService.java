@@ -23,6 +23,7 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -30,6 +31,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserService {
 
@@ -39,6 +42,7 @@ public class UserService {
     private final VoteDAO voteDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
     public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO) {
@@ -114,9 +118,21 @@ public class UserService {
 
     public List<User> getUsersByUserRole(User user, String roleName) {
         switch(roleName) {
+            //SigningOfficial console is technically pulling LCs, it's just bringing associated users along for the ride
+            //However LCs can be created for users not yet registered in the system
+            //As such a more specialzed query is needed to produce the proper listing
             case Resource.SIGNINGOFFICIAL :
+                Integer institutionId = user.getInstitutionId();
                 if (Objects.nonNull(user.getInstitutionId())) {
-                    return userDAO.findUsersByInstitution(user.getInstitutionId());
+                    List<User> institutionUsers = userDAO.getUsersFromInstitutionWithCards(institutionId);
+                    List<User> unregisteredUsers = userDAO.getCardsForUnregisteredUsers(institutionId);
+                    List<User> outsideUsers = userDAO.getUsersOutsideInstitutionWithCards(institutionId);
+                    return Stream.of(
+                        institutionUsers,
+                        unregisteredUsers,
+                        outsideUsers
+                    ).flatMap(Collection::stream)
+                    .collect(Collectors.toList());
                 } else {
                     throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") is not associated with an Institution.");
                 }
@@ -214,6 +230,15 @@ public class UserService {
 
         List<User> users = userDAO.getSOsByInstitution(institutionId);
         return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    }
+
+    public void deleteUserRole(User authUser, Integer dacUserId, Integer roleId) {
+        userRoleDAO.removeSingleUserRole(dacUserId, roleId);
+        logger.info("User " + authUser.getDisplayName() + " deleted roleId: " + roleId + " from User ID: " + dacUserId);
+    }
+
+    public List<User> findUsersWithNoInstitution() {
+        return userDAO.getUsersWithNoInstitution();
     }
 
     private void validateRequiredFields(User user) {

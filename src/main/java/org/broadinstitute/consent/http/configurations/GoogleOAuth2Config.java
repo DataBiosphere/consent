@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.configurations;
 
-import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@SuppressWarnings({"WeakerAccess", "unused"})
+import javax.validation.constraints.NotNull;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GoogleOAuth2Config {
 
     @NotNull

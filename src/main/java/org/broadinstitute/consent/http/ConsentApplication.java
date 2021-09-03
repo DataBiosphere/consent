@@ -28,12 +28,13 @@ import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
 import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
-import org.broadinstitute.consent.http.cloudstore.GCSHealthCheck;
+import org.broadinstitute.consent.http.health.GCSHealthCheck;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
+import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.resources.ApprovalExpirationTimeResource;
 import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
@@ -64,6 +65,7 @@ import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
 import org.broadinstitute.consent.http.resources.NihAccountResource;
 import org.broadinstitute.consent.http.resources.ResearcherResource;
+import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.resources.SwaggerResource;
 import org.broadinstitute.consent.http.resources.UserResource;
@@ -89,12 +91,13 @@ import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.service.ontology.ElasticSearchHealthCheck;
+import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontology.IndexerService;
 import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
-import org.broadinstitute.consent.http.service.ontology.OntologyHealthCheck;
+import org.broadinstitute.consent.http.health.OntologyHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
+import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
 import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
@@ -122,6 +125,11 @@ import java.util.Objects;
 public class ConsentApplication extends Application<ConsentConfiguration> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
+
+    public static final String GCS_CHECK = "google-cloud-storage";
+    public static final String ES_CHECK = "elastic-search";
+    public static final String ONTOLOGY_CHECK = "ontology";
+    public static final String SAM_CHECK = "sam";
 
     public static void main(String[] args) throws Exception {
         LOGGER.info("Starting Consent Application");
@@ -179,14 +187,16 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final MatchService matchService = injector.getProvider(MatchService.class).get();
         final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
         final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class).get();
+        final SamService samService = injector.getProvider(SamService.class).get();
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
 
         // Health Checks
-        env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(gcsService));
-        env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
-        env.healthChecks().register("ontology", new OntologyHealthCheck(clientUtil, config.getServicesConfiguration()));
+        env.healthChecks().register(GCS_CHECK, new GCSHealthCheck(gcsService));
+        env.healthChecks().register(ES_CHECK, new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
+        env.healthChecks().register(ONTOLOGY_CHECK, new OntologyHealthCheck(clientUtil, config.getServicesConfiguration()));
+        env.healthChecks().register(SAM_CHECK, new SamHealthCheck(clientUtil, config.getServicesConfiguration()));
 
         final StoreOntologyService storeOntologyService = new StoreOntologyService(
                 googleStore,
@@ -233,8 +243,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ApprovalExpirationTimeResource(approvalExpirationTimeService, userService));
         env.jersey().register(new MatchResource(matchService));
         env.jersey().register(new MetricsResource(metricsService));
-        env.jersey().register(new UserResource(userService, libraryCardService));
+        env.jersey().register(new UserResource(libraryCardService, researcherService, samService, userService));
         env.jersey().register(new ResearcherResource(researcherService, userService, libraryCardService));
+        env.jersey().register(new SamResource(samService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
         env.jersey().register(new NihAccountResource(nihService, userService));
         env.jersey().register(injector.getInstance(VersionResource.class));

@@ -3207,6 +3207,25 @@ paths:
         500:
           description: Server error.
 
+  /api/user:
+    post:
+      summary: Create User
+      description: Create a user with RESEARCHER role using the user's current authentication status.
+      tags:
+        - User
+      responses:
+        200:
+          description: Returns the created user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Unable to validate the user's google identity.
+        409:
+          description: User should be unique
+        500:
+          description: Server error.
   /api/user/me:
     get:
       summary: Find currently authenticated user
@@ -3224,6 +3243,23 @@ paths:
           description: User not found
         500:
           description: Server error.
+  /api/user/institution/unassigned:
+    get:
+      summary: Find users that do not belong to an institution
+      description: Find users that do not belong to an institution
+      tags:
+        - User
+      responses:
+        200:
+          description: An array of users that do not belong to an institution
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        500:
+          description: Internal Server Error
   /api/user/signing-officials:
     get:
       summary: Find SOs for currently authenticated user's institution
@@ -3243,12 +3279,12 @@ paths:
           description: User not found
         500:
           description: Server error.
-  /api/user/{id}:
+  /api/user/{userId}:
     get:
       summary: Find user by id
       description: Finds user by the user id. Available to Admin, Chair, and Member roles
       parameters:
-        - name: id
+        - name: userId
           in: path
           description: The id of the user
           required: true
@@ -3265,6 +3301,60 @@ paths:
                 $ref: '#/components/schemas/User'
         404:
           description: User not found
+        500:
+          description: Server error.
+  /api/user/profile:
+    post:
+      summary: Create user properties.
+      description: Create properties for the current user.
+      requestBody:
+        description: Map<String, String> for user properties.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProperties'
+      tags:
+        - User
+      responses:
+        201:
+          description: The user properties were created.
+        400:
+          description: Malformed entity.
+        409:
+          description: Unsupported operation.
+        500:
+          description: Server error.
+    put:
+      summary: Update user properties
+      description: Updates a user.
+      requestBody:
+        description: Map<String, String> for user properties.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProperties'
+      parameters:
+        - name: validate
+          in: query
+          description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
+          required: true
+          schema:
+            type: boolean
+      tags:
+        - User
+      responses:
+        200:
+          description: The user was updated, and returns the properties.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Malformed researcher entity.
+        404:
+          description: The requested user doesn't exist in the system.
         500:
           description: Server error.
   /api/user/role/{roleName}:
@@ -3337,6 +3427,51 @@ paths:
           description: User not found
         500:
           description: Server error.
+    delete:
+      summary: Delete a role from a user
+      description: Delete a role from a user, specified by given userId. Available to Admin roles
+      parameters:
+        - name: userId
+          in: path
+          description: The id of the user
+          required: true
+          schema:
+            type: number
+        - name: roleId
+          in: path
+          description: |
+            The id of the role. Members and Chairpersons cannot be deleted this way.
+            See DAC endpoints for those roles.
+            ALUMNI: 3
+            ADMIN: 4
+            RESEARCHER: 5
+            DATAOWNER: 6
+            SIGNINGOFFICIAL: 7
+          required: true
+          schema:
+            type: number
+            nullable: false
+            enum:
+              - 3
+              - 4
+              - 5
+              - 6
+              - 7
+      tags:
+        - User
+      responses:
+        200:
+          description: Updated user along with researcher properties and library cards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Bad Request
+        404:
+          description: User not found
+        500:
+          description: Server error.
   /api/user/{email}:
     delete:
       summary: Delete User by email
@@ -3357,29 +3492,13 @@ paths:
             application/json:
               schema:
                 type: string
-  /api/user:
-    post:
-      summary: createResearcher
-      description: Create a user with RESEARCHER role using the user's current authentication status.
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the created user.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        400:
-          description: Unable to validate the user's google identity.
-        409:
-          description: User should be unique
-        500:
-          description: Server error.
   /api/researcher:
     post:
+      deprecated: true
       summary: Create researcher properties.
-      description: Create researcher properties for the current user.
+      description: |
+        Deprecated - use POST /api/user/{userId}
+        Create researcher properties for the current user.
       parameters:
         - name: researcherProperties
           in: body
@@ -3388,7 +3507,6 @@ paths:
           schema:
             $ref: '#/components/schemas/UserProperties'
       tags:
-        - User
         - Researcher
       responses:
         201:
@@ -3400,8 +3518,11 @@ paths:
         500:
           description: Server error.
     put:
+      deprecated: true
       summary: Update researcher.
-      description: Updates a researcher user.
+      description: |
+        Deprecated - use PUT /api/user/{userId}
+        Updates a researcher user.
       parameters:
         - name: validate
           in: query
@@ -3416,7 +3537,6 @@ paths:
           schema:
             $ref: '#/components/schemas/UserProperties'
       tags:
-        - User
         - Researcher
       responses:
         200:
@@ -3473,35 +3593,12 @@ paths:
           description: The properties were deleted. No response object, just 200 response.
         404:
           description: The requested user doesn't exist in the system
-  /api/researcher/{userId}/dar:
-    get:
-      summary: Returns the researcher properties that are part of a Data Access Request
-      description: Describes all the properties that are taken from the researcher information to fill automatically a DAR request.
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-      tags:
-        - User
-        - Researcher
-      responses:
-        200:
-          description: Returns the user properties. Map<String, String> format
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserProperties'
-        404:
-          description: The requested user doesnt exist in the system
   /api/nih:
     delete:
       summary: Delete Era Commons Account
       description: Removes only Era Commons Account related information from the logued user, requesting this action
       tags:
         - User
-        - Researcher
         - eRA Commons
         - Nih
       responses:
@@ -3527,6 +3624,72 @@ paths:
           description: Returns eRA Commons Account information. Map<String, String> format
         404:
           description: The user doesn't exist in the system
+  /api/sam/register/self:
+    post:
+      summary: Create current user in the Sam system using current login credentials
+      description: Create current user in the Sam system using current login credentials
+      tags:
+        - Sam
+      responses:
+        200:
+          description: Sam User Info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SamUserInfo'
+        409:
+          description: Conflict, user exists
+        500:
+          description: Internal Server Error
+  /api/sam/register/self/diagnostics:
+    get:
+      summary: Gets the various Sam enabled statuses of the logged in user
+      description: Gets the various Sam enabled statuses of the logged in user
+      tags:
+        - Sam
+      responses:
+        200:
+          description: Sam Self Diagnostics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schema/SamSelfDiagnostics'
+        404:
+          description: User not found
+        500:
+          description: Internal Server Error
+  /api/sam/register/self/info:
+    get:
+      summary: Gets the Sam registration status info of the logged in user
+      description: Gets the Sam registration status info of the logged in user
+      tags:
+        - Sam
+      responses:
+        200:
+          description: Sam User Info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SamUserInfo'
+        404:
+          description: User not found
+        500:
+          description: Internal Server Error
+  /api/sam/resource-types:
+    get:
+      summary: Sam Resource Types
+      description: Sam Resource Types
+      tags:
+        - Sam
+      responses:
+        200:
+          description: Sam Resource Types
+          content:
+            application/json:
+              schema:
+                type: object
+        500:
+          description: Internal Server Error
   /metrics/dac/decision:
     get:
       summary: Dac Decision Metrics
@@ -4700,6 +4863,30 @@ components:
         displayName:
           type: string
           description: Name of the user
+    SamSelfDiagnostics:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Enabled status
+        inAllUsersGroup:
+          type: boolean
+          description: All Users Group status
+        inGoogleProxyGroup:
+          type: boolean
+          description: Google Proxy Group status
+    SamUserInfo:
+      type: object
+      properties:
+        userSubjectId:
+          type: string
+          description: Sam User subject id
+        userEmail:
+          type: string
+          description: Sam User email
+        enabled:
+          type: boolean
+          description: Enabled status
     ErrorResponse:
       properties:
         message:

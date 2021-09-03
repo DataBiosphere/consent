@@ -15,8 +15,8 @@ public class TestAuthorizer implements Authorizer<AuthUser> {
 
     @Override
     public boolean authorize(AuthUser user, String role) {
-        return authorizedUserRoleMap.containsKey(user.getName()) &&
-                authorizedUserRoleMap.get(user.getName()).equalsIgnoreCase(role);
+        return authorizedUserRoleMap.containsKey(user.getEmail()) &&
+                authorizedUserRoleMap.get(user.getEmail()).equalsIgnoreCase(role);
     }
 
 }
