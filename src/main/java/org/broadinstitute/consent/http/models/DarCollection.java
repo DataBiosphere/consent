@@ -1,7 +1,13 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 //represents a multi-dataset access request
 public class DarCollection {
@@ -16,13 +22,16 @@ public class DarCollection {
   Timestamp createDate;
 
   @JsonProperty
-  User createUser;
+  Integer createUserId;
 
   @JsonProperty
   Timestamp updateDate;
 
   @JsonProperty
-  User updateUser;
+  Integer updateUserId;
+
+  @JsonProperty
+  List<DataAccessRequest> dars;
 
   public DarCollection() {this.createDate = new Timestamp(System.currentTimeMillis()); }
 
@@ -50,15 +59,15 @@ public class DarCollection {
     this.createDate = createDate;
   }
 
-  public User getCreateUser() {
-    return createUser;
+  public Integer getCreateUserId() {
+    return createUserId;
   }
 
-  public void setCreateUser(User createUser) {
-    this.createUser = createUser;
+  public void setCreateUserId(Integer createUserId) {
+    this.createUserId = createUserId;
   }
 
-  public Timestamp getUpdateDate() {
+  public Date getUpdateDate() {
     return updateDate;
   }
 
@@ -66,12 +75,45 @@ public class DarCollection {
     this.updateDate = updateDate;
   }
 
-  public User getUpdateUser() {
-    return updateUser;
+  public Integer getUpdateUserId() {
+    return updateUserId;
   }
 
-  public void setUpdateUser(User updateUser) {
-    this.updateUser = updateUser;
+  public void setUpdateUserId(Integer updateUserId) {
+    this.updateUserId = updateUserId;
   }
+
+  public List<DataAccessRequest> getDars() {
+    if (Objects.isNull(dars)) {
+      return new ArrayList<>();
+    }
+    return dars;
+  }
+
+  public void setDars(List<DataAccessRequest> dars) { this.dars = dars; }
+
+  public void addDar(DataAccessRequest dar) {
+    if (Objects.isNull(dars)) {
+      this.setDars(new ArrayList<>());
+    }
+    dars.add(dar);
+  }
+
+  @Override
+  public boolean equals(Object obj){
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+
+    DarCollection other = (DarCollection) obj;
+    return new EqualsBuilder()
+      .append(this.getDarCollectionId(), other.getDarCollectionId())
+      .append(this.getDarCode(), other.getDarCode())
+      .isEquals();
+  }
+
 
 }
