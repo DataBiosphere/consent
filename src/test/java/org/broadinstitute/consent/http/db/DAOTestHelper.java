@@ -475,6 +475,9 @@ public class DAOTestHelper {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         createdDarCollections.add(collection_id);
+        for(int i = 0; i < 4; i++) {
+            insertDAR(user.getDacUserId(), collection_id, darCode);
+        }
         return insertDAR(user.getDacUserId(), collection_id, darCode);
     }
 

@@ -36,10 +36,18 @@ public interface DarCollectionDAO {
         "(SELECT FROM jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasets') dataset " +
         "WHERE dataset ->> 'label' ~* :datasetSearchTerm)";
 
-  final String projectSortFilterQuery = 
+  final String getFilteredCollectionIds = 
+  "SELECT DISTINCT(collection_id), <sortField> FROM (" +
     getCollectionAndDars + filterQuery + 
-    "ORDER BY <sortField> <sortOrder> " +
-    "LIMIT :limit OFFSET :offset";
+    ") collections ";
+  
+  final String getCollectionsAndDarsViaIds = 
+  getCollectionAndDars +
+  "WHERE c.collection_id IN " + 
+    "(SELECT collection_id FROM (" +
+      getFilteredCollectionIds +
+    ") ids) " +
+    "ORDER BY <sortField> <sortOrder>"; 
   
   /**
    * Find all DARCollections with their DataAccessRequests
@@ -84,15 +92,13 @@ public interface DarCollectionDAO {
  @RegisterBeanMapper(value = DarCollection.class)
  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
  @UseRowReducer(DarCollectionReducer.class)
- @SqlQuery(projectSortFilterQuery)
+ @SqlQuery(getCollectionsAndDarsViaIds)
  List<DarCollection> findAllDARCollectionsWithFilters(
                                                     @Bind("institutionSearchTerm") String institutionSearchTerm,
                                                     @Bind("projectSearchTerm") String projectSearchTerm,
                                                     @Bind("researcherSearchTerm") String researcherSearchTerm,
                                                     @Bind("darCodeSearchTerm") String darCodeSearchTerm,
                                                     @Bind("datasetSearchTerm") String datasetSearchTerm,
-                                                    @Bind("offset") Integer offset,
-                                                    @Bind("limit") Integer limit,
                                                     @Define("sortField") String sortField,
                                                     @Define("sortOrder") String sortOrder);
 
