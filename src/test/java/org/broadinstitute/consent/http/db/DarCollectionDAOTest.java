@@ -139,7 +139,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   @Test
   public void testFindAllDARCollectionsWithFilters_SortField() {
     DataAccessRequest dar1 = createDataAccessRequestV3(); // create first collection w DAR
-    DataAccessRequest dar2 = createDataAccessRequestV3(); // create second collection w DAR
+    DataAccessRequest dar2 = createDataAccessRequestWithUserIdV3(dar1.getUserId()); // create second collection w DAR
 
     List<DarCollection> collectionsResult = darCollectionDAO.findAllDARCollectionsWithFiltersByUser("", dar1.getUserId(), "dar_code", "ASC");
 
@@ -233,7 +233,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
   @Test
   public void testFindAllDarCollectionsWithFilters_sortDirectionTerm_DESC() {
     DataAccessRequest dar1 = createDataAccessRequestV3(); //create first collection w DAR
-    DataAccessRequest dar2 = createDataAccessRequestV3(); //create second collection w DAR
+    DataAccessRequest dar2 = createDataAccessRequestWithUserIdV3(dar1.getUserId()); // create second collection w DAR
 
     List<DarCollection> collections =  darCollectionDAO.findAllDARCollections();
     collections.sort((a,b) -> (a.getDarCode().compareToIgnoreCase(b.getDarCode())));
@@ -253,7 +253,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
   @Test
   public void testFindAllDarCollectionsWithFilters_sortDirectionTerm_ASC() {
     DataAccessRequest dar1 = createDataAccessRequestV3(); // create first collection w DAR
-    DataAccessRequest dar2 = createDataAccessRequestV3(); // create second collection w DAR
+    DataAccessRequest dar2 = createDataAccessRequestWithUserIdV3(dar1.getUserId()); // create second collection w DAR
 
     List<DarCollection> collections = darCollectionDAO.findAllDARCollections();
     collections.sort((a, b) -> (a.getDarCode().compareToIgnoreCase(b.getDarCode())));

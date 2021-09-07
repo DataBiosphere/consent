@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 
@@ -34,12 +34,11 @@ public class DarCollectionService {
    *
    * @param token A Pagination Token
    * @param user A User
-   * @return A response object
+   * @return A PaginationResponse object
    */
-  public ImmutablePair<List<DarCollection>, List<PaginationToken>> getCollectionsWithFilters(
+  public PaginationResponse<DarCollection> getCollectionsWithFilters(
       PaginationToken token, User user) {
 
-    // TODO: Query for collections using token filters
     // 1. Fetch unfiltered count: Query #1
     // 2. Fetch filtered collection ids, no limit or offset: Query #2
     // 3. Slice that filtered list of ids based on token page # + count per page
@@ -47,9 +46,11 @@ public class DarCollectionService {
     // 5. Update the token info with new counts if different
 
     List<DarCollection> unfilteredDars = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
+    token.setUnfilteredCount(unfilteredDars.size());
 
     String filterTerm = Objects.isNull(token.getFilterTerm()) ? "" : token.getFilterTerm();
     List<DarCollection> filteredDars = darCollectionDAO.findAllDARCollectionsWithFiltersByUser(filterTerm, user.getDacUserId(), token.getSortField(), token.getSortDirection());
+    token.setFilteredCount(filteredDars.size());
 
     List<Integer> collectionIds = filteredDars.stream().map(DarCollection::getDarCollectionId).collect(Collectors.toList());
     // TODO: What is the slice
@@ -59,8 +60,10 @@ public class DarCollectionService {
 
     List<DarCollection> slicedCollections = darCollectionDAO.findDARCollectionByCollectionIds(slice, token.getSortField(), token.getSortDirection());
 
-    // TODO: Update the return value to something that makes more sense.
-    return ImmutablePair.of(slicedCollections, token.createListOfPaginationTokensFromSelf());
+    return new PaginationResponse<DarCollection>()
+            .setCurrentToken(token)
+            .setResults(slicedCollections)
+            .setPaginationTokens(token.createListOfPaginationTokensFromSelf());
   }
 
   public DarCollection getByReferenceId(String referenceId) {
