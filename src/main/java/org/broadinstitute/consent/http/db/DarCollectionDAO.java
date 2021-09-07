@@ -18,31 +18,34 @@ import java.util.List;
 public interface DarCollectionDAO {
 
   String getCollectionAndDars =
-      "SELECT c.*, i.institution_name, u.displayname AS researcher, dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
+      " SELECT c.*, i.institution_name, u.displayname AS researcher, dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
           "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
           "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
           "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, " +
           "(dar.data #>> '{}')::jsonb ->> 'projectTitle' as projectTitle " +
-      "FROM dar_collection c " +
-      "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id " +
-      "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
-      "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id ";
+      " FROM dar_collection c " +
+      " INNER JOIN dacuser u ON u.dacuserid = c.create_user_id " +
+      " LEFT JOIN institution i ON i.institution_id = u.institution_id " +
+      " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id ";
 
   String filterQuery =
-    "WHERE COALESCE(i.institution_name, '') ~* :filterTerm " +
-    "OR (dar.data #>> '{}')::jsonb ->> 'projectTitle' ~* :filterTerm " +
-    "OR u.displayname ~* :filterTerm " +
-    "OR c.dar_code ~* :filterTerm " +
-    "OR EXISTS " +
-        "(SELECT FROM jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasets') dataset " +
-        "WHERE dataset ->> 'label' ~* :filterTerm)";
+    " WHERE c.create_user_id = :userId " +
+      " AND (" +
+        "COALESCE(i.institution_name, '') ~* :filterTerm " +
+        " OR (dar.data #>> '{}')::jsonb ->> 'projectTitle' ~* :filterTerm " +
+        " OR u.displayname ~* :filterTerm " +
+        " OR c.dar_code ~* :filterTerm " +
+        " OR EXISTS " +
+        " (SELECT FROM jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasets') dataset " +
+        " WHERE dataset ->> 'label' ~* :filterTerm)" +
+      " )";
 
   String getCollectionsAndDarsViaIds =
   getCollectionAndDars + filterQuery +
     "ORDER BY <sortField> <sortOrder>";
 
   /**
-   * Find all DARCollections with their DataAccessRequests that match the given filters
+   * Find all DARCollections with their DataAccessRequests that match the given filter
    *
    * <p>FilterTerms filter on dar project title, datasetNames, collection dar code, collection
    * update date, and DAC SortField can be projectTitle, datasetNames, dar code, update date, or DAC
@@ -54,8 +57,9 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionsAndDarsViaIds)
-  List<DarCollection> findAllDARCollectionsWithFilters(
+  List<DarCollection> findAllDARCollectionsWithFiltersByUser(
           @Bind("filterTerm") String filterTerm,
+          @Bind("userId") Integer userId,
           @Define("sortField") String sortField,
           @Define("sortOrder") String sortOrder);
 

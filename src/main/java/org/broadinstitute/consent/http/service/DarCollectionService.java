@@ -29,12 +29,15 @@ public class DarCollectionService {
     return darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
   }
 
+  /**
+   * Find all filtered DAR Collections for a user
+   *
+   * @param token A Pagination Token
+   * @param user A User
+   * @return A response object
+   */
   public ImmutablePair<List<DarCollection>, List<PaginationToken>> getCollectionsWithFilters(
       PaginationToken token, User user) {
-    // TODO: Somehow filter on user access.
-    // Researcher: only mine
-    // Admin: all of them
-    // Chair/member: only those in their DACs
 
     // TODO: Query for collections using token filters
     // 1. Fetch unfiltered count: Query #1
@@ -43,11 +46,10 @@ public class DarCollectionService {
     // 4. Get the collections for that list of ids: Query #3
     // 5. Update the token info with new counts if different
 
-    // This is where we need to filter by access level/role/user
-    List<DarCollection> unfilteredDars = darCollectionDAO.findAllDARCollections();
+    List<DarCollection> unfilteredDars = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
 
     String filterTerm = Objects.isNull(token.getFilterTerm()) ? "" : token.getFilterTerm();
-    List<DarCollection> filteredDars = darCollectionDAO.findAllDARCollectionsWithFilters(filterTerm, token.getSortField(), token.getSortDirection());
+    List<DarCollection> filteredDars = darCollectionDAO.findAllDARCollectionsWithFiltersByUser(filterTerm, user.getDacUserId(), token.getSortField(), token.getSortDirection());
 
     List<Integer> collectionIds = filteredDars.stream().map(DarCollection::getDarCollectionId).collect(Collectors.toList());
     // TODO: What is the slice
