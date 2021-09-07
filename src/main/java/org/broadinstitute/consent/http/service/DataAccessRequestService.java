@@ -354,6 +354,7 @@ public class DataAccessRequestService {
         List<Integer> datasets = dataAccessRequest.getData().getDatasetIds();
         if (CollectionUtils.isNotEmpty(datasets)) {
             String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
+            Integer collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getDacUserId(), now);
             for (int idx = 0; idx < datasets.size(); idx++) {
                 String darCode = (datasets.size() == 1) ? darCodeSequence: darCodeSequence + SUFFIX + idx ;
                 darData.setDatasetIds(Collections.singletonList(datasets.get(idx)));
@@ -372,12 +373,12 @@ public class DataAccessRequestService {
                         newDARList.add(findByReferenceId(dataAccessRequest.getReferenceId()));
                     } else {
                         String referenceId = UUID.randomUUID().toString();
-                        DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData);
+                        DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
                         newDARList.add(createdDar);
                     }
                 } else {
                     String referenceId = UUID.randomUUID().toString();
-                    DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData);
+                    DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
                     newDARList.add(createdDar);
                 }
             }
@@ -385,9 +386,9 @@ public class DataAccessRequestService {
         return newDARList;
     }
 
-    public DataAccessRequest insertSubmittedDataAccessRequest(User user, String referencedId, DataAccessRequestData darData) {
-        Date now = new Date();
-        dataAccessRequestDAO.insertVersion2(
+    public DataAccessRequest insertSubmittedDataAccessRequest(User user, String referencedId, DataAccessRequestData darData, Integer collectionId, Date now) {
+        dataAccessRequestDAO.insertVersion3(
+            collectionId,
             referencedId,
             user.getDacUserId(),
             new Date(darData.getCreateDate()),

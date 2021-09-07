@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import org.mockito.ArgumentMatcher;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -197,10 +198,15 @@ public class DataAccessRequestServiceTest {
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
         when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
-        doNothing().when(dataAccessRequestDAO).insertVersion2(any(), any(), any(), any(), any(), any(), any());
+        when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class))).thenReturn(RandomUtils.nextInt(1,100));
+        doNothing().when(dataAccessRequestDAO).insertVersion3(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
         initService();
         List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
         assertEquals(3, newDars.size());
+        Integer collectionId = newDars.get(0).getCollectionId();
+        for(DataAccessRequest darElement: newDars) {
+            assertEquals(collectionId, darElement.getCollectionId());
+        }   
     }
 
     @Test
