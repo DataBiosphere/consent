@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import com.google.gson.Gson;
+
 import java.util.List;
 
 public class PaginationResponse<T> {
@@ -33,5 +35,10 @@ public class PaginationResponse<T> {
   public PaginationResponse<T> setPaginationTokens(List<PaginationToken> paginationTokens) {
     this.paginationTokens = paginationTokens;
     return this;
+  }
+
+  @Override
+  public String toString() {
+    return new Gson().toJson(this);
   }
 }

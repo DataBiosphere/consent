@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.Gson;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import java.sql.Timestamp;
@@ -39,48 +40,54 @@ public class DarCollection {
     return darCollectionId;
   }
 
-  public void setDarCollectionId(Integer darCollectionId) {
+  public DarCollection setDarCollectionId(Integer darCollectionId) {
     this.darCollectionId = darCollectionId;
+    return this;
   }
 
   public String getDarCode() {
     return darCode;
   }
 
-  public void setDarCode(String darCode) {
+  public DarCollection setDarCode(String darCode) {
     this.darCode = darCode;
+    return this;
   }
 
   public Timestamp getCreateDate() {
     return createDate;
   }
 
-  public void setCreateDate(Timestamp createDate) {
+  public DarCollection setCreateDate(Timestamp createDate) {
     this.createDate = createDate;
+    return this;
   }
 
   public Integer getCreateUserId() {
     return createUserId;
   }
 
-  public void setCreateUserId(Integer createUserId) {
+  public DarCollection setCreateUserId(Integer createUserId) {
     this.createUserId = createUserId;
+    return this;
   }
 
   public Date getUpdateDate() {
     return updateDate;
   }
 
-  public void setUpdateDate(Timestamp updateDate) {
+  public DarCollection setUpdateDate(Timestamp updateDate) {
     this.updateDate = updateDate;
+    return this;
   }
 
   public Integer getUpdateUserId() {
     return updateUserId;
   }
 
-  public void setUpdateUserId(Integer updateUserId) {
+  public DarCollection setUpdateUserId(Integer updateUserId) {
     this.updateUserId = updateUserId;
+    return this;
   }
 
   public List<DataAccessRequest> getDars() {
@@ -90,7 +97,10 @@ public class DarCollection {
     return dars;
   }
 
-  public void setDars(List<DataAccessRequest> dars) { this.dars = dars; }
+  public DarCollection setDars(List<DataAccessRequest> dars) {
+    this.dars = dars;
+    return this;
+  }
 
   public void addDar(DataAccessRequest dar) {
     if (Objects.isNull(dars)) {
@@ -115,5 +125,8 @@ public class DarCollection {
       .isEquals();
   }
 
-
+  @Override
+  public String toString() {
+    return new Gson().toJson(this);
+  }
 }

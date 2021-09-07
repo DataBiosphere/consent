@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import liquibase.pro.packaged.O;
 
 import javax.ws.rs.BadRequestException;
 import java.nio.charset.Charset;
@@ -103,6 +104,11 @@ public class PaginationToken {
 
   public void setFilteredCount(Integer filteredCount) {
     this.filteredCount = filteredCount;
+    if (((filteredCount/this.getPageSize()) % this.getPageSize()) == 0) {
+      this.filteredPageCount = filteredCount/this.getPageSize();
+    } else {
+      this.filteredPageCount = (filteredCount/this.getPageSize()) + 1;
+    }
   }
 
   public Integer getUnfilteredCount() {
@@ -159,14 +165,18 @@ public class PaginationToken {
   }
 
   private void checkSortField(String sortField) {
-    if (!acceptableSortFields.contains(sortField)) {
-      throw new BadRequestException("Cannot sort on given field: " + sortField);
+    if (Objects.nonNull(sortField)) {
+      if (!acceptableSortFields.contains(sortField)) {
+        throw new BadRequestException("Cannot sort on given field: " + sortField);
+      }
     }
   }
 
   private void checkSortDirection(String sortDirection) {
-    if (!sortDirection.equals("asc") && !sortDirection.equals("desc")) {
-      throw new BadRequestException("Sort direction must be either 'asc' or 'desc");
+    if (Objects.nonNull(sortDirection)) {
+      if (!sortDirection.equals("asc") && !sortDirection.equals("desc")) {
+        throw new BadRequestException("Sort direction must be either 'asc' or 'desc");
+      }
     }
   }
 
@@ -209,5 +219,10 @@ public class PaginationToken {
                   this.getUnfilteredCount());
             })
         .collect(Collectors.toList());
+  }
+
+  @Override
+  public String toString() {
+    return new Gson().toJson(this);
   }
 }
