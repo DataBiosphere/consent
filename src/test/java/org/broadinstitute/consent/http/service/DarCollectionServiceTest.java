@@ -55,7 +55,12 @@ public class DarCollectionServiceTest {
   private List<DarCollection> createMockDars(int count) {
     return IntStream
             .rangeClosed(1, count)
-            .mapToObj(i -> new DarCollection().setDarCollectionId(i).setDarCode(RandomStringUtils.randomAlphanumeric(5)))
+            .mapToObj(i -> {
+              DarCollection collection = new DarCollection();
+              collection.setDarCollectionId(i);
+              collection.setDarCode(RandomStringUtils.randomAlphanumeric(5));
+              return collection;
+            })
             .collect(Collectors.toList());
   }
 

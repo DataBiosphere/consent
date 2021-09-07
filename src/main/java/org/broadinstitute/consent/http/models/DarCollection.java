@@ -40,54 +40,48 @@ public class DarCollection {
     return darCollectionId;
   }
 
-  public DarCollection setDarCollectionId(Integer darCollectionId) {
+  public void setDarCollectionId(Integer darCollectionId) {
     this.darCollectionId = darCollectionId;
-    return this;
   }
 
   public String getDarCode() {
     return darCode;
   }
 
-  public DarCollection setDarCode(String darCode) {
+  public void setDarCode(String darCode) {
     this.darCode = darCode;
-    return this;
   }
 
   public Timestamp getCreateDate() {
     return createDate;
   }
 
-  public DarCollection setCreateDate(Timestamp createDate) {
+  public void setCreateDate(Timestamp createDate) {
     this.createDate = createDate;
-    return this;
   }
 
   public Integer getCreateUserId() {
     return createUserId;
   }
 
-  public DarCollection setCreateUserId(Integer createUserId) {
+  public void setCreateUserId(Integer createUserId) {
     this.createUserId = createUserId;
-    return this;
   }
 
   public Date getUpdateDate() {
     return updateDate;
   }
 
-  public DarCollection setUpdateDate(Timestamp updateDate) {
+  public void setUpdateDate(Timestamp updateDate) {
     this.updateDate = updateDate;
-    return this;
   }
 
   public Integer getUpdateUserId() {
     return updateUserId;
   }
 
-  public DarCollection setUpdateUserId(Integer updateUserId) {
+  public void setUpdateUserId(Integer updateUserId) {
     this.updateUserId = updateUserId;
-    return this;
   }
 
   public List<DataAccessRequest> getDars() {
@@ -97,9 +91,8 @@ public class DarCollection {
     return dars;
   }
 
-  public DarCollection setDars(List<DataAccessRequest> dars) {
+  public void setDars(List<DataAccessRequest> dars) {
     this.dars = dars;
-    return this;
   }
 
   public void addDar(DataAccessRequest dar) {

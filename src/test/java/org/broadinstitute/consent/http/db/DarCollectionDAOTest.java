@@ -37,7 +37,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
     assertNotNull(collection);
     assertEquals(dar.getCollectionId(), collection.getDarCollectionId());
-    List<String> ids = collection.getDars().stream().map(d -> d.getReferenceId()).collect(Collectors.toList());
+    List<String> ids = collection.getDars().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
     assertTrue(ids.contains(dar.getReferenceId()));
   }
 
@@ -136,6 +136,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
       assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException)e.getCause()).getSQLState());
     }
   }
+
   @Test
   public void testFindAllDARCollectionsWithFilters_SortField() {
     DataAccessRequest dar1 = createDataAccessRequestV3(); // create first collection w DAR
@@ -147,7 +148,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
 
     DataAccessRequest darOne = collectionsResult.get(0).getDars().get(0);
     DataAccessRequest darTwo = collectionsResult.get(1).getDars().get(0);
-    Integer comparatorValue = darOne.getData().getDarCode().compareTo(darTwo.getData().getDarCode());
+    int comparatorValue = darOne.getData().getDarCode().compareTo(darTwo.getData().getDarCode());
     assertTrue(comparatorValue < 0);
   }
 
