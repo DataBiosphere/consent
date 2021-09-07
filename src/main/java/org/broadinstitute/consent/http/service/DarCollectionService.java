@@ -25,6 +25,10 @@ public class DarCollectionService {
     return darCollectionDAO.findAllDARCollections();
   }
 
+  public List<DarCollection> getCollectionsForUser(User user) {
+    return darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
+  }
+
   public ImmutablePair<List<DarCollection>, List<PaginationToken>> getCollectionsWithFilters(
       PaginationToken token, User user) {
     // TODO: Somehow filter on user access.
