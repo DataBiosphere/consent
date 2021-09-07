@@ -3,6 +3,10 @@ set -e
 
 ## Run from automation/
 ## Pulls templatized configs and renders them to src/test/resources
+## Log into vault first:
+##    vault login -method=github token=$(cat ~/.github-token)
+## Requires jq:
+##    brew install jq
 
 # Defaults
 WORKING_DIR=$PWD
@@ -35,7 +39,10 @@ fi
 listOfRoles="admin
 chair
 member
-researcher"
+researcher
+signing-official"
+
+mkdir -p src/test/resources/accounts
 
 for role in $listOfRoles; do
   echo "Writing $role file from $secretPath/duos-automation-$role.json"
