@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -16,39 +17,55 @@ import java.util.List;
 
 public interface DarCollectionDAO {
 
-  final String getCollectionAndDars =
+  String getCollectionAndDars =
       "SELECT c.*, i.institution_name, u.displayname AS researcher, dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
           "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
           "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
           "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, " +
           "(dar.data #>> '{}')::jsonb ->> 'projectTitle' as projectTitle " +
-      "FROM dar_collection c " + 
+      "FROM dar_collection c " +
       "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id " +
       "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
       "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id ";
-  
-  final String filterQuery = 
-    "WHERE COALESCE(i.institution_name, '') ~* :institutionSearchTerm " +
-    "AND (dar.data #>> '{}')::jsonb ->> 'projectTitle' ~* :projectSearchTerm " +
-    "AND u.displayname ~* :researcherSearchTerm " +
-    "AND c.dar_code ~* :darCodeSearchTerm " + 
-    "AND EXISTS " +
-        "(SELECT FROM jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasets') dataset " +
-        "WHERE dataset ->> 'label' ~* :datasetSearchTerm)";
 
-  final String getFilteredCollectionIds = 
-  "SELECT DISTINCT(collection_id), <sortField> FROM (" +
-    getCollectionAndDars + filterQuery + 
-    ") collections ";
-  
-  final String getCollectionsAndDarsViaIds = 
-  getCollectionAndDars +
-  "WHERE c.collection_id IN " + 
-    "(SELECT collection_id FROM (" +
-      getFilteredCollectionIds +
-    ") ids) " +
-    "ORDER BY <sortField> <sortOrder>"; 
-  
+  String filterQuery =
+    "WHERE COALESCE(i.institution_name, '') ~* :filterTerm " +
+    "OR (dar.data #>> '{}')::jsonb ->> 'projectTitle' ~* :filterTerm " +
+    "OR u.displayname ~* :filterTerm " +
+    "OR c.dar_code ~* :filterTerm " +
+    "OR EXISTS " +
+        "(SELECT FROM jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasets') dataset " +
+        "WHERE dataset ->> 'label' ~* :filterTerm)";
+
+  String getCollectionsAndDarsViaIds =
+  getCollectionAndDars + filterQuery +
+    "ORDER BY <sortField> <sortOrder>";
+
+  /**
+   * Find all DARCollections with their DataAccessRequests that match the given filters
+   *
+   * <p>FilterTerms filter on dar project title, datasetNames, collection dar code, collection
+   * update date, and DAC SortField can be projectTitle, datasetNames, dar code, update date, or DAC
+   * SortDirection can be ASC or DESC
+   *
+   * @return List<DarCollection>
+   */
+  @RegisterBeanMapper(value = DarCollection.class)
+  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
+  @UseRowReducer(DarCollectionReducer.class)
+  @SqlQuery(getCollectionsAndDarsViaIds)
+  List<DarCollection> findAllDARCollectionsWithFilters(
+          @Bind("filterTerm") String filterTerm,
+          @Define("sortField") String sortField,
+          @Define("sortOrder") String sortOrder);
+
+
+  @SqlQuery(getCollectionAndDars + " WHERE c.collection_id in (<collectionIds>)")
+  List<DarCollection> findDARCollectionByCollectionIds(
+          @BindList("collectionIds") List<Integer> collectionIds,
+          @Define("sortField") String sortField,
+          @Define("sortOrder") String sortOrder);
+
   /**
    * Find all DARCollections with their DataAccessRequests
    *
@@ -74,33 +91,10 @@ public interface DarCollectionDAO {
       + "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, "
       + "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
       + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data "
-      + "FROM dar_collection c " 
+      + "FROM dar_collection c "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "AND c.create_user_id = :userId")
   List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
-
-  /**
-   * Find all DARCollections with their DataAccessRequests that match the given filters
-   *
-   * FilterTerms filter on dar project title, datasetNames, collection dar code, collection update date, and DAC
-   * SortField can be projectTitle, datasetNames, dar code, update date, or DAC
-   * SortDirection can be ASC or DESC
-   *
-   * @return List<DarCollection>
-   */
-
- @RegisterBeanMapper(value = DarCollection.class)
- @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
- @UseRowReducer(DarCollectionReducer.class)
- @SqlQuery(getCollectionsAndDarsViaIds)
- List<DarCollection> findAllDARCollectionsWithFilters(
-                                                    @Bind("institutionSearchTerm") String institutionSearchTerm,
-                                                    @Bind("projectSearchTerm") String projectSearchTerm,
-                                                    @Bind("researcherSearchTerm") String researcherSearchTerm,
-                                                    @Bind("darCodeSearchTerm") String darCodeSearchTerm,
-                                                    @Bind("datasetSearchTerm") String datasetSearchTerm,
-                                                    @Define("sortField") String sortField,
-                                                    @Define("sortOrder") String sortOrder);
 
   /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given referenceId
@@ -111,7 +105,7 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DataAccessRequest.class,  prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-    "SELECT " + 
+    "SELECT " +
       "c.*, dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
       "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
       "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +

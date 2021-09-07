@@ -32,7 +32,7 @@ public class PaginationToken {
   private String sortDirection;
 
   @JsonProperty
-  private List<String> filterTerms;
+  private String filterTerm;
 
   @JsonProperty
   private Integer filteredCount;
@@ -50,19 +50,19 @@ public class PaginationToken {
   private PaginationToken nextPageToken;
 
   //constructor for request tokens
-  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, List<String> filterTerms) {
+  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm) {
     checkSortField(sortField);
     checkSortDirection(sortDirection);
     this.page = page;
     this.pageSize = pageSize;
     this.sortField = sortField;
     this.sortDirection = sortDirection;
-    this.filterTerms = filterTerms;
+    this.filterTerm = filterTerm;
     checkForValidNumbers();
   }
 
   //constructor for response tokens
-  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, List<String> filterTerms,
+  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm,
                          Integer filteredCount, Integer filteredPageCount, Integer unfilteredCount) {
     checkSortField(sortField);
     checkSortDirection(sortDirection);
@@ -70,7 +70,7 @@ public class PaginationToken {
     this.pageSize = pageSize;
     this.sortField = sortField;
     this.sortDirection = sortDirection;
-    this.filterTerms = filterTerms;
+    this.filterTerm = filterTerm;
     this.filteredCount = filteredCount;
     this.filteredPageCount = filteredPageCount;
     this.unfilteredCount = unfilteredCount;
@@ -93,8 +93,8 @@ public class PaginationToken {
     return this.sortDirection;
   }
 
-  public List<String> getFilterTerms() {
-    return this.filterTerms;
+  public String getFilterTerm() {
+    return this.filterTerm;
   }
 
   public Integer getFilteredCount() {
@@ -125,7 +125,7 @@ public class PaginationToken {
     if (page == 0) {
     this.previousPageToken = null;
     } else {
-      this.previousPageToken = new PaginationToken(page - 1, pageSize, sortField, sortDirection, filterTerms);
+      this.previousPageToken = new PaginationToken(page - 1, pageSize, sortField, sortDirection, filterTerm);
     }
   }
 
@@ -135,7 +135,7 @@ public class PaginationToken {
     if (Objects.nonNull(filteredPageCount) && page == filteredPageCount) {
       this.nextPageToken = null;
     } else {
-      this.nextPageToken = new PaginationToken(page + 1, pageSize, sortField, sortDirection, filterTerms);
+      this.nextPageToken = new PaginationToken(page + 1, pageSize, sortField, sortDirection, filterTerm);
     }
   }
 
@@ -203,7 +203,7 @@ public class PaginationToken {
                   this.getPageSize(),
                   this.getSortField(),
                   this.getSortDirection(),
-                  this.getFilterTerms(),
+                  this.getFilterTerm(),
                   this.getFilteredCount(),
                   this.getFilteredPageCount(),
                   this.getUnfilteredCount());
