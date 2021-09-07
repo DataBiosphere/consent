@@ -31,19 +31,17 @@ public class DarCollectionService {
 
   /**
    * Find all filtered DAR Collections for a user
+   *  1. Fetch unfiltered count: Query #1
+   *  2. Fetch filtered collection ids, no limit or offset: Query #2
+   *  3. Update the token info with new counts if different
+   *  4. Slice that filtered list of ids based on token page # + count per page
+   *  5. Get the collections for that list of ids: Query #3
    *
-   * @param token A Pagination Token
+   * @param token A PaginationToken
    * @param user A User
    * @return A PaginationResponse object
    */
-  public PaginationResponse<DarCollection> getCollectionsWithFilters(
-      PaginationToken token, User user) {
-
-    // 1. Fetch unfiltered count: Query #1
-    // 2. Fetch filtered collection ids, no limit or offset: Query #2
-    // 3. Slice that filtered list of ids based on token page # + count per page
-    // 4. Get the collections for that list of ids: Query #3
-    // 5. Update the token info with new counts if different
+  public PaginationResponse<DarCollection> getCollectionsWithFilters(PaginationToken token, User user) {
 
     List<DarCollection> unfilteredDars = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
     token.setUnfilteredCount(unfilteredDars.size());

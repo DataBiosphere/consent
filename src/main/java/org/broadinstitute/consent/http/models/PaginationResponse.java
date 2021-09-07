@@ -4,9 +4,9 @@ import java.util.List;
 
 public class PaginationResponse<T> {
 
-  PaginationToken currentToken;
-  List<T> results;
-  List<PaginationToken> paginationTokens;
+  private PaginationToken currentToken;
+  private List<T> results;
+  private List<PaginationToken> paginationTokens;
 
   public PaginationToken getCurrentToken() {
     return currentToken;
