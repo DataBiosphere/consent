@@ -6,16 +6,36 @@ import java.util.List;
 
 public class PaginationResponse<T> {
 
-  private PaginationToken currentToken;
+  private Integer unfilteredCount;
+  private Integer filteredCount;
+  private Integer filteredPageCount;
   private List<T> results;
-  private List<PaginationToken> paginationTokens;
+  private List<String> paginationTokens;
 
-  public PaginationToken getCurrentToken() {
-    return currentToken;
+  public Integer getUnfilteredCount() {
+    return unfilteredCount;
   }
 
-  public PaginationResponse<T> setCurrentToken(PaginationToken currentToken) {
-    this.currentToken = currentToken;
+  public PaginationResponse<T> setUnfilteredCount(Integer unfilteredCount) {
+    this.unfilteredCount = unfilteredCount;
+    return this;
+  }
+
+  public Integer getFilteredCount() {
+    return filteredCount;
+  }
+
+  public PaginationResponse<T> setFilteredCount(Integer filteredCount) {
+    this.filteredCount = filteredCount;
+    return this;
+  }
+
+  public Integer getFilteredPageCount() {
+    return filteredPageCount;
+  }
+
+  public PaginationResponse<T> setFilteredPageCount(Integer filteredPageCount) {
+    this.filteredPageCount = filteredPageCount;
     return this;
   }
 
@@ -28,11 +48,11 @@ public class PaginationResponse<T> {
     return this;
   }
 
-  public List<PaginationToken> getPaginationTokens() {
+  public List<String> getPaginationTokens() {
     return paginationTokens;
   }
 
-  public PaginationResponse<T> setPaginationTokens(List<PaginationToken> paginationTokens) {
+  public PaginationResponse<T> setPaginationTokens(List<String> paginationTokens) {
     this.paginationTokens = paginationTokens;
     return this;
   }

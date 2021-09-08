@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -48,8 +49,7 @@ public class DarCollectionServiceTest {
     init();
 
     PaginationResponse<DarCollection> response = service.getCollectionsWithFilters(token, user);
-    response.getPaginationTokens().forEach(System.out::println);
-    response.getResults().forEach(System.out::println);
+    assertEquals((int) token.getPageSize(), response.getResults().size());
   }
 
   private List<DarCollection> createMockDars(int count) {

@@ -55,13 +55,15 @@ public class DarCollectionService {
     int offset = token.getPageSize() * (token.getPage() - 1);
     // TODO: handle exceptions and inclusivity
     List<Integer> slice = collectionIds.subList(offset, offset + token.getPageSize());
-
     List<DarCollection> slicedCollections = darCollectionDAO.findDARCollectionByCollectionIds(slice, token.getSortField(), token.getSortDirection());
-
+    List<PaginationToken> orderedTokens = token.createListOfPaginationTokensFromSelf();
+    List<String> orderedTokenStrings = orderedTokens.stream().map(PaginationToken::toBase64).collect(Collectors.toList());
     return new PaginationResponse<DarCollection>()
-            .setCurrentToken(token)
+            .setUnfilteredCount(token.getUnfilteredCount())
+            .setFilteredCount(token.getFilteredCount())
+            .setFilteredPageCount(orderedTokens.size())
             .setResults(slicedCollections)
-            .setPaginationTokens(token.createListOfPaginationTokensFromSelf());
+            .setPaginationTokens(orderedTokenStrings);
   }
 
   public DarCollection getByReferenceId(String referenceId) {
