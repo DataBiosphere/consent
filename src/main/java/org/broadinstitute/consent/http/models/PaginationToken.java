@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import liquibase.pro.packaged.O;
 
 import javax.ws.rs.BadRequestException;
 import java.nio.charset.Charset;
@@ -219,6 +218,16 @@ public class PaginationToken {
                   this.getUnfilteredCount());
             })
         .collect(Collectors.toList());
+  }
+
+  public int getStartIndex() {
+    return (this.getPage() * this.getPageSize()) - this.getPageSize();
+  }
+
+  public int getEndIndex() {
+    return Math.min(
+            (getStartIndex() + this.getPageSize()),
+            (this.getFilteredCount() - 1));
   }
 
   @Override

@@ -51,10 +51,7 @@ public class DarCollectionService {
     token.setFilteredCount(filteredDars.size());
 
     List<Integer> collectionIds = filteredDars.stream().map(DarCollection::getDarCollectionId).collect(Collectors.toList());
-    // TODO: What is the slice
-    int offset = token.getPageSize() * (token.getPage() - 1);
-    // TODO: handle exceptions and inclusivity
-    List<Integer> slice = collectionIds.subList(offset, offset + token.getPageSize());
+    List<Integer> slice = collectionIds.subList(token.getStartIndex(), token.getEndIndex());
     List<DarCollection> slicedCollections = darCollectionDAO.findDARCollectionByCollectionIds(slice, token.getSortField(), token.getSortDirection());
     List<PaginationToken> orderedTokens = token.createListOfPaginationTokensFromSelf();
     List<String> orderedTokenStrings = orderedTokens.stream().map(PaginationToken::toBase64).collect(Collectors.toList());
