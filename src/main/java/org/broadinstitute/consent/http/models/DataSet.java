@@ -187,4 +187,8 @@ public class DataSet {
     public static String parseAliasToIdentifier(Integer alias) {
         return PREFIX + StringUtils.leftPad(alias.toString(), 6, "0");
     }
+
+    // public boolean isEqual(List<DataSetProperty> comparablePropertes {
+        
+    // }
 }

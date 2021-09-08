@@ -23,7 +23,10 @@ import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.UserService;
 
@@ -45,21 +48,30 @@ public class DarCollectionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @RolesAllowed(RESEARCHER)
-  public Response getCollectionsByUserId(@Auth AuthUser authUser, @PathParam("id") Integer userId) {
+  public Response getCollectionsForResearcher(@Auth AuthUser authUser) {
     try{
       User user = userService.findUserByEmail(authUser.getEmail());
       List<DarCollection> collections = darCollectionService.findDarCollectionsByUserId(user.getDacUserId());
-      if(user.hasUserRole(UserRoles.ADMIN) || user.hasUserRole(UserRoles.CHAIRPERSON)) {
-        HashMap<Integer, DarCollection> collectionMapping = darCollectionService.sortCollectionsByDataUse(collections);
-      }
+      return Response.ok().entity(collections).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
     }
   }
 
-  public List<DarCollection> sortCollectionsByDataUse(List<DarCollection> collections, User user) {
-    if(user.hasUserRole(UserRoles.ADMIN) || user.hasUserRole(UserRoles.CHAIRPERSON)) {
-      HashMap<Integer, DarCollection> collectionMapping = darCollectionService.sortCollectionsByDataUse(collections);
+  @GET
+  @Produces("application/json")
+  @Path("/{id}")
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  public Response getCollectionsForRole(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
+    try{
+        //NOTE: overall flow for function, may need to split functionality between resource and service
+        //(1) get user, get user role
+        //(2) fetch collections based on role
+        //(3) fetch datasets and add to collection
+        //(4) return collections response
+      }
+    } catch(Exception e) {
+      createExceptionResponse(e);
     }
   }
 }

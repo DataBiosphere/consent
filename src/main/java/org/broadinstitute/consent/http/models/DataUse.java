@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @SuppressWarnings({"unused", "SameParameterValue", "WeakerAccess"})
@@ -378,6 +379,72 @@ public class DataUse {
                 return Optional.empty();
             }
         }
+    }
+
+    public boolean isDataUseEqual(DataUse comparableDataUse) {
+        // NOTE: figure out if population logic from DAR applies here
+        // add logic here once certain
+        
+        // NOTE: not sure if cloud storage needs to be processed for use restriction
+        // should ask for more clarification
+        
+        // NOTE: other essentially ensures manualReview flag, so is there any need to compare
+        // secondaryOther?
+
+        //NOTE: what does population restrictions entail?
+
+        //NOTE: what does date Restriction entail?
+        
+        //NOTE: are these being used/evaluated?
+        //recontactingDataSubjects
+        //recontatingMay
+        //recontactMust
+        //genomicPhenotypeData
+        //cloudStorage
+        //geographicalRestrictions
+        //nonBiomendical
+        //publicationResults
+        //genomic results
+        //genomicSummaryResults
+        //collaborationInvestigators
+        //publicationMoratorium
+
+        return generalUse == comparableDataUse.getGeneralUse()
+            && hmbResearch == comparableDataUse.getHmbResearch()
+            && compareDiseaseRestrictions(diseaseRestrictions, comparableDataUse.getDiseaseRestrictions())
+            && commercialUse == comparableDataUse.getCommercialUse()
+            && methodsResearch == comparableDataUse.getMethodsResearch()
+            && aggregateResearch == comparableDataUse.getAggregateResearch()
+            && controlSetOption == comparableDataUse.getControlSetOption()
+            && gender.equalsIgnoreCase(comparableDataUse.getGender())
+            && pediatric == comparableDataUse.getPediatric()
+            && ethicsApprovalRequired == comparableDataUse.getEthicsApprovalRequired()
+            && collaboratorRequired == comparableDataUse.getCollaboratorRequired()
+            && illegalBehavior == comparableDataUse.getIllegalBehavior()
+            && addiction == comparableDataUse.getAddiction()
+            && sexualDiseases == comparableDataUse.getSexualDiseases()
+            && stigmatizeDiseases == comparableDataUse.getStigmatizeDiseases()
+            && vulnerablePopulations == comparableDataUse.getVulnerablePopulations()
+            && psychologicalTraits == comparableDataUse.getPsychologicalTraits()
+            && manualReview == comparableDataUse.getManualReview()
+            && geneticStudiesOnly == comparableDataUse.getGeneticStudiesOnly();
+    }
+
+    private boolean compareDiseaseRestrictions(List<String> diseaseRestrictions, List<String> comparableDiseaseRestrictions) {
+        if(Objects.isNull(diseaseRestrictions) && Objects.isNull(comparableDiseaseRestrictions)) {
+            return true;
+        } else if(Objects.isNull(diseaseRestrictions) || Objects.isNull(comparableDiseaseRestrictions)) {
+            return false;
+        } else if (diseaseRestrictions.size() != comparableDiseaseRestrictions.size()) {
+            return false;
+        } else {   
+            for(String disease : diseaseRestrictions) {
+                if(!comparableDiseaseRestrictions.contains(disease)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
 }

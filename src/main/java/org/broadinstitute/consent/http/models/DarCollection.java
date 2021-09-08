@@ -2,12 +2,14 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.HashMap;
 
 //represents a multi-dataset access request
 public class DarCollection {
@@ -33,7 +35,12 @@ public class DarCollection {
   @JsonProperty
   List<DataAccessRequest> dars;
 
-  public DarCollection() {this.createDate = new Timestamp(System.currentTimeMillis()); }
+  HashMap<DataUse, List<DatasetDTO>> datasetBins;
+
+  public DarCollection() {
+    this.createDate = new Timestamp(System.currentTimeMillis());
+    this.datasetBins = new HashMap<DataUse, List<DatasetDTO>>();
+  }
 
   public Integer getDarCollectionId() {
     return darCollectionId;
@@ -97,6 +104,18 @@ public class DarCollection {
       this.setDars(new ArrayList<>());
     }
     dars.add(dar);
+  }
+
+  public void addDatasetToBucket(DatasetDTO dataset) {
+    for(DataUse dataUse : datasetBins.keySet()) {
+      if(dataUse.isDataUseEqual(dataset.getDataUse())) {
+        datasetBins.get(dataUse).add(dataset);
+      } else {
+        List<DatasetDTO> datasets = new ArrayList<DatasetDTO>();
+        datasets.add(dataset);
+        datasetBins.put(dataset.getDataUse(), datasets);
+      }
+    }
   }
 
   @Override
