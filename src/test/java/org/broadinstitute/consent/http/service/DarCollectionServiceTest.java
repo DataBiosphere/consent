@@ -67,13 +67,10 @@ public class DarCollectionServiceTest {
     List<DarCollection> filteredDars = unfilteredDars.subList(0, 75 - 1);
     token.setUnfilteredCount(unfilteredDars.size());
     token.setFilteredCount(filteredDars.size());
-    List<DarCollection> collectionIdDars =
-        filteredDars.subList(token.getStartIndex(), token.getEndIndex());
+    List<DarCollection> collectionIdDars = filteredDars.subList(token.getStartIndex(), token.getEndIndex());
     when(darCollectionDAO.findDARCollectionsCreatedByUserId(any())).thenReturn(unfilteredDars);
-    when(darCollectionDAO.findAllDARCollectionsWithFiltersByUser(any(), any(), any(), any()))
-        .thenReturn(filteredDars);
-    when(darCollectionDAO.findDARCollectionByCollectionIds(any(), any(), any()))
-        .thenReturn(collectionIdDars);
+    when(darCollectionDAO.findAllDARCollectionsWithFiltersByUser(any(), any(), any(), any())).thenReturn(filteredDars);
+    when(darCollectionDAO.findDARCollectionByCollectionIds(any(), any(), any())).thenReturn(collectionIdDars);
     service = new DarCollectionService(darCollectionDAO);
   }
 
