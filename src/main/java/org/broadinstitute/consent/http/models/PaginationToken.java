@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 
 import javax.ws.rs.BadRequestException;
 import java.nio.charset.Charset;
@@ -42,12 +41,6 @@ public class PaginationToken {
 
   @JsonProperty
   private Integer unfilteredCount;
-
-  @JsonProperty
-  private PaginationToken previousPageToken;
-
-  @JsonProperty
-  private PaginationToken nextPageToken;
 
   //constructor for request tokens
   public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm) {
@@ -110,11 +103,11 @@ public class PaginationToken {
      * 3. Anything else, i.e. count of 55, page size of 10, page size is 6
      */
     if (filteredCount <= this.getPageSize()) {
-      this.filteredPageCount = 1;
+      setFilteredPageCount(1);
     } else if (((filteredCount/this.getPageSize()) % this.getPageSize()) == 0) {
-      this.filteredPageCount = filteredCount/this.getPageSize();
+      setFilteredPageCount(filteredCount/this.getPageSize());
     } else {
-      this.filteredPageCount = (filteredCount/this.getPageSize()) + 1;
+      setFilteredPageCount((filteredCount/this.getPageSize()) + 1);
     }
   }
 
@@ -134,41 +127,8 @@ public class PaginationToken {
     this.filteredPageCount = filteredPageCount;
   }
 
-  public void generatePrevious() {
-    if (page == 0) {
-    this.previousPageToken = null;
-    } else {
-      this.previousPageToken = new PaginationToken(page - 1, pageSize, sortField, sortDirection, filterTerm);
-    }
-  }
-
-  //could result in bad request if page is greater than page count but unable to do validation
-  //in every case here because pagecount is only populated in response tokens
-  public void generateNext() {
-    if (Objects.nonNull(filteredPageCount) && page == filteredPageCount) {
-      this.nextPageToken = null;
-    } else {
-      this.nextPageToken = new PaginationToken(page + 1, pageSize, sortField, sortDirection, filterTerm);
-    }
-  }
-
-
   public String toBase64() {
     return Base64.getEncoder().encodeToString(new Gson().toJson(this).getBytes(UTF_8));
-  }
-
-  public static PaginationToken fromBase64(String str) {
-    String json = new String(Base64.getDecoder().decode(str), UTF_8);
-    try {
-      PaginationToken result = new Gson().fromJson(json, PaginationToken.class);
-      if (result.getPage() < 0) {
-        throw new BadRequestException(
-          String.format("Invalid pagination offset: %d", result.getPage()));
-      }
-      return result;
-    } catch (JsonSyntaxException e) {
-      throw new BadRequestException(String.format("Invalid pagination token: %s", str));
-    }
   }
 
   private void checkSortField(String sortField) {
@@ -235,7 +195,7 @@ public class PaginationToken {
   public int getEndIndex() {
     return Math.min(
             (getStartIndex() + this.getPageSize()),
-            (this.getFilteredCount() - 1));
+            (this.getFilteredCount()));
   }
 
   @Override
