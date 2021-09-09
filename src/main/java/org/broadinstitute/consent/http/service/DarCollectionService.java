@@ -96,6 +96,6 @@ public class DarCollectionService {
 
   public DarCollection updateDarCollection(Integer collectionId, User user) {
     darCollectionDAO.updateDarCollection(collectionId, user.getDacUserId(), new Date());
-    return null;
+    return getByCollectionId(collectionId);
   }
 }
