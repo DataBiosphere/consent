@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -70,11 +71,21 @@ public class DarCollectionServiceTest {
       initWithPaginationToken(token, unfilteredCount, filteredCount);
       PaginationResponse<DarCollection> response = service.getCollectionsWithFilters(token, user);
 
-      System.out.println(response);
-
       assertEquals(1, response.getFilteredPageCount().intValue());
       assertEquals(filteredCount, response.getResults().size());
       assertEquals(filteredCount, response.getFilteredCount().intValue());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testInitWithInvalidTokenValues() {
+      int filteredCount = 5;
+      int unfilteredCount = 20;
+      PaginationToken token = new PaginationToken(2, 10, null, null, null);
+      initWithPaginationToken(token, unfilteredCount, filteredCount);
+
+      // Start index will be > end index in this case since we're trying to get results 11-20 when
+      // there are only 5 items in the results array.
+      service.getCollectionsWithFilters(token, user);
   }
 
   private void initWithPaginationToken(PaginationToken token, int unfilteredCount, int filteredCount) {
@@ -84,7 +95,10 @@ public class DarCollectionServiceTest {
     List<DarCollection> filteredDars = unfilteredDars.subList(0, filteredCount);
     token.setUnfilteredCount(unfilteredDars.size());
     token.setFilteredCount(filteredDars.size());
-    List<DarCollection> collectionIdDars = filteredDars.subList(token.getStartIndex(), token.getEndIndex());
+    List<DarCollection> collectionIdDars = new ArrayList<>();
+    if (token.getStartIndex() <= token.getEndIndex()) {
+        collectionIdDars.addAll(filteredDars.subList(token.getStartIndex(), token.getEndIndex()));
+    }
     when(darCollectionDAO.findDARCollectionsCreatedByUserId(any())).thenReturn(unfilteredDars);
     when(darCollectionDAO.findAllDARCollectionsWithFiltersByUser(any(), any(), any(), any())).thenReturn(filteredDars);
     when(darCollectionDAO.findDARCollectionByCollectionIds(any(), any(), any())).thenReturn(collectionIdDars);
