@@ -103,7 +103,15 @@ public class PaginationToken {
 
   public void setFilteredCount(Integer filteredCount) {
     this.filteredCount = filteredCount;
-    if (((filteredCount/this.getPageSize()) % this.getPageSize()) == 0) {
+    /*
+     * Three cases in determining filtered page count
+     * 1. The count is less than the page size: page size = 1
+     * 2. The count/page size modulo page size is 0, i.e. count of 50, page size of 10, page count is 5
+     * 3. Anything else, i.e. count of 55, page size of 10, page size is 6
+     */
+    if (filteredCount <= this.getPageSize()) {
+      this.filteredPageCount = 1;
+    } else if (((filteredCount/this.getPageSize()) % this.getPageSize()) == 0) {
       this.filteredPageCount = filteredCount/this.getPageSize();
     } else {
       this.filteredPageCount = (filteredCount/this.getPageSize()) + 1;
