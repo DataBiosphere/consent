@@ -47,7 +47,7 @@ public class DarCollectionServiceTest {
                ...
                page 8: ids 71-75
               */
-              // Assert that the page sizes are correct
+              // Assert that the results sizes are correct
               if (page == 8) {
                 int lastPageSize = token.getFilteredCount() % token.getPageSize();
                 assertEquals(lastPageSize, response.getResults().size());
