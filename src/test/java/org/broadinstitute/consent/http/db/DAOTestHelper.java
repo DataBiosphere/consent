@@ -455,7 +455,7 @@ public class DAOTestHelper {
         createdLibraryCardIds.add(id);
         return libraryCardDAO.findLibraryCardById(id);
     }
-    
+
     protected LibraryCard createLCForUnregisteredUser(Integer institutionId) {
         Integer createUserId = createUser().getDacUserId();
         String email = RandomStringUtils.randomAlphabetic(10);
@@ -503,6 +503,16 @@ public class DAOTestHelper {
             insertDAR(user.getDacUserId(), collection_id, darCode);
         }
         return insertDAR(user.getDacUserId(), collection_id, darCode);
+    }
+
+    protected DataAccessRequest createDataAccessRequestWithUserIdV3(Integer userId) {
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Integer collection_id = darCollectionDAO.insertDarCollection(darCode, userId, new Date());
+        createdDarCollections.add(collection_id);
+        for(int i = 0; i < 4; i++) {
+            insertDAR(userId, collection_id, darCode);
+        }
+        return insertDAR(userId, collection_id, darCode);
     }
 
     protected Integer createDataAccessRequestUserWithInstitute() {
