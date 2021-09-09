@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -76,7 +77,7 @@ public class DarCollectionServiceTest {
       assertEquals(filteredCount, response.getFilteredCount().intValue());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testInitWithInvalidTokenValues() {
       int filteredCount = 5;
       int unfilteredCount = 20;
@@ -84,8 +85,9 @@ public class DarCollectionServiceTest {
       initWithPaginationToken(token, unfilteredCount, filteredCount);
 
       // Start index will be > end index in this case since we're trying to get results 11-20 when
-      // there are only 5 items in the results array.
-      service.getCollectionsWithFilters(token, user);
+      // there are only 5 items in the results array, so there should be 0 results returned
+      PaginationResponse<DarCollection> response = service.getCollectionsWithFilters(token, user);
+      assertTrue(response.getResults().isEmpty());
   }
 
   private void initWithPaginationToken(PaginationToken token, int unfilteredCount, int filteredCount) {
