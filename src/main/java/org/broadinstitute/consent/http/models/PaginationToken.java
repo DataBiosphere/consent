@@ -167,24 +167,17 @@ public class PaginationToken {
    * @return Ordered list of PaginationTokens
    */
   public List<PaginationToken> createListOfPaginationTokensFromSelf() {
-    int currentPage = this.getPage();
-    int lastPage = this.getFilteredPageCount();
-    return IntStream.rangeClosed(1, lastPage)
+    return IntStream.rangeClosed(1, this.getFilteredPageCount())
         .mapToObj(
-            i -> {
-              if (i == currentPage) {
-                return this;
-              }
-              return new PaginationToken(
-                  i,
-                  this.getPageSize(),
-                  this.getSortField(),
-                  this.getSortDirection(),
-                  this.getFilterTerm(),
-                  this.getFilteredCount(),
-                  this.getFilteredPageCount(),
-                  this.getUnfilteredCount());
-            })
+            i -> new PaginationToken(
+                i,
+                this.getPageSize(),
+                this.getSortField(),
+                this.getSortDirection(),
+                this.getFilterTerm(),
+                this.getFilteredCount(),
+                this.getFilteredPageCount(),
+                this.getUnfilteredCount()))
         .collect(Collectors.toList());
   }
 
