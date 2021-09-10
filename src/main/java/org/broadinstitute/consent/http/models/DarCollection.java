@@ -40,11 +40,8 @@ public class DarCollection {
 
   Set<DatasetDTO> datasets;
 
-  HashMap<DataUse, List<DatasetDTO>> datasetBins;
-
   public DarCollection() {
     this.createDate = new Timestamp(System.currentTimeMillis());
-    this.datasetBins = new HashMap<DataUse, List<DatasetDTO>>();
     this.datasets = new HashSet<DatasetDTO>();
   }
 
@@ -120,18 +117,6 @@ public class DarCollection {
 
   public Set<DatasetDTO> getDatasets() {
     return datasets;
-  }
-
-  public void addDatasetToBucket(DatasetDTO dataset) {
-    for(DataUse dataUse : datasetBins.keySet()) {
-      if(dataUse.isDataUseEqual(dataset.getDataUse())) {
-        datasetBins.get(dataUse).add(dataset);
-      } else {
-        List<DatasetDTO> datasets = new ArrayList<DatasetDTO>();
-        datasets.add(dataset);
-        datasetBins.put(dataset.getDataUse(), datasets);
-      }
-    }
   }
 
   @Override
