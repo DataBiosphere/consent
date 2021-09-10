@@ -108,7 +108,7 @@ public class DarCollectionService {
   //Writing this method here so it can be testable and reused for collection resources
   //This method will be expanded to account for dataset binning once roles come into play
   //For now it's functionality is simple, fetch the datasets and attach it to the collection
-  //DTO class is being used due to it having more meaning information (namely dataUse) attached to it
+  //DTO class is used to to it's dataUse attribute which will be needed for binning functionality (to be added soon)
   public void addDatasetsToCollections(List<DarCollection> collections) {
     for (DarCollection collection : collections) {
       List<Integer> datasetIds = new ArrayList<Integer>();
