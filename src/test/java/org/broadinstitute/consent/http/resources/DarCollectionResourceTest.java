@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -100,6 +99,8 @@ public class DarCollectionResourceTest {
     Response response = resource.getCollectionsForResearcher(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
+  
+
 
   
 }
