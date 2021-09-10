@@ -183,9 +183,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @RegisterBeanMapper(value = Institution.class, prefix = "lci")
     @UseRowReducer(UnregisteredUsersWithCardsReducer.class)
     @SqlQuery(" SELECT lc.*, " +
-            " i.institution_id as lci_id, i.institution_name as lci_name, " +
-            " i.it_director_name as lci_it_director_name, i.it_director_email as lci_it_director_email, " +
-            " i.create_date as lci_create_date, i.update_date as lci_update_date " +
+            Institution.QUERY_FIELDS_WITH_LCI_PREFIX +
             " FROM library_card lc " +
             " LEFT JOIN institution i ON lc.institution_id = i.institution_id" +
             " WHERE lc.user_id IS NULL " +
@@ -203,9 +201,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           + " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, "
           + " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, "
           + " lc.update_user_id AS lc_update_user_id, "
-          + " i.institution_id as lci_id, i.institution_name as lci_name, "
-          + " i.it_director_name as lci_it_director_name, i.it_director_email as lci_it_director_email, "
-          + " i.create_date as lci_create_date, i.update_date as lci_update_date "
+          + Institution.QUERY_FIELDS_WITH_LCI_PREFIX
           + " FROM dacuser du"
           + " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid "
           + " LEFT JOIN roles r ON r.roleid = ur.role_id "
@@ -227,9 +223,7 @@ public interface UserDAO extends Transactional<UserDAO> {
                 " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
                 " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, " +
                 " lc.update_user_id AS lc_update_user_id, " +
-                " i.institution_id as i_id, i.institution_name as i_name, " +
-                " i.it_director_name as i_it_director_name, i.it_director_email as i_it_director_email, " +
-                " i.create_date as i_create_date, i.update_date as i_update_date " +
+                Institution.QUERY_FIELDS_WITH_I_PREFIX +
             " FROM dacuser du " +
             " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
             " LEFT JOIN roles r ON r.roleid = ur.role_id " +
