@@ -39,6 +39,7 @@ import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -199,6 +200,14 @@ public class ConsentModule extends AbstractModule {
         return new AuditService(
                 providesUserDAO(),
                 providesWorkspaceAuditDAO());
+    }
+
+    @Provides
+    DarCollectionService providesDarCollectionService() {
+        return new DarCollectionService(
+            providesDARCollectionDAO(),
+            providesDataSetDAO()
+        );
     }
 
     @Provides
