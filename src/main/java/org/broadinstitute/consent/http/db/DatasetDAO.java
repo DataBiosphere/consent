@@ -102,6 +102,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlUpdate("UPDATE dataset SET update_date = :updateDate, update_user_id = :updateUserId WHERE datasetid = :datasetId")
     void updateDatasetUpdateUserAndDate(@Bind("datasetId") Integer datasetId, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId);
 
+    //NOTE: add test to see if this works
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
@@ -111,8 +112,19 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid " +
           "INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
           "INNER JOIN dacuser u ON ur.user_id = u.dacuserid " +
-          "WHERE u.dacuserid = :dacUserId AND d.name IS NOT NULL " +
+          "WHERE d.datasetid IN (<datasetIds>)" +
           "ORDER BY d.datasetid, k.displayorder")
+    Set<DatasetDTO> findDatasetDTOByIdList(@BindList("datasetIds") List<Integer> datasetIds);
+
+    @UseRowMapper(DataSetPropertiesMapper.class)
+    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause "
+                    + "FROM dataset d " + "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid "
+                    + "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey "
+                    + "LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid "
+                    + "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid "
+                    + "INNER JOIN user_role ur ON ur.dac_id = c.dac_id "
+                    + "INNER JOIN dacuser u ON ur.user_id = u.dacuserid "
+                    + "WHERE u.dacuserid = :dacUserId AND d.name IS NOT NULL " + "ORDER BY d.datasetid, k.displayorder")
     Set<DatasetDTO> findDatasetsByUser(@Bind("dacUserId") Integer dacUserId);
 
     @UseRowMapper(DataSetPropertiesMapper.class)

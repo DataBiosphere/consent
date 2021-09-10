@@ -5,6 +5,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 
 import java.sql.Timestamp;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -35,11 +37,14 @@ public class DarCollection {
   @JsonProperty
   List<DataAccessRequest> dars;
 
+  Set<DatasetDTO> datasets;
+
   HashMap<DataUse, List<DatasetDTO>> datasetBins;
 
   public DarCollection() {
     this.createDate = new Timestamp(System.currentTimeMillis());
     this.datasetBins = new HashMap<DataUse, List<DatasetDTO>>();
+    this.datasets = new HashSet<DatasetDTO>();
   }
 
   public Integer getDarCollectionId() {
@@ -104,6 +109,14 @@ public class DarCollection {
       this.setDars(new ArrayList<>());
     }
     dars.add(dar);
+  }
+
+  public void setDatasets(Set<DatasetDTO> datasets) {
+    this.datasets = datasets;
+  }
+
+  public Set<DatasetDTO> getDatasets() {
+    return datasets;
   }
 
   public void addDatasetToBucket(DatasetDTO dataset) {
