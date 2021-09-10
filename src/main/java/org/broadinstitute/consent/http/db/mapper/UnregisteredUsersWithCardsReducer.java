@@ -21,7 +21,10 @@ public class UnregisteredUsersWithCardsReducer implements LinkedHashMapRowReduce
       try {
         if (Objects.nonNull(rowView.getColumn("lci_id", Integer.class))) {
           Institution institution = rowView.getRow(Institution.class);
-          card.setInstitution(institution);
+          // There are unusual cases where we somehow create an institution with null values
+          if (Objects.nonNull(institution.getId())) {
+            card.setInstitution(institution);
+          }
         }
       } catch (MappingException e) {
         // Ignore institution mapping errors
