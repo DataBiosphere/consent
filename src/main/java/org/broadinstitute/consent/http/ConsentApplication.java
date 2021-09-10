@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.resources.ConsentResource;
 import org.broadinstitute.consent.http.resources.ConsentVoteResource;
 import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DacResource;
+import org.broadinstitute.consent.http.resources.DarCollectionResource;
 import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
 import org.broadinstitute.consent.http.resources.DataAccessRequestResourceVersion2;
 import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
@@ -74,6 +75,7 @@ import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -169,6 +171,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ApprovalExpirationTimeService approvalExpirationTimeService = injector.getProvider(ApprovalExpirationTimeService.class).get();
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
+        final DarCollectionService collectionService = injector.getProvider(DarCollectionService.class).get();
         final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
         final DatasetAssociationService datasetAssociationService = injector.getProvider(DatasetAssociationService.class).get();
         final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
@@ -218,6 +221,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Register standard application resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
+        env.jersey().register(new DarCollectionResource(userService, collectionService, datasetService));
         env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, gcsService, userService, matchService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService, consentService, electionService));
         env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService));
