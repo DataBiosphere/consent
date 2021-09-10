@@ -58,7 +58,10 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
         try {
           if (Objects.nonNull(rowView.getColumn("lci_id", Integer.class))) {
             Institution institution = rowView.getRow(Institution.class);
-            lc.setInstitution(institution);
+            // There are unusual cases where we somehow create an institution with null values
+            if (Objects.nonNull(institution.getId())) {
+              lc.setInstitution(institution);
+            }
           }
         } catch (MappingException e) {
           // Ignore institution mapping errors
