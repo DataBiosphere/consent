@@ -185,7 +185,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlQuery(" SELECT lc.*, " +
             Institution.QUERY_FIELDS_WITH_LCI_PREFIX +
             " FROM library_card lc " +
-            " LEFT JOIN institution i ON lc.institution_id = i.institution_id" +
+            " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id" +
             " WHERE lc.user_id IS NULL " +
             " AND lc.institution_id = :institutionId")
     List<User> getCardsForUnregisteredUsers(@Bind("institutionId") Integer institutionId);
@@ -206,7 +206,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           + " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid "
           + " LEFT JOIN roles r ON r.roleid = ur.role_id "
           + " INNER JOIN library_card lc ON lc.user_id = du.dacuserid "
-          + " LEFT JOIN institution i ON lc.institution_id = i.institution_id"
+          + " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id"
           + " WHERE (du.institution_id != :institutionId OR du.institution_id IS NULL) AND lc.institution_id = :institutionId")
     List<User> getUsersOutsideInstitutionWithCards(@Bind("institutionId") Integer institutionId);
 
