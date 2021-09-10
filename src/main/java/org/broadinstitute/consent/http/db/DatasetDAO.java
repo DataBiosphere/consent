@@ -110,8 +110,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey " +
           "LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
           "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid " +
-          "INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
-          "INNER JOIN dacuser u ON ur.user_id = u.dacuserid " +
           "WHERE d.datasetid IN (<datasetIds>)" +
           "ORDER BY d.datasetid, k.displayorder")
     Set<DatasetDTO> findDatasetDTOByIdList(@BindList("datasetIds") List<Integer> datasetIds);

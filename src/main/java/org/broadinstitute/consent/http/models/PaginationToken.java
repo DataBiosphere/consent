@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 
 import javax.ws.rs.BadRequestException;
 import java.nio.charset.Charset;
@@ -11,6 +10,8 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class PaginationToken {
 
@@ -30,7 +31,7 @@ public class PaginationToken {
   private String sortDirection;
 
   @JsonProperty
-  private List<String> filterTerms;
+  private String filterTerm;
 
   @JsonProperty
   private Integer filteredCount;
@@ -41,26 +42,20 @@ public class PaginationToken {
   @JsonProperty
   private Integer unfilteredCount;
 
-  @JsonProperty
-  private PaginationToken previousPageToken;
-
-  @JsonProperty
-  private PaginationToken nextPageToken;
-
   //constructor for request tokens
-  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, List<String> filterTerms) {
+  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm) {
     checkSortField(sortField);
     checkSortDirection(sortDirection);
     this.page = page;
     this.pageSize = pageSize;
     this.sortField = sortField;
     this.sortDirection = sortDirection;
-    this.filterTerms = filterTerms;
+    this.filterTerm = filterTerm;
     checkForValidNumbers();
   }
 
   //constructor for response tokens
-  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, List<String> filterTerms,
+  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm,
                          Integer filteredCount, Integer filteredPageCount, Integer unfilteredCount) {
     checkSortField(sortField);
     checkSortDirection(sortDirection);
@@ -68,7 +63,7 @@ public class PaginationToken {
     this.pageSize = pageSize;
     this.sortField = sortField;
     this.sortDirection = sortDirection;
-    this.filterTerms = filterTerms;
+    this.filterTerm = filterTerm;
     this.filteredCount = filteredCount;
     this.filteredPageCount = filteredPageCount;
     this.unfilteredCount = unfilteredCount;
@@ -91,16 +86,29 @@ public class PaginationToken {
     return this.sortDirection;
   }
 
-  public List<String> getFilterTerms() {
-    return this.filterTerms;
+  public String getFilterTerm() {
+    return this.filterTerm;
   }
 
   public Integer getFilteredCount() {
     return this.filteredCount;
   }
-  
+
   public void setFilteredCount(Integer filteredCount) {
     this.filteredCount = filteredCount;
+    /*
+     * Three cases in determining filtered page count
+     * 1. The count is less than the page size: page size = 1
+     * 2. The count/page size modulo page size is 0, i.e. count of 50, page size of 10, page count is 5
+     * 3. Anything else, i.e. count of 55, page size of 10, page size is 6
+     */
+    if (filteredCount <= this.getPageSize()) {
+      setFilteredPageCount(1);
+    } else if (((filteredCount/this.getPageSize()) % this.getPageSize()) == 0) {
+      setFilteredPageCount(filteredCount/this.getPageSize());
+    } else {
+      setFilteredPageCount((filteredCount/this.getPageSize()) + 1);
+    }
   }
 
   public Integer getUnfilteredCount() {
@@ -119,52 +127,23 @@ public class PaginationToken {
     this.filteredPageCount = filteredPageCount;
   }
 
-  public void generatePrevious() {
-    if (page == 0) {
-    this.previousPageToken = null;
-    } else {
-      this.previousPageToken = new PaginationToken(page - 1, pageSize, sortField, sortDirection, filterTerms);
-    }
-  }
-
-  //could result in bad request if page is greater than page count but unable to do validation 
-  //in every case here because pagecount is only populated in response tokens
-  public void generateNext() {
-    if (Objects.nonNull(filteredPageCount) && page == filteredPageCount) {
-      this.nextPageToken = null;
-    } else {
-      this.nextPageToken = new PaginationToken(page + 1, pageSize, sortField, sortDirection, filterTerms);
-    }
-  }
-
-
   public String toBase64() {
     return Base64.getEncoder().encodeToString(new Gson().toJson(this).getBytes(UTF_8));
   }
 
-  public static PaginationToken fromBase64(String str) {
-    String json = new String(Base64.getDecoder().decode(str), UTF_8);
-    try {
-      PaginationToken result = new Gson().fromJson(json, PaginationToken.class);
-      if (result.getPage() < 0) {
-        throw new BadRequestException(
-          String.format("Invalid pagination offset: %d", result.getPage()));
-      }
-      return result;
-    } catch (JsonSyntaxException e) {
-      throw new BadRequestException(String.format("Invalid pagination token: %s", str));
-    }
-  }
-
   private void checkSortField(String sortField) {
-    if (!acceptableSortFields.contains(sortField)) {
-      throw new BadRequestException("Cannot sort on given field: " + sortField);
+    if (Objects.nonNull(sortField)) {
+      if (!acceptableSortFields.contains(sortField)) {
+        throw new BadRequestException("Cannot sort on given field: " + sortField);
+      }
     }
   }
 
   private void checkSortDirection(String sortDirection) {
-    if (!sortDirection.equals("asc") && !sortDirection.equals("desc")) {
-      throw new BadRequestException("Sort direction must be either 'asc' or 'desc");
+    if (Objects.nonNull(sortDirection)) {
+      if (!sortDirection.equals("asc") && !sortDirection.equals("desc")) {
+        throw new BadRequestException("Sort direction must be either 'asc' or 'desc");
+      }
     }
   }
 
@@ -180,5 +159,40 @@ public class PaginationToken {
     if (Objects.nonNull(filteredPageCount) && page > filteredCount) {
       throw new BadRequestException("Page cannot be greater than filtered page count");
     }
+  }
+
+  /**
+   * Generate an ordered sequence of tokens from self.
+   *
+   * @return Ordered list of PaginationTokens
+   */
+  public List<PaginationToken> createListOfPaginationTokensFromSelf() {
+    return IntStream.rangeClosed(1, this.getFilteredPageCount())
+        .mapToObj(
+            i -> new PaginationToken(
+                i,
+                this.getPageSize(),
+                this.getSortField(),
+                this.getSortDirection(),
+                this.getFilterTerm(),
+                this.getFilteredCount(),
+                this.getFilteredPageCount(),
+                this.getUnfilteredCount()))
+        .collect(Collectors.toList());
+  }
+
+  public int getStartIndex() {
+    return (this.getPage() * this.getPageSize()) - this.getPageSize();
+  }
+
+  public int getEndIndex() {
+    return Math.min(
+            (getStartIndex() + this.getPageSize()),
+            (this.getFilteredCount()));
+  }
+
+  @Override
+  public String toString() {
+    return new Gson().toJson(this);
   }
 }

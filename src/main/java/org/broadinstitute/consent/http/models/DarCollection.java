@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.Gson;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 
@@ -102,7 +103,9 @@ public class DarCollection {
     return dars;
   }
 
-  public void setDars(List<DataAccessRequest> dars) { this.dars = dars; }
+  public void setDars(List<DataAccessRequest> dars) {
+    this.dars = dars;
+  }
 
   public void addDar(DataAccessRequest dar) {
     if (Objects.isNull(dars)) {
@@ -147,5 +150,8 @@ public class DarCollection {
       .isEquals();
   }
 
-
+  @Override
+  public String toString() {
+    return new Gson().toJson(this);
+  }
 }

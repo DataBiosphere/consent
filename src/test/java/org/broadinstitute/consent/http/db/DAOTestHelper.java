@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
@@ -426,6 +427,13 @@ public class DAOTestHelper {
         dataSetDAO.insertDatasetProperties(list);
     }
 
+    //basic helper, only adds dataset id for now
+    //will add more attributes as tests require it
+    protected DatasetDTO createDatasetDTO() {
+        DatasetDTO dataset = new DatasetDTO();
+        dataset.
+    }
+
     protected DataSet createDataset() {
         DataSet ds = new DataSet();
         ds.setName("Name_" + RandomStringUtils.random(20, true, true));
@@ -455,7 +463,7 @@ public class DAOTestHelper {
         createdLibraryCardIds.add(id);
         return libraryCardDAO.findLibraryCardById(id);
     }
-    
+
     protected LibraryCard createLCForUnregisteredUser(Integer institutionId) {
         Integer createUserId = createUser().getDacUserId();
         String email = RandomStringUtils.randomAlphabetic(10);
@@ -503,6 +511,16 @@ public class DAOTestHelper {
             insertDAR(user.getDacUserId(), collection_id, darCode);
         }
         return insertDAR(user.getDacUserId(), collection_id, darCode);
+    }
+
+    protected DataAccessRequest createDataAccessRequestWithUserIdV3(Integer userId) {
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Integer collection_id = darCollectionDAO.insertDarCollection(darCode, userId, new Date());
+        createdDarCollections.add(collection_id);
+        for(int i = 0; i < 4; i++) {
+            insertDAR(userId, collection_id, darCode);
+        }
+        return insertDAR(userId, collection_id, darCode);
     }
 
     protected Integer createDataAccessRequestUserWithInstitute() {

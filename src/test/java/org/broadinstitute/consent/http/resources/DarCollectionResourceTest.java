@@ -93,7 +93,7 @@ public class DarCollectionResourceTest {
     mockCollectionsList.add(mockDarCollection());
     mockCollectionsList.add(mockDarCollection());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.findDarCollectionsByUserId(anyInt())).thenReturn(mockCollectionsList);
+    when(darCollectionService.getCollectionsForUser(any(User.class))).thenReturn(mockCollectionsList);
     when(datasetService.getDatasetDTOByIds(any())).thenReturn(mockDatasetsForResearcherCollection());
     initResource();
 
