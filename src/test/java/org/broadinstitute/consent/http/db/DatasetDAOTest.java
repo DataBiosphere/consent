@@ -164,5 +164,4 @@ public class DatasetDAOTest extends DAOTestHelper {
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {
         dacDAO.addDacMember(roleId, userId, dacId);
     }
-
 }

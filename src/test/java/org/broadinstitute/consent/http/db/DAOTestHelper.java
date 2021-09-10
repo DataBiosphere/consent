@@ -427,13 +427,6 @@ public class DAOTestHelper {
         dataSetDAO.insertDatasetProperties(list);
     }
 
-    //basic helper, only adds dataset id for now
-    //will add more attributes as tests require it
-    protected DatasetDTO createDatasetDTO() {
-        DatasetDTO dataset = new DatasetDTO();
-        dataset.
-    }
-
     protected DataSet createDataset() {
         DataSet ds = new DataSet();
         ds.setName("Name_" + RandomStringUtils.random(20, true, true));
