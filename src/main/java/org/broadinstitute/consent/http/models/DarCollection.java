@@ -109,6 +109,10 @@ public class DarCollection {
     dars.add(dar);
   }
 
+  public void addDataset(DataSet dataset) {
+    this.datasets.add(dataset);
+  }
+
   public void setDatasets(Set<DataSet> datasets) {
     this.datasets = datasets;
   }

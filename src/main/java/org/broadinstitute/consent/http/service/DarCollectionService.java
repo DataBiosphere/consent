@@ -13,10 +13,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class DarCollectionService {
@@ -105,20 +109,28 @@ public class DarCollectionService {
     return getByCollectionId(collectionId);
   }
 
-  //Writing this method here so it can be testable and reused for collection resources
-  //This method will be expanded to account for dataset binning once roles come into play
-  //For now it's functionality is simple, fetch the datasets and attach it to the collection
-  //DTO class is used to to it's dataUse attribute which will be needed for binning functionality (to be added soon)
   public void addDatasetsToCollections(List<DarCollection> collections) {
-    for (DarCollection collection : collections) {
-      List<Integer> datasetIds = new ArrayList<Integer>();
-      for (DataAccessRequest dar : collection.getDars()) {
-        datasetIds.add(dar.getData().getDatasetIds().get(0));
+    List<List<Integer>> collectionDataIds = collections.stream()
+      .map(c -> c.getDars().get(0).getData().getDatasetIds())
+      .collect(Collectors.toList());
+
+    List<Integer> datasetIds = collectionDataIds.stream()
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
+
+    Set<DataSet> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
+    Map<Integer, DataSet> datasetMap = datasets.stream()
+      .collect(
+        Collectors.toMap(d -> d.getDataSetId(), d -> d)
+      );
+
+    for(int i = 0; i < collections.size(); i++) {
+      DarCollection collection = collections.get(i);
+      List<Integer> collectionIds = collectionDataIds.get(i);
+      for(Integer id : collectionIds) {
+        DataSet dataset = datasetMap.get(id);
+        collection.addDataset(dataset);
       }
-      List<Integer> distinctIds = datasetIds.stream().distinct().collect(Collectors.toList());
-      // Dataset call is being done seperatly to keep collection queries and collection mappers/reducers from getting messy
-      Set<DataSet> datasets = datasetDAO.findDatasetWithDataUseByIdList(distinctIds);
-      collection.setDatasets(datasets);
     }
   }
 

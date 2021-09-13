@@ -4,6 +4,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetPropertiesMapper;
+import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
@@ -23,6 +24,7 @@ import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.sql.Timestamp;
@@ -102,7 +104,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlUpdate("UPDATE dataset SET update_date = :updateDate, update_user_id = :updateUserId WHERE datasetid = :datasetId")
     void updateDatasetUpdateUserAndDate(@Bind("datasetId") Integer datasetId, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId);
 
-    @UseRowMapper(DataSetMapper.class)
+    @UseRowReducer(DatasetReducer.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
           "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
