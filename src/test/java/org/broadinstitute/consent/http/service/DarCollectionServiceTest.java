@@ -120,7 +120,7 @@ public class DarCollectionServiceTest {
 
     DarCollection collection = collections.get(0);
     Set<DataSet> datasetsFromCollection = collection.getDatasets();
-    assertEquals(2, datasetsFromCollection.size());
+    assertEquals(datasetIds.size(), datasetsFromCollection.size());
 
     List<Integer> collectionDatasetIds = datasetsFromCollection.stream()
       .map(d -> d.getDataSetId())
@@ -134,6 +134,7 @@ public class DarCollectionServiceTest {
     List<DataAccessRequest> dars = new ArrayList<DataAccessRequest>();
     dars.add(generateMockDarWithDatasetId(datasets));
     dars.add(generateMockDarWithDatasetId(datasets));
+    collection.setDars(dars);
     return collection;
   }
 

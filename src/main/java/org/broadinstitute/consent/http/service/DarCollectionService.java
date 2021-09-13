@@ -110,11 +110,14 @@ public class DarCollectionService {
   }
 
   public void addDatasetsToCollections(List<DarCollection> collections) {
-    List<List<Integer>> collectionDataIds = collections.stream()
-      .map(c -> c.getDars().get(0).getData().getDatasetIds())
+    
+    List<List<DataAccessRequest>> collectionDars = collections.stream()
+      .map(c -> c.getDars())
       .collect(Collectors.toList());
-
-    List<Integer> datasetIds = collectionDataIds.stream()
+    
+    List<Integer> datasetIds = collectionDars.stream()
+      .flatMap(Collection::stream)
+      .map(d -> d.getData().getDatasetIds())
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
 
@@ -126,8 +129,11 @@ public class DarCollectionService {
 
     for(int i = 0; i < collections.size(); i++) {
       DarCollection collection = collections.get(i);
-      List<Integer> collectionIds = collectionDataIds.get(i);
-      for(Integer id : collectionIds) {
+      List<Integer> collectionDatasetIds = collectionDars.get(i).stream()
+        .map(d -> d.getData().getDatasetIds())
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+      for(Integer id : collectionDatasetIds) {
         DataSet dataset = datasetMap.get(id);
         collection.addDataset(dataset);
       }
