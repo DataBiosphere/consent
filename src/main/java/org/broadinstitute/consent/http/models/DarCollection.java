@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 
 import java.sql.Timestamp;
 import java.util.HashSet;
@@ -37,11 +36,11 @@ public class DarCollection {
   @JsonProperty
   List<DataAccessRequest> dars;
 
-  Set<DatasetDTO> datasets;
+  Set<DataSet> datasets;
 
   public DarCollection() {
     this.createDate = new Timestamp(System.currentTimeMillis());
-    this.datasets = new HashSet<DatasetDTO>();
+    this.datasets = new HashSet<DataSet>();
   }
 
   public Integer getDarCollectionId() {
@@ -110,11 +109,11 @@ public class DarCollection {
     dars.add(dar);
   }
 
-  public void setDatasets(Set<DatasetDTO> datasets) {
+  public void setDatasets(Set<DataSet> datasets) {
     this.datasets = datasets;
   }
 
-  public Set<DatasetDTO> getDatasets() {
+  public Set<DataSet> getDatasets() {
     return datasets;
   }
 

@@ -23,7 +23,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -51,7 +51,7 @@ public class DarCollectionResourceTest {
   @Mock private UriBuilder builder;
 
   private void initResource() {
-    resource = new DarCollectionResource(userService, darCollectionService, datasetService);
+    resource = new DarCollectionResource(userService, darCollectionService);
   }
 
   private DataAccessRequest mockDataAccessRequestWithDatasetIds() {
@@ -71,10 +71,10 @@ public class DarCollectionResourceTest {
     return collection;
   }
 
-  private Set<DatasetDTO> mockDatasetsForResearcherCollection() {
-    Set<DatasetDTO> datasets = new HashSet<DatasetDTO>();
+  private Set<DataSet> mockDatasetsForResearcherCollection() {
+    Set<DataSet> datasets = new HashSet<DataSet>();
     for(int i = 1; i < 3; i++) {
-      DatasetDTO newDataset = new DatasetDTO();
+      DataSet newDataset = new DataSet();
       newDataset.setDataSetId(i);
       datasets.add(newDataset);
     }
@@ -93,7 +93,7 @@ public class DarCollectionResourceTest {
     mockCollectionsList.add(mockDarCollection());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getCollectionsForUser(any(User.class))).thenReturn(mockCollectionsList);
-    when(datasetService.getDatasetDTOByIds(any())).thenReturn(mockDatasetsForResearcherCollection());
+    when(datasetService.getDatasetWithDataUseByIds(any())).thenReturn(mockDatasetsForResearcherCollection());
     initResource();
 
     Response response = resource.getCollectionsForResearcher(authUser);

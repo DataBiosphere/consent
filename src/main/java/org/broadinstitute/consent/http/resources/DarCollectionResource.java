@@ -14,7 +14,6 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/collections")
@@ -25,8 +24,7 @@ public class DarCollectionResource extends Resource {
   @Inject
   public DarCollectionResource(
     UserService userService,
-    DarCollectionService darCollectionService,
-    DatasetService datasetService
+    DarCollectionService darCollectionService
   ) {
     this.userService = userService;
     this.darCollectionService = darCollectionService;

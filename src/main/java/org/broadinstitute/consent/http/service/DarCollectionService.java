@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
@@ -117,7 +117,7 @@ public class DarCollectionService {
       }
       List<Integer> distinctIds = datasetIds.stream().distinct().collect(Collectors.toList());
       // Dataset call is being done seperatly to keep collection queries and collection mappers/reducers from getting messy
-      Set<DatasetDTO> datasets = datasetDAO.findDatasetDTOByIdList(distinctIds);
+      Set<DataSet> datasets = datasetDAO.findDatasetWithDataUseByIdList(distinctIds);
       collection.setDatasets(datasets);
     }
   }

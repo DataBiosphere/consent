@@ -149,15 +149,15 @@ public class DatasetDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindDatasetDTOByIdList() {
+    public void testFindDatasetWithDataUseByIdList() {
         DataSet dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
-        Set<DatasetDTO> datasets = dataSetDAO.findDatasetDTOByIdList(Collections.singletonList(dataset.getDataSetId()));
+        Set<DataSet> datasets = dataSetDAO.findDatasetWithDataUseByIdList(Collections.singletonList(dataset.getDataSetId()));
         assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).collect(Collectors.toList());
+        List<Integer> datasetIds = datasets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 
