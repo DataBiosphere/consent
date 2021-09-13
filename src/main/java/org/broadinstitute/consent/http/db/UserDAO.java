@@ -1,12 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.db.mapper.UnregisteredUsersWithCardsReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
+import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -21,6 +17,11 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
 @SuppressWarnings("SqlDialectInspection")
 public interface UserDAO extends Transactional<UserDAO> {
 
@@ -32,9 +33,7 @@ public interface UserDAO extends Transactional<UserDAO> {
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.status, u.rationale, u.institution_id, "
         + "     u.era_commons_id, "
-        + "     i.institution_id as i_id, i.institution_name as i_name, "
-        + "     i.it_director_name as i_it_director_name, i.it_director_email as i_it_director_email, "
-        + "     i.create_date as i_create_date, i.update_date as i_update_date, "
+        + Institution.QUERY_FIELDS_WITH_I_PREFIX + ", "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name  "
         + " FROM dacuser u "
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
@@ -172,39 +171,51 @@ public interface UserDAO extends Transactional<UserDAO> {
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
-    @SqlQuery("SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id " 
+    @SqlQuery("SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id "
             + " FROM dacuser du "
             + " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " + " LEFT JOIN roles r ON r.roleid = ur.role_id "
             + " WHERE du.institution_id = :institutionId")
     List<User> findUsersByInstitution(@Bind("institutionId") Integer institutionId);
 
     @RegisterBeanMapper(value = LibraryCard.class)
+    @RegisterBeanMapper(value = Institution.class, prefix = "lci")
     @UseRowReducer(UnregisteredUsersWithCardsReducer.class)
-    @SqlQuery(
-        "SELECT * FROM library_card lc WHERE lc.user_id IS NULL AND lc.institution_id = :institutionId"
-    )
+    @SqlQuery(" SELECT lc.*, " +
+            Institution.QUERY_FIELDS_WITH_LCI_PREFIX +
+            " FROM library_card lc " +
+            " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id" +
+            " WHERE lc.user_id IS NULL " +
+            " AND lc.institution_id = :institutionId")
     List<User> getCardsForUnregisteredUsers(@Bind("institutionId") Integer institutionId);
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
     @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
+    @RegisterBeanMapper(value = Institution.class, prefix = "lci")
+    @RegisterBeanMapper(value = Institution.class, prefix = "i")
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery(
-    " SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, "
-        + " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, "
-        + " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, "
-        + " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, "
-        + " lc.update_user_id AS lc_update_user_id " 
-    + " FROM dacuser du"
-    + " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " 
-    + " LEFT JOIN roles r ON r.roleid = ur.role_id "
-    + " INNER JOIN library_card lc ON lc.user_id = du.dacuserid "
-    + " WHERE (du.institution_id != :institutionId OR du.institution_id IS NULL) AND lc.institution_id = :institutionId")
+            " SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, "
+          + " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, "
+          + " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, "
+          + " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, "
+          + " lc.update_user_id AS lc_update_user_id, "
+          + Institution.QUERY_FIELDS_WITH_LCI_PREFIX + ", "
+          + Institution.QUERY_FIELDS_WITH_I_PREFIX
+          + " FROM dacuser du"
+          + " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid "
+          + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+          + " INNER JOIN library_card lc ON lc.user_id = du.dacuserid "
+          + " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id"
+          + " LEFT JOIN institution i ON du.institution_id = i.institution_id"
+          + " WHERE (du.institution_id != :institutionId OR du.institution_id IS NULL) AND lc.institution_id = :institutionId")
     List<User> getUsersOutsideInstitutionWithCards(@Bind("institutionId") Integer institutionId);
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
     @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
+    @RegisterBeanMapper(value = Institution.class, prefix = "lci")
+    @RegisterBeanMapper(value = Institution.class, prefix = "i")
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery(
             //This will pull in users tied to the institution
@@ -213,11 +224,15 @@ public interface UserDAO extends Transactional<UserDAO> {
                 " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, " +
                 " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
                 " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, " +
-                " lc.update_user_id AS lc_update_user_id " +
+                " lc.update_user_id AS lc_update_user_id, " +
+                Institution.QUERY_FIELDS_WITH_LCI_PREFIX + ", " +
+                Institution.QUERY_FIELDS_WITH_I_PREFIX +
             " FROM dacuser du " +
             " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
             " LEFT JOIN roles r ON r.roleid = ur.role_id " +
             " LEFT JOIN library_card lc ON lc.user_id = du.dacuserid AND lc.institution_id = :institutionId " +
+            " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id" +
+            " LEFT JOIN institution i ON du.institution_id = i.institution_id" +
             " WHERE du.institution_id = :institutionId")
     List<User> getUsersFromInstitutionWithCards(@Bind("institutionId") Integer institutionId);
 

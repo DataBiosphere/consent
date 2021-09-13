@@ -1,16 +1,16 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import java.util.Map;
-import java.util.Objects;
-
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
-import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
+
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * This class works well for individual Users as well as collections.
@@ -41,7 +41,10 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
     try {
       if(Objects.nonNull(rowView.getColumn("i_id", Integer.class))) {
         Institution institution = rowView.getRow(Institution.class);
-        user.setInstitution(institution);
+        // There are unusual cases where we somehow create an institution with null values
+        if (Objects.nonNull(institution.getId())) {
+          user.setInstitution(institution);
+        }
       }
     } catch(MappingException e) {
       //Ignore institution mapping errors, possible for new users to not have an institution
@@ -50,9 +53,20 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
     //ex) The same LC can end up being repeated multiple times
     //Below only adds LC if not currently saved on the array
     try {
-      if(Objects.nonNull(rowView.getColumn("lc_id", Integer.class))) {
+      if (Objects.nonNull(rowView.getColumn("lc_id", Integer.class))) {
         LibraryCard lc = rowView.getRow(LibraryCard.class);
-        if(Objects.isNull(user.getLibraryCards()) || !user.getLibraryCards().stream().anyMatch(card -> card.getId() == lc.getId())) {
+        try {
+          if (Objects.nonNull(rowView.getColumn("lci_id", Integer.class))) {
+            Institution institution = rowView.getRow(Institution.class);
+            // There are unusual cases where we somehow create an institution with null values
+            if (Objects.nonNull(institution.getId())) {
+              lc.setInstitution(institution);
+            }
+          }
+        } catch (MappingException e) {
+          // Ignore institution mapping errors
+        }
+        if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().stream().noneMatch(card -> card.getId().equals(lc.getId()))) {
           user.addLibraryCard(lc);
         }
       }

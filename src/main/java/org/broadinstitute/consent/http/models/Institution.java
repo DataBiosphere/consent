@@ -10,6 +10,22 @@ import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 public class Institution {
 
+  public static final String QUERY_FIELDS_WITH_I_PREFIX =
+          " i.institution_id as i_id, " +
+          " i.institution_name as i_name, " +
+          " i.it_director_name as i_it_director_name, " +
+          " i.it_director_email as i_it_director_email, " +
+          " i.create_date as i_create_date, " +
+          " i.update_date as i_update_date ";
+
+  public static final String QUERY_FIELDS_WITH_LCI_PREFIX =
+          " lci.institution_id as lci_id, " +
+          " lci.institution_name as lci_name, " +
+          " lci.it_director_name as lci_it_director_name, " +
+          " lci.it_director_email as lci_it_director_email, " +
+          " lci.create_date as lci_create_date, " +
+          " lci.update_date as lci_update_date ";
+
   private Integer id;
   private String name;
   private String itDirectorName;
