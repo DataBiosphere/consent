@@ -1,29 +1,27 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 public class DarCollectionService {
 
@@ -42,7 +40,8 @@ public class DarCollectionService {
   }
 
   public List<DarCollection> getCollectionsForUser(User user) {
-    return darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
+    List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
+    return addDatasetsToCollections(collections);
   }
 
   /**
@@ -86,24 +85,24 @@ public class DarCollectionService {
 
   public DarCollection getByReferenceId(String referenceId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
-    addDatasetsToCollections(Collections.singletonList(collection));
-    return collection;
+    List<DarCollection> updatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
+    return updatedCollections.stream().findFirst().orElse(null);
   }
 
   public DarCollection getByCollectionId(Integer collectionId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
-    addDatasetsToCollections(Collections.singletonList(collection));
-    return collection;
+    List<DarCollection> updatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
+    return updatedCollections.stream().findFirst().orElse(null);
   }
 
   public List<DarCollection> getCollectionsByUser(User user) {
-    return darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
+    List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
+    return addDatasetsToCollections(collections);
   }
 
   public DarCollection createDarCollection(String darCode, User user) {
-    Integer collectionId =
-        darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
-    return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+    return getByCollectionId(collectionId);
   }
 
   public void deleteDarCollectionById(Integer collectionId) {
@@ -115,7 +114,7 @@ public class DarCollectionService {
     return getByCollectionId(collectionId);
   }
 
-  public void addDatasetsToCollections(List<DarCollection> collections) {
+  public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections) {
 
     List<Integer> datasetIds = collections.stream()
       .map(DarCollection::getDars)
@@ -127,20 +126,22 @@ public class DarCollectionService {
     if(!datasetIds.isEmpty()) {
       Set<DataSet> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
       Map<Integer, DataSet> datasetMap = datasets.stream()
-        .collect(
-          Collectors.toMap(DataSet::getDataSetId, d -> d)
-        );
+          .collect(Collectors.toMap(DataSet::getDataSetId, Function.identity()));
 
-      collections.forEach(c -> {
+      return collections.stream().map(c -> {
         Set<DataSet> collectionDatasets = c.getDars().stream()
           .map(DataAccessRequest::getData)
           .map(DataAccessRequestData::getDatasetIds)
           .flatMap(Collection::stream)
           .map(datasetMap::get)
           .collect(Collectors.toSet());
-        c.setDatasets(collectionDatasets);
-      });
+        DarCollection copy = c.deepCopy();
+        copy.setDatasets(collectionDatasets);
+        return copy;
+      }).collect(Collectors.toList());
     }
+    // There were no datasets to add, so we return the original list
+    return collections;
   }
 
 }

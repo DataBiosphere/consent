@@ -37,7 +37,6 @@ public class DarCollectionResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       List<DarCollection> collections = darCollectionService.getCollectionsForUser(user);
-      darCollectionService.addDatasetsToCollections(collections);
       return Response.ok().entity(collections).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
