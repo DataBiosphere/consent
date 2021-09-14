@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import java.util.Collections;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -84,11 +85,15 @@ public class DarCollectionService {
   }
 
   public DarCollection getByReferenceId(String referenceId) {
-    return darCollectionDAO.findDARCollectionByReferenceId(referenceId);
+    DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
+    addDatasetsToCollections(Collections.singletonList(collection));
+    return collection;
   }
 
   public DarCollection getByCollectionId(Integer collectionId) {
-    return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    addDatasetsToCollections(Collections.singletonList(collection));
+    return collection;
   }
 
   public List<DarCollection> getCollectionsByUser(User user) {
@@ -111,19 +116,19 @@ public class DarCollectionService {
   }
 
   public void addDatasetsToCollections(List<DarCollection> collections) {
-    
+
     List<Integer> datasetIds = collections.stream()
-      .map(c -> c.getDars())
+      .map(DarCollection::getDars)
       .flatMap(Collection::stream)
       .map(d -> d.getData().getDatasetIds())
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
-    
+
     if(!datasetIds.isEmpty()) {
       Set<DataSet> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
       Map<Integer, DataSet> datasetMap = datasets.stream()
         .collect(
-          Collectors.toMap(d -> d.getDataSetId(), d -> d)
+          Collectors.toMap(DataSet::getDataSetId, d -> d)
         );
 
       collections.forEach(c -> {
@@ -133,7 +138,7 @@ public class DarCollectionService {
           .flatMap(Collection::stream)
           .map(datasetMap::get)
           .collect(Collectors.toSet());
-        c.setDatasets(collectionDatasets);   
+        c.setDatasets(collectionDatasets);
       });
     }
   }
