@@ -54,12 +54,8 @@ public class DarCollectionResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
-      // Users can only see their own collection, regardless of user's roles
-      validateAuthedRoleUser(Collections.emptyList(), user, collection.getCreateUserId());
+      validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
-    } catch (ForbiddenException e) {
-      // We don't want to leak existence, throw a not found
-      throw new NotFoundException();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -75,14 +71,21 @@ public class DarCollectionResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       DarCollection collection = darCollectionService.getByReferenceId(referenceId);
-      // Users can only see their own collection, regardless of user's roles
-      validateAuthedRoleUser(Collections.emptyList(), user, collection.getCreateUserId());
+      validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
-    } catch (ForbiddenException e) {
-      // We don't want to leak existence, throw a not found
-      throw new NotFoundException();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  // A User should only see their own collection, regardless of the user's roles
+  // We don't want to leak existence so throw a not found if someone tries to
+  // view another user's collection.
+  private void validateUserIsCreator(User user, DarCollection collection) {
+    try {
+      validateAuthedRoleUser(Collections.emptyList(), user, collection.getCreateUserId());
+    } catch (ForbiddenException e) {
+      throw new NotFoundException();
     }
   }
 }
