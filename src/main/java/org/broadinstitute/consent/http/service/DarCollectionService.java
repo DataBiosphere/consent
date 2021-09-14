@@ -36,7 +36,7 @@ public class DarCollectionService {
   }
 
   public List<DarCollection> getAllCollections() {
-    return darCollectionDAO.findAllDARCollections();
+    return addDatasetsToCollections(darCollectionDAO.findAllDARCollections());
   }
 
   public List<DarCollection> getCollectionsForUser(User user) {
@@ -85,14 +85,14 @@ public class DarCollectionService {
 
   public DarCollection getByReferenceId(String referenceId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
-    List<DarCollection> updatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
-    return updatedCollections.stream().findFirst().orElse(null);
+    List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
+    return populatedCollections.stream().findFirst().orElse(null);
   }
 
   public DarCollection getByCollectionId(Integer collectionId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
-    List<DarCollection> updatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
-    return updatedCollections.stream().findFirst().orElse(null);
+    List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
+    return populatedCollections.stream().findFirst().orElse(null);
   }
 
   public List<DarCollection> getCollectionsByUser(User user) {
