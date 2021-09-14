@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -147,8 +148,20 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 
+    @Test
+    public void testFindDatasetWithDataUseByIdList() {
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        Set<DataSet> datasets = dataSetDAO.findDatasetWithDataUseByIdList(Collections.singletonList(dataset.getDataSetId()));
+        assertFalse(datasets.isEmpty());
+        List<Integer> datasetIds = datasets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
+        assertTrue(datasetIds.contains(dataset.getDataSetId()));
+    }
+
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {
         dacDAO.addDacMember(roleId, userId, dacId);
     }
-
 }

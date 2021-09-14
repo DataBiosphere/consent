@@ -203,6 +203,10 @@ public class DatasetService {
         return datasetDAO.findDataSetById(id);
     }
 
+    public Set<DataSet> getDatasetWithDataUseByIds(List<Integer> datasetIds) {
+        return datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
+    }
+
     public Set<DataSetProperty> getDatasetProperties(Integer datasetId) {
         return datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
     }

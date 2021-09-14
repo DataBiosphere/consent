@@ -44,6 +44,9 @@ public class DataSet {
     @JsonProperty
     private Integer alias;
 
+    @JsonProperty
+    public DataUse dataUse;
+
     private Set<DataSetProperty> properties;
 
     public DataSet() {
@@ -174,6 +177,14 @@ public class DataSet {
 
     public Integer getAlias() {
         return alias;
+    }
+
+    public DataUse getDataUse() {
+        return dataUse;
+    }
+
+    public void setDataUse(DataUse dataUse) {
+        this.dataUse = dataUse;
     }
 
     public void setAlias(Integer alias) {

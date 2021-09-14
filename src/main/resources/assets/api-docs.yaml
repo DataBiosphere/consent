@@ -111,6 +111,23 @@ paths:
       responses:
         200:
           description: Successfully deleted
+  /api/collections:
+    get:
+      summary: List of all DAR Collections under the current user (Researcher)
+      description: Returns a list of all DAR Collections, each of which carries associated DARs and datasets
+      tags:
+        - DAR Collection
+      responses:
+        200:
+          description: Returns all DAR Collections under the current user (Researcher)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DarCollection'
+        403:
+          description: User does not have access to this resource
   /api/ontology:
     get:
       summary: List Ontology Files
@@ -3807,6 +3824,39 @@ components:
         displayName:
           description: System assigned create user display name
           type: string
+    DarCollection:
+      type: object
+      properties:
+        darCollectionId:
+          type: integer
+          description: Collection ID
+        darCode:
+          type: string
+          description: 'Code designation referenced by DARs within collection'
+        createDate:
+          type: string
+          format: date
+          description: Collection's create date
+        createUserId:
+          type: integer
+          description: Collection creator's user ID
+        updateDate:
+          type: string
+          format: date
+          description: Collection's last update date
+        updateUserId:
+          type: integer
+          description: ID of user that last updated the collection
+        dars:
+          type: array
+          description: List of all DARs associated with the collection
+          items:
+            $ref: '#/components/schemas/DataAccessRequest'
+        datasets:
+          type: array
+          description: List of all datasets referenced across all DARs within the collection
+          items:
+            $ref: '#/components/schemas/Dataset'
     UserProperties:
       type: array
       items:

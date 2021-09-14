@@ -2,6 +2,10 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
@@ -10,19 +14,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class DarCollectionService {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final DarCollectionDAO darCollectionDAO;
+  private final DatasetDAO datasetDAO;
 
   @Inject
-  public DarCollectionService(DarCollectionDAO darCollectionDAO) {
+  public DarCollectionService(DarCollectionDAO darCollectionDAO, DatasetDAO datasetDAO) {
     this.darCollectionDAO = darCollectionDAO;
+    this.datasetDAO = datasetDAO;
   }
 
   public List<DarCollection> getAllCollections() {
@@ -98,4 +109,33 @@ public class DarCollectionService {
     darCollectionDAO.updateDarCollection(collectionId, user.getDacUserId(), new Date());
     return getByCollectionId(collectionId);
   }
+
+  public void addDatasetsToCollections(List<DarCollection> collections) {
+    
+    List<Integer> datasetIds = collections.stream()
+      .map(c -> c.getDars())
+      .flatMap(Collection::stream)
+      .map(d -> d.getData().getDatasetIds())
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
+    
+    if(!datasetIds.isEmpty()) {
+      Set<DataSet> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
+      Map<Integer, DataSet> datasetMap = datasets.stream()
+        .collect(
+          Collectors.toMap(d -> d.getDataSetId(), d -> d)
+        );
+
+      collections.forEach(c -> {
+        Set<DataSet> collectionDatasets = c.getDars().stream()
+          .map(DataAccessRequest::getData)
+          .map(DataAccessRequestData::getDatasetIds)
+          .flatMap(Collection::stream)
+          .map(datasetMap::get)
+          .collect(Collectors.toSet());
+        c.setDatasets(collectionDatasets);   
+      });
+    }
+  }
+
 }

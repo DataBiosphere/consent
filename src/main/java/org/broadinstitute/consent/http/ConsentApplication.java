@@ -54,6 +54,7 @@ import org.broadinstitute.consent.http.resources.DataRequestVoteResource;
 import org.broadinstitute.consent.http.resources.DataUseLetterResource;
 import org.broadinstitute.consent.http.resources.DatasetAssociationsResource;
 import org.broadinstitute.consent.http.resources.DatasetResource;
+import org.broadinstitute.consent.http.resources.DarCollectionResource;
 import org.broadinstitute.consent.http.resources.ElectionResource;
 import org.broadinstitute.consent.http.resources.ElectionReviewResource;
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
@@ -76,6 +77,7 @@ import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
+import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
@@ -168,6 +170,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // Services
         final ApprovalExpirationTimeService approvalExpirationTimeService = injector.getProvider(ApprovalExpirationTimeService.class).get();
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
+        final DarCollectionService darCollectionService= injector.getProvider(DarCollectionService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
         final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
         final DatasetAssociationService datasetAssociationService = injector.getProvider(DatasetAssociationService.class).get();
@@ -235,6 +238,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
         env.jersey().register(new DacResource(dacService, userService));
         env.jersey().register(new DACUserResource(userService));
+        env.jersey().register(new DarCollectionResource(userService, darCollectionService));
         env.jersey().register(new ElectionReviewResource(dataAccessRequestService, consentService, electionService, reviewResultsService));
         env.jersey().register(new ElectionResource(voteService, electionService));
         env.jersey().register(new EmailNotifierResource(emailNotifierService));

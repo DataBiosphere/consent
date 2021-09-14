@@ -5,6 +5,8 @@ import com.google.gson.Gson;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import java.sql.Timestamp;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,7 +36,12 @@ public class DarCollection {
   @JsonProperty
   List<DataAccessRequest> dars;
 
-  public DarCollection() {this.createDate = new Timestamp(System.currentTimeMillis()); }
+  Set<DataSet> datasets;
+
+  public DarCollection() {
+    this.createDate = new Timestamp(System.currentTimeMillis());
+    this.datasets = new HashSet<DataSet>();
+  }
 
   public Integer getDarCollectionId() {
     return darCollectionId;
@@ -100,6 +107,18 @@ public class DarCollection {
       this.setDars(new ArrayList<>());
     }
     dars.add(dar);
+  }
+
+  public void addDataset(DataSet dataset) {
+    this.datasets.add(dataset);
+  }
+
+  public void setDatasets(Set<DataSet> datasets) {
+    this.datasets = datasets;
+  }
+
+  public Set<DataSet> getDatasets() {
+    return datasets;
   }
 
   @Override

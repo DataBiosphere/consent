@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db.mapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -30,6 +31,9 @@ public class DataSetMapper implements RowMapper<DataSet>, RowMapperHelper {
           if (userId > 0) {
               dataset.setUpdateUserId(userId);
           }
+      }
+      if(hasColumn(r, "dataUse")) {
+        dataset.setDataUse(DataUse.parseDataUse(r.getString("datause")).orElse(null));
       }
       dataset.setActive(r.getBoolean("active"));
       dataset.setAlias(r.getInt("alias"));
