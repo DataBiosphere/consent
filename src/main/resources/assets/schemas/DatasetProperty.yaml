@@ -1,0 +1,8 @@
+type: object
+properties:
+  propertyName:
+    type: string
+    description: Name of the Property.
+  propertyValue:
+    type: string
+    description: Value of the Property.

@@ -2,7 +2,14 @@ openapi: 3.0.3
 
 info:
   title: Consent
-  description: A set of web-services containing methods for ingesting and retrieving expressions representing data use restrictions found within consent forms.
+  description: |
+    The primary API layer for the Data Use Oversight System DUOS
+    ## Data Use Oversight System
+    A semi-automated management service for compliant secondary use of
+    human genomics data There are restrictions on researching human genomics data.
+    For example: “Data can only be used for breast cancer research with non-commercial
+    purpose”. The Data Use Oversight system ensures that researchers using genomics
+    data honor these restrictions.
   version: 1.0.1
   license:
     name: BSD
@@ -112,22 +119,11 @@ paths:
         200:
           description: Successfully deleted
   /api/collections:
-    get:
-      summary: List of all DAR Collections under the current user (Researcher)
-      description: Returns a list of all DAR Collections, each of which carries associated DARs and datasets
-      tags:
-        - DAR Collection
-      responses:
-        200:
-          description: Returns all DAR Collections under the current user (Researcher)
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DarCollection'
-        403:
-          description: User does not have access to this resource
+    $ref: './paths/collections.yaml'
+  /api/collections/{collectionId}:
+    $ref: './paths/collection.yaml'
+  /api/collections/dar/{referenceId}:
+    $ref: './paths/collectionByReferenceId.yaml'
   /api/ontology:
     get:
       summary: List Ontology Files
@@ -3824,39 +3820,6 @@ components:
         displayName:
           description: System assigned create user display name
           type: string
-    DarCollection:
-      type: object
-      properties:
-        darCollectionId:
-          type: integer
-          description: Collection ID
-        darCode:
-          type: string
-          description: 'Code designation referenced by DARs within collection'
-        createDate:
-          type: string
-          format: date
-          description: Collection's create date
-        createUserId:
-          type: integer
-          description: Collection creator's user ID
-        updateDate:
-          type: string
-          format: date
-          description: Collection's last update date
-        updateUserId:
-          type: integer
-          description: ID of user that last updated the collection
-        dars:
-          type: array
-          description: List of all DARs associated with the collection
-          items:
-            $ref: '#/components/schemas/DataAccessRequest'
-        datasets:
-          type: array
-          description: List of all datasets referenced across all DARs within the collection
-          items:
-            $ref: '#/components/schemas/Dataset'
     UserProperties:
       type: array
       items:
@@ -4229,6 +4192,7 @@ components:
           type: boolean
           description: Indicates if a consent has been updated from orsp
     Collaborator:
+      # TODO: move all references to the schemas file
       type: object
       description: |
         A Collaborator on a Data Access Request. Collaborators are either internal lab staff or
@@ -4257,6 +4221,7 @@ components:
           type: string
           description: Optional uuid for this collaborator
     DataAccessRequest:
+      # TODO: move all references to the schemas file
       type: object
       description: Data Access Request
       properties:
@@ -4601,6 +4566,7 @@ components:
           items:
             $ref: '#/components/schemas/User'
     Dataset:
+      # TODO: move all references to the schemas file
       type: object
       properties:
         dataSetId:
@@ -4666,6 +4632,7 @@ components:
           type: object
           description: The Data Use question/answer set for this dataset (used for the associated consent).
     DatasetProperty:
+      # TODO: move all references to the schemas file
       type: object
       properties:
         propertyName:
