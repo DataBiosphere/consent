@@ -16,10 +16,10 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, DataSet>
       rowView.getColumn("datasetid", Integer.class),
       id -> rowView.getRow(DataSet.class));
     
-      if(Objects.nonNull(rowView.getColumn("dataUse", String.class))) {
+      if(Objects.nonNull(rowView.getColumn("datause", String.class))) {
         dataset.setDataUse(
           DataUse.parseDataUse(
-            rowView.getColumn("dataUse", String.class)
+            rowView.getColumn("datause", String.class)
           ).orElse(null)
         );
       }

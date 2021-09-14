@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.PaginationResponse;
@@ -111,32 +112,29 @@ public class DarCollectionService {
 
   public void addDatasetsToCollections(List<DarCollection> collections) {
     
-    List<List<DataAccessRequest>> collectionDars = collections.stream()
+    List<Integer> datasetIds = collections.stream()
       .map(c -> c.getDars())
-      .collect(Collectors.toList());
-    
-    List<Integer> datasetIds = collectionDars.stream()
       .flatMap(Collection::stream)
       .map(d -> d.getData().getDatasetIds())
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
+    
+    if(!datasetIds.isEmpty()) {
+      Set<DataSet> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
+      Map<Integer, DataSet> datasetMap = datasets.stream()
+        .collect(
+          Collectors.toMap(d -> d.getDataSetId(), d -> d)
+        );
 
-    Set<DataSet> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
-    Map<Integer, DataSet> datasetMap = datasets.stream()
-      .collect(
-        Collectors.toMap(d -> d.getDataSetId(), d -> d)
-      );
-
-    for(int i = 0; i < collections.size(); i++) {
-      DarCollection collection = collections.get(i);
-      List<Integer> collectionDatasetIds = collectionDars.get(i).stream()
-        .map(d -> d.getData().getDatasetIds())
-        .flatMap(Collection::stream)
-        .collect(Collectors.toList());
-      for(Integer id : collectionDatasetIds) {
-        DataSet dataset = datasetMap.get(id);
-        collection.addDataset(dataset);
-      }
+      collections.forEach(c -> {
+        Set<DataSet> collectionDatasets = c.getDars().stream()
+          .map(DataAccessRequest::getData)
+          .map(DataAccessRequestData::getDatasetIds)
+          .flatMap(Collection::stream)
+          .map(datasetMap::get)
+          .collect(Collectors.toSet());
+        c.setDatasets(collectionDatasets);   
+      });
     }
   }
 
