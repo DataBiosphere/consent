@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.HashSet;
 
 import com.google.api.client.http.HttpStatusCodes;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
 
 import javax.ws.rs.core.Response;
@@ -99,8 +100,28 @@ public class DarCollectionResourceTest {
     Response response = resource.getCollectionsForResearcher(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
-  
 
+  @Test
+  public void testGetCollectionById() {
+    DarCollection collection = mockDarCollection();
+    collection.setCreateUserId(researcher.getDacUserId());
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
+    initResource();
 
-  
+    Response response = resource.getCollectionById(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testGetCollectionByIdNotFound() {
+    DarCollection collection = mockDarCollection();
+    collection.setCreateUserId(researcher.getDacUserId() + 1);
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
+    initResource();
+
+    Response response = resource.getCollectionById(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
 }
