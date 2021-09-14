@@ -169,7 +169,7 @@ abstract public class Resource {
 
     /**
      * Validate that the current authenticated user can access this resource.
-     * If the user has one of the provided roles, then access allowed.
+     * If the user has one of the provided roles, then access is allowed.
      * If not, then the authenticated user must have the same identity as the
      * `userId` parameter they are requesting information for.
      *
