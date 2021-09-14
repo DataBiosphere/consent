@@ -6,7 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -55,6 +57,9 @@ public class DarCollectionResource extends Resource {
       // Users can only see their own collection, regardless of user's roles
       validateAuthedRoleUser(Collections.emptyList(), user, collection.getCreateUserId());
       return Response.ok().entity(collection).build();
+    } catch (ForbiddenException e) {
+      // We don't want to leak existence, throw a not found
+      throw new NotFoundException();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -73,6 +78,9 @@ public class DarCollectionResource extends Resource {
       // Users can only see their own collection, regardless of user's roles
       validateAuthedRoleUser(Collections.emptyList(), user, collection.getCreateUserId());
       return Response.ok().entity(collection).build();
+    } catch (ForbiddenException e) {
+      // We don't want to leak existence, throw a not found
+      throw new NotFoundException();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
