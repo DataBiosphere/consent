@@ -179,7 +179,7 @@ abstract public class Resource {
      * Privileged users such as admins, chairpersons, and members, may be allowed
      * access to some resources even if they are not the creator/owner.
      *
-     * @param privilegedRoles   List of privielged UserRoles enums
+     * @param privilegedRoles   List of privileged UserRoles enums
      * @param authedUser        The authenticated User
      * @param userId            The user id that the authenticated user is requesting access for
      */
