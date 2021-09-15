@@ -3801,29 +3801,16 @@ components:
             email: email authorization
             profile: profile authorization
   schemas:
-    ApprovalExpirationTime:
-      type: object
-      properties:
-        id:
-          description: System assigned id
-          type: integer
-        userId:
-          description: System assigned create user id
-          type: integer
-        createDate:
-          description: System assigned creation date
-          type: string
-          format: date
-        amountOfDays:
-          description: Number of days
-          type: integer
-        displayName:
-          description: System assigned create user display name
-          type: string
-    UserProperties:
-      type: array
-      items:
-        $ref: '#/components/schemas/UserProperty'
+    Collaborator:
+      $ref: './schemas/Collaborator.yaml'
+    DarCollection:
+      $ref: './schemas/DarCollection.yaml'
+    DataAccessRequest:
+      $ref: './schemas/DataAccessRequest.yaml'
+    Dataset:
+      $ref: './schemas/Dataset.yaml'
+    DatasetProperty:
+      $ref: './schemas/DatasetProperty.yaml'
     UserProperty:
       type: object
       properties:
