@@ -1,0 +1,21 @@
+get:
+  summary: Get DAR Collection By Reference ID
+  description: Returns a single DAR Collection
+  tags:
+    - DAR Collection
+  parameters:
+    - name: referenceId
+      in: path
+      description: Any Reference ID in any DAR in a DAR Collection
+      required: true
+      schema:
+        type: string
+  responses:
+    200:
+      description: Returns a single DAR Collection
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DarCollection.yaml'
+    404:
+      description: Not Found

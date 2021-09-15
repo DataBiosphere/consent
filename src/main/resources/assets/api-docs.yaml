@@ -2,7 +2,14 @@ openapi: 3.0.3
 
 info:
   title: Consent
-  description: A set of web-services containing methods for ingesting and retrieving expressions representing data use restrictions found within consent forms.
+  description: |
+    The primary API layer for the Data Use Oversight System DUOS
+    ## Data Use Oversight System
+    A semi-automated management service for compliant secondary use of
+    human genomics data There are restrictions on researching human genomics data.
+    For example: “Data can only be used for breast cancer research with non-commercial
+    purpose”. The Data Use Oversight system ensures that researchers using genomics
+    data honor these restrictions.
   version: 1.0.1
   license:
     name: BSD
@@ -112,22 +119,11 @@ paths:
         200:
           description: Successfully deleted
   /api/collections:
-    get:
-      summary: List of all DAR Collections under the current user (Researcher)
-      description: Returns a list of all DAR Collections, each of which carries associated DARs and datasets
-      tags:
-        - DAR Collection
-      responses:
-        200:
-          description: Returns all DAR Collections under the current user (Researcher)
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DarCollection'
-        403:
-          description: User does not have access to this resource
+    $ref: './paths/collections.yaml'
+  /api/collections/{collectionId}:
+    $ref: './paths/collection.yaml'
+  /api/collections/dar/{referenceId}:
+    $ref: './paths/collectionByReferenceId.yaml'
   /api/ontology:
     get:
       summary: List Ontology Files
@@ -1098,7 +1094,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Dataset'
+                  $ref: './schemas/Dataset.yaml'
         404:
           description: No DAC found with the provided ID
         500:
@@ -1248,7 +1244,7 @@ paths:
           description: The fields that represent a DAR in json format.
           required: true
           schema:
-            $ref: '#/components/schemas/DataAccessRequest'
+            $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
@@ -1259,7 +1255,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DataAccessRequest'
+                  $ref: './schemas/DataAccessRequest.yaml'
         500:
           description: Internal Server Error.
     get:
@@ -1275,7 +1271,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DataAccessRequest'
+                  $ref: './schemas/DataAccessRequest.yaml'
         403:
           description: The user is not authorized to see all DARs
         500:
@@ -1299,7 +1295,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataAccessRequest'
+                $ref: './schemas/DataAccessRequest.yaml'
         400:
           description: The provided Reference Id is not a valid DAR identifier
         404:
@@ -1321,7 +1317,7 @@ paths:
           description: The fields that represent a DAR in json format.
           required: true
           schema:
-            $ref: '#/components/schemas/DataAccessRequest'
+            $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
@@ -1330,7 +1326,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataAccessRequest'
+                $ref: './schemas/DataAccessRequest.yaml'
         403:
           description: Updates are restricted to the create user.
         500:
@@ -1370,7 +1366,7 @@ paths:
           description: The fields that represent a Data Access Request, json format.
           required: true
           schema:
-            $ref: '#/components/schemas/DataAccessRequest'
+            $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
@@ -1391,7 +1387,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DataAccessRequest'
+                  $ref: './schemas/DataAccessRequest.yaml'
         500:
           description: Internal Server Error.
   /api/dar/v2/draft/{referenceId}:
@@ -1410,7 +1406,7 @@ paths:
           description: The fields that represent a Data Access Request, json format.
           required: true
           schema:
-            $ref: '#/components/schemas/DataAccessRequest'
+            $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
@@ -1438,7 +1434,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataAccessRequest'
+                $ref: './schemas/DataAccessRequest.yaml'
         500:
           description: Internal Server Error.
   /api/dar/v2/draft/manage:
@@ -1511,7 +1507,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataAccessRequest'
+                $ref: './schemas/DataAccessRequest.yaml'
   /api/dar/v2/{referenceId}/collaborationDocument:
     get:
       summary: Retrieve DAR Collaboration Document
@@ -1565,7 +1561,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataAccessRequest'
+                $ref: './schemas/DataAccessRequest.yaml'
 
   /api/dar:
     post:
@@ -1579,7 +1575,7 @@ paths:
           description: The fields that represent a DAR, json format.
           required: true
           schema:
-            $ref: '#/components/schemas/DataAccessRequest'
+            $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
@@ -1606,7 +1602,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataAccessRequest'
+                $ref: './schemas/DataAccessRequest.yaml'
         403:
           description: Forbidden
         404:
@@ -1702,7 +1698,7 @@ paths:
           description: The fields that represent a DAR, json format.
           required: true
           schema:
-            $ref: '#/components/schemas/DataAccessRequest'
+            $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
@@ -1724,7 +1720,7 @@ paths:
             User must be the creator of the DAR.
           required: true
           schema:
-            $ref: '#/components/schemas/DataAccessRequest'
+            $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
@@ -2272,7 +2268,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Dataset'
+                  $ref: './schemas/Dataset.yaml'
 
   /api/dataset/v2:
     post:
@@ -2284,7 +2280,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Dataset'
+              $ref: './schemas/Dataset.yaml'
       tags:
         - Datasets
       responses:
@@ -2293,7 +2289,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dataset'
+                $ref: './schemas/Dataset.yaml'
         400:
           description: External Error (invalid input)
         409:
@@ -2382,7 +2378,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dataset'
+                $ref: './schemas/Dataset.yaml'
         404:
           description: Not Found
         500:
@@ -2421,7 +2417,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Dataset'
+              $ref: './schemas/Dataset.yaml'
       tags:
         - Datasets
       responses:
@@ -3805,62 +3801,16 @@ components:
             email: email authorization
             profile: profile authorization
   schemas:
-    ApprovalExpirationTime:
-      type: object
-      properties:
-        id:
-          description: System assigned id
-          type: integer
-        userId:
-          description: System assigned create user id
-          type: integer
-        createDate:
-          description: System assigned creation date
-          type: string
-          format: date
-        amountOfDays:
-          description: Number of days
-          type: integer
-        displayName:
-          description: System assigned create user display name
-          type: string
+    Collaborator:
+      $ref: './schemas/Collaborator.yaml'
     DarCollection:
-      type: object
-      properties:
-        darCollectionId:
-          type: integer
-          description: Collection ID
-        darCode:
-          type: string
-          description: 'Code designation referenced by DARs within collection'
-        createDate:
-          type: string
-          format: date
-          description: Collection's create date
-        createUserId:
-          type: integer
-          description: Collection creator's user ID
-        updateDate:
-          type: string
-          format: date
-          description: Collection's last update date
-        updateUserId:
-          type: integer
-          description: ID of user that last updated the collection
-        dars:
-          type: array
-          description: List of all DARs associated with the collection
-          items:
-            $ref: '#/components/schemas/DataAccessRequest'
-        datasets:
-          type: array
-          description: List of all datasets referenced across all DARs within the collection
-          items:
-            $ref: '#/components/schemas/Dataset'
-    UserProperties:
-      type: array
-      items:
-        $ref: '#/components/schemas/UserProperty'
+      $ref: './schemas/DarCollection.yaml'
+    DataAccessRequest:
+      $ref: './schemas/DataAccessRequest.yaml'
+    Dataset:
+      $ref: './schemas/Dataset.yaml'
+    DatasetProperty:
+      $ref: './schemas/DatasetProperty.yaml'
     UserProperty:
       type: object
       properties:
@@ -4228,238 +4178,6 @@ components:
         updateStatus:
           type: boolean
           description: Indicates if a consent has been updated from orsp
-    Collaborator:
-      type: object
-      description: |
-        A Collaborator on a Data Access Request. Collaborators are either internal lab staff or
-        internal collaborators.
-      properties:
-        approverStatus:
-          type: boolean
-          description: |
-            Collaborator downloader/approver status. This is relevant for internal lab staff that
-            will have a status as "Designated Downloader/Approver". This indication is limited to
-            individuals who the PI designates to download and/or share the requested data with other
-            internal lab staff, i.e. staff members and trainees under the direct supervision of the PI
-        email:
-          type: string
-          description: Collaborator email
-        eraCommonsId:
-          type: string
-          description: Collaborator era commons id
-        name:
-          type: string
-          description: Collaborator name
-        title:
-          type: string
-          description: Collaborator title
-        uuid:
-          type: string
-          description: Optional uuid for this collaborator
-    DataAccessRequest:
-      type: object
-      description: Data Access Request
-      properties:
-        referenceId:
-          type: string
-          description: The reference id for this DAR. Not modifiable once created.
-        userId:
-          type: integer
-          description: Describes the id of the User. Not modifiable once created.
-        createDate:
-          type: number
-          description: Creation Date
-        sortDate:
-          type: number
-          description: Sort Date
-        submissionDate:
-          type: number
-          description: Submission Date
-        updateDate:
-          type: number
-          description: Update Date
-        draft:
-          type: boolean
-          description: Draft status of this DAR
-        darCode:
-          type: string
-          description: Unique DAR Code
-        partialDarCode:
-          type: string
-          description: Unique Partial DAR Code
-        projectTitle:
-          type: string
-          description: Project Title
-        datasetIds:
-          type: array
-          items:
-            type: string
-          description: Array of Dataset Ids
-        rus:
-          type: string
-          description: Describes the Research Use Statement
-        nonTechRus:
-          type: string
-          description: Describes the Non Technical Summary
-        diseases:
-          type: boolean
-          description: Defines if the purpose of the study is disease-related
-        methods:
-          type: boolean
-          description: Defines if the purpose of the study is for Methods development
-        controls:
-          type: boolean
-          description: Defines if the purpose of the study is to increase the number of controls available for a comparison group
-        population:
-          type: boolean
-          description: Defines if the purpose of the study is to understand variation in the general population
-        other:
-          type: boolean
-          description: Defines if the purpose of the study is other than the above
-        otherText:
-          type: string
-          description: Describes above field
-        ontologies:
-          type: array
-          description: Array of ontology terms
-          items:
-            type: string
-        forProfit:
-          type: boolean
-          description: Describes if data will be used for commercial purposes
-        oneGender:
-          type: boolean
-          description: Describes if study is gender specific
-        gender:
-          type: string
-          description: F/M if oneGender is specified
-        pediatric:
-          type: boolean
-          description: Describes if study is restricted to a pediatric population
-        illegalBehavior:
-          type: boolean
-          description: If TRUE, triggers MANUAL REVIEW.
-        addiction:
-          type: boolean
-          description: If TRUE, triggers MANUAL REVIEW
-        sexualDiseases:
-          type: boolean
-          description: If TRUE, triggers MANUAL REVIEW
-        stigmatizedDiseases:
-          type: boolean
-          description: If TRUE, triggers MANUAL REVIEW
-        vulnerablePopulation:
-          type: boolean
-          description: If TRUE, triggers MANUAL REVIEW
-        populationMigration:
-          type: boolean
-          description: If TRUE, triggers MANUAL REVIEW
-        psychiatricTraits:
-          type: boolean
-          description: If TRUE, triggers MANUAL REVIEW
-        notHealth:
-          type: boolean
-          description: If TRUE, triggers MANUAL REVIEW
-        hmb:
-          type: boolean
-          description: HMB Research
-        poa:
-          type: boolean
-          description: Populations Origins Ancestry Research
-        anvilUse:
-          type: boolean
-          description: Anvil Use
-        cloudUse:
-          type: boolean
-          description: Cloud Use
-        localUse:
-          type: boolean
-          description: Local Use
-        cloudProvider:
-          type: string
-          description: Cloud Use Provider
-        cloudProviderType:
-          type: string
-          description: Cloud Use Provider Type
-        cloudProviderDescription:
-          type: string
-          description: Cloud Use Provider Description
-        geneticStudiesOnly:
-          type: boolean
-          description: Genetic Studies Only
-        irb:
-          type: boolean
-          description: IRB Approval Required
-        irbDocumentLocation:
-          type: string
-          description: IRB Document Location
-        irbProtocolExpiration:
-          type: string
-          description: IRB Protocol Expiration
-        dsAcknowledgement:
-          type: boolean
-          description: Boolean value that represents user acknowledgement of disease studies restrictions (if applciable)
-        gsoAcknowledgement:
-          type: boolean
-          description: Boolean value that represents user acknowledgement of genetic studies limitations (if applicable)
-        pubAcknowledgement:
-          type: boolean
-          description: Boolean value that represents user acknowledgement of publication requirements (if applicable)
-        itDirector:
-          type: string
-          description: IT Director
-        signingOfficial:
-          type: string
-          description: Signing Official
-        publication:
-          type: boolean
-          description: Publication Required
-        collaboration:
-          type: boolean
-          description: Collaboration Required
-        collaborationLetterLocation:
-          type: string
-          description: Collaboration Letter Location
-        forensicActivities:
-          type: boolean
-          description: Study involves Forensic Activities
-        sharingDistribution:
-          type: boolean
-          description: Study requires sharing distribution
-        externalCollaborators:
-          type: array
-          description: |
-            External Collaborators are not employees of the Requesting PI's institution and/or do not
-            work at the same location as the PI, and consequently must be independently approved to
-            access controlled-access data subject to the GDS Policy. External Collaborators must be
-            at the PI or equivalent level and are not required to have a  Library Card in order to
-            access data, although it is encouraged. Note, External Collaborators must submit an
-            independant DAR approved by their Signing Official to collaborate on this project.
-            External Collaborators will be able to add their Lab Staff, as needed, via their
-            independent DAR. Approval of this DAR does not indicate approval of the External
-            Collaborators listed.
-          items:
-            $ref: '#/components/schemas/Collaborator'
-        internalCollaborators:
-          type: array
-          description: |
-            Internal Collaborators are defined as individuals not under the direct supervision of the
-            PO's research project involving controlled-access data subject to the NIH GDS Policy.
-            They are employees of the requesting PI's institution and work at the same location/campus
-            as the PI. Internal Collaborators must be at the PI or equivalent level and are required
-            to have a Library Card in order to access data through this request. Internal
-            Collaborators will have Data Downloader/Approval status so that they may add their own
-            relevant Internal Lab Staff. Internal Collaborators will not be required to submit an
-            independent DAR to collaborate on this project.
-          items:
-            $ref: '#/components/schemas/Collaborator'
-        labCollaborators:
-          type: array
-          description: |
-            Lab Collaborators are defined as users of data from this Data Access Request,
-            including any data that are downloaded or utilized in the cloud.
-          items:
-            $ref: '#/components/schemas/Collaborator'
     DataAccessRequestManage:
       type: object
       properties:
@@ -4600,80 +4318,6 @@ components:
           type: object
           items:
             $ref: '#/components/schemas/User'
-    Dataset:
-      type: object
-      properties:
-        dataSetId:
-          type: integer
-          format: int32
-          description: The dataset id, integer format
-        dacId:
-          type: string
-          description: The id of the DAC this dataset belongs to, if defined.
-        consentId:
-          type: string
-          description: The consent id.
-        translatedUseRestriction:
-          type: string
-          description: The Use Restriction, readable type
-        deletable:
-          type: boolean
-          description: Describes if this DataSet can be deleted (This information is only given to the Admin).
-        properties:
-          type: array
-          items:
-            $ref: '#/components/schemas/DatasetProperty'
-          example:
-            - propertyName: Dataset Name
-              propertyValue: Dataset Name
-            - propertyName: Data Type
-              propertyValue: Whole Genome
-            - propertyName: Species
-              propertyValue: Human
-            - propertyName: Phenotype/Indication
-              propertyValue: Cardiovascular System Disease
-            - propertyName: "# of participants"
-              propertyValue: 20
-            - propertyName: Description
-              propertyValue: Description of Dataset
-            - propertyName: dbGAP
-              propertyValue: http://...
-            - propertyName: Data Depositor
-              propertyValue: NHLBI
-            - propertyName: Principal Investigator(PI)
-              propertyValue: NHLBI
-            - propertyName: Sample Collection ID
-              propertyValue: SC-000
-        active:
-          type: boolean
-          description: The Dataset is active
-        needsApproval:
-          type: boolean
-          description: The Dataset need Data Owners approval
-        isAssociatedToDataOwners:
-          type: boolean
-          description: The Dataset is associated to a data owner
-        updateAssociationToDataOwnerAllowed:
-          type: boolean
-          description: You can update the data owners of this Dataset
-        alias:
-          type: string
-          description: The dataset id, string format
-        objectId:
-          type: string
-          description: The sample collection ID, if defined
-        dataUse:
-          type: object
-          description: The Data Use question/answer set for this dataset (used for the associated consent).
-    DatasetProperty:
-      type: object
-      properties:
-        propertyName:
-          type: string
-          description: Name of the Property.
-        propertyValue:
-          type: string
-          description: Value of the Property.
     DatasetAssociation:
       type: object
       properties:

@@ -1,0 +1,21 @@
+get:
+  summary: Get DAR Collection By ID
+  description: Returns a single DAR Collection
+  tags:
+    - DAR Collection
+  parameters:
+    - name: collectionId
+      in: path
+      description: DAR Collection Id
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: Returns a single DAR Collection
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DarCollection.yaml'
+    404:
+      description: Not Found

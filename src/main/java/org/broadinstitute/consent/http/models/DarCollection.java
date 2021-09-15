@@ -16,31 +16,38 @@ import java.util.Objects;
 public class DarCollection {
 
   @JsonProperty
-  Integer darCollectionId;
+  private Integer darCollectionId;
 
   @JsonProperty
-  String darCode;
+  private String darCode;
 
   @JsonProperty
-  Timestamp createDate;
+  private Timestamp createDate;
 
   @JsonProperty
-  Integer createUserId;
+  private Integer createUserId;
 
   @JsonProperty
-  Timestamp updateDate;
+  private Timestamp updateDate;
 
   @JsonProperty
-  Integer updateUserId;
+  private Integer updateUserId;
 
   @JsonProperty
-  List<DataAccessRequest> dars;
+  private List<DataAccessRequest> dars;
 
-  Set<DataSet> datasets;
+  @JsonProperty
+  private Set<DataSet> datasets;
 
   public DarCollection() {
     this.createDate = new Timestamp(System.currentTimeMillis());
-    this.datasets = new HashSet<DataSet>();
+    this.datasets = new HashSet<>();
+  }
+
+  public DarCollection deepCopy() {
+    Gson gson = new Gson();
+    String json = gson.toJson(this);
+    return gson.fromJson(json, DarCollection.class);
   }
 
   public Integer getDarCollectionId() {

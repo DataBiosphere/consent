@@ -1,0 +1,16 @@
+get:
+  summary: List of all DAR Collections under the current user (Researcher)
+  description: Returns a list of all DAR Collections, each of which carries associated DARs and datasets
+  tags:
+    - DAR Collection
+  responses:
+    200:
+      description: Returns all DAR Collections under the current user (Researcher)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DarCollection.yaml'
+    403:
+      description: User does not have access to this resource

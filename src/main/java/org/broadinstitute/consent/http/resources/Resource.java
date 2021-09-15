@@ -173,12 +173,18 @@ abstract public class Resource {
      * If not, then the authenticated user must have the same identity as the
      * `userId` parameter they are requesting information for.
      *
-     * @param authedRoles   List of UserRoles enums
-     * @param authedUser The authenticated DACUser
-     * @param userId        The id of the DACUser the authenticated user is requesting access to
+     * Typically, we use this to ensure that a non-privileged user is the creator
+     * of an entity. In those cases, pass in an empty list of privileged roles.
+     *
+     * Privileged users such as admins, chairpersons, and members, may be allowed
+     * access to some resources even if they are not the creator/owner.
+     *
+     * @param privilegedRoles   List of privileged UserRoles enums
+     * @param authedUser        The authenticated User
+     * @param userId            The user id that the authenticated user is requesting access for
      */
-    void validateAuthedRoleUser(final List<UserRoles> authedRoles, final User authedUser, final Integer userId) {
-        List<Integer> authedRoleIds = authedRoles.stream().
+    void validateAuthedRoleUser(final List<UserRoles> privilegedRoles, final User authedUser, final Integer userId) {
+        List<Integer> authedRoleIds = privilegedRoles.stream().
                 map(UserRoles::getRoleId).
                 collect(Collectors.toList());
         boolean authedUserHasRole = authedUser.getRoles().stream().

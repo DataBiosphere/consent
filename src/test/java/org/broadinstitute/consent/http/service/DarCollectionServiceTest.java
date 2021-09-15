@@ -1,5 +1,19 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -7,28 +21,13 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.when;
 
 public class DarCollectionServiceTest {
 
@@ -41,7 +40,7 @@ public class DarCollectionServiceTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    openMocks(this);
   }
 
   @Test
@@ -104,18 +103,18 @@ public class DarCollectionServiceTest {
 
   @Test
   public void testAddDatasetsToCollection() {
-    List<DarCollection> collections = new ArrayList<DarCollection>();
-    Set<DataSet> datasets = new HashSet<DataSet>();
+    List<DarCollection> collections = new ArrayList<>();
+    Set<DataSet> datasets = new HashSet<>();
     collections.add(generateMockDarCollection(datasets));
     List<Integer> datasetIds = datasets.stream()
-      .map(d -> d.getDataSetId())
+      .map(DataSet::getDataSetId)
       .sorted()
       .collect(Collectors.toList());
 
     when(datasetDAO.findDatasetWithDataUseByIdList(anyList())).thenReturn(datasets);
     initService();
 
-    service.addDatasetsToCollections(collections);
+    collections = service.addDatasetsToCollections(collections);
     assertEquals(1, collections.size());
 
     DarCollection collection = collections.get(0);
@@ -123,7 +122,7 @@ public class DarCollectionServiceTest {
     assertEquals(datasetIds.size(), datasetsFromCollection.size());
 
     List<Integer> collectionDatasetIds = datasetsFromCollection.stream()
-      .map(d -> d.getDataSetId())
+      .map(DataSet::getDataSetId)
       .sorted()
       .collect(Collectors.toList());
     assertEquals(datasetIds, collectionDatasetIds);
@@ -131,7 +130,7 @@ public class DarCollectionServiceTest {
 
   private DarCollection generateMockDarCollection(Set<DataSet> datasets) {
     DarCollection collection = new DarCollection();
-    List<DataAccessRequest> dars = new ArrayList<DataAccessRequest>();
+    List<DataAccessRequest> dars = new ArrayList<>();
     dars.add(generateMockDarWithDatasetId(datasets));
     dars.add(generateMockDarWithDatasetId(datasets));
     collection.setDars(dars);
@@ -141,7 +140,7 @@ public class DarCollectionServiceTest {
   private DataAccessRequest generateMockDarWithDatasetId(Set<DataSet> datasets) {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
-    
+
     Integer datasetId = RandomUtils.nextInt(1, 100);
     datasets.add(generateMockDatasetWithDataUse(datasetId));
     data.setDatasetIds(Collections.singletonList(datasetId));
@@ -160,7 +159,7 @@ public class DarCollectionServiceTest {
   }
 
   private void initWithPaginationToken(PaginationToken token, int unfilteredCount, int filteredCount) {
-    MockitoAnnotations.openMocks(this);
+    openMocks(this);
     List<DarCollection> unfilteredDars = createMockDars(unfilteredCount);
     // Start the filtered ids at index 0 so tests can make more assertions.
     List<DarCollection> filteredDars = unfilteredDars.subList(0, filteredCount);
