@@ -9,6 +9,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -73,6 +74,22 @@ public class DarCollectionResource extends Resource {
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
     } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Path("dar/{id}/cancel")
+  @Produces("application/json")
+  @RolesAllowed(RESEARCHER)
+  public Response cancelDarCollection(@Auth AuthUser authUser, @PathParam("id") Integer collectionId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      DarCollection collection = darCollectionService.getByCollectionId(collectionId);
+      validateUserIsCreator(user, collection);
+      DarCollection cancelledCollection = darCollectionService.cancelDarCollection(collection, user);
+      return Response.ok().entity(cancelledCollection).build();
+    } catch(Exception e) {
       return createExceptionResponse(e);
     }
   }

@@ -11,12 +11,18 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import javax.ws.rs.BadRequestException;
+
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
@@ -27,12 +33,16 @@ public class DarCollectionService {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final DarCollectionDAO darCollectionDAO;
+  private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
+  private final ElectionDAO electionDAO;
 
   @Inject
-  public DarCollectionService(DarCollectionDAO darCollectionDAO, DatasetDAO datasetDAO) {
+  public DarCollectionService(DarCollectionDAO darCollectionDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO) {
     this.darCollectionDAO = darCollectionDAO;
     this.datasetDAO = datasetDAO;
+    this.electionDAO = electionDAO;
+    this.dataAccessRequestDAO = dataAccessRequestDAO;
   }
 
   public List<DarCollection> getAllCollections() {
@@ -142,6 +152,32 @@ public class DarCollectionService {
     }
     // There were no datasets to add, so we return the original list
     return collections;
+  }
+
+  // fetch elections in bulk via dar reference ids
+  // if any election exists, throw a bad request
+  // else collect the dar reference ids where the status is NOT cancelled
+  // once collected, perform bulk update where status is updated with cancelled
+  public DarCollection cancelDarCollection(DarCollection collection, User user) {
+    List<DataAccessRequest> dars = collection.getDars();
+    List<String> referenceIds = dars.stream()
+      .map(d -> d.getReferenceId())
+      .collect(Collectors.toList());
+    
+    List<Election> elections = electionDAO.findElectionsByReferenceIds(referenceIds);
+    if(!elections.isEmpty()) {
+      throw new BadRequestException("Elections present on DARs; cannot cancel collection");
+    }
+    List<String> nonCanceledIds = dars.stream()
+      .filter(d -> {
+        String status = d.getData().getStatus();
+        return Objects.nonNull(status) && status.toLowerCase() != "canceled";
+      })
+      .map(d -> d.getReferenceId())
+      .collect(Collectors.toList());
+    
+    dataAccessRequestDAO.cancelByReferenceIds(nonCanceledIds);
+    return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }
 
 }
