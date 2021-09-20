@@ -161,10 +161,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("SELECT * FROM election WHERE referenceid = :referenceId")
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
 
-    @UseRowMapper(SimpleElectionMapper.class)
-    @SqlQuery("SELECT * FROM election where referenceid IN (<referenceIds>) AND lower(electiontype) = 'dataaccess'")
-    List<Election> findElectionsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
-
     @SqlQuery(
       "SELECT * from ( "
         + "SELECT e.*, v.vote finalvote, "

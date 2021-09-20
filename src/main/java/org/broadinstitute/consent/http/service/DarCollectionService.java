@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -164,7 +165,7 @@ public class DarCollectionService {
       .map(d -> d.getReferenceId())
       .collect(Collectors.toList());
     
-    List<Election> elections = electionDAO.findElectionsByReferenceIds(referenceIds);
+    List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds, ElectionType.DATA_ACCESS.getValue());
     if(!elections.isEmpty()) {
       throw new BadRequestException("Elections present on DARs; cannot cancel collection");
     }
