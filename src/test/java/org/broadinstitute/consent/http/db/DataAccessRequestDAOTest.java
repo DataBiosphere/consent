@@ -209,9 +209,12 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest updatedDar1 = dataAccessRequestDAO.findByReferenceId(dar1.getReferenceId());
         DataAccessRequest updatedDar2 = dataAccessRequestDAO.findByReferenceId(dar2.getReferenceId());
 
+        assertEquals(dar1.getReferenceId(), updatedDar1.getReferenceId());
+        assertEquals(dar2.getReferenceId(), updatedDar2.getReferenceId());
+
         assertEquals("Canceled", updatedDar1.getData().getStatus());
         assertEquals("Canceled", updatedDar2.getData().getStatus());
-        
+
         assertNotNull(updatedDar1.getData().getHmb());
         assertNotNull(updatedDar2.getData().getHmb());
         assertEquals(dar1.getData().getHmb(), updatedDar1.getData().getHmb());
