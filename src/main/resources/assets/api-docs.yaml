@@ -124,7 +124,7 @@ paths:
     $ref: './paths/collection.yaml'
   /api/collections/dar/{referenceId}:
     $ref: './paths/collectionByReferenceId.yaml'
-  /api/collections/cancel/{collectionId}:
+  /api/collections/{collectionId}/cancel:
     $ref: './paths/cancelCollectionByCollectionId.yaml'
   /api/ontology:
     get:

@@ -81,7 +81,7 @@ public class DarCollectionResource extends Resource {
   }
 
   @PUT
-  @Path("dar/{id}/cancel")
+  @Path("{id}/cancel")
   @Produces("application/json")
   @RolesAllowed(RESEARCHER)
   public Response cancelDarCollectionByCollectionId(@Auth AuthUser authUser, @PathParam("id") Integer collectionId) {
