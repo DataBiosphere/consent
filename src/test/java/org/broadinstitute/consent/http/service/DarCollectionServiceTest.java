@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -50,7 +51,7 @@ public class DarCollectionServiceTest {
             page -> {
               int filteredCount = 75;
               int unfilteredCount = 100;
-              PaginationToken token = new PaginationToken(page, 10, null, null, null);
+              PaginationToken token = new PaginationToken(page, 10, null, null, null, defineAcceptableSortFields());
               initWithPaginationToken(token, unfilteredCount, filteredCount);
               PaginationResponse<DarCollection> response = service.getCollectionsWithFilters(token, user);
               /*
@@ -79,7 +80,7 @@ public class DarCollectionServiceTest {
   public void testGetCollectionsWithFiltersByPageLessThanPageSize() {
       int filteredCount = 3;
       int unfilteredCount = 5;
-      PaginationToken token = new PaginationToken(1, 10, null, null, null);
+      PaginationToken token = new PaginationToken(1, 10, null, null, null, defineAcceptableSortFields());
       initWithPaginationToken(token, unfilteredCount, filteredCount);
       PaginationResponse<DarCollection> response = service.getCollectionsWithFilters(token, user);
 
@@ -92,7 +93,7 @@ public class DarCollectionServiceTest {
   public void testInitWithInvalidTokenValues() {
       int filteredCount = 5;
       int unfilteredCount = 20;
-      PaginationToken token = new PaginationToken(2, 10, null, null, null);
+      PaginationToken token = new PaginationToken(2, 10, null, null, null, defineAcceptableSortFields());
       initWithPaginationToken(token, unfilteredCount, filteredCount);
 
       // Start index will be > end index in this case since we're trying to get results 11-20 when
@@ -186,5 +187,14 @@ public class DarCollectionServiceTest {
               return collection;
             })
         .collect(Collectors.toList());
+  }
+
+  private Map<String, String> defineAcceptableSortFields() {
+    return Map.of(
+      "projectTitle", "projectTitle",
+      "researcher", "researcher",
+      "darCode", "dar_code",
+      "institution", "institution_name"
+    );
   }
 }

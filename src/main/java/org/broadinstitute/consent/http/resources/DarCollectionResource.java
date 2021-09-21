@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.ForbiddenException;
@@ -12,9 +13,12 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.PaginationToken;
+import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -77,6 +81,27 @@ public class DarCollectionResource extends Resource {
     }
   }
 
+  @GET
+  @Path("query")
+  @Produces("application/json")
+  @RolesAllowed(RESEARCHER)
+  public Response getCollectionsByInitialQuery(
+    @Auth AuthUser authUser,
+    @QueryParam("filterTerm") String filterTerm,
+    @QueryParam("sortField") String sortField,
+    @QueryParam("sortOrder") String sortOrder,
+    @QueryParam("pageSize") int pageSize
+  ) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, defineAcceptableSortFields());
+      PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(token, user);
+      return Response.ok().entity(paginationResponse).build();
+    } catch(Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   // A User should only see their own collection, regardless of the user's roles
   // We don't want to leak existence so throw a not found if someone tries to
   // view another user's collection.
@@ -86,5 +111,14 @@ public class DarCollectionResource extends Resource {
     } catch (ForbiddenException e) {
       throw new NotFoundException();
     }
+  }
+
+  private Map<String, String> defineAcceptableSortFields() {
+    return Map.of(
+      "projectTitle", "projectTitle",
+      "researcher", "researcher",
+      "darCode", "dar_code",
+      "institution", "institution_name"
+    );
   }
 }

@@ -124,6 +124,8 @@ paths:
     $ref: './paths/collection.yaml'
   /api/collections/dar/{referenceId}:
     $ref: './paths/collectionByReferenceId.yaml'
+  /api/collections/query:
+    $ref: './paths/collectionsByQuery.yaml'
   /api/ontology:
     get:
       summary: List Ontology Files

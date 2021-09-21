@@ -13,6 +13,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -21,6 +23,8 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.PaginationResponse;
+import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DarCollectionService;
@@ -139,5 +143,35 @@ public class DarCollectionResourceTest {
 
     Response response = resource.getCollectionByReferenceId(authUser, "1");
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void testGetCollectionsByInitialQuery_BadSortField() {
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    initResource();
+
+    Response response = resource.getCollectionsByInitialQuery(authUser, "filterTerm", "badSortFieldName", "ASC", 10);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testGetCollectionsByInitialQuery_BadSortOrder() {
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    initResource();
+
+    Response response = resource.getCollectionsByInitialQuery(authUser, "filterTerm", "projectTitle", "badSortOrder", 10);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testGetCollectionsByInitialQuery() {
+    PaginationResponse<DarCollection> paginationResponse = new PaginationResponse<>();
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    when(darCollectionService.getCollectionsWithFilters(any(PaginationToken.class), any(User.class)))
+      .thenReturn(paginationResponse);
+    initResource();
+    
+    Response response = resource.getCollectionsByInitialQuery(authUser, "filterTerm", "projectTitle", "asc", 10);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 }

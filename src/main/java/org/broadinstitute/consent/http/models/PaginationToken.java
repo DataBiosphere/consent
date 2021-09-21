@@ -7,8 +7,8 @@ import javax.ws.rs.BadRequestException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -16,7 +16,7 @@ import java.util.stream.IntStream;
 public class PaginationToken {
 
   private static final Charset UTF_8 = StandardCharsets.UTF_8;
-  private static final List<String> acceptableSortFields = Collections.emptyList();
+  // private static final Map<String> acceptableSortFields = Collections.emptyLi();
 
   @JsonProperty
   private Integer page;
@@ -42,8 +42,11 @@ public class PaginationToken {
   @JsonProperty
   private Integer unfilteredCount;
 
+  private Map<String, String> acceptableSortFields;
+
   //constructor for request tokens
-  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm) {
+  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm, Map<String, String> acceptableSortFields) {
+    this.acceptableSortFields = acceptableSortFields;
     checkSortField(sortField);
     checkSortDirection(sortDirection);
     this.page = page;
@@ -56,7 +59,8 @@ public class PaginationToken {
 
   //constructor for response tokens
   public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm,
-                         Integer filteredCount, Integer filteredPageCount, Integer unfilteredCount) {
+                         Integer filteredCount, Integer filteredPageCount, Integer unfilteredCount, Map<String, String> acceptableSortFields) {
+    this.acceptableSortFields = acceptableSortFields;
     checkSortField(sortField);
     checkSortDirection(sortDirection);
     this.page = page;
@@ -67,6 +71,7 @@ public class PaginationToken {
     this.filteredCount = filteredCount;
     this.filteredPageCount = filteredPageCount;
     this.unfilteredCount = unfilteredCount;
+    this.acceptableSortFields = acceptableSortFields;
     checkForValidNumbers();
   }
 
@@ -131,9 +136,17 @@ public class PaginationToken {
     return Base64.getEncoder().encodeToString(new Gson().toJson(this).getBytes(UTF_8));
   }
 
+  public void setAcceptableSortField(Map<String, String> acceptableSortFields) {
+    this.acceptableSortFields = acceptableSortFields;
+  }
+
+  public Map<String, String> getAcceptableSortFields() {
+    return acceptableSortFields;
+  }
+
   private void checkSortField(String sortField) {
     if (Objects.nonNull(sortField)) {
-      if (!acceptableSortFields.contains(sortField)) {
+      if (Objects.isNull(acceptableSortFields.get(sortField))) {
         throw new BadRequestException("Cannot sort on given field: " + sortField);
       }
     }
@@ -141,7 +154,7 @@ public class PaginationToken {
 
   private void checkSortDirection(String sortDirection) {
     if (Objects.nonNull(sortDirection)) {
-      if (!sortDirection.equals("asc") && !sortDirection.equals("desc")) {
+      if (!sortDirection.toLowerCase().equals("asc") && !sortDirection.toLowerCase().equals("desc")) {
         throw new BadRequestException("Sort direction must be either 'asc' or 'desc");
       }
     }
@@ -177,7 +190,8 @@ public class PaginationToken {
                 this.getFilterTerm(),
                 this.getFilteredCount(),
                 this.getFilteredPageCount(),
-                this.getUnfilteredCount()))
+                this.getUnfilteredCount(),
+                this.getAcceptableSortFields()))
         .collect(Collectors.toList());
   }
 

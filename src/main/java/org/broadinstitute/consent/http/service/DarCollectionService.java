@@ -57,7 +57,6 @@ public class DarCollectionService {
    * @return A PaginationResponse object
    */
   public PaginationResponse<DarCollection> getCollectionsWithFilters(PaginationToken token, User user) {
-
     List<DarCollection> unfilteredDars = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
     token.setUnfilteredCount(unfilteredDars.size());
 
@@ -143,5 +142,4 @@ public class DarCollectionService {
     // There were no datasets to add, so we return the original list
     return collections;
   }
-
 }
