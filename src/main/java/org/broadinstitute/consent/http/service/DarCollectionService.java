@@ -64,6 +64,14 @@ public class DarCollectionService {
     String filterTerm = Objects.isNull(token.getFilterTerm()) ? "" : token.getFilterTerm();
     List<DarCollection> filteredDars = darCollectionDAO.findAllDARCollectionsWithFiltersByUser(filterTerm, user.getDacUserId(), token.getSortField(), token.getSortDirection());
     token.setFilteredCount(filteredDars.size());
+    if(filteredDars.isEmpty()) {
+      return new PaginationResponse<DarCollection>()
+          .setUnfilteredCount(token.getUnfilteredCount())
+          .setFilteredCount(0)
+          .setFilteredPageCount(0) //should this be 0 or 1?
+          .setResults(Collections.emptyList())
+          .setPaginationTokens(Collections.emptyList());
+    }
 
     List<Integer> collectionIds = filteredDars.stream().map(DarCollection::getDarCollectionId).collect(Collectors.toList());
     List<Integer> slice = new ArrayList<>();
