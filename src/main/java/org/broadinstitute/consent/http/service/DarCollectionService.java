@@ -58,6 +58,9 @@ public class DarCollectionService {
    */
   public PaginationResponse<DarCollection> getCollectionsWithFilters(PaginationToken token, User user) {
     List<DarCollection> unfilteredDars = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
+    if(unfilteredDars.isEmpty()) {
+      return createEmptyPaginationResponse(0);
+    }
     Map<String,String> acceptableSortFields = token.getAcceptableSortFields();
     token.setUnfilteredCount(unfilteredDars.size());
 
@@ -65,12 +68,7 @@ public class DarCollectionService {
     List<DarCollection> filteredDars = darCollectionDAO.findAllDARCollectionsWithFiltersByUser(filterTerm, user.getDacUserId(), token.getSortField(), token.getSortDirection());
     token.setFilteredCount(filteredDars.size());
     if(filteredDars.isEmpty()) {
-      return new PaginationResponse<DarCollection>()
-          .setUnfilteredCount(token.getUnfilteredCount())
-          .setFilteredCount(0)
-          .setFilteredPageCount(0) //should this be 0 or 1?
-          .setResults(Collections.emptyList())
-          .setPaginationTokens(Collections.emptyList());
+      return createEmptyPaginationResponse(token.getUnfilteredCount());
     }
 
     List<Integer> collectionIds = filteredDars.stream().map(DarCollection::getDarCollectionId).collect(Collectors.toList());
@@ -150,5 +148,14 @@ public class DarCollectionService {
     }
     // There were no datasets to add, so we return the original list
     return collections;
+  }
+
+  private PaginationResponse<DarCollection> createEmptyPaginationResponse(Integer unfilteredCount) {
+    return new PaginationResponse<DarCollection>()
+          .setUnfilteredCount(unfilteredCount)
+          .setFilteredCount(0)
+          .setFilteredPageCount(0) //should this be 0 or 1?
+          .setResults(Collections.emptyList())
+          .setPaginationTokens(Collections.emptyList());
   }
 }
