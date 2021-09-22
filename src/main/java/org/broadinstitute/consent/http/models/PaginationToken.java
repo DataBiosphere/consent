@@ -51,7 +51,7 @@ public class PaginationToken {
     checkSortDirection(sortDirection);
     this.page = page;
     this.pageSize = pageSize;
-    this.sortField = sortField;
+    this.sortField = this.acceptableSortFields.get(sortField);
     this.sortDirection = sortDirection;
     this.filterTerm = filterTerm;
     checkForValidNumbers();
@@ -65,7 +65,7 @@ public class PaginationToken {
     checkSortDirection(sortDirection);
     this.page = page;
     this.pageSize = pageSize;
-    this.sortField = sortField;
+    this.sortField = this.acceptableSortFields.get(sortField);
     this.sortDirection = sortDirection;
     this.filterTerm = filterTerm;
     this.filteredCount = filteredCount;
