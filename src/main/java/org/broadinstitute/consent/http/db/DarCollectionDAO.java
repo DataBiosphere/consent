@@ -66,7 +66,10 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(getCollectionAndDars + " WHERE c.collection_id in (<collectionIds>)")
+  @SqlQuery(
+    getCollectionAndDars 
+    + " WHERE c.collection_id in (<collectionIds>)"
+    +  " ORDER BY <sortField> <sortOrder>")
   List<DarCollection> findDARCollectionByCollectionIds(
           @BindList("collectionIds") List<Integer> collectionIds,
           @Define("sortField") String sortField,
