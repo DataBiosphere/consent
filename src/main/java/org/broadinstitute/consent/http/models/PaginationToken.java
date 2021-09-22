@@ -51,8 +51,8 @@ public class PaginationToken {
     checkSortDirection(sortDirection);
     this.page = page;
     this.pageSize = pageSize;
-    this.sortField = this.acceptableSortFields.get(sortField);
-    this.sortDirection = sortDirection;
+    this.sortField =  Objects.nonNull(sortField) ? sortField : "darCode";
+    this.sortDirection = Objects.nonNull(sortDirection) ? sortDirection : "DESC";
     this.filterTerm = filterTerm;
     checkForValidNumbers();
   }
@@ -65,13 +65,12 @@ public class PaginationToken {
     checkSortDirection(sortDirection);
     this.page = page;
     this.pageSize = pageSize;
-    this.sortField = this.acceptableSortFields.get(sortField);
-    this.sortDirection = sortDirection;
+    this.sortField = Objects.nonNull(sortField) ? sortField : "darCode";
+    this.sortDirection = Objects.nonNull(sortDirection) ? sortDirection : "DESC";
     this.filterTerm = filterTerm;
     this.filteredCount = filteredCount;
     this.filteredPageCount = filteredPageCount;
     this.unfilteredCount = unfilteredCount;
-    this.acceptableSortFields = acceptableSortFields;
     checkForValidNumbers();
   }
 
