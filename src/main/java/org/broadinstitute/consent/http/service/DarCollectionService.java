@@ -154,7 +154,7 @@ public class DarCollectionService {
     return new PaginationResponse<DarCollection>()
           .setUnfilteredCount(unfilteredCount)
           .setFilteredCount(0)
-          .setFilteredPageCount(0) //should this be 0 or 1?
+          .setFilteredPageCount(1) //should this be 0 or 1?
           .setResults(Collections.emptyList())
           .setPaginationTokens(Collections.emptyList());
   }

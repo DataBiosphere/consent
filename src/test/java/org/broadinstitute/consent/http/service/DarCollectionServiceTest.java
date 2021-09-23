@@ -3,7 +3,9 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -74,6 +76,34 @@ public class DarCollectionServiceTest {
               assertEquals(Integer.valueOf(expectedCollectionId), response.getResults().get(0).getDarCollectionId());
               assertEquals(filteredCount, response.getFilteredCount().intValue());
             });
+  }
+
+  @Test
+  public void testGetCollectionsWithFilters_EmptyUnfiltered() {
+    PaginationToken token = new PaginationToken(1, 10, null, null, null, defineAcceptableSortFields());
+    when(darCollectionDAO.findDARCollectionsCreatedByUserId(anyInt())).thenReturn(Collections.emptyList());
+    service = new DarCollectionService(darCollectionDAO, datasetDAO);
+
+    PaginationResponse<DarCollection> response = service.getCollectionsWithFilters(token, user);
+
+    assertEquals(1, response.getFilteredPageCount().intValue());
+    assertEquals(0, response.getUnfilteredCount().intValue());
+    assertEquals(0, response.getFilteredCount().intValue());
+  }
+
+  @Test
+  public void testGetCollectionsWithFilters_EmptyFiltered() {
+    PaginationToken token = new PaginationToken(1, 10, null, null, null, defineAcceptableSortFields());
+    List<DarCollection> collections = createMockCollections(3);
+    when(darCollectionDAO.findDARCollectionsCreatedByUserId(anyInt())).thenReturn(collections);
+    when(darCollectionDAO.findAllDARCollectionsWithFiltersByUser(anyString(), anyInt(), anyString(), anyString())).thenReturn(Collections.emptyList());
+    service = new DarCollectionService(darCollectionDAO, datasetDAO);
+    
+    PaginationResponse<DarCollection> response = service.getCollectionsWithFilters(token, user);
+
+    assertEquals(1, response.getFilteredPageCount().intValue());
+    assertEquals(collections.size(), response.getUnfilteredCount().intValue());
+    assertEquals(0, response.getFilteredCount().intValue());
   }
 
   @Test
@@ -161,7 +191,7 @@ public class DarCollectionServiceTest {
 
   private void initWithPaginationToken(PaginationToken token, int unfilteredCount, int filteredCount) {
     openMocks(this);
-    List<DarCollection> unfilteredDars = createMockDars(unfilteredCount);
+    List<DarCollection> unfilteredDars = createMockCollections(unfilteredCount);
     // Start the filtered ids at index 0 so tests can make more assertions.
     List<DarCollection> filteredDars = unfilteredDars.subList(0, filteredCount);
     token.setUnfilteredCount(unfilteredDars.size());
@@ -176,7 +206,7 @@ public class DarCollectionServiceTest {
     service = new DarCollectionService(darCollectionDAO, datasetDAO);
   }
 
-  private List<DarCollection> createMockDars(int count) {
+  private List<DarCollection> createMockCollections(int count) {
     return IntStream.rangeClosed(1, count)
         .mapToObj(
             i -> {
