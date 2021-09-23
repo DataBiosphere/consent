@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import java.lang.IllegalStateException;
 import javax.ws.rs.BadRequestException;
 
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -155,15 +156,19 @@ public class DarCollectionService {
     return collections;
   }
 
-  // fetch elections in bulk via dar reference ids
-  // if any election exists, throw a bad request
-  // else collect the dar reference ids where the status is NOT cancelled
-  // once collected, perform bulk update where status is updated with cancelled
+  // If an election exists for a DAR within the collection, that DAR cannot be cancelled by the researcher
+  // Since it's now under DAC review, it's up to the DAC Chair (or admin) to ultimately decline or cancel via elections 
   public DarCollection cancelDarCollection(DarCollection collection, User user) {
     List<DataAccessRequest> dars = collection.getDars();
     List<String> referenceIds = dars.stream()
       .map(d -> d.getReferenceId())
       .collect(Collectors.toList());
+    
+    
+    if(referenceIds.isEmpty()) {
+      logger.warn("DAR Collection does not have any associated DAR ids");
+      return collection;
+    }
     
     List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds, ElectionType.DATA_ACCESS.getValue());
     if(!elections.isEmpty()) {
@@ -177,7 +182,10 @@ public class DarCollectionService {
       .map(d -> d.getReferenceId())
       .collect(Collectors.toList());
     
-    dataAccessRequestDAO.cancelByReferenceIds(nonCanceledIds);
+    //if no dars are valid, simply return the collection (since researcher cancelled DARs should be skipped over)
+    if(!nonCanceledIds.isEmpty()) {
+      dataAccessRequestDAO.cancelByReferenceIds(nonCanceledIds);
+    }
     return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }
 
