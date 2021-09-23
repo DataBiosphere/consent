@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import java.lang.IllegalStateException;
 import javax.ws.rs.BadRequestException;
 
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
