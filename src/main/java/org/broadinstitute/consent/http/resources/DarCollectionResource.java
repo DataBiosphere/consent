@@ -5,8 +5,10 @@ import io.dropwizard.auth.Auth;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -94,6 +96,7 @@ public class DarCollectionResource extends Resource {
   ) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
+      checkIfSortFieldAndSortOrderIsPresent(sortField, sortOrder);
       PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, defineAcceptableSortFields());
       PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(token, user);
       return Response.ok().entity(paginationResponse).build();
@@ -120,5 +123,11 @@ public class DarCollectionResource extends Resource {
       "darCode", "dar_code",
       "institution", "institution_name"
     );
+  }
+
+  private void checkIfSortFieldAndSortOrderIsPresent(String sortField, String sortOrder) {
+    if (Objects.isNull(sortOrder) || Objects.isNull(sortOrder)) {
+      throw new BadRequestException("sortOrder and sortField are required");
+    }
   }
 }

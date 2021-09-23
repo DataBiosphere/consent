@@ -53,7 +53,7 @@ public class DarCollectionServiceTest {
             page -> {
               int filteredCount = 75;
               int unfilteredCount = 100;
-              PaginationToken token = new PaginationToken(page, 10, null, null, null, defineAcceptableSortFields());
+              PaginationToken token = new PaginationToken(page, 10, "darCode", "DESC", null, defineAcceptableSortFields());
               initWithPaginationToken(token, unfilteredCount, filteredCount);
               PaginationResponse<DarCollection> response = service.getCollectionsWithFilters(token, user);
               /*
@@ -80,7 +80,7 @@ public class DarCollectionServiceTest {
 
   @Test
   public void testGetCollectionsWithFilters_EmptyUnfiltered() {
-    PaginationToken token = new PaginationToken(1, 10, null, null, null, defineAcceptableSortFields());
+    PaginationToken token = new PaginationToken(1, 10, "darCode", "DESC", null, defineAcceptableSortFields());
     when(darCollectionDAO.findDARCollectionsCreatedByUserId(anyInt())).thenReturn(Collections.emptyList());
     service = new DarCollectionService(darCollectionDAO, datasetDAO);
 
@@ -93,12 +93,12 @@ public class DarCollectionServiceTest {
 
   @Test
   public void testGetCollectionsWithFilters_EmptyFiltered() {
-    PaginationToken token = new PaginationToken(1, 10, null, null, null, defineAcceptableSortFields());
+    PaginationToken token = new PaginationToken(1, 10, "darCode", "DESC", null, defineAcceptableSortFields());
     List<DarCollection> collections = createMockCollections(3);
     when(darCollectionDAO.findDARCollectionsCreatedByUserId(anyInt())).thenReturn(collections);
     when(darCollectionDAO.findAllDARCollectionsWithFiltersByUser(anyString(), anyInt(), anyString(), anyString())).thenReturn(Collections.emptyList());
     service = new DarCollectionService(darCollectionDAO, datasetDAO);
-    
+
     PaginationResponse<DarCollection> response = service.getCollectionsWithFilters(token, user);
 
     assertEquals(1, response.getFilteredPageCount().intValue());
@@ -110,7 +110,7 @@ public class DarCollectionServiceTest {
   public void testGetCollectionsWithFiltersByPageLessThanPageSize() {
       int filteredCount = 3;
       int unfilteredCount = 5;
-      PaginationToken token = new PaginationToken(1, 10, null, null, null, defineAcceptableSortFields());
+      PaginationToken token = new PaginationToken(1, 10, "darCode", "DESC", null, defineAcceptableSortFields());
       initWithPaginationToken(token, unfilteredCount, filteredCount);
       PaginationResponse<DarCollection> response = service.getCollectionsWithFilters(token, user);
 
@@ -123,7 +123,7 @@ public class DarCollectionServiceTest {
   public void testInitWithInvalidTokenValues() {
       int filteredCount = 5;
       int unfilteredCount = 20;
-      PaginationToken token = new PaginationToken(2, 10, null, null, null, defineAcceptableSortFields());
+      PaginationToken token = new PaginationToken(2, 10, "darCode", "DESC", null, defineAcceptableSortFields());
       initWithPaginationToken(token, unfilteredCount, filteredCount);
 
       // Start index will be > end index in this case since we're trying to get results 11-20 when

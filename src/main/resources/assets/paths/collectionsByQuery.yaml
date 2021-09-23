@@ -12,11 +12,13 @@ get:
     - name: sortField
       in: query
       description: String value that represents field to order by
+      required: true
       schema:
         type: string
     - name: sortOrder
       in: query
       description: String value that represents direction of ordering
+      required: true
       schema:
         type: string
     - name: pageSize
@@ -32,5 +34,12 @@ get:
         application/json:
           schema:
             $ref: '../schemas/DarCollection.yaml'
+    400:
+      description: Bad Request
+    401:
+      description: Unauthorized
     404:
       description: Not Found
+    500:
+      description: Internal Server Error
+      
