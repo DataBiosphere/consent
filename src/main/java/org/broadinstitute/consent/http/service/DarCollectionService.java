@@ -58,7 +58,7 @@ public class DarCollectionService {
    */
   public PaginationResponse<DarCollection> getCollectionsWithFilters(PaginationToken token, User user) {
     List<DarCollection> unfilteredDars = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
-    if(unfilteredDars.isEmpty()) {
+    if (unfilteredDars.isEmpty()) {
       return createEmptyPaginationResponse(0);
     }
     token.setUnfilteredCount(unfilteredDars.size());
