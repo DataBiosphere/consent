@@ -4,11 +4,8 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -96,8 +93,7 @@ public class DarCollectionResource extends Resource {
   ) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      checkIfSortFieldAndSortOrderIsPresent(sortField, sortOrder);
-      PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, defineAcceptableSortFields());
+      PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields);
       PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(token, user);
       return Response.ok().entity(paginationResponse).build();
     } catch(Exception e) {
@@ -113,21 +109,6 @@ public class DarCollectionResource extends Resource {
       validateAuthedRoleUser(Collections.emptyList(), user, collection.getCreateUserId());
     } catch (ForbiddenException e) {
       throw new NotFoundException();
-    }
-  }
-
-  private Map<String, String> defineAcceptableSortFields() {
-    return Map.of(
-      "projectTitle", "projectTitle",
-      "researcher", "researcher",
-      "darCode", "dar_code",
-      "institution", "institution_name"
-    );
-  }
-
-  private void checkIfSortFieldAndSortOrderIsPresent(String sortField, String sortOrder) {
-    if (Objects.isNull(sortOrder) || Objects.isNull(sortOrder)) {
-      throw new BadRequestException("sortOrder and sortField are required");
     }
   }
 }

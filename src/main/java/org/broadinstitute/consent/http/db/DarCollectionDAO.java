@@ -33,9 +33,6 @@ public interface DarCollectionDAO {
       " AND (" +
         "COALESCE(i.institution_name, '') ~* :filterTerm " +
         " OR (dar.data #>> '{}')::jsonb ->> 'projectTitle' ~* :filterTerm " +
-        //NOTE: since users can change their name, however the dar researcher attribute will not be updated
-        //Search on both dar.data and user displayname for proper name matching
-        " OR (dar.data #>> '{}')::jsonb ->> 'researcher' ~* :filterTerm " +
         " OR u.displayname ~* :filterTerm " +
         " OR c.dar_code ~* :filterTerm " +
         " OR EXISTS " +

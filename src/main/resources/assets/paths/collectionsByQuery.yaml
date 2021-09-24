@@ -12,15 +12,15 @@ get:
     - name: sortField
       in: query
       description: String value that represents field to order by
-      required: true
       schema:
         type: string
+      default: "darCode"
     - name: sortOrder
       in: query
       description: String value that represents direction of ordering
-      required: true
       schema:
         type: string
+      default: "DESC"
     - name: pageSize
       in: query
       description: Integer value that represents number of records returned on each page
@@ -34,10 +34,6 @@ get:
         application/json:
           schema:
             $ref: '../schemas/DarCollection.yaml'
-    400:
-      description: Bad Request
-    401:
-      description: Unauthorized
     404:
       description: Not Found
     500:

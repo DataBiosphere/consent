@@ -16,7 +16,6 @@ import java.util.stream.IntStream;
 public class PaginationToken {
 
   private static final Charset UTF_8 = StandardCharsets.UTF_8;
-  // private static final Map<String> acceptableSortFields = Collections.emptyLi();
 
   @JsonProperty
   private Integer page;
@@ -47,12 +46,10 @@ public class PaginationToken {
   //constructor for request tokens
   public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm, Map<String, String> acceptableSortFields) {
     this.acceptableSortFields = acceptableSortFields;
-    checkSortField(sortField);
-    checkSortDirection(sortDirection);
     this.page = page;
     this.pageSize = Objects.nonNull(pageSize) ? pageSize : 10;
-    this.sortField = sortField;
-    this.sortDirection = sortDirection;
+    this.sortField = validateSortField(sortField);
+    this.sortDirection = validateSortDirection(sortDirection);
     this.filterTerm = filterTerm;
     checkForValidNumbers();
   }
@@ -61,8 +58,6 @@ public class PaginationToken {
   public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm,
                          Integer filteredCount, Integer filteredPageCount, Integer unfilteredCount, Map<String, String> acceptableSortFields) {
     this.acceptableSortFields = acceptableSortFields;
-    checkSortField(sortField);
-    checkSortDirection(sortDirection);
     this.page = page;
     this.pageSize = pageSize;
     this.sortField = sortField;
@@ -143,20 +138,22 @@ public class PaginationToken {
     return acceptableSortFields;
   }
 
-  private void checkSortField(String sortField) {
-    if (Objects.nonNull(sortField)) {
-      if (Objects.isNull(acceptableSortFields.get(sortField))) {
-        throw new BadRequestException("Cannot sort on given field: " + sortField);
-      }
+  private String validateSortField(String sortField) {
+    if(Objects.isNull(sortField) || Objects.isNull(acceptableSortFields.get(sortField))) {
+      return "dar_code";
     }
+    return acceptableSortFields.get(sortField);
   }
 
-  private void checkSortDirection(String sortDirection) {
-    if (Objects.nonNull(sortDirection)) {
-      if (!sortDirection.toLowerCase().equals("asc") && !sortDirection.toLowerCase().equals("desc")) {
-        throw new BadRequestException("Sort direction must be either 'asc' or 'desc");
-      }
+  private String validateSortDirection(String sortDirection) {
+    if (
+      Objects.isNull(sortDirection) || 
+      !sortDirection.toLowerCase().equals("asc") && !sortDirection.toLowerCase().equals("desc")
+    ) {
+      return "DESC";
     }
+
+    return sortDirection;
   }
 
   private void checkForValidNumbers() {

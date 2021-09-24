@@ -61,7 +61,6 @@ public class DarCollectionService {
     if(unfilteredDars.isEmpty()) {
       return createEmptyPaginationResponse(0);
     }
-    Map<String,String> acceptableSortFields = token.getAcceptableSortFields();
     token.setUnfilteredCount(unfilteredDars.size());
 
     String filterTerm = Objects.isNull(token.getFilterTerm()) ? "" : token.getFilterTerm();
@@ -78,7 +77,7 @@ public class DarCollectionService {
     } else {
       logger.warn(String.format("Invalid pagination state: startIndex: %s endIndex: %s", token.getStartIndex(), token.getEndIndex()));
     }
-    List<DarCollection> slicedCollections = darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(slice, acceptableSortFields.get(token.getSortField()), token.getSortDirection());
+    List<DarCollection> slicedCollections = darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(slice, token.getSortField(), token.getSortDirection());
     List<PaginationToken> orderedTokens = token.createListOfPaginationTokensFromSelf();
     List<String> orderedTokenStrings = orderedTokens.stream().map(PaginationToken::toBase64).collect(Collectors.toList());
     return new PaginationResponse<DarCollection>()
