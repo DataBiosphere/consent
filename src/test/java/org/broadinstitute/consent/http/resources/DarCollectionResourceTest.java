@@ -162,7 +162,10 @@ public class DarCollectionResourceTest {
     initResource();
 
     Response response = resource.getCollectionsByInitialQuery(authUser, "filterTerm", "projectTitle", "badSortOrder", 10);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
+
+  @Test
   public void testCancelDarCollection_OKStatus() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(researcher.getDacUserId());
@@ -210,7 +213,7 @@ public class DarCollectionResourceTest {
     Response response = resource.getCollectionsByInitialQuery(authUser, "filterTerm", "projectTitle", "asc", 10);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
-  
+
   public void testCancelDarCollection_InternalErrorStatus() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(researcher.getDacUserId());
