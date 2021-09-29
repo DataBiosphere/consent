@@ -44,12 +44,12 @@ public class PaginationToken {
   private Map<String, String> acceptableSortFields;
 
   //constructor for request tokens
-  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm, Map<String, String> acceptableSortFields) {
+  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm, Map<String, String> acceptableSortFields, String defaultField) {
     this.acceptableSortFields = acceptableSortFields;
     this.page = page;
     this.pageSize = Objects.nonNull(pageSize) ? pageSize : 10;
-    this.sortField = validateSortField(sortField);
-    this.sortDirection = validateSortDirection(sortDirection);
+    this.sortField = Objects.isNull(sortField) ? acceptableSortFields.get(defaultField) : validateSortField(sortField);
+    this.sortDirection = Objects.isNull(sortDirection) ? "DESC" : validateSortDirection(sortDirection);
     this.filterTerm = filterTerm;
     checkForValidNumbers();
   }
@@ -139,20 +139,18 @@ public class PaginationToken {
   }
 
   private String validateSortField(String sortField) {
-    if(Objects.isNull(sortField) || Objects.isNull(acceptableSortFields.get(sortField))) {
-      return "dar_code";
+    if(Objects.isNull(acceptableSortFields.get(sortField))) {
+      throw new BadRequestException("Invalid sortField");
     }
     return acceptableSortFields.get(sortField);
   }
 
   private String validateSortDirection(String sortDirection) {
     if (
-      Objects.isNull(sortDirection) || 
       !sortDirection.toLowerCase().equals("asc") && !sortDirection.toLowerCase().equals("desc")
     ) {
-      return "DESC";
+      throw new BadRequestException("Invalid sortDirection");
     }
-
     return sortDirection;
   }
 

@@ -93,7 +93,7 @@ public class DarCollectionResource extends Resource {
   ) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields);
+      PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields, DarCollection.defaultSortField);
       PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(token, user);
       return Response.ok().entity(paginationResponse).build();
     } catch(Exception e) {
