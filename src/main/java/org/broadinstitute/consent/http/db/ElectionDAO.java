@@ -358,7 +358,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(DacMapper.class)
     List<Dac> findAllDacsForElectionIds(@BindList("electionIds") List<Integer> electionIds);
   
-
     /**
      * Find the OPEN elections that belong to this Dac
      *

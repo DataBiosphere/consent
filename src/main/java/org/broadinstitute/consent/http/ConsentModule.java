@@ -206,7 +206,9 @@ public class ConsentModule extends AbstractModule {
     DarCollectionService providesDarCollectionService() {
         return new DarCollectionService(
             providesDARCollectionDAO(),
-            providesDataSetDAO()
+            providesDataSetDAO(),
+            providesElectionDAO(),
+            providesDataAccessRequestDAO()
         );
     }
 

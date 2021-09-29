@@ -1,0 +1,25 @@
+put:
+  summary: Cancel DAR Collection By ID
+  description: Returns DAR Collection after canceling associated dars
+  tags:
+    - DAR Collection
+  parameters:
+    - name: collectionId
+      in: path
+      description: DAR Collection Id
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: Returns target dar collection with DARs canceled
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DarCollection.yaml'
+    400: 
+      description: Bad Request (result of elections present on DARs)
+    404:
+      description: Not Found
+    500:
+      description: Internal Server Error
