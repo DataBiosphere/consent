@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -14,14 +16,20 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import javax.ws.rs.BadRequestException;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
@@ -35,6 +43,8 @@ public class DarCollectionServiceTest {
 
   @Mock private DarCollectionDAO darCollectionDAO;
   @Mock private DatasetDAO datasetDAO;
+  @Mock private ElectionDAO electionDAO;
+  @Mock private DataAccessRequestDAO dataAccessRequestDAO;
 
   @Mock private User user;
 
@@ -128,6 +138,44 @@ public class DarCollectionServiceTest {
     assertEquals(datasetIds, collectionDatasetIds);
   }
 
+  @Test
+  public void testCancelDarCollection_noElections() { 
+    Set<DataSet> datasets = new HashSet<>();
+    DarCollection collection = generateMockDarCollection(datasets);
+    collection.getDars().forEach(d -> {
+      d.getData().setStatus("Canceled");
+    });
+    List<Election> elections = new ArrayList<>();
+    User user = new User();
+    user.setDacUserId(RandomUtils.nextInt(1,100));
+
+    when(electionDAO.findLastElectionsByReferenceIdsAndType(anyList(), anyString())).thenReturn(elections);
+    doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
+    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
+    initService();
+
+    DarCollection canceledCollection = service.cancelDarCollection(collection, user);
+    for (DataAccessRequest collectionDar : canceledCollection.getDars()) {
+      assertEquals("canceled", collectionDar.getData().getStatus().toLowerCase());
+    }
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void testCancelDarCollection_electionPresent() {
+    Set<DataSet> datasets = new HashSet<>();
+    DarCollection collection = generateMockDarCollection(datasets);
+    List<Election> elections = Collections.singletonList(new Election());
+    User user = new User();
+    user.setDacUserId(RandomUtils.nextInt(1, 100));
+
+    when(electionDAO.findLastElectionsByReferenceIdsAndType(anyList(), anyString())).thenReturn(elections);
+    doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
+    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
+    initService();
+
+    service.cancelDarCollection(collection, user);
+  }
+
   private DarCollection generateMockDarCollection(Set<DataSet> datasets) {
     DarCollection collection = new DarCollection();
     List<DataAccessRequest> dars = new ArrayList<>();
@@ -155,7 +203,7 @@ public class DarCollectionServiceTest {
   }
 
   private void initService() {
-    service = new DarCollectionService(darCollectionDAO, datasetDAO);
+    service = new DarCollectionService(darCollectionDAO, datasetDAO, electionDAO, dataAccessRequestDAO);
   }
 
   private void initWithPaginationToken(PaginationToken token, int unfilteredCount, int filteredCount) {
@@ -172,7 +220,7 @@ public class DarCollectionServiceTest {
     when(darCollectionDAO.findDARCollectionsCreatedByUserId(any())).thenReturn(unfilteredDars);
     when(darCollectionDAO.findAllDARCollectionsWithFiltersByUser(any(), any(), any(), any())).thenReturn(filteredDars);
     when(darCollectionDAO.findDARCollectionByCollectionIds(any(), any(), any())).thenReturn(collectionIdDars);
-    service = new DarCollectionService(darCollectionDAO, datasetDAO);
+    service = new DarCollectionService(darCollectionDAO, datasetDAO, electionDAO, dataAccessRequestDAO);
   }
 
   private List<DarCollection> createMockDars(int count) {

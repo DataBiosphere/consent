@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -192,6 +193,42 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest returnedAfter = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
         assertNull(returnedAfter);
 
+    }
+
+    @Test
+    public void testCancelDeleteByCollectionIds() {
+        DataAccessRequest dar1 = createDataAccessRequestV3();
+        DataAccessRequest dar2 = createDataAccessRequestV3();
+
+        List<String> referenceIds = new ArrayList<>();
+        referenceIds.add(dar1.getReferenceId());
+        referenceIds.add(dar2.getReferenceId());
+
+        dataAccessRequestDAO.cancelByReferenceIds(referenceIds);
+
+        DataAccessRequest updatedDar1 = dataAccessRequestDAO.findByReferenceId(dar1.getReferenceId());
+        DataAccessRequest updatedDar2 = dataAccessRequestDAO.findByReferenceId(dar2.getReferenceId());
+
+        assertEquals(dar1.getReferenceId(), updatedDar1.getReferenceId());
+        assertEquals(dar2.getReferenceId(), updatedDar2.getReferenceId());
+
+        assertEquals("Canceled", updatedDar1.getData().getStatus());
+        assertEquals("Canceled", updatedDar2.getData().getStatus());
+
+        assertNotNull(updatedDar1.getData().getHmb());
+        assertNotNull(updatedDar2.getData().getHmb());
+        assertEquals(dar1.getData().getHmb(), updatedDar1.getData().getHmb());
+        assertEquals(dar2.getData().getHmb(), updatedDar2.getData().getHmb());
+
+        assertNotNull(updatedDar1.getData().getMethods());
+        assertNotNull(updatedDar2.getData().getMethods());
+        assertEquals(dar1.getData().getMethods(), updatedDar1.getData().getMethods());
+        assertEquals(dar2.getData().getMethods(), updatedDar2.getData().getMethods());
+
+        assertNotNull(updatedDar1.getData().getAddress1());
+        assertNotNull(updatedDar2.getData().getAddress1());
+        assertEquals(dar1.getData().getAddress1(), updatedDar1.getData().getAddress1());
+        assertEquals(dar2.getData().getAddress1(), updatedDar2.getData().getAddress1());
     }
 
 }

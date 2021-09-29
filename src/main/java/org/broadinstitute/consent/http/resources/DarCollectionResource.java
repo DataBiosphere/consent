@@ -4,11 +4,14 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -74,6 +77,29 @@ public class DarCollectionResource extends Resource {
       return Response.ok().entity(collection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Path("{id}/cancel")
+  @Produces("application/json")
+  @RolesAllowed(RESEARCHER)
+  public Response cancelDarCollectionByCollectionId(@Auth AuthUser authUser, @PathParam("id") Integer collectionId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      DarCollection collection = darCollectionService.getByCollectionId(collectionId);
+      isCollectionPresent(collection);
+      validateUserIsCreator(user, collection);
+      DarCollection cancelledCollection = darCollectionService.cancelDarCollection(collection, user);
+      return Response.ok().entity(cancelledCollection).build();
+    } catch(Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  private void isCollectionPresent(DarCollection collection) {
+    if(Objects.isNull(collection)) {
+      throw new NotFoundException("Collection not found");
     }
   }
 
