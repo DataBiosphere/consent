@@ -23,7 +23,7 @@ public class DarCollection {
       "institution", "institution_name"
   );
 
-  public static String defaultSortField = "dar_code";
+  public static String defaultTokenSortField = "darCode";
 
   @JsonProperty
   private Integer darCollectionId;
