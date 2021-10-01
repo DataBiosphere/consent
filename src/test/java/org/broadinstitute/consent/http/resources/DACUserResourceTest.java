@@ -1,9 +1,24 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import java.net.URI;
+import java.util.Collections;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
@@ -18,22 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.Collections;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
 
 
 public class DACUserResourceTest {
@@ -53,7 +52,7 @@ public class DACUserResourceTest {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         GoogleUser googleUser = new GoogleUser();
         googleUser.setName("Test User");
         googleUser.setEmail("test@gmail.com");
@@ -67,14 +66,25 @@ public class DACUserResourceTest {
         resource = new DACUserResource(userService);
     }
 
-    @Test
-    public void testUpdateResearcherAsSelf() throws Exception {
-        User researcher = createDacUser(UserRoles.RESEARCHER);
+    /**
+     * Utility method to construct a user json object as the API expects it to be formatted.
+     * @param user The User
+     * @return Json object in the form of { "updatedUser": {... user json ...}}
+     */
+    private JsonObject makeUserMapJsonObject(User user) {
         JsonObject json = new JsonObject();
-        JsonElement userJson = new Gson().toJsonTree(researcher);
+        JsonElement userJson = new Gson().toJsonTree(user);
         json.add(UserRolesHandler.UPDATED_USER_KEY, userJson);
+        return json;
+    }
+
+    @Test
+    public void testUpdateResearcherAsSelf() {
+        User researcher = createDacUser(UserRoles.RESEARCHER);
+        JsonObject json = makeUserMapJsonObject(researcher);
 
         when(userService.findUserByEmail(any())).thenReturn(researcher);
+        when(userService.findUserById(any())).thenReturn(researcher);
         when(userService.updateDACUserById(any(), anyInt())).thenReturn(researcher);
         doNothing().when(userService).updateEmailPreference(anyBoolean(), anyInt());
         initResource();
@@ -84,13 +94,12 @@ public class DACUserResourceTest {
     }
 
     @Test
-    public void testUpdateResearcherAsSomeoneElse() throws Exception {
+    public void testUpdateResearcherAsSomeoneElse() {
         User researcher = createDacUser(UserRoles.RESEARCHER);
-        JsonObject json = new JsonObject();
-        JsonElement userJson = new Gson().toJsonTree(researcher);
-        json.add(UserRolesHandler.UPDATED_USER_KEY, userJson);
+        JsonObject json = makeUserMapJsonObject(researcher);
 
         when(userService.findUserByEmail(any())).thenReturn(researcher);
+        when(userService.findUserById(any())).thenReturn(researcher);
         when(userService.updateDACUserById(any(), anyInt())).thenReturn(researcher);
         doNothing().when(userService).updateEmailPreference(anyBoolean(), anyInt());
         initResource();
@@ -100,19 +109,36 @@ public class DACUserResourceTest {
     }
 
     @Test
-    public void testUpdateResearcherAsAdmin() throws Exception {
+    public void testUpdateResearcherAsAdmin() {
         User admin = createDacUser(UserRoles.ADMIN);
-        JsonObject json = new JsonObject();
-        JsonElement userJson = new Gson().toJsonTree(admin);
-        json.add(UserRolesHandler.UPDATED_USER_KEY, userJson);
+        JsonObject json = makeUserMapJsonObject(admin);
 
         when(userService.findUserByEmail(any())).thenReturn(admin);
+        when(userService.findUserById(any())).thenReturn(admin);
         when(userService.updateDACUserById(any(), anyInt())).thenReturn(admin);
         doNothing().when(userService).updateEmailPreference(anyBoolean(), anyInt());
         initResource();
 
         Response response = resource.update(authUser, uriInfo, json.toString(), admin.getDacUserId() + 1);
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateSOInstitutionBadRequest() {
+        User user = createDacUser(UserRoles.SIGNINGOFFICIAL);
+        user.setDacUserId(RandomUtils.nextInt(1, 10));
+        when(userService.findUserById(any())).thenReturn(user);
+        initResource();
+
+        // Update passed in user to have a different institution id to trigger SO error
+        Gson gson = new Gson();
+        User updateUser = gson.fromJson(gson.toJson(user), User.class);
+        updateUser.setInstitutionId(user.getInstitutionId() + 10);
+
+        JsonObject json = makeUserMapJsonObject(updateUser);
+
+        Response response = resource.update(authUser, uriInfo, json.toString(), updateUser.getDacUserId());
+        assertEquals(400, response.getStatus());
     }
 
     @Test(expected = NotFoundException.class)
@@ -195,6 +221,7 @@ public class DACUserResourceTest {
         user.setEmail("email");
         user.setAdditionalEmail("additional email");
         user.setEmailPreference(true);
+        user.setInstitutionId(RandomUtils.nextInt(1, 100));
         UserRole userRole = new UserRole(roles.getRoleId(), roles.getRoleName());
         user.setRoles(Collections.singletonList(userRole));
         return user;

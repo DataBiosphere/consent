@@ -1179,6 +1179,8 @@ paths:
         and Member roles using this endpoint. All Chairperson and Member changes (additions or removals)
         are ignored. See [DAC](/#!/DAC) endpoints for **POST/DELETE** endpoints for
         **/api/dac/{dacId}/chair/{userId}** and **/api/dac/{dacId}/member/{userId}** calls.
+        Users with the "Signing Official" are not permitted to update their institution. Such calls
+        will result in a "Bad Request".
       parameters:
         - name: id
           in: path
@@ -1205,7 +1207,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
         400:
-          description: Malformed user entity.
+          description: Malformed user entity or improper institution update
         403:
           description: User must have appropriate roles to update different users' information.
   /api/dacuser/status/{userId}:
