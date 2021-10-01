@@ -124,6 +124,8 @@ paths:
     $ref: './paths/collection.yaml'
   /api/collections/dar/{referenceId}:
     $ref: './paths/collectionByReferenceId.yaml'
+  /api/collections/paginated:
+    $ref: './paths/collectionsByToken.yaml'
   /api/collections/query:
     $ref: './paths/collectionsByQuery.yaml'
   /api/collections/{collectionId}/cancel:
