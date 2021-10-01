@@ -91,10 +91,14 @@ public class DACUserResource extends Resource {
         try {
             User userToUpdate = userMap.get(UserRolesHandler.UPDATED_USER_KEY);
             User existingUser = userService.findUserById(userToUpdate.getDacUserId());
-            // Signing Officials are prohibited from updating their institution
+            // Signing Officials are prohibited from changing their institution
             if (existingUser.getUserRoleIdsFromUser().contains(UserRoles.SIGNINGOFFICIAL.getRoleId())) {
-                if (!Objects.equals(userToUpdate.getInstitutionId(), existingUser.getInstitutionId())) {
-                    throw new BadRequestException("Signing Officials are not permitted to update their institution. Please contact support.");
+                // A SO should be able to update their institution if they don't have one
+                // If they do have one, it cannot be changed through this endpoint.
+                if (Objects.nonNull(existingUser.getInstitutionId())) {
+                    if (!Objects.equals(userToUpdate.getInstitutionId(), existingUser.getInstitutionId())) {
+                        throw new BadRequestException("Signing Officials are not permitted to update their institution. Please contact support.");
+                    }
                 }
             }
             validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), findByAuthUser(authUser), userId);

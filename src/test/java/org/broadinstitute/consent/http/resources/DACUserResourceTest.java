@@ -124,6 +124,27 @@ public class DACUserResourceTest {
     }
 
     @Test
+    public void testSetSOInstitutionOK() {
+        User user = createDacUser(UserRoles.SIGNINGOFFICIAL);
+        user.setInstitutionId(null);
+        user.setDacUserId(RandomUtils.nextInt(1, 10));
+        when(userService.findUserById(any())).thenReturn(user);
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(userService.updateDACUserById(any(), anyInt())).thenReturn(user);
+        initResource();
+
+        // Update passed in user to have a different institution id to trigger SO error
+        Gson gson = new Gson();
+        User updateUser = gson.fromJson(gson.toJson(user), User.class);
+        updateUser.setInstitutionId(RandomUtils.nextInt(1, 10));
+
+        JsonObject json = makeUserMapJsonObject(updateUser);
+
+        Response response = resource.update(authUser, uriInfo, json.toString(), updateUser.getDacUserId());
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
     public void testUpdateSOInstitutionBadRequest() {
         User user = createDacUser(UserRoles.SIGNINGOFFICIAL);
         user.setDacUserId(RandomUtils.nextInt(1, 10));

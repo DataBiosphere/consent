@@ -1179,8 +1179,9 @@ paths:
         and Member roles using this endpoint. All Chairperson and Member changes (additions or removals)
         are ignored. See [DAC](/#!/DAC) endpoints for **POST/DELETE** endpoints for
         **/api/dac/{dacId}/chair/{userId}** and **/api/dac/{dacId}/member/{userId}** calls.
-        Users with the "Signing Official" are not permitted to update their institution. Such calls
-        will result in a "Bad Request".
+        Users with the "Signing Official" are not permitted to change their institution. Such calls
+        will result in a "Bad Request". "Signing Official" users are, however, allowed to save their
+        institution if it is not already set.
       parameters:
         - name: id
           in: path
