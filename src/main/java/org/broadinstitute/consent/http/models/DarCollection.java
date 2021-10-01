@@ -11,9 +11,19 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Map;
 
 //represents a multi-dataset access request
 public class DarCollection {
+
+  public static Map<String, String> acceptableSortFields = Map.of(
+      "projectTitle", "projectTitle",
+      "researcher", "researcher",
+      "darCode", "dar_code",
+      "institution", "institution_name"
+  );
+
+  public static String defaultTokenSortField = "darCode";
 
   @JsonProperty
   private Integer darCollectionId;

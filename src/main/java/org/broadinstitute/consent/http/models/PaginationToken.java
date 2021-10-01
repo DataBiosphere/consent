@@ -7,8 +7,8 @@ import javax.ws.rs.BadRequestException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -16,7 +16,6 @@ import java.util.stream.IntStream;
 public class PaginationToken {
 
   private static final Charset UTF_8 = StandardCharsets.UTF_8;
-  private static final List<String> acceptableSortFields = Collections.emptyList();
 
   @JsonProperty
   private Integer page;
@@ -42,23 +41,23 @@ public class PaginationToken {
   @JsonProperty
   private Integer unfilteredCount;
 
+  private Map<String, String> acceptableSortFields;
+
   //constructor for request tokens
-  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm) {
-    checkSortField(sortField);
-    checkSortDirection(sortDirection);
+  public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm, Map<String, String> acceptableSortFields, String defaultField) {
+    this.acceptableSortFields = acceptableSortFields;
     this.page = page;
-    this.pageSize = pageSize;
-    this.sortField = sortField;
-    this.sortDirection = sortDirection;
+    this.pageSize = Objects.nonNull(pageSize) ? pageSize : 10;
+    this.sortField = Objects.isNull(sortField) ? acceptableSortFields.get(defaultField) : validateSortField(sortField);
+    this.sortDirection = Objects.isNull(sortDirection) ? "DESC" : validateSortDirection(sortDirection);
     this.filterTerm = filterTerm;
     checkForValidNumbers();
   }
 
   //constructor for response tokens
   public PaginationToken(Integer page, Integer pageSize, String sortField, String sortDirection, String filterTerm,
-                         Integer filteredCount, Integer filteredPageCount, Integer unfilteredCount) {
-    checkSortField(sortField);
-    checkSortDirection(sortDirection);
+                         Integer filteredCount, Integer filteredPageCount, Integer unfilteredCount, Map<String, String> acceptableSortFields) {
+    this.acceptableSortFields = acceptableSortFields;
     this.page = page;
     this.pageSize = pageSize;
     this.sortField = sortField;
@@ -131,20 +130,28 @@ public class PaginationToken {
     return Base64.getEncoder().encodeToString(new Gson().toJson(this).getBytes(UTF_8));
   }
 
-  private void checkSortField(String sortField) {
-    if (Objects.nonNull(sortField)) {
-      if (!acceptableSortFields.contains(sortField)) {
-        throw new BadRequestException("Cannot sort on given field: " + sortField);
-      }
-    }
+  public void setAcceptableSortField(Map<String, String> acceptableSortFields) {
+    this.acceptableSortFields = acceptableSortFields;
   }
 
-  private void checkSortDirection(String sortDirection) {
-    if (Objects.nonNull(sortDirection)) {
-      if (!sortDirection.equals("asc") && !sortDirection.equals("desc")) {
-        throw new BadRequestException("Sort direction must be either 'asc' or 'desc");
-      }
+  public Map<String, String> getAcceptableSortFields() {
+    return acceptableSortFields;
+  }
+
+  private String validateSortField(String sortField) {
+    if(Objects.isNull(acceptableSortFields.get(sortField))) {
+      throw new BadRequestException("Invalid sortField");
     }
+    return acceptableSortFields.get(sortField);
+  }
+
+  private String validateSortDirection(String sortDirection) {
+    if (
+      !sortDirection.toLowerCase().equals("asc") && !sortDirection.toLowerCase().equals("desc")
+    ) {
+      throw new BadRequestException("Invalid sortDirection");
+    }
+    return sortDirection;
   }
 
   private void checkForValidNumbers() {
@@ -177,7 +184,8 @@ public class PaginationToken {
                 this.getFilterTerm(),
                 this.getFilteredCount(),
                 this.getFilteredPageCount(),
-                this.getUnfilteredCount()))
+                this.getUnfilteredCount(),
+                this.getAcceptableSortFields()))
         .collect(Collectors.toList());
   }
 

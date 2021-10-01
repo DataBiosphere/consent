@@ -68,13 +68,18 @@ public class DarCollectionService {
    * @return A PaginationResponse object
    */
   public PaginationResponse<DarCollection> getCollectionsWithFilters(PaginationToken token, User user) {
-
     List<DarCollection> unfilteredDars = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
+    if (unfilteredDars.isEmpty()) {
+      return createEmptyPaginationResponse(0);
+    }
     token.setUnfilteredCount(unfilteredDars.size());
 
     String filterTerm = Objects.isNull(token.getFilterTerm()) ? "" : token.getFilterTerm();
     List<DarCollection> filteredDars = darCollectionDAO.findAllDARCollectionsWithFiltersByUser(filterTerm, user.getDacUserId(), token.getSortField(), token.getSortDirection());
     token.setFilteredCount(filteredDars.size());
+    if(filteredDars.isEmpty()) {
+      return createEmptyPaginationResponse(token.getUnfilteredCount());
+    }
 
     List<Integer> collectionIds = filteredDars.stream().map(DarCollection::getDarCollectionId).collect(Collectors.toList());
     List<Integer> slice = new ArrayList<>();
@@ -83,7 +88,7 @@ public class DarCollectionService {
     } else {
       logger.warn(String.format("Invalid pagination state: startIndex: %s endIndex: %s", token.getStartIndex(), token.getEndIndex()));
     }
-    List<DarCollection> slicedCollections = darCollectionDAO.findDARCollectionByCollectionIds(slice, token.getSortField(), token.getSortDirection());
+    List<DarCollection> slicedCollections = darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(slice, token.getSortField(), token.getSortDirection());
     List<PaginationToken> orderedTokens = token.createListOfPaginationTokensFromSelf();
     List<String> orderedTokenStrings = orderedTokens.stream().map(PaginationToken::toBase64).collect(Collectors.toList());
     return new PaginationResponse<DarCollection>()
@@ -155,6 +160,14 @@ public class DarCollectionService {
     return collections;
   }
 
+  private PaginationResponse<DarCollection> createEmptyPaginationResponse(Integer unfilteredCount) {
+    return new PaginationResponse<DarCollection>()
+          .setUnfilteredCount(unfilteredCount)
+          .setFilteredCount(0)
+          .setFilteredPageCount(1) //should this be 0 or 1?
+          .setResults(Collections.emptyList())
+          .setPaginationTokens(Collections.emptyList());
+  }
   // If an election exists for a DAR within the collection, that DAR cannot be cancelled by the researcher
   // Since it's now under DAC review, it's up to the DAC Chair (or admin) to ultimately decline or cancel via elections 
   public DarCollection cancelDarCollection(DarCollection collection, User user) {

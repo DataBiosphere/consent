@@ -65,6 +65,36 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   }
 
   @Test
+  public void testFindDARCollectionByCollectionIdWithOrder_ASC() {
+    DarCollection collectionOne = createDarCollection();
+    DarCollection collectionTwo = createDarCollection();
+    List<Integer> collectionIds = List.of(
+      collectionOne.getDarCollectionId(),
+      collectionTwo.getDarCollectionId()
+    );
+    List<DarCollection> returnedCollections = darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(collectionIds, "dar_code", "ASC");
+    for(int i = 0; i < returnedCollections.size() - 1; i++) {
+      String firstCode = returnedCollections.get(i).getDarCode();
+      String secondCode = returnedCollections.get(i+1).getDarCode();
+      assertTrue(firstCode.compareTo(secondCode) < 0);
+    }
+  }
+
+  @Test
+  public void testFindDARCollectionByCollectionIdWithOrder_DESC() {
+    DarCollection collectionOne = createDarCollection();
+    DarCollection collectionTwo = createDarCollection();
+    List<Integer> collectionIds = List.of(collectionOne.getDarCollectionId(), collectionTwo.getDarCollectionId());
+    List<DarCollection> returnedCollections = darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(collectionIds,
+        "dar_code", "DESC");
+    for (int i = 0; i < returnedCollections.size() - 1; i++) {
+      String firstCode = returnedCollections.get(i).getDarCode();
+      String secondCode = returnedCollections.get(i + 1).getDarCode();
+      assertTrue(firstCode.compareTo(secondCode) > 0);
+    }
+  }
+
+  @Test
   public void testInsertDARCollection() {
     List<DarCollection> allBefore = darCollectionDAO.findAllDARCollections();
     assertTrue(allBefore.isEmpty());

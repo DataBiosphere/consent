@@ -15,9 +15,12 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.PaginationToken;
+import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -75,6 +78,27 @@ public class DarCollectionResource extends Resource {
       DarCollection collection = darCollectionService.getByReferenceId(referenceId);
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("query")
+  @Produces("application/json")
+  @RolesAllowed(RESEARCHER)
+  public Response getCollectionsByInitialQuery(
+    @Auth AuthUser authUser,
+    @QueryParam("filterTerm") String filterTerm,
+    @QueryParam("sortField") String sortField,
+    @QueryParam("sortOrder") String sortOrder,
+    @QueryParam("pageSize") int pageSize
+  ) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields, DarCollection.defaultTokenSortField);
+      PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(token, user);
+      return Response.ok().entity(paginationResponse).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
