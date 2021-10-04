@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -226,4 +227,41 @@ public class DarCollectionResourceTest {
     Response response = resource.cancelDarCollectionByCollectionId(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
+
+  @Test
+  public void testGetCollectionsByToken_InvalidToken() {
+    initResource();
+    Response response = resource.getCollectionsByToken(authUser, "badTokenString");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testGetCollectionsByToken_NullToken() {
+    initResource();
+    Response response = resource.getCollectionsByToken(authUser, null);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testGetCollectionsByToken_EmptyStringToken() {
+    initResource();
+    Response response = resource.getCollectionsByToken(authUser, "");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testGetCollectionsByToken() {
+    PaginationResponse<DarCollection> paginationResponse = new PaginationResponse<>();
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    when(darCollectionService.getCollectionsWithFilters(any(PaginationToken.class), any(User.class)))
+      .thenReturn(paginationResponse);
+    initResource();
+    
+    String token = "eyJwYWdlIjoyLCJwYWdlU2l6ZSI6MSwic29ydEZpZWxkIjoiZGFyX2NvZGUiLCJzb3J0RGlyZWN0aW9uIjoiREVTQyIsImZpbHRlcmVkQ291bnQiOjQsImZpbHRlcmVkUGFnZUNvdW50Ijo0LCJ1bmZpbHRlcmVkQ291bnQiOjQsImFjY2VwdGFibGVTb3J0RmllbGRzIjp7InByb2plY3RUaXRsZSI6InByb2plY3RUaXRsZSIsInJlc2VhcmNoZXIiOiJyZXNlYXJjaGVyIiwiaW5zdGl0dXRpb24iOiJpbnN0aXR1dGlvbl9uYW1lIiwiZGFyQ29kZSI6ImRhcl9jb2RlIn19";
+    Response response = resource.getCollectionsByToken(authUser, token);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+
+  
 }

@@ -2,12 +2,15 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import java.nio.charset.StandardCharsets;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -17,6 +20,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import com.google.gson.Gson;
+
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.PaginationToken;
@@ -104,6 +109,26 @@ public class DarCollectionResource extends Resource {
     }
   }
 
+  @GET
+  @Path("paginated")
+  @Produces("application/json")
+  @RolesAllowed(RESEARCHER)
+  public Response getCollectionsByToken(
+    @Auth AuthUser authUser,
+    @QueryParam("token") String token
+  ) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      String json = getDecodedJson(token);
+      PaginationToken paginationToken = convertJsonToPaginationToken(json);
+      PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(paginationToken, user);
+      return Response.ok(paginationResponse).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+
   @PUT
   @Path("{id}/cancel")
   @Produces("application/json")
@@ -135,6 +160,25 @@ public class DarCollectionResource extends Resource {
       validateAuthedRoleUser(Collections.emptyList(), user, collection.getCreateUserId());
     } catch (ForbiddenException e) {
       throw new NotFoundException();
+    }
+  }
+
+  private String getDecodedJson(String token) {
+    if(Objects.isNull(token) || token.isEmpty()) {
+      throw new BadRequestException("Token must be provided");
+    }
+    try{
+      return new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
+    } catch (Exception e) {
+      throw new BadRequestException("Invalid pagination token");
+    }
+  }
+
+  private PaginationToken convertJsonToPaginationToken(String json) {
+    try {
+      return new Gson().fromJson(json, PaginationToken.class);
+    } catch (Exception e) {
+      throw new BadRequestException("Invalid pagination token");
     }
   }
 }

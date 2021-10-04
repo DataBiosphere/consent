@@ -1,0 +1,21 @@
+type: object
+properties:
+  unfilteredCount:
+    type: integer
+    description: Total number of DAR Collections present 
+  filteredCount:
+    type: integer
+    description: Total number of DAR Collections that match query parameters
+  filteredPageCount:
+    type: integer
+    description: Total number of pages for filtered results
+  results: 
+    type: array
+    description: List of DAR Collections that match query parameters
+    items:
+      $ref: './DarCollection.yaml'
+  paginationTokens:
+    type: array
+    description: List of Base64 encoded tokens that represent page specific queries for filtered search
+    items:
+      type: string
