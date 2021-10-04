@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -246,7 +245,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testGetCollectionsByToken_EmptyStringToken() {
     initResource();
-    Response response = resource.getCollectionsByToken(authUser, null);
+    Response response = resource.getCollectionsByToken(authUser, "");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 

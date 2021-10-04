@@ -164,6 +164,9 @@ public class DarCollectionResource extends Resource {
   }
 
   private String getDecodedJson(String token) {
+    if(Objects.isNull(token) || token.isEmpty()) {
+      throw new BadRequestException("Token must be provided");
+    }
     try{
       return new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
     } catch (Exception e) {
