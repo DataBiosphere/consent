@@ -5,19 +5,19 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -29,14 +29,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("api/dacuser")
 public class DACUserResource extends Resource {
@@ -88,6 +89,18 @@ public class DACUserResource extends Resource {
     public Response update(@Auth AuthUser authUser, @Context UriInfo info, String json, @PathParam("id") Integer userId) {
         Map<String, User> userMap = constructUserMapFromJson(json);
         try {
+            User userToUpdate = userMap.get(UserRolesHandler.UPDATED_USER_KEY);
+            User existingUser = userService.findUserById(userToUpdate.getDacUserId());
+            // Signing Officials are prohibited from changing their institution
+            if (existingUser.getUserRoleIdsFromUser().contains(UserRoles.SIGNINGOFFICIAL.getRoleId())) {
+                // A SO should be able to update their institution if they don't have one
+                // If they do have one, it cannot be changed through this endpoint.
+                if (Objects.nonNull(existingUser.getInstitutionId())) {
+                    if (!Objects.equals(userToUpdate.getInstitutionId(), existingUser.getInstitutionId())) {
+                        throw new BadRequestException("Signing Officials are not permitted to update their institution. Please contact support.");
+                    }
+                }
+            }
             validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), findByAuthUser(authUser), userId);
             URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
             User user = userService.updateDACUserById(userMap, userId);
