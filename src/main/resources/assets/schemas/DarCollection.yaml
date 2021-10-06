@@ -30,3 +30,8 @@ properties:
     description: List of all datasets referenced across all DARs within the collection
     items:
       $ref: './Dataset.yaml'
+  elections:
+    type: array
+    description: List of all elections associated with collection's DARs
+    items:
+      $ref: './Election.yaml'

@@ -4101,58 +4101,7 @@ components:
           format: int32
           description: Describes the number of cases that are opened and have to be reviewed.
     Election:
-      type: object
-      properties:
-        electionId:
-          type: integer
-          format: int32
-          description: Describes the id of the election.
-        electionType:
-          type: string
-          description: Describes the type of the election.
-        finalVote:
-          type: boolean
-          description: Describes the chairperson final vote, if the election is closed.
-        status:
-          type: string
-          description: Describes the status of the election. Open, Closed or Cancelled.
-        createDate:
-          type: string
-          format: date
-          description: Describes the date the election was created.
-        lastUpdate:
-          type: string
-          format: date
-          description: Describes the date the election was last modified.
-        finalVoteDate:
-          type: string
-          format: date
-          description: Describes the date the chaiperson made the final vote.
-        referenceId:
-          type: string
-          description: Describes the id of the consent/data access request the election is related to.
-        finalRationale:
-          type: string
-          description: If the final vote is NO, the chairperson can specify why in this field.
-        finalAccessVote:
-          type: boolean
-          description: For Data Access Request only. Final vote that determines if the request is approved or denied.
-        dataSetId:
-          type: integer
-          description: The dataSetId related to the election.
-        displayId:
-          type: string
-          description: The ID for display.
-        dulName:
-          type: string
-          description: Contains the correspondant Dul name for the given election.
-        version:
-          type: integer
-          format: int32
-          description: Indicates the version number of the given election.
-        archived:
-          type: boolean
-          description: Determines if the election is archived.
+      $ref: "./schemas/Election.yaml"
     ConsentManage:
       type: object
       properties:
