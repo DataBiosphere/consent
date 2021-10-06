@@ -49,6 +49,9 @@ public class DarCollection {
   @JsonProperty
   private Set<DataSet> datasets;
 
+  @JsonProperty
+  private List<Election> elections;
+
   public DarCollection() {
     this.createDate = new Timestamp(System.currentTimeMillis());
     this.datasets = new HashSet<>();
@@ -136,6 +139,21 @@ public class DarCollection {
 
   public Set<DataSet> getDatasets() {
     return datasets;
+  }
+
+  public void setElections(List<Election> elections) {
+    this.elections = elections;
+  }
+
+  public List<Election> getElections() {
+    return elections;
+  }
+
+  public void addElection(Election election) {
+    if(Objects.isNull(this.elections)) {
+      this.elections = new ArrayList<>();
+    }
+    elections.add(election);
   }
 
   @Override

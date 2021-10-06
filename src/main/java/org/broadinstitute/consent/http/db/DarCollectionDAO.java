@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.db.mapper.DarCollectionReducer;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.Election;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -103,14 +104,19 @@ public interface DarCollectionDAO {
 
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
+  @RegisterBeanMapper(value = Election.class, prefix = "e")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(" SELECT c.*, dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
       + "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, "
       + "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
-      + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data "
+      + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, "
+      + "e.electionid AS e_election_id, e.referenceid AS e_reference_id, e.status AS e_status, e.createdate AS e_create_date, "
+      + "e.lastupdate AS e_last_update, e.datasetid AS e_dataset_id, e.electiontype AS e_election_type "
       + "FROM dar_collection c "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
-      + "AND c.create_user_id = :userId")
+      + "AND c.create_user_id = :userId "
+      + "LEFT JOIN election e ON e.referenceid = dar.reference_id "
+  )
   List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
 
   /**
@@ -119,7 +125,7 @@ public interface DarCollectionDAO {
    * @return DarCollection
    */
   @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class,  prefix = "dar")
+  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT " +

@@ -5,6 +5,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import static org.junit.Assert.assertEquals;
@@ -311,6 +312,8 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     List<DarCollection> collectionResult = darCollectionDAO.findDARCollectionsCreatedByUserId(userId);
     assertEquals(1, collectionResult.size());
     assertEquals(userId, collectionResult.get(0).getCreateUserId());
+    List<Election> elections = collectionResult.get(0).getElections();
+    assertEquals(elections.size(), 1);
 
     List<DataAccessRequest> darsResult = collectionResult.get(0).getDars();
     assertEquals(dars.size(), darsResult.size());
