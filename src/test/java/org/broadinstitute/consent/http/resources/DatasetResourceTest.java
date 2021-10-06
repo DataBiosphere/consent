@@ -23,8 +23,8 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -142,6 +142,7 @@ public class DatasetResourceTest {
         when(googleUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
         when(dacUser.getDacUserId()).thenReturn(1);
+        when(dacUser.hasUserRole(any())).thenReturn(true);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
@@ -162,6 +163,7 @@ public class DatasetResourceTest {
         when(googleUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
         when(dacUser.getDacUserId()).thenReturn(1);
+        when(dacUser.hasUserRole(any())).thenReturn(true);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
