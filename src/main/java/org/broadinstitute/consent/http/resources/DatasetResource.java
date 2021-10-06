@@ -4,20 +4,15 @@ import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -38,25 +33,35 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("api/dataset")
 public class DatasetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
+    private final DacService dacService;
     private final DatasetService datasetService;
     private final UserService userService;
     private final DataAccessRequestService darService;
 
     @Inject
-    public DatasetResource(DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
+    public DatasetResource(DacService dacService, DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
+        this.dacService = dacService;
         this.datasetService = datasetService;
         this.userService = userService;
         this.darService = darService;
@@ -135,8 +140,10 @@ public class DatasetResource extends Resource {
             if (duplicateProperties.size() > 0) {
                 throw new BadRequestException("Dataset contains multiple values for the same property.");
             }
-            User dacUser = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
-            Integer userId = dacUser.getDacUserId();
+            User user = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
+            // Validate that the admin/chairperson has edit access to this dataset
+            validateDatasetDacAccess(user, datasetExists);
+            Integer userId = user.getDacUserId();
             Optional<DataSet> updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
             if (updatedDataset.isPresent()) {
                 URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.get().getDataSetId());
@@ -346,4 +353,23 @@ public class DatasetResource extends Resource {
         return LoggerFactory.getLogger(this.getClass());
     }
 
+    private void validateDatasetDacAccess(User user, DataSet dataset) {
+        if (user.hasUserRole(UserRoles.ADMIN)) {
+            return;
+        }
+        List<Integer> dacIds = user.getRoles().stream()
+            .filter(r -> r.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()))
+            .map(UserRole::getDacId)
+            .collect(Collectors.toList());
+        if (dacIds.isEmpty()) {
+            // Something went very wrong here. A chairperson with no dac ids is an error
+            logger().error("Unable to find dac ids for chairperson user: " + user.getEmail());
+            throw new NotFoundException();
+        } else {
+            Set<DataSet> accessibleDatasets = dacService.findDatasetsByDacIds(dacIds);
+            if (accessibleDatasets.stream().noneMatch(d -> d.getDataSetId().equals(dataset.getDataSetId()))) {
+                throw new NotFoundException();
+            }
+        }
+    }
 }

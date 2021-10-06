@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -34,6 +35,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 public class DatasetResourceTest {
+
+    @Mock
+    private DacService dacService;
 
     @Mock
     private DataAccessRequestService darService;
@@ -67,7 +71,7 @@ public class DatasetResourceTest {
     }
 
     private void initResource() {
-        resource = new DatasetResource(datasetService, userService, darService);
+        resource = new DatasetResource(dacService, datasetService, userService, darService);
     }
 
     @Test

@@ -1,11 +1,16 @@
 package org.broadinstitute.consent.http.db;
 
+import java.sql.Timestamp;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetPropertiesMapper;
-import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
+import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.models.Association;
@@ -26,12 +31,6 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.sql.Timestamp;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 
 @RegisterRowMapper(DataSetMapper.class)
 public interface DatasetDAO extends Transactional<DatasetDAO> {
@@ -236,6 +235,17 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " inner join consents c on c.consentId = a.consentId " +
             " where c.dac_id = :dacId ")
     Set<DatasetDTO> findDatasetsByDac(@Bind("dacId") Integer dacId);
+
+  @UseRowReducer(DatasetReducer.class)
+  @SqlQuery(
+      "SELECT d.*, k.key, p.propertyvalue, c.consentid, c.dac_id, c.translateduserestriction, c.datause "
+          + " FROM dataset d "
+          + " LEFT OUTER JOIN datasetproperty p ON p.datasetid = d.datasetid "
+          + " LEFT OUTER JOIN dictionary k ON k.keyid = p.propertykey "
+          + " INNER JOIN consentassociations a ON a.datasetid = d.datasetid "
+          + " INNER JOIN consents c ON c.consentid = a.consentid "
+          + " WHERE c.dac_id IN (<dacIds>) ")
+  Set<DataSet> findDatasetsByDacIds(@BindList("dacIds") List<Integer> dacIds);
 
     /**
      * DACs -> Consents -> Consent Associations -> DataSets
