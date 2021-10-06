@@ -377,7 +377,9 @@ public class DatasetService {
                 Set<DatasetDTO> moreDatasets = new HashSet<>();
                 moreDatasets.addAll(datasets);
                 moreDatasets.addAll(chairSpecificDatasets);
-                return moreDatasets;
+                return moreDatasets.stream()
+                    .peek(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())))
+                    .collect(Collectors.toSet());
             }
         }
         return datasets.stream()
