@@ -266,15 +266,17 @@ public class DatasetResource extends Resource {
         }
     }
 
-
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{datasetId}")
-    @RolesAllowed(ADMIN)
-    public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer dataSetId, @Context UriInfo info) {
+    @RolesAllowed({ADMIN, CHAIRPERSON})
+    public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId, @Context UriInfo info) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            datasetService.deleteDataset(dataSetId, user.getDacUserId());
+            DataSet dataset = datasetService.findDatasetById(datasetId);
+            // Validate that the admin/chairperson has edit/delete access to this dataset
+            validateDatasetDacAccess(user, dataset);
+            datasetService.deleteDataset(datasetId, user.getDacUserId());
             return Response.ok().build();
         } catch (Exception e) {
             return createExceptionResponse(e);
