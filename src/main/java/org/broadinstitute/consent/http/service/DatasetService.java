@@ -377,14 +377,12 @@ public class DatasetService {
                 Set<DatasetDTO> moreDatasets = new HashSet<>();
                 moreDatasets.addAll(datasets);
                 moreDatasets.addAll(chairSpecificDatasets);
-                return moreDatasets.stream()
-                    .peek(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())))
-                    .collect(Collectors.toSet());
+                moreDatasets.forEach(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())));
+                return moreDatasets;
             }
         }
-        return datasets.stream()
-                .peek(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())))
-                .collect(Collectors.toSet());
+        datasets.forEach(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())));
+        return datasets;
     }
 
     public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
