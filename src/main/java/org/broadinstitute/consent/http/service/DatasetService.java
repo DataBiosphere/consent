@@ -357,7 +357,7 @@ public class DatasetService {
         }
     }
 
-    public Set<DatasetDTO> describeDatasets(Integer dacUserId) {
+    public Set<DatasetDTO> describeDatasets(Integer userId) {
         List<DataAccessRequestData> darDatas = dataAccessRequestDAO.findAllDataAccessRequestDatas();
         List<Integer> datasetIdsInUse = darDatas
                 .stream()
@@ -367,18 +367,13 @@ public class DatasetService {
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
         Set<DatasetDTO> datasets;
-        if (userHasRole(UserRoles.ADMIN.getRoleName(), dacUserId)) {
+        if (userHasRole(UserRoles.ADMIN.getRoleName(), userId)) {
             datasets = datasetDAO.findAllDatasets();
-        }
-        else {
+        } else {
             datasets = getAllActiveDatasets();
-            if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacUserId)) {
-                Set<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetsByUser(dacUserId);
-                Set<DatasetDTO> moreDatasets = new HashSet<>();
-                moreDatasets.addAll(datasets);
-                moreDatasets.addAll(chairSpecificDatasets);
-                moreDatasets.forEach(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())));
-                return moreDatasets;
+            if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), userId)) {
+                Set<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetsByUserId(userId);
+                datasets.addAll(chairSpecificDatasets);
             }
         }
         datasets.forEach(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())));

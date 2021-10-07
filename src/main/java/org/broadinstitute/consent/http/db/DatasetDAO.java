@@ -115,15 +115,17 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     Set<DataSet> findDatasetWithDataUseByIdList(@BindList("datasetIds") List<Integer> datasetIds);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause "
-                    + "FROM dataset d " + "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid "
-                    + "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey "
-                    + "LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid "
-                    + "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid "
-                    + "INNER JOIN user_role ur ON ur.dac_id = c.dac_id "
-                    + "INNER JOIN dacuser u ON ur.user_id = u.dacuserid "
-                    + "WHERE u.dacuserid = :dacUserId AND d.name IS NOT NULL " + "ORDER BY d.datasetid, k.displayorder")
-    Set<DatasetDTO> findDatasetsByUser(@Bind("dacUserId") Integer dacUserId);
+    @SqlQuery(
+        " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause "
+            + " FROM dataset d "
+            + " LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid "
+            + " LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey "
+            + " INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid "
+            + " INNER JOIN consents c ON c.consentid = ca.consentid "
+            + " INNER JOIN user_role ur ON ur.dac_id = c.dac_id "
+            + " WHERE ur.user_id = :userId "
+            + " ORDER BY d.datasetid, k.displayorder ")
+    Set<DatasetDTO> findDatasetsByUserId(@Bind("userId") Integer userId);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
