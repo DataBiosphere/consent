@@ -1,7 +1,8 @@
 name: OWASP
-on:
-  schedule:
-    - cron: "0 0 * * *"
+on: [ pull_request ]
+#on:
+#  schedule:
+#    - cron: "0 0 * * *"
 jobs:
   package:
     name: OWASP
