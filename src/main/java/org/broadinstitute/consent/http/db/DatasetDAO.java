@@ -125,28 +125,30 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             + " INNER JOIN user_role ur ON ur.dac_id = c.dac_id "
             + " WHERE ur.user_id = :userId "
             + " AND d.name IS NOT NULL "
-            + " ORDER BY d.datasetid, k.displayorder ")
+            + " ORDER BY d.datasetid ")
     Set<DatasetDTO> findDatasetsByUserId(@Bind("userId") Integer userId);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
-          "FROM dataset d " +
-          "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
-          "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey " +
-          "LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
-          "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid " +
-          "WHERE d.name IS NOT NULL AND d.active = true " +
-          "ORDER BY d.datasetid, k.displayorder")
+    @SqlQuery(
+        " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause "
+            + " FROM dataset d "
+            + " LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid "
+            + " LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey "
+            + " LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid "
+            + " LEFT OUTER JOIN consents c ON c.consentid = ca.consentid "
+            + " WHERE d.name IS NOT NULL AND d.active = true "
+            + " ORDER BY d.datasetid ")
     Set<DatasetDTO> findActiveDatasets();
 
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
-          "FROM dataset d " +
-          "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
-          "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey " +
-          "LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
-          "LEFT OUTER JOIN consents c ON c.consentid = ca.consentid " +
-          "ORDER BY d.datasetid, k.displayorder")
+    @SqlQuery(
+        " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause "
+            + " FROM dataset d "
+            + " LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid "
+            + " LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey "
+            + " LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.datasetid "
+            + " LEFT OUTER JOIN consents c ON c.consentid = ca.consentid "
+            + " ORDER BY d.datasetid ")
     Set<DatasetDTO> findAllDatasets();
 
     @UseRowMapper(DataSetPropertiesMapper.class)

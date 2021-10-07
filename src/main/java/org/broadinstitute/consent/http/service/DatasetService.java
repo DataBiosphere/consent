@@ -366,18 +366,18 @@ public class DatasetService {
                 .filter(l -> !l.isEmpty())
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
-        Collection<DatasetDTO> datasets = new ArrayList<>();
+        HashSet<DatasetDTO> datasets = new HashSet<>();
         if (userHasRole(UserRoles.ADMIN.getRoleName(), userId)) {
             datasets.addAll(datasetDAO.findAllDatasets());
         } else {
-            datasets.addAll(getAllActiveDatasets());
+            datasets.addAll(datasetDAO.findActiveDatasets());
             if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), userId)) {
                 Collection<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetsByUserId(userId);
                 datasets.addAll(chairSpecificDatasets);
             }
         }
         datasets.forEach(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())));
-        return new HashSet<>(datasets);
+        return datasets;
     }
 
     public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
@@ -417,10 +417,6 @@ public class DatasetService {
             .anyMatch(p -> {
                 return p.getPropertyValue().toLowerCase().contains(term);
             });
-    }
-
-    public Set<DatasetDTO> getAllActiveDatasets() {
-        return datasetDAO.findActiveDatasets();
     }
 
     private boolean userHasRole(String roleName, Integer dacUserId) {
