@@ -6,6 +6,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import java.sql.Timestamp;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.Date;
@@ -50,11 +51,12 @@ public class DarCollection {
   private Set<DataSet> datasets;
 
   @JsonProperty
-  private List<Election> elections;
+  private Map<String, List<Election>> electionMap;
 
   public DarCollection() {
     this.createDate = new Timestamp(System.currentTimeMillis());
     this.datasets = new HashSet<>();
+    this.electionMap = new HashMap<>();
   }
 
   public DarCollection deepCopy() {
@@ -141,19 +143,20 @@ public class DarCollection {
     return datasets;
   }
 
-  public void setElections(List<Election> elections) {
-    this.elections = elections;
+  public void setElectionMap(Map<String, List<Election>> electionMap) {
+    this.electionMap = electionMap;
   }
 
-  public List<Election> getElections() {
-    return elections;
+  public Map<String, List<Election>> getElectionMap() {
+    return electionMap;
   }
 
   public void addElection(Election election) {
-    if(Objects.isNull(this.elections)) {
-      this.elections = new ArrayList<>();
+    String referenceId = election.getReferenceId();
+    if(!electionMap.containsKey(referenceId)){
+      electionMap.put(referenceId, new ArrayList<>());
     }
-    elections.add(election);
+    electionMap.get(referenceId).add(election);
   }
 
   @Override

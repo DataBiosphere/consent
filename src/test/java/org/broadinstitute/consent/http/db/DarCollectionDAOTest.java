@@ -19,6 +19,7 @@ import org.postgresql.util.PSQLState;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -312,8 +313,10 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     List<DarCollection> collectionResult = darCollectionDAO.findDARCollectionsCreatedByUserId(userId);
     assertEquals(1, collectionResult.size());
     assertEquals(userId, collectionResult.get(0).getCreateUserId());
-    List<Election> elections = collectionResult.get(0).getElections();
-    assertEquals(elections.size(), 1);
+    Map<String, List<Election>> electionMap = collectionResult.get(0).getElectionMap();
+    assertEquals(1, electionMap.size());
+    String referenceId = collectionResult.get(0).getDars().get(0).getReferenceId();
+    assertEquals(1, electionMap.get(referenceId).size());
 
     List<DataAccessRequest> darsResult = collectionResult.get(0).getDars();
     assertEquals(dars.size(), darsResult.size());
