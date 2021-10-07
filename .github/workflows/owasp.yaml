@@ -1,8 +1,7 @@
 name: OWASP
-on: [ pull_request ]
-#on:
-#  schedule:
-#    - cron: "0 0 * * *"
+on:
+  schedule:
+    - cron: "0 0 * * *"
 jobs:
   package:
     name: OWASP
@@ -17,7 +16,7 @@ jobs:
         run: |
           mvn -v
           mvn dependency-check:check --no-transfer-progress
-      - name: Archive OWASP results
+      - name: Archive Report
         uses: actions/upload-artifact@v2
         with:
           name: owasp-report
