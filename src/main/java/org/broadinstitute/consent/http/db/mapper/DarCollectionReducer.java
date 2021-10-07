@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db.mapper;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Election;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -15,15 +16,20 @@ public class DarCollectionReducer implements LinkedHashMapRowReducer<Integer, Da
     @Override
     public void accumulate(Map<Integer, DarCollection> map, RowView rowView) {
       DataAccessRequest dar = null;
+      Election election = null;
       DarCollection collection = map.computeIfAbsent(
         rowView.getColumn("collection_id", Integer.class),
         id -> rowView.getRow(DarCollection.class));
-
-      try{
-        if(Objects.nonNull(collection) && Objects.nonNull(rowView.getColumn("dar_id", Integer.class))) {
-          dar = rowView.getRow(DataAccessRequest.class);
-          DataAccessRequestData data = translate(rowView.getColumn("data", String.class));
-          dar.setData(data);
+      try {
+        if(Objects.nonNull(collection)) {
+          if(Objects.nonNull(rowView.getColumn("dar_id", Integer.class))) {
+            dar = rowView.getRow(DataAccessRequest.class);
+            DataAccessRequestData data = translate(rowView.getColumn("data", String.class));
+            dar.setData(data);
+          }
+          if(Objects.nonNull(rowView.getColumn("e_election_id", Integer.class))) {
+            election = rowView.getRow(Election.class);
+          }
         }
       } catch(MappingException e) {
         //ignore any exceptions
@@ -32,6 +38,8 @@ public class DarCollectionReducer implements LinkedHashMapRowReducer<Integer, Da
       if(Objects.nonNull(dar)) {
         collection.addDar(dar);
       }
+      if(Objects.nonNull(election)) {
+        collection.addElection(election);
+      }
     }
-
 }

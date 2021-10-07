@@ -200,6 +200,17 @@ public class DAOTestHelper {
         return electionDAO.findElectionById(electionId);
     }
 
+    protected Election createCancelledAccessElection(String referenceId, Integer datasetId) {
+        Integer electionId = electionDAO.insertElection(
+                ElectionType.DATA_ACCESS.getValue(),
+                ElectionStatus.CANCELED.getValue(),
+                new Date(),
+                referenceId,
+                datasetId
+        );
+        createdElectionIds.add(electionId);
+        return electionDAO.findElectionById(electionId);
+    }
     protected Election createExtendedElection(String referenceId, Integer datasetId) {
         Integer electionId = electionDAO.insertElection(
                 ElectionType.DATA_ACCESS.getValue(),
@@ -577,7 +588,10 @@ public class DAOTestHelper {
         User user = createUser();
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
-        insertDAR(user.getDacUserId(), collection_id, darCode);
+        DataSet dataset = createDataset();
+        DataAccessRequest dar = insertDAR(user.getDacUserId(), collection_id, darCode);
+        createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         insertDAR(user.getDacUserId(), collection_id, darCode);
         insertDAR(user.getDacUserId(), collection_id, darCode);
         createdDarCollections.add(collection_id);
