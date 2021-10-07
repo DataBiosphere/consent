@@ -16,4 +16,4 @@ jobs:
       - name: Run Report
         run: |
           mvn -v
-          mvn dependency-check:check
+          mvn dependency-check:check --no-transfer-progress
