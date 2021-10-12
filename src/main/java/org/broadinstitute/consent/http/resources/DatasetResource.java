@@ -374,6 +374,7 @@ public class DatasetResource extends Resource {
         } else {
             Consent consent = consentService.getConsentFromDatasetID(dataset.getDataSetId());
             if (Objects.isNull(consent) || Objects.isNull(consent.getDacId())) {
+                logger().warn("Cannot find a valid dac id for dataset: " + dataset.getDataSetId());
                 throw new NotFoundException();
             } else {
                 if (!dacIds.contains(consent.getDacId())) {
