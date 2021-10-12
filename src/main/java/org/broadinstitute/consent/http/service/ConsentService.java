@@ -17,7 +17,6 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -48,7 +47,6 @@ import org.slf4j.LoggerFactory;
 public class ConsentService {
 
     private final AuditService auditService;
-    private final AssociationDAO associationDAO;
     private final Jdbi jdbi;
     private final Logger logger;
     private final DatasetDAO dataSetDAO;
@@ -63,7 +61,7 @@ public class ConsentService {
     @Inject
     public ConsentService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
                           DataAccessRequestDAO dataAccessRequestDAO, AuditService auditService,
-                          AssociationDAO associationDAO, Jdbi jdbi, DatasetDAO dataSetDAO,
+                          Jdbi jdbi, DatasetDAO dataSetDAO,
                           UseRestrictionConverter useRestrictionConverter) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
@@ -71,7 +69,6 @@ public class ConsentService {
         this.dacService = dacService;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.auditService = auditService;
-        this.associationDAO = associationDAO;
         this.jdbi = jdbi;
         this.dataSetDAO = dataSetDAO;
         this.useRestrictionConverter = useRestrictionConverter;
@@ -422,10 +419,6 @@ public class ConsentService {
         }
         logger.debug(String.format("getAllAssociationsForConsent - returning '%s'", assoc_list.toString()));
         return assoc_list;
-    }
-
-    public boolean hasWorkspaceAssociation(String workspaceId) {
-        return !Objects.isNull(associationDAO.findAssociationIdByTypeAndObjectId(AssociationType.WORKSPACE.getValue(), workspaceId));
     }
 
     private Consent updateConsentDates(Consent c) {

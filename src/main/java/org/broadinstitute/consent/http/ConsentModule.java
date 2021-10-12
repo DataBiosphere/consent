@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
-import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -90,7 +89,7 @@ public class ConsentModule extends AbstractModule {
     private final MailServiceDAO mailServiceDAO;
     private final UserPropertyDAO userPropertyDAO;
     private final WorkspaceAuditDAO workspaceAuditDAO;
-    private final AssociationDAO associationDAO;
+//    private final AssociationDAO associationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DarCollectionDAO darCollectionDAO;
     private final InstitutionDAO institutionDAO;
@@ -125,7 +124,7 @@ public class ConsentModule extends AbstractModule {
         this.mailServiceDAO = this.jdbi.onDemand(MailServiceDAO.class);
         this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
         this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
-        this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
+//        this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
         this.darCollectionDAO = this.jdbi.onDemand(DarCollectionDAO.class);
         this.institutionDAO = this.jdbi.onDemand((InstitutionDAO.class));
@@ -142,7 +141,6 @@ public class ConsentModule extends AbstractModule {
     public DAOContainer providesDAOContainer() {
         DAOContainer container = new DAOContainer();
         container.setApprovalExpirationTimeDAO(providesApprovalExpirationTimeDAO());
-        container.setAssociationDAO(providesAssociationDAO());
         container.setConsentDAO(providesConsentDAO());
         container.setCounterDAO(providesCounterDAO());
         container.setDacDAO(providesDacDAO());
@@ -231,7 +229,6 @@ public class ConsentModule extends AbstractModule {
                 providesDacService(),
                 providesDataAccessRequestDAO(),
                 providesAuditService(),
-                providesAssociationDAO(),
                 providesJdbi(),
                 providesDataSetDAO(),
                 providesUseRestrictionConverter());
@@ -458,10 +455,10 @@ public class ConsentModule extends AbstractModule {
         return workspaceAuditDAO;
     }
 
-    @Provides
-    AssociationDAO providesAssociationDAO() {
-        return associationDAO;
-    }
+//    @Provides
+//    AssociationDAO providesAssociationDAO() {
+//        return associationDAO;
+//    }
 
     @Provides
     InstitutionDAO providesInstitutionDAO() {
