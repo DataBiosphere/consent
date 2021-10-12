@@ -59,6 +59,7 @@ public class DAOTestHelper {
 
     private static DropwizardTestSupport<ConsentConfiguration> testApp;
     protected static ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
+    protected static ConsentAuditDAO consentAuditDAO;
     protected static ConsentDAO consentDAO;
     protected static CounterDAO counterDAO;
     protected static DacDAO dacDAO;
@@ -75,6 +76,7 @@ public class DAOTestHelper {
     protected static LibraryCardDAO libraryCardDAO;
     protected static DarCollectionDAO darCollectionDAO;
 
+    private static final List<String> createdConsentAuditIds = new ArrayList<>();
     private static final List<Integer> createdDataSetIds = new ArrayList<>();
     private static final List<Integer> createdDacIds = new ArrayList<>();
     private static final List<String> createdConsentIds = new ArrayList<>();
@@ -119,6 +121,7 @@ public class DAOTestHelper {
         jdbi.installPlugin(new Gson2Plugin());
         jdbi.installPlugin(new GuavaPlugin());
         approvalExpirationTimeDAO = jdbi.onDemand(ApprovalExpirationTimeDAO.class);
+        consentAuditDAO = jdbi.onDemand(ConsentAuditDAO.class);
         consentDAO = jdbi.onDemand(ConsentDAO.class);
         counterDAO = jdbi.onDemand(CounterDAO.class);
         dacDAO = jdbi.onDemand(DacDAO.class);
@@ -148,6 +151,7 @@ public class DAOTestHelper {
             approvalExpirationTimeDAO.deleteApprovalExpirationTime(aet.getId());
         }
         // Order is important for FK constraints
+        consentAuditDAO.deleteByObjectIds(createdConsentIds);
         createdConsentIds.forEach(id -> {
             matchDAO.deleteMatchesByConsentId(id);
             voteDAO.deleteVotes(id);
