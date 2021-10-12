@@ -82,7 +82,7 @@ public class UserResource extends Resource {
                 if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleName))) {
                     throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " + roleName + " role.");
                 }
-                List<User> users = userService.getUsersByUserRole(user, roleName);
+                List<User> users = userService.getUsersAsRole(user, roleName);
                 return Response.ok().entity(users).build();
             }
             else {

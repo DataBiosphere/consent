@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,8 +22,8 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
@@ -35,7 +36,6 @@ import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 public class UserServiceTest {
 
@@ -61,7 +61,7 @@ public class UserServiceTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     private void initService() {
@@ -93,7 +93,7 @@ public class UserServiceTest {
         u.setRoles(roles);
         when(userDAO.findUserById(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(roles);
-        when(libraryCardDAO.findAllLibraryCardsByUserEmail(u.getEmail())).thenReturn(Arrays.asList(libraryCard));
+        when(libraryCardDAO.findAllLibraryCardsByUserEmail(u.getEmail())).thenReturn(Collections.singletonList(libraryCard));
         initService();
 
         try {
@@ -329,7 +329,7 @@ public class UserServiceTest {
         doNothing().when(userDAO).updateUser(any(), any(), any(), any());
         initService();
         Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
-        User user = service.updateDACUserById(dacUsers, u.getDacUserId());
+        service.updateDACUserById(dacUsers, u.getDacUserId());
     }
 
     @Test
@@ -355,30 +355,32 @@ public class UserServiceTest {
     public void testGetUsersByUserRole_SO() {
         User u = generateUser();
         u.setInstitutionId(1);
-        when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(Arrays.asList(new User()));
-        when(userDAO.getCardsForUnregisteredUsers(anyInt())).thenReturn(Arrays.asList(new User()));
-        when(userDAO.getUsersOutsideInstitutionWithCards(anyInt())).thenReturn(Arrays.asList(new User()));
+        when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(Collections.singletonList(new User()));
+        when(userDAO.getCardsForUnregisteredUsers(anyInt())).thenReturn(Collections.singletonList(new User()));
+        when(userDAO.getUsersOutsideInstitutionWithCards(anyInt())).thenReturn(Collections.singletonList(new User()));
         initService();
 
-        List<User> users = service.getUsersByUserRole(u, "SigningOfficial");
+        List<User> users = service.getUsersAsRole(u, "SigningOfficial");
         assertNotNull(users);
         assertEquals(3, users.size());
     }
 
     @Test(expected = NotFoundException.class)
-    public void testGetUsersByUserRole_SO_noInstitution() {
+    public void testGetUsersAsRoleSO_NoInstitution() {
         User u = generateUser();
         u.setInstitutionId(null);
         initService();
-        service.getUsersByUserRole(u, "SigningOfficial");
+    service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
     }
 
     @Test
-    public void testGetUsersByUserRole_Admin() {
-        User u = generateUser();
-        when(userDAO.findUsers()).thenReturn(new HashSet<>(Arrays.asList(generateUser(), generateUser(), generateUser())));
+    public void testGetUsersAsRoleAdmin() {
+        User u1 = generateUser();
+        User u2 = generateUser();
+        User u3 = generateUser();
+        when(userDAO.findUsers()).thenReturn(new HashSet<>(Arrays.asList(u1, u2, u3)));
         initService();
-        List<User> users = service.getUsersByUserRole(u, "Admin");
+        List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
         assertNotNull(users);
         assertEquals(3, users.size());
     }
