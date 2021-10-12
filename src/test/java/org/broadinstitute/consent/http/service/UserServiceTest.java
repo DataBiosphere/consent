@@ -11,11 +11,10 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -71,7 +70,7 @@ public class UserServiceTest {
     @Test
     public void createUserTest() {
         User u = generateUser();
-        List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.RESEARCHER.getRoleId()));
+        List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
         when(userDAO.findUserById(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(roles);
@@ -89,11 +88,11 @@ public class UserServiceTest {
         User u = generateUser();
         LibraryCard libraryCard = generateLibraryCard(u.getEmail());
         Integer institutionId = libraryCard.getInstitutionId();
-        List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.RESEARCHER.getRoleId()));
+        List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
         when(userDAO.findUserById(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(roles);
-        when(libraryCardDAO.findAllLibraryCardsByUserEmail(u.getEmail())).thenReturn(Collections.singletonList(libraryCard));
+        when(libraryCardDAO.findAllLibraryCardsByUserEmail(u.getEmail())).thenReturn(List.of(libraryCard));
         initService();
 
         try {
@@ -109,7 +108,7 @@ public class UserServiceTest {
     @Test(expected = BadRequestException.class)
     public void testCreateUserDuplicateEmail() {
         User u = generateUser();
-        List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.RESEARCHER.getRoleId()));
+        List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
         when(userDAO.findUserByEmail(any())).thenReturn(u);
         initService();
@@ -119,7 +118,7 @@ public class UserServiceTest {
     @Test(expected = BadRequestException.class)
     public void testCreateUserNoDisplayName() {
         User u = generateUser();
-        List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.RESEARCHER.getRoleId()));
+        List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
         u.setDisplayName(null);
         initService();
@@ -130,7 +129,7 @@ public class UserServiceTest {
     public void testCreateUserNoRoles() {
         User u = generateUser();
         when(userDAO.findUserById(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(generateRole(UserRoles.RESEARCHER.getRoleId())));
+        when(roleDAO.findRolesByUserId(any())).thenReturn(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
         initService();
         User user = service.createUser(u);
         assertFalse(user.getRoles().isEmpty());
@@ -140,7 +139,7 @@ public class UserServiceTest {
     @Test(expected = BadRequestException.class)
     public void testCreateUserInvalidRoleCase1() {
         User u = generateUser();
-        List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.CHAIRPERSON.getRoleId()));
+        List<UserRole> roles = List.of(generateRole(UserRoles.CHAIRPERSON.getRoleId()));
         u.setRoles(roles);
         initService();
         service.createUser(u);
@@ -149,7 +148,7 @@ public class UserServiceTest {
     @Test(expected = BadRequestException.class)
     public void testCreateUserInvalidRoleCase2() {
         User u = generateUser();
-        List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.MEMBER.getRoleId()));
+        List<UserRole> roles = List.of(generateRole(UserRoles.MEMBER.getRoleId()));
         u.setRoles(roles);
         initService();
         service.createUser(u);
@@ -168,7 +167,7 @@ public class UserServiceTest {
         User u = generateUser();
         LibraryCard one = generateLibraryCard(u);
         LibraryCard two = generateLibraryCard(u);
-        List<LibraryCard> cards = Arrays.asList(one, two);
+        List<LibraryCard> cards = List.of(one, two);
         when(userDAO.findUserById(any())).thenReturn(u);
         when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(cards);
         initService();
@@ -197,7 +196,7 @@ public class UserServiceTest {
     @Test
     public void testFindUserByIdWithRoles() {
         User u = generateUser();
-        List<UserRole> roleList = Arrays.asList(
+        List<UserRole> roleList = List.of(
                 generateRole(UserRoles.RESEARCHER.getRoleId()),
                 generateRole(UserRoles.MEMBER.getRoleId())
         );
@@ -237,7 +236,7 @@ public class UserServiceTest {
     @Test
     public void testFindUserByEmailWithRoles() {
         User u = generateUser();
-        List<UserRole> roleList = Arrays.asList(
+        List<UserRole> roleList = List.of(
                 generateRole(UserRoles.RESEARCHER.getRoleId()),
                 generateRole(UserRoles.MEMBER.getRoleId())
         );
@@ -336,7 +335,7 @@ public class UserServiceTest {
     public void testFindSOsByInstitutionId() {
         User u = generateUser();
         Integer institutionId = u.getInstitutionId();
-        when(userDAO.getSOsByInstitution(any())).thenReturn(Arrays.asList(u, u, u));
+        when(userDAO.getSOsByInstitution(any())).thenReturn(List.of(u, u, u));
         initService();
         List<SimplifiedUser> users = service.findSOsByInstitutionId(institutionId);
         assertEquals(3, users.size());
@@ -355,9 +354,9 @@ public class UserServiceTest {
     public void testGetUsersByUserRole_SO() {
         User u = generateUser();
         u.setInstitutionId(1);
-        when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(Collections.singletonList(new User()));
-        when(userDAO.getCardsForUnregisteredUsers(anyInt())).thenReturn(Collections.singletonList(new User()));
-        when(userDAO.getUsersOutsideInstitutionWithCards(anyInt())).thenReturn(Collections.singletonList(new User()));
+        when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(List.of(new User()));
+        when(userDAO.getCardsForUnregisteredUsers(anyInt())).thenReturn(List.of(new User()));
+        when(userDAO.getUsersOutsideInstitutionWithCards(anyInt())).thenReturn(List.of(new User()));
         initService();
 
         List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
@@ -378,7 +377,7 @@ public class UserServiceTest {
         User u1 = generateUser();
         User u2 = generateUser();
         User u3 = generateUser();
-        when(userDAO.findUsers()).thenReturn(new HashSet<>(Arrays.asList(u1, u2, u3)));
+        when(userDAO.findUsers()).thenReturn(Set.of(u1, u2, u3));
         initService();
         List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
         assertNotNull(users);
@@ -388,7 +387,7 @@ public class UserServiceTest {
     @Test
     public void testFindUsersWithNoInstitution() {
         User user = generateUser();
-        when(userDAO.getUsersWithNoInstitution()).thenReturn(Collections.singletonList(user));
+        when(userDAO.getUsersWithNoInstitution()).thenReturn(List.of(user));
         initService();
         List<User> users = service.findUsersWithNoInstitution();
         assertNotNull(users);
