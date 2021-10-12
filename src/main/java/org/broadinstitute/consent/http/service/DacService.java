@@ -159,13 +159,6 @@ public class DacService {
         return userDAO.findUserById(id);
     }
 
-    public Set<DataSet> findDatasetsByDacIds(List<Integer> dacIds) {
-        if (!dacIds.isEmpty()) {
-            return dataSetDAO.findDatasetsByDacIds(dacIds);
-        }
-        return Collections.emptySet();
-    }
-
     public Set<DatasetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
         Set<DatasetDTO> datasets = dataSetDAO.findDatasetsByDac(dacId);
         if (isAuthUserAdmin(authUser)) {

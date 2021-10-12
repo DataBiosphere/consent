@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -36,13 +35,14 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -54,14 +54,14 @@ import org.slf4j.LoggerFactory;
 public class DatasetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
-    private final DacService dacService;
+    private final ConsentService consentService;
     private final DatasetService datasetService;
     private final UserService userService;
     private final DataAccessRequestService darService;
 
     @Inject
-    public DatasetResource(DacService dacService, DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
-        this.dacService = dacService;
+    public DatasetResource(ConsentService consentService, DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
+        this.consentService = consentService;
         this.datasetService = datasetService;
         this.userService = userService;
         this.darService = darService;
@@ -372,9 +372,13 @@ public class DatasetResource extends Resource {
             logger().error("Unable to find dac ids for chairperson user: " + user.getEmail());
             throw new NotFoundException();
         } else {
-            Set<DataSet> accessibleDatasets = dacService.findDatasetsByDacIds(dacIds);
-            if (accessibleDatasets.stream().noneMatch(d -> d.getDataSetId().equals(dataset.getDataSetId()))) {
+            Consent consent = consentService.getConsentFromDatasetID(dataset.getDataSetId());
+            if (Objects.isNull(consent) || Objects.isNull(consent.getDacId())) {
                 throw new NotFoundException();
+            } else {
+                if (!dacIds.contains(consent.getDacId())) {
+                    throw new NotFoundException();
+                }
             }
         }
     }

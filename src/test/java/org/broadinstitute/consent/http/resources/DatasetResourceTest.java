@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.gson.Gson;
 import java.net.URI;
@@ -25,19 +26,18 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 public class DatasetResourceTest {
 
     @Mock
-    private DacService dacService;
+    private ConsentService consentService;
 
     @Mock
     private DataAccessRequestService darService;
@@ -67,11 +67,11 @@ public class DatasetResourceTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     private void initResource() {
-        resource = new DatasetResource(dacService, datasetService, userService, darService);
+        resource = new DatasetResource(consentService, datasetService, userService, darService);
     }
 
     @Test

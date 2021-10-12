@@ -241,17 +241,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " where c.dac_id = :dacId ")
     Set<DatasetDTO> findDatasetsByDac(@Bind("dacId") Integer dacId);
 
-  @UseRowReducer(DatasetReducer.class)
-  @SqlQuery(
-      "SELECT d.*, k.key, p.propertyvalue, c.consentid, c.dac_id, c.translateduserestriction, c.datause "
-          + " FROM dataset d "
-          + " LEFT OUTER JOIN datasetproperty p ON p.datasetid = d.datasetid "
-          + " LEFT OUTER JOIN dictionary k ON k.keyid = p.propertykey "
-          + " INNER JOIN consentassociations a ON a.datasetid = d.datasetid "
-          + " INNER JOIN consents c ON c.consentid = a.consentid "
-          + " WHERE c.dac_id IN (<dacIds>) ")
-  Set<DataSet> findDatasetsByDacIds(@BindList("dacIds") List<Integer> dacIds);
-
     /**
      * DACs -> Consents -> Consent Associations -> DataSets
      * DataSets -> DatasetProperties -> Dictionary
