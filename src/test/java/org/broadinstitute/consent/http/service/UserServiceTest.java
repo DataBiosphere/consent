@@ -360,7 +360,7 @@ public class UserServiceTest {
         when(userDAO.getUsersOutsideInstitutionWithCards(anyInt())).thenReturn(Collections.singletonList(new User()));
         initService();
 
-        List<User> users = service.getUsersAsRole(u, "SigningOfficial");
+        List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
         assertNotNull(users);
         assertEquals(3, users.size());
     }
