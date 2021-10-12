@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import java.util.Date;
 
-public class WorkspaceAudit {
+public class ConsentAudit {
 
     private String modifiedObjectId;
 
@@ -14,7 +14,7 @@ public class WorkspaceAudit {
 
     private Date modificationDate;
 
-    public WorkspaceAudit(String modifiedObjectId, String modifiedTable, String changeAction, int modifiedByUserId, Date modificationDate) {
+    public ConsentAudit(String modifiedObjectId, String modifiedTable, String changeAction, int modifiedByUserId, Date modificationDate) {
         this.modifiedObjectId = modifiedObjectId;
         this.modifiedTable = modifiedTable;
         this.changeAction = changeAction;

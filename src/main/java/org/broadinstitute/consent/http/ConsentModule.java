@@ -31,7 +31,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
+import org.broadinstitute.consent.http.db.ConsentAuditDAO;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
@@ -89,7 +89,7 @@ public class ConsentModule extends AbstractModule {
     private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     private final MailServiceDAO mailServiceDAO;
     private final UserPropertyDAO userPropertyDAO;
-    private final WorkspaceAuditDAO workspaceAuditDAO;
+    private final ConsentAuditDAO consentAuditDAO;
     private final AssociationDAO associationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DarCollectionDAO darCollectionDAO;
@@ -124,7 +124,7 @@ public class ConsentModule extends AbstractModule {
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         this.mailServiceDAO = this.jdbi.onDemand(MailServiceDAO.class);
         this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
-        this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
+        this.consentAuditDAO = this.jdbi.onDemand(ConsentAuditDAO.class);
         this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
         this.darCollectionDAO = this.jdbi.onDemand(DarCollectionDAO.class);
@@ -454,8 +454,8 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    WorkspaceAuditDAO providesWorkspaceAuditDAO() {
-        return workspaceAuditDAO;
+    ConsentAuditDAO providesWorkspaceAuditDAO() {
+        return consentAuditDAO;
     }
 
     @Provides
