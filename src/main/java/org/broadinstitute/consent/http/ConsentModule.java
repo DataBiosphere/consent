@@ -118,8 +118,6 @@ public class ConsentModule extends AbstractModule {
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         this.mailServiceDAO = this.jdbi.onDemand(MailServiceDAO.class);
         this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
-//        this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
-//        this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
         this.darCollectionDAO = this.jdbi.onDemand(DarCollectionDAO.class);
         this.institutionDAO = this.jdbi.onDemand((InstitutionDAO.class));
