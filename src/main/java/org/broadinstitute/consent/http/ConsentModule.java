@@ -7,6 +7,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
+import javax.ws.rs.client.Client;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
@@ -30,11 +31,9 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
-import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
@@ -63,8 +62,6 @@ import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
-import javax.ws.rs.client.Client;
-
 public class ConsentModule extends AbstractModule {
 
     @Inject
@@ -88,8 +85,6 @@ public class ConsentModule extends AbstractModule {
     private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     private final MailServiceDAO mailServiceDAO;
     private final UserPropertyDAO userPropertyDAO;
-    private final WorkspaceAuditDAO workspaceAuditDAO;
-//    private final AssociationDAO associationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DarCollectionDAO darCollectionDAO;
     private final InstitutionDAO institutionDAO;
@@ -123,7 +118,7 @@ public class ConsentModule extends AbstractModule {
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         this.mailServiceDAO = this.jdbi.onDemand(MailServiceDAO.class);
         this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
-        this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
+//        this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
 //        this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
         this.darCollectionDAO = this.jdbi.onDemand(DarCollectionDAO.class);
@@ -156,7 +151,6 @@ public class ConsentModule extends AbstractModule {
         container.setUserDAO(providesUserDAO());
         container.setUserRoleDAO(providesUserRoleDAO());
         container.setVoteDAO(providesVoteDAO());
-        container.setWorkspaceAuditDAO(providesWorkspaceAuditDAO());
         container.setInstitutionDAO(providesInstitutionDAO());
         return container;
     }
@@ -194,13 +188,6 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    AuditService providesAuditService() {
-        return new AuditService(
-                providesUserDAO(),
-                providesWorkspaceAuditDAO());
-    }
-
-    @Provides
     DarCollectionService providesDarCollectionService() {
         return new DarCollectionService(
             providesDARCollectionDAO(),
@@ -228,7 +215,6 @@ public class ConsentModule extends AbstractModule {
                 providesVoteDAO(),
                 providesDacService(),
                 providesDataAccessRequestDAO(),
-                providesAuditService(),
                 providesJdbi(),
                 providesDataSetDAO(),
                 providesUseRestrictionConverter());
@@ -449,16 +435,6 @@ public class ConsentModule extends AbstractModule {
     UserPropertyDAO providesResearcherPropertyDAO() {
         return userPropertyDAO;
     }
-
-    @Provides
-    WorkspaceAuditDAO providesWorkspaceAuditDAO() {
-        return workspaceAuditDAO;
-    }
-
-//    @Provides
-//    AssociationDAO providesAssociationDAO() {
-//        return associationDAO;
-//    }
 
     @Provides
     InstitutionDAO providesInstitutionDAO() {

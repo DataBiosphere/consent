@@ -8,7 +8,6 @@ package org.broadinstitute.consent.http.db;
 public class DAOContainer {
 
   private ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
-//  private AssociationDAO associationDAO;
   private ConsentDAO consentDAO;
   private CounterDAO counterDAO;
   private DacDAO dacDAO;
@@ -24,7 +23,6 @@ public class DAOContainer {
   private UserDAO userDAO;
   private UserRoleDAO userRoleDAO;
   private VoteDAO voteDAO;
-  private WorkspaceAuditDAO workspaceAuditDAO;
   private InstitutionDAO institutionDAO;
 
   public ApprovalExpirationTimeDAO getApprovalExpirationTimeDAO() {
@@ -158,14 +156,6 @@ public class DAOContainer {
 
   public void setVoteDAO(VoteDAO voteDAO) {
     this.voteDAO = voteDAO;
-  }
-
-  public WorkspaceAuditDAO getWorkspaceAuditDAO() {
-    return workspaceAuditDAO;
-  }
-
-  public void setWorkspaceAuditDAO(WorkspaceAuditDAO workspaceAuditDAO) {
-    this.workspaceAuditDAO = workspaceAuditDAO;
   }
 
   public InstitutionDAO getInstitutionDAO() { return institutionDAO; }

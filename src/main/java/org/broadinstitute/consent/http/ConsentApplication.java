@@ -72,7 +72,6 @@ import org.broadinstitute.consent.http.resources.SwaggerResource;
 import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
-import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -183,7 +182,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final PendingCaseService pendingCaseService = injector.getProvider(PendingCaseService.class).get();
         final UserService userService = injector.getProvider(UserService.class).get();
         final VoteService voteService = injector.getProvider(VoteService.class).get();
-        final AuditService auditService = injector.getProvider(AuditService.class).get();
         final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
         final ReviewResultsService reviewResultsService = injector.getProvider(ReviewResultsService.class).get();
         final UseRestrictionValidator useRestrictionValidator = injector.getProvider(UseRestrictionValidator.class).get();
@@ -225,7 +223,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService, consentService, electionService));
         env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService));
         env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
-        env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService, useRestrictionValidator));
+        env.jersey().register(new ConsentResource(consentService, matchService, useRestrictionValidator));
         env.jersey().register(new ConsentAssociationResource(consentService, userService));
         env.jersey().register(new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService));
         env.jersey().register(new ConsentManageResource(consentService));
@@ -233,7 +231,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ConsentCasesResource(electionService, pendingCaseService, summaryService));
         env.jersey().register(new DataRequestElectionResource(dataAccessRequestService, emailNotifierService, summaryService, voteService, electionService));
         env.jersey().register(new DataRequestVoteResource(dataAccessRequestService, datasetAssociationService, emailNotifierService, voteService, datasetService, electionService, userService));
-        env.jersey().register(new DataUseLetterResource(auditService, googleStore, userService, consentService));
+        env.jersey().register(new DataUseLetterResource(googleStore, consentService));
         env.jersey().register(new DataRequestCasesResource(electionService, pendingCaseService, summaryService));
         env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
         env.jersey().register(new DacResource(dacService, userService));

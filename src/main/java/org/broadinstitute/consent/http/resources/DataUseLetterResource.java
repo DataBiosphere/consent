@@ -19,15 +19,10 @@ import javax.ws.rs.core.MediaType;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
-import org.broadinstitute.consent.http.enumeration.Actions;
-import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
-import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -38,15 +33,11 @@ public class DataUseLetterResource extends Resource {
 
     private final ConsentService consentService;
     private final GCSStore store;
-    private final AuditService auditService;
-    private final UserService userService;
 
     @Inject
-    public DataUseLetterResource(AuditService auditService, GCSStore store, UserService userService, ConsentService consentService) {
-        this.auditService = auditService;
+    public DataUseLetterResource(GCSStore store, ConsentService consentService) {
         this.consentService = consentService;
         this.store = store;
-        this.userService = userService;
     }
 
     private String getFileExtension(String fileName) {
@@ -82,10 +73,7 @@ public class DataUseLetterResource extends Resource {
             deletePreviousStorageFile(consentId);
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
-            Consent consent = consentService.updateConsentDul(consentId, dulUrl, name);
-            User dacUser = userService.findUserByEmail(user.getEmail());
-            auditService.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
-            return consent;
+            return consentService.updateConsentDul(consentId, dulUrl, name);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e) {

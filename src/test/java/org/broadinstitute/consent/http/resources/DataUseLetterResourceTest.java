@@ -1,33 +1,30 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.UUID;
+import javax.ws.rs.core.MediaType;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.core.MediaType;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.UUID;
-
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 public class DataUseLetterResourceTest {
 
@@ -37,10 +34,6 @@ public class DataUseLetterResourceTest {
     private GCSStore store;
     @Mock
     private ConsentService consentService;
-    @Mock
-    private AuditService auditService;
-    @Mock
-    private UserService userService;
 
     private AuthUser user = new AuthUser("oauthuser@broadinstitute.org");
     private DataUseLetterResource resource;
@@ -54,8 +47,7 @@ public class DataUseLetterResourceTest {
         User user = new User();
         user.setEmail(this.user.getEmail());
         user.setDacUserId(1);
-        when(userService.findUserByEmail(any())).thenReturn(user);
-        resource = new DataUseLetterResource(auditService, store, userService, consentService);
+        resource = new DataUseLetterResource(store, consentService);
     }
 
     @Test

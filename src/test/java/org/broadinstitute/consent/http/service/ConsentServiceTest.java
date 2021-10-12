@@ -1,5 +1,22 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -21,66 +38,45 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
 
 public class ConsentServiceTest {
 
     private ConsentService service;
 
     @Mock
-    ConsentDAO consentDAO;
+    private ConsentDAO consentDAO;
 
     @Mock
-    ElectionDAO electionDAO;
+    private ElectionDAO electionDAO;
 
     @Mock
-    VoteDAO voteDAO;
+    private VoteDAO voteDAO;
 
     @Mock
-    DacService dacService;
+    private DacService dacService;
 
     @Mock
-    DataAccessRequestDAO dataAccessRequestDAO;
+    private DataAccessRequestDAO dataAccessRequestDAO;
 
     @Mock
-    AuditService auditService;
+    private DatasetDAO dataSetDAO;
 
     @Mock
-    DatasetDAO dataSetDAO;
+    private DacDAO dacDAO;
 
     @Mock
-    DacDAO dacDAO;
+    private Jdbi jdbi;
 
     @Mock
-    Jdbi jdbi;
-
-    @Mock
-    UseRestrictionConverter useRestrictionConverter;
+    private UseRestrictionConverter useRestrictionConverter;
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     private void initService() {
-        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO, auditService, jdbi, dataSetDAO, useRestrictionConverter);
+        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO, jdbi, dataSetDAO, useRestrictionConverter);
     }
 
     @Test

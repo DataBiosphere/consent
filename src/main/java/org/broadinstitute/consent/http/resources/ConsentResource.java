@@ -20,35 +20,26 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.broadinstitute.consent.http.enumeration.Actions;
-import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
-import org.broadinstitute.consent.http.service.UserService;
 
 @Path("{auth: (basic/|api/)?}consent")
 public class ConsentResource extends Resource {
 
     private final ConsentService consentService;
-    private final AuditService auditService;
     private final MatchService matchService;
     private final UseRestrictionValidator useRestrictionValidator;
-    private final UserService userService;
 
     @Inject
-    public ConsentResource(AuditService auditService, UserService userService, ConsentService consentService, MatchService matchService, UseRestrictionValidator useRestrictionValidator) {
-        this.auditService = auditService;
+    public ConsentResource(ConsentService consentService, MatchService matchService, UseRestrictionValidator useRestrictionValidator) {
         this.consentService = consentService;
         this.useRestrictionValidator = useRestrictionValidator;
-        this.userService = userService;
         this.matchService = matchService;
     }
 
@@ -70,7 +61,6 @@ public class ConsentResource extends Resource {
     @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
     public Response createConsent(@Context UriInfo info, Consent rec, @Auth AuthUser user) {
         try {
-            User dacUser = userService.findUserByEmail(user.getEmail());
             if(rec.getUseRestriction() != null){
                 useRestrictionValidator.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
             }
@@ -81,7 +71,6 @@ public class ConsentResource extends Resource {
                 checkValidDUL(rec);
             }
             Consent consent = consentService.create(rec);
-            auditService.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), dacUser.getEmail());
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
             matchService.reprocessMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
@@ -107,9 +96,7 @@ public class ConsentResource extends Resource {
             if (updated.getDataUseLetter() != null) {
                 checkValidDUL(updated);
             }
-            User dacUser = userService.findUserByEmail(user.getEmail());
             updated = consentService.update(id, updated);
-            auditService.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             matchService.reprocessMatchesForConsent(id);
             return Response.ok(updated).build();
         } catch (Exception e) {

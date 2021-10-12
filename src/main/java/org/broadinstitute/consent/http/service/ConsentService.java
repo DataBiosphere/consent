@@ -14,7 +14,6 @@ import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -22,12 +21,9 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.Actions;
-import org.broadinstitute.consent.http.enumeration.AssociationType;
-import org.broadinstitute.consent.http.enumeration.AuditTable;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
@@ -46,7 +42,6 @@ import org.slf4j.LoggerFactory;
 
 public class ConsentService {
 
-    private final AuditService auditService;
     private final Jdbi jdbi;
     private final Logger logger;
     private final DatasetDAO dataSetDAO;
@@ -60,7 +55,7 @@ public class ConsentService {
 
     @Inject
     public ConsentService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
-                          DataAccessRequestDAO dataAccessRequestDAO, AuditService auditService,
+                          DataAccessRequestDAO dataAccessRequestDAO,
                           Jdbi jdbi, DatasetDAO dataSetDAO,
                           UseRestrictionConverter useRestrictionConverter) {
         this.consentDAO = consentDAO;
@@ -68,7 +63,6 @@ public class ConsentService {
         this.voteDAO = voteDAO;
         this.dacService = dacService;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
-        this.auditService = auditService;
         this.jdbi = jdbi;
         this.dataSetDAO = dataSetDAO;
         this.useRestrictionConverter = useRestrictionConverter;
@@ -129,8 +123,6 @@ public class ConsentService {
             processAssociation(association.getElements());
             try {
                 consentDAO.deleteAllAssociationsForType(consentId, association.getAssociationType());
-                List<String> generatedIds = updateAssociations(consentId, association.getAssociationType(), association.getElements());
-                auditService.saveAssociationAuditList(generatedIds, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.CREATE.getValue(), createdByUserEmail);
             } catch (Exception e) {
                 throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");
             }
@@ -181,8 +173,6 @@ public class ConsentService {
             try {
                 if (new_ids.size() > 0) {
                     processAssociation(new_ids);
-                    List<String> ids = updateAssociations(consentId, association.getAssociationType(), new_ids);
-                    auditService.saveAssociationAuditList(ids, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.REPLACE.getValue(), modifiedByUserEmail);
                 }
             } catch (Exception e) {
                 throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");
