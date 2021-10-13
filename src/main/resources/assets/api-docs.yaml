@@ -603,13 +603,13 @@ paths:
     post:
       summary: Create new Consent
       description: Creates the consent sent with the request.
-      parameters:
-        - name: rec
-          in: body
-          description: Object that represents a Consent
-          required: true
-          schema:
-            $ref: '#/components/schemas/Consent'
+      requestBody:
+        description: Object that represents a Consent
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Consent'
       tags:
         - Consent
       responses:
