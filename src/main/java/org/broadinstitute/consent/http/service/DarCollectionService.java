@@ -56,22 +56,22 @@ public class DarCollectionService {
     if (Objects.nonNull(roles)) {
       switch (roles) {
         case ADMIN:
-          darCollectionDAO.findAllDARCollections();
+          collections.addAll(getAllCollections());
           break;
         case CHAIRPERSON:
         case MEMBER:
-          collections.addAll(getCollectionsByUserDacIds(user));
+          collections.addAll(getCollectionsByUserDacs(user));
           break;
         case SIGNINGOFFICIAL:
           collections.addAll(getCollectionsByUserInstitution(user));
           break;
         default:
-          collections.addAll(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId()));
+          collections.addAll(getCollectionsForUser(user));
       }
     } else {
-      collections.addAll(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId()));
+      collections.addAll(getCollectionsForUser(user));
     }
-    return addDatasetsToCollections(collections);
+    return collections;
   }
 
   /**
@@ -80,7 +80,7 @@ public class DarCollectionService {
    * @param user The User
    * @return List<DarCollection>
    */
-  public List<DarCollection> getCollectionsByUserDacIds(User user) {
+  public List<DarCollection> getCollectionsByUserDacs(User user) {
     List<Integer> dacIds = user.getRoles().stream()
         .map(UserRole::getDacId)
         .filter(Objects::nonNull)
@@ -90,7 +90,7 @@ public class DarCollectionService {
         Collections.emptyList() :
         darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
     if (!collectionIds.isEmpty()) {
-      return darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
+      return addDatasetsToCollections(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds));
     }
     return Collections.emptyList();
   }
