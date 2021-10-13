@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -76,7 +77,7 @@ public class ElectionReview {
     }
 
     public void setAssociatedConsent(Consent consent, Election consentElection) {
-        this.associatedConsent = new HashMap<>();
+        this.associatedConsent = new LinkedHashMap<>();
         this.associatedConsent.put("electionId", consentElection != null ? consentElection.getElectionId() : null);
         this.associatedConsent.put("consentId", consent.getConsentId());
         this.associatedConsent.put("name", consent.getName());
