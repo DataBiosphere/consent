@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Date;
+import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DarCollectionReducer;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -12,9 +14,6 @@ import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
-
-import java.util.Date;
-import java.util.List;
 
 public interface DarCollectionDAO {
 
@@ -75,6 +74,14 @@ public interface DarCollectionDAO {
           + " AND consent.consentid = ca.consentid "
           + " AND consent.dac_id IN (<dacIds>) ")
   List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds);
+
+  @SqlQuery(
+      " SELECT distinct c.collection_id "
+          + " FROM dar_collection c"
+          + " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id"
+          + " INNER JOIN dacuser u ON dar.user_id = u.dacuserid"
+          + " WHERE u.institution_id = :institutionId ")
+  List<Integer> findDARCollectionIdsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")

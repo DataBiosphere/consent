@@ -107,7 +107,10 @@ public class DarCollectionService {
       logger.warn("User does not have a valid institution: " + user.getEmail());
       throw new IllegalArgumentException("User does not have a valid institution");
     }
-    // TODO
+    List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByInstitutionId(user.getInstitutionId());
+    if (!collectionIds.isEmpty()) {
+      return addDatasetsToCollections(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds));
+    }
     return Collections.emptyList();
   }
 
