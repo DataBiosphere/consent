@@ -17,7 +17,6 @@ import org.junit.Test;
 
 public class ConsentAuditDAOTest extends DAOTestHelper {
 
-
   @Test
   public void testInsertWorkspaceAudit() {
     ConsentAudit audit = createConsentAudit();
@@ -31,14 +30,10 @@ public class ConsentAuditDAOTest extends DAOTestHelper {
 
   @Test
   public void testBatchInsertWorkspaceAudit() {
-    List<ConsentAudit> audits = List.of(
-        createConsentAudit(),
-        createConsentAudit(),
-        createConsentAudit()
-    );
-    List<String> auditObjectIds = audits.stream()
-        .map(ConsentAudit::getModifiedObjectId)
-        .collect(Collectors.toList());
+    List<ConsentAudit> audits =
+        List.of(createConsentAudit(), createConsentAudit(), createConsentAudit());
+    List<String> auditObjectIds =
+        audits.stream().map(ConsentAudit::getModifiedObjectId).collect(Collectors.toList());
 
     consentAuditDAO.batchInsertWorkspaceAudit(audits);
 
@@ -56,7 +51,6 @@ public class ConsentAuditDAOTest extends DAOTestHelper {
         AuditTable.CONSENT.getValue(),
         AuditActions.CREATE.getValue(),
         user.getDacUserId(),
-        new Date()
-    );
+        new Date());
   }
 }
