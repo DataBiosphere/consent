@@ -2,9 +2,9 @@ package org.broadinstitute.consent.http.enumeration;
 
 public enum AssociationType {
   SAMPLE("sample"),
-  SAMPLESET("sampleSet");
+  SAMPLE_SET("sampleSet");
 
-  private String value;
+  private final String value;
 
   AssociationType(String value) {
     this.value = value;

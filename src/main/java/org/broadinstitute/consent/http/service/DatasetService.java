@@ -128,7 +128,7 @@ public class DatasetService {
                     if (Objects.nonNull(dataset.getDacId())) {
                         h.updateConsentDac(consentId, dataset.getDacId());
                     }
-                    String associationType = AssociationType.SAMPLESET.getValue();
+                    String associationType = AssociationType.SAMPLE_SET.getValue();
                     h.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
                 } catch (Exception e) {
                     h.rollback();
