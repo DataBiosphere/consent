@@ -7,12 +7,14 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
+import javax.ws.rs.client.Client;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
+import org.broadinstitute.consent.http.db.ConsentAuditDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -31,7 +33,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.ConsentAuditDAO;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
@@ -63,8 +64,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-
-import javax.ws.rs.client.Client;
 
 public class ConsentModule extends AbstractModule {
 
@@ -143,6 +142,7 @@ public class ConsentModule extends AbstractModule {
         DAOContainer container = new DAOContainer();
         container.setApprovalExpirationTimeDAO(providesApprovalExpirationTimeDAO());
         container.setAssociationDAO(providesAssociationDAO());
+        container.setConsentAuditDAO(providesConsentAuditDAO());
         container.setConsentDAO(providesConsentDAO());
         container.setCounterDAO(providesCounterDAO());
         container.setDacDAO(providesDacDAO());
@@ -158,7 +158,6 @@ public class ConsentModule extends AbstractModule {
         container.setUserDAO(providesUserDAO());
         container.setUserRoleDAO(providesUserRoleDAO());
         container.setVoteDAO(providesVoteDAO());
-        container.setWorkspaceAuditDAO(providesWorkspaceAuditDAO());
         container.setInstitutionDAO(providesInstitutionDAO());
         return container;
     }
@@ -199,7 +198,7 @@ public class ConsentModule extends AbstractModule {
     AuditService providesAuditService() {
         return new AuditService(
                 providesUserDAO(),
-                providesWorkspaceAuditDAO());
+                providesConsentAuditDAO());
     }
 
     @Provides
@@ -454,7 +453,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    ConsentAuditDAO providesWorkspaceAuditDAO() {
+    ConsentAuditDAO providesConsentAuditDAO() {
         return consentAuditDAO;
     }
 

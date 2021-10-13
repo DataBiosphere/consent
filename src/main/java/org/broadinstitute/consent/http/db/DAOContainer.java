@@ -168,11 +168,11 @@ public class DAOContainer {
     this.voteDAO = voteDAO;
   }
 
-  public ConsentAuditDAO getWorkspaceAuditDAO() {
+  public ConsentAuditDAO getConsentAuditDAO() {
     return consentAuditDAO;
   }
 
-  public void setWorkspaceAuditDAO(ConsentAuditDAO consentAuditDAO) {
+  public void setConsentAuditDAO(ConsentAuditDAO consentAuditDAO) {
     this.consentAuditDAO = consentAuditDAO;
   }
 
