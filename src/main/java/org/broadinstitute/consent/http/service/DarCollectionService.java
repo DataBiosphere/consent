@@ -6,15 +6,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import javax.ws.rs.BadRequestException;
-
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -30,7 +27,6 @@ import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.resources.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,24 +60,10 @@ public class DarCollectionService {
           break;
         case CHAIRPERSON:
         case MEMBER:
-          List<Integer> dacIds = user.getRoles().stream()
-              .map(UserRole::getDacId)
-              .filter(Objects::nonNull)
-              .distinct()
-              .collect(Collectors.toList());
-          List<Integer> collectionIds = dacIds.isEmpty() ?
-            Collections.emptyList() :
-            darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
-          if (!collectionIds.isEmpty()) {
-            collections.addAll(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds));
-          }
+          collections.addAll(getCollectionsByUserDacIds(user));
           break;
         case SIGNINGOFFICIAL:
-          if (Objects.isNull(user.getInstitutionId())) {
-            logger.warn("User does not have a valid institution: " + user.getEmail());
-            throw new BadRequestException("User does not have a valid institution");
-          }
-          collections.addAll(getCollectionsByInstitutionId(user.getInstitutionId()));
+          collections.addAll(getCollectionsByUserInstitution(user));
           break;
         default:
           collections.addAll(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId()));
@@ -92,7 +74,39 @@ public class DarCollectionService {
     return addDatasetsToCollections(collections);
   }
 
-  public List<DarCollection> getCollectionsByInstitutionId(Integer institutionId) {
+  /**
+   * Find all DAR Collections by the user's associated DACs
+   *
+   * @param user The User
+   * @return List<DarCollection>
+   */
+  public List<DarCollection> getCollectionsByUserDacIds(User user) {
+    List<Integer> dacIds = user.getRoles().stream()
+        .map(UserRole::getDacId)
+        .filter(Objects::nonNull)
+        .distinct()
+        .collect(Collectors.toList());
+    List<Integer> collectionIds = dacIds.isEmpty() ?
+        Collections.emptyList() :
+        darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
+    if (!collectionIds.isEmpty()) {
+      return darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
+    }
+    return Collections.emptyList();
+  }
+
+  /**
+   * Find all DAR Collections by the user's associated Institution
+   *
+   * @param user The User
+   * @return List<DarCollection>
+   * @throws IllegalArgumentException If the user does not have a valid institution
+   */
+  public List<DarCollection> getCollectionsByUserInstitution(User user) throws IllegalArgumentException {
+    if (Objects.isNull(user.getInstitutionId())) {
+      logger.warn("User does not have a valid institution: " + user.getEmail());
+      throw new IllegalArgumentException("User does not have a valid institution");
+    }
     // TODO
     return Collections.emptyList();
   }
