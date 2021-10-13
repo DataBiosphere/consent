@@ -116,11 +116,19 @@ public class UserService {
         return user;
     }
 
-    public List<User> getUsersByUserRole(User user, String roleName) {
+    /**
+     * Find users as a specific role, e.g., Admins can see all users, other roles
+     * can only see a subset of users.
+     *
+     * @param user The user making the request
+     * @param roleName The role the user is making the request as
+     * @return List of Users for specified role name
+     */
+    public List<User> getUsersAsRole(User user, String roleName) {
         switch(roleName) {
-            //SigningOfficial console is technically pulling LCs, it's just bringing associated users along for the ride
-            //However LCs can be created for users not yet registered in the system
-            //As such a more specialzed query is needed to produce the proper listing
+            // SigningOfficial console is technically pulling LCs, it's just bringing associated users along for the ride
+            // However LCs can be created for users not yet registered in the system
+            // As such a more specialized query is needed to produce the proper listing
             case Resource.SIGNINGOFFICIAL :
                 Integer institutionId = user.getInstitutionId();
                 if (Objects.nonNull(user.getInstitutionId())) {

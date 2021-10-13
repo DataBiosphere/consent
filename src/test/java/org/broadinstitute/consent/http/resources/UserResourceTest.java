@@ -105,7 +105,7 @@ public class UserResourceTest {
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
     when(libraryCardService.findLibraryCardsByUserId(any()))
-        .thenReturn(createLibraryCards());;
+        .thenReturn(createLibraryCards());
     initResource();
 
     Response response = userResource.getUserById(authUser, 1);
@@ -124,9 +124,9 @@ public class UserResourceTest {
   @Test
   public void testGetUsers_SO() {
     User user = createUserWithRole();
-    user.setRoles(Arrays.asList(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
+    user.setRoles(List.of(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.getUsersByUserRole(user, "SigningOfficial")).thenReturn(Arrays.asList(new User(), new User()));
+    when(userService.getUsersAsRole(user, "SigningOfficial")).thenReturn(Arrays.asList(new User(), new User()));
     initResource();
 
     Response response = userResource.getUsers(authUser, "SigningOfficial");
@@ -146,9 +146,9 @@ public class UserResourceTest {
   @Test
   public void testGetUsers_Admin() {
     User user = createUserWithRole();
-    user.setRoles(Arrays.asList(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
+    user.setRoles(List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.getUsersByUserRole(user, "Admin")).thenReturn(Arrays.asList(new User(), new User()));
+    when(userService.getUsersAsRole(user, "Admin")).thenReturn(Arrays.asList(new User(), new User()));
     initResource();
 
     Response response = userResource.getUsers(authUser, "Admin");
