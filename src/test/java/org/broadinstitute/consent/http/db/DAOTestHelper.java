@@ -76,7 +76,6 @@ public class DAOTestHelper {
     protected static LibraryCardDAO libraryCardDAO;
     protected static DarCollectionDAO darCollectionDAO;
 
-    private static final List<String> createdConsentAuditIds = new ArrayList<>();
     private static final List<Integer> createdDataSetIds = new ArrayList<>();
     private static final List<Integer> createdDacIds = new ArrayList<>();
     private static final List<String> createdConsentIds = new ArrayList<>();
