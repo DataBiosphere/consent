@@ -424,10 +424,6 @@ public class ConsentService {
         return assoc_list;
     }
 
-    public boolean hasWorkspaceAssociation(String workspaceId) {
-        return !Objects.isNull(associationDAO.findAssociationIdByTypeAndObjectId(AssociationType.WORKSPACE.getValue(), workspaceId));
-    }
-
     private Consent updateConsentDates(Consent c) {
         Timestamp updateDate = new Timestamp(new Date().getTime());
         c.setLastUpdate(updateDate);

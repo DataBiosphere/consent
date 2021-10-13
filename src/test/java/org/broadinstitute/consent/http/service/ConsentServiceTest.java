@@ -375,17 +375,6 @@ public class ConsentServiceTest {
     }
 
     @Test
-    public void testHasWorkspaceAssociation() {
-        when(associationDAO.findAssociationIdByTypeAndObjectId(AssociationType.WORKSPACE.getValue(), "test object"))
-                .thenReturn(1);
-        initService();
-
-        Boolean hasWorkspaceAssociation = service.hasWorkspaceAssociation("test object");
-
-        Assert.assertEquals(true, hasWorkspaceAssociation);
-    }
-
-    @Test
     public void testGetByName() {
         when(consentDAO.findConsentByName("test consent"))
                 .thenReturn(this.getTestConsent());

@@ -49,11 +49,6 @@ public class ConsentAssociationResource extends Resource {
     public Response createAssociation(@Auth AuthUser user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("POSTing association to id '%s' with body '%s'", consentId, body.toString());
-            for (ConsentAssociation association : body) {
-                if(association.getAssociationType().equals(AssociationType.WORKSPACE.getValue()) && consentService.hasWorkspaceAssociation(association.getElements().get(0))){
-                    return Response.status(Response.Status.CONFLICT).entity(new Error("Workspace associations can only be created once.", Response.Status.CONFLICT.getStatusCode())).build();
-                }
-            }
             logger().debug(msg);
             User dacUser = userService.findUserByEmail(user.getEmail());
             List<ConsentAssociation> result = consentService.createAssociation(consentId, body, dacUser.getEmail());
@@ -75,11 +70,6 @@ public class ConsentAssociationResource extends Resource {
     public Response updateAssociation(@Auth AuthUser user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("PUTing association to id '%s' with body '%s'", consentId, body.toString());
-            for (ConsentAssociation association : body) {
-                if(association.getAssociationType().equals(AssociationType.WORKSPACE.getValue())){
-                    return Response.status(Response.Status.CONFLICT).entity(new Error("Workspace associations can't be updated.", Response.Status.CONFLICT.getStatusCode())).build();
-                }
-            }
             logger().debug(msg);
             List<ConsentAssociation> result = consentService.updateAssociation(consentId, body, user.getEmail());
             URI assocURI = buildConsentAssociationURI(consentId);
