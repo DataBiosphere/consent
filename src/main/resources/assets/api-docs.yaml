@@ -3773,6 +3773,8 @@ components:
   schemas:
     Collaborator:
       $ref: './schemas/Collaborator.yaml'
+    Consent:
+      $ref: './schemas/Consent.yaml'
     DarCollection:
       $ref: './schemas/DarCollection.yaml'
     DataAccessRequest:
