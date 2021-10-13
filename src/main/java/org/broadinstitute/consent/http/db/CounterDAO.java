@@ -7,7 +7,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
-@SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection", "SqlWithoutWhere"})
 @RegisterRowMapper(CounterMapper.class)
 public interface CounterDAO extends Transactional<CounterDAO> {
 
