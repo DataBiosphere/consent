@@ -1,17 +1,22 @@
 <databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
-    <changeSet author="grushton" id="75.0">
-        <renameTable oldTableName="workspace_audit" newTableName="consent_audit"/>
-        <renameColumn tableName="consent_audit" oldColumnName="workspace_audit_id" newColumnName="id"/>
-        <renameColumn tableName="consent_audit" oldColumnName="modifiedobjectid" newColumnName="modified_object_id"/>
-        <renameColumn tableName="consent_audit" oldColumnName="modifiedtable" newColumnName="modified_table"/>
-        <renameColumn tableName="consent_audit" oldColumnName="changeaction" newColumnName="change_action"/>
-        <renameColumn tableName="consent_audit" oldColumnName="modifiedbyuserid" newColumnName="modified_by_user_id"/>
-        <renameColumn tableName="consent_audit" oldColumnName="modificationdate" newColumnName="modification_date"/>
-    </changeSet>
+  <changeSet author="grushton" id="75.0">
+    <renameTable oldTableName="workspace_audit" newTableName="consent_audit"/>
+    <renameColumn tableName="consent_audit" oldColumnName="workspace_audit_id" newColumnName="id"/>
+    <renameColumn tableName="consent_audit" oldColumnName="modifiedobjectid"
+      newColumnName="modified_object_id"/>
+    <renameColumn tableName="consent_audit" oldColumnName="modifiedtable"
+      newColumnName="modified_table"/>
+    <renameColumn tableName="consent_audit" oldColumnName="changeaction"
+      newColumnName="change_action"/>
+    <renameColumn tableName="consent_audit" oldColumnName="modifiedbyuserid"
+      newColumnName="modified_by_user_id"/>
+    <renameColumn tableName="consent_audit" oldColumnName="modificationdate"
+      newColumnName="modification_date"/>
+  </changeSet>
 
 </databaseChangeLog>
