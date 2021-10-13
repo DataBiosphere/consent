@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -28,9 +27,10 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Path("{auth: (basic/|api/)?}consent/{id}/association")
+@Path("{auth: (basic/|api/)?}consent/{consentId}/association")
 public class ConsentAssociationResource extends Resource {
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ConsentService consentService;
     private final UserService userService;
 
@@ -44,15 +44,15 @@ public class ConsentAssociationResource extends Resource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({RESEARCHER, DATAOWNER, ADMIN})
-    public Response createAssociation(@Auth AuthUser user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
+    public Response createAssociation(@Auth AuthUser user, @PathParam("consentId") String consentId, List<ConsentAssociation> body) {
         try {
             String msg = String.format("POSTing association to id '%s' with body '%s'", consentId, body.toString());
-            logger().debug(msg);
+            logger.debug(msg);
             User dacUser = userService.findUserByEmail(user.getEmail());
             List<ConsentAssociation> result = consentService.createAssociation(consentId, body, dacUser.getEmail());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
-        }catch (Exception e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -65,14 +65,14 @@ public class ConsentAssociationResource extends Resource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({RESEARCHER, DATAOWNER, ADMIN})
-    public Response updateAssociation(@Auth AuthUser user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
+    public Response updateAssociation(@Auth AuthUser user, @PathParam("consentId") String consentId, List<ConsentAssociation> body) {
         try {
             String msg = String.format("PUTing association to id '%s' with body '%s'", consentId, body.toString());
-            logger().debug(msg);
+            logger.debug(msg);
             List<ConsentAssociation> result = consentService.updateAssociation(consentId, body, user.getEmail());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
-        }catch (Exception e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -80,10 +80,10 @@ public class ConsentAssociationResource extends Resource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @PermitAll
-    public Response getAssociation(@PathParam("id") String consentId, @QueryParam("associationType") String atype, @QueryParam("id") String objectId) {
+    public Response getAssociation(@PathParam("consentId") String consentId, @QueryParam("associationType") String atype, @QueryParam("objectId") String objectId) {
         try {
             String msg = String.format("GETing association for id '%s' with associationType='%s' and id='%s'", consentId, (atype == null ? "<null>" : atype), (objectId == null ? "<null>" : objectId));
-            logger().debug(msg);
+            logger.debug(msg);
             if (atype == null && objectId != null)
                 return Response.status(Response.Status.BAD_REQUEST).build();
             List<ConsentAssociation> result = consentService.getAssociation(consentId, atype, objectId);
@@ -97,22 +97,17 @@ public class ConsentAssociationResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(ADMIN)
-    public Response deleteAssociation(@PathParam("id") String consentId, @QueryParam("associationType") String atype, @QueryParam("id") String objectId) {
+    public Response deleteAssociation(@PathParam("consentId") String consentId, @QueryParam("associationType") String atype, @QueryParam("objectId") String objectId) {
         try {
             String msg = String.format("DELETEing association for id '%s' with associationType='%s' and id='%s'", consentId, (atype == null ? "<null>" : atype), (objectId == null ? "<null>" : objectId));
-            logger().debug(msg);
+            logger.debug(msg);
             if (atype == null && objectId != null)
                 return Response.status(Response.Status.BAD_REQUEST).build();
             List<ConsentAssociation> result = consentService.deleteAssociation(consentId, atype, objectId);
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
-        }catch (Exception e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
-    }
-
-    @Override
-    protected Logger logger() {
-        return LoggerFactory.getLogger(this.getClass());
     }
 }

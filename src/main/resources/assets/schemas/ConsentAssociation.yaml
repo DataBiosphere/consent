@@ -1,0 +1,10 @@
+type: object
+properties:
+  associationType:
+    type: string
+    description: Defines the type of the association. Valid values are 'sample' or 'sampleSet'
+  elements:
+    type: array
+    items:
+      type: string
+    description: Elements, in a hash set, to avoid duplicates.
