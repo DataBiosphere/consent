@@ -64,6 +64,18 @@ public interface DarCollectionDAO {
           @Define("sortField") String sortField,
           @Define("sortOrder") String sortOrder);
 
+  @SqlQuery(
+      " SELECT distinct c.collection_id "
+          + " FROM dar_collection c, "
+          + "     (SELECT distinct dar.collection_id, jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasetIds')::integer AS dataset_id from data_access_request dar) AS dar_datasets, "
+          + "     consentassociations ca,"
+          + "     consents consent "
+          + " WHERE c.collection_id = dar_datasets.collection_id "
+          + " AND dar_datasets.dataset_id = ca.datasetid "
+          + " AND consent.consentid = ca.consentid "
+          + " AND consent.dac_id IN (<dacIds>) ")
+  List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds);
+
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
@@ -76,7 +88,7 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-    getCollectionAndDars 
+    getCollectionAndDars
     + " WHERE c.collection_id in (<collectionIds>)"
     +  " ORDER BY <sortField> <sortOrder>")
   List<DarCollection> findDARCollectionByCollectionIdsWithOrder(

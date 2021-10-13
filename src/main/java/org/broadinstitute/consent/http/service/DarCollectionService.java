@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -19,6 +20,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -27,6 +29,8 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.resources.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +52,49 @@ public class DarCollectionService {
 
   public List<DarCollection> getAllCollections() {
     return addDatasetsToCollections(darCollectionDAO.findAllDARCollections());
+  }
+
+  public List<DarCollection> getCollectionsForUserByRoleName(User user, String roleName) {
+    List<DarCollection> collections = new ArrayList<>();
+    UserRoles roles = UserRoles.getUserRoleFromName(roleName);
+    if (Objects.nonNull(roles)) {
+      switch (roles) {
+        case ADMIN:
+          darCollectionDAO.findAllDARCollections();
+          break;
+        case CHAIRPERSON:
+        case MEMBER:
+          List<Integer> dacIds = user.getRoles().stream()
+              .map(UserRole::getDacId)
+              .filter(Objects::nonNull)
+              .distinct()
+              .collect(Collectors.toList());
+          List<Integer> collectionIds = dacIds.isEmpty() ?
+            Collections.emptyList() :
+            darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
+          if (!collectionIds.isEmpty()) {
+            collections.addAll(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds));
+          }
+          break;
+        case SIGNINGOFFICIAL:
+          if (Objects.isNull(user.getInstitutionId())) {
+            logger.warn("User does not have a valid institution: " + user.getEmail());
+            throw new BadRequestException("User does not have a valid institution");
+          }
+          collections.addAll(getCollectionsByInstitutionId(user.getInstitutionId()));
+          break;
+        default:
+          collections.addAll(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId()));
+      }
+    } else {
+      collections.addAll(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId()));
+    }
+    return addDatasetsToCollections(collections);
+  }
+
+  public List<DarCollection> getCollectionsByInstitutionId(Integer institutionId) {
+    // TODO
+    return Collections.emptyList();
   }
 
   public List<DarCollection> getCollectionsForUser(User user) {
@@ -169,19 +216,19 @@ public class DarCollectionService {
           .setPaginationTokens(Collections.emptyList());
   }
   // If an election exists for a DAR within the collection, that DAR cannot be cancelled by the researcher
-  // Since it's now under DAC review, it's up to the DAC Chair (or admin) to ultimately decline or cancel via elections 
+  // Since it's now under DAC review, it's up to the DAC Chair (or admin) to ultimately decline or cancel via elections
   public DarCollection cancelDarCollection(DarCollection collection, User user) {
     List<DataAccessRequest> dars = collection.getDars();
     List<String> referenceIds = dars.stream()
       .map(d -> d.getReferenceId())
       .collect(Collectors.toList());
-    
-    
+
+
     if(referenceIds.isEmpty()) {
       logger.warn("DAR Collection does not have any associated DAR ids");
       return collection;
     }
-    
+
     List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds, ElectionType.DATA_ACCESS.getValue());
     if(!elections.isEmpty()) {
       throw new BadRequestException("Elections present on DARs; cannot cancel collection");
@@ -193,7 +240,7 @@ public class DarCollectionService {
       })
       .map(d -> d.getReferenceId())
       .collect(Collectors.toList());
-    
+
     //if no dars are valid, simply return the collection (since researcher cancelled DARs should be skipped over)
     if(!nonCanceledIds.isEmpty()) {
       dataAccessRequestDAO.cancelByReferenceIds(nonCanceledIds);

@@ -1,13 +1,13 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-import java.nio.charset.StandardCharsets;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -20,12 +20,11 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import com.google.gson.Gson;
-
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.PaginationResponse;
+import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -48,6 +47,21 @@ public class DarCollectionResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       List<DarCollection> collections = darCollectionService.getCollectionsForUser(user);
+      return Response.ok().entity(collections).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("role/{roleName}")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL})
+  public Response getCollectionsForUserByRole(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateUserHasRole(user, roleName);
+      List<DarCollection> collections = darCollectionService.getCollectionsForUserByRoleName(user, roleName);
       return Response.ok().entity(collections).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -179,6 +193,13 @@ public class DarCollectionResource extends Resource {
       return new Gson().fromJson(json, PaginationToken.class);
     } catch (Exception e) {
       throw new BadRequestException("Invalid pagination token");
+    }
+  }
+
+  private void validateUserHasRole(User user, String roleName) {
+    UserRoles thisRole = UserRoles.getUserRoleFromName(roleName);
+    if (Objects.isNull(thisRole) || !user.hasUserRole(thisRole)) {
+      throw new BadRequestException("Invalid role selection: " + roleName);
     }
   }
 }
