@@ -151,7 +151,9 @@ public class DAOTestHelper {
             approvalExpirationTimeDAO.deleteApprovalExpirationTime(aet.getId());
         }
         // Order is important for FK constraints
-        consentAuditDAO.deleteByObjectIds(createdConsentIds);
+        if (!createdConsentIds.isEmpty()) {
+            consentAuditDAO.deleteByObjectIds(createdConsentIds);
+        }
         createdConsentIds.forEach(id -> {
             matchDAO.deleteMatchesByConsentId(id);
             voteDAO.deleteVotes(id);
