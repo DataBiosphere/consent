@@ -577,46 +577,7 @@ paths:
         200:
           description: 'Returns an integer corresponding to the amount of unreviewed DULs'
   /api/consent:
-    get:
-      summary: Find Consent by name
-      description: Returns the Consent identified by the name.
-      parameters:
-        - name: name
-          in: query
-          description: Consent Name
-          required: true
-          schema:
-            type: string
-      tags:
-        - Consent
-      responses:
-        200:
-          description: Returns the requested consent.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Consent'
-        400:
-          description: The consent associated with the provided name has not been approved.
-        404:
-          description: The consent associated with the provided name could not be found.
-    post:
-      summary: Create new Consent
-      description: Creates the consent sent with the request.
-      requestBody:
-        description: Object that represents a Consent
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Consent'
-      tags:
-        - Consent
-      responses:
-        201:
-          description: Returns the URL to find the created consent.
-        500:
-          description: Internal Server Error.
+    $ref: './paths/consent.yaml'
   /api/consent/{id}:
     get:
       summary: Get Consent by ID
@@ -636,7 +597,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Consent'
+                $ref: './schemas/Consent.yaml'
         404:
           description: The consent associated with the ID couldn't be found.
     put:
@@ -654,7 +615,7 @@ paths:
           description: Object that represents the consent to be updated
           required: true
           schema:
-            $ref: '#/components/schemas/Consent'
+            $ref: './schemas/Consent.yaml'
       tags:
         - Consent
       responses:
@@ -663,7 +624,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Consent'
+                $ref: './schemas/Consent.yaml'
         400:
           description:
             Consent updates are only allowed when
@@ -1654,7 +1615,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Consent'
+                $ref: './schemas/Consent.yaml'
         404:
           description: The requested couldn't be found or the DAR doesn't exist.
   /api/dar/manage/v2:
@@ -2001,7 +1962,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Consent'
+                $ref: './schemas/Consent.yaml'
         404:
           description: Could not find consent with the specified Id
     put:
@@ -2039,7 +2000,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Consent'
+                $ref: './schemas/Consent.yaml'
         404:
           description: Could not find consent with the specified Id
     delete:
@@ -2060,7 +2021,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Consent'
+                $ref: './schemas/Consent.yaml'
         404:
           description: Could not find consent with the specified Id
   /api/dataRequest/{requestId}/vote:
@@ -3894,64 +3855,6 @@ components:
           items:
             type: string
           description: Elements, in a hash set, to avoid duplicates.
-    Consent:
-      type: object
-      properties:
-        consentId:
-          type: string
-          description: The ID of the entity.
-        requiresManualReview:
-          type: boolean
-          description: Describes if this consent has to be reviewed manually.
-        dataUseLetter:
-          type: string
-          description: The URL of the saved file.
-        useRestriction:
-          type: string
-          description: The UseRestriction of this consent. Used to match against another entities.
-        dataUse:
-          type: string
-          description: The Data Use question/answer set for this consent.
-        name:
-          type: string
-          description: Name to identify the consent.
-        dulName:
-          type: string
-          description: Name that identifies the Data Use Letter file.
-        createDate:
-          type: string
-          format: date
-          description: Creation Date.
-        updateDate:
-          type: string
-          format: date
-          description: Date of the last update.
-        sortDate:
-          type: string
-          format: date
-          description: |
-            DEPRECATED: Use updateDate
-            The lastest modification date. This has historically been used to
-            determine sort order in addition to update date.
-        translatedUseRestriction:
-          type: string
-          format: date
-          description: The translated use restriction of the consent.
-        lastElectionStatus:
-          type: string
-          description: Displays the associated election if this exists, else is null.
-        lastElectionArchived:
-          type: boolean
-          description: Flag indicating if the last election associated is archived or not. Null if election doesn't exists
-        groupName:
-          type: string
-          description: The Group Name provided by ORSP
-        updateStatus:
-          type: boolean
-          description: Indicates if a consent has been updated from orsp
-        dacId:
-          type: integer
-          description: The Data Access Committee ID
     Vote:
       type: object
       properties:
@@ -4338,7 +4241,7 @@ components:
         election:
           $ref: '#/components/schemas/Election'
         consent:
-          $ref: '#/components/schemas/Consent'
+          $ref: './schemas/Consent.yaml'
         voteAgreement:
           $ref: '#/components/schemas/Vote'
         finalVote:
