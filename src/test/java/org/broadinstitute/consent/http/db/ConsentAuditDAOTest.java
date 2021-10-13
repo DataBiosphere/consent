@@ -7,7 +7,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.broadinstitute.consent.http.enumeration.Actions;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAudit;
@@ -54,7 +54,7 @@ public class ConsentAuditDAOTest extends DAOTestHelper {
     return new ConsentAudit(
         consent.getConsentId(),
         AuditTable.CONSENT.getValue(),
-        Actions.CREATE.getValue(),
+        AuditActions.CREATE.getValue(),
         user.getDacUserId(),
         new Date()
     );

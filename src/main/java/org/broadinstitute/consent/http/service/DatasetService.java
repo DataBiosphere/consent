@@ -4,7 +4,7 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.enumeration.Actions;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -336,7 +336,7 @@ public class DatasetService {
         if (Objects.nonNull(dataset)) {
             // Some legacy dataset names can be null
             String dsAuditName = Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
-            DataSetAudit dsAudit = new DataSetAudit(datasetId, dataset.getObjectId(), dsAuditName, new Date(), dataset.getActive(), userId, Actions.DELETE.getValue().toUpperCase());
+            DataSetAudit dsAudit = new DataSetAudit(datasetId, dataset.getObjectId(), dsAuditName, new Date(), dataset.getActive(), userId, AuditActions.DELETE.getValue().toUpperCase());
             try {
                 datasetDAO.useTransaction(h -> {
                     try {
