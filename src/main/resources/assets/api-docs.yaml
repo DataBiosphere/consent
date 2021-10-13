@@ -3580,6 +3580,8 @@ components:
   schemas:
     Collaborator:
       $ref: './schemas/Collaborator.yaml'
+    ConsentAssociation:
+      $ref: './schemas/ConsentAssociation.yaml'
     DarCollection:
       $ref: './schemas/DarCollection.yaml'
     DataAccessRequest:
