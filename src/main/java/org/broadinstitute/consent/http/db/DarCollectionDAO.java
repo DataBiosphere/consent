@@ -67,7 +67,7 @@ public interface DarCollectionDAO {
   @SqlQuery(
       " SELECT distinct c.collection_id "
           + " FROM dar_collection c, "
-          + "     (SELECT distinct dar.collection_id, jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasetIds')::integer AS dataset_id from data_access_request dar) AS dar_datasets, "
+          + "     (SELECT distinct dar.collection_id, jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasetIds')::integer AS dataset_id FROM data_access_request dar) AS dar_datasets, "
           + "     consentassociations ca,"
           + "     consents consent "
           + " WHERE c.collection_id = dar_datasets.collection_id "
