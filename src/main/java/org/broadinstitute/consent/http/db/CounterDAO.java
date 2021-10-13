@@ -23,6 +23,7 @@ public interface CounterDAO extends Transactional<CounterDAO> {
           + " SELECT MAX(count) FROM m WHERE name = :name ")
   Integer incrementCountByName(@Bind("name") String name);
 
+  @SuppressWarnings("SqlWithoutWhere")
   @SqlUpdate("DELETE FROM counter")
   void deleteAll();
 }
