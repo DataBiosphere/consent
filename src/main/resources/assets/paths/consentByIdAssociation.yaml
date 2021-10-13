@@ -14,6 +14,7 @@ get:
       required: true
       schema:
         type: string
+        enum: [sample, sampleSet]
     - name: associationId
       in: query
       description: Optional ID of the requested association
@@ -42,7 +43,17 @@ post:
   requestBody:
     description: Required JSON payload representing new Consent Associations
     required: true
-    example: [{}]
+    example: |
+    [
+      {
+        "associationType": "sample",
+        "elements": ["SAMPLE-1234", "SAMPLE-5678"]
+      },
+      {
+        "associationType": "sampleSet",
+        "elements": ["SAMPLE_SET-1234", "SAMPLE_SET-5678"]
+      }
+    ]
     content:
       application/json:
         schema:
@@ -76,6 +87,17 @@ put:
   requestBody:
     description: Required JSON payload representing updated Consent Association
     required: true
+    example: |
+    [
+      {
+        "associationType": "sample",
+        "elements": ["SAMPLE-1234", "SAMPLE-5678"]
+      },
+      {
+        "associationType": "sampleSet",
+        "elements": ["SAMPLE_SET-1234", "SAMPLE_SET-5678"]
+      }
+    ]
     content:
       application/json:
         schema:
