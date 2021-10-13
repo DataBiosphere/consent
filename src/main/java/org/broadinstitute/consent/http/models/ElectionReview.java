@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.bson.Document;
-
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ElectionReview {
 
@@ -27,7 +27,7 @@ public class ElectionReview {
     private Integer rpElectionId;
 
     @JsonProperty
-    private Document associatedConsent;
+    private Map<String, Object> associatedConsent;
 
     public ElectionReview(){}
 
@@ -71,12 +71,12 @@ public class ElectionReview {
         this.finalVote = finalVote;
     }
 
-    public Document getAssociatedConsent() {
+    public Map<String, Object> getAssociatedConsent() {
         return associatedConsent;
     }
 
     public void setAssociatedConsent(Consent consent, Election consentElection) {
-        this.associatedConsent = new Document();
+        this.associatedConsent = new HashMap<>();
         this.associatedConsent.put("electionId", consentElection != null ? consentElection.getElectionId() : null);
         this.associatedConsent.put("consentId", consent.getConsentId());
         this.associatedConsent.put("name", consent.getName());
