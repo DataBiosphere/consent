@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.gson.Gson;
 import java.net.URI;
@@ -23,17 +24,20 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 public class DatasetResourceTest {
+
+    @Mock
+    private ConsentService consentService;
 
     @Mock
     private DataAccessRequestService darService;
@@ -63,11 +67,11 @@ public class DatasetResourceTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     private void initResource() {
-        resource = new DatasetResource(datasetService, userService, darService);
+        resource = new DatasetResource(consentService, datasetService, userService, darService);
     }
 
     @Test
@@ -138,6 +142,7 @@ public class DatasetResourceTest {
         when(googleUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
         when(dacUser.getDacUserId()).thenReturn(1);
+        when(dacUser.hasUserRole(any())).thenReturn(true);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
@@ -158,6 +163,7 @@ public class DatasetResourceTest {
         when(googleUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
         when(dacUser.getDacUserId()).thenReturn(1);
+        when(dacUser.hasUserRole(any())).thenReturn(true);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();

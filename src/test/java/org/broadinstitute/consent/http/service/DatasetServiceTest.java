@@ -412,18 +412,6 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void testGetAllActiveDatasets() {
-        List<DatasetDTO> dtos = getDatasetDTOs();
-        Set<DatasetDTO> setOfDtos = new HashSet<>(dtos);
-        when(datasetDAO.findActiveDatasets()).thenReturn(setOfDtos);
-        initService();
-
-        Set<DatasetDTO> result = datasetService.getAllActiveDatasets();
-        assertNotNull(result);
-        assertEquals(result.size(), dtos.size());
-    }
-
-    @Test
     public void testDescribeDatasets() {
         List<DatasetDTO> dtos = getDatasetDTOs();
         Set<DatasetDTO> setOfDtos = new HashSet<>(dtos);
@@ -436,7 +424,7 @@ public class DatasetServiceTest {
         when(userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), 2)).thenReturn(2);
         when(datasetDAO.findAllDatasets()).thenReturn(setOfDtos);
         when(datasetDAO.findActiveDatasets()).thenReturn(emptyActiveDtoSet);
-        when(datasetDAO.findDatasetsByUser(2)).thenReturn(singleDtoSet);
+        when(datasetDAO.findDatasetsByUserId(2)).thenReturn(singleDtoSet);
         initService();
 
         Set<DatasetDTO> memberResult = datasetService.describeDatasets(0);

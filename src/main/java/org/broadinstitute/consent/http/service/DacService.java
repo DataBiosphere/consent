@@ -258,7 +258,7 @@ public class DacService {
         return user != null;
     }
 
-    private List<Integer> getDacIdsForUser(AuthUser authUser) {
+    public List<Integer> getDacIdsForUser(AuthUser authUser) {
         return dacDAO.findDacsForEmail(authUser.getEmail())
                 .stream()
                 .filter(Objects::nonNull)

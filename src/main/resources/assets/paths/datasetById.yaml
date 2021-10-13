@@ -1,0 +1,72 @@
+get:
+  summary: Get Dataset by Id
+  description: Finds Dataset and DatasetProperties of the Dataset specified by id.
+  parameters:
+    - name: id
+      in: path
+      description: ID of the Dataset
+      required: true
+      schema:
+        type: integer
+  tags:
+    - Datasets
+  responses:
+    200:
+      description: The Dataset with properties
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dataset.yaml'
+    404:
+      description: Not Found
+    500:
+      description: Server error
+delete:
+  summary: Delete Dataset
+  description: Deletes Dataset and DatasetProperties of the Dataset specified by id.
+  parameters:
+    - name: id
+      in: path
+      description: ID of the Dataset
+      required: true
+      schema:
+        type: integer
+  tags:
+    - Datasets
+  responses:
+    200:
+      description: The Dataset was deleted.
+    404:
+      description: Not Found
+    500:
+      description: Server error.
+put:
+  summary: Updates the Dataset from JSON
+  description: Updates the Dataset from JSON
+  parameters:
+    - name: datasetId
+      in: path
+      description: ID of the Dataset
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    description: Dataset with properties
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/Dataset.yaml'
+  tags:
+    - Datasets
+  responses:
+    200:
+      description: Successfully updated Dataset
+    204:
+      description: Not modified
+    400:
+      description: Bad Request (invalid input)
+    404:
+      description: Not Found
+    500:
+      description: Internal Error

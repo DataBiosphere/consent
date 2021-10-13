@@ -1,0 +1,22 @@
+delete:
+  summary: Disable Dataset
+  description: Updates the Active status of the Dataset specified by id
+  parameters:
+    - name: id
+      in: path
+      description: the Id of the Dataset to Update.
+      required: true
+      schema:
+        type: string
+    - name: active
+      in: path
+      required: true
+      schema:
+        type: boolean
+  tags:
+    - Datasets
+  responses:
+    200:
+      description: Successful update
+    500:
+      description: Server error.

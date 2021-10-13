@@ -357,7 +357,7 @@ public class DatasetService {
         }
     }
 
-    public Set<DatasetDTO> describeDatasets(Integer dacUserId) {
+    public Set<DatasetDTO> describeDatasets(Integer userId) {
         List<DataAccessRequestData> darDatas = dataAccessRequestDAO.findAllDataAccessRequestDatas();
         List<Integer> datasetIdsInUse = darDatas
                 .stream()
@@ -366,23 +366,18 @@ public class DatasetService {
                 .filter(l -> !l.isEmpty())
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
-        Set<DatasetDTO> datasets;
-        if (userHasRole(UserRoles.ADMIN.getRoleName(), dacUserId)) {
-            datasets = datasetDAO.findAllDatasets();
-        }
-        else {
-            datasets = getAllActiveDatasets();
-            if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacUserId)) {
-                Set<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetsByUser(dacUserId);
-                Set<DatasetDTO> moreDatasets = new HashSet<>();
-                moreDatasets.addAll(datasets);
-                moreDatasets.addAll(chairSpecificDatasets);
-                return moreDatasets;
+        HashSet<DatasetDTO> datasets = new HashSet<>();
+        if (userHasRole(UserRoles.ADMIN.getRoleName(), userId)) {
+            datasets.addAll(datasetDAO.findAllDatasets());
+        } else {
+            datasets.addAll(datasetDAO.findActiveDatasets());
+            if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), userId)) {
+                Collection<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetsByUserId(userId);
+                datasets.addAll(chairSpecificDatasets);
             }
         }
-        return datasets.stream()
-                .peek(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())))
-                .collect(Collectors.toSet());
+        datasets.forEach(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())));
+        return datasets;
     }
 
     public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
@@ -422,10 +417,6 @@ public class DatasetService {
             .anyMatch(p -> {
                 return p.getPropertyValue().toLowerCase().contains(term);
             });
-    }
-
-    public Set<DatasetDTO> getAllActiveDatasets() {
-        return datasetDAO.findActiveDatasets();
     }
 
     private boolean userHasRole(String roleName, Integer dacUserId) {
