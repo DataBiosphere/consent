@@ -240,7 +240,6 @@ public class DarCollectionService {
       .map(d -> d.getReferenceId())
       .collect(Collectors.toList());
 
-
     if(referenceIds.isEmpty()) {
       logger.warn("DAR Collection does not have any associated DAR ids");
       return collection;
