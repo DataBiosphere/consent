@@ -200,7 +200,8 @@ abstract public class Resource {
      * for determining when a user hits an endpoint that is permitted to multiple
      * different roles, but is requested a role specific view of a data entity.
      * In these cases, we need to make sure that the role name provided is a real
-     * one and that the user actually has that role.
+     * one and that the user actually has that role to prevent escalated privilege
+     * violations.
      *
      * @param user The User
      * @param roleName The UserRole name
