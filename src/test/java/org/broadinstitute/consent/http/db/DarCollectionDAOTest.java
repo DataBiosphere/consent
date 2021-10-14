@@ -77,7 +77,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     DataSet dataset = createDataset();
     DarCollection c = createDarCollection();
     DataAccessRequest dar = c.getDars().get(0);
-    if ( Objects.isNull(dar)) {
+    if (Objects.isNull(dar)) {
       fail("DAR was not created in collection");
     }
     dar.getData().setDatasetIds(List.of(dataset.getDataSetId()));
@@ -96,7 +96,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     // Set up a DAR Collection with a DAR, User, and Institution
     DarCollection c = createDarCollection();
     DataAccessRequest dar = c.getDars().get(0);
-    if ( Objects.isNull(dar)) {
+    if (Objects.isNull(dar)) {
       fail("DAR was not created in collection");
     }
     User user = userDAO.findUserById(dar.getUserId());
