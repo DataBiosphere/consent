@@ -53,7 +53,7 @@ public class DarCollectionService {
   public List<DarCollection> getCollectionsForUserByRoleName(User user, String roleName) {
     List<DarCollection> collections = new ArrayList<>();
     UserRoles selectedRole = UserRoles.getUserRoleFromName(roleName);
-    if (Objects.nonNull(selectedRole)) {
+    if (Objects.nonNull(selectedRole) && user.hasUserRole(selectedRole)) {
       switch (selectedRole) {
         case ADMIN:
           collections.addAll(getAllCollections());

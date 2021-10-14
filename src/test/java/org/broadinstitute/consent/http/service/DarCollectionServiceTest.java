@@ -111,6 +111,18 @@ public class DarCollectionServiceTest {
     assertEquals(1, collections.size());
   }
 
+  @Test
+  public void testGetCollectionsForUserByRoleName_NULL() {
+    User user = new User();
+    user.setDacUserId(1);
+    DarCollection collection = new DarCollection();
+    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId())).thenReturn(List.of(collection));
+    initService();
+
+    List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, null);
+    assertEquals(1, collections.size());
+  }
+
   // TODO:
   // Tests for getCollectionsByUserDacs
   // Tests for getCollectionsByUserInstitution
