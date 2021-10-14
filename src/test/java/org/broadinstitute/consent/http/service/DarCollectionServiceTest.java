@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -34,6 +35,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -53,6 +55,23 @@ public class DarCollectionServiceTest {
   public void setUp() {
     openMocks(this);
   }
+
+  @Test
+  public void testGetCollectionsForUserByRoleName() {
+    User user = new User();
+    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    DarCollection collection = new DarCollection();
+    when(darCollectionDAO.findAllDARCollections()).thenReturn(List.of(collection));
+    initService();
+
+    List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.ADMIN.getRoleName());
+    assertEquals(1, collections.size());
+  }
+
+  // TODO:
+  // Tests for each role in ^^^
+  // Tests for getCollectionsByUserDacs
+  // Tests for getCollectionsByUserInstitution
 
   @Test
   public void testGetCollectionsWithFiltersByPage() {
@@ -168,7 +187,7 @@ public class DarCollectionServiceTest {
   }
 
   @Test
-  public void testCancelDarCollection_noElections() { 
+  public void testCancelDarCollection_noElections() {
     Set<DataSet> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
     collection.getDars().forEach(d -> {
