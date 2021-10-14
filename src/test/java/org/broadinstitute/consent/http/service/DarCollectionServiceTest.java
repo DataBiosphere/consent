@@ -84,8 +84,34 @@ public class DarCollectionServiceTest {
     assertEquals(1, collections.size());
   }
 
+  @Test
+  public void testGetCollectionsForUserByRoleName_SIGNING_OFFICIAL() {
+    User user = new User();
+    user.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    user.setInstitutionId(1);
+    when(darCollectionDAO.findDARCollectionIdsByInstitutionId(1)).thenReturn(List.of(1));
+    DarCollection collection = new DarCollection();
+    when(darCollectionDAO.findDARCollectionByCollectionIds(List.of(1))).thenReturn(List.of(collection));
+    initService();
+
+    List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.SIGNINGOFFICIAL.getRoleName());
+    assertEquals(1, collections.size());
+  }
+
+  @Test
+  public void testGetCollectionsForUserByRoleName_DEFAULT() {
+    User user = new User();
+    user.setDacUserId(1);
+    user.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    DarCollection collection = new DarCollection();
+    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId())).thenReturn(List.of(collection));
+    initService();
+
+    List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.RESEARCHER.getRoleName());
+    assertEquals(1, collections.size());
+  }
+
   // TODO:
-  // Tests for each role in ^^^
   // Tests for getCollectionsByUserDacs
   // Tests for getCollectionsByUserInstitution
 
