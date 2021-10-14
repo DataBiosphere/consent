@@ -60,7 +60,7 @@ public class DarCollectionResource extends Resource {
   public Response getCollectionsForUserByRole(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      validateUserHasRole(user, roleName);
+      validateUserHasRoleName(user, roleName);
       List<DarCollection> collections = darCollectionService.getCollectionsForUserByRoleName(user, roleName);
       return Response.ok().entity(collections).build();
     } catch (Exception e) {
@@ -193,13 +193,6 @@ public class DarCollectionResource extends Resource {
       return new Gson().fromJson(json, PaginationToken.class);
     } catch (Exception e) {
       throw new BadRequestException("Invalid pagination token");
-    }
-  }
-
-  private void validateUserHasRole(User user, String roleName) {
-    UserRoles thisRole = UserRoles.getUserRoleFromName(roleName);
-    if (Objects.isNull(thisRole) || !user.hasUserRole(thisRole)) {
-      throw new BadRequestException("Invalid role selection: " + roleName);
     }
   }
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import java.util.Objects;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -191,6 +192,23 @@ abstract public class Resource {
                 anyMatch(userRole -> authedRoleIds.contains(userRole.getRoleId()));
         if (!authedUserHasRole && !authedUser.getDacUserId().equals(userId)) {
             throw new ForbiddenException("User does not have permission");
+        }
+    }
+
+    /**
+     * Validate that the user has the actual role name provided. This is useful
+     * for determining when a user hits an endpoint that is permitted to multiple
+     * different roles, but is requested a role specific view of a data entity.
+     * In these cases, we need to make sure that the role name provided is a real
+     * one and that the user actually has that role.
+     *
+     * @param user The User
+     * @param roleName The UserRole name
+     */
+    void validateUserHasRoleName(User user, String roleName) {
+        UserRoles thisRole = UserRoles.getUserRoleFromName(roleName);
+        if (Objects.isNull(thisRole) || !user.hasUserRole(thisRole)) {
+            throw new BadRequestException("Invalid role selection: " + roleName);
         }
     }
 
