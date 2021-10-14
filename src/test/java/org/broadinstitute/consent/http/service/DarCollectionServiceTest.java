@@ -57,7 +57,7 @@ public class DarCollectionServiceTest {
   }
 
   @Test
-  public void testGetCollectionsForUserByRoleName() {
+  public void testGetCollectionsForUserByRoleName_ADMIN() {
     User user = new User();
     user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
     DarCollection collection = new DarCollection();
@@ -65,6 +65,22 @@ public class DarCollectionServiceTest {
     initService();
 
     List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.ADMIN.getRoleName());
+    assertEquals(1, collections.size());
+  }
+
+  @Test
+  public void testGetCollectionsForUserByRoleName_CHAIR_MEMBER() {
+    User user = new User();
+    user.addRole(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
+    user.addRole(new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName()));
+    user.getRoles().get(0).setDacId(1);
+    user.getRoles().get(1).setDacId(1);
+    when(darCollectionDAO.findDARCollectionIdsByDacIds(List.of(1))).thenReturn(List.of(1));
+    DarCollection collection = new DarCollection();
+    when(darCollectionDAO.findDARCollectionByCollectionIds(List.of(1))).thenReturn(List.of(collection));
+    initService();
+
+    List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.CHAIRPERSON.getRoleName());
     assertEquals(1, collections.size());
   }
 
