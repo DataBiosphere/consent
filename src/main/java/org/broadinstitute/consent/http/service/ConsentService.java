@@ -23,7 +23,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.Actions;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -133,7 +133,7 @@ public class ConsentService {
             try {
                 consentDAO.deleteAllAssociationsForType(consentId, association.getAssociationType());
                 List<String> generatedIds = updateAssociations(consentId, association.getAssociationType(), association.getElements());
-                auditService.saveAssociationAuditList(generatedIds, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.CREATE.getValue(), createdByUserEmail);
+                auditService.saveAssociationAuditList(generatedIds, AuditTable.CONSENT_ASSOCIATIONS.getValue(), AuditActions.CREATE.getValue(), createdByUserEmail);
             } catch (Exception e) {
                 throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");
             }
@@ -185,7 +185,7 @@ public class ConsentService {
                 if (new_ids.size() > 0) {
                     processAssociation(new_ids);
                     List<String> ids = updateAssociations(consentId, association.getAssociationType(), new_ids);
-                    auditService.saveAssociationAuditList(ids, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.REPLACE.getValue(), modifiedByUserEmail);
+                    auditService.saveAssociationAuditList(ids, AuditTable.CONSENT_ASSOCIATIONS.getValue(), AuditActions.REPLACE.getValue(), modifiedByUserEmail);
                 }
             } catch (Exception e) {
                 throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");

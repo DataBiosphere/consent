@@ -5,42 +5,42 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
-import org.broadinstitute.consent.http.models.WorkspaceAudit;
+import org.broadinstitute.consent.http.db.ConsentAuditDAO;
+import org.broadinstitute.consent.http.models.ConsentAudit;
 
 public class AuditService {
 
     private final UserDAO userDAO;
-    private final WorkspaceAuditDAO workspaceAuditDAO;
+    private final ConsentAuditDAO consentAuditDAO;
 
     @Inject
-    public AuditService(UserDAO userDAO, WorkspaceAuditDAO dao) {
+    public AuditService(UserDAO userDAO, ConsentAuditDAO dao) {
         this.userDAO = userDAO;
-        this.workspaceAuditDAO = dao;
+        this.consentAuditDAO = dao;
     }
 
     public void saveAssociationAuditList(List<String> ids, String modifiedTable, String changeAction, String modifiedByUserEmail) {
         int modifiedByUserId = userDAO.findUserByEmail(modifiedByUserEmail).getDacUserId();
-        List<WorkspaceAudit> auditList = createAuditList(ids, modifiedTable, changeAction, modifiedByUserId);
-        workspaceAuditDAO.batchInsertWorkspaceAudit(auditList);
+        List<ConsentAudit> auditList = createAuditList(ids, modifiedTable, changeAction, modifiedByUserId);
+        consentAuditDAO.batchInsertWorkspaceAudit(auditList);
     }
 
-    private List<WorkspaceAudit> createAuditList(List<String> ids, String modifiedTable, String changeAction, int modifiedByUserId) {
-        List<WorkspaceAudit> audits = new ArrayList<>();
+    private List<ConsentAudit> createAuditList(List<String> ids, String modifiedTable, String changeAction, int modifiedByUserId) {
+        List<ConsentAudit> audits = new ArrayList<>();
         Date date = new Date();
         for (String id : ids) {
-            audits.add(new WorkspaceAudit(id, modifiedTable, changeAction, modifiedByUserId, date));
+            audits.add(new ConsentAudit(id, modifiedTable, changeAction, modifiedByUserId, date));
         }
         return audits;
     }
 
     public void saveConsentAudit(String consentId, String modifiedTable, String changeAction, String modifiedByUserEmail) {
         int modifiedByUserId = userDAO.findUserByEmail(modifiedByUserEmail).getDacUserId();
-        saveAuditInfo(new WorkspaceAudit(consentId, modifiedTable, changeAction, modifiedByUserId, new Date()));
+        saveAuditInfo(new ConsentAudit(consentId, modifiedTable, changeAction, modifiedByUserId, new Date()));
     }
 
-    private void saveAuditInfo(WorkspaceAudit auditInfo) {
-        workspaceAuditDAO.insertWorkspaceAudit(auditInfo);
+    private void saveAuditInfo(ConsentAudit auditInfo) {
+        consentAuditDAO.insertWorkspaceAudit(auditInfo);
     }
 
 }
