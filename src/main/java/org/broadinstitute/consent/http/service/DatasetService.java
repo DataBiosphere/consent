@@ -49,7 +49,6 @@ public class DatasetService {
     private final DatasetDAO datasetDAO;
     private final UserRoleDAO userRoleDAO;
     private final UseRestrictionConverter converter;
-    public static String datasetName = "Dataset Name";
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
@@ -128,7 +127,7 @@ public class DatasetService {
                     if (Objects.nonNull(dataset.getDacId())) {
                         h.updateConsentDac(consentId, dataset.getDacId());
                     }
-                    String associationType = AssociationType.SAMPLESET.getValue();
+                    String associationType = AssociationType.SAMPLE_SET.getValue();
                     h.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
                 } catch (Exception e) {
                     h.rollback();
@@ -293,7 +292,7 @@ public class DatasetService {
 
         return properties.stream()
               .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName()
-                    .equals(datasetName))
+                    .equals(DATASET_NAME_KEY))
               .map(p ->
                     new DataSetProperty(datasetId,
                           dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),

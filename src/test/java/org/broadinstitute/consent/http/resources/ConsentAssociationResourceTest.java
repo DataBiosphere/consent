@@ -42,7 +42,6 @@ public class ConsentAssociationResourceTest {
     public void testCreateAssociation() {
         User user = new User();
         user.setEmail("test");
-        when(consentService.hasWorkspaceAssociation(any())).thenReturn(false);
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(consentService.createAssociation(any(), any(), any())).thenReturn(Collections.emptyList());
         initResource();
@@ -57,7 +56,6 @@ public class ConsentAssociationResourceTest {
     public void testUpdateAssociation() {
         User user = new User();
         user.setEmail("test");
-        when(consentService.hasWorkspaceAssociation(any())).thenReturn(false);
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(consentService.createAssociation(any(), any(), any())).thenReturn(Collections.emptyList());
         initResource();

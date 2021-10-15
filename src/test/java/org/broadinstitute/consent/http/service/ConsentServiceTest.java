@@ -1,14 +1,28 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -24,23 +38,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
 
 public class ConsentServiceTest {
 
@@ -68,9 +65,6 @@ public class ConsentServiceTest {
     DatasetDAO dataSetDAO;
 
     @Mock
-    AssociationDAO associationDAO;
-
-    @Mock
     DacDAO dacDAO;
 
     @Mock
@@ -85,7 +79,7 @@ public class ConsentServiceTest {
     }
 
     private void initService() {
-        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO, auditService, associationDAO, jdbi, dataSetDAO, useRestrictionConverter);
+        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO, auditService, jdbi, dataSetDAO, useRestrictionConverter);
     }
 
     @Test
@@ -372,17 +366,6 @@ public class ConsentServiceTest {
             Assert.fail(unknownIdentifierException.getMessage());
         }
         Assert.assertNotNull(dulUrl);
-    }
-
-    @Test
-    public void testHasWorkspaceAssociation() {
-        when(associationDAO.findAssociationIdByTypeAndObjectId(AssociationType.WORKSPACE.getValue(), "test object"))
-                .thenReturn(1);
-        initService();
-
-        Boolean hasWorkspaceAssociation = service.hasWorkspaceAssociation("test object");
-
-        Assert.assertEquals(true, hasWorkspaceAssociation);
     }
 
     @Test

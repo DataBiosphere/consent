@@ -236,144 +236,7 @@ paths:
         200:
           description: List of allowed types.
   /api/consent/{consentId}/association:
-    get:
-      summary: Get Associations for Consent
-      description: Returns the associations identified by the parameters.
-      parameters:
-        - name: consentId
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-        - name: associationType
-          in: query
-          description: "Association's type, 'sample', or 'sampleSet'"
-          required: true
-          schema:
-            type: string
-        - name: id
-          in: query
-          description: Optional ID of the requested association
-          required: false
-          schema:
-            type: string
-      tags:
-        - Consent
-        - Association
-      responses:
-        200:
-          description: An array of Consent Associations
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ConsentAssociation'
-        400:
-          description: Required parameter is null
-        default:
-          description: Unexpected error
-    post:
-      summary: Create Associations for Consent
-      description: Create the associations sent as parameters.
-      parameters:
-        - name: consentId
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-        - name: body
-          in: body
-          description: Associations to be created
-          required: true
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/ConsentAssociation'
-      tags:
-        - Consent
-        - Association
-      responses:
-        200:
-          description: An array of created consent associations
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ConsentAssociation'
-        default:
-          description: Unexpected error
-    put:
-      summary: Update Associations for Consent
-      description: Update the association identified by the parameters
-      parameters:
-        - name: consentId
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-        - name: body
-          in: body
-          description: Associations to be updated
-          required: true
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/ConsentAssociation'
-      tags:
-        - Consent
-        - Association
-      responses:
-        200:
-          description: An array with the updated consent associations
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ConsentAssociation'
-        default:
-          description: Unexpected error
-    delete:
-      summary: Delete Associations for Consent
-      description: Deletes the association identified by the parameters
-      parameters:
-        - name: consentId
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-        - name: associationType
-          in: query
-          description: "Association's type"
-          required: true
-          schema:
-            type: string
-        - name: id
-          in: query
-          description: Object ID of the requested association
-          required: true
-          schema:
-            type: string
-      tags:
-        - Consent
-        - Association
-      responses:
-        200:
-          description: An array with the deleted consent associations
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ConsentAssociation'
-        default:
-          description: Unexpected error
+    $ref: './paths/consentByIdAssociation.yaml'
   /api/consent/cases/summary:
     get:
       summary: Get Consent Summary Cases
@@ -3680,6 +3543,8 @@ components:
       $ref: './schemas/Collaborator.yaml'
     Consent:
       $ref: './schemas/Consent.yaml'
+    ConsentAssociation:
+      $ref: './schemas/ConsentAssociation.yaml'
     DarCollection:
       $ref: './schemas/DarCollection.yaml'
     DataAccessRequest:
@@ -3751,17 +3616,6 @@ components:
         eraExpiration:
           type: string
           description: Contains the eRA account expiration date in miliseconds. This will be 30 days from the user's authentication.
-    ConsentAssociation:
-      type: object
-      properties:
-        associationType:
-          type: string
-          description: 'Defines the type of the association. Possible values: sample, sampleSet.'
-        elements:
-          type: array
-          items:
-            type: string
-          description: Elements, in a hash set, to avoid duplicates.
     Vote:
       type: object
       properties:
