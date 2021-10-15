@@ -175,25 +175,6 @@ public class DarCollectionService {
     return populatedCollections.stream().findFirst().orElse(null);
   }
 
-  public List<DarCollection> getCollectionsByUser(User user) {
-    List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
-    return addDatasetsToCollections(collections);
-  }
-
-  public DarCollection createDarCollection(String darCode, User user) {
-    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
-    return getByCollectionId(collectionId);
-  }
-
-  public void deleteDarCollectionById(Integer collectionId) {
-    darCollectionDAO.deleteByCollectionId(collectionId);
-  }
-
-  public DarCollection updateDarCollection(Integer collectionId, User user) {
-    darCollectionDAO.updateDarCollection(collectionId, user.getDacUserId(), new Date());
-    return getByCollectionId(collectionId);
-  }
-
   public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections) {
 
     List<Integer> datasetIds = collections.stream()
