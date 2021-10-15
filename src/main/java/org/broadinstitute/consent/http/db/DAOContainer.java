@@ -23,7 +23,7 @@ public class DAOContainer {
   private UserDAO userDAO;
   private UserRoleDAO userRoleDAO;
   private VoteDAO voteDAO;
-  private WorkspaceAuditDAO workspaceAuditDAO;
+  private ConsentAuditDAO consentAuditDAO;
   private InstitutionDAO institutionDAO;
 
   public ApprovalExpirationTimeDAO getApprovalExpirationTimeDAO() {
@@ -159,12 +159,12 @@ public class DAOContainer {
     this.voteDAO = voteDAO;
   }
 
-  public WorkspaceAuditDAO getWorkspaceAuditDAO() {
-    return workspaceAuditDAO;
+  public ConsentAuditDAO getConsentAuditDAO() {
+    return consentAuditDAO;
   }
 
-  public void setWorkspaceAuditDAO(WorkspaceAuditDAO workspaceAuditDAO) {
-    this.workspaceAuditDAO = workspaceAuditDAO;
+  public void setConsentAuditDAO(ConsentAuditDAO consentAuditDAO) {
+    this.consentAuditDAO = consentAuditDAO;
   }
 
   public InstitutionDAO getInstitutionDAO() { return institutionDAO; }

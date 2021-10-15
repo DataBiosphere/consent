@@ -1,0 +1,40 @@
+get:
+  summary: Find Consent by name
+  description: Returns the Consent identified by the name.
+  parameters:
+    - name: name
+      in: query
+      description: Consent Name
+      required: true
+      schema:
+        type: string
+  tags:
+    - Consent
+  responses:
+    200:
+      description: Returns the requested consent.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Consent.yaml'
+    400:
+      description: The consent associated with the provided name has not been approved.
+    404:
+      description: The consent associated with the provided name could not be found.
+post:
+  summary: Create new Consent
+  description: Creates the consent sent with the request.
+  requestBody:
+    description: Object that represents a Consent
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/Consent.yaml'
+  tags:
+    - Consent
+  responses:
+    201:
+      description: Returns the URL to find the created consent.
+    500:
+      description: Internal Server Error.

@@ -20,7 +20,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.broadinstitute.consent.http.enumeration.Actions;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -81,7 +81,7 @@ public class ConsentResource extends Resource {
                 checkValidDUL(rec);
             }
             Consent consent = consentService.create(rec);
-            auditService.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), dacUser.getEmail());
+            auditService.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), AuditActions.CREATE.getValue(), dacUser.getEmail());
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
             matchService.reprocessMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
@@ -109,7 +109,7 @@ public class ConsentResource extends Resource {
             }
             User dacUser = userService.findUserByEmail(user.getEmail());
             updated = consentService.update(id, updated);
-            auditService.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
+            auditService.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), AuditActions.REPLACE.getValue(), dacUser.getEmail());
             matchService.reprocessMatchesForConsent(id);
             return Response.ok(updated).build();
         } catch (Exception e) {
