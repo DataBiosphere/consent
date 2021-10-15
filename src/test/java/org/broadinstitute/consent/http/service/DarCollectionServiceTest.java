@@ -116,8 +116,7 @@ public class DarCollectionServiceTest {
   public void testGetCollectionsForUserByRoleName_NULL() {
     User user = new User();
     user.setDacUserId(1);
-    DarCollection collection = new DarCollection();
-    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId())).thenReturn(List.of(collection));
+    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId())).thenReturn(List.of(new DarCollection()));
     initService();
 
     List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, null);
@@ -131,15 +130,25 @@ public class DarCollectionServiceTest {
     UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
     chair.setDacId(1);
     user.setRoles(List.of(chair));
-    DarCollection collection = new DarCollection();
     when(darCollectionDAO.findDARCollectionIdsByDacIds(List.of(chair.getDacId()))).thenReturn(List.of(1));
-    when(darCollectionDAO.findDARCollectionByCollectionIds(List.of(1))).thenReturn(List.of(collection));
+    when(darCollectionDAO.findDARCollectionByCollectionIds(List.of(1))).thenReturn(List.of(new DarCollection()));
     initService();
 
     List<DarCollection> collections = service.getCollectionsByUserDacs(user);
     assertEquals(1, collections.size());
   }
 
+  @Test
+  public void testGetCollectionsByUserInstitution() {
+    User user = new User();
+    user.setInstitutionId(1);
+    when(darCollectionDAO.findDARCollectionIdsByInstitutionId(user.getInstitutionId())).thenReturn(List.of(1));
+    when(darCollectionDAO.findDARCollectionByCollectionIds(List.of(1))).thenReturn(List.of(new DarCollection()));
+    initService();
+
+    List<DarCollection> collections = service.getCollectionsByUserInstitution(user);
+    assertEquals(1, collections.size());
+  }
 
   @Test
   public void testGetCollectionsWithFiltersByPage() {
