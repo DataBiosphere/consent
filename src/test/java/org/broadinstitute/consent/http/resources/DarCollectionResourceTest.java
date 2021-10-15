@@ -260,6 +260,7 @@ public class DarCollectionResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
+  @Test
   public void testCancelDarCollection_InternalErrorStatus() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(researcher.getDacUserId());
