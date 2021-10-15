@@ -136,12 +136,10 @@ public class DarCollectionServiceTest {
     when(darCollectionDAO.findDARCollectionByCollectionIds(List.of(1))).thenReturn(List.of(collection));
     initService();
 
-    List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, chair.getName());
+    List<DarCollection> collections = service.getCollectionsByUserDacs(user);
     assertEquals(1, collections.size());
   }
 
-  // TODO:
-  // Tests for getCollectionsByUserInstitution
 
   @Test
   public void testGetCollectionsWithFiltersByPage() {
