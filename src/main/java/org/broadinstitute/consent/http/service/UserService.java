@@ -134,11 +134,9 @@ public class UserService {
                 if (Objects.nonNull(user.getInstitutionId())) {
                     List<User> institutionUsers = userDAO.getUsersFromInstitutionWithCards(institutionId);
                     List<User> unregisteredUsers = userDAO.getCardsForUnregisteredUsers(institutionId);
-                    List<User> outsideUsers = userDAO.getUsersOutsideInstitutionWithCards(institutionId);
                     return Stream.of(
                         institutionUsers,
-                        unregisteredUsers,
-                        outsideUsers
+                        unregisteredUsers
                     ).flatMap(Collection::stream)
                     .collect(Collectors.toList());
                 } else {
