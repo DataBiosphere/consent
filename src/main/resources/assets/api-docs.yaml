@@ -3616,6 +3616,44 @@ components:
         eraExpiration:
           type: string
           description: Contains the eRA account expiration date in miliseconds. This will be 30 days from the user's authentication.
+    Vote:
+      type: object
+      properties:
+        voteId:
+          type: integer
+          format: int32
+          description: Describes the id of the vote.
+        vote:
+          type: boolean
+          description: Describe the Positive or negative value of the vote
+        dacUserId:
+          type: integer
+          format: int32
+          description: Describes the id of the voter.
+        createDate:
+          type: string
+          format: date
+          description: Describes the date the vote was created.
+        updateDate:
+          type: string
+          format: date
+          description: Describes the date the vote was last modified.
+        electionId:
+          type: integer
+          format: int32
+          description: Describes the id of the election the election at which the vote belongs.
+        rationale:
+          type: string
+          description: If the final vote is NO, the voter can specify why in this field.
+        type:
+          type: string
+          description: Specifies the type of the vote (DAC, CHAIRPERSON, AGREEMENT, FINAL)
+        isReminderSent:
+          type: boolean
+          description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
+        hasConcerns:
+          type: boolean
+          description: For Dataset elections, it is a flag for DataSet owners concerns.
     MatchResult:
       type: object
       properties:
