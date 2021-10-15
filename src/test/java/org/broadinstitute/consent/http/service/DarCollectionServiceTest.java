@@ -264,19 +264,14 @@ public class DarCollectionServiceTest {
   public void testCancelDarCollection_noElections() {
     Set<DataSet> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
-    collection.getDars().forEach(d -> {
-      d.getData().setStatus("Canceled");
-    });
+    collection.getDars().forEach(d -> d.getData().setStatus("Canceled"));
     List<Election> elections = new ArrayList<>();
-    User user = new User();
-    user.setDacUserId(RandomUtils.nextInt(1,100));
-
     when(electionDAO.findLastElectionsByReferenceIdsAndType(anyList(), anyString())).thenReturn(elections);
     doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     initService();
 
-    DarCollection canceledCollection = service.cancelDarCollection(collection, user);
+    DarCollection canceledCollection = service.cancelDarCollection(collection);
     for (DataAccessRequest collectionDar : canceledCollection.getDars()) {
       assertEquals("canceled", collectionDar.getData().getStatus().toLowerCase());
     }
@@ -287,15 +282,13 @@ public class DarCollectionServiceTest {
     Set<DataSet> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
     List<Election> elections = Collections.singletonList(new Election());
-    User user = new User();
-    user.setDacUserId(RandomUtils.nextInt(1, 100));
 
     when(electionDAO.findLastElectionsByReferenceIdsAndType(anyList(), anyString())).thenReturn(elections);
     doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     initService();
 
-    service.cancelDarCollection(collection, user);
+    service.cancelDarCollection(collection);
   }
 
   private DarCollection generateMockDarCollection(Set<DataSet> datasets) {

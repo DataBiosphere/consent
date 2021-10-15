@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -215,10 +214,10 @@ public class DarCollectionService {
   }
   // If an election exists for a DAR within the collection, that DAR cannot be cancelled by the researcher
   // Since it's now under DAC review, it's up to the DAC Chair (or admin) to ultimately decline or cancel via elections
-  public DarCollection cancelDarCollection(DarCollection collection, User user) {
+  public DarCollection cancelDarCollection(DarCollection collection) {
     List<DataAccessRequest> dars = collection.getDars();
     List<String> referenceIds = dars.stream()
-      .map(d -> d.getReferenceId())
+      .map(DataAccessRequest::getReferenceId)
       .collect(Collectors.toList());
 
     if(referenceIds.isEmpty()) {
@@ -233,9 +232,9 @@ public class DarCollectionService {
     List<String> nonCanceledIds = dars.stream()
       .filter(d -> {
         String status = d.getData().getStatus();
-        return Objects.nonNull(status) && status.toLowerCase() != "canceled";
+        return Objects.nonNull(status) && !status.equalsIgnoreCase("canceled");
       })
-      .map(d -> d.getReferenceId())
+      .map(DataAccessRequest::getReferenceId)
       .collect(Collectors.toList());
 
     //if no dars are valid, simply return the collection (since researcher cancelled DARs should be skipped over)

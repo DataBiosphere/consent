@@ -241,7 +241,7 @@ public class DarCollectionResourceTest {
     collection.setCreateUserId(researcher.getDacUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
-    when(darCollectionService.cancelDarCollection(any(DarCollection.class), any(User.class))).thenThrow(new BadRequestException());
+    when(darCollectionService.cancelDarCollection(any(DarCollection.class))).thenThrow(new BadRequestException());
     initResource();
 
     Response response = resource.cancelDarCollectionByCollectionId(authUser, 1);
@@ -266,7 +266,7 @@ public class DarCollectionResourceTest {
     collection.setCreateUserId(researcher.getDacUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
-    when(darCollectionService.cancelDarCollection(any(DarCollection.class), any(User.class)))
+    when(darCollectionService.cancelDarCollection(any(DarCollection.class)))
         .thenThrow(new InternalServerErrorException());
     initResource();
 

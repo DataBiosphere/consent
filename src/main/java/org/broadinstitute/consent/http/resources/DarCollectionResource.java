@@ -152,7 +152,7 @@ public class DarCollectionResource extends Resource {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
       isCollectionPresent(collection);
       validateUserIsCreator(user, collection);
-      DarCollection cancelledCollection = darCollectionService.cancelDarCollection(collection, user);
+      DarCollection cancelledCollection = darCollectionService.cancelDarCollection(collection);
       return Response.ok().entity(cancelledCollection).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
