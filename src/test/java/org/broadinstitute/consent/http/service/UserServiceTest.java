@@ -360,7 +360,7 @@ public class UserServiceTest {
 
         List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
         assertNotNull(users);
-        assertEquals(3, users.size());
+        assertEquals(2, users.size());
     }
 
     @Test(expected = NotFoundException.class)
