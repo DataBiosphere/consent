@@ -9,7 +9,9 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
+import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,14 +43,10 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 public class DacServiceTest {
 
@@ -74,7 +72,7 @@ public class DacServiceTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     private void initService() {
@@ -188,14 +186,19 @@ public class DacServiceTest {
 
     @Test
     public void testAddDacMember() {
+        Gson gson = new Gson();
         User user = getDacUsers().get(0);
         Dac dac = getDacs().get(0);
         when(userDAO.findUserById(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
         when(dacDAO.findUserRolesForUser(any())).thenReturn(getDacUsers().get(0).getRoles());
         List<Election> elections = getElections().stream().
-                peek(e -> e.setElectionType(ElectionType.DATA_ACCESS.getValue())).
-                peek(e -> e.setReferenceId(new ObjectId().toHexString())).
+                map(e -> {
+                    Election newE = gson.fromJson(gson.toJson(e), Election.class);
+                    newE.setElectionType(ElectionType.DATA_ACCESS.getValue());
+                    newE.setReferenceId(UUID.randomUUID().toString());
+                    return newE;
+                }).
                 collect(Collectors.toList());
         DataAccessRequest dar = new DataAccessRequest();
         dar.setData(new DataAccessRequestData());
@@ -693,19 +696,6 @@ public class DacServiceTest {
     }
 
     /**
-     * @return A list of 5 documents with DataSet ids
-     */
-    private List<Document> getDocuments() {
-        return IntStream.range(1, 5).
-                mapToObj(i -> {
-                    List<Integer> dataSetIds = Collections.singletonList(i);
-                    Document doc = new Document();
-                    doc.put(DarConstants.DATASET_ID, dataSetIds);
-                    return doc;
-                }).collect(Collectors.toList());
-    }
-
-    /**
      * @return A list of 5 DataAccessRequest with DataSet ids and Reference ids
      */
     private List<DataAccessRequest> getDataAccessRequests() {
@@ -786,10 +776,6 @@ public class DacServiceTest {
         member.setRoles(new ArrayList<>());
         member.getRoles().add(new UserRole(2, member.getDacUserId(), UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName(), 1));
         return member;
-    }
-
-    private AuthUser getMemberAuthUser() {
-        return new AuthUser(getMember().getEmail());
     }
 
 }

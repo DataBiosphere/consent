@@ -7,7 +7,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
-@SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection", "SqlWithoutWhere"})
 @RegisterRowMapper(CounterMapper.class)
 public interface CounterDAO extends Transactional<CounterDAO> {
 
@@ -24,6 +23,7 @@ public interface CounterDAO extends Transactional<CounterDAO> {
           + " SELECT MAX(count) FROM m WHERE name = :name ")
   Integer incrementCountByName(@Bind("name") String name);
 
+  @SuppressWarnings("SqlWithoutWhere")
   @SqlUpdate("DELETE FROM counter")
   void deleteAll();
 }

@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.enumeration;
 
-public enum Actions {
+public enum AuditActions {
   ADD("add"),
   CREATE("create"),
   DELETE("delete"),
@@ -9,7 +9,7 @@ public enum Actions {
 
   private final String value;
 
-  Actions(String value) {
+  AuditActions(String value) {
     this.value = value;
   }
 

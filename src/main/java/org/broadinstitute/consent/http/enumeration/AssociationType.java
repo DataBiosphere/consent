@@ -1,17 +1,16 @@
 package org.broadinstitute.consent.http.enumeration;
 
 public enum AssociationType {
+  SAMPLE("sample"),
+  SAMPLE_SET("sampleSet");
 
-    SAMPLE("sample"), SAMPLESET("sampleSet"), WORKSPACE("workspace");
+  private final String value;
 
-    private String value;
+  AssociationType(String value) {
+    this.value = value;
+  }
 
-    AssociationType(String value) {
-        this.value = value;
-    }
-
-    public String getValue() {
-        return value;
-    }
-    
+  public String getValue() {
+    return value;
+  }
 }
