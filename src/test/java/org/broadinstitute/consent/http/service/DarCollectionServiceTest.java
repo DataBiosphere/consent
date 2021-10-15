@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -123,8 +124,23 @@ public class DarCollectionServiceTest {
     assertEquals(1, collections.size());
   }
 
+  @Test
+  public void testGetCollectionsByUserDacs() {
+    User user = new User();
+    user.setDacUserId(1);
+    UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    chair.setDacId(1);
+    user.setRoles(List.of(chair));
+    DarCollection collection = new DarCollection();
+    when(darCollectionDAO.findDARCollectionIdsByDacIds(List.of(chair.getDacId()))).thenReturn(List.of(1));
+    when(darCollectionDAO.findDARCollectionByCollectionIds(List.of(1))).thenReturn(List.of(collection));
+    initService();
+
+    List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, chair.getName());
+    assertEquals(1, collections.size());
+  }
+
   // TODO:
-  // Tests for getCollectionsByUserDacs
   // Tests for getCollectionsByUserInstitution
 
   @Test
