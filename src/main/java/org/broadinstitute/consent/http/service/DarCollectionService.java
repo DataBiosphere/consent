@@ -189,7 +189,7 @@ public class DarCollectionService {
     List<String> nonCanceledIds = dars.stream()
       .filter(d -> {
         String status = d.getData().getStatus();
-        return Objects.nonNull(status) && status.toLowerCase() != "canceled";
+        return Objects.isNull(status) || status.toLowerCase() != "canceled";
       })
       .map(d -> d.getReferenceId())
       .collect(Collectors.toList());
