@@ -1,12 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
-import org.broadinstitute.consent.http.db.MailServiceDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.MailService;
@@ -18,12 +22,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.Assert.fail;
 
 /**
  * This class can be used to functionally test email notifications as well as unit test.
@@ -54,9 +52,6 @@ public class EmailNotifierServiceTest {
     private MailMessageDAO emailDAO;
 
     @Mock
-    private MailServiceDAO mailServiceDAO;
-
-    @Mock
     private UserPropertyDAO userPropertyDAO;
 
     private final String defaultAccount = "duos-dev@broadinstitute.org";
@@ -81,7 +76,7 @@ public class EmailNotifierServiceTest {
         fmConfig.setTemplateDirectory("/freemarker");
         FreeMarkerTemplateHelper helper = new FreeMarkerTemplateHelper(fmConfig);
         service = new EmailNotifierService(consentDAO, dataAccessRequestService, voteDAO, electionDAO, userDAO,
-                emailDAO, mailService, mailServiceDAO, helper, serverUrl, serviceActive,
+                emailDAO, mailService, helper, serverUrl, serviceActive,
             userPropertyDAO);
     }
 

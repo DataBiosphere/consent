@@ -17,7 +17,6 @@ public class DAOContainer {
   private DatasetDAO datasetDAO;
   private ElectionDAO electionDAO;
   private MailMessageDAO mailMessageDAO;
-  private MailServiceDAO mailServiceDAO;
   private MatchDAO matchDAO;
   private UserPropertyDAO userPropertyDAO;
   private UserDAO userDAO;
@@ -108,14 +107,6 @@ public class DAOContainer {
 
   public void setMailMessageDAO(MailMessageDAO mailMessageDAO) {
     this.mailMessageDAO = mailMessageDAO;
-  }
-
-  public MailServiceDAO getMailServiceDAO() {
-    return mailServiceDAO;
-  }
-
-  public void setMailServiceDAO(MailServiceDAO mailServiceDAO) {
-    this.mailServiceDAO = mailServiceDAO;
   }
 
   public MatchDAO getMatchDAO() {

@@ -68,10 +68,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     void updateElectionStatus(@BindList("electionsId") List<Integer> electionsId,
                               @Bind("status") String status);
 
-    @SqlUpdate("update election set status = '" + CANCELED + "' where referenceId in (<referenceId>) and lower(status) = 'open' and lower(electiontype) = lower(:electionType)")
-    void bulkCancelOpenElectionByReferenceIdAndType(@Bind("electionType") String electionType,
-                                                    @BindList("referenceId") List<String> referenceId);
-
     @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, "
             + "e.lastUpdate, e.finalAccessVote, e.electionType,  e.dataUseLetter, e.dulName, e.archived, e.version   from election e"
             + " inner join vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' "
@@ -228,9 +224,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "left join vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' ")
      List<Election> findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(@BindList("referenceIds") List<String> referenceIds, @Bind("status") String status);
 
-     @SqlQuery("select count(*) from election e where lower(e.status) = 'open' and e.referenceId = :referenceId")
-     Integer verifyOpenElectionsForReferenceId(@Bind("referenceId") String referenceId); 
-
      @RegisterRowMapper(AccessRPMapper.class)
      @SqlQuery("select * from access_rp where electionAccessId in (<electionAccessIds>) ")
      List<AccessRP> findAccessRPbyElectionAccessId(@BindList("electionAccessIds") List<Integer> electionAccessIds); 
@@ -288,18 +281,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select distinct * from election where lower(status) = lower(:status) and lower(electionType) = lower(:electionType)")
     List<Election> getElectionByTypeAndStatus(@Bind("electionType") String electionType, @Bind("status") String status);
 
-    @UseRowMapper(SimpleElectionMapper.class)
-    @SqlQuery("select distinct * from election  where lower(status) = lower(:status) and lower(electionType) = lower(:electionType) and referenceId = :referenceId")
-    List<Election> getElectionByTypeStatusAndReferenceId(@Bind("electionType") String electionType, @Bind("status") String status, @Bind("referenceId") String referenceId);
-
     @SqlUpdate("update election set status = :status, lastUpdate = :lastUpdate, finalAccessVote = :finalAccessVote where electionId = :electionId ")
     void updateElectionById(@Bind("electionId") Integer electionId,
                             @Bind("status") String status,
                             @Bind("lastUpdate") Date lastUpdate,
                             @Bind("finalAccessVote") Boolean finalAccessVote);
-
-    @SqlQuery("SELECT v.electionId FROM vote v, election e where v.dacUserId = :dacUserId and e.electionId = v.electionId and v.vote is null AND lower(e.electionType) = 'dataset' AND lower(e.status) = 'open'")
-    List<Integer> findDataSetOpenElectionIds(@Bind("dacUserId")Integer dacUserId);
 
     @SqlUpdate("update election set archived = true, lastUpdate = :lastUpdate where electionId = :electionId ")
     void archiveElectionById(@Bind("electionId") Integer electionId, @Bind("lastUpdate") Date lastUpdate);

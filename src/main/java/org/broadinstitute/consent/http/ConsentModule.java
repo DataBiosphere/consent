@@ -26,7 +26,6 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
-import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
@@ -85,7 +84,6 @@ public class ConsentModule extends AbstractModule {
     private final MatchDAO matchDAO;
     private final MailMessageDAO mailMessageDAO;
     private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
-    private final MailServiceDAO mailServiceDAO;
     private final UserPropertyDAO userPropertyDAO;
     private final ConsentAuditDAO consentAuditDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -119,7 +117,6 @@ public class ConsentModule extends AbstractModule {
         this.matchDAO = this.jdbi.onDemand(MatchDAO.class);
         this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
-        this.mailServiceDAO = this.jdbi.onDemand(MailServiceDAO.class);
         this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
         this.consentAuditDAO = this.jdbi.onDemand(ConsentAuditDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
@@ -148,7 +145,6 @@ public class ConsentModule extends AbstractModule {
         container.setDatasetDAO(providesDataSetDAO());
         container.setElectionDAO(providesElectionDAO());
         container.setMailMessageDAO(providesMailMessageDAO());
-        container.setMailServiceDAO(providesMailServiceDAO());
         container.setMatchDAO(providesMatchDAO());
         container.setResearcherPropertyDAO(providesResearcherPropertyDAO());
         container.setUserDAO(providesUserDAO());
@@ -306,7 +302,6 @@ public class ConsentModule extends AbstractModule {
                 providesUserDAO(),
                 providesMailMessageDAO(),
                 providesMailService(),
-                providesMailServiceDAO(),
                 providesFreeMarkerTemplateHelper(),
                 config.getServicesConfiguration().getLocalURL(),
                 config.getMailConfiguration().isActivateEmailNotifications(),
@@ -435,11 +430,6 @@ public class ConsentModule extends AbstractModule {
     @Provides
     ApprovalExpirationTimeDAO providesApprovalExpirationTimeDAO() {
         return approvalExpirationTimeDAO;
-    }
-
-    @Provides
-    MailServiceDAO providesMailServiceDAO() {
-        return mailServiceDAO;
     }
 
     @Provides
