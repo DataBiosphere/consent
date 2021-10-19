@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service;
+package org.broadinstitute.consent.http.exceptions;
 
 public class UnknownIdentifierException extends Exception {
 
