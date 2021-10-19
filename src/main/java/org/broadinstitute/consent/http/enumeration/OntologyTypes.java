@@ -5,7 +5,7 @@ import java.util.List;
 public enum OntologyTypes {
 
     DISEASE("disease"), ORGANIZATION("organization");
-    private String value;
+    private final String value;
 
     OntologyTypes(String value) {
         this.value = value;

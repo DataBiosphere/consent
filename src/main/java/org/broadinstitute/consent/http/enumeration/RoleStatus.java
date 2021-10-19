@@ -6,8 +6,8 @@ public enum RoleStatus {
     APPROVED("approved", 1),
     REJECTED("rejected", 2);
 
-    private String status;
-    private Integer value;
+    private final String status;
+    private final Integer value;
 
     RoleStatus(String status, Integer value) {
         this.value = value;

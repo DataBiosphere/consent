@@ -18,7 +18,7 @@ public enum ElectionFields {
     ARCHIVED("archived"),
     DUL_NAME("dulName");
 
-    private String value;
+    private final String value;
 
     ElectionFields(String value) {
         this.value = value;

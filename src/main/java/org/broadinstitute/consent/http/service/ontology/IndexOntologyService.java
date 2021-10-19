@@ -15,8 +15,8 @@ import java.util.List;
 public class IndexOntologyService implements Managed {
 
     private final String indexName;
-    private IndexerUtils utils = new IndexerUtils();
-    private RestClient client;
+    private final IndexerUtils utils = new IndexerUtils();
+    private final RestClient client;
 
     @Override
     public void start() throws Exception { }

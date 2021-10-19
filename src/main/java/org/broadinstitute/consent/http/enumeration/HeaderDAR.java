@@ -21,7 +21,7 @@ public enum HeaderDAR {
     NAME("Name");
 
 
-    private String value;
+    private final String value;
 
     HeaderDAR(String value) {
         this.value = value;
