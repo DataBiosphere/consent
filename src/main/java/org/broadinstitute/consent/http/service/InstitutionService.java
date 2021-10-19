@@ -18,7 +18,7 @@ public class InstitutionService {
   @Inject
   public InstitutionService(InstitutionDAO institutionDAO) {
     this.institutionDAO = institutionDAO;
-  };
+  }
 
   public Institution createInstitution(Institution institution, Integer userId) {
       checkForEmptyName(institution); 
@@ -72,7 +72,7 @@ public class InstitutionService {
     if(Objects.isNull(name) || name.isBlank()) {
       throw new IllegalArgumentException("Institution name cannot be null or empty");
     }
-  };
+  }
 
   private void checkUserId(Integer userId) {
     if(Objects.isNull(userId)) {

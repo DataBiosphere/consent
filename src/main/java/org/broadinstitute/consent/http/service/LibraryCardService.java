@@ -1,21 +1,19 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.db.InstitutionDAO;
-import org.broadinstitute.consent.http.db.LibraryCardDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.LibraryCard;
-import org.broadinstitute.consent.http.models.User;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.ForbiddenException;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.User;
 
 public class LibraryCardService {
 
@@ -73,8 +71,7 @@ public class LibraryCardService {
         return this.libraryCardDAO.findLibraryCardById(id);
     }
 
-    public void deleteLibraryCardById(Integer id, User user) {
-        Boolean isAdmin = checkIsAdmin(user);
+    public void deleteLibraryCardById(Integer id) {
         LibraryCard card = findLibraryCardById(id);
         throwIfNull(card);
         this.libraryCardDAO.deleteLibraryCardById(id);
@@ -137,7 +134,7 @@ public class LibraryCardService {
     }
 
     //helper method for create method, checks to see if card already exists
-    private void checkIfCardExists(LibraryCard payload) throws Exception {
+    private void checkIfCardExists(LibraryCard payload) {
         Integer userId = payload.getUserId();
         String email = payload.getUserEmail();
         Integer institutionId = payload.getInstitutionId();
@@ -166,7 +163,7 @@ public class LibraryCardService {
 
     //Helper method to process user data on create LC payload
     //Needed since CREATE has a unique situation where admins can create LCs without an active user (save with userEmail instead)
-    private LibraryCard processUserOnNewLC(LibraryCard card) throws Exception {
+    private LibraryCard processUserOnNewLC(LibraryCard card) {
         if (Objects.isNull(card.getUserId())) {
             if (Objects.isNull(card.getUserEmail())) {
                 throw new BadRequestException();

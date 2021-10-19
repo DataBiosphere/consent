@@ -562,10 +562,8 @@ public class DataAccessRequestService {
     }
 
     /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
-     *
      * @param authUser AuthUser
-     * @return List<Document>
+     * @return List<DataAccessRequest>
      */
     private List<DataAccessRequest> getUnReviewedDarsForUser(AuthUser authUser) {
         List<DataAccessRequest> activeDars = dataAccessRequestDAO.findAllDataAccessRequests().stream().
