@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DarCollectionService;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Before;
@@ -49,9 +50,10 @@ public class DarCollectionResourceTest {
   @Mock private UserService userService;
   @Mock private DatasetService datasetService;
   @Mock private DarCollectionService darCollectionService;
+  @Mock private DataAccessRequestService dataAccessRequestService;
 
   private void initResource() {
-    resource = new DarCollectionResource(userService, darCollectionService);
+    resource = new DarCollectionResource(userService, darCollectionService, dataAccessRequestService);
   }
 
   private DataAccessRequest mockDataAccessRequestWithDatasetIds() {
