@@ -230,10 +230,7 @@ public class DarCollectionService {
       throw new BadRequestException("Elections present on DARs; cannot cancel collection");
     }
     List<String> nonCanceledIds = dars.stream()
-      .filter(d -> {
-        String status = d.getData().getStatus();
-        return Objects.nonNull(status) && !status.equalsIgnoreCase("canceled");
-      })
+      .filter(DataAccessRequest::isNotCanceled)
       .map(DataAccessRequest::getReferenceId)
       .collect(Collectors.toList());
 
