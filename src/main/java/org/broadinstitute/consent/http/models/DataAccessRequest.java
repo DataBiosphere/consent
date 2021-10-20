@@ -44,6 +44,11 @@ public class DataAccessRequest {
 
   @JsonProperty public Timestamp updateDate;
 
+  public static boolean isNotCanceled(DataAccessRequest dar) {
+    String status = dar.getData().getStatus();
+    return Objects.isNull(status) || status.toLowerCase() != "canceled";
+  }
+
   public Integer getId() {
     return id;
   }
