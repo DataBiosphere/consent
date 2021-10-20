@@ -1,0 +1,28 @@
+get:
+  summary: Get DAR Collection(s) By Role Name
+  description: Returns DAR collections by Role Name
+  tags:
+    - DAR Collection
+  parameters:
+    - name: roleName
+      in: path
+      description: String value that represents the role name to query by
+      schema:
+        type: string
+        enum: [Admin, Chairperson, Member, SigningOfficial]
+  responses:
+    200:
+      description: Returns a list of DAR Collections
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DarCollection.yaml'
+    400:
+      description: Bad Request
+    404:
+      description: Not Found
+    500:
+      description: Internal Server Error
+
