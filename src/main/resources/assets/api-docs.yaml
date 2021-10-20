@@ -3553,52 +3553,18 @@ components:
       $ref: './schemas/Dataset.yaml'
     DatasetProperty:
       $ref: './schemas/DatasetProperty.yaml'
+    Election:
+      $ref: './schemas/Election.yaml'
+    Institution:
+      $ref: './schemas/Institution.yaml'
+    LibraryCard:
+      $ref: './schemas/LibraryCard.yaml'
+    PaginationResponse:
+      $ref: './schemas/PaginationResponse.yaml'
     UserProperty:
-      type: object
-      properties:
-        profileName:
-          type: string
-        country:
-          type: string
-        city:
-          type: string
-        address1:
-          type: string
-        address2:
-          type: string
-        orcid:
-          type: string
-        completed:
-          type: string
-        libraryCards:
-          type: array
-          description: List of string values of the organizations for all library cards the user has access to.
-          items:
-            type: string
-        zipcode:
-          type: string
-        libraryCardEntries:
-          type: array
-          items:
-            $ref: '#/components/schemas/LibraryCard'
-        institution:
-          type: string
-        nihUsername:
-          type: string
-        academicEmail:
-          type: string
-        state:
-          type: string
-        isThePI:
-          type: string
-        department:
-          type: string
-        checkNotifications:
-          type: string
-        eraAuthorized:
-          type: string
-        eraExpiration:
-          type: string
+      $ref: './schemas/UserProperty.yaml'
+    UserProperties:
+      $ref: './schemas/UserProperties.yaml'
     NIHUserAccount:
       type: object
       properties:
@@ -3769,8 +3735,6 @@ components:
           type: integer
           format: int32
           description: Describes the number of cases that are opened and have to be reviewed.
-    Election:
-      $ref: "./schemas/Election.yaml"
     ConsentManage:
       type: object
       properties:
@@ -4051,77 +4015,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
-    Institution:
-      type: object
-      properties:
-          id:
-            type: integer
-            description: Id of Institution,
-          name:
-            type: string
-            description: Name of institution
-          createUser:
-            type: integer
-            description: Id of user who created the Institution record
-          createDate:
-            type: string
-            format: Date
-            description: Institution's creation date
-          updateUser:
-            type: integer
-            description: Id of user who last updated the Institution record
-          updateDate:
-            type: string
-            format: Date
-            description: Institution's last update date
-    LibraryCard:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: ID of Library Card
-        userId:
-          type: integer
-          description: ID of associated user
-        institution:
-          $ref: '#/components/schemas/Institution'
-        institutionId:
-          type: integer
-          description: ID of associated institution
-        eraCommonsId:
-          type: string
-          description: eraCommonsId of associated User
-        userName:
-          type: string
-          decription: Name of associated user
-        userEmail:
-          type: string
-          description: Email of associated user
-        createDate:
-          type: string
-          format: date
-          description: Date the library card was created
-        createUserId:
-          type: integer
-          description: ID of user who created the Library Card record
-        updateDate:
-          type: string
-          format: Date
-          description: Last update date of Library card
-        updateUserId:
-          type: integer
-          description: User who last updated the LibraryCard
-      example:
-        id: 1
-        userId: 2
-        institutionId: 3
-        eraCommonsId: CommonsId
-        userName: User Smith
-        userEmail: email@somewhere.com
-        createDate: date
-        createUserId: 3
-        updateDate: date
-        updateUserId: 4
     User:
       type: object
       properties:
