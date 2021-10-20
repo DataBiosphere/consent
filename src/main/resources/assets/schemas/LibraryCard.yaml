@@ -1,0 +1,47 @@
+type: object
+properties:
+  id:
+    type: integer
+    description: ID of Library Card
+  userId:
+    type: integer
+    description: ID of associated user
+  institution:
+    $ref: './Institution.yaml'
+  institutionId:
+    type: integer
+    description: ID of associated institution
+  eraCommonsId:
+    type: string
+    description: eraCommonsId of associated User
+  userName:
+    type: string
+    decription: Name of associated user
+  userEmail:
+    type: string
+    description: Email of associated user
+  createDate:
+    type: string
+    format: date
+    description: Date the library card was created
+  createUserId:
+    type: integer
+    description: ID of user who created the Library Card record
+  updateDate:
+    type: string
+    format: Date
+    description: Last update date of Library card
+  updateUserId:
+    type: integer
+    description: User who last updated the LibraryCard
+example:
+  id: 1
+  userId: 2
+  institutionId: 3
+  eraCommonsId: CommonsId
+  userName: User Smith
+  userEmail: email@somewhere.com
+  createDate: date
+  createUserId: 3
+  updateDate: date
+  updateUserId: 4

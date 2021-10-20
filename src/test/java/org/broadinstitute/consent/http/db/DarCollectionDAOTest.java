@@ -1,27 +1,31 @@
 package org.broadinstitute.consent.http.db;
 
-
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.User;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import org.junit.Test;
-import org.postgresql.util.PSQLException;
-import org.postgresql.util.PSQLState;
+import static org.junit.Assert.fail;
 
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
-
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.User;
+import org.junit.Test;
+import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 
 public class DarCollectionDAOTest extends DAOTestHelper  {
 
@@ -64,6 +68,45 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   public void testFindDARCollectionByCollectionIdNegative() {
     DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(RandomUtils.nextInt(1000, 2000));
     assertNull(returned);
+  }
+
+  @Test
+  public void testFindDARCollectionIdsByDacIds() {
+    // Set up a DAR Collection with a DAR, Dataset, Consent, Consent Association,
+    // and DAC in such a way that all are connected via the dataset id.
+    DataSet dataset = createDataset();
+    DarCollection c = createDarCollection();
+    DataAccessRequest dar = c.getDars().get(0);
+    if (Objects.isNull(dar)) {
+      fail("DAR was not created in collection");
+    }
+    dar.getData().setDatasetIds(List.of(dataset.getDataSetId()));
+    dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), dar.getUserId(), new Date(), new Date(), new Date(), dar.getData());
+    Dac dac = createDac();
+    Consent consent = createConsent(dac.getDacId());
+    createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+    List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(List.of(dac.getDacId()));
+    assertFalse(collectionIds.isEmpty());
+    assertEquals(c.getDarCollectionId(), collectionIds.get(0));
+  }
+
+  @Test
+  public void testFindDARCollectionIdsByInstitutionId() {
+    // Set up a DAR Collection with a DAR, User, and Institution
+    DarCollection c = createDarCollection();
+    DataAccessRequest dar = c.getDars().get(0);
+    if (Objects.isNull(dar)) {
+      fail("DAR was not created in collection");
+    }
+    User user = userDAO.findUserById(dar.getUserId());
+    Institution institution = createInstitution();
+    user.setInstitutionId(institution.getId());
+    userDAO.updateUser(user.getDisplayName(), user.getDacUserId(), user.getAdditionalEmail(), user.getInstitutionId());
+
+    List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByInstitutionId(institution.getId());
+    assertFalse(collectionIds.isEmpty());
+    assertEquals(c.getDarCollectionId(), collectionIds.get(0));
   }
 
   @Test
@@ -172,7 +215,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   @Test
   public void testFindAllDARCollectionsWithFilters_SortField() {
     DataAccessRequest dar1 = createDataAccessRequestV3(); // create first collection w DAR
-    DataAccessRequest dar2 = createDataAccessRequestWithUserIdV3(dar1.getUserId()); // create second collection w DAR
+    createDataAccessRequestWithUserIdV3(dar1.getUserId()); // create second collection w DAR
 
     List<DarCollection> collectionsResult = darCollectionDAO.findAllDARCollectionsWithFiltersByUser("", dar1.getUserId(), "dar_code", "ASC");
 
@@ -266,7 +309,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
   @Test
   public void testFindAllDarCollectionsWithFilters_sortDirectionTerm_DESC() {
     DataAccessRequest dar1 = createDataAccessRequestV3(); //create first collection w DAR
-    DataAccessRequest dar2 = createDataAccessRequestWithUserIdV3(dar1.getUserId()); // create second collection w DAR
+    createDataAccessRequestWithUserIdV3(dar1.getUserId()); // create second collection w DAR
 
     List<DarCollection> collections =  darCollectionDAO.findAllDARCollections();
     collections.sort((a,b) -> (a.getDarCode().compareToIgnoreCase(b.getDarCode())));
@@ -286,7 +329,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
   @Test
   public void testFindAllDarCollectionsWithFilters_sortDirectionTerm_ASC() {
     DataAccessRequest dar1 = createDataAccessRequestV3(); // create first collection w DAR
-    DataAccessRequest dar2 = createDataAccessRequestWithUserIdV3(dar1.getUserId()); // create second collection w DAR
+    createDataAccessRequestWithUserIdV3(dar1.getUserId()); // create second collection w DAR
 
     List<DarCollection> collections = darCollectionDAO.findAllDARCollections();
     collections.sort((a, b) -> (a.getDarCode().compareToIgnoreCase(b.getDarCode())));
@@ -329,7 +372,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     }
   }
 
-  private final String generateTestTerm(String targetString) {
+  private String generateTestTerm(String targetString) {
     return "(?=.*" + targetString.substring(0, 4) + ")";
   }
-};
+}

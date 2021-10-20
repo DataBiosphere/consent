@@ -405,20 +405,6 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testGetUsersOutsideInstitutionWithCards() {
-        User user = createUser();
-        LibraryCard card = createLibraryCard(user);
-        Integer institutionId = card.getInstitutionId();
-        List<User> users = userDAO.getUsersOutsideInstitutionWithCards(institutionId);
-        assertEquals(1, users.size());
-        User outsideUser = users.get(0);
-        assertEquals(user.getDacUserId(), outsideUser.getDacUserId());
-        LibraryCard outsideCard = outsideUser.getLibraryCards().get(0);
-        assertEquals(outsideCard.getId(), card.getId());
-        assertEquals(outsideCard.getUserId(), user.getDacUserId());
-    }
-
-    @Test
     public void testGetUsersWithNoInstitution() {
         createUserWithInstitution();
         User user = createUser();
