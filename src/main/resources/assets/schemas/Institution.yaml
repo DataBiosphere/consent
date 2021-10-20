@@ -1,0 +1,22 @@
+type: object
+properties:
+  id:
+    type: integer
+    description: Id of Institution,
+  name:
+    type: string
+    description: Name of institution
+  createUser:
+    type: integer
+    description: Id of user who created the Institution record
+  createDate:
+    type: string
+    format: Date
+    description: Institution's creation date
+  updateUser:
+    type: integer
+    description: Id of user who last updated the Institution record
+  updateDate:
+    type: string
+    format: Date
+    description: Institution's last update date

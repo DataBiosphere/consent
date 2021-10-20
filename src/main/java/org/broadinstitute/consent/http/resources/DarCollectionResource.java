@@ -61,6 +61,21 @@ public class DarCollectionResource extends Resource {
   }
 
   @GET
+  @Path("role/{roleName}")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL})
+  public Response getCollectionsForUserByRole(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateUserHasRoleName(user, roleName);
+      List<DarCollection> collections = darCollectionService.getCollectionsForUserByRoleName(user, roleName);
+      return Response.ok().entity(collections).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
   @Path("{collectionId}")
   @Produces("application/json")
   @PermitAll
@@ -145,7 +160,7 @@ public class DarCollectionResource extends Resource {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
       isCollectionPresent(collection);
       validateUserIsCreator(user, collection);
-      DarCollection cancelledCollection = darCollectionService.cancelDarCollection(collection, user);
+      DarCollection cancelledCollection = darCollectionService.cancelDarCollection(collection);
       return Response.ok().entity(cancelledCollection).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
