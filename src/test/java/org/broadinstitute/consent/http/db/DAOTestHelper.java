@@ -548,7 +548,7 @@ public class DAOTestHelper {
             data.setDarCode(darCode);
             String referenceId = UUID.randomUUID().toString();
             if (collectionId == 0) {
-                dataAccessRequestDAO.insertVersion2(referenceId, userId, now, now, now, now, data);
+                dataAccessRequestDAO.insertDraftDataAccessRequest(referenceId, userId, now, now, now, now, data);
             } else {
                 dataAccessRequestDAO.insertVersion3(collectionId, referenceId, userId, now, now, now, now, data);
             }
@@ -570,7 +570,7 @@ public class DAOTestHelper {
                     Charset.defaultCharset());
             data = DataAccessRequestData.fromString(darDataString);
             String referenceId = UUID.randomUUID().toString();
-            dataAccessRequestDAO.insertVersion2(
+            dataAccessRequestDAO.insertDraftDataAccessRequest(
                 referenceId,
                 user.getDacUserId(),
                 new Date(),
@@ -579,7 +579,6 @@ public class DAOTestHelper {
                 new Date(),
                 data
             );
-            dataAccessRequestDAO.updateDraftByReferenceId(referenceId, true);
             createdDataAccessRequestReferenceIds.add(referenceId);
             return dataAccessRequestDAO.findByReferenceId(referenceId);
         } catch (IOException e) {

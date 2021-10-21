@@ -166,8 +166,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
 
   /**
-   * Create new DataAccessRequest.
-   * This version supercedes `insert`
+   * Create new DataAccessRequest in draft status
    *
    * @param referenceId String
    * @param userId Integer User
@@ -177,11 +176,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @param updateDate Date Update Date
    * @param data DataAccessRequestData DAR Properties
    */
-  @Deprecated // TODO: We actually need this to insert a DRAFT DAR that does not have a collection id
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
-      "INSERT INTO data_access_request (reference_id, user_id, create_date, sort_date, submission_date, update_date, data) VALUES (:referenceId, :userId, :createDate, :sortDate, :submissionDate, :updateDate, to_jsonb(:data)) ")
-  void insertVersion2(
+      "INSERT INTO data_access_request (reference_id, user_id, create_date, sort_date, submission_date, update_date, data, draft) VALUES (:referenceId, :userId, :createDate, :sortDate, :submissionDate, :updateDate, to_jsonb(:data), true) ")
+  void insertDraftDataAccessRequest(
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
       @Bind("createDate") Date createDate,

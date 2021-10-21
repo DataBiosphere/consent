@@ -177,7 +177,7 @@ public class DarCollectionResource extends Resource {
       isCollectionPresent(sourceCollection);
       validateUserIsCreator(user, sourceCollection);
       validateCollectionIsCanceled(sourceCollection);
-      DataAccessRequest draftDar = dataAccessRequestService.cloneDraftDarFromCollection(user, sourceCollection);
+      DataAccessRequest draftDar = dataAccessRequestService.createDraftDarFromCanceledCollection(user, sourceCollection);
       return Response.ok().entity(draftDar).build();
     } catch(Exception e) {
       return createExceptionResponse(e);

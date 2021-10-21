@@ -24,7 +24,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotFoundException;
-import liquibase.pro.packaged.G;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -229,7 +228,7 @@ public class DataAccessRequestService {
         Date now = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         dar.getData().setPartialDarCode(DataAccessRequestData.partialDarCodePrefix + sdf.format(now));
-        dataAccessRequestDAO.insertVersion2(
+        dataAccessRequestDAO.insertDraftDataAccessRequest(
             dar.getReferenceId(),
             user.getDacUserId(),
             now,
@@ -238,11 +237,17 @@ public class DataAccessRequestService {
             now,
             dar.getData()
         );
-        dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), true);
         return findByReferenceId(dar.getReferenceId());
     }
 
-    public DataAccessRequest cloneDraftDarFromCollection(User user, DarCollection sourceCollection) {
+    /**
+     * Create a new Draft DAR from the canceled DARs present in source DarCollection.
+     * 
+     * @param user The User
+     * @param sourceCollection The source DarCollection
+     * @return New DataAccessRequest in draft status
+     */
+    public DataAccessRequest createDraftDarFromCanceledCollection(User user, DarCollection sourceCollection) {
         DataAccessRequest sourceDar = sourceCollection.getDars().get(0);
         if (Objects.isNull(sourceDar)) {
             throw new IllegalArgumentException("Source Collection must contain at least a single DAR");
@@ -266,11 +271,14 @@ public class DataAccessRequestService {
         Date now = new Date();
         // Clone the dar's data object and reset values that need to be updated for the clone
         DataAccessRequestData newData = new Gson().fromJson(sourceData.toString(), DataAccessRequestData.class);
+        newData.setDarCode(null);
         newData.setReferenceId(referenceId); // TODO: This field is deprecated ... test that we really need it.
         newData.setDatasetIds(datasetIds);
         newData.setCreateDate(now.getTime());
-        newData.setSortDate(now.getTime());
-        dataAccessRequestDAO.insertVersion2(
+        newData.setSortDate(now.getTime()); // TODO: This field is deprecated ... test that we really need it.
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        newData.setPartialDarCode(DataAccessRequestData.partialDarCodePrefix + sdf.format(now));
+        dataAccessRequestDAO.insertDraftDataAccessRequest(
             referenceId,
             user.getDacUserId(),
             now,
@@ -279,7 +287,6 @@ public class DataAccessRequestService {
             now,
             newData
         );
-        dataAccessRequestDAO.updateDraftByReferenceId(referenceId, true);
         return findByReferenceId(referenceId);
     }
 
