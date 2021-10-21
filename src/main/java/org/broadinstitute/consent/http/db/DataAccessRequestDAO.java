@@ -177,7 +177,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @param updateDate Date Update Date
    * @param data DataAccessRequestData DAR Properties
    */
-  @Deprecated
+  @Deprecated // TODO: We actually need this to insert a DRAFT DAR that does not have a collection id
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
       "INSERT INTO data_access_request (reference_id, user_id, create_date, sort_date, submission_date, update_date, data) VALUES (:referenceId, :userId, :createDate, :sortDate, :submissionDate, :updateDate, to_jsonb(:data)) ")

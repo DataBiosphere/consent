@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static java.util.stream.Collectors.toList;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import java.io.File;
@@ -23,6 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotFoundException;
+import liquibase.pro.packaged.G;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -42,6 +44,7 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
@@ -237,6 +240,47 @@ public class DataAccessRequestService {
         );
         dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), true);
         return findByReferenceId(dar.getReferenceId());
+    }
+
+    public DataAccessRequest cloneDraftDarFromCollection(User user, DarCollection sourceCollection) {
+        DataAccessRequest sourceDar = sourceCollection.getDars().get(0);
+        if (Objects.isNull(sourceDar)) {
+            throw new IllegalArgumentException("Source Collection must contain at least a single DAR");
+        }
+        DataAccessRequestData sourceData = sourceDar.getData();
+        if (Objects.isNull(sourceData)) {
+            throw new IllegalArgumentException("Source Collection must contain at least a single DAR with a populated data");
+        }
+        // Find all dataset ids for canceled DARs in the collection
+        List<Integer> datasetIds = sourceCollection
+            .getDars().stream()
+            .map(DataAccessRequest::getData)
+            .filter(d -> d.getStatus().equalsIgnoreCase(ElectionStatus.CANCELED.getValue()))
+            .map(DataAccessRequestData::getDatasetIds)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toUnmodifiableList());
+        if (datasetIds.isEmpty()) {
+            throw new IllegalArgumentException("Source Collection must contain references to at least a single canceled DAR's dataset");
+        }
+        String referenceId = UUID.randomUUID().toString();
+        Date now = new Date();
+        // Clone the dar's data object and reset values that need to be updated for the clone
+        DataAccessRequestData newData = new Gson().fromJson(sourceData.toString(), DataAccessRequestData.class);
+        newData.setReferenceId(referenceId); // TODO: This field is deprecated ... test that we really need it.
+        newData.setDatasetIds(datasetIds);
+        newData.setCreateDate(now.getTime());
+        newData.setSortDate(now.getTime());
+        dataAccessRequestDAO.insertVersion2(
+            referenceId,
+            user.getDacUserId(),
+            now,
+            now,
+            null,
+            now,
+            newData
+        );
+        dataAccessRequestDAO.updateDraftByReferenceId(referenceId, true);
+        return findByReferenceId(referenceId);
     }
 
     /**

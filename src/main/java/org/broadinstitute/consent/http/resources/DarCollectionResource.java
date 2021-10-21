@@ -24,7 +24,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
@@ -178,13 +177,8 @@ public class DarCollectionResource extends Resource {
       isCollectionPresent(sourceCollection);
       validateUserIsCreator(user, sourceCollection);
       validateCollectionIsCanceled(sourceCollection);
-
-      DataAccessRequest newDar = new DataAccessRequest();
-      DataAccessRequestData data = new DataAccessRequestData();
-      newDar.setData(data);
-//      DataAccessRequest newDraftDar = dataAccessRequestService.cloneDraftDarFromCollection(user, newDar);
-      
-      return Response.ok().entity(newDar).build();
+      DataAccessRequest draftDar = dataAccessRequestService.cloneDraftDarFromCollection(user, sourceCollection);
+      return Response.ok().entity(draftDar).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
     }
