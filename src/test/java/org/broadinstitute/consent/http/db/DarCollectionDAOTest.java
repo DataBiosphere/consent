@@ -50,7 +50,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   @Test
   public void testFindDARCollectionByReferenceIdNegative() {
     //dar without a collection ID
-    DataAccessRequest dar = createDataAccessRequestV2();
+    DataAccessRequest dar = createDraftDataAccessRequest();
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
     assertNull(collection);
   }

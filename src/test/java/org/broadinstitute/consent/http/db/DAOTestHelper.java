@@ -327,7 +327,7 @@ public class DAOTestHelper {
     }
 
     protected Match createMatch() {
-        DataAccessRequest dar = createDataAccessRequestV2();
+        DataAccessRequest dar = createDataAccessRequestV3();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Integer matchId =
@@ -505,11 +505,12 @@ public class DAOTestHelper {
         return cal.getTime();
     }
 
-    protected DataAccessRequest createDataAccessRequestV2() {
-        Integer userId = createUser().getDacUserId();
-        return insertDAR(userId, 0, "");
-    }
-
+    /**
+     * This method creates a number of DARs under a DarCollection and only returns the
+     * last DAR created.
+     * 
+     * @return Last DataAccessRequest of a DarCollection
+     */
     protected DataAccessRequest createDataAccessRequestV3() {
         User user = createUserWithInstitution();
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
@@ -549,6 +550,7 @@ public class DAOTestHelper {
             String referenceId = UUID.randomUUID().toString();
             if (collectionId == 0) {
                 dataAccessRequestDAO.insertDraftDataAccessRequest(referenceId, userId, now, now, now, now, data);
+                dataAccessRequestDAO.updateDraftByReferenceId(referenceId, false);
             } else {
                 dataAccessRequestDAO.insertVersion3(collectionId, referenceId, userId, now, now, now, now, data);
             }
@@ -570,13 +572,14 @@ public class DAOTestHelper {
                     Charset.defaultCharset());
             data = DataAccessRequestData.fromString(darDataString);
             String referenceId = UUID.randomUUID().toString();
+            Date now = new Date();
             dataAccessRequestDAO.insertDraftDataAccessRequest(
                 referenceId,
                 user.getDacUserId(),
-                new Date(),
-                new Date(),
-                new Date(),
-                new Date(),
+                now,
+                now,
+                now,
+                now,
                 data
             );
             createdDataAccessRequestReferenceIds.add(referenceId);
