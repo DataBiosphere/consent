@@ -273,10 +273,10 @@ public class DataAccessRequestService {
         DataAccessRequestData newData = new Gson().fromJson(sourceData.toString(), DataAccessRequestData.class);
         newData.setDarCode(null);
         newData.setStatus(null);
-        newData.setReferenceId(referenceId); // TODO: This field is marked as deprecated ... test that we really need it.
+        newData.setReferenceId(referenceId);
         newData.setDatasetIds(datasetIds);
         newData.setCreateDate(now.getTime());
-        newData.setSortDate(now.getTime()); // TODO: This field is marked as deprecated ... test that we really need it.
+        newData.setSortDate(now.getTime());
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         newData.setPartialDarCode(DataAccessRequestData.partialDarCodePrefix + sdf.format(now));
         dataAccessRequestDAO.insertDraftDataAccessRequest(
