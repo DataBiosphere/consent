@@ -24,25 +24,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
-import org.broadinstitute.consent.http.db.MailServiceDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
-import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
-import org.broadinstitute.consent.http.resources.Resource;
 
 public class EmailNotifierService {
 
@@ -51,7 +48,6 @@ public class EmailNotifierService {
     private final UserDAO userDAO;
     private final ElectionDAO electionDAO;
     private final MailMessageDAO emailDAO;
-    private final MailServiceDAO mailServiceDAO;
     private final UserPropertyDAO userPropertyDAO;
     private final VoteDAO voteDAO;
     private final FreeMarkerTemplateHelper templateHelper;
@@ -94,7 +90,7 @@ public class EmailNotifierService {
     @Inject
     public EmailNotifierService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
                                 VoteDAO voteDAO, ElectionDAO electionDAO, UserDAO userDAO,
-                                MailMessageDAO emailDAO, MailService mailService, MailServiceDAO mailServiceDAO,
+                                MailMessageDAO emailDAO, MailService mailService,
                                 FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive,
                                 UserPropertyDAO userPropertyDAO) {
         this.consentDAO = consentDAO;
@@ -104,7 +100,6 @@ public class EmailNotifierService {
         this.voteDAO = voteDAO;
         this.templateHelper = helper;
         this.emailDAO = emailDAO;
-        this.mailServiceDAO = mailServiceDAO;
         this.mailService = mailService;
         this.SERVER_URL = serverUrl;
         this.isServiceActive = serviceActive;

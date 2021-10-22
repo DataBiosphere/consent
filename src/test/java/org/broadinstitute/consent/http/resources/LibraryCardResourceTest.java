@@ -254,7 +254,7 @@ public class LibraryCardResourceTest {
     LibraryCard card = mockLibraryCardSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
-    doThrow(new NotFoundException()).when(libraryCardService).deleteLibraryCardById(anyInt(), any());
+    doThrow(new NotFoundException()).when(libraryCardService).deleteLibraryCardById(anyInt());
     initResource();
 
     Response response = resource.deleteLibraryCard(authUser, 1);

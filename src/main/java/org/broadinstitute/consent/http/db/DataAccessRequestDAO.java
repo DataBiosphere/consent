@@ -217,18 +217,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
     @Bind("data") @Json DataAccessRequestData data);
 
   /**
-   * Insert DataAccessRequest by reference id and provided DataAccessRequestData
-   *
-   * @param referenceId String
-   * @param data DataAccessRequestData
-   */
-  @RegisterArgumentFactory(JsonArgumentFactory.class)
-  @SqlUpdate(
-      "INSERT INTO data_access_request (reference_id, draft, data) VALUES (:referenceId, true, to_jsonb(:data)) ")
-  void insertDraft(
-      @Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
-
-  /**
    * Converts a Draft DataAccessRequest into a non-draft DataAccessRequest
    *
    * @param referenceId String

@@ -17,10 +17,8 @@ import java.util.List;
 @RegisterRowMapper(UserPropertyMapper.class)
 public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
 
-    String INSTITUTION = "institution";
     String ARE_YOU_PRINCIPAL_INVESTIGATOR = "isThePI";
     String DO_YOU_HAVE_PI = "havePI";
-    String ERA_COMMONS_ID = "eRACommonsID";
     String PUBMED_ID = "pubmedID";
     String SCIENTIFIC_URL = "scientificURL";
 
@@ -39,9 +37,6 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
 
     @SqlBatch("DELETE FROM user_property WHERE userid = :userId AND propertykey = :propertyKey")
     void deletePropertiesByUserAndKey(@BindBean Collection<UserProperty> researcherProperties);
-
-    @SqlUpdate("DELETE FROM user_property WHERE userid = :userId AND propertykey IN (<propertyKeyList>)")
-    void deletePropertyByUser(@BindList("propertyKeyList") List<String> propertyKeyList, @Bind("userId") Integer userId);
 
     @SqlQuery(value = "SELECT * FROM user_property WHERE " +
             "(propertykey = '" + ARE_YOU_PRINCIPAL_INVESTIGATOR + "' AND  propertyvalue != :isThePI) OR " +

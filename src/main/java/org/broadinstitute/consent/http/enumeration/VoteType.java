@@ -6,7 +6,7 @@ public enum VoteType {
 
     DAC("DAC"), FINAL("FINAL"), AGREEMENT("AGREEMENT"), CHAIRPERSON(Resource.CHAIRPERSON), DATA_OWNER("DATA_OWNER");
 
-    private String value;
+    private final String value;
 
     VoteType(String value) {
         this.value = value;

@@ -289,7 +289,7 @@ public class LibraryCardServiceTest {
         doNothing().when(libraryCardDAO).deleteLibraryCardById(any());
 
         initService();
-        service.deleteLibraryCardById(libraryCard.getId(), user);
+        service.deleteLibraryCardById(libraryCard.getId());
     }
 
     @Test(expected = NotFoundException.class)

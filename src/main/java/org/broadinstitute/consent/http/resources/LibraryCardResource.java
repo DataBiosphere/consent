@@ -119,7 +119,7 @@ public class LibraryCardResource extends Resource{
       if (!checkIsAdmin(user) && !card.getInstitutionId().equals(user.getInstitutionId())) {
         throw new ForbiddenException("You are not authorized to delete this library card");
       }
-      libraryCardService.deleteLibraryCardById(id, user);
+      libraryCardService.deleteLibraryCardById(id);
       return Response.status(204).build();
     } catch(Exception e) {
       return createExceptionResponse(e);

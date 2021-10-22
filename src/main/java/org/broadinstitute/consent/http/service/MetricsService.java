@@ -3,29 +3,6 @@ package org.broadinstitute.consent.http.service;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
 import java.sql.Timestamp;
-
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.Type;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DacDecisionMetrics;
-import org.broadinstitute.consent.http.models.DarDecisionMetrics;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DatasetMetrics;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Match;
-import org.broadinstitute.consent.http.models.DecisionMetrics;
-
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -35,6 +12,23 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacDecisionMetrics;
+import org.broadinstitute.consent.http.models.DarDecisionMetrics;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DatasetMetrics;
+import org.broadinstitute.consent.http.models.DecisionMetrics;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Match;
+import org.broadinstitute.consent.http.models.Type;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 
 public class MetricsService {
 
@@ -43,16 +37,14 @@ public class MetricsService {
   private final DataAccessRequestDAO darDAO;
   private final MatchDAO matchDAO;
   private final ElectionDAO electionDAO;
-  private final UserDAO userDAO;
 
   @Inject
-  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO, MatchDAO matchDAO, ElectionDAO electionDAO, UserDAO userDAO) {
+  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO, MatchDAO matchDAO, ElectionDAO electionDAO) {
     this.dacService = dacService;
     this.dataSetDAO = dataSetDAO;
     this.darDAO = darDAO;
     this.matchDAO = matchDAO;
     this.electionDAO = electionDAO;
-    this.userDAO = userDAO;
   }
 
   public class DarMetricsSummary {

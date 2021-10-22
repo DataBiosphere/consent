@@ -14,9 +14,9 @@ import org.broadinstitute.consent.http.models.Vote;
 import java.util.List;
 
 public class ReviewResultsService {
-    private ElectionDAO electionDAO;
-    private VoteDAO voteDAO;
-    private ConsentDAO consentDAO;
+    private final ElectionDAO electionDAO;
+    private final VoteDAO voteDAO;
+    private final ConsentDAO consentDAO;
 
     @Inject
     public ReviewResultsService(ElectionDAO electionDAO, VoteDAO voteDAO, ConsentDAO consentDAO) {
