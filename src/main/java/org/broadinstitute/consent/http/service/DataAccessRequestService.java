@@ -272,6 +272,7 @@ public class DataAccessRequestService {
         // Clone the dar's data object and reset values that need to be updated for the clone
         DataAccessRequestData newData = new Gson().fromJson(sourceData.toString(), DataAccessRequestData.class);
         newData.setDarCode(null);
+        newData.setStatus(null);
         newData.setReferenceId(referenceId); // TODO: This field is marked as deprecated ... test that we really need it.
         newData.setDatasetIds(datasetIds);
         newData.setCreateDate(now.getTime());
