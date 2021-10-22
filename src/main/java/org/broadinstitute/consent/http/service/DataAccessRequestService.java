@@ -272,10 +272,10 @@ public class DataAccessRequestService {
         // Clone the dar's data object and reset values that need to be updated for the clone
         DataAccessRequestData newData = new Gson().fromJson(sourceData.toString(), DataAccessRequestData.class);
         newData.setDarCode(null);
-        newData.setReferenceId(referenceId); // TODO: This field is deprecated ... test that we really need it.
+        newData.setReferenceId(referenceId); // TODO: This field is marked as deprecated ... test that we really need it.
         newData.setDatasetIds(datasetIds);
         newData.setCreateDate(now.getTime());
-        newData.setSortDate(now.getTime()); // TODO: This field is deprecated ... test that we really need it.
+        newData.setSortDate(now.getTime()); // TODO: This field is marked as deprecated ... test that we really need it.
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         newData.setPartialDarCode(DataAccessRequestData.partialDarCodePrefix + sdf.format(now));
         dataAccessRequestDAO.insertDraftDataAccessRequest(
