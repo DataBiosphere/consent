@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static junit.framework.TestCase.assertNull;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Test;
@@ -231,4 +232,15 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertEquals(dar2.getData().getAddress1(), updatedDar2.getData().getAddress1());
     }
 
+    @Test
+    public void testUpdateDraftForCollection() {
+        DarCollection collection = createDarCollection();
+        DataAccessRequest draft = createDraftDataAccessRequest();
+        String referenceId = draft.getReferenceId();
+        Integer collectionId = collection.getDarCollectionId();
+        dataAccessRequestDAO.updateDraftForCollection(collectionId, referenceId);
+        DataAccessRequest updatedDraft = dataAccessRequestDAO.findByReferenceId(referenceId);
+        assertEquals(false, updatedDraft.getDraft());
+        assertEquals(collectionId, updatedDraft.getCollectionId());
+    }
 }

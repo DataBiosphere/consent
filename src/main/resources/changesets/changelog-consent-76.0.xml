@@ -1,0 +1,20 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+  <changeSet id="76.0" author="JVThomas">
+    <validCheckSum>ANY</validCheckSum>
+
+    <sql>
+      UPDATE data_access_request AS dar 
+      SET collection_id = c.collection_id
+      FROM dar_collection c
+      WHERE (
+        CONCAT((dar.data #>> '{}')::jsonb ->> 'darCode', '-') ~* c.dar_code
+        OR (dar.data #>> '{}')::jsonb ->> 'darCode' = c.dar_code
+      ) 
+      AND dar.collection_id IS NULL
+      AND dar.draft = false;
+    </sql>
+
+  </changeSet>
+</databaseChangeLog>

@@ -362,7 +362,7 @@ public class DataAccessRequestService {
                 if (idx == 0) {
                     DataAccessRequest alreadyExists = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());
                     if (Objects.nonNull(alreadyExists)) {
-                        dataAccessRequestDAO.updateDraftByReferenceId(dataAccessRequest.getReferenceId(), false);
+                        dataAccessRequestDAO.updateDraftForCollection(collectionId, dataAccessRequest.getReferenceId());
                         dataAccessRequestDAO.updateDataByReferenceIdVersion2(
                             dataAccessRequest.getReferenceId(),
                             user.getDacUserId(),
