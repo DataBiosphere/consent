@@ -78,4 +78,5 @@
     <include file="changesets/changelog-consent-73.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-74.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-75.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-76.0.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

@@ -18,8 +18,8 @@ public enum UserRoles {
     DATAOWNER(Resource.DATAOWNER, 6),
     SIGNINGOFFICIAL(Resource.SIGNINGOFFICIAL, 7);
 
-    private String roleName;
-    private Integer roleId;
+    private final String roleName;
+    private final Integer roleId;
 
     UserRoles(String roleName, Integer roleId) {
         this.roleName = roleName;

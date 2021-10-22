@@ -41,7 +41,7 @@ public enum HeaderSummary {
     DATA_OWNER_VOTE("Data Owner Vote"),
     DATA_OWNER_COMMENT("Data Owner Comment");
 
-    private String value;
+    private final String value;
 
     HeaderSummary(String value) {
         this.value = value;

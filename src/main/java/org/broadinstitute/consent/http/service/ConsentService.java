@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;

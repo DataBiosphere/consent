@@ -4,7 +4,7 @@ public enum AuditTable {
 
     CONSENT_ASSOCIATIONS("consentassociations"), CONSENT("consents");
 
-    private String value;
+    private final String value;
 
     AuditTable(String value) {
         this.value = value;

@@ -10,7 +10,7 @@ public enum ElectionType {
     RP("RP"),
     DATA_SET("DataSet");
 
-    private String value;
+    private final String value;
 
     ElectionType(String value) {
         this.value = value;

@@ -36,6 +36,7 @@ import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class MetricsServiceTest {
 
@@ -49,17 +50,15 @@ public class MetricsServiceTest {
 
   @Mock private ElectionDAO electionDAO;
 
-  @Mock private UserDAO userDAO;
-
   private MetricsService service;
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    openMocks(this);
   }
 
   private void initService() {
-    service = new MetricsService(dacService, dataSetDAO, darDAO, matchDAO, electionDAO, userDAO);
+    service = new MetricsService(dacService, dataSetDAO, darDAO, matchDAO, electionDAO);
   }
 
   @Test

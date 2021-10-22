@@ -4,7 +4,7 @@ public enum ElectionStatus {
 
     OPEN("Open"), CLOSED("Closed"), CANCELED("Canceled"), FINAL("Final"), PENDING_APPROVAL("PendingApproval");
 
-    private String value;
+    private final String value;
 
     ElectionStatus(String value) {
         this.value = value;

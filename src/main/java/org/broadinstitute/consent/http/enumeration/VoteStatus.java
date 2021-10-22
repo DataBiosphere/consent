@@ -4,7 +4,7 @@ public enum VoteStatus {
 
     PENDING("pending"), EDITABLE("editable"), URGENT("urgent"), CLOSED("closed");
 
-    private String value;
+    private final String value;
 
     VoteStatus(String value) {
         this.value = value;

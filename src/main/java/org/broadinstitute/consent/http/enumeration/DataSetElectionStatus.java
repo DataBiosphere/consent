@@ -7,7 +7,7 @@ public enum DataSetElectionStatus {
     DS_PENDING("Needs Data Owner(s) approval."),
     APPROVAL_NOT_NEEDED("Approval not needed.");
 
-    private String value;
+    private final String value;
 
     DataSetElectionStatus(String value) {
         this.value = value;

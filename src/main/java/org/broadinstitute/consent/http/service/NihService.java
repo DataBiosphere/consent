@@ -17,9 +17,9 @@ import java.util.List;
 
 public class NihService {
 
-    private ResearcherService researcherService;
-    private LibraryCardDAO libraryCardDAO;
-    private UserDAO userDAO;
+    private final ResearcherService researcherService;
+    private final LibraryCardDAO libraryCardDAO;
+    private final UserDAO userDAO;
 
     @Inject
     public NihService(ResearcherService researcherService, LibraryCardDAO libraryCardDAO, UserDAO userDAO) {

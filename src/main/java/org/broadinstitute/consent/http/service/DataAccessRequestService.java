@@ -413,7 +413,7 @@ public class DataAccessRequestService {
                 if (idx == 0) {
                     DataAccessRequest alreadyExists = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());
                     if (Objects.nonNull(alreadyExists)) {
-                        dataAccessRequestDAO.updateDraftByReferenceId(dataAccessRequest.getReferenceId(), false);
+                        dataAccessRequestDAO.updateDraftForCollection(collectionId, dataAccessRequest.getReferenceId());
                         dataAccessRequestDAO.updateDataByReferenceIdVersion2(
                             dataAccessRequest.getReferenceId(),
                             user.getDacUserId(),
@@ -613,10 +613,8 @@ public class DataAccessRequestService {
     }
 
     /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
-     *
      * @param authUser AuthUser
-     * @return List<Document>
+     * @return List<DataAccessRequest>
      */
     private List<DataAccessRequest> getUnReviewedDarsForUser(AuthUser authUser) {
         List<DataAccessRequest> activeDars = dataAccessRequestDAO.findAllDataAccessRequests().stream().
