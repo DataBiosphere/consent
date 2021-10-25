@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -164,12 +165,18 @@ public class DarCollectionService {
 
   public DarCollection getByReferenceId(String referenceId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
+    if (Objects.isNull(collection)) {
+      throw new NotFoundException("Collection with the reference id of " + referenceId + " was not found");
+    }
     List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
     return populatedCollections.stream().findFirst().orElse(null);
   }
 
   public DarCollection getByCollectionId(Integer collectionId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    if (Objects.isNull(collection)) {
+      throw new NotFoundException("Collection with the collection id of " + collectionId + " was not found");
+    }
     List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
     return populatedCollections.stream().findFirst().orElse(null);
   }
