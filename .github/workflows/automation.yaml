@@ -21,11 +21,11 @@ jobs:
 
       - name: Render configs
         env:
-          ADMIN: ${{ secrets.DUOS_AUTOMATION_ADMIN }}
-          CHAIR: ${{ secrets.DUOS_AUTOMATION_CHAIR }}
-          MEMBER: ${{ secrets.DUOS_AUTOMATION_MEMBER }}
-          RESEARCHER: ${{ secrets.DUOS_AUTOMATION_RESEARCHER }}
-          SIGNING_OFFICIAL: ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL }}
+          ADMIN: ${{ secrets.DUOS_AUTOMATION_ADMIN_SA }}
+          CHAIR: ${{ secrets.DUOS_AUTOMATION_CHAIR_SA }}
+          MEMBER: ${{ secrets.DUOS_AUTOMATION_MEMBER_SA }}
+          RESEARCHER: ${{ secrets.DUOS_AUTOMATION_RESEARCHER_SA }}
+          SIGNING_OFFICIAL: ${{ secrets.DUOS_AUTOMATION_SIGNING_OFFICIAL_SA }}
         run: |
           echo "$ADMIN" >> ./automation/src/test/resources/accounts/duos-automation-admin.json
           echo "$CHAIR" >> ./automation/src/test/resources/accounts/duos-automation-chair.json
