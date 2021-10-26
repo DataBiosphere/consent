@@ -688,7 +688,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
         data.setStatus(DarStatus.CANCELED.getValue());
-        data.setDatasetIds(Collections.emptyList());
+        data.setDatasetIds(List.of());
         dar.setData(data);
         sourceCollection.setDars(List.of(dar));
         initService();
@@ -708,6 +708,33 @@ public class DataAccessRequestServiceTest {
         dar.setReferenceId(data.getReferenceId());
         sourceCollection.setDars(List.of(dar));
         when(electionDAO.getOpenElectionIdsByReferenceIds(any())).thenReturn(List.of(1));
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+    }
+
+    @Test
+    public void testCreateDraftDarFromCanceledCollection() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setStatus(DarStatus.CANCELED.getValue());
+        data.setDatasetIds(List.of(1));
+        data.setReferenceId(UUID.randomUUID().toString());
+        dar.setData(data);
+        dar.setReferenceId(data.getReferenceId());
+        sourceCollection.setDars(List.of(dar));
+        when(electionDAO.getOpenElectionIdsByReferenceIds(any())).thenReturn(List.of());
+        doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any()
+        );
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(new DataAccessRequest());
         initService();
         service.createDraftDarFromCanceledCollection(user, sourceCollection);
     }
