@@ -25,7 +25,7 @@ import java.util.List;
 @RegisterRowMapper(ElectionMapper.class)
 public interface ElectionDAO extends Transactional<ElectionDAO> {
 
-    @SqlQuery("select electionId from election where referenceId = :referenceId and lower(status) = 'open'")
+    @SqlQuery("SELECT electionid FROM election WHERE referenceid = :referenceId AND LOWER(status) = 'open'")
     Integer getOpenElectionIdByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("SELECT distinct electionid FROM election WHERE referenceid IN (<referenceIds>) AND LOWER(status) = 'open'")
