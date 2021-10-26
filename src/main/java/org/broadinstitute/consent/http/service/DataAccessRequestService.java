@@ -247,10 +247,10 @@ public class DataAccessRequestService {
      * @return New DataAccessRequest in draft status
      */
     public DataAccessRequest createDraftDarFromCanceledCollection(User user, DarCollection sourceCollection) {
-        DataAccessRequest sourceDar = sourceCollection.getDars().get(0);
-        if (Objects.isNull(sourceDar)) {
+        if (Objects.isNull(sourceCollection.getDars()) || sourceCollection.getDars().isEmpty()) {
             throw new IllegalArgumentException("Source Collection must contain at least a single DAR");
         }
+        DataAccessRequest sourceDar = sourceCollection.getDars().get(0);
         DataAccessRequestData sourceData = sourceDar.getData();
         if (Objects.isNull(sourceData)) {
             throw new IllegalArgumentException("Source Collection must contain at least a single DAR with a populated data");

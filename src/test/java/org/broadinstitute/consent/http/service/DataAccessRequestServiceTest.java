@@ -37,6 +37,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
@@ -648,6 +649,67 @@ public class DataAccessRequestServiceTest {
         initService();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenThrow(new NotFoundException());
         service.findByReferenceId("referenceId");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDraftDarFromCanceledCollection_NoDars() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDraftDarFromCanceledCollection_NoDarData() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        sourceCollection.setDars(List.of(new DataAccessRequest()));
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDraftDarFromCanceledCollection_NoCanceledDars() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setStatus("Not Canceled");
+        dar.setData(data);
+        sourceCollection.setDars(List.of(dar));
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDraftDarFromCanceledCollection_NoDatasets() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setStatus(DarStatus.CANCELED.getValue());
+        data.setDatasetIds(Collections.emptyList());
+        dar.setData(data);
+        sourceCollection.setDars(List.of(dar));
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDraftDarFromCanceledCollection_OpenElectionsOnCanceledDars() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setStatus(DarStatus.CANCELED.getValue());
+        data.setDatasetIds(List.of(1));
+        data.setReferenceId(UUID.randomUUID().toString());
+        dar.setData(data);
+        dar.setReferenceId(data.getReferenceId());
+        sourceCollection.setDars(List.of(dar));
+        when(electionDAO.getOpenElectionIdsByReferenceIds(any())).thenReturn(List.of(1));
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
     }
 
     private class LongerThanTwo implements ArgumentMatcher<String> {
