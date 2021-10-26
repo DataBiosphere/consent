@@ -266,6 +266,18 @@ public class DataAccessRequestService {
         if (datasetIds.isEmpty()) {
             throw new IllegalArgumentException("Source Collection must contain references to at least a single canceled DAR's dataset");
         }
+        List<String> canceledReferenceIds = sourceCollection
+            .getDars().stream()
+            .map(DataAccessRequest::getData)
+            .filter(d -> d.getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()))
+            .map(DataAccessRequestData::getReferenceId)
+            .collect(Collectors.toUnmodifiableList());
+        List<Integer> openElectionIds = electionDAO.getOpenElectionIdsByReferenceIds(canceledReferenceIds);
+        if (!openElectionIds.isEmpty()) {
+            String errorMessage = "Found 'Open' elections for canceled DARs in collection id: " + sourceCollection.getDarCollectionId();
+            logger.warn(errorMessage);
+            throw new IllegalArgumentException(errorMessage); 
+        }
         String referenceId = UUID.randomUUID().toString();
         Date now = new Date();
         // Clone the dar's data object and reset values that need to be updated for the clone

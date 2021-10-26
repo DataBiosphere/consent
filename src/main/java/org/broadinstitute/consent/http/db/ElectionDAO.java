@@ -30,6 +30,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select electionId from election where referenceId = :referenceId and lower(status) = 'open'")
     Integer getOpenElectionIdByReferenceId(@Bind("referenceId") String referenceId);
 
+    @SqlQuery("SELECT distinct electionid FROM election WHERE referenceid IN (<referenceIds>) AND LOWER(status) = 'open'")
+    List<Integer> getOpenElectionIdsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
     @SqlQuery("select  e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, " +
             " e.lastUpdate, e.finalAccessVote, e.electionType,  e.dataUseLetter, e.dulName, e.archived, e.version from election e inner join vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' where referenceId = :referenceId")
     List<Election> findElectionsWithFinalVoteByReferenceId(@Bind("referenceId") String referenceId);
