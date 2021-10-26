@@ -25,8 +25,6 @@ import java.util.List;
 @RegisterRowMapper(ElectionMapper.class)
 public interface ElectionDAO extends Transactional<ElectionDAO> {
 
-    String CANCELED = "Canceled";
-
     @SqlQuery("select electionId from election where referenceId = :referenceId and lower(status) = 'open'")
     Integer getOpenElectionIdByReferenceId(@Bind("referenceId") String referenceId);
 
