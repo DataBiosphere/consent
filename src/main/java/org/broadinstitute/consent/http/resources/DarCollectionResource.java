@@ -20,7 +20,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -188,7 +188,7 @@ public class DarCollectionResource extends Resource {
     boolean isCanceled =
         collection.getDars().stream()
             .anyMatch(
-                d -> d.getData().getStatus().equalsIgnoreCase(ElectionStatus.CANCELED.getValue()));
+                d -> d.getData().getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()));
     if (!isCanceled) {
       throw new BadRequestException();
     }

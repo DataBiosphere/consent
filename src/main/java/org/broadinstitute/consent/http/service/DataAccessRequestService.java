@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -36,10 +35,10 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.UserFields;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -260,7 +259,7 @@ public class DataAccessRequestService {
         List<Integer> datasetIds = sourceCollection
             .getDars().stream()
             .map(DataAccessRequest::getData)
-            .filter(d -> d.getStatus().equalsIgnoreCase(ElectionStatus.CANCELED.getValue()))
+            .filter(d -> d.getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()))
             .map(DataAccessRequestData::getDatasetIds)
             .flatMap(Collection::stream)
             .collect(Collectors.toUnmodifiableList());
@@ -317,7 +316,7 @@ public class DataAccessRequestService {
             throw new UnsupportedOperationException("Cancelling this DAR is not allowed");
         }
         DataAccessRequestData darData = dar.getData();
-        darData.setStatus(ElectionStatus.CANCELED.getValue());
+        darData.setStatus(DarStatus.CANCELED.getValue());
         updateByReferenceId(referenceId, darData);
         return findByReferenceId(referenceId);
     }
@@ -377,7 +376,7 @@ public class DataAccessRequestService {
     }
 
     private List<DataAccessRequest> filterOutCanceledDars(List<DataAccessRequest> dars) {
-        return dars.stream().filter(dar -> !ElectionStatus.CANCELED.getValue().equals(dar.getData().getStatus())).collect(Collectors.toList());
+        return dars.stream().filter(dar -> !DarStatus.CANCELED.getValue().equals(dar.getData().getStatus())).collect(Collectors.toList());
     }
 
     /**
@@ -619,7 +618,7 @@ public class DataAccessRequestService {
      */
     private List<DataAccessRequest> getUnReviewedDarsForUser(AuthUser authUser) {
         List<DataAccessRequest> activeDars = dataAccessRequestDAO.findAllDataAccessRequests().stream().
-                filter(d -> !ElectionStatus.CANCELED.getValue().equalsIgnoreCase(Objects.nonNull(d.getData()) ? d.getData().getStatus() : "")).
+                filter(d -> !DarStatus.CANCELED.getValue().equalsIgnoreCase(Objects.nonNull(d.getData()) ? d.getData().getStatus() : "")).
                 collect(Collectors.toList());
         if (dacService.isAuthUserAdmin(authUser)) {
             return activeDars;
