@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -152,9 +153,7 @@ public class DataAccessRequestServiceTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testCancelDataAccessRequestWithElectionPresentFail() {
-        List<Election> electionList = new ArrayList<Election>();
-        electionList.add(new Election());
-        when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);
+        when(electionDAO.getElectionIdsByReferenceIds(anyList())).thenReturn(List.of(1));
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
