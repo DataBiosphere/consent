@@ -232,8 +232,8 @@ public class DarCollectionService {
       return collection;
     }
 
-    List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds, ElectionType.DATA_ACCESS.getValue());
-    if(!elections.isEmpty()) {
+    List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(referenceIds);
+    if(!electionIds.isEmpty()) {
       throw new BadRequestException("Elections present on DARs; cannot cancel collection");
     }
     List<String> nonCanceledIds = dars.stream()
@@ -247,5 +247,5 @@ public class DarCollectionService {
     }
     return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }
-
 }
+

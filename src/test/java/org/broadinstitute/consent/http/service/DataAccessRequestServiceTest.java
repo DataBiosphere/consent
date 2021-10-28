@@ -1,27 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.DarCollectionDAO;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.Vote;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import org.mockito.ArgumentMatcher;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,21 +22,38 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import javax.ws.rs.NotFoundException;
-
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.DarStatus;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DatasetDetailEntry;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -147,14 +148,12 @@ public class DataAccessRequestServiceTest {
         assertNotNull(updated);
         assertNotNull(updated.getData());
         assertNotNull(updated.getData().getStatus());
-        assertEquals(ElectionStatus.CANCELED.getValue(), updated.getData().getStatus());
+        assertEquals(DarStatus.CANCELED.getValue(), updated.getData().getStatus());
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void testCancelDataAccessRequestWithElectionPresentFail() {
-        List<Election> electionList = new ArrayList<Election>();
-        electionList.add(new Election());
-        when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);
+        when(electionDAO.getElectionIdsByReferenceIds(anyList())).thenReturn(List.of(1));
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
@@ -181,7 +180,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         doNothing().when(dataAccessRequestDAO).updateDraftByReferenceId(any(), any());
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(), any(), any(), any());
-        doNothing().when(dataAccessRequestDAO).insertVersion2(any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
         initService();
         List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
         assertEquals(3, newDars.size());
@@ -244,7 +243,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest draft = generateDataAccessRequest();
         doNothing()
             .when(dataAccessRequestDAO)
-            .insertVersion2(any(), any(), any(), any(), any(), any(), any());
+            .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
         doNothing()
             .when(dataAccessRequestDAO)
             .updateDraftByReferenceId(any(), any());
@@ -649,6 +648,94 @@ public class DataAccessRequestServiceTest {
         initService();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenThrow(new NotFoundException());
         service.findByReferenceId("referenceId");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDraftDarFromCanceledCollection_NoDars() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDraftDarFromCanceledCollection_NoDarData() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        sourceCollection.setDars(List.of(new DataAccessRequest()));
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDraftDarFromCanceledCollection_NoCanceledDars() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setStatus("Not Canceled");
+        dar.setData(data);
+        sourceCollection.setDars(List.of(dar));
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDraftDarFromCanceledCollection_NoDatasets() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setStatus(DarStatus.CANCELED.getValue());
+        data.setDatasetIds(List.of());
+        dar.setData(data);
+        sourceCollection.setDars(List.of(dar));
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDraftDarFromCanceledCollection_OpenElectionsOnCanceledDars() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setStatus(DarStatus.CANCELED.getValue());
+        data.setDatasetIds(List.of(1));
+        data.setReferenceId(UUID.randomUUID().toString());
+        dar.setData(data);
+        dar.setReferenceId(data.getReferenceId());
+        sourceCollection.setDars(List.of(dar));
+        when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of(1));
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+    }
+
+    @Test
+    public void testCreateDraftDarFromCanceledCollection() {
+        User user = new User();
+        DarCollection sourceCollection = new DarCollection();
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setStatus(DarStatus.CANCELED.getValue());
+        data.setDatasetIds(List.of(1));
+        data.setReferenceId(UUID.randomUUID().toString());
+        dar.setData(data);
+        dar.setReferenceId(data.getReferenceId());
+        sourceCollection.setDars(List.of(dar));
+        when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of());
+        doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any()
+        );
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(new DataAccessRequest());
+        initService();
+        service.createDraftDarFromCanceledCollection(user, sourceCollection);
     }
 
     private class LongerThanTwo implements ArgumentMatcher<String> {

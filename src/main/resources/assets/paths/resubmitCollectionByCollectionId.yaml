@@ -1,0 +1,25 @@
+put:
+  summary: Resubmit DAR Collection By ID
+  description: Returns new draft Data Access Request from a previously canceled DAR Collection
+  tags:
+    - DAR Collection
+  parameters:
+    - name: collectionId
+      in: path
+      description: DAR Collection Id
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: Returns new draft DAR
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DataAccessRequest.yaml'
+    400: 
+      description: Bad Request (dar collection is not canceled)
+    404:
+      description: Not Found
+    500:
+      description: Internal Server Error
