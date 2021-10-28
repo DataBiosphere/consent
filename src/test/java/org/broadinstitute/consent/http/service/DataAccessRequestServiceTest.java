@@ -707,7 +707,7 @@ public class DataAccessRequestServiceTest {
         dar.setData(data);
         dar.setReferenceId(data.getReferenceId());
         sourceCollection.setDars(List.of(dar));
-        when(electionDAO.getOpenElectionIdsByReferenceIds(any())).thenReturn(List.of(1));
+        when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of(1));
         initService();
         service.createDraftDarFromCanceledCollection(user, sourceCollection);
     }
@@ -724,7 +724,7 @@ public class DataAccessRequestServiceTest {
         dar.setData(data);
         dar.setReferenceId(data.getReferenceId());
         sourceCollection.setDars(List.of(dar));
-        when(electionDAO.getOpenElectionIdsByReferenceIds(any())).thenReturn(List.of());
+        when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of());
         doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(
             any(),
             any(),

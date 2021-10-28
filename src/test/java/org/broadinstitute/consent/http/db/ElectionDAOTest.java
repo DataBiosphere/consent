@@ -42,7 +42,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetOpenElectionIdsByReferenceIds() {
+  public void testGetElectionIdsByReferenceIds() {
     String accessReferenceId1 = UUID.randomUUID().toString();
     String accessReferenceId2 = UUID.randomUUID().toString();
     DataSet dataset1 = createDataset();
@@ -50,11 +50,11 @@ public class ElectionDAOTest extends DAOTestHelper {
     Election accessElection1 = createAccessElection(accessReferenceId1, dataset1.getDataSetId());
     Election accessElection2 = createAccessElection(accessReferenceId2, dataset2.getDataSetId());
     
-    List<Integer> electionIds = electionDAO.getOpenElectionIdsByReferenceIds(List.of(accessReferenceId1, accessReferenceId2));
+    List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(List.of(accessReferenceId1, accessReferenceId2));
     assertEquals(2, electionIds.size());
     assertTrue(electionIds.contains(accessElection1.getElectionId()));
     assertTrue(electionIds.contains(accessElection2.getElectionId()));
-    List<Integer> missingElectionIds = electionDAO.getOpenElectionIdsByReferenceIds(List.of("1", "2", "3"));
+    List<Integer> missingElectionIds = electionDAO.getElectionIdsByReferenceIds(List.of("1", "2", "3"));
     assertTrue(missingElectionIds.isEmpty());
   }
 

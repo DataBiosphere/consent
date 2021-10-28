@@ -272,8 +272,8 @@ public class DataAccessRequestService {
             .filter(d -> d.getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()))
             .map(DataAccessRequestData::getReferenceId)
             .collect(Collectors.toUnmodifiableList());
-        List<Integer> openElectionIds = electionDAO.getOpenElectionIdsByReferenceIds(canceledReferenceIds);
-        if (!openElectionIds.isEmpty()) {
+        List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(canceledReferenceIds);
+        if (!electionIds.isEmpty()) {
             String errorMessage = "Found 'Open' elections for canceled DARs in collection id: " + sourceCollection.getDarCollectionId();
             logger.warn(errorMessage);
             throw new IllegalArgumentException(errorMessage); 
@@ -323,8 +323,8 @@ public class DataAccessRequestService {
         if (Objects.isNull(dar)) {
             throw new NotFoundException("Unable to find Data Access Request with the provided id: " + referenceId);
         }
-        List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
-        if (!elections.isEmpty()) {
+        List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(List.of(referenceId));
+        if (!electionIds.isEmpty()) {
             throw new UnsupportedOperationException("Cancelling this DAR is not allowed");
         }
         DataAccessRequestData darData = dar.getData();
