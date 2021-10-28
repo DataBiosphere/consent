@@ -283,7 +283,7 @@ public class DarCollectionServiceTest {
     DarCollection collection = generateMockDarCollection(datasets);
     List<Election> elections = Collections.singletonList(new Election());
 
-    when(electionDAO.findLastElectionsByReferenceIdsAndType(anyList(), anyString())).thenReturn(elections);
+    when(electionDAO.getElectionIdsByReferenceIds(anyList())).thenReturn(List.of(1));
     doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     initService();
