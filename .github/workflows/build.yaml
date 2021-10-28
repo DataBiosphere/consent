@@ -69,7 +69,7 @@ jobs:
         token: ${{ secrets.BROADBOT_TOKEN }}
         repository: broadinstitute/terra-helmfile
         event-type: update-service
-        client-payload: '{"service": "duos", "version": "${{ steps.short-sha.outputs.sha }}", "dev_only": false}'
+        client-payload: '{"service": "consent", "version": "${{ steps.short-sha.outputs.sha }}", "dev_only": false}'
     - name: Notify Slack
       # only notify for develop branch build
       if: github.event_name == 'push'
