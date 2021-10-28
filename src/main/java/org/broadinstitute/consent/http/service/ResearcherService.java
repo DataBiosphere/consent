@@ -67,7 +67,6 @@ public class ResearcherService {
             saveProperties(properties);
             notifyAdmins(user.getDacUserId());
         } else if (hasUpdatedFields(user.getDacUserId(), validatedProperties, isUpdatedProfileCompleted)) {
-            deleteResearcherProperties(user.getDacUserId());
             saveProperties(properties);
             userService.updateUserStatus(RoleStatus.PENDING.toString(), user.getDacUserId());
         } else {
