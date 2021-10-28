@@ -281,7 +281,6 @@ public class DarCollectionServiceTest {
   public void testCancelDarCollection_electionPresent() {
     Set<DataSet> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
-    List<Election> elections = Collections.singletonList(new Election());
 
     when(electionDAO.getElectionIdsByReferenceIds(anyList())).thenReturn(List.of(1));
     doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
