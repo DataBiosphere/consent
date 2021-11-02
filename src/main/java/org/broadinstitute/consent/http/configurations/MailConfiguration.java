@@ -8,13 +8,15 @@ import javax.validation.constraints.NotNull;
 public class MailConfiguration {
 
     @NotNull
-    boolean activateEmailNotifications;
+    private boolean activateEmailNotifications;
 
     @NotNull
-    String googleAccount;
+    private String googleAccount;
 
     @NotNull
-    String sendGridApiKey;
+    private String sendGridApiKey;
+
+    private String sendGridStatusUrl = "https://status.sendgrid.com/api/v2/status.json";
 
     public boolean isActivateEmailNotifications() {
         return activateEmailNotifications;
@@ -39,4 +41,8 @@ public class MailConfiguration {
     public void setSendGridApiKey(String sendGridApiKey) {
         this.sendGridApiKey = sendGridApiKey;
     }
+
+    public String getSendGridStatusUrl() { return sendGridStatusUrl; }
+
+    public void setSendGridStatusUrl(String sendGridStatusUrl) { this.sendGridStatusUrl = sendGridStatusUrl; }
 }

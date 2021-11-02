@@ -28,13 +28,12 @@ import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
 import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
-import org.broadinstitute.consent.http.health.GCSHealthCheck;
+import org.broadinstitute.consent.http.health.*;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
-import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.resources.ApprovalExpirationTimeResource;
 import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
@@ -93,11 +92,9 @@ import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontology.IndexerService;
 import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
-import org.broadinstitute.consent.http.health.OntologyHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
@@ -132,6 +129,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     public static final String ES_CHECK = "elastic-search";
     public static final String ONTOLOGY_CHECK = "ontology";
     public static final String SAM_CHECK = "sam";
+    public static final String SG_CHECK = "sendgrid";
 
     public static void main(String[] args) throws Exception {
         LOGGER.info("Starting Consent Application");
@@ -200,6 +198,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.healthChecks().register(ES_CHECK, new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
         env.healthChecks().register(ONTOLOGY_CHECK, new OntologyHealthCheck(clientUtil, config.getServicesConfiguration()));
         env.healthChecks().register(SAM_CHECK, new SamHealthCheck(clientUtil, config.getServicesConfiguration()));
+        env.healthChecks().register(SG_CHECK, new SendGridHealthCheck(clientUtil, config.getMailConfiguration()));
 
         final StoreOntologyService storeOntologyService = new StoreOntologyService(
                 googleStore,
