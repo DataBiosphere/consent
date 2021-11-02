@@ -20,23 +20,30 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/collections")
 public class DarCollectionResource extends Resource {
+
   private final UserService userService;
   private final DarCollectionService darCollectionService;
+  private final DataAccessRequestService dataAccessRequestService;
 
   @Inject
-  public DarCollectionResource(UserService userService, DarCollectionService darCollectionService) {
+  public DarCollectionResource(UserService userService, DarCollectionService darCollectionService, 
+    DataAccessRequestService dataAccessRequestService) {
     this.userService = userService;
     this.darCollectionService = darCollectionService;
+    this.dataAccessRequestService = dataAccessRequestService;
   }
 
   @GET
@@ -156,6 +163,34 @@ public class DarCollectionResource extends Resource {
       return Response.ok().entity(cancelledCollection).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Path("{id}/resubmit")
+  @Produces("application/json")
+  @RolesAllowed(RESEARCHER)
+  public Response resubmitDarCollection(@Auth AuthUser authUser, @PathParam("id") Integer collectionId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      DarCollection sourceCollection = darCollectionService.getByCollectionId(collectionId);
+      isCollectionPresent(sourceCollection);
+      validateUserIsCreator(user, sourceCollection);
+      validateCollectionIsCanceled(sourceCollection);
+      DataAccessRequest draftDar = dataAccessRequestService.createDraftDarFromCanceledCollection(user, sourceCollection);
+      return Response.ok().entity(draftDar).build();
+    } catch(Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  private void validateCollectionIsCanceled(DarCollection collection) {
+    boolean isCanceled =
+        collection.getDars().stream()
+            .anyMatch(
+                d -> d.getData().getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()));
+    if (!isCanceled) {
+      throw new BadRequestException();
     }
   }
 

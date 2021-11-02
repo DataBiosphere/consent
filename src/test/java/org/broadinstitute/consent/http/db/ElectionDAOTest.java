@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 
@@ -27,6 +28,35 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class ElectionDAOTest extends DAOTestHelper {
+
+  @Test
+  public void testGetOpenElectionIdByReferenceId() {
+    String accessReferenceId = UUID.randomUUID().toString();
+    DataSet dataset = createDataset();
+    Election accessElection = createAccessElection(accessReferenceId, dataset.getDataSetId());
+    
+    Integer electionId = electionDAO.getOpenElectionIdByReferenceId(accessReferenceId);
+    assertEquals(accessElection.getElectionId(), electionId);
+    Integer missingElectionId = electionDAO.getOpenElectionIdByReferenceId("accessReferenceId");
+    assertNull(missingElectionId);
+  }
+
+  @Test
+  public void testGetElectionIdsByReferenceIds() {
+    String accessReferenceId1 = UUID.randomUUID().toString();
+    String accessReferenceId2 = UUID.randomUUID().toString();
+    DataSet dataset1 = createDataset();
+    DataSet dataset2 = createDataset();
+    Election accessElection1 = createAccessElection(accessReferenceId1, dataset1.getDataSetId());
+    Election accessElection2 = createAccessElection(accessReferenceId2, dataset2.getDataSetId());
+    
+    List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(List.of(accessReferenceId1, accessReferenceId2));
+    assertEquals(2, electionIds.size());
+    assertTrue(electionIds.contains(accessElection1.getElectionId()));
+    assertTrue(electionIds.contains(accessElection2.getElectionId()));
+    List<Integer> missingElectionIds = electionDAO.getElectionIdsByReferenceIds(List.of("1", "2", "3"));
+    assertTrue(missingElectionIds.isEmpty());
+  }
 
   @Test
   public void testFindRpAccessElectionIdPairs() {
@@ -186,7 +216,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
   @Test
   public void testFindElectionsByReferenceIdCase1() {
-    DataAccessRequest dar = createDataAccessRequestV2();
+    DataAccessRequest dar = createDataAccessRequestV3();
     DataSet d = createDataset();
     createAccessElection(dar.getReferenceId(), d.getDataSetId());
     createRPElection(dar.getReferenceId(), d.getDataSetId());
@@ -210,7 +240,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
   @Test
   public void testFindLastElectionsByReferenceIdsAndType() {
-    DataAccessRequest dar = createDataAccessRequestV2();
+    DataAccessRequest dar = createDataAccessRequestV3();
     DataSet d = createDataset();
     createExtendedElection(dar.getReferenceId(), d.getDataSetId());
     List<Election> elections =
@@ -252,7 +282,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
     DataSet dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequestV2();
+    DataAccessRequest dar = createDataAccessRequestV3();
 
     String darReferenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();

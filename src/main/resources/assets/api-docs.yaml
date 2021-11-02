@@ -132,6 +132,8 @@ paths:
     $ref: './paths/collectionsByRoleName.yaml'
   /api/collections/{collectionId}/cancel:
     $ref: './paths/cancelCollectionByCollectionId.yaml'
+  /api/collections/{collectionId}/resubmit:
+    $ref: './paths/resubmitCollectionByCollectionId.yaml'
   /api/ontology:
     get:
       summary: List Ontology Files

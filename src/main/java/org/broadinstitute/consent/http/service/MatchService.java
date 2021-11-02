@@ -149,7 +149,7 @@ public class MatchService {
                 match = singleEntitiesMatch(consent, dar);
             }
         } catch (Exception e) {
-            logger.error("Error finding single match.", e);
+            logger.error("Error finding single match for consent: " + consentId + " and purpose: " + purposeId);
             return null;
         }
         return match;
@@ -165,7 +165,7 @@ public class MatchService {
                 try {
                     match = singleEntitiesMatch(consent, dar);
                 } catch (Exception e) {
-                    logger.error("Error finding single match.", e);
+                    logger.error("Error finding single match for purpose: " + purposeId);
                     match = createMatch(consent.getConsentId(), purposeId, true, false);
                 }
             }
@@ -185,7 +185,7 @@ public class MatchService {
                     match = singleEntitiesMatch(consent, dar);
                     matches.add(match);
                 } catch (Exception e) {
-                    logger.error("Error finding  matches for consent.", e);
+                    logger.error("Error finding  matches for consent: " + consentId);
                     matches.add(createMatch(consentId, dar.getReferenceId(), true, false));
                 }
             }
@@ -251,7 +251,7 @@ public class MatchService {
                 consent.setLastElectionArchived(election.getArchived());
             }
         } catch (UnknownIdentifierException e) {
-            logger.error("Consent for specified id does not exist.", e);
+            logger.error("Consent for specified id does not exist: " + consentId);
         }
         return consent;
     }
