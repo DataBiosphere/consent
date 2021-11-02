@@ -25,15 +25,15 @@ public class SendGridHealthCheck extends HealthCheck implements Managed {
     @Override
     protected Result check() throws Exception {
         try {
-            String statusUrl = configuration.getSendGridStatusUrl() + "status";
+            String statusUrl = configuration.getSendGridStatusUrl();
             HttpGet httpGet = new HttpGet(statusUrl);
             try (CloseableHttpResponse response = clientUtil.getHttpResponse(httpGet)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatusCodes.STATUS_CODE_OK) {
                     String content = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
                     SendGridStatus sgStatus = new Gson().fromJson(content, SendGridStatus.class);
                     return Result.builder()
-                            .withDetail(StatusResource.OK, sgStatus.ok)
-                            .withDetail(StatusResource.SYSTEMS, sgStatus.systems)
+                            .withDetail("pages", sgStatus.page)
+                            .withDetail("status", sgStatus.status)
                             .healthy()
                             .build();
                 } else {
@@ -54,7 +54,7 @@ public class SendGridHealthCheck extends HealthCheck implements Managed {
     public void stop() throws Exception {}
 
     private static class SendGridStatus {
-        boolean ok;
-        Object systems;
+        Object page;
+        Object status;
     }
 }
