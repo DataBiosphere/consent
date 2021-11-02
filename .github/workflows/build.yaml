@@ -8,6 +8,7 @@ on:
     - 'CONTRIBUTING.md'
     - 'DEVNOTES.md'
     - 'README.md'
+    - 'LICENSE.txt'
     - '.github/**'
   pull_request:
     branches:
@@ -16,6 +17,7 @@ on:
     - 'CONTRIBUTING.md'
     - 'DEVNOTES.md'
     - 'README.md'
+    - 'LICENSE.txt'
 env:
   REGISTRY_HOST: gcr.io
   GOOGLE_PROJECT: broad-dsp-gcr-public
