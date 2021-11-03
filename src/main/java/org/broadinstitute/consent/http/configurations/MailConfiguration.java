@@ -16,7 +16,7 @@ public class MailConfiguration {
     @NotNull
     private String sendGridApiKey;
 
-    private String sendGridStatusUrl = "https://status.sendgrid.com/api/v2/status.json";
+    private String sendGridStatusUrl;
 
     public boolean isActivateEmailNotifications() {
         return activateEmailNotifications;

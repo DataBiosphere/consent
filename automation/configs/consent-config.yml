@@ -35,6 +35,7 @@ mailConfiguration:
   activateEmailNotifications: false
   googleAccount: test@gmail.com
   sendGridApiKey: test-key
+  sendGridStatusUrl: https://status.sendgrid.com/api/v2/status.json
 freeMarkerConfiguration:
   templateDirectory: /freemarker
   defaultEncoding: UTF-8

@@ -39,11 +39,12 @@ public class SendGridHealthCheckTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    private void initHealthCheck() {
+    private String correctEntity = "{\"page\":{\"id\":\"3tgl2vf85cht\",\"name\":\"SendGrid\",\"url\":\"https://status.sendgrid.com\",\"time_zone\":\"America/Los_Angeles\",\"updated_at\":\"2021-11-03T04:01:21.355-07:00\"},\"status\":{\"indicator\":\"none\",\"description\":\"All Systems Operational\"}}";
+    private String incorrectEntity = "{\"page\":{\"id\":\"3tgl2vf85cht\",\"name\":\"SendGrid\",\"url\":\"https://status.sendgrid.com\",\"time_zone\":\"America/Los_Angeles\",\"updated_at\":\"2021-11-03T04:01:21.355-07:00\"},\"status\":{\"indicator\":\"none\",\"description\":\"FAILURE\"}}";
+
+    private void initHealthCheck(String entity) {
         try {
-            when(response.getEntity()).thenReturn(
-                    new StringEntity("{\"page\":{\"id\":\"3tgl2vf85cht\",\"name\":\"SendGrid\",\"url\":\"https://status.sendgrid.com\",\"time_zone\":\"America/Los_Angeles\",\"updated_at\":\"2021-11-03T04:01:21.355-07:00\"},\"status\":{\"indicator\":\"none\",\"description\":\"All Systems Operational\"}}")
-            );
+            when(response.getEntity()).thenReturn(new StringEntity(entity));
             when(clientUtil.getHttpResponse(any())).thenReturn(response);
             when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
             healthCheck = new SendGridHealthCheck(clientUtil, mailConfiguration);
@@ -56,7 +57,7 @@ public class SendGridHealthCheckTest {
     public void testCheckSuccess() throws Exception {
         when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
         when(response.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck();
+        initHealthCheck(correctEntity);
 
         HealthCheck.Result result = healthCheck.check();
         assertTrue(result.isHealthy());
@@ -66,7 +67,17 @@ public class SendGridHealthCheckTest {
     public void testCheckFailure() throws Exception {
         when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
         when(response.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck();
+        initHealthCheck(correctEntity);
+
+        HealthCheck.Result result = healthCheck.check();
+        assertFalse(result.isHealthy());
+    }
+
+    @Test
+    public void testCheckExternalFailure() throws Exception {
+        when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+        when(response.getStatusLine()).thenReturn(statusLine);
+        initHealthCheck(incorrectEntity);
 
         HealthCheck.Result result = healthCheck.check();
         assertFalse(result.isHealthy());
@@ -75,7 +86,7 @@ public class SendGridHealthCheckTest {
     @Test
     public void testCheckException() throws Exception {
         doThrow(new RuntimeException()).when(response).getStatusLine();
-        initHealthCheck();
+        initHealthCheck(correctEntity);
 
         HealthCheck.Result result = healthCheck.check();
         assertFalse(result.isHealthy());
