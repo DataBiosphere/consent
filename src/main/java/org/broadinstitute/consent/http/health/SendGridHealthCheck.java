@@ -8,7 +8,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
-import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 import java.nio.charset.Charset;
@@ -31,11 +30,15 @@ public class SendGridHealthCheck extends HealthCheck implements Managed {
                 if (response.getStatusLine().getStatusCode() == HttpStatusCodes.STATUS_CODE_OK) {
                     String content = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
                     SendGridStatus sgStatus = new Gson().fromJson(content, SendGridStatus.class);
-                    return Result.builder()
-                            .withDetail("pages", sgStatus.page)
-                            .withDetail("status", sgStatus.status)
-                            .healthy()
-                            .build();
+                    if (sgStatus.status.description.equalsIgnoreCase("All Systems Operational")) {
+                        return Result.builder()
+                                .withDetail("pages", sgStatus.page)
+                                .withDetail("status", sgStatus.status)
+                                .healthy()
+                                .build();
+                    } else {
+                        return Result.unhealthy("SendGrid status is unhealthy: " + sgStatus.status.description);
+                    }
                 } else {
                     return Result.unhealthy("SendGrid status is unhealthy: " + response.getStatusLine());
                 }
@@ -55,6 +58,11 @@ public class SendGridHealthCheck extends HealthCheck implements Managed {
 
     private static class SendGridStatus {
         Object page;
-        Object status;
+        StatusObject status;
+    }
+
+    private static class StatusObject {
+        String indicator;
+        String description;
     }
 }
