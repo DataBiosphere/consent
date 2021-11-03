@@ -39,12 +39,7 @@ public class SendGridHealthCheckTest {
 
     private void initHealthCheck() {
         try {
-            when(response.getEntity())
-                    .thenReturn(
-                        new StringEntity(
-                            "{\"pages\": {\"id\": \"3tgl2vf85cht\",\"name\": \"SendGrid\",\"url\": \"https://status.sendgrid.com\",\"time_zone\": \"America/Los_Angeles\",\"updated_at\": \"2021-11-02T08:52:16.760-07:00\"},\"status\": {\"indicator\": \"none\",\"description\": \"All Systems Operational\")}"
-                        )
-                    );
+            when(response.getEntity()).thenReturn(new StringEntity("{}"));
             when(clientUtil.getHttpResponse(any())).thenReturn(response);
             when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
             healthCheck = new SendGridHealthCheck(clientUtil, mailConfiguration);
