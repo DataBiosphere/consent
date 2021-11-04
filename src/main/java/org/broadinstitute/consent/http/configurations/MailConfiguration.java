@@ -16,6 +16,7 @@ public class MailConfiguration {
     @NotNull
     private String sendGridApiKey;
 
+    @NotNull
     private String sendGridStatusUrl;
 
     public boolean isActivateEmailNotifications() {
