@@ -29,16 +29,8 @@ public class SendGridHealthCheck extends HealthCheck implements Managed {
             try (CloseableHttpResponse response = clientUtil.getHttpResponse(httpGet)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatusCodes.STATUS_CODE_OK) {
                     String content = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
-                    SendGridStatus sgStatus = new Gson().fromJson(content, SendGridStatus.class);
-                    if (sgStatus.status.description.equalsIgnoreCase("All Systems Operational")) {
-                        return Result.builder()
-                                .withDetail("pages", sgStatus.page)
-                                .withDetail("status", sgStatus.status)
-                                .healthy()
-                                .build();
-                    } else {
-                        return Result.unhealthy("SendGrid status is unhealthy: " + sgStatus.status.description);
-                    }
+                    SendGridStatus status = new Gson().fromJson(content, SendGridStatus.class);
+                    return status.getResult();
                 } else {
                     return Result.unhealthy("SendGrid status is unhealthy: " + response.getStatusLine());
                 }
@@ -55,14 +47,4 @@ public class SendGridHealthCheck extends HealthCheck implements Managed {
 
     @Override
     public void stop() throws Exception {}
-
-    private static class SendGridStatus {
-        Object page;
-        StatusObject status;
-    }
-
-    private static class StatusObject {
-        String indicator;
-        String description;
-    }
 }

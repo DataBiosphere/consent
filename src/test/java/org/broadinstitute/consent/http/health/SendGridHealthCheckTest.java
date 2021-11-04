@@ -40,7 +40,7 @@ public class SendGridHealthCheckTest {
     }
 
     private String correctEntity = "{\"page\":{\"id\":\"3tgl2vf85cht\",\"name\":\"SendGrid\",\"url\":\"https://status.sendgrid.com\",\"time_zone\":\"America/Los_Angeles\",\"updated_at\":\"2021-11-03T04:01:21.355-07:00\"},\"status\":{\"indicator\":\"none\",\"description\":\"All Systems Operational\"}}";
-    private String incorrectEntity = "{\"page\":{\"id\":\"3tgl2vf85cht\",\"name\":\"SendGrid\",\"url\":\"https://status.sendgrid.com\",\"time_zone\":\"America/Los_Angeles\",\"updated_at\":\"2021-11-03T04:01:21.355-07:00\"},\"status\":{\"indicator\":\"none\",\"description\":\"FAILURE\"}}";
+    private String incorrectEntity = "{\"page\":{\"id\":\"3tgl2vf85cht\",\"name\":\"SendGrid\",\"url\":\"https://status.sendgrid.com\",\"time_zone\":\"America/Los_Angeles\",\"updated_at\":\"2021-11-03T04:01:21.355-07:00\"},\"status\":{\"indicator\":\"major\",\"description\":\"FAILURE\"}}";
 
     private void initHealthCheck(String entity) {
         try {
