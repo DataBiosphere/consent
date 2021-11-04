@@ -4,20 +4,9 @@ on:
   push:
     branches:
     - develop
-    paths-ignore:
-    - 'CONTRIBUTING.md'
-    - 'DEVNOTES.md'
-    - 'README.md'
-    - 'LICENSE.txt'
-    - '.github/**'
   pull_request:
     branches:
     - develop
-    paths-ignore:
-    - 'CONTRIBUTING.md'
-    - 'DEVNOTES.md'
-    - 'README.md'
-    - 'LICENSE.txt'
 env:
   REGISTRY_HOST: gcr.io
   GOOGLE_PROJECT: broad-dsp-gcr-public
