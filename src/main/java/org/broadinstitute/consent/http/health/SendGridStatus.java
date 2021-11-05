@@ -20,35 +20,51 @@ public class SendGridStatus {
 
     public String getStatus() {
         Map<String, String> statusMap = new HashMap<>();
-        statusMap.put("indicator", status.indicator);
-        statusMap.put("description", status.description);
+        statusMap.put("indicator", status.getIndicator());
+        statusMap.put("description", status.getDescription());
         return new Gson().toJson(statusMap);
     }
 
     public void setStatus(String indicator, String description) {
         status = new StatusObject();
-        status.indicator = indicator;
-        status.description = description;
+        status.setIndicator(indicator);
+        status.setDescription(description);
     }
 
     public Result getResult() {
         Result result;
 
-        if (status.indicator.equalsIgnoreCase("none")) {
+        if (status.getIndicator().equalsIgnoreCase("none")) {
             result = Result.builder()
                     .withDetail("page", getPage())
                     .withDetail("status", getStatus())
                     .healthy()
                     .build();
         } else {
-            result = Result.unhealthy("SendGrid status is unhealthy: " + status.description);
+            result = Result.unhealthy("SendGrid status is unhealthy: " + status.getDescription());
         }
 
         return result;
     }
 
     private static class StatusObject {
-        String indicator;
-        String description;
+        private String indicator;
+        private String description;
+
+        public String getIndicator() {
+            return indicator;
+        }
+
+        public void setIndicator(String indicator) {
+            this.indicator = indicator;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
     }
 }
