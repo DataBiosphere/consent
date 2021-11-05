@@ -19,10 +19,7 @@ public class SendGridStatus {
     }
 
     public String getStatus() {
-        Map<String, String> statusMap = new HashMap<>();
-        statusMap.put("indicator", status.getIndicator());
-        statusMap.put("description", status.getDescription());
-        return new Gson().toJson(statusMap);
+        return new Gson().toJson(status);
     }
 
     public void setStatus(String indicator, String description) {
