@@ -24,14 +24,14 @@ public class SendGridStatus {
 
     public void setStatus(String indicator, String description) {
         status = new StatusObject();
-        status.setIndicator(indicator);
+        status.setIndicator(Indicator.valueOf(indicator));
         status.setDescription(description);
     }
 
     public Result getResult() {
         Result result;
 
-        if (status.getIndicator().equalsIgnoreCase("none")) {
+        if (status.getIndicator() == Indicator.none) {
             result = Result.builder()
                     .withDetail("page", getPage())
                     .withDetail("status", getStatus())
@@ -44,15 +44,19 @@ public class SendGridStatus {
         return result;
     }
 
+    private enum Indicator {
+        none, minor, major, critical
+    }
+
     private static class StatusObject {
-        private String indicator;
+        private Indicator indicator;
         private String description;
 
-        public String getIndicator() {
+        public Indicator getIndicator() {
             return indicator;
         }
 
-        public void setIndicator(String indicator) {
+        public void setIndicator(Indicator indicator) {
             this.indicator = indicator;
         }
 
