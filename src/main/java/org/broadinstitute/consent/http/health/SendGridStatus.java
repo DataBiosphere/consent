@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.health;
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.google.gson.Gson;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class SendGridStatus {
@@ -21,8 +22,11 @@ public class SendGridStatus {
         return status;
     }
 
-    public void setStatus(Object status) {
-        this.status = status;
+    public void setStatus(String indicator, String description) {
+        Map<String, String> statusMap = new HashMap<>();
+        statusMap.put("indicator", indicator);
+        statusMap.put("description", description);
+        status = new Gson().toJson(statusMap);
     }
 
     private Map<String, String> getStatusMap() {

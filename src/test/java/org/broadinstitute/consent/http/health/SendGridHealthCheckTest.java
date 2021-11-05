@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.health;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.gson.Gson;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.StringEntity;
@@ -32,19 +33,26 @@ public class SendGridHealthCheckTest {
     @Mock
     private MailConfiguration mailConfiguration;
 
-    @Mock
-    private SendGridStatus sendGridStatus;
-
     private SendGridHealthCheck healthCheck;
+    private SendGridStatus goodStatus, badStatus;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        goodStatus = new SendGridStatus();
+        goodStatus.setPage("test");
+        goodStatus.setStatus("none", "test");
+
+        badStatus = new SendGridStatus();
+        badStatus.setPage("test");
+        badStatus.setStatus("major", "test");
     }
 
-    private void initHealthCheck() {
+    private void initHealthCheck(SendGridStatus status) {
         try {
-            when(response.getEntity()).thenReturn(new StringEntity("{}"));
+            String statusJson = new Gson().toJson(status);
+            when(response.getEntity()).thenReturn(new StringEntity(statusJson));
             when(clientUtil.getHttpResponse(any())).thenReturn(response);
             when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
             healthCheck = new SendGridHealthCheck(clientUtil, mailConfiguration);
@@ -55,10 +63,9 @@ public class SendGridHealthCheckTest {
 
     @Test
     public void testCheckSuccess() throws Exception {
-        when(sendGridStatus.isOk()).thenReturn(true);
         when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
         when(response.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck();
+        initHealthCheck(goodStatus);
 
         HealthCheck.Result result = healthCheck.check();
         assertTrue(result.isHealthy());
@@ -66,10 +73,9 @@ public class SendGridHealthCheckTest {
 
     @Test
     public void testCheckFailure() throws Exception {
-        when(sendGridStatus.isOk()).thenReturn(true);
         when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
         when(response.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck();
+        initHealthCheck(goodStatus);
 
         HealthCheck.Result result = healthCheck.check();
         assertFalse(result.isHealthy());
@@ -77,10 +83,9 @@ public class SendGridHealthCheckTest {
 
     @Test
     public void testCheckExternalFailure() throws Exception {
-        when(sendGridStatus.isOk()).thenReturn(false);
         when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
         when(response.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck();
+        initHealthCheck(badStatus);
 
         HealthCheck.Result result = healthCheck.check();
         assertFalse(result.isHealthy());
@@ -88,9 +93,8 @@ public class SendGridHealthCheckTest {
 
     @Test
     public void testCheckException() throws Exception {
-        when(sendGridStatus.isOk()).thenReturn(true);
         doThrow(new RuntimeException()).when(response).getStatusLine();
-        initHealthCheck();
+        initHealthCheck(goodStatus);
 
         HealthCheck.Result result = healthCheck.check();
         assertFalse(result.isHealthy());
