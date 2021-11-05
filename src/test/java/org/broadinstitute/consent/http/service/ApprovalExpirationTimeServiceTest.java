@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.service.ApprovalExpirationTimeService.DEFAULT_AMOUNT_OF_DAYS;
+import static org.broadinstitute.consent.http.service.ApprovalExpirationTimeService.DUOS_DEFAULT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -11,7 +13,6 @@ import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.util.DarConstants;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -83,8 +84,8 @@ public class ApprovalExpirationTimeServiceTest {
     public void testFindApprovalExpirationTimeDefaultValues() {
         when(approvalExpirationTimeDAO.findApprovalExpirationTime()).thenReturn(null);
         ApprovalExpirationTime response = expirationTimeService.findApprovalExpirationTime();
-        assertEquals("The amount of days equals the default: ", response.getAmountOfDays(), DarConstants.DEFAULT_AMOUNT_OF_DAYS);
-        assertEquals("The display name equals the default: ", response.getDisplayName(), DarConstants.DUOS_DEFAULT);
+        assertEquals("The amount of days equals the default: ", response.getAmountOfDays(), DEFAULT_AMOUNT_OF_DAYS);
+        assertEquals("The display name equals the default: ", response.getDisplayName(), DUOS_DEFAULT);
     }
 
     @Test
