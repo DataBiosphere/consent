@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class SendGridStatus {
     private Object page;
-    private Object status;
+    private StatusObject status;
 
     public Object getPage() {
         return page;
@@ -18,38 +18,37 @@ public class SendGridStatus {
         this.page = page;
     }
 
-    public Object getStatus() {
-        return status;
+    public String getStatus() {
+        Map<String, String> statusMap = new HashMap<>();
+        statusMap.put("indicator", status.indicator);
+        statusMap.put("description", status.description);
+        return new Gson().toJson(statusMap);
     }
 
     public void setStatus(String indicator, String description) {
-        Map<String, String> statusMap = new HashMap<>();
-        statusMap.put("indicator", indicator);
-        statusMap.put("description", description);
-        status = new Gson().toJson(statusMap);
-    }
-
-    private Map<String, String> getStatusMap() {
-        return new Gson().fromJson(getStatus().toString(), Map.class);
-    }
-
-    public boolean isOk() {
-        return getStatusMap().get("indicator").equalsIgnoreCase("none");
+        status = new StatusObject();
+        status.indicator = indicator;
+        status.description = description;
     }
 
     public Result getResult() {
         Result result;
 
-        if (isOk()) {
+        if (status.indicator.equalsIgnoreCase("none")) {
             result = Result.builder()
                     .withDetail("page", getPage())
                     .withDetail("status", getStatus())
                     .healthy()
                     .build();
         } else {
-            result = Result.unhealthy("SendGrid status is unhealthy: " + getStatusMap().get("description"));
+            result = Result.unhealthy("SendGrid status is unhealthy: " + status.description);
         }
 
         return result;
+    }
+
+    private static class StatusObject {
+        String indicator;
+        String description;
     }
 }
