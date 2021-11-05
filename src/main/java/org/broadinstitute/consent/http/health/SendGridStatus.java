@@ -3,9 +3,6 @@ package org.broadinstitute.consent.http.health;
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.google.gson.Gson;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class SendGridStatus {
     private Object page;
     private StatusObject status;
@@ -33,8 +30,8 @@ public class SendGridStatus {
 
         if (status.getIndicator() == Indicator.none) {
             result = Result.builder()
-                    .withDetail("page", getPage())
-                    .withDetail("status", getStatus())
+                    .withDetail("page", page)
+                    .withDetail("status", status)
                     .healthy()
                     .build();
         } else {
