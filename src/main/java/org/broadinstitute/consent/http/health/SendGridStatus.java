@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.health;
 
 import com.codahale.metrics.health.HealthCheck.Result;
-import com.google.gson.Gson;
 
 public class SendGridStatus {
     private Object page;
