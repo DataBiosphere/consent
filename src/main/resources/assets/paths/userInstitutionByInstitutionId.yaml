@@ -1,0 +1,23 @@
+get:
+  summary: Find users that belong to the institution specified by institution id
+  description: Find users that belong to the institution specified by institution id
+  tags:
+    - User
+  parameters:
+    - name: institutionId
+      in: path
+      description: The Institution Id for which to find users for
+      required: true
+      schema:
+        type: string
+  responses:
+    200:
+      description: An array of users that belong to an institution
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/User.yaml'
+    500:
+      description: Internal Server Error
