@@ -75,6 +75,7 @@ public class StatusResourceTest {
     checks.put(ConsentApplication.ES_CHECK, Result.healthy());
     checks.put(ConsentApplication.GCS_CHECK, Result.healthy());
     checks.put(ConsentApplication.SAM_CHECK, Result.healthy());
+    checks.put(ConsentApplication.SG_CHECK, Result.healthy());
     StatusResource statusResource = initStatusResource(checks);
 
     Response response = statusResource.getStatus();

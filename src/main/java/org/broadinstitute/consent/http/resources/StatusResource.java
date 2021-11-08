@@ -58,14 +58,16 @@ public class StatusResource {
             healthy = true;
         }
         formattedResults.put(OK, healthy);
-        HealthCheck.Result gcs = results.getOrDefault(ConsentApplication.GCS_CHECK, HealthCheck.Result.unhealthy("Unable to access Sam"));
-        HealthCheck.Result elasticSearch = results.getOrDefault(ConsentApplication.ES_CHECK, HealthCheck.Result.unhealthy("Unable to access Sam"));
-        HealthCheck.Result ontology = results.getOrDefault(ConsentApplication.ONTOLOGY_CHECK, HealthCheck.Result.unhealthy("Unable to access Sam"));
+        HealthCheck.Result gcs = results.getOrDefault(ConsentApplication.GCS_CHECK, HealthCheck.Result.unhealthy("Unable to access Google Cloud Storage"));
+        HealthCheck.Result elasticSearch = results.getOrDefault(ConsentApplication.ES_CHECK, HealthCheck.Result.unhealthy("Unable to access Elastic Search"));
+        HealthCheck.Result ontology = results.getOrDefault(ConsentApplication.ONTOLOGY_CHECK, HealthCheck.Result.unhealthy("Unable to access Ontology"));
         HealthCheck.Result sam = results.getOrDefault(ConsentApplication.SAM_CHECK, HealthCheck.Result.unhealthy("Unable to access Sam"));
+        HealthCheck.Result sendGrid = results.getOrDefault(ConsentApplication.SG_CHECK, HealthCheck.Result.unhealthy("Unable to access SendGrid"));
         boolean degraded = (!gcs.isHealthy()
                 || !elasticSearch.isHealthy()
                 || !ontology.isHealthy()
-                || !sam.isHealthy());
+                || !sam.isHealthy()
+                || !sendGrid.isHealthy());
         formattedResults.put(DEGRADED, degraded);
         formattedResults.put(SYSTEMS, results);
         return formattedResults;
