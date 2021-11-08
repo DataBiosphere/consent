@@ -20,5 +20,9 @@ get:
             type: array
             items:
               $ref: '../schemas/User.yaml'
+    400:
+      description: Bad Request
+    404:
+      description: Not Found
     500:
       description: Internal Server Error

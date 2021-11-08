@@ -353,7 +353,7 @@ public class UserServiceTest {
         assertEquals(0, users.size());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testFindUsersByInstitutionIdNullId() {
         initService();
         service.findUsersByInstitutionId(null);

@@ -351,11 +351,11 @@ public class UserResourceTest {
   @Test
   public void testGetUsersByInstitutionNullInstitution() {
     Integer institutionId = null;
-    doThrow(new NotFoundException()).when(userService).findUsersByInstitutionId(institutionId);
+    doThrow(new IllegalArgumentException()).when(userService).findUsersByInstitutionId(institutionId);
     initResource();
     
     Response response = userResource.getUsersByInstitution(authUser, institutionId);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test

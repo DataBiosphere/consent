@@ -241,7 +241,7 @@ public class UserService {
 
     public List<User> findUsersByInstitutionId(Integer institutionId) {
         if (Objects.isNull(institutionId)) {
-            throw new NotFoundException();
+            throw new IllegalArgumentException();
         }
         Institution institution = institutionDAO.findInstitutionById(institutionId);
         if (Objects.isNull(institution)) {
