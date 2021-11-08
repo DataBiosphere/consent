@@ -42,11 +42,11 @@ public class SendGridHealthCheckTest {
 
         goodStatus = new SendGridStatus();
         goodStatus.setPage("test");
-        goodStatus.setStatus("none", "test");
+        goodStatus.setStatus(new SendGridStatus.StatusObject(SendGridStatus.Indicator.none, "test"));
 
         badStatus = new SendGridStatus();
         badStatus.setPage("test");
-        badStatus.setStatus("major", "test");
+        badStatus.setStatus(new SendGridStatus.StatusObject(SendGridStatus.Indicator.major, "test"));
     }
 
     private void initHealthCheck(SendGridStatus status) {

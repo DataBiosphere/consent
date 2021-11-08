@@ -15,14 +15,12 @@ public class SendGridStatus {
         this.page = page;
     }
 
-    public String getStatus() {
-        return new Gson().toJson(status);
+    public StatusObject getStatus() {
+        return status;
     }
 
-    public void setStatus(String indicator, String description) {
-        status = new StatusObject();
-        status.setIndicator(Indicator.valueOf(indicator));
-        status.setDescription(description);
+    public void setStatus(StatusObject status) {
+        this.status = status;
     }
 
     public Result getResult() {
@@ -41,13 +39,18 @@ public class SendGridStatus {
         return result;
     }
 
-    private enum Indicator {
+    enum Indicator {
         none, minor, major, critical
     }
 
-    private static class StatusObject {
+    static class StatusObject {
         private Indicator indicator;
         private String description;
+
+        public StatusObject(Indicator indicator, String description) {
+            this.indicator = indicator;
+            this.description = description;
+        }
 
         public Indicator getIndicator() {
             return indicator;
