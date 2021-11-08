@@ -1,7 +1,8 @@
 get:
   summary: Find users that belong to the institution specified by institution id
-  description: Find users that belong to the institution specified by institution id
+  description: Admin-only endpoint. Find users that belong to the institution specified by institution id
   tags:
+    - Admin
     - User
   parameters:
     - name: institutionId
