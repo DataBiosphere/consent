@@ -4,10 +4,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -27,6 +29,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -348,6 +351,38 @@ public class UserServiceTest {
         initService();
         List<SimplifiedUser> users = service.findSOsByInstitutionId(null);
         assertEquals(0, users.size());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testFindUsersByInstitutionIdNullId() {
+        initService();
+        service.findUsersByInstitutionId(null);
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testFindUsersByInstitutionIdNullInstitution() {
+        doThrow(new NotFoundException()).when(institutionDAO).findInstitutionById(anyInt());
+        initService();
+        service.findUsersByInstitutionId(1);
+    }
+
+    @Test
+    public void testFindUsersByInstitutionIdSuccess() {
+        when(institutionDAO.findInstitutionById(anyInt())).thenReturn(new Institution());
+        initService();
+        List<User> users = service.findUsersByInstitutionId(1);
+        assertNotNull(users);
+        assertTrue(users.isEmpty());
+    }
+
+    @Test
+    public void testFindUsersByInstitutionIdSuccessWithUsers() {
+        when(institutionDAO.findInstitutionById(anyInt())).thenReturn(new Institution());
+        when(userDAO.findUsersByInstitution(anyInt())).thenReturn(List.of(new User()));
+        initService();
+        List<User> users = service.findUsersByInstitutionId(1);
+        assertNotNull(users);
+        assertFalse(users.isEmpty());
     }
 
     @Test

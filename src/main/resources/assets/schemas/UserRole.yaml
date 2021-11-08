@@ -1,0 +1,9 @@
+type: object
+properties:
+  roleId:
+    type: integer
+    format: int32
+    description: ID of the role
+  name:
+    type: string
+    description: Name of the role

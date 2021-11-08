@@ -1,0 +1,28 @@
+get:
+  summary: Find users that belong to the institution specified by institution id
+  description: Admin-only endpoint. Find users that belong to the institution specified by institution id
+  tags:
+    - Admin
+    - User
+  parameters:
+    - name: institutionId
+      in: path
+      description: The Institution Id for which to find users for
+      required: true
+      schema:
+        type: string
+  responses:
+    200:
+      description: An array of users that belong to an institution
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/User.yaml'
+    400:
+      description: Bad Request
+    404:
+      description: Not Found
+    500:
+      description: Internal Server Error

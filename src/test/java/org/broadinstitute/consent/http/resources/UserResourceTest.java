@@ -339,6 +339,35 @@ public class UserResourceTest {
   }
 
   @Test
+  public void testGetUsersByInstitutionNoInstitution() {
+    Integer institutionId = 1;
+    doThrow(new NotFoundException()).when(userService).findUsersByInstitutionId(institutionId);
+    initResource();
+    
+    Response response = userResource.getUsersByInstitution(authUser, institutionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void testGetUsersByInstitutionNullInstitution() {
+    Integer institutionId = null;
+    doThrow(new IllegalArgumentException()).when(userService).findUsersByInstitutionId(institutionId);
+    initResource();
+    
+    Response response = userResource.getUsersByInstitution(authUser, institutionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testGetUsersByInstitutionSuccess() {
+    when(userService.findUsersByInstitutionId(any())).thenReturn(Collections.emptyList());
+    initResource();
+    
+    Response response = userResource.getUsersByInstitution(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
   public void testDeleteRoleFromUser() {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);

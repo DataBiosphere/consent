@@ -2998,6 +2998,8 @@ paths:
           description: User not found
         500:
           description: Server error.
+  /api/user/institution/{institutionId}:
+    $ref: './paths/userInstitutionByInstitutionId.yaml'
   /api/user/institution/unassigned:
     get:
       summary: Find users that do not belong to an institution
@@ -3565,10 +3567,14 @@ components:
       $ref: './schemas/LibraryCard.yaml'
     PaginationResponse:
       $ref: './schemas/PaginationResponse.yaml'
+    User:
+      $ref: './schemas/User.yaml'
     UserProperty:
       $ref: './schemas/UserProperty.yaml'
     UserProperties:
       $ref: './schemas/UserProperties.yaml'
+    UserRole:
+      $ref: './schemas/UserRole.yaml'
     NIHUserAccount:
       type: object
       properties:
@@ -4019,54 +4025,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
-    User:
-      type: object
-      properties:
-        dacUserId:
-          type: integer
-          description: ID of the user
-        email:
-          type: string
-          description: Email of the user
-        emailPreference:
-          type: boolean
-          description: The user wants email notifications.
-        displayName:
-          type: string
-          description: Name of the user
-        createDate:
-          type: string
-          format: date
-          description: Describes the date the User was created.
-        status:
-          type: string
-          description: Status of the user, approved or not.
-        rationale:
-          type: string
-          description: Reason why the role was not approved.
-        profileCompleted:
-          type: boolean
-          description: The profile is completed. Researchers only.
-        roles:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserRole'
-        researcherProperties:
-          $ref: '#/components/schemas/UserProperties'
-        libraryCards:
-          type: array
-          items:
-            $ref: '#/components/schemas/LibraryCard'
-    UserRole:
-      type: object
-      properties:
-        roleId:
-          type: integer
-          format: int32
-          description: ID of the role
-        name:
-          type: string
-          description: Name of the role
     SimplifiedUser:
       type: object
       properties:

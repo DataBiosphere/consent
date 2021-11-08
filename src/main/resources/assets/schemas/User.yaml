@@ -1,0 +1,37 @@
+type: object
+properties:
+  dacUserId:
+    type: integer
+    description: ID of the user
+  email:
+    type: string
+    description: Email of the user
+  emailPreference:
+    type: boolean
+    description: The user wants email notifications.
+  displayName:
+    type: string
+    description: Name of the user
+  createDate:
+    type: string
+    format: date
+    description: Describes the date the User was created.
+  status:
+    type: string
+    description: Status of the user, approved or not.
+  rationale:
+    type: string
+    description: Reason why the role was not approved.
+  profileCompleted:
+    type: boolean
+    description: The profile is completed. Researchers only.
+  roles:
+    type: array
+    items:
+      $ref: './UserRole.yaml'
+  researcherProperties:
+    $ref: './UserProperties.yaml'
+  libraryCards:
+    type: array
+    items:
+      $ref: './LibraryCard.yaml'
