@@ -7,20 +7,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.LibraryCard;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.LibraryCardService;
-import org.broadinstitute.consent.http.service.ResearcherService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
-import org.broadinstitute.consent.http.service.sam.SamService;
-
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -38,11 +29,19 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.LibraryCardService;
+import org.broadinstitute.consent.http.service.ResearcherService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.sam.SamService;
 
 @Path("api/user")
 public class UserResource extends Resource {
@@ -133,6 +132,20 @@ public class UserResource extends Resource {
             List<User> unassignedUsers = userService.findUsersWithNoInstitution();
             return Response.ok().entity(unassignedUsers).build();
         } catch(Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Path("/institution/{institutionId}")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN})
+    public Response getUsersByInstitution(
+        @Auth AuthUser user, @PathParam("institutionId") Integer institutionId) {
+        try {
+            List<User> users = userService.findUsersByInstitutionId(institutionId);
+            return Response.ok().entity(users).build();
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }

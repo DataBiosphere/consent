@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -236,6 +237,17 @@ public class UserService {
 
         List<User> users = userDAO.getSOsByInstitution(institutionId);
         return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    }
+
+    public List<User> findUsersByInstitutionId(Integer institutionId) {
+        if (Objects.isNull(institutionId)) {
+            throw new NotFoundException();
+        }
+        Institution institution = institutionDAO.findInstitutionById(institutionId);
+        if (Objects.isNull(institution)) {
+            throw new NotFoundException();
+        }
+        return userDAO.findUsersByInstitution(institutionId);
     }
 
     public void deleteUserRole(User authUser, Integer dacUserId, Integer roleId) {
