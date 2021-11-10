@@ -11,5 +11,5 @@ COPY src /usr/src/app/src
 RUN mvn clean package -Dmaven.test.skip=true --no-transfer-progress
 
 # Published
-FROM us.gcr.io/broad-dsp-gcr-public/base/jre:11-alpine
+FROM us.gcr.io/broad-dsp-gcr-public/base/jre:11-debian
 COPY --from=build /usr/src/app/target/consent.jar /opt/consent.jar
