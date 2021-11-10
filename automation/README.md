@@ -46,7 +46,10 @@ sbt clean gatling:testOnly *.StatusScenarios
 ```
 
 ### Run all tests with the standalone docker stack:
+Note that postgres will cache its local db so subsequent runs can result
+in duplicate exceptions if the image cache isn't cleared out
 ```
+docker rmi -f $(docker images --filter=reference="postgres:11.6-alpine" -q)
 docker-compose build --no-cache
 docker-compose up --quiet-pull --abort-on-container-exit --exit-code-from automation-tests
 ```

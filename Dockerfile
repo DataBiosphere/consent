@@ -1,7 +1,7 @@
 # Builder
-FROM adoptopenjdk/maven-openjdk11:latest AS build
+FROM maven:3.8.3-eclipse-temurin-11 AS build
 
-RUN mkdir /usr/src/app
+RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY .git /usr/src/app/.git
