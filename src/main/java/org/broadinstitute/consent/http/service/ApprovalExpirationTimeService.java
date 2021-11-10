@@ -6,10 +6,11 @@ import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
-import org.broadinstitute.consent.http.util.DarConstants;
 
 public class ApprovalExpirationTimeService {
 
+  public static final Integer DEFAULT_AMOUNT_OF_DAYS = 7;
+  public static final String DUOS_DEFAULT = "Default Duos";
   private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
   private final UserDAO userDAO;
 
@@ -49,8 +50,8 @@ public class ApprovalExpirationTimeService {
         approvalExpirationTimeDAO.findApprovalExpirationTime();
     if (approvalExpirationTime == null) {
       approvalExpirationTime = new ApprovalExpirationTime();
-      approvalExpirationTime.setAmountOfDays(DarConstants.DEFAULT_AMOUNT_OF_DAYS);
-      approvalExpirationTime.setDisplayName(DarConstants.DUOS_DEFAULT);
+      approvalExpirationTime.setAmountOfDays(DEFAULT_AMOUNT_OF_DAYS);
+      approvalExpirationTime.setDisplayName(DUOS_DEFAULT);
     }
     return approvalExpirationTime;
   }
