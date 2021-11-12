@@ -242,7 +242,7 @@ public class DatasetResource extends Resource {
                 return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
             }
 
-            Collection<DatasetDTO> rows = datasetService.describeDataSetsByReceiveOrder(idList);
+            Collection<DatasetDTO> rows = datasetService.describeDatasetsByReceiveOrder(idList);
 
             for (DatasetDTO row : rows) {
                 StringBuilder sbr = new StringBuilder();
@@ -333,7 +333,7 @@ public class DatasetResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
         try{
-            Dataset dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, needsApproval);
+            Dataset dataSet = datasetService.updateNeedsReviewDatasets(dataSetId, needsApproval);
             return Response.ok().entity(dataSet).build();
         }catch (Exception e){
             return createExceptionResponse(e);

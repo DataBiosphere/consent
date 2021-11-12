@@ -110,7 +110,7 @@ public class ElectionResource extends Resource {
     @Produces("application/json")
     @Path("/checkdataset")
     @PermitAll
-    public Response isDataSetElectionOpen(@Context UriInfo info) {
+    public Response isDatasetElectionOpen(@Context UriInfo info) {
         try {
             return Response.ok().entity("{ \"open\" : " + electionService.isDataSetElectionOpen() + " }").build();
         } catch (Exception e) {

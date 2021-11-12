@@ -67,7 +67,7 @@ public class FreeMarkerTemplateHelper {
 
     public Writer getApprovedDarTemplate(String userName, String date, String entityId, String investigator, String institution,
                                          String researchPurpose, List<SummaryItem> typeOfResearch, String diseaseArea,
-                                         List<String> checkedSentences, String translatedUseRestriction, List<DataSetPIMailModel> datasets,
+                                         List<String> checkedSentences, String translatedUseRestriction, List<DatasetPIMailModel> datasets,
                                          String daysToApprove, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("owner-dar-approved.html");
         return generateApprovedDarTemplate(userName, date, entityId, investigator, institution, researchPurpose, typeOfResearch, diseaseArea,
@@ -178,7 +178,7 @@ public class FreeMarkerTemplateHelper {
 
     private Writer generateApprovedDarTemplate(String userName, String date, String entityId, String investigator, String institution,
                                                String researchPurpose, List<SummaryItem> typeOfResearch, String diseaseArea,
-                                               List<String> checkedSentences, String translatedUseRestriction, List<DataSetPIMailModel> datasets,
+                                               List<String> checkedSentences, String translatedUseRestriction, List<DatasetPIMailModel> datasets,
                                                String daysToApprove, String serverUrl, Template temp) throws IOException, TemplateException {
         ApprovedDarModel model = new ApprovedDarModel(userName, date, entityId, investigator, institution, researchPurpose, typeOfResearch, diseaseArea, checkedSentences,
                 translatedUseRestriction, datasets, serverUrl, daysToApprove);

@@ -76,7 +76,7 @@ public class DAOTestHelper {
     protected static LibraryCardDAO libraryCardDAO;
     protected static DarCollectionDAO darCollectionDAO;
 
-    private static final List<Integer> createdDataSetIds = new ArrayList<>();
+    private static final List<Integer> createdDatasetIds = new ArrayList<>();
     private static final List<Integer> createdDacIds = new ArrayList<>();
     private static final List<String> createdConsentIds = new ArrayList<>();
     private static final List<Integer> createdElectionIds = new ArrayList<>();
@@ -161,8 +161,8 @@ public class DAOTestHelper {
         });
         createdElectionIds.forEach(id -> electionDAO.deleteAccessRP(id));
         createdElectionIds.forEach(id -> electionDAO.deleteElectionById(id));
-        datasetDAO.deleteDatasetPropertiesByDatasetIdList(createdDataSetIds);
-        datasetDAO.deleteDatasets(createdDataSetIds);
+        datasetDAO.deleteDatasetPropertiesByDatasetIdList(createdDatasetIds);
+        datasetDAO.deleteDatasets(createdDatasetIds);
         createdDacIds.forEach(id -> {
             dacDAO.deleteDacMembers(id);
             dacDAO.deleteDac(id);
@@ -450,7 +450,7 @@ public class DAOTestHelper {
         ds.setActive(true);
         ds.setAlias(RandomUtils.nextInt(1, 1000));
         Integer id = datasetDAO.insertDataset(ds.getName(), ds.getCreateDate(), ds.getObjectId(), ds.getActive(), ds.getAlias());
-        createdDataSetIds.add(id);
+        createdDatasetIds.add(id);
         createDatasetProperties(id);
         return datasetDAO.findDatasetById(id);
     }

@@ -34,9 +34,9 @@ properties:
   finalAccessVote:
     type: boolean
     description: For Data Access Request only. Final vote that determines if the request is approved or denied.
-  dataSetId:
+  datasetId:
     type: integer
-    description: The dataSetId related to the election.
+    description: The datasetId related to the election.
   displayId:
     type: string
     description: The ID for display.

@@ -19,11 +19,11 @@ public class AdminDarApprovedModel {
 
     private String serverUrl;
 
-    public AdminDarApprovedModel(String user, String referenceId, Map<User, List<Dataset>> dataOwnersDataSets, String serverUrl) {
+    public AdminDarApprovedModel(String user, String referenceId, Map<User, List<Dataset>> dataOwnersDatasets, String serverUrl) {
         this.userName = user;
         this.referenceId = referenceId;
         this.serverUrl = serverUrl;
-        this.dol = ownersMapToTemplateList(dataOwnersDataSets);
+        this.dol = ownersMapToTemplateList(dataOwnersDatasets);
     }
 
     public String getUserName() {

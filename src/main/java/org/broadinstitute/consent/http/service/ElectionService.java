@@ -409,7 +409,7 @@ public class ElectionService {
         List<Integer> electionsIds = new ArrayList<>();
         dataOwnerDataSet.forEach((user,dataSets) -> {
             dataSets.stream().forEach(dataSet -> {
-                if(electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, dataSet.getDatasetId()) == null) {
+                if(electionDAO.getOpenElectionByReferenceIdAndDataset(referenceId, dataSet.getDatasetId()) == null) {
                     Integer electionId = electionDAO.insertElection(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), new Date(), referenceId, dataSet.getDatasetId());
                     electionsIds.add(electionId);
                 }

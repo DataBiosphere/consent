@@ -33,15 +33,15 @@ import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 public class MetricsService {
 
   private final DacService dacService;
-  private final DatasetDAO dataSetDAO;
+  private final DatasetDAO datasetDAO;
   private final DataAccessRequestDAO darDAO;
   private final MatchDAO matchDAO;
   private final ElectionDAO electionDAO;
 
   @Inject
-  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO, MatchDAO matchDAO, ElectionDAO electionDAO) {
+  public MetricsService(DacService dacService, DatasetDAO datasetDAO, DataAccessRequestDAO darDAO, MatchDAO matchDAO, ElectionDAO electionDAO) {
     this.dacService = dacService;
-    this.dataSetDAO = dataSetDAO;
+    this.datasetDAO = datasetDAO;
     this.darDAO = darDAO;
     this.matchDAO = matchDAO;
     this.electionDAO = electionDAO;
@@ -92,7 +92,7 @@ public class MetricsService {
         .map(DataAccessRequestData::getDatasetIds)
         .flatMap(List::stream)
         .collect(Collectors.toList());
-    List<Dataset> datasets = dataSetDAO.findDatasetsByIdList(datasetIds);
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(datasetIds);
     List<Election> elections = electionDAO.findLastElectionsByReferenceIds(referenceIds);
     List<Match> matches = matchDAO.findMatchesForPurposeIds(referenceIds);
     List<Integer> electionIds =
@@ -107,7 +107,7 @@ public class MetricsService {
       //if the type is not DAR then it is DAC, so this method returns a list of DacDecisionMetrics representing
       //each dac including information about their datasets and dars that they've reviewed
       List<Dac> allDacs = dacService.findAllDacsWithMembers();
-      Set<DatasetDTO> datasetsDacs = dataSetDAO.findDatasetsWithDacs();
+      Set<DatasetDTO> datasetsDacs = datasetDAO.findDatasetsWithDacs();
       return getDacMetrics(allDacs, datasetsDacs, darMetrics);
     }
   }
@@ -216,7 +216,7 @@ public class MetricsService {
     DatasetMetrics metrics = new DatasetMetrics();
 
     //get datasetDTO with properties and data use restrictions
-    Set<DatasetDTO> datasets = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
+    Set<DatasetDTO> datasets = datasetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
     if (datasets == null || datasets.isEmpty()) {
        throw new NotFoundException("Dataset with specified ID does not exist.");
     }

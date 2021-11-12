@@ -63,7 +63,7 @@ public class ConsentServiceTest {
     AuditService auditService;
 
     @Mock
-    DatasetDAO dataSetDAO;
+    DatasetDAO datasetDAO;
 
     @Mock
     DacDAO dacDAO;
@@ -80,7 +80,8 @@ public class ConsentServiceTest {
     }
 
     private void initService() {
-        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO, auditService, jdbi, dataSetDAO, useRestrictionConverter);
+        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO, auditService, jdbi,
+            datasetDAO, useRestrictionConverter);
     }
 
     @Test

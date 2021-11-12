@@ -40,9 +40,9 @@ public class DatasetAssociationService {
         this.userRoleDAO = userRoleDAO;
     }
 
-    public List<DatasetAssociation> createDatasetUsersAssociation(Integer dataSetId, List<Integer> userIds) {
+    public List<DatasetAssociation> createDatasetUsersAssociation(Integer dsId, List<Integer> userIds) {
         verifyUsers(userIds);
-        Dataset d = dsDAO.findDatasetById(dataSetId);
+        Dataset d = dsDAO.findDatasetById(dsId);
         if (Objects.isNull(d)) {
             throw new NotFoundException("Invalid DatasetId");
         }

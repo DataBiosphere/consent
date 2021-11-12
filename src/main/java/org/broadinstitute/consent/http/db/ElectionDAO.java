@@ -42,7 +42,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                            @Bind("status") String status,
                            @Bind("createDate") Date createDate,
                            @Bind("referenceId") String referenceId,
-                           @Bind("datasetId") Integer dataSetId);
+                           @Bind("datasetId") Integer datasetId);
 
     @SqlUpdate("insert into election (electionType, status, createDate,referenceId, finalAccessVote, dataUseLetter, dulName, datasetId, version) values " +
             "(:electionType, :status, :createDate,:referenceId, :finalAccessVote, :dataUseLetter, :dulName, :datasetId, " +
@@ -55,7 +55,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                            @Bind("finalAccessVote") Boolean finalAccessVote,
                            @Bind("dataUseLetter") String dataUseLetter,
                            @Bind("dulName") String dulName,
-                           @Bind("datasetId") Integer dataSetId);
+                           @Bind("datasetId") Integer datasetId);
 
     @SqlUpdate("delete  from election where electionId = :electionId")
     void deleteElectionById(@Bind("electionId") Integer electionId);
@@ -272,8 +272,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select * from election e where e.electionId = :electionId")
     Election findElectionById(@Bind("electionId") Integer electionId);
 
-    @SqlQuery("select electionId from election  where referenceId = :referenceId and lower(status) = 'open' and datasetId = :dataSetId")
-    Integer getOpenElectionByReferenceIdAndDataSet(@Bind("referenceId") String referenceId, @Bind("dataSetId") Integer dataSetId);
+    @SqlQuery("select electionId from election  where referenceId = :referenceId and lower(status) = 'open' and datasetId = :datasetId")
+    Integer getOpenElectionByReferenceIdAndDataset(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId);
 
     @SqlQuery("select datasetId from election where electionId = :electionId ")
     Integer getDatasetIdByElectionId(@Bind("electionId") Integer electionId);
@@ -310,14 +310,14 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
      */
     @UseRowMapper(DacMapper.class)
     @SqlQuery("select d0.* from ( " +
-            "   select d1.*, e1.electionId from dac d1 " +
+            "   select d1.*, e1.electionid from dac d1 " +
             "     inner join consents c1 on d1.dac_id = c1.dac_id " +
-            "     inner join consentassociations a1 on a1.consentId = c1.consentId " +
-            "     inner join election e1 on e1.datasetId = a1.dataSetId and e1.electionId = :electionId " +
+            "     inner join consentassociations a1 on a1.consentid = c1.consentid " +
+            "     inner join election e1 on e1.datasetid = a1.datasetid and e1.electionid = :electionId " +
             " union " +
-            "   select d2.*, e2.electionId from dac d2 " +
+            "   select d2.*, e2.electionid from dac d2 " +
             "     inner join consents c2 on d2.dac_id = c2.dac_id " +
-            "     inner join election e2 on e2.referenceId = c2.consentId and e2.electionId = :electionId " +
+            "     inner join election e2 on e2.referenceid = c2.consentid and e2.electionid = :electionId " +
             " ) as d0 limit 1 ") // `select * from (...) limit 1` syntax is an hsqldb limitation
     Dac findDacForElection(@Bind("electionId") Integer electionId);
 
@@ -353,12 +353,12 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
      */
     @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("select e1.* from election e1 " +
-            "   inner join consentassociations a1 on a1.dataSetId = e1.datasetId " +
-            "   inner join consents c1 on c1.consentId = a1.consentId and c1.dac_id = :dacId " +
+            "   inner join consentassociations a1 on a1.datasetid = e1.datasetid " +
+            "   inner join consents c1 on c1.consentid = a1.consentid and c1.dac_id = :dacId " +
             "   where lower(e1.status) = 'open' " +
             " union " +
             " select e2.* from election e2 " +
-            "   inner join consents c2 on c2.consentId = e2.referenceId and c2.dac_id = :dacId " +
+            "   inner join consents c2 on c2.consentid = e2.referenceid and c2.dac_id = :dacId " +
             "   where lower(e2.status) = 'open' ")
     List<Election> findOpenElectionsByDacId(@Bind("dacId") Integer dacId);
 

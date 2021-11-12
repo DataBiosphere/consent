@@ -11,11 +11,11 @@ public class AssociationMapper implements RowMapper<Association> {
   @Override
   public Association map(ResultSet r, StatementContext statementContext) throws SQLException {
     Association association = new Association();
-    association.setAssociationId(r.getInt("associationId"));
-    association.setConsentId(r.getString("consentId"));
-    association.setAssociationType(r.getString("associationType"));
-    association.setObjectId(r.getString("objectId"));
-    association.setDatasetId(r.getInt("dataSetId"));
+    association.setAssociationId(r.getInt("associationid"));
+    association.setConsentId(r.getString("consentid"));
+    association.setAssociationType(r.getString("associationtype"));
+    association.setObjectId(r.getString("objectid"));
+    association.setDatasetId(r.getInt("datasetid"));
     return association;
   }
 }

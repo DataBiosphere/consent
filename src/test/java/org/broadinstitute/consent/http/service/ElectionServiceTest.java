@@ -605,7 +605,7 @@ public class ElectionServiceTest {
 
     @Test
     public void testCreateDataSetElections() {
-        when(electionDAO.getOpenElectionByReferenceIdAndDataSet(sampleElection1.getReferenceId(), sampleDataset1.getDatasetId()))
+        when(electionDAO.getOpenElectionByReferenceIdAndDataset(sampleElection1.getReferenceId(), sampleDataset1.getDatasetId()))
                 .thenReturn(null);
         when(electionDAO.findElectionsByIds(Arrays.asList(sampleDatasetElection.getElectionId())))
             .thenReturn(Arrays.asList(sampleElection1));

@@ -19,62 +19,62 @@ public class DatasetPropertiesMapper implements RowMapper<DatasetDTO>, RowMapper
 
   public DatasetDTO map(ResultSet r, StatementContext ctx) throws SQLException {
 
-    DatasetDTO dataSetDTO;
-    Integer dataSetId = r.getInt("dataSetId");
-    String consentId = r.getString("consentId");
+    DatasetDTO datasetDTO;
+    Integer dataSetId = r.getInt("datasetid");
+    String consentId = r.getString("consentid");
     Integer alias = r.getInt("alias");
     if (!datasets.containsKey(dataSetId)) {
-      dataSetDTO = new DatasetDTO(new ArrayList<>());
+      datasetDTO = new DatasetDTO(new ArrayList<>());
       if (hasColumn(r, "dac_id")) {
         int dacId = r.getInt("dac_id");
         if (dacId > 0) {
-          dataSetDTO.setDacId(dacId);
+          datasetDTO.setDacId(dacId);
         }
       }
-      dataSetDTO.setConsentId(consentId);
-      dataSetDTO.setAlias(alias);
-      dataSetDTO.setDatasetId(dataSetId);
-      dataSetDTO.setActive(r.getBoolean("active"));
-      dataSetDTO.setTranslatedUseRestriction(r.getString("translatedUseRestriction"));
+      datasetDTO.setConsentId(consentId);
+      datasetDTO.setAlias(alias);
+      datasetDTO.setDatasetId(dataSetId);
+      datasetDTO.setActive(r.getBoolean("active"));
+      datasetDTO.setTranslatedUseRestriction(r.getString("translateduserestriction"));
       if (hasColumn(r, "datause")) {
-        dataSetDTO.setDataUse(DataUse.parseDataUse(r.getString("datause")).orElse(null));
+        datasetDTO.setDataUse(DataUse.parseDataUse(r.getString("datause")).orElse(null));
       }
       if (hasColumn(r, "createdate")) {
-          dataSetDTO.setCreateDate(r.getDate("createdate"));
+          datasetDTO.setCreateDate(r.getDate("createdate"));
       }
       if (hasColumn(r, "create_user_id")) {
           int userId = r.getInt("create_user_id");
           if (userId > 0) {
-              dataSetDTO.setCreateUserId(userId);
+              datasetDTO.setCreateUserId(userId);
           }
       }
       if (hasColumn(r, "update_date")) {
-          dataSetDTO.setUpdateDate(r.getTimestamp("update_date"));
+          datasetDTO.setUpdateDate(r.getTimestamp("update_date"));
       }
       if (hasColumn(r, "update_user_id")) {
           int userId = r.getInt("update_user_id");
           if (userId > 0) {
-              dataSetDTO.setUpdateUserId(userId);
+              datasetDTO.setUpdateUserId(userId);
           }
       }
       DatasetPropertyDTO property = new DatasetPropertyDTO("Dataset Name", r.getString("name"));
-      dataSetDTO.addProperty(property);
+      datasetDTO.addProperty(property);
       property =
           new DatasetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
       if (property.getPropertyName() != null) {
-        dataSetDTO.addProperty(property);
+        datasetDTO.addProperty(property);
       }
-      dataSetDTO.setNeedsApproval(r.getBoolean("needs_approval"));
-      dataSetDTO.setObjectId(r.getString("objectId"));
-      datasets.put(dataSetId, dataSetDTO);
+      datasetDTO.setNeedsApproval(r.getBoolean("needs_approval"));
+      datasetDTO.setObjectId(r.getString("objectid"));
+      datasets.put(dataSetId, datasetDTO);
     } else {
-      dataSetDTO = datasets.get(dataSetId);
+      datasetDTO = datasets.get(dataSetId);
       DatasetPropertyDTO property =
           new DatasetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
       if (property.getPropertyName() != null) {
-        dataSetDTO.addProperty(property);
+        datasetDTO.addProperty(property);
       }
     }
-    return dataSetDTO;
+    return datasetDTO;
   }
 }

@@ -116,7 +116,7 @@ public class ElectionResourceTest {
 
     @Test
     public void testIsDataSetElectionOpen() {
-        Response response = electionResource.isDataSetElectionOpen(null);
+        Response response = electionResource.isDatasetElectionOpen(null);
         Assert.assertEquals(OK, response.getStatus());
     }
 
@@ -124,7 +124,7 @@ public class ElectionResourceTest {
     public void testIsDataSetElectionOpenError() {
         when(electionService.isDataSetElectionOpen()).thenThrow(new NullPointerException());
         electionResource = new ElectionResource(voteService, electionService);
-        Response response = electionResource.isDataSetElectionOpen(null);
+        Response response = electionResource.isDatasetElectionOpen(null);
         Assert.assertEquals(ERROR, response.getStatus());
     }
 

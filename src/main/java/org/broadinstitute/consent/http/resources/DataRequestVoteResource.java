@@ -254,7 +254,7 @@ public class DataRequestVoteResource extends Resource {
             agreementVote = vote;
         }
         if((finalVote != null && finalVote.getVote() != null && finalVote.getVote()) && (agreementVote == null || (agreementVote != null && agreementVote.getVote() != null))){
-            List<Dataset> needsApprovedDatasets = datasetService.findNeedsApprovalDataSetByObjectId(dar.getData().getDatasetIds());
+            List<Dataset> needsApprovedDatasets = datasetService.findNeedsApprovalDatasetByObjectId(dar.getData().getDatasetIds());
             List<Integer> dataSetIds = needsApprovedDatasets.stream().map(Dataset::getDatasetId).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(needsApprovedDatasets)){
                 Map<User, List<Dataset>> dataOwnerDataSet = datasetAssociationService.findDataOwnersWithAssociatedDataSets(dataSetIds);

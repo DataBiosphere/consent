@@ -60,12 +60,12 @@ public class DatasetService {
         this.converter = converter;
     }
 
-    public List<Dataset> getDataSetsForConsent(String consentId) {
+    public List<Dataset> getDatasetsForConsent(String consentId) {
         return datasetDAO.getDatasetsForConsent(consentId);
     }
 
-    public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
-        return datasetDAO.findDatasetsByReceiveOrder(dataSetId);
+    public Collection<DatasetDTO> describeDatasetsByReceiveOrder(List<Integer> datasetId) {
+        return datasetDAO.findDatasetsByReceiveOrder(datasetId);
     }
 
     public Collection<Dictionary> describeDictionaryByDisplayOrder() {
@@ -83,22 +83,22 @@ public class DatasetService {
         }
     }
 
-    public Dataset updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval) {
-        if (datasetDAO.findDatasetById(dataSetId) == null) {
-            throw new NotFoundException("DataSet doesn't exist");
+    public Dataset updateNeedsReviewDatasets(Integer datasetId, Boolean needsApproval) {
+        if (datasetDAO.findDatasetById(datasetId) == null) {
+            throw new NotFoundException("Dataset doesn't exist");
         }
-        datasetDAO.updateDatasetNeedsApproval(dataSetId, needsApproval);
-        return datasetDAO.findDatasetById(dataSetId);
+        datasetDAO.updateDatasetNeedsApproval(datasetId, needsApproval);
+        return datasetDAO.findDatasetById(datasetId);
     }
 
-    public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
-        return datasetDAO.findNeedsApprovalDatasetByDatasetId(dataSetIdList);
+    public List<Dataset> findNeedsApprovalDatasetByObjectId(List<Integer> datasetIdList) {
+        return datasetDAO.findNeedsApprovalDatasetByDatasetId(datasetIdList);
     }
 
     /**
      * Create a minimal consent from the data provided in a Dataset.
      *
-     * @param dataset The DataSetDTO
+     * @param dataset The DatasetDTO
      * @return The created Consent
      */
     public Consent createConsentForDataset(DatasetDTO dataset) {
