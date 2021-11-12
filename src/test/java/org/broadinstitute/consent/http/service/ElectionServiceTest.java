@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
-import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
+import org.broadinstitute.consent.http.enumeration.DatasetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -536,7 +536,7 @@ public class ElectionServiceTest {
         initService();
 
         String status = service.darDatasetElectionStatus(sampleElection1.getReferenceId());
-        assertEquals(DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue(), status);
+        assertEquals(DatasetElectionStatus.APPROVAL_NOT_NEEDED.getValue(), status);
     }
 
     @Test
@@ -552,7 +552,7 @@ public class ElectionServiceTest {
         initService();
 
         String status = service.darDatasetElectionStatus(sampleElection1.getReferenceId());
-        assertEquals(DataSetElectionStatus.DS_PENDING.getValue(), status);
+        assertEquals(DatasetElectionStatus.DS_PENDING.getValue(), status);
     }
 
     @Test
@@ -568,7 +568,7 @@ public class ElectionServiceTest {
         initService();
 
         String status = service.darDatasetElectionStatus(sampleElection1.getReferenceId());
-        assertEquals(DataSetElectionStatus.DS_PENDING.getValue(), status);
+        assertEquals(DatasetElectionStatus.DS_PENDING.getValue(), status);
     }
 
     @Test
@@ -584,7 +584,7 @@ public class ElectionServiceTest {
         initService();
 
         String status = service.darDatasetElectionStatus(sampleElection1.getReferenceId());
-        assertEquals(DataSetElectionStatus.DS_DENIED.getValue(), status);
+        assertEquals(DatasetElectionStatus.DS_DENIED.getValue(), status);
     }
 
     @Test
@@ -600,7 +600,7 @@ public class ElectionServiceTest {
         initService();
 
         String status = service.darDatasetElectionStatus(sampleElection1.getReferenceId());
-        assertEquals(DataSetElectionStatus.DS_APPROVED.getValue(), status);
+        assertEquals(DatasetElectionStatus.DS_APPROVED.getValue(), status);
     }
 
     @Test

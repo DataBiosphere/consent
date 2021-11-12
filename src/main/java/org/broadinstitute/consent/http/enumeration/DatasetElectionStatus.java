@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.enumeration;
 
-public enum DataSetElectionStatus {
+public enum DatasetElectionStatus {
 
     DS_APPROVED("Approved by Data Owner(s)."),
     DS_DENIED("Denied by Data Owner(s)."),
@@ -9,7 +9,7 @@ public enum DataSetElectionStatus {
 
     private final String value;
 
-    DataSetElectionStatus(String value) {
+    DatasetElectionStatus(String value) {
         this.value = value;
     }
 
@@ -18,7 +18,7 @@ public enum DataSetElectionStatus {
     }
 
     public static String getValue(String value) {
-        for (DataSetElectionStatus e : DataSetElectionStatus.values()) {
+        for (DatasetElectionStatus e : DatasetElectionStatus.values()) {
             if (e.getValue().equalsIgnoreCase(value)) {
                 return e.getValue();
             }
