@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -254,10 +254,10 @@ public class DataRequestVoteResource extends Resource {
             agreementVote = vote;
         }
         if((finalVote != null && finalVote.getVote() != null && finalVote.getVote()) && (agreementVote == null || (agreementVote != null && agreementVote.getVote() != null))){
-            List<DataSet> needsApprovedDataSets = datasetService.findNeedsApprovalDataSetByObjectId(dar.getData().getDatasetIds());
-            List<Integer> dataSetIds = needsApprovedDataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(needsApprovedDataSets)){
-                Map<User, List<DataSet>> dataOwnerDataSet = datasetAssociationService.findDataOwnersWithAssociatedDataSets(dataSetIds);
+            List<Dataset> needsApprovedDatasets = datasetService.findNeedsApprovalDataSetByObjectId(dar.getData().getDatasetIds());
+            List<Integer> dataSetIds = needsApprovedDatasets.stream().map(Dataset::getDataSetId).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(needsApprovedDatasets)){
+                Map<User, List<Dataset>> dataOwnerDataSet = datasetAssociationService.findDataOwnersWithAssociatedDataSets(dataSetIds);
                 List<Election> elections = electionService.createDataSetElections(dar.getReferenceId(), dataOwnerDataSet);
                 if(CollectionUtils.isNotEmpty(elections)){
                     elections.forEach(voteService::createDataOwnersReviewVotes);

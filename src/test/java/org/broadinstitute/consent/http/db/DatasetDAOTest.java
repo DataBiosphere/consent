@@ -9,7 +9,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
@@ -28,34 +28,34 @@ public class DatasetDAOTest extends DAOTestHelper {
     // User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
     @Test
     public void testFindDataSetsByAuthUserEmail() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
         User user = createUser();
         createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), dac.getDacId());
 
-        List<DataSet> datasets = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail());
+        List<Dataset> datasets = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail());
         assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
+        List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 
     @Test
     public void testFindNonDACDataSets() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
-        List<DataSet> datasets = dataSetDAO.findNonDACDataSets();
+        List<Dataset> datasets = dataSetDAO.findNonDACDataSets();
         assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
+        List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 
     @Test
     public void testFindDatasetAndDacIds() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
@@ -69,23 +69,23 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindDatasetPropertiesByDatasetId() {
-        DataSet d = createDataset();
+        Dataset d = createDataset();
         Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
         assertEquals(properties.size(), 1);
     }
 
     @Test
     public void testUpdateDataset() {
-        DataSet d = createDataset();
+        Dataset d = createDataset();
         Timestamp now = new Timestamp(new Date().getTime());
         dataSetDAO.updateDatasetUpdateUserAndDate(d.getDataSetId(), now, d.getCreateUserId());
-        DataSet updated = dataSetDAO.findDataSetById(d.getDataSetId());
+        Dataset updated = dataSetDAO.findDataSetById(d.getDataSetId());
         assertEquals(updated.getUpdateDate(), now);
     }
 
     @Test
     public void testUpdateDatasetProperty() {
-        DataSet d = createDataset();
+        Dataset d = createDataset();
         Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
         DataSetProperty originalProperty = properties.stream().collect(Collectors.toList()).get(0);
         DataSetProperty newProperty = new DataSetProperty(d.getDataSetId(), 1, "Updated Value", new Date());
@@ -101,7 +101,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     @Test
     public void testDeleteDatasetPropertyByKey() {
-        DataSet d = createDataset();
+        Dataset d = createDataset();
         Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
         DataSetProperty propertyToDelete = properties.stream().collect(Collectors.toList()).get(0);
         dataSetDAO.deleteDatasetPropertyByKey(d.getDataSetId(), propertyToDelete.getPropertyKey());
@@ -111,7 +111,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindAllDatasets() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
@@ -123,7 +123,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindActiveDatasets() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
@@ -135,7 +135,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindDatasetsByUser() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
@@ -150,14 +150,14 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindDatasetWithDataUseByIdList() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
-        Set<DataSet> datasets = dataSetDAO.findDatasetWithDataUseByIdList(Collections.singletonList(dataset.getDataSetId()));
+        Set<Dataset> datasets = dataSetDAO.findDatasetWithDataUseByIdList(Collections.singletonList(dataset.getDataSetId()));
         assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
+        List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 

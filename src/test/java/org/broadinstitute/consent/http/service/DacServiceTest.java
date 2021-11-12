@@ -36,7 +36,7 @@ import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
@@ -324,8 +324,9 @@ public class DacServiceTest {
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_1() {
         // Member has access to DataSet 1
-        List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
-        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+        List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
+        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(
+            memberDatasets);
 
         // There are no additional unassociated datasets
         when(dataSetDAO.findNonDACDataSets()).thenReturn(Collections.emptyList());
@@ -336,18 +337,19 @@ public class DacServiceTest {
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should only contain the ones the user has direct access to:
-        Assert.assertEquals(memberDataSets.size(), filtered.size());
+        Assert.assertEquals(memberDatasets.size(), filtered.size());
     }
 
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_2() {
         // Member has access to datasets
-        List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
-        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+        List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
+        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(
+            memberDatasets);
 
         // There are additional unassociated datasets
-        List<DataSet> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
-        when(dataSetDAO.findNonDACDataSets()).thenReturn(unassociatedDataSets);
+        List<Dataset> unassociatedDatasets = getDatasets().subList(1, getDatasets().size());
+        when(dataSetDAO.findNonDACDataSets()).thenReturn(unassociatedDatasets);
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();
@@ -355,18 +357,19 @@ public class DacServiceTest {
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should only contain the ones the user has direct access to
-        Assert.assertEquals(memberDataSets.size(), filtered.size());
+        Assert.assertEquals(memberDatasets.size(), filtered.size());
     }
 
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_3() {
         // Member no direct access to datasets
-        List<DataSet> memberDataSets = Collections.emptyList();
-        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+        List<Dataset> memberDatasets = Collections.emptyList();
+        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(
+            memberDatasets);
 
         // There are additional unassociated datasets
-        List<DataSet> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
-        when(dataSetDAO.findNonDACDataSets()).thenReturn(unassociatedDataSets);
+        List<Dataset> unassociatedDatasets = getDatasets().subList(1, getDatasets().size());
+        when(dataSetDAO.findNonDACDataSets()).thenReturn(unassociatedDatasets);
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();
@@ -374,7 +377,7 @@ public class DacServiceTest {
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should contain the ones the user has direct access to
-        Assert.assertEquals(memberDataSets.size(), filtered.size());
+        Assert.assertEquals(memberDatasets.size(), filtered.size());
     }
 
     @Test
@@ -559,7 +562,7 @@ public class DacServiceTest {
 
         // Member is a member of one DAC that has a single consented dataset
         List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
-        List<DataSet> memberDatasets = Collections.singletonList(getDatasets().get(0));
+        List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(memberDacs);
         when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
         initService();
@@ -578,7 +581,7 @@ public class DacServiceTest {
 
         // Member is a member of one DAC that has a single consented dataset
         List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
-        List<DataSet> memberDatasets = Collections.singletonList(getDatasets().get(0));
+        List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(memberDacs);
         when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
         initService();
@@ -716,10 +719,10 @@ public class DacServiceTest {
     /**
      * @return A list of 5 datasets with ids
      */
-    private List<DataSet> getDatasets() {
+    private List<Dataset> getDatasets() {
         return IntStream.range(1, 5).
                 mapToObj(i -> {
-                    DataSet dataSet = new DataSet();
+                    Dataset dataSet = new Dataset();
                     dataSet.setDataSetId(i);
                     return dataSet;
                 }).collect(Collectors.toList());

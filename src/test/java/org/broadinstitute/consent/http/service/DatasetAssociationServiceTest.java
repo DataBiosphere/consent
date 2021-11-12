@@ -4,17 +4,15 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.BadRequestException;
@@ -105,8 +103,8 @@ public class DatasetAssociationServiceTest {
     DatasetAssociation dsAssociation1 = new DatasetAssociation(1, 3);
     DatasetAssociation dsAssociation2 = new DatasetAssociation(1, 4);
 
-    DataSet ds1 = new DataSet(1, "DS-001", "DS-001", new Date(), true);
-    DataSet ds2 = new DataSet(2, "DS-002", "DS-002", new Date(), true);
+    Dataset ds1 = new Dataset(1, "DS-001", "DS-001", new Date(), true);
+    Dataset ds2 = new Dataset(2, "DS-002", "DS-002", new Date(), true);
 
     User chairperson = new User(1, "originalchair@broad.com", "Original Chairperson", new Date(), chairpersonList(), null);
     User member = new User(2, "originalchair@broad.com", "Original Chairperson", new Date(), memberList(), null);

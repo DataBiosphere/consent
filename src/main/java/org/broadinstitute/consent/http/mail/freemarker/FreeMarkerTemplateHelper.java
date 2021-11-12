@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
@@ -60,7 +60,7 @@ public class FreeMarkerTemplateHelper {
         return generateCancelledDarTemplate(userType, entityId, serverUrl, temp);
     }
 
-    public Writer getAdminApprovedDarTemplate(String userName, String entityId, Map<User, List<DataSet>> dataOwnersDataSets, String serverUrl) throws IOException, TemplateException {
+    public Writer getAdminApprovedDarTemplate(String userName, String entityId, Map<User, List<Dataset>> dataOwnersDataSets, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("admin-dar-approved.html");
         return generateAdminApprovedDarTemplate(userName, entityId, dataOwnersDataSets, serverUrl, temp);
     }
@@ -169,7 +169,7 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    private Writer generateAdminApprovedDarTemplate(String userType, String entityId, Map<User, List<DataSet>> dataOwnersDataSets, String serverUrl, Template temp) throws IOException, TemplateException {
+    private Writer generateAdminApprovedDarTemplate(String userType, String entityId, Map<User, List<Dataset>> dataOwnersDataSets, String serverUrl, Template temp) throws IOException, TemplateException {
         AdminDarApprovedModel model = new AdminDarApprovedModel(userType, entityId, dataOwnersDataSets, serverUrl);
         Writer out = new StringWriter();
         temp.process(model, out);

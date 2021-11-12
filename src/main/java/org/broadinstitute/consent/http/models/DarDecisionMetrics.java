@@ -6,7 +6,6 @@ import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
-import org.apache.commons.collections4.CollectionUtils;
 
 /**
  * Generate a row of dar decision data in the form of:
@@ -54,7 +53,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
   public DarDecisionMetrics(
     DataAccessRequest dar,
     Dac dac,
-    DataSet dataset,
+    Dataset dataset,
     Election accessElection,
     Election rpElection,
     Match match) {
@@ -113,7 +112,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
     return datasetId;
   }
 
-  private void setDatasetId(DataSet dataset) {
+  private void setDatasetId(Dataset dataset) {
     if (Objects.nonNull(dataset)) {
       this.datasetId = dataset.getDatasetIdentifier();
     }

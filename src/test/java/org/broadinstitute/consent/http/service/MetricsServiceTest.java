@@ -5,9 +5,9 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Type;
@@ -15,7 +15,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -23,7 +22,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -186,11 +184,11 @@ public class MetricsServiceTest {
     return dars.stream().map(dar -> service.new DarMetricsSummary(dar)).collect(Collectors.toList());
   }
 
-  private List<DataSet> generateDatasets(int count) {
+  private List<Dataset> generateDatasets(int count) {
     return IntStream.range(1, count + 1)
         .mapToObj(
             i -> {
-              DataSet d = new DataSet();
+              Dataset d = new Dataset();
               d.setAlias(count);
               d.setDataSetId(count);
               d.setName(UUID.randomUUID().toString());

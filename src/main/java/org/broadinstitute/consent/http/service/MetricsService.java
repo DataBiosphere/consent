@@ -22,7 +22,7 @@ import org.broadinstitute.consent.http.models.DacDecisionMetrics;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 import org.broadinstitute.consent.http.models.Election;
@@ -92,7 +92,7 @@ public class MetricsService {
         .map(DataAccessRequestData::getDatasetIds)
         .flatMap(List::stream)
         .collect(Collectors.toList());
-    List<DataSet> datasets = dataSetDAO.findDatasetsByIdList(datasetIds);
+    List<Dataset> datasets = dataSetDAO.findDatasetsByIdList(datasetIds);
     List<Election> elections = electionDAO.findLastElectionsByReferenceIds(referenceIds);
     List<Match> matches = matchDAO.findMatchesForPurposeIds(referenceIds);
     List<Integer> electionIds =
@@ -113,14 +113,14 @@ public class MetricsService {
   }
 
   private List<DarDecisionMetrics> getDarMetrics(List<DataAccessRequest> dars,
-    List<DataSet> datasets, List<Election> elections,  List<Match> matches, List<Dac> dacs) {
+    List<Dataset> datasets, List<Election> elections,  List<Match> matches, List<Dac> dacs) {
     return dars.stream()
       .map(
         dataAccessRequest -> {
           Integer datasetId =
             dataAccessRequest.getData().getDatasetIds().stream().findFirst().orElse(0);
 
-          DataSet dataset =
+          Dataset dataset =
             datasets.stream()
               .filter(d -> d.getDataSetId().equals(datasetId))
               .findFirst()

@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 import org.jsoup.Jsoup;
@@ -149,9 +149,9 @@ public class FreeMarkerTemplateHelperTest {
         return Jsoup.parse(parsedHtml);
     }
 
-    private DataSet ds1 = new DataSet(1, "DS-101", "Dataset 1", new Date(), true);
-    private DataSet ds2 = new DataSet(2, "DS-102", "Dataset 2", new Date(), true);
-    private DataSet ds3 = new DataSet(3, "DS-103", "Dataset 3", new Date(), true);
+    private Dataset ds1 = new Dataset(1, "DS-101", "Dataset 1", new Date(), true);
+    private Dataset ds2 = new Dataset(2, "DS-102", "Dataset 2", new Date(), true);
+    private Dataset ds3 = new Dataset(3, "DS-103", "Dataset 3", new Date(), true);
     private User testUser = new User(1, "testuser@email.com", "Test User", new Date(), null);
     private Election e1 = new Election(1, "DataSet", "Closed", new Date(), "DAR-1", null , true, 1);
     private Election e2 = new Election(2, "DataSet", "Closed", new Date(), "DAR-1", null , false, 2);
@@ -169,12 +169,12 @@ public class FreeMarkerTemplateHelperTest {
     private DataSetPIMailModel piModel2 = new DataSetPIMailModel("DS-102", "Dataset 2", "DUOS-000002");
     private DataSetPIMailModel piModel3 = new DataSetPIMailModel("DS-102", "Dataset 3", "DUOS-000003");
 
-    private List<DataSet> sampleDatasets(){
+    private List<Dataset> sampleDatasets(){
         return Arrays.asList(ds1, ds2, ds3);
     }
 
-    private Map<User, List<DataSet>> getApprovedDarMap(){
-        Map<User, List<DataSet>> approvedDarMap = new HashMap<>();
+    private Map<User, List<Dataset>> getApprovedDarMap(){
+        Map<User, List<Dataset>> approvedDarMap = new HashMap<>();
         approvedDarMap.put(testUser, sampleDatasets());
         return approvedDarMap;
     }

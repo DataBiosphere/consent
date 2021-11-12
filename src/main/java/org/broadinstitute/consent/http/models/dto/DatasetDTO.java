@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataUse;
 
 
@@ -167,7 +167,7 @@ public class DatasetDTO {
     }
 
     public void setAlias(Integer alias) {
-        this.alias = DataSet.parseAliasToIdentifier(alias);
+        this.alias = Dataset.parseAliasToIdentifier(alias);
     }
 
     public String getAlias(){

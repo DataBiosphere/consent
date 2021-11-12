@@ -14,7 +14,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
@@ -176,8 +176,8 @@ public class MatchService {
     public List<Match> createMatchesForConsent(String consentId) {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
-        List<DataSet> dataSets = dataSetDAO.getDataSetsForConsent(consentId);
-        List<DataAccessRequest> dars = findRelatedDars(dataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList()));
+        List<Dataset> datasets = dataSetDAO.getDataSetsForConsent(consentId);
+        List<DataAccessRequest> dars = findRelatedDars(datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toList()));
         if (consent != null && !dars.isEmpty()) {
             Match match;
             for (DataAccessRequest dar : dars) {

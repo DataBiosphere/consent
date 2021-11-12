@@ -48,7 +48,7 @@ public class DarCollection {
   private List<DataAccessRequest> dars;
 
   @JsonProperty
-  private Set<DataSet> datasets;
+  private Set<Dataset> datasets;
 
   @JsonProperty
   private Map<String, List<Election>> electionMap;
@@ -131,15 +131,15 @@ public class DarCollection {
     dars.add(dar);
   }
 
-  public void addDataset(DataSet dataset) {
+  public void addDataset(Dataset dataset) {
     this.datasets.add(dataset);
   }
 
-  public void setDatasets(Set<DataSet> datasets) {
+  public void setDatasets(Set<Dataset> datasets) {
     this.datasets = datasets;
   }
 
-  public Set<DataSet> getDatasets() {
+  public Set<Dataset> getDatasets() {
     return datasets;
   }
 

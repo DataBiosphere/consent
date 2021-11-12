@@ -19,7 +19,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
@@ -74,7 +74,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   public void testFindDARCollectionIdsByDacIds() {
     // Set up a DAR Collection with a DAR, Dataset, Consent, Consent Association,
     // and DAC in such a way that all are connected via the dataset id.
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     DarCollection c = createDarCollection();
     DataAccessRequest dar = c.getDars().get(0);
     if (Objects.isNull(dar)) {

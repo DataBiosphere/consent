@@ -22,7 +22,7 @@ import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
@@ -102,7 +102,7 @@ public class DatasetResourceTest {
 
     @Test(expected = BadRequestException.class)
     public void testCreateDatasetErrors() {
-        DataSet inUse = new DataSet();
+        Dataset inUse = new Dataset();
         when(datasetService.getDatasetByName("test")).thenReturn(inUse);
 
         initResource();
@@ -131,7 +131,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testUpdateDataset() {
-        DataSet preexistingDataset = new DataSet();
+        Dataset preexistingDataset = new Dataset();
         DatasetDTO json = new DatasetDTO();
         List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
         jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
@@ -152,7 +152,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testUpdateDatasetNoContent() {
-        DataSet preexistingDataset = new DataSet();
+        Dataset preexistingDataset = new Dataset();
         DatasetDTO json = new DatasetDTO();
         List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
         jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
@@ -196,7 +196,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testValidateDatasetNameSuccess() {
-        DataSet testDataset = new DataSet();
+        Dataset testDataset = new Dataset();
         testDataset.setDataSetId(1);
         when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
         initResource();

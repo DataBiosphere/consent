@@ -10,7 +10,7 @@ import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataSetAudit;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -60,7 +60,7 @@ public class DatasetService {
         this.converter = converter;
     }
 
-    public List<DataSet> getDataSetsForConsent(String consentId) {
+    public List<Dataset> getDataSetsForConsent(String consentId) {
         return datasetDAO.getDataSetsForConsent(consentId);
     }
 
@@ -77,13 +77,13 @@ public class DatasetService {
     }
 
     public void disableDataset(Integer datasetId, Boolean active) {
-        DataSet dataset = datasetDAO.findDataSetById(datasetId);
+        Dataset dataset = datasetDAO.findDataSetById(datasetId);
         if (dataset != null) {
             datasetDAO.updateDataSetActive(dataset.getDataSetId(), active);
         }
     }
 
-    public DataSet updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval) {
+    public Dataset updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval) {
         if (datasetDAO.findDataSetById(dataSetId) == null) {
             throw new NotFoundException("DataSet doesn't exist");
         }
@@ -91,7 +91,7 @@ public class DatasetService {
         return datasetDAO.findDataSetById(dataSetId);
     }
 
-    public List<DataSet> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
+    public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
         return datasetDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
     }
 
@@ -193,16 +193,16 @@ public class DatasetService {
         return getDatasetDTO(createdDatasetId);
     }
 
-    public DataSet getDatasetByName(String name) {
+    public Dataset getDatasetByName(String name) {
         String lowercaseName = name.toLowerCase();
         return datasetDAO.getDatasetByName(lowercaseName);
     }
 
-    public DataSet findDatasetById(Integer id) {
+    public Dataset findDatasetById(Integer id) {
         return datasetDAO.findDataSetById(id);
     }
 
-    public Set<DataSet> getDatasetWithDataUseByIds(List<Integer> datasetIds) {
+    public Set<Dataset> getDatasetWithDataUseByIds(List<Integer> datasetIds) {
         return datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
     }
 
@@ -210,14 +210,14 @@ public class DatasetService {
         return datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
     }
 
-    public DataSet getDatasetWithPropertiesById(Integer datasetId) {
-        DataSet dataset = datasetDAO.findDataSetById(datasetId);
+    public Dataset getDatasetWithPropertiesById(Integer datasetId) {
+        Dataset dataset = datasetDAO.findDataSetById(datasetId);
         Set<DataSetProperty> properties = getDatasetProperties(datasetId);
         dataset.setProperties(properties);
         return dataset;
     }
 
-    public Optional<DataSet> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
+    public Optional<Dataset> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
 
         if (Objects.nonNull(dataset.getDacId())) {
@@ -227,7 +227,7 @@ public class DatasetService {
             }
         }
 
-        DataSet old = getDatasetWithPropertiesById(datasetId);
+        Dataset old = getDatasetWithPropertiesById(datasetId);
         Set<DataSetProperty> oldProperties = old.getProperties();
 
         List<DataSetPropertyDTO> updateDatasetPropertyDTOs = dataset.getProperties();
@@ -257,7 +257,7 @@ public class DatasetService {
         updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
         datasetDAO.updateDatasetNeedsApproval(datasetId, dataset.getNeedsApproval());
         datasetDAO.updateDatasetUpdateUserAndDate(datasetId, now, userId);
-        DataSet updatedDataset = getDatasetWithPropertiesById(datasetId);
+        Dataset updatedDataset = getDatasetWithPropertiesById(datasetId);
         return Optional.of(updatedDataset);
     }
 
@@ -331,7 +331,7 @@ public class DatasetService {
     }
 
     public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
-        DataSet dataset = datasetDAO.findDataSetById(datasetId);
+        Dataset dataset = datasetDAO.findDataSetById(datasetId);
         if (Objects.nonNull(dataset)) {
             // Some legacy dataset names can be null
             String dsAuditName = Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();

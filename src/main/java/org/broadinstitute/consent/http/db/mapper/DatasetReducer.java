@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataUse;
 
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -9,12 +9,12 @@ import java.util.Objects;
 
 import java.util.Map;
 
-public class DatasetReducer implements LinkedHashMapRowReducer<Integer, DataSet> {
+public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset> {
   @Override
-  public void accumulate(Map<Integer, DataSet> map, RowView rowView) {
-    DataSet dataset = map.computeIfAbsent(
+  public void accumulate(Map<Integer, Dataset> map, RowView rowView) {
+    Dataset dataset = map.computeIfAbsent(
       rowView.getColumn("datasetid", Integer.class),
-      id -> rowView.getRow(DataSet.class));
+      id -> rowView.getRow(Dataset.class));
     
       if(Objects.nonNull(rowView.getColumn("datause", String.class))) {
         dataset.setDataUse(

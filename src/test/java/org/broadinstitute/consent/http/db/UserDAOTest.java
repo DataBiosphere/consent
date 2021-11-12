@@ -20,7 +20,7 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -281,7 +281,7 @@ public class UserDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindUsersForElectionsByRoles() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
@@ -298,7 +298,7 @@ public class UserDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindUsersForElectionsByRolesNotFound() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
@@ -314,7 +314,7 @@ public class UserDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindUsersForDatasetsByRole() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
@@ -332,7 +332,7 @@ public class UserDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindUsersForDatasetsByRoleNotFound() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());

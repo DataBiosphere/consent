@@ -22,7 +22,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
@@ -379,7 +379,7 @@ public class ElectionService {
     public String darDatasetElectionStatus(String darReferenceId){
         DataAccessRequest dar = describeDataAccessRequestById(darReferenceId);
         List<Integer> dataSets =  Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
-        List<DataSet> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
+        List<Dataset> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
         if(CollectionUtils.isEmpty(dsForApproval)) {
             return DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
         } else {
@@ -405,7 +405,7 @@ public class ElectionService {
         return electionId != null ? electionDAO.findElectionById(electionId) : null;
     }
 
-    public List<Election> createDataSetElections(String referenceId, Map<User, List<DataSet>> dataOwnerDataSet){
+    public List<Election> createDataSetElections(String referenceId, Map<User, List<Dataset>> dataOwnerDataSet){
         List<Integer> electionsIds = new ArrayList<>();
         dataOwnerDataSet.forEach((user,dataSets) -> {
             dataSets.stream().forEach(dataSet -> {
@@ -440,41 +440,41 @@ public class ElectionService {
             if (Objects.isNull(dataAccessRequest) || Objects.isNull(dataAccessRequest.getData())) {
                 throw new NotFoundException();
             }
-            List<DataSet> dataSets = verifyActiveDataSets(dataAccessRequest, referenceId);
-            Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
+            List<Dataset> datasets = verifyActiveDataSets(dataAccessRequest, referenceId);
+            Consent consent = consentDAO.findConsentFromDatasetID(datasets.get(0).getDataSetId());
             consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), ElectionStatus.CLOSED.getValue());
         }
         return consentElection;
     }
 
-    private List<DataSet> verifyActiveDataSets(DataAccessRequest dar, String referenceId) throws Exception {
+    private List<Dataset> verifyActiveDataSets(DataAccessRequest dar, String referenceId) throws Exception {
         List<Integer> dataSets = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
-        List<DataSet> dataSetList = dataSets.isEmpty() ? Collections.emptyList() : dataSetDAO.findDatasetsByIdList(dataSets);
-        List<String> disabledDataSets = dataSetList.stream()
+        List<Dataset> datasetList = dataSets.isEmpty() ? Collections.emptyList() : dataSetDAO.findDatasetsByIdList(dataSets);
+        List<String> disabledDataSets = datasetList.stream()
                 .filter(ds -> !ds.getActive())
-                .map(DataSet::getObjectId)
+                .map(Dataset::getObjectId)
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(disabledDataSets)) {
-            boolean createElection = disabledDataSets.size() != dataSetList.size();
+            boolean createElection = disabledDataSets.size() != datasetList.size();
             User user = userDAO.findUserById(dar.getUserId());
             if (!createElection) {
                 emailNotifierService.sendDisabledDatasetsMessage(user, disabledDataSets, dar.getData().getDarCode());
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
             } else {
-                updateDataAccessRequest(dataSetList, dar, referenceId);
+                updateDataAccessRequest(datasetList, dar, referenceId);
                 emailNotifierService.sendDisabledDatasetsMessage(user, disabledDataSets, dar.getData().getDarCode());
             }
         }
-        return dataSetList;
+        return datasetList;
     }
 
-    private void updateDataAccessRequest(List<DataSet> dataSets, DataAccessRequest dar, String referenceId) {
+    private void updateDataAccessRequest(List<Dataset> datasets, DataAccessRequest dar, String referenceId) {
         List<DatasetDetailEntry> activeDatasetDetailEntries = new ArrayList<>();
         List<Integer> activeDatasetIds = new ArrayList<>();
-        List<DataSet> activeDataSets = dataSets.stream()
-                .filter(DataSet::getActive)
+        List<Dataset> activeDatasets = datasets.stream()
+                .filter(Dataset::getActive)
                 .collect(Collectors.toList());
-        activeDataSets.forEach((dataSet) -> {
+        activeDatasets.forEach((dataSet) -> {
             activeDatasetIds.add(dataSet.getDataSetId());
             DatasetDetailEntry entry = new DatasetDetailEntry();
             entry.setDatasetId(dataSet.getDataSetId().toString());
@@ -628,12 +628,12 @@ public class ElectionService {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
         List<Integer> dataSetIdList = dar.getData().getDatasetIds();
         if (CollectionUtils.isNotEmpty(dataSetIdList)) {
-            List<DataSet> dataSets = dataSetDAO.findDatasetsByIdList(dataSetIdList);
+            List<Dataset> datasets = dataSetDAO.findDatasetsByIdList(dataSetIdList);
             List<DatasetMailDTO> datasetsDetail = new ArrayList<>();
-            dataSets.forEach(ds ->
+            datasets.forEach(ds ->
                     datasetsDetail.add(new DatasetMailDTO(ds.getName(), ds.getDatasetIdentifier()))
             );
-            Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
+            Consent consent = consentDAO.findConsentFromDatasetID(datasets.get(0).getDataSetId());
             // Legacy behavior was to populate the plain language translation we received from ORSP
             // If we don't have that and have a valid data use, use that instead as it is more up to date.
             String translatedUseRestriction = consent.getTranslatedUseRestriction();

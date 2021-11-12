@@ -18,7 +18,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.junit.Test;
 
@@ -31,7 +31,7 @@ public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindConsentFromDatasetID() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
@@ -41,7 +41,7 @@ public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindConsentNameFromDatasetID() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
@@ -185,7 +185,7 @@ public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindAssociationByTypeAndId() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
@@ -201,8 +201,8 @@ public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testDeleteOneAssociation() {
-        DataSet dataset = createDataset();
-        DataSet dataset2 = createDataset();
+        Dataset dataset = createDataset();
+        Dataset dataset2 = createDataset();
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
         createAssociation(consent.getConsentId(), dataset2.getDataSetId());
@@ -219,8 +219,8 @@ public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testDeleteAllAssociationsForType() {
-        DataSet dataset = createDataset();
-        DataSet dataset2 = createDataset();
+        Dataset dataset = createDataset();
+        Dataset dataset2 = createDataset();
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
         createAssociation(consent.getConsentId(), dataset2.getDataSetId());
@@ -237,8 +237,8 @@ public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testDeleteAssociationsByDataSetId() {
-        DataSet dataset = createDataset();
-        DataSet dataset2 = createDataset();
+        Dataset dataset = createDataset();
+        Dataset dataset2 = createDataset();
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
         createAssociation(consent.getConsentId(), dataset2.getDataSetId());
@@ -257,8 +257,8 @@ public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindConsentsForAssociation() {
-        DataSet dataset = createDataset();
-        DataSet dataset2 = createDataset();
+        Dataset dataset = createDataset();
+        Dataset dataset2 = createDataset();
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
         createAssociation(consent.getConsentId(), dataset2.getDataSetId());
@@ -305,7 +305,7 @@ public class ConsentDAOTest extends DAOTestHelper {
     @Test
     public void testFindConsentManageByStatus() {
         Consent consent = createConsent(null);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
@@ -317,7 +317,7 @@ public class ConsentDAOTest extends DAOTestHelper {
     @Test
     public void testGetAssociationConsentIdsFromDatasetIds() {
         Consent consent = createConsent(null);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
         List<Integer> dataSetIds = Stream.of(dataset.getDataSetId()).collect(Collectors.toList());
 

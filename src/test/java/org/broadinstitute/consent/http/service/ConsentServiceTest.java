@@ -29,7 +29,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.grammar.Everything;
@@ -394,8 +394,8 @@ public class ConsentServiceTest {
         return consent;
     }
 
-    private DataSet getTestDataset() {
-        DataSet dataset = new DataSet();
+    private Dataset getTestDataset() {
+        Dataset dataset = new Dataset();
         dataset.setDataSetId(1);
         dataset.setObjectId("test dataset");
         return dataset;

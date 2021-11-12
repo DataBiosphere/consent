@@ -30,7 +30,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
@@ -442,8 +442,8 @@ public class DAOTestHelper {
         dataSetDAO.insertDatasetProperties(list);
     }
 
-    protected DataSet createDataset() {
-        DataSet ds = new DataSet();
+    protected Dataset createDataset() {
+        Dataset ds = new Dataset();
         ds.setName("Name_" + RandomStringUtils.random(20, true, true));
         ds.setCreateDate(new Date());
         ds.setObjectId("Object ID_" + RandomStringUtils.random(20, true, true));
@@ -595,7 +595,7 @@ public class DAOTestHelper {
         User user = createUser();
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         DataAccessRequest dar = insertDAR(user.getDacUserId(), collection_id, darCode);
         createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         createAccessElection(dar.getReferenceId(), dataset.getDataSetId());

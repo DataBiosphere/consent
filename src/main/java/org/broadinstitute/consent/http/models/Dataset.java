@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
-public class DataSet {
+public class Dataset {
 
     @JsonProperty
     private Integer dataSetId;
@@ -49,10 +49,10 @@ public class DataSet {
 
     private Set<DataSetProperty> properties;
 
-    public DataSet() {
+    public Dataset() {
     }
 
-    public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Integer createUserId, Date updateDate, Integer updateUserId, Boolean active, Integer alias) {
+    public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Integer createUserId, Date updateDate, Integer updateUserId, Boolean active, Integer alias) {
         this.dataSetId = dataSetId;
         this.objectId = objectId;
         this.name = name;
@@ -64,7 +64,7 @@ public class DataSet {
         this.alias = alias;
     }
 
-    public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active, Integer alias) {
+    public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Boolean active, Integer alias) {
         this.dataSetId = dataSetId;
         this.objectId = objectId;
         this.name = name;
@@ -73,7 +73,7 @@ public class DataSet {
         this.alias = alias;
     }
 
-    public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active) {
+    public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Boolean active) {
         this.dataSetId = dataSetId;
         this.objectId = objectId;
         this.name = name;
@@ -83,7 +83,7 @@ public class DataSet {
 
     private static String PREFIX = "DUOS-";
 
-    public DataSet(String objectId) {
+    public Dataset(String objectId) {
         this.objectId = objectId;
     }
 

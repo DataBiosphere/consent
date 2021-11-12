@@ -32,7 +32,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AccessRP;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.Summary;
@@ -298,7 +298,7 @@ public class SummaryService {
                                 summaryWriter.write( dar.getData().getProjectTitle() + SEPARATOR);
                                 List<String> dataSetUUIds = new ArrayList<>();
                                 for (Integer id : datasetId) {
-                                    dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
+                                    dataSetUUIds.add(Dataset.parseAliasToIdentifier(id));
                                 }
                                 summaryWriter.write( StringUtils.join(dataSetUUIds, ",")  + SEPARATOR);
                                 summaryWriter.write( formatLongToDate(dar.getSortDate().getTime())  + SEPARATOR);
@@ -375,7 +375,7 @@ public class SummaryService {
                 for (Election election : elections) {
                     summaryWriter.write( dar_code + SEPARATOR);
                     summaryWriter.write( dar_election_result + SEPARATOR);
-                    DataSet dataset = datasetDAO.findDataSetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
+                    Dataset dataset = datasetDAO.findDataSetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
                     summaryWriter.write( dataset.getObjectId() + SEPARATOR);
                     summaryWriter.write( dataset.getName() + SEPARATOR);
                     summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);
