@@ -40,7 +40,7 @@ public class MetricsServiceTest {
 
   @Mock private DacService dacService;
 
-  @Mock private DatasetDAO dataSetDAO;
+  @Mock private DatasetDAO datasetDAO;
 
   @Mock private DataAccessRequestDAO darDAO;
 
@@ -56,7 +56,7 @@ public class MetricsServiceTest {
   }
 
   private void initService() {
-    service = new MetricsService(dacService, dataSetDAO, darDAO, matchDAO, electionDAO);
+    service = new MetricsService(dacService, datasetDAO, darDAO, matchDAO, electionDAO);
   }
 
   @Test
@@ -87,7 +87,7 @@ public class MetricsServiceTest {
     List<Election> election = generateElection(dars.get(0).getReferenceId());
     Set<DatasetDTO> dataset = new HashSet<>(generateDatasetDTO(1));
 
-    when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(dataset);
+    when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(dataset);
     when(darDAO.findAllDataAccessRequestsByDatasetId(any())).thenReturn(dars);
     when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), eq("DataAccess"))).thenReturn(election);
 
@@ -101,7 +101,7 @@ public class MetricsServiceTest {
 
   @Test(expected = NotFoundException.class)
   public void testGenerateDatasetMetricsNotFound() {
-    when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(new HashSet<>());
+    when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(new HashSet<>());
 
     initService();
     service.generateDatasetMetrics(1);
@@ -110,14 +110,14 @@ public class MetricsServiceTest {
 
   private void initializeMetricsDAOCalls(int darCount, int datasetCount) {
     when(darDAO.findAllDataAccessRequests()).thenReturn(generateDars(darCount));
-    when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(generateDatasets(datasetCount));
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(generateDatasets(datasetCount));
     when(electionDAO.findLastElectionsByReferenceIds(any())).thenReturn(Collections.emptyList());
     when(matchDAO.findMatchesForPurposeIds(any())).thenReturn(Collections.emptyList());
     when(electionDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
     Dac dac = generateDac();
     when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
     List<DatasetDTO> datasetDTOS = generateDatasetDTO(datasetCount);
-    when(dataSetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOS));
+    when(datasetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOS));
   }
 
   private Dac generateDac() {

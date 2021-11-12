@@ -74,7 +74,7 @@ public class DataAccessRequestServiceTest {
     @Mock
     private UserDAO userDAO;
     @Mock
-    private DatasetDAO dataSetDAO;
+    private DatasetDAO datasetDAO;
     @Mock
     private ElectionDAO electionDAO;
     @Mock
@@ -106,7 +106,7 @@ public class DataAccessRequestServiceTest {
         container.setInstitutionDAO(institutionDAO);
         container.setDacDAO(dacDAO);
         container.setUserDAO(userDAO);
-        container.setDatasetDAO(dataSetDAO);
+        container.setDatasetDAO(datasetDAO);
         container.setElectionDAO(electionDAO);
         container.setVoteDAO(voteDAO);
         service = new DataAccessRequestService(counterService, container, dacService);
@@ -127,7 +127,7 @@ public class DataAccessRequestServiceTest {
         ds.setConsentName(dar.getReferenceId());
         ds.setDatasetId(1);
         ds.setName("test dataset");
-        when(dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()))
+        when(datasetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()))
                 .thenReturn(Collections.singletonList(ds));
         initService();
 
@@ -408,7 +408,7 @@ public class DataAccessRequestServiceTest {
         Institution institution = new Institution();
         institution.setName("Institution");
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        when(dataSetDAO.getAssociatedConsentIdByDataSetId(any()))
+        when(datasetDAO.getAssociatedConsentIdByDataSetId(any()))
                 .thenReturn("CONS-1");
 
         Consent consent = new Consent();
@@ -436,7 +436,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        when(dataSetDAO.getAssociatedConsentIdByDataSetId(any()))
+        when(datasetDAO.getAssociatedConsentIdByDataSetId(any()))
                 .thenReturn("CONS-1");
 
         Consent consent = new Consent();
@@ -506,7 +506,7 @@ public class DataAccessRequestServiceTest {
         when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
         when(dataAccessRequestDAO.findByReferenceId(any()))
                 .thenReturn(dar);
-        when(dataSetDAO.findDataSetsByIdList(dar.data.getDatasetIds()))
+        when(datasetDAO.findDataSetsByIdList(dar.data.getDatasetIds()))
                 .thenReturn(Collections.singletonList(ds));
 
         User user = new User();

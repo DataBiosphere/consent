@@ -64,7 +64,7 @@ public class DAOTestHelper {
     protected static CounterDAO counterDAO;
     protected static DacDAO dacDAO;
     protected static UserDAO userDAO;
-    protected static DatasetDAO dataSetDAO;
+    protected static DatasetDAO datasetDAO;
     protected static ElectionDAO electionDAO;
     protected static UserRoleDAO userRoleDAO;
     protected static VoteDAO voteDAO;
@@ -125,7 +125,7 @@ public class DAOTestHelper {
         counterDAO = jdbi.onDemand(CounterDAO.class);
         dacDAO = jdbi.onDemand(DacDAO.class);
         userDAO = jdbi.onDemand(UserDAO.class);
-        dataSetDAO = jdbi.onDemand(DatasetDAO.class);
+        datasetDAO = jdbi.onDemand(DatasetDAO.class);
         electionDAO = jdbi.onDemand(ElectionDAO.class);
         userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
         voteDAO = jdbi.onDemand(VoteDAO.class);
@@ -161,8 +161,8 @@ public class DAOTestHelper {
         });
         createdElectionIds.forEach(id -> electionDAO.deleteAccessRP(id));
         createdElectionIds.forEach(id -> electionDAO.deleteElectionById(id));
-        dataSetDAO.deleteDataSetsProperties(createdDataSetIds);
-        dataSetDAO.deleteDataSets(createdDataSetIds);
+        datasetDAO.deleteDataSetsProperties(createdDataSetIds);
+        datasetDAO.deleteDataSets(createdDataSetIds);
         createdDacIds.forEach(id -> {
             dacDAO.deleteDacMembers(id);
             dacDAO.deleteDac(id);
@@ -439,7 +439,7 @@ public class DAOTestHelper {
         dsp.setPropertyValue("Test_PropertyValue");
         dsp.setCreateDate(new Date());
         list.add(dsp);
-        dataSetDAO.insertDatasetProperties(list);
+        datasetDAO.insertDatasetProperties(list);
     }
 
     protected Dataset createDataset() {
@@ -449,10 +449,10 @@ public class DAOTestHelper {
         ds.setObjectId("Object ID_" + RandomStringUtils.random(20, true, true));
         ds.setActive(true);
         ds.setAlias(RandomUtils.nextInt(1, 1000));
-        Integer id = dataSetDAO.insertDataset(ds.getName(), ds.getCreateDate(), ds.getObjectId(), ds.getActive(), ds.getAlias());
+        Integer id = datasetDAO.insertDataset(ds.getName(), ds.getCreateDate(), ds.getObjectId(), ds.getActive(), ds.getAlias());
         createdDataSetIds.add(id);
         createDatasetProperties(id);
-        return dataSetDAO.findDataSetById(id);
+        return datasetDAO.findDataSetById(id);
     }
 
     protected LibraryCard createLibraryCard() {
