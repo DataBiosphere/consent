@@ -409,8 +409,8 @@ public class ElectionService {
         List<Integer> electionsIds = new ArrayList<>();
         dataOwnerDataSet.forEach((user,dataSets) -> {
             dataSets.stream().forEach(dataSet -> {
-                if(electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, dataSet.getDataSetId()) == null) {
-                    Integer electionId = electionDAO.insertElection(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), new Date(), referenceId, dataSet.getDataSetId());
+                if(electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, dataSet.getDatasetId()) == null) {
+                    Integer electionId = electionDAO.insertElection(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), new Date(), referenceId, dataSet.getDatasetId());
                     electionsIds.add(electionId);
                 }
             });
@@ -441,7 +441,7 @@ public class ElectionService {
                 throw new NotFoundException();
             }
             List<Dataset> datasets = verifyActiveDataSets(dataAccessRequest, referenceId);
-            Consent consent = consentDAO.findConsentFromDatasetID(datasets.get(0).getDataSetId());
+            Consent consent = consentDAO.findConsentFromDatasetID(datasets.get(0).getDatasetId());
             consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), ElectionStatus.CLOSED.getValue());
         }
         return consentElection;
@@ -475,9 +475,9 @@ public class ElectionService {
                 .filter(Dataset::getActive)
                 .collect(Collectors.toList());
         activeDatasets.forEach((dataSet) -> {
-            activeDatasetIds.add(dataSet.getDataSetId());
+            activeDatasetIds.add(dataSet.getDatasetId());
             DatasetDetailEntry entry = new DatasetDetailEntry();
-            entry.setDatasetId(dataSet.getDataSetId().toString());
+            entry.setDatasetId(dataSet.getDatasetId().toString());
             entry.setName(dataSet.getName());
             entry.setObjectId(dataSet.getObjectId());
             activeDatasetDetailEntries.add(entry);
@@ -633,7 +633,7 @@ public class ElectionService {
             datasets.forEach(ds ->
                     datasetsDetail.add(new DatasetMailDTO(ds.getName(), ds.getDatasetIdentifier()))
             );
-            Consent consent = consentDAO.findConsentFromDatasetID(datasets.get(0).getDataSetId());
+            Consent consent = consentDAO.findConsentFromDatasetID(datasets.get(0).getDatasetId());
             // Legacy behavior was to populate the plain language translation we received from ORSP
             // If we don't have that and have a valid data use, use that instead as it is more up to date.
             String translatedUseRestriction = consent.getTranslatedUseRestriction();

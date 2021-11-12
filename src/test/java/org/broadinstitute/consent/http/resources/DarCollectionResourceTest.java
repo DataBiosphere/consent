@@ -77,7 +77,7 @@ public class DarCollectionResourceTest {
     Set<Dataset> datasets = new HashSet<>();
     for(int i = 1; i < 3; i++) {
       Dataset newDataset = new Dataset();
-      newDataset.setDataSetId(i);
+      newDataset.setDatasetId(i);
       datasets.add(newDataset);
     }
     return datasets;

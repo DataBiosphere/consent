@@ -11,7 +11,7 @@ public class DataSetMapper implements RowMapper<Dataset>, RowMapperHelper {
 
   public Dataset map(ResultSet r, StatementContext ctx) throws SQLException {
       Dataset dataset = new Dataset();
-      dataset.setDataSetId(r.getInt("dataSetId"));
+      dataset.setDatasetId(r.getInt("dataSetId"));
       dataset.setObjectId(r.getString("objectId"));
       dataset.setName(r.getString("name"));
       if (hasColumn(r, "createdate")) {

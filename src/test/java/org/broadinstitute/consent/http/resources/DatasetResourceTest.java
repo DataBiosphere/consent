@@ -197,7 +197,7 @@ public class DatasetResourceTest {
     @Test
     public void testValidateDatasetNameSuccess() {
         Dataset testDataset = new Dataset();
-        testDataset.setDataSetId(1);
+        testDataset.setDatasetId(1);
         when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
         initResource();
         Response response = resource.validateDatasetName("test");

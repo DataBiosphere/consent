@@ -396,7 +396,7 @@ public class ConsentServiceTest {
 
     private Dataset getTestDataset() {
         Dataset dataset = new Dataset();
-        dataset.setDataSetId(1);
+        dataset.setDatasetId(1);
         dataset.setObjectId("test dataset");
         return dataset;
     }

@@ -177,7 +177,7 @@ public class MatchService {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
         List<Dataset> datasets = dataSetDAO.getDataSetsForConsent(consentId);
-        List<DataAccessRequest> dars = findRelatedDars(datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toList()));
+        List<DataAccessRequest> dars = findRelatedDars(datasets.stream().map(Dataset::getDatasetId).collect(Collectors.toList()));
         if (consent != null && !dars.isEmpty()) {
             Match match;
             for (DataAccessRequest dar : dars) {

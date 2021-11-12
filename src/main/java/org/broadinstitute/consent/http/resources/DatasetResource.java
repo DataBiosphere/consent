@@ -146,7 +146,7 @@ public class DatasetResource extends Resource {
             Integer userId = user.getDacUserId();
             Optional<Dataset> updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
             if (updatedDataset.isPresent()) {
-                URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.get().getDataSetId());
+                URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.get().getDatasetId());
                 return Response.ok(uri).entity(updatedDataset.get()).build();
             }
             else {
@@ -191,7 +191,7 @@ public class DatasetResource extends Resource {
     public Response validateDatasetName(@QueryParam("name") String name) {
         try {
             Dataset datasetWithName = datasetService.getDatasetByName(name);
-            return Response.ok().entity(datasetWithName.getDataSetId()).build();
+            return Response.ok().entity(datasetWithName.getDatasetId()).build();
         } catch (Exception e) {
             throw new NotFoundException("Could not find the dataset with name: " + name);
         }
@@ -372,9 +372,9 @@ public class DatasetResource extends Resource {
             logger().error("Unable to find dac ids for chairperson user: " + user.getEmail());
             throw new NotFoundException();
         } else {
-            Consent consent = consentService.getConsentFromDatasetID(dataset.getDataSetId());
+            Consent consent = consentService.getConsentFromDatasetID(dataset.getDatasetId());
             if (Objects.isNull(consent) || Objects.isNull(consent.getDacId())) {
-                logger().warn("Cannot find a valid dac id for dataset: " + dataset.getDataSetId());
+                logger().warn("Cannot find a valid dac id for dataset: " + dataset.getDatasetId());
                 throw new NotFoundException();
             } else {
                 if (!dacIds.contains(consent.getDacId())) {

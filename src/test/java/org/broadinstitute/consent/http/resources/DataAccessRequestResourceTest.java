@@ -82,7 +82,7 @@ public class DataAccessRequestResourceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         Dataset dataSet = new Dataset();
-        dataSet.setDataSetId(1);
+        dataSet.setDatasetId(1);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(user.getDacUserId()).thenReturn(dar.getUserId());
         when(userService.findUserByEmail(any())).thenReturn(user);
@@ -123,7 +123,7 @@ public class DataAccessRequestResourceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         Dataset dataSet = new Dataset();
-        dataSet.setDataSetId(1);
+        dataSet.setDatasetId(1);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(user.getDacUserId()).thenReturn(dar.getUserId() + 1);
         when(userService.findUserByEmail(any())).thenReturn(user);

@@ -125,7 +125,7 @@ public class DataAccessRequestServiceTest {
         when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), any())).thenReturn(Collections.singletonList(e));
         Dataset ds = new Dataset();
         ds.setConsentName(dar.getReferenceId());
-        ds.setDataSetId(1);
+        ds.setDatasetId(1);
         ds.setName("test dataset");
         when(dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()))
                 .thenReturn(Collections.singletonList(ds));
@@ -498,7 +498,7 @@ public class DataAccessRequestServiceTest {
         institution.setId(1);
         institution.setName("Institution");
         Dataset ds = new Dataset();
-        ds.setDataSetId(1);
+        ds.setDatasetId(1);
         ds.setName("DS-1");
         ds.setConsentName(dar.getReferenceId());
 

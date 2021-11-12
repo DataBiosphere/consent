@@ -152,7 +152,7 @@ public class MetricsServiceTest {
               DatasetDTO dto = new DatasetDTO();
               dto.setDacId(dac.getDacId());
               dto.setAlias(ds.getAlias());
-              dto.setDataSetId(ds.getDataSetId());
+              dto.setDataSetId(ds.getDatasetId());
               DataSetPropertyDTO name = new DataSetPropertyDTO("Dataset Name", ds.getName());
               DataSetPropertyDTO consent = new DataSetPropertyDTO("Consent ID", ds.getName());
               dto.setProperties(Arrays.asList(name, consent));
@@ -190,7 +190,7 @@ public class MetricsServiceTest {
             i -> {
               Dataset d = new Dataset();
               d.setAlias(count);
-              d.setDataSetId(count);
+              d.setDatasetId(count);
               d.setName(UUID.randomUUID().toString());
               return d;
             })

@@ -76,7 +76,7 @@ public class DatasetServiceTest {
     public void testCreateDataset() throws Exception {
         DatasetDTO test = getDatasetDTO();
         Dataset mockDataset = getDatasets().get(0);
-        when(datasetDAO.insertDatasetV2(anyString(), any(), anyInt(), anyString(), anyBoolean())).thenReturn(mockDataset.getDataSetId());
+        when(datasetDAO.insertDatasetV2(anyString(), any(), anyInt(), anyString(), anyBoolean())).thenReturn(mockDataset.getDatasetId());
         when(datasetDAO.findDataSetById(any())).thenReturn(mockDataset);
         when(datasetDAO.findDatasetPropertiesByDatasetId(any())).thenReturn(getDatasetProperties());
         when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(Collections.singleton(test));
@@ -85,7 +85,7 @@ public class DatasetServiceTest {
         DatasetDTO result = datasetService.createDatasetWithConsent(getDatasetDTO(), "Test Dataset 1", 1);
 
         assertNotNull(result);
-        assertEquals(mockDataset.getDataSetId(), result.getDataSetId());
+        assertEquals(mockDataset.getDatasetId(), result.getDataSetId());
         assertNotNull(result.getProperties());
         assertFalse(result.getProperties().isEmpty());
     }
@@ -99,7 +99,7 @@ public class DatasetServiceTest {
         List<Dataset> setsForConsent = datasetService.getDataSetsForConsent("Test Consent 1");
         assertNotNull(setsForConsent);
         assertEquals(setsForConsent.size(), getDatasets().size());
-        assertEquals(setsForConsent.get(0).getDataSetId(), getDatasets().get(0).getDataSetId());
+        assertEquals(setsForConsent.get(0).getDatasetId(), getDatasets().get(0).getDatasetId());
     }
 
     @Test
@@ -168,7 +168,7 @@ public class DatasetServiceTest {
         List<Dataset> datasets = datasetService.findNeedsApprovalDataSetByObjectId(Collections.singletonList(1));
         assertNotNull(datasets);
         assertEquals(
-            datasets.stream().findFirst().orElseThrow().getDataSetId(), getDatasets().stream().findFirst().orElseThrow().getDataSetId());
+            datasets.stream().findFirst().orElseThrow().getDatasetId(), getDatasets().stream().findFirst().orElseThrow().getDatasetId());
     }
 
     @Test
@@ -196,12 +196,12 @@ public class DatasetServiceTest {
         Dataset dataset = datasetService.getDatasetByName("Test Dataset 1");
 
         assertNotNull(dataset);
-        assertEquals(dataset.getDataSetId(), getDatasets().get(0).getDataSetId());
+        assertEquals(dataset.getDatasetId(), getDatasets().get(0).getDatasetId());
     }
 
     @Test
     public void testFindDatasetById() {
-        when(datasetDAO.findDataSetById(getDatasets().get(0).getDataSetId()))
+        when(datasetDAO.findDataSetById(getDatasets().get(0).getDatasetId()))
             .thenReturn(getDatasets().get(0));
         initService();
 
@@ -445,7 +445,7 @@ public class DatasetServiceTest {
         return IntStream.range(1, 3)
             .mapToObj(i -> {
                 Dataset dataset = new Dataset();
-                dataset.setDataSetId(i);
+                dataset.setDatasetId(i);
                 dataset.setName("Test Dataset " + i);
                 dataset.setConsentName("Test Consent " + i);
                 dataset.setActive(true);

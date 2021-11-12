@@ -312,7 +312,7 @@ public class MatchServiceTest {
                 .getDatasetIds()
                 .stream()
                 .map(id -> {
-                  Dataset d = new Dataset(); d.setDataSetId(id); return d;} )
+                  Dataset d = new Dataset(); d.setDatasetId(id); return d;} )
                 .collect(Collectors.toList());
         when(dataSetDAO.getDataSetsForConsent(consent.getConsentId())).thenReturn(datasets);
         when(rmo.isResult()).thenReturn(true);

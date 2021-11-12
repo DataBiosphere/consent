@@ -126,7 +126,7 @@ public class ConsentElectionResource extends Resource {
         Optional<Dataset> dataset = dacService.findDatasetsByConsentId(consentId).
                 stream().
                 findFirst();
-        dataset.ifPresent(dataSet -> election.setDataSetId(dataSet.getDataSetId()));
+        dataset.ifPresent(dataSet -> election.setDataSetId(dataSet.getDatasetId()));
         Election newElection = electionService.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
         List<Vote> votes = voteService.createVotes(newElection, ElectionType.TRANSLATE_DUL, false);
         List<Vote> dulVotes = votes.stream().

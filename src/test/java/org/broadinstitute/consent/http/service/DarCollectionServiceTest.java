@@ -239,7 +239,7 @@ public class DarCollectionServiceTest {
     Set<Dataset> datasets = new HashSet<>();
     collections.add(generateMockDarCollection(datasets));
     List<Integer> datasetIds = datasets.stream()
-      .map(Dataset::getDataSetId)
+      .map(Dataset::getDatasetId)
       .sorted()
       .collect(Collectors.toList());
 
@@ -254,7 +254,7 @@ public class DarCollectionServiceTest {
     assertEquals(datasetIds.size(), datasetsFromCollection.size());
 
     List<Integer> collectionDatasetIds = datasetsFromCollection.stream()
-      .map(Dataset::getDataSetId)
+      .map(Dataset::getDatasetId)
       .sorted()
       .collect(Collectors.toList());
     assertEquals(datasetIds, collectionDatasetIds);
@@ -312,7 +312,7 @@ public class DarCollectionServiceTest {
 
   private Dataset generateMockDatasetWithDataUse(Integer datasetId) {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(datasetId);
+    dataset.setDatasetId(datasetId);
     return dataset;
   }
 

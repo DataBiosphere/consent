@@ -27,7 +27,7 @@ public class DacDAOTest extends DAOTestHelper {
             Dac d = createDac();
             Dataset ds = createDataset();
             Consent c = createConsent(d.getDacId());
-            createAssociation(c.getConsentId(), ds.getDataSetId());
+            createAssociation(c.getConsentId(), ds.getDatasetId());
         };
         List<Dac> dacList = dacDAO.findAll();
         Assert.assertEquals(count, dacList.size());
@@ -188,13 +188,13 @@ public class DacDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         Consent consent1 = createConsent(dac.getDacId());
         Dataset dataset1 = createDataset();
-        createAssociation(consent1.getConsentId(), dataset1.getDataSetId());
+        createAssociation(consent1.getConsentId(), dataset1.getDatasetId());
 
         Consent consent2 = createConsent(dac.getDacId());
         Dataset dataset2 = createDataset();
-        createAssociation(consent2.getConsentId(), dataset2.getDataSetId());
+        createAssociation(consent2.getConsentId(), dataset2.getDatasetId());
         Set<Dac> dacs = dacDAO.findDacsForDatasetIds(Arrays.asList(
-            dataset1.getDataSetId(), dataset2.getDataSetId()));
+            dataset1.getDatasetId(), dataset2.getDatasetId()));
         assertFalse(dacs.isEmpty());
         assertEquals(1, dacs.size());
     }

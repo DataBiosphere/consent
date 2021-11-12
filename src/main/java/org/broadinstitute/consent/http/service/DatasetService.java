@@ -79,7 +79,7 @@ public class DatasetService {
     public void disableDataset(Integer datasetId, Boolean active) {
         Dataset dataset = datasetDAO.findDataSetById(datasetId);
         if (dataset != null) {
-            datasetDAO.updateDataSetActive(dataset.getDataSetId(), active);
+            datasetDAO.updateDataSetActive(dataset.getDatasetId(), active);
         }
     }
 

@@ -80,11 +80,11 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     if (Objects.isNull(dar)) {
       fail("DAR was not created in collection");
     }
-    dar.getData().setDatasetIds(List.of(dataset.getDataSetId()));
+    dar.getData().setDatasetIds(List.of(dataset.getDatasetId()));
     dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), dar.getUserId(), new Date(), new Date(), new Date(), dar.getData());
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
-    createAssociation(consent.getConsentId(), dataset.getDataSetId());
+    createAssociation(consent.getConsentId(), dataset.getDatasetId());
 
     List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(List.of(dac.getDacId()));
     assertFalse(collectionIds.isEmpty());

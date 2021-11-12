@@ -636,7 +636,7 @@ public class DataAccessRequestService {
             return activeDars;
         }
         List<Integer> dataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()).stream().
-                map(Dataset::getDataSetId).
+                map(Dataset::getDatasetId).
                 collect(Collectors.toList());
         return activeDars.stream().
                 filter(d -> d.getData().getDatasetIds().stream().anyMatch(dataSetIds::contains)).

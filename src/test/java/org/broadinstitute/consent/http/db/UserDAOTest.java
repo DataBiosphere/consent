@@ -285,7 +285,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createAccessElection(consent.getConsentId(), dataset.getDatasetId());
         createDacVote(user.getDacUserId(), election.getElectionId());
 
         Set<User> users = userDAO.findUsersForElectionsByRoles(
@@ -302,7 +302,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createAccessElection(consent.getConsentId(), dataset.getDatasetId());
         createDacVote(user.getDacUserId(), election.getElectionId());
 
         Set<User> users = userDAO.findUsersForElectionsByRoles(
@@ -318,10 +318,10 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset.getDatasetId());
 
         Set<User> users = userDAO.findUsersForDatasetsByRole(
-                Collections.singletonList(dataset.getDataSetId()),
+                Collections.singletonList(dataset.getDatasetId()),
                 Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
         Optional<User> foundUser = users.stream().findFirst();
         assertNotNull(users);
@@ -336,10 +336,10 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset.getDatasetId());
 
         Set<User> users = userDAO.findUsersForDatasetsByRole(
-                Collections.singletonList(dataset.getDataSetId()),
+                Collections.singletonList(dataset.getDatasetId()),
                 Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
         assertNotNull(users);
         assertTrue(users.isEmpty());

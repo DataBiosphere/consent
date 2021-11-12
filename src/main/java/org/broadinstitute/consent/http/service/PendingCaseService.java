@@ -153,7 +153,7 @@ public class PendingCaseService {
                         Dataset dataSet = dataSetDAO.findDataSetById(election.getDataSetId());
                         dataOwnerCase.setAlias(dataSet.getAlias());
                         dataOwnerCase.setDarCode(dataAccessRequest != null ? dataAccessRequest.getData().getDarCode() : null);
-                        dataOwnerCase.setDataSetId(dataSet.getDataSetId());
+                        dataOwnerCase.setDataSetId(dataSet.getDatasetId());
                         dataOwnerCase.setDataSetName(dataSet.getName());
                         dataOwnerCase.setVoteId(v.getVoteId());
                         dataOwnerCase.setAlreadyVoted(v.getVote() != null);

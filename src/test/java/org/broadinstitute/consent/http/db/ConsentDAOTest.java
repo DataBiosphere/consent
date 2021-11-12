@@ -33,9 +33,9 @@ public class ConsentDAOTest extends DAOTestHelper {
     public void testFindConsentFromDatasetID() {
         Dataset dataset = createDataset();
         Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset.getDatasetId());
 
-        Consent foundConsent = consentDAO.findConsentFromDatasetID(dataset.getDataSetId());
+        Consent foundConsent = consentDAO.findConsentFromDatasetID(dataset.getDatasetId());
         assertNotNull(foundConsent);
     }
 
@@ -43,9 +43,9 @@ public class ConsentDAOTest extends DAOTestHelper {
     public void testFindConsentNameFromDatasetID() {
         Dataset dataset = createDataset();
         Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset.getDatasetId());
 
-        String name = consentDAO.findConsentNameFromDatasetID(dataset.getDataSetId());
+        String name = consentDAO.findConsentNameFromDatasetID(dataset.getDatasetId());
         assertNotNull(name);
         assertEquals(consent.getName(), name);
     }
@@ -187,7 +187,7 @@ public class ConsentDAOTest extends DAOTestHelper {
     public void testFindAssociationByTypeAndId() {
         Dataset dataset = createDataset();
         Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset.getDatasetId());
 
         List<String> associations = consentDAO.findAssociationsByType(consent.getConsentId(), ASSOCIATION_TYPE_TEST);
         assertNotNull(associations);
@@ -204,16 +204,16 @@ public class ConsentDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dataset dataset2 = createDataset();
         Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        createAssociation(consent.getConsentId(), dataset2.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset.getDatasetId());
+        createAssociation(consent.getConsentId(), dataset2.getDatasetId());
 
         consentDAO.deleteOneAssociation(
                 consent.getConsentId(),
                 ASSOCIATION_TYPE_TEST,
-                dataset.getDataSetId());
-        Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
+                dataset.getDatasetId());
+        Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDatasetId());
         assertNull(deletedAssociationId);
-        Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDataSetId());
+        Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDatasetId());
         assertNotNull(remainingAssociationId);
     }
 
@@ -222,8 +222,8 @@ public class ConsentDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dataset dataset2 = createDataset();
         Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        createAssociation(consent.getConsentId(), dataset2.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset.getDatasetId());
+        createAssociation(consent.getConsentId(), dataset2.getDatasetId());
 
         consentDAO.deleteAllAssociationsForType(consent.getConsentId(), ASSOCIATION_TYPE_TEST);
         List<String> associationTypes = consentDAO.findAssociationTypesForConsent(consent.getConsentId());
@@ -240,13 +240,13 @@ public class ConsentDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dataset dataset2 = createDataset();
         Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        createAssociation(consent.getConsentId(), dataset2.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset.getDatasetId());
+        createAssociation(consent.getConsentId(), dataset2.getDatasetId());
 
-        dataSetDAO.deleteConsentAssociationsByDataSetId(dataset.getDataSetId());
-        Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
+        dataSetDAO.deleteConsentAssociationsByDataSetId(dataset.getDatasetId());
+        Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDatasetId());
         assertNull(deletedAssociationId);
-        Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDataSetId());
+        Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDatasetId());
         assertNotNull(remainingAssociationId);
     }
 
@@ -260,8 +260,8 @@ public class ConsentDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dataset dataset2 = createDataset();
         Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        createAssociation(consent.getConsentId(), dataset2.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset.getDatasetId());
+        createAssociation(consent.getConsentId(), dataset2.getDatasetId());
 
         List<String> associationTypes = consentDAO.findAssociationTypesForConsent(consent.getConsentId());
         assertNotNull(associationTypes);
@@ -306,8 +306,8 @@ public class ConsentDAOTest extends DAOTestHelper {
     public void testFindConsentManageByStatus() {
         Consent consent = createConsent(null);
         Dataset dataset = createDataset();
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset.getDatasetId());
+        Election election = createAccessElection(consent.getConsentId(), dataset.getDatasetId());
 
         List<ConsentManage> consentManages = consentDAO.findConsentManageByStatus(election.getStatus());
         List<String> consentIds = consentManages.stream().map(ConsentManage::getConsentId).collect(Collectors.toList());
@@ -318,8 +318,8 @@ public class ConsentDAOTest extends DAOTestHelper {
     public void testGetAssociationConsentIdsFromDatasetIds() {
         Consent consent = createConsent(null);
         Dataset dataset = createDataset();
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        List<Integer> dataSetIds = Stream.of(dataset.getDataSetId()).collect(Collectors.toList());
+        createAssociation(consent.getConsentId(), dataset.getDatasetId());
+        List<Integer> dataSetIds = Stream.of(dataset.getDatasetId()).collect(Collectors.toList());
 
         List<String> consentIds = consentDAO.getAssociationConsentIdsFromDatasetIds(dataSetIds);
         assertFalse(consentIds.isEmpty());

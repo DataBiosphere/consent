@@ -191,7 +191,7 @@ public class DarCollectionService {
     if(!datasetIds.isEmpty()) {
       Set<Dataset> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
       Map<Integer, Dataset> datasetMap = datasets.stream()
-          .collect(Collectors.toMap(Dataset::getDataSetId, Function.identity()));
+          .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
 
       return collections.stream().map(c -> {
         Set<Dataset> collectionDatasets = c.getDars().stream()

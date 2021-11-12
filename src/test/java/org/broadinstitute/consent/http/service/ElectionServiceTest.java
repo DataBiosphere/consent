@@ -116,7 +116,7 @@ public class ElectionServiceTest {
         sampleLibraryCard = new LibraryCard();
 
         sampleDataset1 = new Dataset();
-        sampleDataset1.setDataSetId(1);
+        sampleDataset1.setDatasetId(1);
         sampleDataset1.setObjectId("ObjectID 1");
         sampleDataset1.setActive(true);
         sampleDataset1.setNeedsApproval(false);
@@ -126,18 +126,18 @@ public class ElectionServiceTest {
 
         sampleElection1 = new Election(1, ElectionType.DATA_ACCESS.getValue(),
                 ElectionStatus.OPEN.getValue(), new Date(),
-                sampleDataset1.getConsentName(), new Date(), false, sampleDataset1.getDataSetId());
+                sampleDataset1.getConsentName(), new Date(), false, sampleDataset1.getDatasetId());
         sampleElection2 = new Election(2, ElectionType.DATA_ACCESS.getValue(),
                 ElectionStatus.CLOSED.getValue(), new Date(),
-                sampleDataset1.getConsentName(), new Date(), false, sampleDataset1.getDataSetId());
+                sampleDataset1.getConsentName(), new Date(), false, sampleDataset1.getDatasetId());
         sampleElectionRP = new Election(3, ElectionType.RP.getValue(), ElectionStatus.OPEN.getValue(), new Date(),
-                sampleDataset1.getConsentName(), new Date(), false, sampleDataset1.getDataSetId());
+                sampleDataset1.getConsentName(), new Date(), false, sampleDataset1.getDatasetId());
         sampleDatasetElection = new Election(4, ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), new Date(),
-                sampleDataset1.getConsentName(), new Date(), false, sampleDataset1.getDataSetId());
+                sampleDataset1.getConsentName(), new Date(), false, sampleDataset1.getDatasetId());
         sampleDatasetElectionDenied = new Election(5, ElectionType.DATA_SET.getValue(), ElectionStatus.CLOSED.getValue(), new Date(),
-                sampleDataset1.getConsentName(), new Date(), false, sampleDataset1.getDataSetId());
+                sampleDataset1.getConsentName(), new Date(), false, sampleDataset1.getDatasetId());
         sampleDatasetElectionApproved = new Election(6, ElectionType.DATA_SET.getValue(), ElectionStatus.CLOSED.getValue(), new Date(),
-                sampleDataset1.getConsentName(), new Date(), true, sampleDataset1.getDataSetId());
+                sampleDataset1.getConsentName(), new Date(), true, sampleDataset1.getDatasetId());
 
         authUser = new AuthUser("test@test.com");
         sampleUserChairperson = new User(1, "test@test.com", "Test User", new Date());
@@ -153,13 +153,13 @@ public class ElectionServiceTest {
         sampleDataAccessRequest1.setUserId(2);
         DataAccessRequestData data = new DataAccessRequestData();
         data.setReferenceId(sampleElection1.getReferenceId());
-        data.setDatasetIds(Arrays.asList(sampleDataset1.getDataSetId()));
+        data.setDatasetIds(Arrays.asList(sampleDataset1.getDatasetId()));
         DatasetEntry entry = new DatasetEntry();
         entry.setKey(sampleDataset1.getConsentName());
         entry.setValue(sampleDataset1.getName());
         data.setDatasets(Arrays.asList(entry));
         DatasetDetailEntry entryDetail = new DatasetDetailEntry();
-        entryDetail.setDatasetId(sampleDataset1.getDataSetId().toString());
+        entryDetail.setDatasetId(sampleDataset1.getDatasetId().toString());
         entryDetail.setName(sampleDataset1.getName());
         entryDetail.setObjectId(sampleDataset1.getObjectId());
         data.setDatasetDetail(Arrays.asList(entryDetail));
@@ -247,7 +247,7 @@ public class ElectionServiceTest {
         when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(Arrays.asList(sampleDataset1));
         when(consentDAO.checkConsentById(sampleConsent1.getConsentId())).thenReturn(sampleConsent1.getConsentId());
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
-        when(consentDAO.findConsentFromDatasetID(sampleDataset1.getDataSetId())).thenReturn(sampleConsent1);
+        when(consentDAO.findConsentFromDatasetID(sampleDataset1.getDatasetId())).thenReturn(sampleConsent1);
     }
 
     private void userStubs() {
@@ -518,7 +518,7 @@ public class ElectionServiceTest {
         when(electionDAO.findElectionById(any()))
                 .thenReturn(new Election(5, ElectionType.DATA_SET.getValue(),
                         ElectionStatus.CLOSED.getValue(), new Date(),
-                        "CONS-1", new Date(), true, sampleDataset1.getDataSetId()));
+                        "CONS-1", new Date(), true, sampleDataset1.getDatasetId()));
         when(voteDAO.findDataOwnerPendingVotesByElectionId(any(), any()))
                 .thenReturn(Arrays.asList());
         initService();
@@ -605,7 +605,7 @@ public class ElectionServiceTest {
 
     @Test
     public void testCreateDataSetElections() {
-        when(electionDAO.getOpenElectionByReferenceIdAndDataSet(sampleElection1.getReferenceId(), sampleDataset1.getDataSetId()))
+        when(electionDAO.getOpenElectionByReferenceIdAndDataSet(sampleElection1.getReferenceId(), sampleDataset1.getDatasetId()))
                 .thenReturn(null);
         when(electionDAO.findElectionsByIds(Arrays.asList(sampleDatasetElection.getElectionId())))
             .thenReturn(Arrays.asList(sampleElection1));

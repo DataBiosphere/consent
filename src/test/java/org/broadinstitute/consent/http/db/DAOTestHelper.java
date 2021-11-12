@@ -597,8 +597,8 @@ public class DAOTestHelper {
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         Dataset dataset = createDataset();
         DataAccessRequest dar = insertDAR(user.getDacUserId(), collection_id, darCode);
-        createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-        createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        createCancelledAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+        createAccessElection(dar.getReferenceId(), dataset.getDatasetId());
         insertDAR(user.getDacUserId(), collection_id, darCode);
         insertDAR(user.getDacUserId(), collection_id, darCode);
         createdDarCollections.add(collection_id);

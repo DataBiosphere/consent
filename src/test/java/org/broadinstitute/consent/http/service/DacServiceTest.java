@@ -723,7 +723,7 @@ public class DacServiceTest {
         return IntStream.range(1, 5).
                 mapToObj(i -> {
                     Dataset dataSet = new Dataset();
-                    dataSet.setDataSetId(i);
+                    dataSet.setDatasetId(i);
                     return dataSet;
                 }).collect(Collectors.toList());
     }

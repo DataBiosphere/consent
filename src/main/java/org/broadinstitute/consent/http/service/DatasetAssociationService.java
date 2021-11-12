@@ -46,7 +46,7 @@ public class DatasetAssociationService {
         if (Objects.isNull(d)) {
             throw new NotFoundException("Invalid DatasetId");
         }
-        Integer datasetId = d.getDataSetId();
+        Integer datasetId = d.getDatasetId();
         try {
             dsAssociationDAO.insertDatasetUserAssociation(DatasetAssociation.createDatasetAssociations(datasetId, userIds));
         } catch (UnableToExecuteStatementException e) {
@@ -58,7 +58,7 @@ public class DatasetAssociationService {
     }
 
     public Map<String, Collection<User>> findDataOwnersRelationWithDataset(Integer datasetId) {
-        List<DatasetAssociation> associationList = dsAssociationDAO.getDatasetAssociation(dsDAO.findDataSetById(datasetId).getDataSetId());
+        List<DatasetAssociation> associationList = dsAssociationDAO.getDatasetAssociation(dsDAO.findDataSetById(datasetId).getDatasetId());
         Collection<User> associatedUsers = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(associationList)) {
             Collection<Integer> usersIdList = associationList.stream().map(DatasetAssociation::getDacuserId).collect(
@@ -97,7 +97,7 @@ public class DatasetAssociationService {
         if (Objects.isNull(d)) {
             throw new NotFoundException("Invalid DatasetId");
         }
-        Integer datasetId = d.getDataSetId();
+        Integer datasetId = d.getDatasetId();
         checkAssociationsExist(datasetId);
         verifyUsers(userIds);
         dsAssociationDAO.inTransaction(h -> {

@@ -278,7 +278,7 @@ public class DacService {
             if (user.hasUserRole(UserRoles.MEMBER) || user.hasUserRole(UserRoles.CHAIRPERSON)) {
                 List<Integer> accessibleDatasetIds = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail()).
                   stream().
-                  map(Dataset::getDataSetId).
+                  map(Dataset::getDatasetId).
                   collect(Collectors.toList());
 
                 return documents.
@@ -334,7 +334,7 @@ public class DacService {
 
         List<Integer> userDataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()).
                 stream().
-                map(Dataset::getDataSetId).
+                map(Dataset::getDatasetId).
                 collect(Collectors.toList());
         return elections.stream().
                 filter(e -> Objects.isNull(e.getDataSetId()) || userDataSetIds.contains(e.getDataSetId())).
