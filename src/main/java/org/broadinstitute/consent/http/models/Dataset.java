@@ -47,7 +47,7 @@ public class Dataset {
     @JsonProperty
     public DataUse dataUse;
 
-    private Set<DataSetProperty> properties;
+    private Set<DatasetProperty> properties;
 
     public Dataset() {
     }
@@ -143,11 +143,11 @@ public class Dataset {
         this.updateUserId = updateUserId;
     }
 
-    public Set<DataSetProperty> getProperties() {
+    public Set<DatasetProperty> getProperties() {
         return properties;
     }
 
-    public void setProperties(Set<DataSetProperty> properties) {
+    public void setProperties(Set<DatasetProperty> properties) {
         this.properties = properties;
     }
 

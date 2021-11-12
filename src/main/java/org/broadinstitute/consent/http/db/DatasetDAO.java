@@ -16,7 +16,7 @@ import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
-import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.resources.Resource;
@@ -64,7 +64,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     @SqlBatch("insert into datasetproperty (dataSetId, propertyKey, propertyValue, createDate )" +
             " values (:dataSetId, :propertyKey, :propertyValue, :createDate)")
-    void insertDatasetProperties(@BindBean List<DataSetProperty> dataSetPropertiesList);
+    void insertDatasetProperties(@BindBean List<DatasetProperty> dataSetPropertiesList);
 
     @SqlBatch("delete from datasetproperty where dataSetId = :dataSetId")
     void deleteDataSetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
@@ -165,7 +165,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlQuery(
         "SELECT * FROM datasetproperty WHERE datasetid = :datasetId"
     )
-    Set<DataSetProperty> findDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
+    Set<DatasetProperty> findDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
     @UseRowMapper(DatasetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction, c.datause " +

@@ -31,7 +31,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -432,8 +432,8 @@ public class DAOTestHelper {
     }
 
     protected void createDatasetProperties(Integer datasetId) {
-        List<DataSetProperty> list = new ArrayList<>();
-        DataSetProperty dsp = new DataSetProperty();
+        List<DatasetProperty> list = new ArrayList<>();
+        DatasetProperty dsp = new DatasetProperty();
         dsp.setDataSetId(datasetId);
         dsp.setPropertyKey(1);
         dsp.setPropertyValue("Test_PropertyValue");

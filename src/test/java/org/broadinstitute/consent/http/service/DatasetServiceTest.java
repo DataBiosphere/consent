@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dictionary;
@@ -234,7 +234,7 @@ public class DatasetServiceTest {
         when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
         initService();
 
-        List<DataSetProperty> properties = datasetService
+        List<DatasetProperty> properties = datasetService
             .processDatasetProperties(1, getDatasetPropertiesDTO());
 
         assertEquals(properties.size(), getDatasetPropertiesDTO().size());
@@ -330,7 +330,7 @@ public class DatasetServiceTest {
         int datasetId = 1;
         DatasetDTO dataSetDTO = getDatasetDTO();
         Dataset dataset = getDatasets().get(0);
-        List<DataSetProperty> properties = new ArrayList<>(getDatasetProperties());
+        List<DatasetProperty> properties = new ArrayList<>(getDatasetProperties());
         properties.remove(2);
         properties.remove(2);
         dataset.setProperties(new HashSet<>(properties));
@@ -468,10 +468,10 @@ public class DatasetServiceTest {
               }).collect(Collectors.toList());
     }
 
-    private Set<DataSetProperty> getDatasetProperties() {
+    private Set<DatasetProperty> getDatasetProperties() {
         return IntStream.range(1, 11)
             .mapToObj(i ->
-                new DataSetProperty(1, i, "Test Value", new Date())
+                new DatasetProperty(1, i, "Test Value", new Date())
             ).collect(Collectors.toSet());
     }
 

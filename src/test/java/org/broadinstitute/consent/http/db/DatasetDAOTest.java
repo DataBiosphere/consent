@@ -10,7 +10,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
@@ -70,7 +70,7 @@ public class DatasetDAOTest extends DAOTestHelper {
     @Test
     public void testFindDatasetPropertiesByDatasetId() {
         Dataset d = createDataset();
-        Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
+        Set<DatasetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
         assertEquals(properties.size(), 1);
     }
 
@@ -86,14 +86,14 @@ public class DatasetDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateDatasetProperty() {
         Dataset d = createDataset();
-        Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-        DataSetProperty originalProperty = properties.stream().collect(Collectors.toList()).get(0);
-        DataSetProperty newProperty = new DataSetProperty(d.getDatasetId(), 1, "Updated Value", new Date());
-        List<DataSetProperty> updatedProperties = new ArrayList<>();
+        Set<DatasetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
+        DatasetProperty originalProperty = properties.stream().collect(Collectors.toList()).get(0);
+        DatasetProperty newProperty = new DatasetProperty(d.getDatasetId(), 1, "Updated Value", new Date());
+        List<DatasetProperty> updatedProperties = new ArrayList<>();
         updatedProperties.add(newProperty);
         dataSetDAO.updateDatasetProperty(d.getDatasetId(), updatedProperties.get(0).getPropertyKey(), updatedProperties.get(0).getPropertyValue());
-        Set<DataSetProperty> returnedProperties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-        DataSetProperty returnedProperty = returnedProperties.stream().collect(Collectors.toList()).get(0);
+        Set<DatasetProperty> returnedProperties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
+        DatasetProperty returnedProperty = returnedProperties.stream().collect(Collectors.toList()).get(0);
         assertEquals(originalProperty.getPropertyKey(), returnedProperty.getPropertyKey());
         assertEquals(originalProperty.getPropertyId(), returnedProperty.getPropertyId());
         assertNotEquals(originalProperty.getPropertyValue(), returnedProperty.getPropertyValue());
@@ -102,10 +102,10 @@ public class DatasetDAOTest extends DAOTestHelper {
     @Test
     public void testDeleteDatasetPropertyByKey() {
         Dataset d = createDataset();
-        Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-        DataSetProperty propertyToDelete = properties.stream().collect(Collectors.toList()).get(0);
+        Set<DatasetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
+        DatasetProperty propertyToDelete = properties.stream().collect(Collectors.toList()).get(0);
         dataSetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
-        Set<DataSetProperty> returnedProperties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
+        Set<DatasetProperty> returnedProperties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
         assertNotEquals(properties.size(), returnedProperties.size());
     }
 
