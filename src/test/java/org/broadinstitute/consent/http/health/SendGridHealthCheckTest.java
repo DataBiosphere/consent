@@ -49,12 +49,14 @@ public class SendGridHealthCheckTest {
         badStatus.setStatus(new SendGridStatus.StatusObject(SendGridStatus.Indicator.major, "test"));
     }
 
-    private void initHealthCheck(SendGridStatus status) {
+    private void initHealthCheck(SendGridStatus status, boolean configOk) {
         try {
             String statusJson = new Gson().toJson(status);
             when(response.getEntity()).thenReturn(new StringEntity(statusJson));
             when(clientUtil.getHttpResponse(any())).thenReturn(response);
-            when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
+            if (configOk) {
+                when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
+            }
             healthCheck = new SendGridHealthCheck(clientUtil, mailConfiguration);
         } catch (Exception e) {
             fail(e.getMessage());
@@ -65,7 +67,7 @@ public class SendGridHealthCheckTest {
     public void testCheckSuccess() throws Exception {
         when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
         when(response.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck(goodStatus);
+        initHealthCheck(goodStatus, true);
 
         HealthCheck.Result result = healthCheck.check();
         assertTrue(result.isHealthy());
@@ -75,7 +77,7 @@ public class SendGridHealthCheckTest {
     public void testCheckFailure() throws Exception {
         when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
         when(response.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck(goodStatus);
+        initHealthCheck(goodStatus, true);
 
         HealthCheck.Result result = healthCheck.check();
         assertFalse(result.isHealthy());
@@ -85,7 +87,7 @@ public class SendGridHealthCheckTest {
     public void testCheckExternalFailure() throws Exception {
         when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
         when(response.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck(badStatus);
+        initHealthCheck(badStatus, true);
 
         HealthCheck.Result result = healthCheck.check();
         assertFalse(result.isHealthy());
@@ -94,7 +96,16 @@ public class SendGridHealthCheckTest {
     @Test
     public void testCheckException() throws Exception {
         doThrow(new RuntimeException()).when(response).getStatusLine();
-        initHealthCheck(goodStatus);
+        initHealthCheck(goodStatus, true);
+
+        HealthCheck.Result result = healthCheck.check();
+        assertFalse(result.isHealthy());
+    }
+
+    @Test
+    public void testConfigException() throws Exception {
+        doThrow(new RuntimeException()).when(mailConfiguration).getSendGridStatusUrl();
+        initHealthCheck(goodStatus, false);
 
         HealthCheck.Result result = healthCheck.check();
         assertFalse(result.isHealthy());
