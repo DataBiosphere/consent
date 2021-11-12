@@ -6,9 +6,9 @@ import java.util.Date;
 
 public class DatasetAudit {
 
-  @JsonProperty private Integer dataSetAuditId;
+  @JsonProperty private Integer datasetAuditId;
 
-  @JsonProperty private Integer dataSetId;
+  @JsonProperty private Integer datasetId;
 
   @JsonProperty private String objectId;
 
@@ -25,14 +25,14 @@ public class DatasetAudit {
   public DatasetAudit() {}
 
   public DatasetAudit(
-      Integer dataSetId,
+      Integer datasetId,
       String objectId,
       String name,
       Date date,
       Boolean active,
       Integer user,
       String action) {
-    this.dataSetId = dataSetId;
+    this.datasetId = datasetId;
     this.objectId = objectId;
     this.name = name;
     this.date = date;
@@ -41,20 +41,20 @@ public class DatasetAudit {
     this.action = action;
   }
 
-  public Integer getDataSetAuditId() {
-    return dataSetAuditId;
+  public Integer getDatasetAuditId() {
+    return datasetAuditId;
   }
 
-  public void setDataSetAuditId(Integer dataSetAuditId) {
-    this.dataSetAuditId = dataSetAuditId;
+  public void setDatasetAuditId(Integer datasetAuditId) {
+    this.datasetAuditId = datasetAuditId;
   }
 
-  public Integer getDataSetId() {
-    return dataSetId;
+  public Integer getDatasetId() {
+    return datasetId;
   }
 
-  public void setDataSetId(Integer dataSetId) {
-    this.dataSetId = dataSetId;
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
   }
 
   public String getObjectId() {
