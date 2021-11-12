@@ -54,7 +54,7 @@ public class DatasetAssociationServiceTest {
 
     @Test
     public void testGetAndVerifyUsersUserNotDataOwner() {
-        when(dsDAO.findDataSetById(any())).thenReturn(ds1);
+        when(dsDAO.findDatasetById(any())).thenReturn(ds1);
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
         doNothing().when(userRoleDAO).insertSingleUserRole(any(), any());
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
@@ -71,7 +71,7 @@ public class DatasetAssociationServiceTest {
     @Test
     public void testCreateDatasetUsersAssociation() throws Exception {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
-        when(dsDAO.findDataSetById(1)).thenReturn(ds1);
+        when(dsDAO.findDatasetById(1)).thenReturn(ds1);
         when(dsAssociationDAO.getDatasetAssociation(1)).thenReturn(Arrays.asList(dsAssociation1, dsAssociation2));
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
@@ -79,7 +79,7 @@ public class DatasetAssociationServiceTest {
     @Test
     public void testCreateDatasetUsersAssociationNotFoundException() throws Exception {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
-        when(dsDAO.findDataSetById(1)).thenReturn(null);
+        when(dsDAO.findDatasetById(1)).thenReturn(null);
         thrown.expect(NotFoundException.class);
         thrown.expectMessage("Invalid DatasetId");
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
@@ -88,7 +88,7 @@ public class DatasetAssociationServiceTest {
     @Test(expected = BatchUpdateException.class)
     public void testCreateDatasetUsersAssociationBadRequestException() throws Exception {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
-        when(dsDAO.findDataSetById(1)).thenReturn(ds1);
+        when(dsDAO.findDatasetById(1)).thenReturn(ds1);
 
         doAnswer(invocationOnMock -> { throw new BatchUpdateException(); }).when(dsAssociationDAO).insertDatasetUserAssociation(any());
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));

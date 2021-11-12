@@ -161,8 +161,8 @@ public class DAOTestHelper {
         });
         createdElectionIds.forEach(id -> electionDAO.deleteAccessRP(id));
         createdElectionIds.forEach(id -> electionDAO.deleteElectionById(id));
-        datasetDAO.deleteDataSetsProperties(createdDataSetIds);
-        datasetDAO.deleteDataSets(createdDataSetIds);
+        datasetDAO.deleteDatasetPropertiesByDatasetIdList(createdDataSetIds);
+        datasetDAO.deleteDatasets(createdDataSetIds);
         createdDacIds.forEach(id -> {
             dacDAO.deleteDacMembers(id);
             dacDAO.deleteDac(id);
@@ -434,7 +434,7 @@ public class DAOTestHelper {
     protected void createDatasetProperties(Integer datasetId) {
         List<DatasetProperty> list = new ArrayList<>();
         DatasetProperty dsp = new DatasetProperty();
-        dsp.setDataSetId(datasetId);
+        dsp.setDatasetId(datasetId);
         dsp.setPropertyKey(1);
         dsp.setPropertyValue("Test_PropertyValue");
         dsp.setCreateDate(new Date());
@@ -452,7 +452,7 @@ public class DAOTestHelper {
         Integer id = datasetDAO.insertDataset(ds.getName(), ds.getCreateDate(), ds.getObjectId(), ds.getActive(), ds.getAlias());
         createdDataSetIds.add(id);
         createDatasetProperties(id);
-        return datasetDAO.findDataSetById(id);
+        return datasetDAO.findDatasetById(id);
     }
 
     protected LibraryCard createLibraryCard() {

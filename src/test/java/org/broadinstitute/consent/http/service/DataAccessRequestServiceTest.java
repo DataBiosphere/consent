@@ -127,7 +127,7 @@ public class DataAccessRequestServiceTest {
         ds.setConsentName(dar.getReferenceId());
         ds.setDatasetId(1);
         ds.setName("test dataset");
-        when(datasetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()))
+        when(datasetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()))
                 .thenReturn(Collections.singletonList(ds));
         initService();
 
@@ -408,7 +408,7 @@ public class DataAccessRequestServiceTest {
         Institution institution = new Institution();
         institution.setName("Institution");
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        when(datasetDAO.getAssociatedConsentIdByDataSetId(any()))
+        when(datasetDAO.getAssociatedConsentIdByDatasetId(any()))
                 .thenReturn("CONS-1");
 
         Consent consent = new Consent();
@@ -436,7 +436,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        when(datasetDAO.getAssociatedConsentIdByDataSetId(any()))
+        when(datasetDAO.getAssociatedConsentIdByDatasetId(any()))
                 .thenReturn("CONS-1");
 
         Consent consent = new Consent();
@@ -506,7 +506,7 @@ public class DataAccessRequestServiceTest {
         when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
         when(dataAccessRequestDAO.findByReferenceId(any()))
                 .thenReturn(dar);
-        when(datasetDAO.findDataSetsByIdList(dar.data.getDatasetIds()))
+        when(datasetDAO.findDatasetsByIdList(dar.data.getDatasetIds()))
                 .thenReturn(Collections.singletonList(ds));
 
         User user = new User();

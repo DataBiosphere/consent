@@ -314,7 +314,7 @@ public class MatchServiceTest {
                 .map(id -> {
                   Dataset d = new Dataset(); d.setDatasetId(id); return d;} )
                 .collect(Collectors.toList());
-        when(dataSetDAO.getDataSetsForConsent(consent.getConsentId())).thenReturn(datasets);
+        when(dataSetDAO.getDatasetsForConsent(consent.getConsentId())).thenReturn(datasets);
         when(rmo.isResult()).thenReturn(true);
         when(response.readEntity(any(GenericType.class))).thenReturn(rmo);
         when(response.getStatus()).thenReturn(200);

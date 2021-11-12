@@ -25,9 +25,9 @@ import java.util.stream.Collectors;
 
 public class DatasetDAOTest extends DAOTestHelper {
 
-    // User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
+    // User -> UserRoles -> DACs -> Consents -> Consent Associations -> Datasets
     @Test
-    public void testFindDataSetsByAuthUserEmail() {
+    public void testFindDatasetsByAuthUserEmail() {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
@@ -35,7 +35,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         User user = createUser();
         createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), dac.getDacId());
 
-        List<Dataset> datasets = datasetDAO.findDataSetsByAuthUserEmail(user.getEmail());
+        List<Dataset> datasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
         assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(Dataset::getDatasetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDatasetId()));
@@ -47,7 +47,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDatasetId());
 
-        List<Dataset> datasets = datasetDAO.findNonDACDataSets();
+        List<Dataset> datasets = datasetDAO.findNonDACDatasets();
         assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(Dataset::getDatasetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDatasetId()));
@@ -79,7 +79,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset d = createDataset();
         Timestamp now = new Timestamp(new Date().getTime());
         datasetDAO.updateDatasetUpdateUserAndDate(d.getDatasetId(), now, d.getCreateUserId());
-        Dataset updated = datasetDAO.findDataSetById(d.getDatasetId());
+        Dataset updated = datasetDAO.findDatasetById(d.getDatasetId());
         assertEquals(updated.getUpdateDate(), now);
     }
 

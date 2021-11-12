@@ -176,7 +176,7 @@ public class MatchService {
     public List<Match> createMatchesForConsent(String consentId) {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
-        List<Dataset> datasets = datasetDAO.getDataSetsForConsent(consentId);
+        List<Dataset> datasets = datasetDAO.getDatasetsForConsent(consentId);
         List<DataAccessRequest> dars = findRelatedDars(datasets.stream().map(Dataset::getDatasetId).collect(Collectors.toList()));
         if (consent != null && !dars.isEmpty()) {
             Match match;

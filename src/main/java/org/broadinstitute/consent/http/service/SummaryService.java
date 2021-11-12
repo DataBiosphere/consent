@@ -223,7 +223,7 @@ public class SummaryService {
                             map(dar -> Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : new ArrayList<Integer>()).
                             flatMap(List::stream).
                             collect(Collectors.toList());
-                    List<Association> associations = datasetDAO.getAssociationsForDataSetIdList(new ArrayList<>(datasetIds));
+                    List<Association> associations = datasetDAO.getAssociationsForDatasetIdList(new ArrayList<>(datasetIds));
                     List<String> associatedConsentIds =   associations.stream().map(Association::getConsentId).collect(Collectors.toList());
                     List<Election> reviewedConsentElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
                     List<Integer> darElectionIds = reviewedElections.stream().map(Election::getElectionId).collect(Collectors.toList());
@@ -375,7 +375,7 @@ public class SummaryService {
                 for (Election election : elections) {
                     summaryWriter.write( dar_code + SEPARATOR);
                     summaryWriter.write( dar_election_result + SEPARATOR);
-                    Dataset dataset = datasetDAO.findDataSetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
+                    Dataset dataset = datasetDAO.findDatasetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
                     summaryWriter.write( dataset.getObjectId() + SEPARATOR);
                     summaryWriter.write( dataset.getName() + SEPARATOR);
                     summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);

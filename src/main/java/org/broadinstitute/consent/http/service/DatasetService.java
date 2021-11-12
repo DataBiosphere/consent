@@ -61,11 +61,11 @@ public class DatasetService {
     }
 
     public List<Dataset> getDataSetsForConsent(String consentId) {
-        return datasetDAO.getDataSetsForConsent(consentId);
+        return datasetDAO.getDatasetsForConsent(consentId);
     }
 
     public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
-        return datasetDAO.findDataSetsByReceiveOrder(dataSetId);
+        return datasetDAO.findDatasetsByReceiveOrder(dataSetId);
     }
 
     public Collection<Dictionary> describeDictionaryByDisplayOrder() {
@@ -77,22 +77,22 @@ public class DatasetService {
     }
 
     public void disableDataset(Integer datasetId, Boolean active) {
-        Dataset dataset = datasetDAO.findDataSetById(datasetId);
+        Dataset dataset = datasetDAO.findDatasetById(datasetId);
         if (dataset != null) {
-            datasetDAO.updateDataSetActive(dataset.getDatasetId(), active);
+            datasetDAO.updateDatasetActive(dataset.getDatasetId(), active);
         }
     }
 
     public Dataset updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval) {
-        if (datasetDAO.findDataSetById(dataSetId) == null) {
+        if (datasetDAO.findDatasetById(dataSetId) == null) {
             throw new NotFoundException("DataSet doesn't exist");
         }
         datasetDAO.updateDatasetNeedsApproval(dataSetId, needsApproval);
-        return datasetDAO.findDataSetById(dataSetId);
+        return datasetDAO.findDatasetById(dataSetId);
     }
 
     public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
-        return datasetDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
+        return datasetDAO.findNeedsApprovalDatasetByDatasetId(dataSetIdList);
     }
 
     /**
@@ -199,7 +199,7 @@ public class DatasetService {
     }
 
     public Dataset findDatasetById(Integer id) {
-        return datasetDAO.findDataSetById(id);
+        return datasetDAO.findDatasetById(id);
     }
 
     public Set<Dataset> getDatasetWithDataUseByIds(List<Integer> datasetIds) {
@@ -211,7 +211,7 @@ public class DatasetService {
     }
 
     public Dataset getDatasetWithPropertiesById(Integer datasetId) {
-        Dataset dataset = datasetDAO.findDataSetById(datasetId);
+        Dataset dataset = datasetDAO.findDatasetById(datasetId);
         Set<DatasetProperty> properties = getDatasetProperties(datasetId);
         dataset.setProperties(properties);
         return dataset;
@@ -264,9 +264,9 @@ public class DatasetService {
     private void updateDatasetProperties(List<DatasetProperty> updateProperties,
           List<DatasetProperty> deleteProperties, List<DatasetProperty> addProperties) {
         updateProperties.forEach(p -> datasetDAO
-              .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue()));
+              .updateDatasetProperty(p.getDatasetId(), p.getPropertyKey(), p.getPropertyValue()));
         deleteProperties.forEach(
-              p -> datasetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
+              p -> datasetDAO.deleteDatasetPropertyByKey(p.getDatasetId(), p.getPropertyKey()));
         datasetDAO.insertDatasetProperties(addProperties);
     }
 
@@ -331,7 +331,7 @@ public class DatasetService {
     }
 
     public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
-        Dataset dataset = datasetDAO.findDataSetById(datasetId);
+        Dataset dataset = datasetDAO.findDatasetById(datasetId);
         if (Objects.nonNull(dataset)) {
             // Some legacy dataset names can be null
             String dsAuditName = Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
@@ -339,10 +339,10 @@ public class DatasetService {
             try {
                 datasetDAO.useTransaction(h -> {
                     try {
-                        h.insertDataSetAudit(dsAudit);
+                        h.insertDatasetAudit(dsAudit);
                         h.deleteUserAssociationsByDatasetId(datasetId);
                         h.deleteDatasetPropertiesByDatasetId(datasetId);
-                        h.deleteConsentAssociationsByDataSetId(datasetId);
+                        h.deleteConsentAssociationsByDatasetId(datasetId);
                         h.deleteDatasetById(datasetId);
                     } catch (Exception e) {
                         h.rollback();

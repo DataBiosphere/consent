@@ -6,7 +6,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 public class DatasetProperty {
 
     private Integer propertyId;
-    private Integer dataSetId;
+    private Integer datasetId;
     private Integer propertyKey;
     private String propertyValue;
     private Date createDate;
@@ -14,15 +14,15 @@ public class DatasetProperty {
     public DatasetProperty(){
     }
 
-    public DatasetProperty(Integer propertyId, Integer  dataSetId, Integer propertyKey, String propertyValue,
+    public DatasetProperty(Integer propertyId, Integer datasetId, Integer propertyKey, String propertyValue,
                            Date createDate) {
-        this(dataSetId, propertyKey, propertyValue, createDate);
+        this(datasetId, propertyKey, propertyValue, createDate);
         this.propertyId = propertyId;
     }
 
-    public DatasetProperty(Integer  dataSetId, Integer propertyKey, String propertyValue,
+    public DatasetProperty(Integer datasetId, Integer propertyKey, String propertyValue,
                            Date createDate){
-        this.dataSetId = dataSetId;
+        this.datasetId = datasetId;
         this.propertyKey = propertyKey;
         this.propertyValue = propertyValue;
         this.createDate = createDate;
@@ -36,12 +36,12 @@ public class DatasetProperty {
         this.propertyId = propertyId;
     }
 
-    public Integer getDataSetId() {
-        return dataSetId;
+    public Integer getDatasetId() {
+        return datasetId;
     }
 
-    public void setDataSetId(Integer dataSetId) {
-        this.dataSetId = dataSetId;
+    public void setDatasetId(Integer datasetId) {
+        this.datasetId = datasetId;
     }
 
     public Integer getPropertyKey() {
@@ -79,7 +79,7 @@ public class DatasetProperty {
 
         DatasetProperty other = (DatasetProperty) obj;
         return new EqualsBuilder()
-              .append(dataSetId, other.dataSetId)
+              .append(datasetId, other.datasetId)
               .append(propertyKey, other.propertyKey)
               .append(propertyValue, other.propertyValue)
               .isEquals();

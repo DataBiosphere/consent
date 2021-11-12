@@ -313,7 +313,7 @@ public class ConsentService {
             if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) == null){
                 throw new NotFoundException();
             } else {
-                Integer datasetId = datasetDAO.findDataSetIdByObjectId(objectId);
+                Integer datasetId = datasetDAO.findDatasetIdByObjectId(objectId);
                 consentDAO.deleteOneAssociation(consentId, associationType, datasetId);
             }
 
@@ -341,7 +341,7 @@ public class ConsentService {
         Handle h = jdbi.open();
         PreparedBatch insertBatch = h.prepareBatch("insert into consentassociations (consentId, associationType, dataSetId) values (?, ?, ?)");
         for (String id : ids) {
-            insertBatch.add(consentId, associationType, datasetDAO.findDataSetIdByObjectId(id));
+            insertBatch.add(consentId, associationType, datasetDAO.findDatasetIdByObjectId(id));
         }
         List<Long> insertedIds = insertBatch.
                 executeAndReturnGeneratedKeys("associationid").
@@ -364,7 +364,7 @@ public class ConsentService {
 
     private void processAssociation(List<String> objectIds) {
         if (CollectionUtils.isNotEmpty(objectIds)) {
-            List<Dataset> datasets = datasetDAO.getDataSetsForObjectIdList(objectIds);
+            List<Dataset> datasets = datasetDAO.getDatasetsForObjectIdList(objectIds);
             List<String> existentObjectsId = datasets.stream().map(Dataset::getObjectId).collect(Collectors.toList());
             List<Dataset> dataSetsToCreate = new ArrayList<>();
             if(CollectionUtils.isNotEmpty(datasets)) {

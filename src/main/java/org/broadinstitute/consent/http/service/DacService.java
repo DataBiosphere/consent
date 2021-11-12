@@ -276,7 +276,7 @@ public class DacService {
             }
             // Chair and Member users can see data access requests that they have DAC access to
             if (user.hasUserRole(UserRoles.MEMBER) || user.hasUserRole(UserRoles.CHAIRPERSON)) {
-                List<Integer> accessibleDatasetIds = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail()).
+                List<Integer> accessibleDatasetIds = dataSetDAO.findDatasetsByAuthUserEmail(user.getEmail()).
                   stream().
                   map(Dataset::getDatasetId).
                   collect(Collectors.toList());
@@ -332,7 +332,7 @@ public class DacService {
             return elections;
         }
 
-        List<Integer> userDataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()).
+        List<Integer> userDataSetIds = dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).
                 stream().
                 map(Dataset::getDatasetId).
                 collect(Collectors.toList());
