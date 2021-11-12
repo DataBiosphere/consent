@@ -15,7 +15,7 @@ import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DataSetAudit;
+import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
@@ -74,7 +74,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     @SqlUpdate("INSERT INTO dataset_audit (datasetid, changeaction, modifiedbyuser, modificationdate, objectid, name, active) VALUES (:dataSetId, :action, :user, :date, :objectId, :name, :active )")
     @GetGeneratedKeys
-    Integer insertDataSetAudit(@BindBean DataSetAudit dataSets);
+    Integer insertDataSetAudit(@BindBean DatasetAudit dataSets);
 
     @SqlUpdate("DELETE FROM dataset_user_association WHERE datasetid = :datasetId")
     void deleteUserAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
