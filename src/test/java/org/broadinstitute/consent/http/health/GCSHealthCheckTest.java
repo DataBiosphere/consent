@@ -10,6 +10,7 @@ import org.mockito.MockitoAnnotations;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 public class GCSHealthCheckTest {
@@ -39,6 +40,15 @@ public class GCSHealthCheckTest {
     @Test
     public void testBucketMissing() {
         when(store.getRootBucketWithMetadata()).thenReturn(null);
+
+        HealthCheck.Result result = healthCheck.execute();
+        assertFalse(result.isHealthy());
+        assertTrue(result.getMessage().contains("GCS bucket unreachable"));
+    }
+
+    @Test
+    public void testException() {
+        doThrow(new RuntimeException()).when(store).getRootBucketWithMetadata();
 
         HealthCheck.Result result = healthCheck.execute();
         assertFalse(result.isHealthy());
