@@ -46,21 +46,21 @@ public class MatchService {
     private final UseRestrictionConverter useRestrictionConverter;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final DataAccessRequestDAO dataAccessRequestDAO;
-    private final DatasetDAO dataSetDAO;
+    private final DatasetDAO datasetDAO;
     private final WebTarget matchServiceTarget;
 
     private final GenericType<ResponseMatchingObject> rmo = new GenericType<>(){};
 
     @Inject
     public MatchService(Client client, ServicesConfiguration config, ConsentDAO consentDAO, MatchDAO matchDAO,
-                        ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
+                        ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO datasetDAO,
                         UseRestrictionConverter useRestrictionConverter) {
         this.matchDAO = matchDAO;
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.useRestrictionConverter = useRestrictionConverter;
-        this.dataSetDAO = dataSetDAO;
+        this.datasetDAO = datasetDAO;
 
         Integer timeout = 1000 * 60 * 3; // 3 minute timeout so ontology can properly do matching.
         client.property(ClientProperties.CONNECT_TIMEOUT, timeout);
@@ -176,7 +176,7 @@ public class MatchService {
     public List<Match> createMatchesForConsent(String consentId) {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
-        List<Dataset> datasets = dataSetDAO.getDataSetsForConsent(consentId);
+        List<Dataset> datasets = datasetDAO.getDataSetsForConsent(consentId);
         List<DataAccessRequest> dars = findRelatedDars(datasets.stream().map(Dataset::getDatasetId).collect(Collectors.toList()));
         if (consent != null && !dars.isEmpty()) {
             Match match;
