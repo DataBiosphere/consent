@@ -8,10 +8,10 @@ public class DataOwnerCase {
     private String alias;
 
     @JsonProperty
-    private Integer dataSetId;
+    private Integer datasetId;
 
     @JsonProperty
-    private String dataSetName;
+    private String datasetName;
 
     @JsonProperty
     private String darCode;
@@ -32,20 +32,20 @@ public class DataOwnerCase {
     public DataOwnerCase() {
     }
 
-    public Integer getDataSetId() {
-        return dataSetId;
+    public Integer getDatasetId() {
+        return datasetId;
     }
 
-    public void setDataSetId(Integer dataSetId) {
-        this.dataSetId = dataSetId;
+    public void setDatasetId(Integer datasetId) {
+        this.datasetId = datasetId;
     }
 
-    public String getDataSetName() {
-        return dataSetName;
+    public String getDatasetName() {
+        return datasetName;
     }
 
-    public void setDataSetName(String dataSetName) {
-        this.dataSetName = dataSetName;
+    public void setDatasetName(String datasetName) {
+        this.datasetName = datasetName;
     }
 
     public String getDarCode() {

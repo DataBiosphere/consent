@@ -574,7 +574,7 @@ public class DataAccessRequestServiceTest {
     private Election generateElection(Integer dataSetId) {
         String refId = UUID.randomUUID().toString();
         Election election = new Election();
-        election.setDataSetId(dataSetId);
+        election.setDatasetId(dataSetId);
         election.setReferenceId(refId);
 
         return election;

@@ -155,14 +155,14 @@ public interface UserDAO extends Transactional<UserDAO> {
                                            @BindList("roleNames") List<String> roleNames);
 
     @UseRowMapper(UserWithRolesMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +
+    @SqlQuery("select du.*, r.roleid, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +
             " from dacuser du " +
-            " inner join user_role ur on ur.user_id = du.dacUserId " +
-            " inner join roles r on r.roleId = ur.role_id and r.name in (<roleNames>) " +
+            " inner join user_role ur on ur.user_id = du.dacuserid " +
+            " inner join roles r on r.roleid = ur.role_id and r.name in (<roleNames>) " +
             " inner join dac d on d.dac_id = ur.dac_id " +
             " inner join consents c on c.dac_id = d.dac_id " +
-            " inner join consentassociations a on a.consentId = c.consentId " +
-            " where a.dataSetId in (<datasetIds>) "
+            " inner join consentassociations a on a.consentid = c.consentid " +
+            " where a.datasetid in (<datasetIds>) "
     )
     Set<User> findUsersForDatasetsByRole(
             @BindList("datasetIds") List<Integer> datasetIds,

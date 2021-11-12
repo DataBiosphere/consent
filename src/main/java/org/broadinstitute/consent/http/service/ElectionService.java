@@ -143,7 +143,7 @@ public class ElectionService {
                 election.getFinalAccessVote() ,
                 election.getDataUseLetter(),
                 election.getDulName(),
-                election.getDataSetId());
+                election.getDatasetId());
         updateSortDate(referenceId, createDate);
 
         switch (electionType) {
@@ -514,7 +514,7 @@ public class ElectionService {
                                 StringUtils.join(datasetIdList, ", "));
                     }
                     Optional<Integer> datasetId = datasetIdList.stream().findFirst();
-                    datasetId.ifPresent(election::setDataSetId);
+                    datasetId.ifPresent(election::setDatasetId);
                 }
                 break;
             case DATA_SET:

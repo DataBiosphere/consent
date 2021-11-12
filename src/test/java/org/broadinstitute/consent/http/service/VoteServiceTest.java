@@ -233,8 +233,8 @@ public class VoteServiceTest {
     public void testCreateDataOwnersReviewVotes() {
         Election e = new Election();
         e.setElectionId(1);
-        e.setDataSetId(1);
-        when(dataSetAssociationDAO.getDataOwnersOfDataSet(anyInt())).thenReturn(Collections.singletonList(1));
+        e.setDatasetId(1);
+        when(dataSetAssociationDAO.getDataOwnersOfDataset(anyInt())).thenReturn(Collections.singletonList(1));
         Vote v = new Vote();
         v.setVoteId(1);
         when(voteDAO.insertVote(anyInt(), anyInt(), any())).thenReturn(v.getVoteId());

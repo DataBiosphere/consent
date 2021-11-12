@@ -23,7 +23,7 @@ public class Association {
     public String objectId;
 
     @JsonProperty
-    public Integer dataSetId;
+    public Integer datasetId;
 
     public Integer getAssociationId() {
         return associationId;
@@ -53,12 +53,12 @@ public class Association {
         return objectId;
     }
 
-    public Integer getDataSetId() {
-        return dataSetId;
+    public Integer getDatasetId() {
+        return datasetId;
     }
 
-    public void setDataSetId(Integer dataSetId) {
-        this.dataSetId = dataSetId;
+    public void setDatasetId(Integer datasetId) {
+        this.datasetId = datasetId;
     }
 
     public void setObjectId(String objectId) {

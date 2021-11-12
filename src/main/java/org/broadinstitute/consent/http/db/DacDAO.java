@@ -133,7 +133,7 @@ public interface DacDAO extends Transactional<DacDAO> {
     /**
      * Find the Dacs for these datasets.
      *
-     * DACs -> Consents -> Consent Associations -> DataSets
+     * DACs -> Consents -> Consent Associations -> Datasets
      *
      * @param datasetIds The list of dataset ids
      * @return All DACs that corresponds to the provided dataset ids

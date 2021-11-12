@@ -50,7 +50,7 @@ public class ElectionMapper implements RowMapper<Election>, RowMapperHelper {
             election.setFinalAccessVote(r.getBoolean(ElectionFields.FINAL_ACCESS_VOTE.getValue()));
         }
         if (r.getObject(ElectionFields.DATASET_ID.getValue()) != null) {
-            election.setDataSetId(r.getInt(ElectionFields.DATASET_ID.getValue()));
+            election.setDatasetId(r.getInt(ElectionFields.DATASET_ID.getValue()));
         }
         if (r.getString(ElectionFields.DATA_USE_LETTER.getValue()) != null) {
             election.setDataUseLetter(r.getString(ElectionFields.DATA_USE_LETTER.getValue()));

@@ -40,7 +40,7 @@ public class Election {
     private Boolean finalAccessVote;
 
     @JsonProperty
-    private Integer dataSetId;
+    private Integer datasetId;
 
     @JsonProperty
     private String displayId;
@@ -68,7 +68,7 @@ public class Election {
 
     public Election(Integer electionId, String electionType,
             String status, Date createDate,
-            String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer dataSetId) {
+            String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer datasetId) {
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -76,12 +76,12 @@ public class Election {
         this.referenceId = referenceId;
         this.lastUpdate = lastUpdate;
         this.finalAccessVote = finalAccessVote;
-        this.dataSetId = dataSetId;
+        this.datasetId = datasetId;
     }
 
     public Election(Integer electionId, String electionType,
                     String status, Date createDate,
-                    String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer dataSetId, Boolean archived,
+                    String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer datasetId, Boolean archived,
                     String dulName, String dataUseLetter) {
         this.electionId = electionId;
         this.electionType = electionType;
@@ -90,7 +90,7 @@ public class Election {
         this.referenceId = referenceId;
         this.lastUpdate = lastUpdate;
         this.finalAccessVote = finalAccessVote;
-        this.dataSetId = dataSetId;
+        this.datasetId = datasetId;
         this.archived = archived;
         this.dulName = dulName;
         this.dataUseLetter = dataUseLetter;
@@ -184,12 +184,12 @@ public class Election {
         this.lastUpdate = lastUpdate;
     }
 
-    public Integer getDataSetId() {
-        return dataSetId;
+    public Integer getDatasetId() {
+        return datasetId;
     }
 
-    public void setDataSetId(Integer dataSetId) {
-        this.dataSetId = dataSetId;
+    public void setDatasetId(Integer datasetId) {
+        this.datasetId = datasetId;
     }
 
     public String getDisplayId() {

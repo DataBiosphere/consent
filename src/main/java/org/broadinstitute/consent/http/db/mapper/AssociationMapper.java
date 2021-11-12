@@ -15,7 +15,7 @@ public class AssociationMapper implements RowMapper<Association> {
     association.setConsentId(r.getString("consentId"));
     association.setAssociationType(r.getString("associationType"));
     association.setObjectId(r.getString("objectId"));
-    association.setDataSetId(r.getInt("dataSetId"));
+    association.setDatasetId(r.getInt("dataSetId"));
     return association;
   }
 }

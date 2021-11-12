@@ -272,7 +272,7 @@ public class SummaryService {
                         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
                             List<Integer> datasetId = dar.getData().getDatasetIds();
                             if (CollectionUtils.isNotEmpty(datasetId)) {
-                                Association association = associations.stream().filter((as) -> as.getDataSetId().equals(datasetId.get(0))).collect(singletonCollector());
+                                Association association = associations.stream().filter((as) -> as.getDatasetId().equals(datasetId.get(0))).collect(singletonCollector());
                                 Election consentElection = reviewedConsentElections.stream().filter(re -> re.getReferenceId().equals(association.getConsentId())).collect(singletonCollector());
                                 List<Vote> electionConsentVotes = consentVotes.stream().filter(cv -> cv.getElectionId().equals(consentElection.getElectionId())).collect(Collectors.toList());
                                 Vote chairPersonConsentVote =  electionConsentVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());

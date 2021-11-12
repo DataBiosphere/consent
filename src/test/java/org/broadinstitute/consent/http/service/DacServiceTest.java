@@ -588,7 +588,7 @@ public class DacServiceTest {
 
         // There are unassociated elections:
         List<Election> unassociatedElections = getElections().stream().
-                peek(e -> e.setDataSetId(null)).
+                peek(e -> e.setDatasetId(null)).
                 collect(Collectors.toList());
 
         List<Election> elections = getElections();
@@ -614,7 +614,7 @@ public class DacServiceTest {
 
         // There are unassociated elections:
         List<Election> unassociatedElections = getElections().stream().
-                peek(e -> e.setDataSetId(null)).
+                peek(e -> e.setDatasetId(null)).
                 collect(Collectors.toList());
 
         List<Election> elections = getElections();
@@ -669,7 +669,7 @@ public class DacServiceTest {
         return IntStream.range(1, 5).
                 mapToObj(i -> {
                     Election election = new Election();
-                    election.setDataSetId(i);
+                    election.setDatasetId(i);
                     return election;
                 }).collect(Collectors.toList());
     }

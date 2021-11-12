@@ -19,23 +19,23 @@ import java.util.List;
 @RegisterRowMapper(DatasetAssociationMapper.class)
 public interface DatasetAssociationDAO extends Transactional<DatasetAssociationDAO> {
 
-    @SqlBatch("insert into dataset_user_association (datasetId, dacuserId, createDate )" +
+    @SqlBatch("insert into dataset_user_association (datasetid, dacuserid, createdate )" +
             " values (:datasetId, :dacuserId, :createDate)")
     void insertDatasetUserAssociation(@BindBean Collection<DatasetAssociation> associationList) throws UnableToExecuteStatementException;
 
-    @SqlQuery("select * from dataset_user_association where datasetId = :datasetId")
+    @SqlQuery("select * from dataset_user_association where datasetid = :datasetId")
     List<DatasetAssociation> getDatasetAssociation(@Bind("datasetId") Integer datasetId);
 
-    @SqlQuery("select * from dataset_user_association where datasetId in (<dataSetIdList>)")
-    List<DatasetAssociation> getDatasetAssociations(@BindList("dataSetIdList") List<Integer> dataSetIdList);
+    @SqlQuery("select * from dataset_user_association where datasetid in (<datasetIdList>)")
+    List<DatasetAssociation> getDatasetAssociations(@BindList("datasetIdList") List<Integer> datasetIdList);
 
-    @SqlUpdate("delete from dataset_user_association where datasetId = :datasetId")
+    @SqlUpdate("delete from dataset_user_association where datasetid = :datasetId")
     void delete(@Bind("datasetId") Integer datasetId);
 
-    @SqlQuery("select exists (select * from dataset_user_association where datasetId = :datasetId )")
+    @SqlQuery("select exists (select * from dataset_user_association where datasetid = :datasetId )")
     Boolean exist(@Bind("datasetId") Integer datasetId);
 
-    @SqlQuery("select ds.dacuserId from dataset_user_association ds where ds.datasetId = :datasetId")
-    List<Integer> getDataOwnersOfDataSet(@Bind("datasetId") Integer datasetId);
+    @SqlQuery("select ds.dacuserId from dataset_user_association ds where ds.datasetid = :datasetId")
+    List<Integer> getDataOwnersOfDataset(@Bind("datasetId") Integer datasetId);
 
 }

@@ -28,15 +28,15 @@ import java.util.stream.Collectors;
 public class VoteService {
 
     private final UserDAO userDAO;
-    private final DatasetAssociationDAO dataSetAssociationDAO;
+    private final DatasetAssociationDAO datasetAssociationDAO;
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
 
     @Inject
-    public VoteService(UserDAO userDAO, DatasetAssociationDAO dataSetAssociationDAO,
+    public VoteService(UserDAO userDAO, DatasetAssociationDAO datasetAssociationDAO,
                        ElectionDAO electionDAO, VoteDAO voteDAO) {
         this.userDAO = userDAO;
-        this.dataSetAssociationDAO = dataSetAssociationDAO;
+        this.datasetAssociationDAO = datasetAssociationDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
     }
@@ -191,7 +191,7 @@ public class VoteService {
      */
     @SuppressWarnings("UnusedReturnValue")
     public List<Vote> createDataOwnersReviewVotes(Election election) {
-        List<Integer> dataOwners = dataSetAssociationDAO.getDataOwnersOfDataSet(election.getDataSetId());
+        List<Integer> dataOwners = datasetAssociationDAO.getDataOwnersOfDataset(election.getDatasetId());
         voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
         return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
     }

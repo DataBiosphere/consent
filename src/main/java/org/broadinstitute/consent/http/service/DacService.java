@@ -40,18 +40,18 @@ public class DacService {
 
     private final DacDAO dacDAO;
     private final UserDAO userDAO;
-    private final DatasetDAO dataSetDAO;
+    private final DatasetDAO datasetDAO;
     private final ElectionDAO electionDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final VoteService voteService;
 
     @Inject
-    public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
+    public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO datasetDAO,
                       ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
                       VoteService voteService) {
         this.dacDAO = dacDAO;
         this.userDAO = userDAO;
-        this.dataSetDAO = dataSetDAO;
+        this.datasetDAO = datasetDAO;
         this.electionDAO = electionDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.voteService = voteService;
@@ -160,7 +160,7 @@ public class DacService {
     }
 
     public Set<DatasetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
-        Set<DatasetDTO> datasets = dataSetDAO.findDatasetsByDac(dacId);
+        Set<DatasetDTO> datasets = datasetDAO.findDatasetsByDac(dacId);
         if (isAuthUserAdmin(authUser)) {
             return datasets;
         }
@@ -172,7 +172,7 @@ public class DacService {
     }
 
     public Set<Dataset> findDatasetsByConsentId(String consentId) {
-        return dataSetDAO.findDatasetsForConsentId(consentId);
+        return datasetDAO.findDatasetsForConsentId(consentId);
     }
 
     public List<User> findMembersByDacId(Integer dacId) {
@@ -276,7 +276,7 @@ public class DacService {
             }
             // Chair and Member users can see data access requests that they have DAC access to
             if (user.hasUserRole(UserRoles.MEMBER) || user.hasUserRole(UserRoles.CHAIRPERSON)) {
-                List<Integer> accessibleDatasetIds = dataSetDAO.findDatasetsByAuthUserEmail(user.getEmail()).
+                List<Integer> accessibleDatasetIds = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail()).
                   stream().
                   map(Dataset::getDatasetId).
                   collect(Collectors.toList());
@@ -332,12 +332,12 @@ public class DacService {
             return elections;
         }
 
-        List<Integer> userDataSetIds = dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).
+        List<Integer> userDataSetIds = datasetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).
                 stream().
                 map(Dataset::getDatasetId).
                 collect(Collectors.toList());
         return elections.stream().
-                filter(e -> Objects.isNull(e.getDataSetId()) || userDataSetIds.contains(e.getDataSetId())).
+                filter(e -> Objects.isNull(e.getDatasetId()) || userDataSetIds.contains(e.getDatasetId())).
                 collect(Collectors.toList());
     }
 
