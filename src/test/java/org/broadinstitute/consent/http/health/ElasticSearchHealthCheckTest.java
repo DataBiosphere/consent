@@ -35,12 +35,6 @@ import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
 public class ElasticSearchHealthCheckTest implements WithMockServer {
-    @Mock
-    private StatusLine statusLine;
-
-    @Mock
-    private Response esResponse;
-
     private ElasticSearchHealthCheck healthCheck;
     private ElasticSearchConfiguration config;
     private RestClient client;
@@ -66,13 +60,12 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         stop(container);
     }
 
-    private void initHealthCheck(String status) {
+    private void initHealthCheck(String status, Integer statusCode) {
         try {
-            mockServerClient.when(request()).respond(response().withStatusCode(200).withBody(String.valueOf(esResponse)));
-            String stringResponse = IOUtils.toString(esResponse.getEntity().getContent(), Charset.defaultCharset());
-            JsonObject jsonResponse = JsonParser.parseString(stringResponse).getAsJsonObject();
-            when(jsonResponse.get("status").getAsString()).thenReturn(status);
-            when(client.performRequest(any())).thenReturn(esResponse);
+            String stringResponse = "{ \"status\": \"" + status + "\" }";
+            mockServerClient.when(request()).respond(response()
+                    .withStatusCode(statusCode)
+                    .withBody(stringResponse));
 
             healthCheck = new ElasticSearchHealthCheck(config);
         } catch (Exception e) {
@@ -82,9 +75,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
 
     @Test
     public void testCheckSuccessGreen() throws Exception {
-        when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-        when(esResponse.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck("green");
+        initHealthCheck("green", HttpStatusCodes.STATUS_CODE_OK);
 
         HealthCheck.Result result = healthCheck.check();
         assertTrue(result.isHealthy());
@@ -92,9 +83,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
 
     @Test
     public void testCheckSuccessYellow() throws Exception {
-        when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-        when(esResponse.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck("yellow");
+        initHealthCheck("yellow", HttpStatusCodes.STATUS_CODE_OK);
 
         HealthCheck.Result result = healthCheck.check();
         assertTrue(result.isHealthy());
@@ -102,9 +91,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
 
     @Test
     public void testCheckFailureRed() throws Exception {
-        when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-        when(esResponse.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck("red");
+        initHealthCheck("red", HttpStatusCodes.STATUS_CODE_OK);
 
         HealthCheck.Result result = healthCheck.check();
         assertFalse(result.isHealthy());
@@ -112,9 +99,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
 
     @Test
     public void testCheckServerFailure() throws Exception {
-        when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-        when(esResponse.getStatusLine()).thenReturn(statusLine);
-        initHealthCheck("green");
+        initHealthCheck("green", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
 
         HealthCheck.Result result = healthCheck.check();
         assertFalse(result.isHealthy());
@@ -122,8 +107,8 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
 
     @Test
     public void testCheckException() throws Exception {
-        doThrow(new RuntimeException()).when(esResponse).getStatusLine();
-        initHealthCheck("green");
+//        doThrow(new RuntimeException()).when(esResponse).getStatusLine();
+        initHealthCheck("green", HttpStatusCodes.STATUS_CODE_OK);
 
         HealthCheck.Result result = healthCheck.check();
         assertFalse(result.isHealthy());
