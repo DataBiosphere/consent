@@ -13,7 +13,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 
 public class DatasetPropertiesMapper implements RowMapper<DatasetDTO>, RowMapperHelper {
 
-  private final Map<Integer, DatasetDTO> dataSets = new LinkedHashMap<>();
+  private final Map<Integer, DatasetDTO> datasets = new LinkedHashMap<>();
   private static final String PROPERTY_KEY = "key";
   private static final String PROPERTY_PROPERTYVALUE = "propertyValue";
 
@@ -23,7 +23,7 @@ public class DatasetPropertiesMapper implements RowMapper<DatasetDTO>, RowMapper
     Integer dataSetId = r.getInt("dataSetId");
     String consentId = r.getString("consentId");
     Integer alias = r.getInt("alias");
-    if (!dataSets.containsKey(dataSetId)) {
+    if (!datasets.containsKey(dataSetId)) {
       dataSetDTO = new DatasetDTO(new ArrayList<>());
       if (hasColumn(r, "dac_id")) {
         int dacId = r.getInt("dac_id");
@@ -66,9 +66,9 @@ public class DatasetPropertiesMapper implements RowMapper<DatasetDTO>, RowMapper
       }
       dataSetDTO.setNeedsApproval(r.getBoolean("needs_approval"));
       dataSetDTO.setObjectId(r.getString("objectId"));
-      dataSets.put(dataSetId, dataSetDTO);
+      datasets.put(dataSetId, dataSetDTO);
     } else {
-      dataSetDTO = dataSets.get(dataSetId);
+      dataSetDTO = datasets.get(dataSetId);
       DataSetPropertyDTO property =
           new DataSetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
       if (property.getPropertyName() != null) {
