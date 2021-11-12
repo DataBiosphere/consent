@@ -103,7 +103,7 @@ public class DatasetResource extends Resource {
         Integer userId = dacUser.getDacUserId();
         try {
             DatasetDTO createdDatasetWithConsent = datasetService.createDatasetWithConsent(inputDataset, name, userId);
-            URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDatasetWithConsent.getDataSetId());
+            URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDatasetWithConsent.getDatasetId());
             return Response.created(uri).entity(createdDatasetWithConsent).build();
         }
         catch (Exception e) {

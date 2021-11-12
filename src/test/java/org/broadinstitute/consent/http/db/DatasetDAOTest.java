@@ -117,7 +117,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         Set<DatasetDTO> datasets = dataSetDAO.findAllDatasets();
         assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).collect(Collectors.toList());
+        List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDatasetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDatasetId()));
     }
 
@@ -129,7 +129,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         Set<DatasetDTO> datasets = dataSetDAO.findActiveDatasets();
         assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).collect(Collectors.toList());
+        List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDatasetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDatasetId()));
     }
 
@@ -144,7 +144,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         Set<DatasetDTO> datasets = dataSetDAO.findDatasetsByUserId(user.getDacUserId());
         assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).collect(Collectors.toList());
+        List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDatasetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDatasetId()));
     }
 

@@ -152,7 +152,7 @@ public class MetricsServiceTest {
               DatasetDTO dto = new DatasetDTO();
               dto.setDacId(dac.getDacId());
               dto.setAlias(ds.getAlias());
-              dto.setDataSetId(ds.getDatasetId());
+              dto.setDatasetId(ds.getDatasetId());
               DatasetPropertyDTO name = new DatasetPropertyDTO("Dataset Name", ds.getName());
               DatasetPropertyDTO consent = new DatasetPropertyDTO("Consent ID", ds.getName());
               dto.setProperties(Arrays.asList(name, consent));

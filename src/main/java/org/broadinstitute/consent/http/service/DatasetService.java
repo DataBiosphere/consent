@@ -110,7 +110,7 @@ public class DatasetService {
         // Typically, this is a construct from ORSP consisting of dataset name and some form of investigator code.
         // In our world, we'll use that dataset name if provided, or the alias.
         String groupName = nameProp.isPresent() ? nameProp.get().getPropertyValue() : dataset.getAlias();
-        String name = CONSENT_NAME_PREFIX + dataset.getDataSetId();
+        String name = CONSENT_NAME_PREFIX + dataset.getDatasetId();
         Date createDate = new Date();
         if (Objects.nonNull(dataset.getDataUse())) {
             boolean manualReview = isConsentDataUseManualReview(dataset.getDataUse());
@@ -128,7 +128,7 @@ public class DatasetService {
                         h.updateConsentDac(consentId, dataset.getDacId());
                     }
                     String associationType = AssociationType.SAMPLE_SET.getValue();
-                    h.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
+                    h.insertConsentAssociation(consentId, associationType, dataset.getDatasetId());
                 } catch (Exception e) {
                     h.rollback();
                     logger.error("Exception creating consent: " + e.getMessage());
@@ -182,7 +182,7 @@ public class DatasetService {
                 throw e;
             }
         });
-        dataset.setDataSetId(createdDatasetId);
+        dataset.setDatasetId(createdDatasetId);
         try {
             createConsentForDataset(dataset);
         } catch (Exception e) {
@@ -276,7 +276,7 @@ public class DatasetService {
         if (Objects.nonNull(dataset) && !dataset.isEmpty()) {
             result = dataset.iterator().next();
         }
-        if (Objects.isNull(result.getDataSetId())) {
+        if (Objects.isNull(result.getDatasetId())) {
             throw new NotFoundException("Unable to find dataset with id: " + datasetId);
         }
         return result;
@@ -375,7 +375,7 @@ public class DatasetService {
                 datasets.addAll(chairSpecificDatasets);
             }
         }
-        datasets.forEach(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())));
+        datasets.forEach(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDatasetId())));
         return datasets;
     }
 
@@ -397,7 +397,7 @@ public class DatasetService {
                   String datasetNameString =
                         datasetName.isPresent() ? datasetName.get().getPropertyValue() : "";
                   String piString = pi.isPresent() ? pi.get().getPropertyValue() : "";
-                  map.put("id", ds.getDataSetId().toString());
+                  map.put("id", ds.getDatasetId().toString());
                   map.put("objectId", ds.getObjectId());
                   map.put("concatenation",
                         datasetNameString + " | " + piString + " | " + ds.getConsentId());

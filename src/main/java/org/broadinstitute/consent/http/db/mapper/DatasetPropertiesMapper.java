@@ -33,7 +33,7 @@ public class DatasetPropertiesMapper implements RowMapper<DatasetDTO>, RowMapper
       }
       dataSetDTO.setConsentId(consentId);
       dataSetDTO.setAlias(alias);
-      dataSetDTO.setDataSetId(dataSetId);
+      dataSetDTO.setDatasetId(dataSetId);
       dataSetDTO.setActive(r.getBoolean("active"));
       dataSetDTO.setTranslatedUseRestriction(r.getString("translatedUseRestriction"));
       if (hasColumn(r, "datause")) {

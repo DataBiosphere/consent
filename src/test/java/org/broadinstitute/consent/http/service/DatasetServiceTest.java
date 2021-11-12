@@ -85,7 +85,7 @@ public class DatasetServiceTest {
         DatasetDTO result = datasetService.createDatasetWithConsent(getDatasetDTO(), "Test Dataset 1", 1);
 
         assertNotNull(result);
-        assertEquals(mockDataset.getDatasetId(), result.getDataSetId());
+        assertEquals(mockDataset.getDatasetId(), result.getDatasetId());
         assertNotNull(result.getProperties());
         assertFalse(result.getProperties().isEmpty());
     }
@@ -459,7 +459,7 @@ public class DatasetServiceTest {
         return IntStream.range(1, 3)
               .mapToObj(i -> {
                   DatasetDTO dataset = new DatasetDTO();
-                  dataset.setDataSetId(i);
+                  dataset.setDatasetId(i);
                   DatasetPropertyDTO nameProperty = new DatasetPropertyDTO("Dataset Name", "Test Dataset " + i);
                   dataset.setActive(true);
                   dataset.setNeedsApproval(false);
@@ -485,7 +485,7 @@ public class DatasetServiceTest {
 
     private DatasetDTO getDatasetDTO() {
         DatasetDTO datasetDTO = new DatasetDTO();
-        datasetDTO.setDataSetId(1);
+        datasetDTO.setDatasetId(1);
         datasetDTO.setObjectId("Test ObjectId");
         datasetDTO.setActive(true);
         datasetDTO.setProperties(getDatasetPropertiesDTO());
