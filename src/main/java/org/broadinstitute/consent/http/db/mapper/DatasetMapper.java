@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class DataSetMapper implements RowMapper<Dataset>, RowMapperHelper {
+public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
 
   public Dataset map(ResultSet r, StatementContext ctx) throws SQLException {
       Dataset dataset = new Dataset();

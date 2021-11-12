@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
-import org.broadinstitute.consent.http.db.mapper.DataSetMapper;
+import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
@@ -32,7 +32,7 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
-@RegisterRowMapper(DataSetMapper.class)
+@RegisterRowMapper(DatasetMapper.class)
 public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     String CHAIRPERSON = Resource.CHAIRPERSON;
@@ -269,7 +269,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " where c.dac_id is not null ")
     List<Pair<Integer, Integer>> findDatasetAndDacIds();
 
-    @UseRowMapper(DataSetMapper.class)
+    @UseRowMapper(DatasetMapper.class)
     @SqlQuery("select d.* from dataset d " +
             " inner join consentassociations a on a.dataSetId = d.dataSetId and a.consentId = :consentId " +
             " where d.active = true ")
