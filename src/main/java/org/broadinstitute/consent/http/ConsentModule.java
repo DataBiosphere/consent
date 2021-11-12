@@ -142,7 +142,7 @@ public class ConsentModule extends AbstractModule {
         container.setDataAccessRequestDAO(providesDataAccessRequestDAO());
         container.setDarCollectionDAO(providesDARCollectionDAO());
         container.setDatasetAssociationDAO(providesDatasetAssociationDAO());
-        container.setDatasetDAO(providesDataSetDAO());
+        container.setDatasetDAO(providesDatasetDAO());
         container.setElectionDAO(providesElectionDAO());
         container.setMailMessageDAO(providesMailMessageDAO());
         container.setMatchDAO(providesMatchDAO());
@@ -197,7 +197,7 @@ public class ConsentModule extends AbstractModule {
     DarCollectionService providesDarCollectionService() {
         return new DarCollectionService(
             providesDARCollectionDAO(),
-            providesDataSetDAO(),
+            providesDatasetDAO(),
             providesElectionDAO(),
             providesDataAccessRequestDAO()
         );
@@ -223,7 +223,7 @@ public class ConsentModule extends AbstractModule {
                 providesDataAccessRequestDAO(),
                 providesAuditService(),
                 providesJdbi(),
-                providesDataSetDAO(),
+                providesDatasetDAO(),
                 providesUseRestrictionConverter());
     }
 
@@ -255,7 +255,7 @@ public class ConsentModule extends AbstractModule {
         return new DatasetService(
                 providesConsentDAO(),
                 providesDataAccessRequestDAO(),
-                providesDataSetDAO(),
+                providesDatasetDAO(),
                 providesUserRoleDAO(),
                 providesUseRestrictionConverter());
     }
@@ -265,7 +265,7 @@ public class ConsentModule extends AbstractModule {
         return new DatasetAssociationService(
             providesDatasetAssociationDAO(),
             providesUserDAO(),
-            providesDataSetDAO(),
+            providesDatasetDAO(),
             providesUserRoleDAO()
         );
     }
@@ -277,7 +277,7 @@ public class ConsentModule extends AbstractModule {
                 providesElectionDAO(),
                 providesVoteDAO(),
                 providesUserDAO(),
-                providesDataSetDAO(),
+                providesDatasetDAO(),
                 providesLibraryCardDAO(),
                 providesDatasetAssociationDAO(),
                 providesMailMessageDAO(),
@@ -319,7 +319,7 @@ public class ConsentModule extends AbstractModule {
         return new PendingCaseService(
                 providesConsentDAO(),
                 providesDataAccessRequestService(),
-                providesDataSetDAO(),
+                providesDatasetDAO(),
                 providesElectionDAO(),
                 providesVoteDAO(),
                 providesDacService(),
@@ -357,7 +357,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    DatasetDAO providesDataSetDAO() {
+    DatasetDAO providesDatasetDAO() {
         return datasetDAO;
     }
 
@@ -376,7 +376,7 @@ public class ConsentModule extends AbstractModule {
         return new DacService(
                 providesDacDAO(),
                 providesUserDAO(),
-                providesDataSetDAO(),
+                providesDatasetDAO(),
                 providesElectionDAO(),
                 providesDataAccessRequestDAO(),
                 providesVoteService());
@@ -401,7 +401,7 @@ public class ConsentModule extends AbstractModule {
                 providesMatchDAO(),
                 providesElectionDAO(),
                 providesDataAccessRequestDAO(),
-                providesDataSetDAO(),
+                providesDatasetDAO(),
                 providesUseRestrictionConverter());
     }
 
@@ -419,7 +419,7 @@ public class ConsentModule extends AbstractModule {
     MetricsService providesMetricsService() {
         return new MetricsService(
                 providesDacService(),
-                providesDataSetDAO(),
+                providesDatasetDAO(),
                 providesDataAccessRequestDAO(),
                 providesMatchDAO(),
                 providesElectionDAO()
@@ -505,7 +505,7 @@ public class ConsentModule extends AbstractModule {
             providesElectionDAO(),
             providesUserDAO(),
             providesConsentDAO(),
-            providesDataSetDAO(),
+            providesDatasetDAO(),
             providesMatchDAO()
         );
     }

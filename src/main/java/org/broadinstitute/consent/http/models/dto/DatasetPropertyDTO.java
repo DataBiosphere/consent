@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class DataSetPropertyDTO {
+public class DatasetPropertyDTO {
 
     @JsonProperty
     private String propertyName;
@@ -10,7 +10,7 @@ public class DataSetPropertyDTO {
     @JsonProperty
     private String propertyValue;
 
-    public DataSetPropertyDTO(String propertyName, String propertyValue) {
+    public DatasetPropertyDTO(String propertyName, String propertyValue) {
         this.propertyName=propertyName;
         this.propertyValue=propertyValue;
     }
@@ -37,7 +37,7 @@ public class DataSetPropertyDTO {
         if (obj == null) {
             return false;
         }
-        final DataSetPropertyDTO other = (DataSetPropertyDTO) obj;
+        final DatasetPropertyDTO other = (DatasetPropertyDTO) obj;
         if (this.propertyName.equals(other.getPropertyName())) {
             return true;
         }

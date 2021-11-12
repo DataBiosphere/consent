@@ -16,7 +16,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.junit.Before;
@@ -153,8 +153,8 @@ public class MetricsServiceTest {
               dto.setDacId(dac.getDacId());
               dto.setAlias(ds.getAlias());
               dto.setDataSetId(ds.getDatasetId());
-              DataSetPropertyDTO name = new DataSetPropertyDTO("Dataset Name", ds.getName());
-              DataSetPropertyDTO consent = new DataSetPropertyDTO("Consent ID", ds.getName());
+              DatasetPropertyDTO name = new DatasetPropertyDTO("Dataset Name", ds.getName());
+              DatasetPropertyDTO consent = new DatasetPropertyDTO("Consent ID", ds.getName());
               dto.setProperties(Arrays.asList(name, consent));
               return dto;
             })

@@ -24,7 +24,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -79,8 +79,8 @@ public class DatasetResourceTest {
         DatasetDTO result = new DatasetDTO();
         DatasetDTO json = new DatasetDTO();
         Consent consent = new Consent();
-        List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
-        jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
+        List<DatasetPropertyDTO> jsonProperties = new ArrayList<>();
+        jsonProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
         json.setProperties(jsonProperties);
 
         when(datasetService.getDatasetByName("test")).thenReturn(null);
@@ -133,8 +133,8 @@ public class DatasetResourceTest {
     public void testUpdateDataset() {
         Dataset preexistingDataset = new Dataset();
         DatasetDTO json = new DatasetDTO();
-        List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
-        jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
+        List<DatasetPropertyDTO> jsonProperties = new ArrayList<>();
+        jsonProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
         json.setProperties(jsonProperties);
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.of(preexistingDataset));
@@ -154,8 +154,8 @@ public class DatasetResourceTest {
     public void testUpdateDatasetNoContent() {
         Dataset preexistingDataset = new Dataset();
         DatasetDTO json = new DatasetDTO();
-        List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
-        jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
+        List<DatasetPropertyDTO> jsonProperties = new ArrayList<>();
+        jsonProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
         json.setProperties(jsonProperties);
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.empty());

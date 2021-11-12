@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -57,10 +57,10 @@ public class DatasetPropertiesMapper implements RowMapper<DatasetDTO>, RowMapper
               dataSetDTO.setUpdateUserId(userId);
           }
       }
-      DataSetPropertyDTO property = new DataSetPropertyDTO("Dataset Name", r.getString("name"));
+      DatasetPropertyDTO property = new DatasetPropertyDTO("Dataset Name", r.getString("name"));
       dataSetDTO.addProperty(property);
       property =
-          new DataSetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
+          new DatasetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
       if (property.getPropertyName() != null) {
         dataSetDTO.addProperty(property);
       }
@@ -69,8 +69,8 @@ public class DatasetPropertiesMapper implements RowMapper<DatasetDTO>, RowMapper
       datasets.put(dataSetId, dataSetDTO);
     } else {
       dataSetDTO = datasets.get(dataSetId);
-      DataSetPropertyDTO property =
-          new DataSetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
+      DatasetPropertyDTO property =
+          new DatasetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
       if (property.getPropertyName() != null) {
         dataSetDTO.addProperty(property);
       }

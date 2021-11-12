@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.Before;
@@ -245,11 +245,11 @@ public class DatasetServiceTest {
         when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
         initService();
 
-        List<DataSetPropertyDTO> input = getDatasetPropertiesDTO().stream()
+        List<DatasetPropertyDTO> input = getDatasetPropertiesDTO().stream()
             .peek(p -> p.setPropertyKey("Invalid Key"))
             .collect(Collectors.toList());
 
-        List<DataSetPropertyDTO> properties = datasetService.findInvalidProperties(input);
+        List<DatasetPropertyDTO> properties = datasetService.findInvalidProperties(input);
 
         assertFalse(properties.isEmpty());
     }
@@ -258,11 +258,11 @@ public class DatasetServiceTest {
     public void testFindDuplicateProperties() {
         initService();
 
-        List<DataSetPropertyDTO> input = getDatasetPropertiesDTO();
-        DataSetPropertyDTO duplicateProperty = input.get(0);
+        List<DatasetPropertyDTO> input = getDatasetPropertiesDTO();
+        DatasetPropertyDTO duplicateProperty = input.get(0);
         input.add(duplicateProperty);
 
-        List<DataSetPropertyDTO> properties = datasetService.findDuplicateProperties(input);
+        List<DatasetPropertyDTO> properties = datasetService.findDuplicateProperties(input);
 
         assertFalse(properties.isEmpty());
         assertEquals(properties.get(0), duplicateProperty);
@@ -310,7 +310,7 @@ public class DatasetServiceTest {
         Dataset dataset = getDatasets().get(0);
         dataset.setProperties(getDatasetProperties());
 
-        List<DataSetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
+        List<DatasetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
         updatedProperties.get(2).setPropertyValue("updated value");
         updatedProperties.get(3).setPropertyValue("updated value");
         dataSetDTO.setProperties(updatedProperties);
@@ -335,7 +335,7 @@ public class DatasetServiceTest {
         properties.remove(2);
         dataset.setProperties(new HashSet<>(properties));
 
-        List<DataSetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
+        List<DatasetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
         updatedProperties.get(2).setPropertyValue("added value");
         updatedProperties.get(3).setPropertyValue("added value");
         dataSetDTO.setProperties(updatedProperties);
@@ -357,7 +357,7 @@ public class DatasetServiceTest {
         Dataset dataset = getDatasets().get(0);
         dataset.setProperties(getDatasetProperties());
 
-        List<DataSetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
+        List<DatasetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
         updatedProperties.remove(2);
         updatedProperties.remove(2);
         dataSetDTO.setProperties(updatedProperties);
@@ -460,7 +460,7 @@ public class DatasetServiceTest {
               .mapToObj(i -> {
                   DatasetDTO dataset = new DatasetDTO();
                   dataset.setDataSetId(i);
-                  DataSetPropertyDTO nameProperty = new DataSetPropertyDTO("Dataset Name", "Test Dataset " + i);
+                  DatasetPropertyDTO nameProperty = new DatasetPropertyDTO("Dataset Name", "Test Dataset " + i);
                   dataset.setActive(true);
                   dataset.setNeedsApproval(false);
                   dataset.setProperties(Collections.singletonList(nameProperty));
@@ -475,11 +475,11 @@ public class DatasetServiceTest {
             ).collect(Collectors.toSet());
     }
 
-    private List<DataSetPropertyDTO> getDatasetPropertiesDTO() {
+    private List<DatasetPropertyDTO> getDatasetPropertiesDTO() {
         List<Dictionary> dictionaries = getDictionaries();
         return dictionaries.stream()
             .map(d ->
-                new DataSetPropertyDTO(d.getKey(), "Test Value")
+                new DatasetPropertyDTO(d.getKey(), "Test Value")
             ).collect(Collectors.toList());
     }
 
