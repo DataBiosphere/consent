@@ -16,6 +16,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -43,7 +45,9 @@ public class ElasticSearchHealthCheckTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
 
-//        when(config.getServers()).thenReturn(???); not sure what to put here
+        List<String> servers = new ArrayList<>();
+        servers.add("localhost");
+        when(config.getServers()).thenReturn(servers);
         when(ElasticSearchSupport.createRestClient(config)).thenReturn(client);
     }
 
