@@ -64,7 +64,7 @@ public class DataAccessRequestService {
     private final ConsentDAO consentDAO;
     private final CounterService counterService;
     private final DacDAO dacDAO;
-    private final DatasetDAO dataSetDAO;
+    private final DatasetDAO datasetDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DarCollectionDAO darCollectionDAO;
     private final ElectionDAO electionDAO;
@@ -85,7 +85,7 @@ public class DataAccessRequestService {
         this.dacDAO = container.getDacDAO();
         this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
         this.darCollectionDAO = container.getDarCollectionDAO();
-        this.dataSetDAO = container.getDatasetDAO();
+        this.datasetDAO = container.getDatasetDAO();
         this.electionDAO = container.getElectionDAO();
         this.matchDAO = container.getMatchDAO();
         this.userDAO = container.getUserDAO();
@@ -502,7 +502,7 @@ public class DataAccessRequestService {
                 try {
                     if (Objects.nonNull(dataAccessRequest) && Objects.nonNull(dataAccessRequest.getData()) && Objects.nonNull(user)) {
                         Integer datasetId = !CollectionUtils.isEmpty(dataAccessRequest.getData().getDatasetIds()) ? dataAccessRequest.getData().getDatasetIds().get(0) : null;
-                        String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
+                        String consentId = Objects.nonNull(datasetId) ? datasetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
                         Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
                         String profileName = user.getDisplayName();
                         if (Objects.isNull(user.getInstitutionId())) {
@@ -535,7 +535,7 @@ public class DataAccessRequestService {
                 DataAccessRequest dar = findByReferenceId(election.getReferenceId());
                 if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
                     Integer datasetId = !CollectionUtils.isEmpty(dar.getData().getDatasetIds()) ? dar.getData().getDatasetIds().get(0) : null;
-                    String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
+                    String consentId = Objects.nonNull(datasetId) ? datasetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
                     Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
                     if (Objects.nonNull(consent)) {
                         dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar, consent.getName(), consent.getTranslatedUseRestriction());
@@ -619,7 +619,7 @@ public class DataAccessRequestService {
     private List<Dataset> populateDatasets(DataAccessRequest dar) {
         List<Integer> datasetIds = Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
         if (!datasetIds.isEmpty()) {
-            return dataSetDAO.findDatasetsByIdList(datasetIds);
+            return datasetDAO.findDatasetsByIdList(datasetIds);
         }
         return Collections.emptyList();
     }
@@ -635,7 +635,7 @@ public class DataAccessRequestService {
         if (dacService.isAuthUserAdmin(authUser)) {
             return activeDars;
         }
-        List<Integer> dataSetIds = dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).stream().
+        List<Integer> dataSetIds = datasetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).stream().
                 map(Dataset::getDatasetId).
                 collect(Collectors.toList());
         return activeDars.stream().

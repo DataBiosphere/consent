@@ -43,7 +43,7 @@ public class SummaryServiceTest {
     @Mock
     private ConsentDAO consentDAO;
     @Mock
-    private DatasetDAO dataSetDAO;
+    private DatasetDAO datasetDAO;
     @Mock
     private MatchDAO matchDAO;
     @Mock
@@ -54,7 +54,8 @@ public class SummaryServiceTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        summaryService = Mockito.spy(new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO, dataSetDAO, matchDAO));
+        summaryService = Mockito.spy(new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO,
+            datasetDAO, matchDAO));
     }
 
     // In this tests we won't validate the resulting file, we will just validate the methods being called for each response given by the mocks is accurate.

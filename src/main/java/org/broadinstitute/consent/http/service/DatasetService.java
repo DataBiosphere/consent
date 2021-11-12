@@ -51,11 +51,11 @@ public class DatasetService {
     private final UseRestrictionConverter converter;
 
     @Inject
-    public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
+    public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO datasetDAO,
                           UserRoleDAO userRoleDAO, UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
-        this.datasetDAO = dataSetDAO;
+        this.datasetDAO = datasetDAO;
         this.userRoleDAO = userRoleDAO;
         this.converter = converter;
     }

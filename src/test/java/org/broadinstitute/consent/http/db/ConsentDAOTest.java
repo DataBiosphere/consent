@@ -211,9 +211,9 @@ public class ConsentDAOTest extends DAOTestHelper {
                 consent.getConsentId(),
                 ASSOCIATION_TYPE_TEST,
                 dataset.getDatasetId());
-        Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDatasetId());
+        Integer deletedAssociationId = consentDAO.findAssociationsByDatasetId(dataset.getDatasetId());
         assertNull(deletedAssociationId);
-        Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDatasetId());
+        Integer remainingAssociationId = consentDAO.findAssociationsByDatasetId(dataset2.getDatasetId());
         assertNotNull(remainingAssociationId);
     }
 
@@ -244,9 +244,9 @@ public class ConsentDAOTest extends DAOTestHelper {
         createAssociation(consent.getConsentId(), dataset2.getDatasetId());
 
         datasetDAO.deleteConsentAssociationsByDatasetId(dataset.getDatasetId());
-        Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDatasetId());
+        Integer deletedAssociationId = consentDAO.findAssociationsByDatasetId(dataset.getDatasetId());
         assertNull(deletedAssociationId);
-        Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDatasetId());
+        Integer remainingAssociationId = consentDAO.findAssociationsByDatasetId(dataset2.getDatasetId());
         assertNotNull(remainingAssociationId);
     }
 

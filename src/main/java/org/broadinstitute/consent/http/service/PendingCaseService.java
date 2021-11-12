@@ -40,7 +40,7 @@ public class PendingCaseService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ConsentDAO consentDAO;
     private final DataAccessRequestService dataAccessRequestService;
-    private final DatasetDAO dataSetDAO;
+    private final DatasetDAO datasetDAO;
     private final ElectionDAO electionDAO;
 
     private final VoteDAO voteDAO;
@@ -50,11 +50,11 @@ public class PendingCaseService {
 
     @Inject
     public PendingCaseService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
-                              DatasetDAO dataSetDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
+                              DatasetDAO datasetDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
                               UserService userService, VoteService voteService) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestService = dataAccessRequestService;
-        this.dataSetDAO = dataSetDAO;
+        this.datasetDAO = datasetDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.dacService = dacService;
@@ -150,7 +150,7 @@ public class PendingCaseService {
                 if (CollectionUtils.isNotEmpty(dataOwnerVotes)) {
                     dataOwnerVotes.forEach(v -> {
                         DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(election.getReferenceId());
-                        Dataset dataSet = dataSetDAO.findDatasetById(election.getDataSetId());
+                        Dataset dataSet = datasetDAO.findDatasetById(election.getDataSetId());
                         dataOwnerCase.setAlias(dataSet.getAlias());
                         dataOwnerCase.setDarCode(dataAccessRequest != null ? dataAccessRequest.getData().getDarCode() : null);
                         dataOwnerCase.setDataSetId(dataSet.getDatasetId());
