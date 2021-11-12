@@ -6,12 +6,12 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class GCSHealthCheckTest {
 
@@ -25,7 +25,7 @@ public class GCSHealthCheckTest {
 
     @Before
     public void setUpClass() {
-        MockitoAnnotations.openMocks(this);
+        openMocks(this);
         healthCheck = new GCSHealthCheck(store);
     }
 

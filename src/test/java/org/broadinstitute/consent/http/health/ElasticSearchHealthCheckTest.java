@@ -4,13 +4,10 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
-import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
-import org.elasticsearch.client.RestClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.MockitoAnnotations;
 import org.mockserver.client.MockServerClient;
 import org.testcontainers.containers.MockServerContainer;
 
@@ -20,13 +17,13 @@ import java.util.Collections;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
 public class ElasticSearchHealthCheckTest implements WithMockServer {
     private ElasticSearchHealthCheck healthCheck;
     private ElasticSearchConfiguration config;
-    private RestClient client;
     private MockServerClient mockServerClient;
 
     @Rule
@@ -34,12 +31,11 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
+        openMocks(this);
 
         config = new ElasticSearchConfiguration();
         config.setServers(Collections.singletonList("localhost"));
         config.setPort(container.getServerPort());
-        client = ElasticSearchSupport.createRestClient(config);
 
         mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
     }
@@ -86,14 +82,9 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         assertFalse(result.isHealthy());
     }
 
-    @Test
+    @Test (expected = InternalServerErrorException.class)
     public void testCheckServerFailure() throws Exception {
         initHealthCheck("green", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-        try {
-            healthCheck.check();
-            fail("Expected InternalServerErrorException was not thrown.");
-        } catch (InternalServerErrorException e) {
-            return;
-        }
+        healthCheck.check();
     }
 }

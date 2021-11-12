@@ -10,7 +10,6 @@ import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -18,6 +17,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class SamHealthCheckTest {
 
@@ -33,7 +33,7 @@ public class SamHealthCheckTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.openMocks(this);
+    openMocks(this);
   }
 
   private void initHealthCheck(boolean configOk) {
