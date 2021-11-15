@@ -10,7 +10,6 @@ import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -18,6 +17,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class OntologyHealthCheckTest {
 
@@ -33,14 +33,16 @@ public class OntologyHealthCheckTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.openMocks(this);
+    openMocks(this);
   }
 
-  private void initHealthCheck() {
+  private void initHealthCheck(boolean configOk) {
     try {
       when(response.getEntity()).thenReturn(new StringEntity("{}"));
       when(clientUtil.getHttpResponse(any())).thenReturn(response);
-      when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
+      if (configOk) {
+        when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
+      }
       healthCheck = new OntologyHealthCheck(clientUtil, servicesConfiguration);
     } catch (Exception e) {
       fail(e.getMessage());
@@ -51,7 +53,7 @@ public class OntologyHealthCheckTest {
   public void testCheckSuccess() {
     when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     when(response.getStatusLine()).thenReturn(statusLine);
-    initHealthCheck();
+    initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();
     assertTrue(result.isHealthy());
@@ -61,7 +63,7 @@ public class OntologyHealthCheckTest {
   public void testCheckFailure() {
     when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     when(response.getStatusLine()).thenReturn(statusLine);
-    initHealthCheck();
+    initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();
     assertFalse(result.isHealthy());
@@ -70,7 +72,16 @@ public class OntologyHealthCheckTest {
   @Test
   public void testCheckException() {
     doThrow(new RuntimeException()).when(response).getStatusLine();
-    initHealthCheck();
+    initHealthCheck(true);
+
+    HealthCheck.Result result = healthCheck.check();
+    assertFalse(result.isHealthy());
+  }
+
+  @Test
+  public void testConfigException() {
+    doThrow(new RuntimeException()).when(servicesConfiguration).getOntologyURL();
+    initHealthCheck(false);
 
     HealthCheck.Result result = healthCheck.check();
     assertFalse(result.isHealthy());
