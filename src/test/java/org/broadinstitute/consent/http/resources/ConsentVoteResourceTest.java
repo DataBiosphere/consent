@@ -13,11 +13,13 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 public class ConsentVoteResourceTest {
@@ -40,14 +42,20 @@ public class ConsentVoteResourceTest {
         resource = new ConsentVoteResource(emailNotifierService, electionService, voteService);
     }
 
-    @Test
-    public void testCreateConsentVote() throws Exception {
-        Consent consent = new Consent();
-        consent.setConsentId(UUID.randomUUID().toString());
+    private Vote createTestVote() {
         Vote vote = new Vote();
         vote.setVoteId(RandomUtils.nextInt(100, 1000));
         vote.setVote(false);
         vote.setRationale("Test");
+        return vote;
+    }
+
+    @Test
+    public void testCreateConsentVoteSuccess() throws Exception {
+//        Consent consent = new Consent();
+//        consent.setConsentId(UUID.randomUUID().toString());
+        // Are these lines necessary? The test works without them.
+        Vote vote = createTestVote();
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
         when(electionService.validateCollectEmailCondition(any())).thenReturn(true);
         doNothing().when(emailNotifierService).sendCollectMessage(any());
@@ -55,6 +63,20 @@ public class ConsentVoteResourceTest {
 
         Response response = resource.firstVoteUpdate(vote, UUID.randomUUID().toString(), vote.getVoteId());
         assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testCreateConsentVoteCollectMessageError() throws Exception {
+        Vote vote = createTestVote();
+        when(voteService.updateVoteById(any(), any())).thenReturn(vote);
+        when(electionService.validateCollectEmailCondition(any())).thenReturn(true);
+        doThrow(new IOException()).when(emailNotifierService).sendCollectMessage(any());
+        initResource();
+
+        Response response = resource.firstVoteUpdate(vote, UUID.randomUUID().toString(), vote.getVoteId());
+        assertEquals(200, response.getStatus());
+
+        // This test is passing, and it looks like it shouldn't. Does something need to be reworked in the resource class?
     }
 
 }
