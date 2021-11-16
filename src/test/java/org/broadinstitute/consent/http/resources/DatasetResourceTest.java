@@ -100,6 +100,17 @@ public class DatasetResourceTest {
         assertEquals(201,response.getStatus());
     }
 
+    // Testing if Coveralls recognizes this test
+    @Test(expected = BadRequestException.class)
+    public void testCreateDatasetNoPropertiesError() {
+        DataSet inUse = new DataSet();
+        when(datasetService.getDatasetByName("test")).thenReturn(inUse);
+
+        initResource();
+        Response responseNoProperties = resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
+        assertEquals(400, responseNoProperties.getStatus());
+    }
+
     @Test(expected = BadRequestException.class)
     public void testCreateDatasetErrors() {
         DataSet inUse = new DataSet();
