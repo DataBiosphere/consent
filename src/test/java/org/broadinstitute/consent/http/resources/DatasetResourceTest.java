@@ -218,11 +218,14 @@ public class DatasetResourceTest {
         assertEquals(404, response.getStatus());
     }
 
+    @Test
     public void testUpdateDatasetInvalidProperty() {
         List<DataSetPropertyDTO> invalidProperties = new ArrayList<>();
         invalidProperties.add(new DataSetPropertyDTO("Invalid Property", "test"));
         when(datasetService.findInvalidProperties(any())).thenReturn(invalidProperties);
 
+        DataSet preexistingDataset = new DataSet();
+        when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         String json = createPropertiesJson(invalidProperties);
 
         initResource();
@@ -230,13 +233,15 @@ public class DatasetResourceTest {
         assertEquals(400, response.getStatus());
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testUpdateDatasetDuplicateProperties() {
         List<DataSetPropertyDTO> duplicateProperties = new ArrayList<>();
         duplicateProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
         duplicateProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
         when(datasetService.findDuplicateProperties(any())).thenReturn(duplicateProperties);
 
+        DataSet preexistingDataset = new DataSet();
+        when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         String json = createPropertiesJson(duplicateProperties);
 
         initResource();
