@@ -1,24 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
 import com.google.gson.Gson;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import liquibase.pro.packaged.D;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -33,6 +16,27 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DatasetResourceTest {
 
@@ -74,14 +78,23 @@ public class DatasetResourceTest {
         resource = new DatasetResource(consentService, datasetService, userService, darService);
     }
 
+    private String createPropertiesJson(List<DataSetPropertyDTO> properties) {
+        DatasetDTO json = new DatasetDTO();
+        json.setProperties(properties);
+        return new Gson().toJson(json);
+    }
+
+    private String createPropertiesJson(String propertyName, String propertyValue) {
+        List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
+        jsonProperties.add(new DataSetPropertyDTO(propertyName, propertyValue));
+        return createPropertiesJson(jsonProperties);
+    }
+
     @Test
     public void testCreateDataset() throws Exception {
         DatasetDTO result = new DatasetDTO();
-        DatasetDTO json = new DatasetDTO();
         Consent consent = new Consent();
-        List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
-        jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
-        json.setProperties(jsonProperties);
+        String json = createPropertiesJson("Dataset Name", "test");
 
         when(datasetService.getDatasetByName("test")).thenReturn(null);
         when(datasetService.createDatasetWithConsent(any(), any(), anyInt())).thenReturn(result);
@@ -95,58 +108,78 @@ public class DatasetResourceTest {
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("/api/dataset/1"));
         initResource();
-        Response response = resource.createDataset(authUser, uriInfo, new Gson().toJson(json));
+        Response response = resource.createDataset(authUser, uriInfo, json);
 
         assertEquals(201,response.getStatus());
     }
 
-    // Testing if Coveralls recognizes this test
     @Test(expected = BadRequestException.class)
-    public void testCreateDatasetNoPropertiesError() {
-        DataSet inUse = new DataSet();
-        when(datasetService.getDatasetByName("test")).thenReturn(inUse);
-
+    public void testCreateDatasetNoJson() {
         initResource();
-        Response responseNoProperties = resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
-        assertEquals(400, responseNoProperties.getStatus());
+        Response response = resource.createDataset(authUser, uriInfo, "");
+        assertEquals(400, response.getStatus());
     }
 
     @Test(expected = BadRequestException.class)
-    public void testCreateDatasetErrors() {
+    public void testCreateDatasetNoProperties() {
+        initResource();
+        Response response = resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testCreateDatasetMissingName() {
+        String json = createPropertiesJson("Dataset Name", null);
+        // TODO: Rewrite createDataset to handle empty name strings and entirely missing name properties
+
+        initResource();
+        Response response = resource.createDataset(authUser, uriInfo, json);
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testCreateDatasetInvalidProperty() {
+        List<DataSetPropertyDTO> invalidProperties = new ArrayList<>();
+        invalidProperties.add(new DataSetPropertyDTO("Invalid Property", "test"));
+        when(datasetService.findInvalidProperties(any())).thenReturn(invalidProperties);
+
+        String json = createPropertiesJson(invalidProperties);
+
+        initResource();
+        Response response = resource.createDataset(authUser, uriInfo, json);
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testCreateDatasetDuplicateProperties() {
+        List<DataSetPropertyDTO> duplicateProperties = new ArrayList<>();
+        duplicateProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
+        duplicateProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
+        when(datasetService.findDuplicateProperties(any())).thenReturn(duplicateProperties);
+
+        String json = createPropertiesJson(duplicateProperties);
+
+        initResource();
+        Response response = resource.createDataset(authUser, uriInfo, json);
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test(expected = ClientErrorException.class)
+    public void testCreateDatasetNameInUse() {
         DataSet inUse = new DataSet();
         when(datasetService.getDatasetByName("test")).thenReturn(inUse);
 
+        String json = createPropertiesJson("Dataset Name", "test");
+
         initResource();
-        Response responseNoJson = resource.createDataset(authUser, uriInfo, "");
-        assertEquals(400, responseNoJson.getStatus());
-
-        Response responseNoProperties = resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
-        assertEquals(400, responseNoProperties.getStatus());
-
-        Response responseMissingDatasetName = resource.createDataset(authUser, uriInfo,
-              "{\"properties\":[{\"propertyName\":\"Species\",\"propertyValue\":\"test\"}]}");
-        assertEquals(400, responseMissingDatasetName.getStatus());
-
-        Response responseInvalidProperty = resource.createDataset(authUser, uriInfo,
-              "{\"properties\":[{\"propertyName\":\"Invalid Property\",\"propertyValue\":\"test\"}]");
-        assertEquals(400, responseInvalidProperty.getStatus());
-
-        Response responseDuplicateProperties = resource.createDataset(authUser, uriInfo,
-              "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"},{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}");
-        assertEquals(400, responseDuplicateProperties.getStatus());
-
-        Response responseNameInUse = resource.createDataset(authUser, uriInfo,
-              "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}");
-        assertEquals(409, responseNameInUse.getStatus());
+        Response response = resource.createDataset(authUser, uriInfo, json);
+        assertEquals(409, response.getStatus());
     }
 
     @Test
     public void testUpdateDataset() {
         DataSet preexistingDataset = new DataSet();
-        DatasetDTO json = new DatasetDTO();
-        List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
-        jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
-        json.setProperties(jsonProperties);
+        String json = createPropertiesJson("Dataset Name", "test");
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.of(preexistingDataset));
         when(authUser.getGoogleUser()).thenReturn(googleUser);
@@ -157,17 +190,64 @@ public class DatasetResourceTest {
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
-        Response response = resource.updateDataset(authUser, uriInfo, 1, new Gson().toJson(json));
+        Response response = resource.updateDataset(authUser, uriInfo, 1, json);
         assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetNoJson() {
+        initResource();
+        Response response = resource.updateDataset(authUser, uriInfo, 1, "");
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetNoProperties() {
+        initResource();
+        Response response = resource.updateDataset(authUser, uriInfo, 1, "{\"properties\":[]}");
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetIdNotFound() {
+        String json = createPropertiesJson("Dataset Name", "test");
+        when(datasetService.findDatasetById(anyInt())).thenReturn(null);
+
+        initResource();
+        Response response = resource.updateDataset(authUser, uriInfo, 1, json);
+        assertEquals(404, response.getStatus());
+    }
+
+    public void testUpdateDatasetInvalidProperty() {
+        List<DataSetPropertyDTO> invalidProperties = new ArrayList<>();
+        invalidProperties.add(new DataSetPropertyDTO("Invalid Property", "test"));
+        when(datasetService.findInvalidProperties(any())).thenReturn(invalidProperties);
+
+        String json = createPropertiesJson(invalidProperties);
+
+        initResource();
+        Response response = resource.updateDataset(authUser, uriInfo, 1, json);
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testUpdateDatasetDuplicateProperties() {
+        List<DataSetPropertyDTO> duplicateProperties = new ArrayList<>();
+        duplicateProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
+        duplicateProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
+        when(datasetService.findDuplicateProperties(any())).thenReturn(duplicateProperties);
+
+        String json = createPropertiesJson(duplicateProperties);
+
+        initResource();
+        Response response = resource.updateDataset(authUser, uriInfo, 1, json);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void testUpdateDatasetNoContent() {
         DataSet preexistingDataset = new DataSet();
-        DatasetDTO json = new DatasetDTO();
-        List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
-        jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
-        json.setProperties(jsonProperties);
+        String json = createPropertiesJson("Dataset Name", "test");
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.empty());
         when(authUser.getGoogleUser()).thenReturn(googleUser);
@@ -178,7 +258,7 @@ public class DatasetResourceTest {
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
-        Response responseNoContent = resource.updateDataset(authUser, uriInfo, 1, new Gson().toJson(json));
+        Response responseNoContent = resource.updateDataset(authUser, uriInfo, 1, json);
         assertEquals(204, responseNoContent.getStatus());
     }
 
@@ -203,6 +283,16 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.describeDataSets(authUser);
         assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeDatasetsError() {
+        when(authUser.getEmail()).thenReturn("authUserEmail");
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
+        doThrow(new RuntimeException()).when(datasetService).describeDatasets(anyInt());
+        initResource();
+        Response response = resource.describeDataSets(authUser);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
