@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
-import liquibase.pro.packaged.D;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -116,25 +115,39 @@ public class DatasetResourceTest {
     @Test(expected = BadRequestException.class)
     public void testCreateDatasetNoJson() {
         initResource();
-        Response response = resource.createDataset(authUser, uriInfo, "");
-        assertEquals(400, response.getStatus());
+        resource.createDataset(authUser, uriInfo, "");
     }
 
     @Test(expected = BadRequestException.class)
     public void testCreateDatasetNoProperties() {
         initResource();
-        Response response = resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
-        assertEquals(400, response.getStatus());
+        resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
     }
 
     @Test(expected = BadRequestException.class)
-    public void testCreateDatasetMissingName() {
+    public void testCreateDatasetNullName() {
         String json = createPropertiesJson("Dataset Name", null);
-        // TODO: Rewrite createDataset to handle empty name strings and entirely missing name properties
 
         initResource();
-        Response response = resource.createDataset(authUser, uriInfo, json);
-        assertEquals(400, response.getStatus());
+        resource.createDataset(authUser, uriInfo, json);
+    }
+
+    @Test(expected = NullPointerException.class)
+    // TODO: Recode createDataset to return a BadRequestException with this test
+    public void testCreateDatasetEmptyName() {
+        String json = createPropertiesJson("Dataset Name", "");
+
+        initResource();
+        resource.createDataset(authUser, uriInfo, json);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    // TODO: Recode createDataset to return a BadRequestException with this test
+    public void testCreateDatasetMissingName() {
+        String json = createPropertiesJson("Property", "test");
+
+        initResource();
+        resource.createDataset(authUser, uriInfo, json);
     }
 
     @Test(expected = BadRequestException.class)
@@ -146,8 +159,7 @@ public class DatasetResourceTest {
         String json = createPropertiesJson(invalidProperties);
 
         initResource();
-        Response response = resource.createDataset(authUser, uriInfo, json);
-        assertEquals(400, response.getStatus());
+        resource.createDataset(authUser, uriInfo, json);
     }
 
     @Test(expected = BadRequestException.class)
@@ -160,8 +172,7 @@ public class DatasetResourceTest {
         String json = createPropertiesJson(duplicateProperties);
 
         initResource();
-        Response response = resource.createDataset(authUser, uriInfo, json);
-        assertEquals(400, response.getStatus());
+        resource.createDataset(authUser, uriInfo, json);
     }
 
     @Test(expected = ClientErrorException.class)
@@ -172,8 +183,7 @@ public class DatasetResourceTest {
         String json = createPropertiesJson("Dataset Name", "test");
 
         initResource();
-        Response response = resource.createDataset(authUser, uriInfo, json);
-        assertEquals(409, response.getStatus());
+        resource.createDataset(authUser, uriInfo, json);
     }
 
     @Test
@@ -313,8 +323,7 @@ public class DatasetResourceTest {
     @Test(expected = NotFoundException.class)
     public void testValidateDatasetNameNotFound() {
         initResource();
-        Response response = resource.validateDatasetName("test");
-        assertEquals(404, response.getStatus());
+        resource.validateDatasetName("test");
     }
 
 }

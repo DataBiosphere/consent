@@ -14,6 +14,10 @@ import org.mockito.Mock;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,20 +36,39 @@ public class ConsentVoteResourceTest {
     private EmailNotifierService emailNotifierService;
 
     private ConsentVoteResource resource;
-    private Vote vote;
-    private Consent consent;
+
+    private Vote createMockVote() {
+        Vote vote = new Vote();
+        vote.setVoteId(RandomUtils.nextInt(100, 1000));
+        vote.setVote(false);
+        vote.setRationale("Test");
+        return vote;
+    }
+
+    private Consent createMockConsent() {
+        Consent consent = new Consent();
+        consent.setConsentId(UUID.randomUUID().toString());
+        return consent;
+    }
+
+    private class LogHandler extends Handler {
+        Level lastLevel = Level.FINEST;
+
+        public Level checkLevel() {
+            return lastLevel;
+        }
+
+        public void publish(LogRecord record) {
+            lastLevel = record.getLevel();
+        }
+
+        public void close(){}
+        public void flush(){}
+    }
 
     @Before
     public void setUp() {
         openMocks(this);
-
-        consent = new Consent();
-        consent.setConsentId(UUID.randomUUID().toString());
-
-        vote = new Vote();
-        vote.setVoteId(RandomUtils.nextInt(100, 1000));
-        vote.setVote(false);
-        vote.setRationale("Test");
     }
 
     private void initResource() {
@@ -54,6 +77,9 @@ public class ConsentVoteResourceTest {
 
     @Test
     public void testCreateConsentVoteSuccess() throws Exception {
+        Vote vote = createMockVote();
+        Consent consent = createMockConsent();
+
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
         when(electionService.validateCollectEmailCondition(any())).thenReturn(true);
         doNothing().when(emailNotifierService).sendCollectMessage(any());
@@ -65,19 +91,31 @@ public class ConsentVoteResourceTest {
 
     @Test
     public void testCreateConsentVoteCollectMessageError() throws Exception {
+        Vote vote = createMockVote();
+        Consent consent = createMockConsent();
+
+        Logger logger = Logger.getLogger(ConsentVoteResource.class.getName());
+        LogHandler handler = new LogHandler();
+        handler.setLevel(Level.ALL);
+        logger.setUseParentHandlers(false);
+        logger.addHandler(handler);
+        logger.setLevel(Level.ALL);
+
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
         when(electionService.validateCollectEmailCondition(any())).thenReturn(true);
         doThrow(new IOException()).when(emailNotifierService).sendCollectMessage(any());
         initResource();
 
         Response response = resource.firstVoteUpdate(vote, consent.getConsentId(), vote.getVoteId());
+        assertEquals(Level.SEVERE, handler.checkLevel());
         assertEquals(200, response.getStatus());
-
-        // This test is passing, and it looks like it shouldn't. Does something need to be reworked in the resource class?
     }
 
     @Test
     public void testCreateConsentVoteOtherError() throws Exception {
+        Vote vote = createMockVote();
+        Consent consent = createMockConsent();
+
         doThrow(new RuntimeException()).when(voteService).updateVoteById(any(), any());
         initResource();
 
@@ -87,6 +125,9 @@ public class ConsentVoteResourceTest {
 
     @Test
     public void testUpdateConsentVoteSuccess() throws Exception {
+        Vote vote = createMockVote();
+        Consent consent = createMockConsent();
+
         when(voteService.updateVote(any(), any(), any())).thenReturn(vote);
         initResource();
 
@@ -96,6 +137,9 @@ public class ConsentVoteResourceTest {
 
     @Test
     public void testUpdateConsentVoteError() throws Exception {
+        Vote vote = createMockVote();
+        Consent consent = createMockConsent();
+
         doThrow(new RuntimeException()).when(voteService).updateVote(any(), any(), any());
         initResource();
 
@@ -105,6 +149,9 @@ public class ConsentVoteResourceTest {
 
     @Test
     public void testDescribe() throws Exception {
+        Vote vote = createMockVote();
+        Consent consent = createMockConsent();
+
         when(voteService.findVoteById(any())).thenReturn(vote);
         initResource();
 
@@ -114,6 +161,9 @@ public class ConsentVoteResourceTest {
 
     @Test
     public void testDeleteVoteSuccess() throws Exception {
+        Vote vote = createMockVote();
+        Consent consent = createMockConsent();
+
         initResource();
 
         Response response = resource.deleteVote(consent.getConsentId(), vote.getVoteId());
@@ -122,6 +172,9 @@ public class ConsentVoteResourceTest {
 
     @Test
     public void testDeleteVoteError() throws Exception {
+        Vote vote = createMockVote();
+        Consent consent = createMockConsent();
+
         doThrow(new RuntimeException()).when(voteService).deleteVote(any(), any());
         initResource();
 
@@ -131,6 +184,8 @@ public class ConsentVoteResourceTest {
 
     @Test
     public void testDeleteVotesSuccess() throws Exception {
+        Consent consent = createMockConsent();
+
         initResource();
 
         Response response = resource.deleteVotes(consent.getConsentId());
@@ -139,6 +194,8 @@ public class ConsentVoteResourceTest {
 
     @Test
     public void testDeleteVotesError() throws Exception {
+        Consent consent = createMockConsent();
+
         doThrow(new RuntimeException()).when(voteService).deleteVotes(any());
         initResource();
 
@@ -148,6 +205,8 @@ public class ConsentVoteResourceTest {
 
     @Test
     public void testOptions() throws Exception {
+        Consent consent = createMockConsent();
+
         initResource();
 
         Response response = resource.options(consent.getConsentId());
