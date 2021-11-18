@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -24,6 +25,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -89,16 +91,24 @@ public class DatasetResourceTest {
         return createPropertiesJson(jsonProperties);
     }
 
+    private DatasetDTO createMockDatasetDTO() {
+        DatasetDTO mockDTO = new DatasetDTO();
+        mockDTO.setDataSetId(RandomUtils.nextInt(100, 1000));
+        mockDTO.setDatasetName("test");
+        mockDTO.addProperty(new DataSetPropertyDTO("Property", "test"));
+
+        return mockDTO;
+    }
+
     @Test
-    public void testCreateDataset() throws Exception {
-        DatasetDTO result = new DatasetDTO();
+    public void testCreateDatasetSuccess() throws Exception {
+        DatasetDTO result = createMockDatasetDTO();
         Consent consent = new Consent();
         String json = createPropertiesJson("Dataset Name", "test");
 
         when(datasetService.getDatasetByName("test")).thenReturn(null);
         when(datasetService.createDatasetWithConsent(any(), any(), anyInt())).thenReturn(result);
         when(datasetService.createConsentForDataset(any())).thenReturn(consent);
-        when(datasetService.getDatasetDTO(any())).thenReturn(result);
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
@@ -109,7 +119,8 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.createDataset(authUser, uriInfo, json);
 
-        assertEquals(201,response.getStatus());
+        assertEquals(201, response.getStatus());
+        assertEquals(result, response.getEntity());
     }
 
     @Test(expected = BadRequestException.class)
@@ -187,7 +198,25 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testUpdateDataset() {
+    public void testCreateDatasetError() throws Exception {
+        Consent consent = new Consent();
+        String json = createPropertiesJson("Dataset Name", "test");
+
+        when(datasetService.getDatasetByName("test")).thenReturn(null);
+        doThrow(new RuntimeException()).when(datasetService).createDatasetWithConsent(any(), any(), anyInt());
+        when(datasetService.createConsentForDataset(any())).thenReturn(consent);
+        when(authUser.getGoogleUser()).thenReturn(googleUser);
+        when(googleUser.getEmail()).thenReturn("email@email.com");
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
+        when(dacUser.getDacUserId()).thenReturn(1);
+        initResource();
+        Response response = resource.createDataset(authUser, uriInfo, json);
+
+        assertEquals(500,response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetSuccess() {
         DataSet preexistingDataset = new DataSet();
         String json = createPropertiesJson("Dataset Name", "test");
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
@@ -202,6 +231,7 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.updateDataset(authUser, uriInfo, 1, json);
         assertEquals(200, response.getStatus());
+        assertEquals(Optional.of(preexistingDataset).get(), response.getEntity());
     }
 
     @Test
@@ -313,7 +343,6 @@ public class DatasetResourceTest {
     @Test
     public void testValidateDatasetNameSuccess() {
         DataSet testDataset = new DataSet();
-        testDataset.setDataSetId(1);
         when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
         initResource();
         Response response = resource.validateDatasetName("test");
@@ -326,4 +355,66 @@ public class DatasetResourceTest {
         resource.validateDatasetName("test");
     }
 
+    @Test
+    public void testDescribeDataSetSuccess() {
+        DatasetDTO testDTO = createMockDatasetDTO();
+        when(datasetService.getDatasetDTO(any())).thenReturn(testDTO);
+        initResource();
+        Response response = resource.describeDataSet(1);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeDataSetError() {
+        doThrow(new RuntimeException()).when(datasetService).getDatasetDTO(any());
+        initResource();
+        Response response = resource.describeDataSet(1);
+        assertEquals(500, response.getStatus());
+    }
+
+    // TODO: Recode getDataSetSample so it is possible to test missing file error case
+    @Test
+    public void testGetDataSetSample() {
+        List header = List.of("attachment; filename=DataSetSample.tsv");
+        initResource();
+        Response response = resource.getDataSetSample();
+        assertEquals(200, response.getStatus());
+        assertEquals(header, response.getHeaders().get("Content-Disposition"));
+    }
+
+    @Test
+    public void testDownloadDatasetsSuccess() {
+        List<DatasetDTO> dtoList = new ArrayList<>();
+        DatasetDTO testDTO = createMockDatasetDTO();
+        dtoList.add(testDTO);
+
+        when(datasetService.describeDataSetsByReceiveOrder(any())).thenReturn(dtoList);
+        initResource();
+
+        Response response = resource.downloadDataSets(List.of(1));
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDownloadDatasetsHeaderError() {
+        doThrow(new RuntimeException()).when(datasetService).describeDictionaryByReceiveOrder();
+        initResource();
+        Response response = resource.downloadDataSets(List.of(1));
+        assertEquals(500, response.getStatus());
+    }
+
+    @Test
+    public void testDownloadDatasetsEmptyList() {
+        initResource();
+        Response response = resource.downloadDataSets(List.of());
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDownloadDatasetsServiceError() {
+        doThrow(new RuntimeException()).when(datasetService).describeDataSetsByReceiveOrder(any());
+        initResource();
+        Response response = resource.downloadDataSets(List.of(1));
+        assertEquals(500, response.getStatus());
+    }
 }
