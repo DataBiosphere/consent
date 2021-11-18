@@ -51,6 +51,7 @@ public class ConsentVoteResourceTest {
         return consent;
     }
 
+    // TODO: Extract this class into an interface
     private class LogHandler extends Handler {
         Level lastLevel = Level.FINEST;
 
@@ -190,6 +191,14 @@ public class ConsentVoteResourceTest {
 
         Response response = resource.deleteVotes(consent.getConsentId());
         assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDeleteVotesNull() throws Exception {
+        initResource();
+
+        Response response = resource.deleteVotes(null);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
