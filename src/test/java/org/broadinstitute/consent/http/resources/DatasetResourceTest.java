@@ -3,10 +3,12 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.ConsentService;
@@ -415,6 +417,112 @@ public class DatasetResourceTest {
         doThrow(new RuntimeException()).when(datasetService).describeDataSetsByReceiveOrder(any());
         initResource();
         Response response = resource.downloadDataSets(List.of(1));
+        assertEquals(500, response.getStatus());
+    }
+
+    @Test
+    public void testDeleteSuccessAdmin() {
+        DataSet dataSet = new DataSet();
+
+        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+
+        initResource();
+        Response response = resource.delete(authUser, 1, null);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDeleteSuccessChairperson() {
+        DataSet dataSet = new DataSet();
+        dataSet.setDataSetId(1);
+        Consent consent = new Consent();
+        consent.setDacId(1);
+        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
+
+        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        role.setDacId(1);
+        when(dacUser.getRoles()).thenReturn(List.of(role));
+
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+
+        initResource();
+        Response response = resource.delete(authUser, 1, null);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDeleteErrorNoDacIds() {
+        DataSet dataSet = new DataSet();
+
+        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        when(dacUser.getRoles()).thenReturn(List.of(role));
+
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+
+        initResource();
+        Response response = resource.delete(authUser, 1, null);
+        assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    public void testDeleteErrorNullConsent() {
+        DataSet dataSet = new DataSet();
+        dataSet.setDataSetId(1);
+        Consent consent = new Consent();
+        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
+
+        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        role.setDacId(1);
+        when(dacUser.getRoles()).thenReturn(List.of(role));
+
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+
+        initResource();
+        Response response = resource.delete(authUser, 1, null);
+        assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    public void testDeleteErrorMismatch() {
+        DataSet dataSet = new DataSet();
+        dataSet.setDataSetId(1);
+        Consent consent = new Consent();
+        consent.setDacId(2);
+        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
+
+        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        role.setDacId(1);
+        when(dacUser.getRoles()).thenReturn(List.of(role));
+
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+
+        initResource();
+        Response response = resource.delete(authUser, 1, null);
+        assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    public void testDeleteErrorPermission() {
+        DataSet dataSet = new DataSet();
+
+        UserRole role = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        when(dacUser.getRoles()).thenReturn(List.of(role));
+
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+
+        initResource();
+        Response response = resource.delete(authUser, 1, null);
         assertEquals(500, response.getStatus());
     }
 }
