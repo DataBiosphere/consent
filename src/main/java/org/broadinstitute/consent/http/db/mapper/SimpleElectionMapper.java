@@ -11,7 +11,7 @@ public class SimpleElectionMapper implements RowMapper<Election>, RowMapperHelpe
 
   @Override
   public Election map(ResultSet r, StatementContext ctx) throws SQLException {
-    return new Election(
+    Election e = new Election(
         r.getInt(ElectionFields.ID.getValue()),
         r.getString(ElectionFields.TYPE.getValue()),
         r.getString(ElectionFields.STATUS.getValue()),
@@ -25,5 +25,11 @@ public class SimpleElectionMapper implements RowMapper<Election>, RowMapperHelpe
         r.getBoolean(ElectionFields.ARCHIVED.getValue()),
         r.getString(ElectionFields.DUL_NAME.getValue()),
         r.getString(ElectionFields.DATA_USE_LETTER.getValue()));
+    if (hasColumn(r, ElectionFields.FINAL_VOTE.getValue())) {
+      if (r.getString(ElectionFields.FINAL_VOTE.getValue()) != null) {
+        e.setFinalVote(r.getBoolean(ElectionFields.FINAL_VOTE.getValue()));
+      }
+    }
+    return e;
   }
 }
