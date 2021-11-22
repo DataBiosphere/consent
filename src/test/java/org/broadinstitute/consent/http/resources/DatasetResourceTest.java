@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
@@ -27,7 +28,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +70,9 @@ public class DatasetResourceTest {
 
     @Mock
     private UriBuilder uriBuilder;
+
+    @Mock
+    private Collection<Dictionary> dictionaries;
 
     private DatasetResource resource;
 
@@ -310,19 +314,6 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testDatasetAutocomplete() {
-        List<Map<String, String>> autocompleteMap = Collections.singletonList(Collections.EMPTY_MAP);
-        when(authUser.getEmail()).thenReturn("testauthuser@test.com");
-        when(userService.findUserByEmail(anyString())).thenReturn(dacUser);
-        when(dacUser.getDacUserId()).thenReturn(0);
-        when(datasetService.autoCompleteDatasets(anyString(), anyInt())).thenReturn(autocompleteMap);
-
-        initResource();
-        Response response = resource.datasetAutocomplete(authUser, "test");
-        assertEquals(200, response.getStatus());
-    }
-
-    @Test
     public void testDescribeDatasetsSuccess() {
         when(authUser.getEmail()).thenReturn("authUserEmail");
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
@@ -512,17 +503,170 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testDeleteErrorPermission() {
+    public void testDisableDataSetSuccessAdmin() {
         DataSet dataSet = new DataSet();
 
-        UserRole role = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+
+        initResource();
+        Response response = resource.disableDataSet(authUser, 1, true, null);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDisableDataSetSuccessChairperson() {
+        DataSet dataSet = new DataSet();
+        dataSet.setDataSetId(1);
+        Consent consent = new Consent();
+        consent.setDacId(1);
+        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
+
+        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        role.setDacId(1);
         when(dacUser.getRoles()).thenReturn(List.of(role));
 
         when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
         when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
         initResource();
-        Response response = resource.delete(authUser, 1, null);
+        Response response = resource.disableDataSet(authUser, 1, true, null);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDisableDataSetErrorNoDacIds() {
+        DataSet dataSet = new DataSet();
+
+        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        when(dacUser.getRoles()).thenReturn(List.of(role));
+
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+
+        initResource();
+        Response response = resource.disableDataSet(authUser, 1, true, null);
+        assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    public void testDisableDataSetErrorNullConsent() {
+        DataSet dataSet = new DataSet();
+        dataSet.setDataSetId(1);
+        Consent consent = new Consent();
+        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
+
+        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        role.setDacId(1);
+        when(dacUser.getRoles()).thenReturn(List.of(role));
+
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+
+        initResource();
+        Response response = resource.disableDataSet(authUser, 1, true, null);
+        assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    public void testDisableDataSetErrorMismatch() {
+        DataSet dataSet = new DataSet();
+        dataSet.setDataSetId(1);
+        Consent consent = new Consent();
+        consent.setDacId(2);
+        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
+
+        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        role.setDacId(1);
+        when(dacUser.getRoles()).thenReturn(List.of(role));
+
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+
+        initResource();
+        Response response = resource.disableDataSet(authUser, 1, true, null);
+        assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeDictionarySuccess() {
+        when(datasetService.describeDictionaryByDisplayOrder()).thenReturn(dictionaries);
+        initResource();
+        Response response = resource.describeDictionary();
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeDictionaryError() {
+        doThrow(new RuntimeException()).when(datasetService).describeDictionaryByDisplayOrder();
+        initResource();
+        Response response = resource.describeDictionary();
+        assertEquals(500, response.getStatus());
+    }
+
+    @Test
+    public void testDatasetAutocompleteSuccess() {
+        List<Map<String, String>> autocompleteMap = List.of(Collections.EMPTY_MAP);
+        when(authUser.getEmail()).thenReturn("testauthuser@test.com");
+        when(userService.findUserByEmail(anyString())).thenReturn(dacUser);
+        when(dacUser.getDacUserId()).thenReturn(0);
+        when(datasetService.autoCompleteDatasets(anyString(), anyInt())).thenReturn(autocompleteMap);
+
+        initResource();
+        Response response = resource.datasetAutocomplete(authUser, "test");
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDatasetAutocompleteError() {
+        when(authUser.getEmail()).thenReturn("testauthuser@test.com");
+        when(userService.findUserByEmail(anyString())).thenReturn(dacUser);
+        when(dacUser.getDacUserId()).thenReturn(0);
+        doThrow(new RuntimeException()).when(datasetService).autoCompleteDatasets(anyString(), anyInt());
+
+        initResource();
+        Response response = resource.datasetAutocomplete(authUser, "test");
+        assertEquals(500, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateNeedsReviewDataSetsSuccess() {
+        DataSet dataSet = new DataSet();
+        when(datasetService.updateNeedsReviewDataSets(any(), any())).thenReturn(dataSet);
+
+        initResource();
+        Response response = resource.updateNeedsReviewDataSets(1, true);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateNeedsReviewDataSetsError() {
+        doThrow(new RuntimeException()).when(datasetService).updateNeedsReviewDataSets(any(), any());
+
+        initResource();
+        Response response = resource.updateNeedsReviewDataSets(1, true);
+        assertEquals(500, response.getStatus());
+    }
+
+    @Test
+    public void testDownloadDatasetApprovedUsersSuccess() {
+        List header = List.of("attachment; filename =DatasetApprovedUsers.tsv");
+        initResource();
+        Response response = resource.downloadDatasetApprovedUsers(1);
+        assertEquals(200, response.getStatus());
+        assertEquals(header, response.getHeaders().get("Content-Disposition"));
+    }
+
+    @Test
+    public void testDownloadDatasetApprovedUsersError() throws Exception {
+        doThrow(new RuntimeException()).when(darService).createDataSetApprovedUsersDocument(any());
+        initResource();
+        Response response = resource.downloadDatasetApprovedUsers(1);
         assertEquals(500, response.getStatus());
     }
 }
