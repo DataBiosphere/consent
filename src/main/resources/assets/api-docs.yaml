@@ -3510,6 +3510,8 @@ paths:
           * GCS
           * Ontology
           * Postgres DB
+          * Sam
+          * Sendgrid
       tags:
         - Status
       responses:
