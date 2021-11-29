@@ -225,10 +225,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "left join vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' ")
      List<Election> findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(@BindList("referenceIds") List<String> referenceIds, @Bind("status") String status);
 
-     @RegisterRowMapper(AccessRPMapper.class)
-     @SqlQuery("select * from access_rp where electionAccessId in (<electionAccessIds>) ")
-     List<AccessRP> findAccessRPbyElectionAccessId(@BindList("electionAccessIds") List<Integer> electionAccessIds); 
-
     @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where lower(e.electionType) = lower(:type) group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
             "AND e.referenceId = :referenceId ")

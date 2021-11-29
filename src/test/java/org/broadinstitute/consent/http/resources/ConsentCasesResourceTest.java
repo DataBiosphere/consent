@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -18,7 +20,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 public class ConsentCasesResourceTest {
 
@@ -35,7 +36,7 @@ public class ConsentCasesResourceTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     @Test
@@ -78,16 +79,6 @@ public class ConsentCasesResourceTest {
         Assert.assertNotNull(summaryFile);
     }
 
-    @Test
-    public void testGetConsentSummaryDetailFileDataAccess() throws Exception {
-        File file = File.createTempFile("temp", ".txt");
-        when(summaryService.describeDataAccessRequestSummaryDetail()).thenReturn(file);
-        initResource();
-        Response response = resource.getConsentSummaryDetailFile(ElectionType.DATA_ACCESS.getValue(), null);
-        Assert.assertEquals(200, response.getStatus());
-        Object summaryFile = response.getEntity();
-        Assert.assertNotNull(summaryFile);
-    }
     @Test
     public void testDescribeClosedElections() {
         when(electionService.describeClosedElectionsByType(anyString(), notNull())).thenReturn(Collections.emptyList());
