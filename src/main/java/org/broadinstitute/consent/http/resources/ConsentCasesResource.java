@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.io.File;
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
@@ -59,15 +58,13 @@ public class ConsentCasesResource extends Resource {
     @PermitAll
     public Response getConsentSummaryDetailFile(@QueryParam("fileType") String fileType, @Auth AuthUser authUser) {
         try {
-            File fileToSend = null;
-            List<DataAccessRequestSummaryDetail> details = null;
-            StringBuilder summaryDetails = new StringBuilder();
             if (fileType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-                fileToSend = summaryService.describeConsentSummaryDetail();
+                File fileToSend = summaryService.describeConsentSummaryDetail();
                 return Response.ok(fileToSend).build();
             } else if (fileType.equals(ElectionType.DATA_ACCESS.getValue())) {
-                details = summaryService.listDataAccessRequestSummaryDetails();
+                List<DataAccessRequestSummaryDetail> details = summaryService.listDataAccessRequestSummaryDetails();
                 if (!details.isEmpty()) {
+                    StringBuilder summaryDetails = new StringBuilder();
                     summaryDetails.append(details.get(0).headers()).append(System.lineSeparator());
                     details.forEach(d -> summaryDetails.append(d.toString()).append(System.lineSeparator()));
                     return Response.ok(summaryDetails.toString()).build();
