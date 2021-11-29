@@ -1,0 +1,19 @@
+get:
+  summary: Get Consent Summary Details
+  description: Returns the details of the reviewed cases whose type will be specified by fileType param.
+  tags:
+    - Summary File
+  parameters:
+    - name: fileType
+      in: query
+      description: DataAccess / TranslateDUL , defines the type of the reviewed cases info required.
+      schema:
+        type: String
+        enum: [DataAccess, TranslateDUL]
+  responses:
+    200:
+      description: Export data to a txt file.
+      content:
+        text/plain:
+          schema:
+            type: string
