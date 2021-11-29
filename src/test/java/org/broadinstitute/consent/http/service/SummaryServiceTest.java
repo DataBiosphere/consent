@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.models.Vote;
@@ -55,6 +56,17 @@ public class SummaryServiceTest {
     public void setUp() throws Exception {
         openMocks(this);
         summaryService = Mockito.spy(new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO, dataSetDAO, matchDAO));
+    }
+    
+    private void initService() {
+        summaryService = new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO, dataSetDAO, matchDAO);
+    }
+    
+    @Test
+    public void testListDataAccessRequestSummaryDetails() {
+        initService();
+        List<DataAccessRequestSummaryDetail> details = summaryService.listDataAccessRequestSummaryDetails();
+        assertTrue(details.isEmpty());
     }
 
     // In this tests we won't validate the resulting file, we will just validate the methods being called for each response given by the mocks is accurate.
