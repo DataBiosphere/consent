@@ -29,7 +29,7 @@ public class DataAccessRequestSummaryDetail {
       List<Vote> rpVotes,
       List<Vote> consentVotes,
       Match matchObject,
-      List<User> electionUsers,
+      List<User> dacMembers,
       User darUser,
       Integer maxNumberOfDACMembers) {
 
@@ -39,7 +39,7 @@ public class DataAccessRequestSummaryDetail {
     setRpVotes(rpVotes);
     setConsentVotes(consentVotes);
     setMatchObject(matchObject);
-    setDacMembers(electionUsers);
+    setDacMembers(dacMembers);
     setDarUser(darUser);
     setMaxNumberOfDACMembers(maxNumberOfDACMembers);
   }

@@ -245,10 +245,10 @@ public class SummaryService {
       List<Vote> rpVotes = rpElectionIds.isEmpty() ? Collections.emptyList() : voteDAO.findVotesByElectionIds(rpElectionIds);
       List<Vote> consentVotes = consentElectionIds.isEmpty() ? Collections.emptyList() : voteDAO.findVotesByElectionIds(consentElectionIds);
       List<Match> matchList = referenceIds.isEmpty() ? Collections.emptyList() : matchDAO.findMatchesForPurposeIds(referenceIds);
-      Collection<Integer> voteUserIds = accessVotes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
-      List<User> voteUsers = voteUserIds.isEmpty() ? Collections.emptyList() : userDAO.findUsers(voteUserIds).stream().collect(Collectors.toUnmodifiableList());
+      List<Integer> voteUserIds = accessVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toList());
+      List<User> voteUsers = voteUserIds.isEmpty() ? Collections.emptyList() : new ArrayList<>(userDAO.findUsers(voteUserIds));
       List<Integer> darUserIds = dataAccessRequests.stream().map(DataAccessRequest::getUserId).collect(Collectors.toList());
-      List<User> darUsers = darUserIds.isEmpty() ? Collections.emptyList() : userDAO.findUsers(darUserIds).stream().collect(Collectors.toUnmodifiableList());
+      List<User> darUsers = darUserIds.isEmpty() ? Collections.emptyList() : new ArrayList<>(userDAO.findUsers(darUserIds));
 
       // This represents the maximum possible number of DAC members across all elections. We need to
       // pre-calculate this so each row can know the correct max # of DAC members for header
