@@ -66,12 +66,14 @@ public class ConsentCasesResource extends Resource {
                 fileToSend = summaryService.describeConsentSummaryDetail();
             } else if (fileType.equals(ElectionType.DATA_ACCESS.getValue())) {
                 details = summaryService.listDataAccessRequestSummaryDetails();
-                summaryDetails.append(details.get(0).headers()).append(System.lineSeparator());
-                details.forEach(d -> summaryDetails.append(d.toString()).append(System.lineSeparator()));
+                if (!details.isEmpty()) {
+                    summaryDetails.append(details.get(0).headers()).append(System.lineSeparator());
+                    details.forEach(d -> summaryDetails.append(d.toString()).append(System.lineSeparator()));
+                }
             }
             if ((fileToSend != null)) {
                 return Response.ok(fileToSend).build();
-            } else if (Objects.nonNull(details)) {
+            } else if (Objects.nonNull(details) && (!details.isEmpty())) {
                 return Response.ok(summaryDetails.toString()).build();
             } else {
                 return Response.ok().build();
