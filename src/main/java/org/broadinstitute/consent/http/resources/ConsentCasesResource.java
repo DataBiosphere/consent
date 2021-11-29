@@ -64,20 +64,16 @@ public class ConsentCasesResource extends Resource {
             StringBuilder summaryDetails = new StringBuilder();
             if (fileType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
                 fileToSend = summaryService.describeConsentSummaryDetail();
+                return Response.ok(fileToSend).build();
             } else if (fileType.equals(ElectionType.DATA_ACCESS.getValue())) {
                 details = summaryService.listDataAccessRequestSummaryDetails();
                 if (!details.isEmpty()) {
                     summaryDetails.append(details.get(0).headers()).append(System.lineSeparator());
                     details.forEach(d -> summaryDetails.append(d.toString()).append(System.lineSeparator()));
+                    return Response.ok(summaryDetails.toString()).build();
                 }
             }
-            if ((fileToSend != null)) {
-                return Response.ok(fileToSend).build();
-            } else if (Objects.nonNull(details) && (!details.isEmpty())) {
-                return Response.ok(summaryDetails.toString()).build();
-            } else {
-                return Response.ok().build();
-            }
+            return Response.ok().build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
