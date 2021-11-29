@@ -74,7 +74,8 @@ public class DataAccessRequestSummaryDetail {
         .append(TAB)
         .append(HeaderSummary.DATA_ACCESS_SUBM_DATE.getValue())
         .append(TAB);
-    IntStream.rangeClosed(1, getMaxNumberOfDACMembers()).forEach(i -> builder.append(HeaderSummary.DAC_MEMBERS.getValue()).append(TAB));
+    IntStream.rangeClosed(1, getMaxNumberOfDACMembers())
+        .forEach(i -> builder.append(HeaderSummary.DAC_MEMBERS.getValue()).append(TAB));
     builder
         .append(HeaderSummary.REQUIRE_MANUAL_REVIEW.getValue())
         .append(TAB)
@@ -131,9 +132,7 @@ public class DataAccessRequestSummaryDetail {
 
     StringBuilder builder = new StringBuilder();
     builder.append(getDar().getData().getDarCode()).append(TAB);
-    builder
-        .append(formatLongToDate(getAccessElection().getCreateDate().getTime()))
-        .append(TAB);
+    builder.append(formatLongToDate(getAccessElection().getCreateDate().getTime())).append(TAB);
     if (chairpersonUser.isPresent()) {
       builder.append(chairpersonUser.get().getDisplayName()).append(TAB);
     } else {
@@ -158,8 +157,7 @@ public class DataAccessRequestSummaryDetail {
     }
     // Append extra tabs for the case where there are more DAC members in other rows
     // than there are DAC members for this row.
-    builder.append(
-        TAB.repeat(Math.max(0, (getMaxNumberOfDACMembers() - getDacMembers().size()))));
+    builder.append(TAB.repeat(Math.max(0, (getMaxNumberOfDACMembers() - getDacMembers().size()))));
     builder
         .append(booleanToString(Objects.isNull(getDar().getData().getRestriction())))
         .append(TAB);
@@ -181,75 +179,75 @@ public class DataAccessRequestSummaryDetail {
     }
   }
 
-  public DataAccessRequest getDar() {
+  private DataAccessRequest getDar() {
     return dar;
   }
 
-  public void setDar(DataAccessRequest dar) {
+  private void setDar(DataAccessRequest dar) {
     this.dar = dar;
   }
 
-  public Election getAccessElection() {
+  private Election getAccessElection() {
     return accessElection;
   }
 
-  public void setAccessElection(Election accessElection) {
+  private void setAccessElection(Election accessElection) {
     this.accessElection = accessElection;
   }
 
-  public List<Vote> getAccessVotes() {
+  private List<Vote> getAccessVotes() {
     return accessVotes;
   }
 
-  public void setAccessVotes(List<Vote> accessVotes) {
+  private void setAccessVotes(List<Vote> accessVotes) {
     this.accessVotes = accessVotes;
   }
 
-  public List<Vote> getRpVotes() {
+  private List<Vote> getRpVotes() {
     return rpVotes;
   }
 
-  public void setRpVotes(List<Vote> rpVotes) {
+  private void setRpVotes(List<Vote> rpVotes) {
     this.rpVotes = rpVotes;
   }
 
-  public List<Vote> getConsentVotes() {
+  private List<Vote> getConsentVotes() {
     return consentVotes;
   }
 
-  public void setConsentVotes(List<Vote> consentVotes) {
+  private void setConsentVotes(List<Vote> consentVotes) {
     this.consentVotes = consentVotes;
   }
 
-  public List<User> getDacMembers() {
+  private List<User> getDacMembers() {
     return dacMembers;
   }
 
-  public void setDacMembers(List<User> dacMembers) {
+  private void setDacMembers(List<User> dacMembers) {
     this.dacMembers = dacMembers;
   }
 
-  public User getDarUser() {
+  private User getDarUser() {
     return darUser;
   }
 
-  public void setDarUser(User darUser) {
+  private void setDarUser(User darUser) {
     this.darUser = darUser;
   }
 
-  public Match getMatchObject() {
+  private Match getMatchObject() {
     return matchObject;
   }
 
-  public void setMatchObject(Match matchObject) {
+  private void setMatchObject(Match matchObject) {
     this.matchObject = matchObject;
   }
 
-  public Integer getMaxNumberOfDACMembers() {
+  private Integer getMaxNumberOfDACMembers() {
     return maxNumberOfDACMembers;
   }
 
-  public void setMaxNumberOfDACMembers(Integer maxNumberOfDACMembers) {
+  private void setMaxNumberOfDACMembers(Integer maxNumberOfDACMembers) {
     this.maxNumberOfDACMembers = maxNumberOfDACMembers;
   }
 

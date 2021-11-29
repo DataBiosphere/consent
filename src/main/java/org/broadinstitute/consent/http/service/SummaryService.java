@@ -213,6 +213,10 @@ public class SummaryService {
 
   /**
    * Generate a list of Summary Details for all reviewed Data Access Requests
+   * Requires a significant amount of database interaction as we need to find all
+   * completed elections for DARs, datasets, votes, matches, and users for those elections.
+   * Batch what we can as efficiently as possible and calculate the rest.
+   *
    * @return List<DataAccessRequestSummaryDetail>
    */
   public List<DataAccessRequestSummaryDetail> listDataAccessRequestSummaryDetails() {
@@ -221,7 +225,7 @@ public class SummaryService {
     List<Election> rpElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue());
     if (!CollectionUtils.isEmpty(accessElections)) {
       List<String> referenceIds = accessElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-      List<DataAccessRequest> dataAccessRequests = dataAccessRequestService.getDataAccessRequestsByReferenceIds(referenceIds);
+      List<DataAccessRequest> dataAccessRequests = referenceIds.isEmpty() ? Collections.emptyList() : dataAccessRequestService.getDataAccessRequestsByReferenceIds(referenceIds);
       List<Integer> datasetIds =
           dataAccessRequests.stream()
             .filter(Objects::nonNull)
@@ -231,23 +235,24 @@ public class SummaryService {
             .flatMap(List::stream)
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
-      List<Association> associations = datasetDAO.getAssociationsForDataSetIdList(new ArrayList<>(datasetIds));
+      List<Association> associations = datasetIds.isEmpty() ? Collections.emptyList() : datasetDAO.getAssociationsForDataSetIdList(datasetIds);
       List<String> associatedConsentIds = associations.stream().map(Association::getConsentId).collect(Collectors.toList());
-      List<Election> reviewedConsentElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
+      List<Election> consentElections = associatedConsentIds.isEmpty() ? Collections.emptyList() : electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
       List<Integer> accessElectionIds = accessElections.stream().map(Election::getElectionId).collect(Collectors.toList());
       List<Integer> rpElectionIds = rpElections.stream().map(Election::getElectionId).collect(Collectors.toList());
-      List<Integer> consentElectionIds = reviewedConsentElections.stream().map(Election::getElectionId).collect(Collectors.toList());
-      List<Vote> accessVotes = voteDAO.findVotesByElectionIds(accessElectionIds);
-      List<Vote> rpVotes = voteDAO.findVotesByElectionIds(rpElectionIds);
-      List<Vote> consentVotes = voteDAO.findVotesByElectionIds(consentElectionIds);
-      List<Match> matchList = matchDAO.findMatchesForPurposeIds(referenceIds);
+      List<Integer> consentElectionIds = consentElections.stream().map(Election::getElectionId).collect(Collectors.toList());
+      List<Vote> accessVotes = accessElectionIds.isEmpty() ? Collections.emptyList() : voteDAO.findVotesByElectionIds(accessElectionIds);
+      List<Vote> rpVotes = rpElectionIds.isEmpty() ? Collections.emptyList() : voteDAO.findVotesByElectionIds(rpElectionIds);
+      List<Vote> consentVotes = consentElectionIds.isEmpty() ? Collections.emptyList() : voteDAO.findVotesByElectionIds(consentElectionIds);
+      List<Match> matchList = referenceIds.isEmpty() ? Collections.emptyList() : matchDAO.findMatchesForPurposeIds(referenceIds);
       Collection<Integer> voteUserIds = accessVotes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
-      List<User> voteUsers = userDAO.findUsers(voteUserIds).stream().collect(Collectors.toUnmodifiableList());
+      List<User> voteUsers = voteUserIds.isEmpty() ? Collections.emptyList() : userDAO.findUsers(voteUserIds).stream().collect(Collectors.toUnmodifiableList());
       List<Integer> darUserIds = dataAccessRequests.stream().map(DataAccessRequest::getUserId).collect(Collectors.toList());
       List<User> darUsers = darUserIds.isEmpty() ? Collections.emptyList() : userDAO.findUsers(darUserIds).stream().collect(Collectors.toUnmodifiableList());
 
-      // This represents the maximum possible number of DAC members. We need to pre-calculate this
-      // across all elections so each row can know the correct max # of DAC members.
+      // This represents the maximum possible number of DAC members across all elections. We need to
+      // pre-calculate this so each row can know the correct max # of DAC members for header
+      // construction.
       int maxNumberOfDACMembers = 0;
       for (Election accessElection : accessElections) {
         List<Vote> accessElectionVotes = Objects.nonNull(accessElection) ? accessVotes
