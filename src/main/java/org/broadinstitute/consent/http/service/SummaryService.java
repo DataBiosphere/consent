@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,11 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -55,7 +52,6 @@ public class SummaryService {
     private final MatchDAO matchDAO;
     private final DataAccessRequestService dataAccessRequestService;
     private static final String SEPARATOR = "\t";
-    private static final String TEXT_DELIMITER = "\"";
     private static final String END_OF_LINE = System.lineSeparator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
