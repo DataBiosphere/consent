@@ -153,6 +153,11 @@ public class SummaryService {
         return summary;
     }
 
+    /**
+     * Generate a list of Summary Details for all reviewed Consent elections.
+     *
+     * @return List<ConsentSummaryDetail>
+     */
     public List<ConsentSummaryDetail> describeConsentSummaryDetail() {
       List<ConsentSummaryDetail> details = new ArrayList<>();
       try {
