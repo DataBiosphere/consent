@@ -223,7 +223,7 @@ public class SummaryService {
     List<DataAccessRequestSummaryDetail> details = new ArrayList<>();
     List<Election> accessElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue());
     List<Election> rpElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue());
-    if (!CollectionUtils.isEmpty(accessElections)) {
+    if (!accessElections.isEmpty()) {
       List<String> referenceIds = accessElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
       List<DataAccessRequest> dataAccessRequests = referenceIds.isEmpty() ? Collections.emptyList() : dataAccessRequestService.getDataAccessRequestsByReferenceIds(referenceIds);
       List<Integer> datasetIds =
