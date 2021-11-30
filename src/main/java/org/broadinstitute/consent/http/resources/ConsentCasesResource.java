@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.security.PermitAll;
@@ -20,6 +21,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.models.SummaryDetail;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
@@ -63,22 +65,17 @@ public class ConsentCasesResource extends Resource {
             if (Objects.isNull(type)) {
                 type = ElectionType.DATA_ACCESS.getValue();
             }
+            List<? extends SummaryDetail> details = new ArrayList<>();
             if (type.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-                List<ConsentSummaryDetail> details = summaryService.describeConsentSummaryDetail();
-                if (!details.isEmpty()) {
-                    StringBuilder summaryDetails = new StringBuilder();
-                    summaryDetails.append(details.get(0).headers()).append(System.lineSeparator());
-                    details.forEach(d -> summaryDetails.append(d.toString()).append(System.lineSeparator()));
-                    return Response.ok(summaryDetails.toString()).build();
-                }
+                details = summaryService.describeConsentSummaryDetail();
             } else if (type.equals(ElectionType.DATA_ACCESS.getValue())) {
-                List<DataAccessRequestSummaryDetail> details = summaryService.listDataAccessRequestSummaryDetails();
-                if (!details.isEmpty()) {
-                    StringBuilder summaryDetails = new StringBuilder();
-                    summaryDetails.append(details.get(0).headers()).append(System.lineSeparator());
-                    details.forEach(d -> summaryDetails.append(d.toString()).append(System.lineSeparator()));
-                    return Response.ok(summaryDetails.toString()).build();
-                }
+                details = summaryService.listDataAccessRequestSummaryDetails();
+            }
+            if (!details.isEmpty()) {
+                StringBuilder detailsBuilder = new StringBuilder();
+                detailsBuilder.append(details.get(0).headers()).append(System.lineSeparator());
+                details.forEach(d -> detailsBuilder.append(d.toString()).append(System.lineSeparator()));
+                return Response.ok(detailsBuilder.toString()).build();
             }
             return Response.ok().build();
         } catch (Exception e) {

@@ -7,6 +7,11 @@ import java.util.Calendar;
  */
 public interface SummaryDetail {
 
+  String headers();
+  
+  @Override
+  String toString();
+
   default String delimiterCheck(String delimitedString) {
     String textDelimiter = "\"";
     if (!delimitedString.isBlank()) {
