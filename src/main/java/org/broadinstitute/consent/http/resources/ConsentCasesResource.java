@@ -15,6 +15,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
 import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
@@ -57,15 +58,20 @@ public class ConsentCasesResource extends Resource {
     @Path("/summary/file")
     @Produces("text/plain")
     @PermitAll
-    public Response getConsentSummaryDetailFile(@QueryParam("fileType") String fileType, @Auth AuthUser authUser) {
+    public Response getConsentSummaryDetailFile(@QueryParam("type") String type, @Auth AuthUser authUser) {
         try {
-            if (Objects.isNull(fileType)) {
-                fileType = ElectionType.DATA_ACCESS.getValue();
+            if (Objects.isNull(type)) {
+                type = ElectionType.DATA_ACCESS.getValue();
             }
-            if (fileType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-                File fileToSend = summaryService.describeConsentSummaryDetail();
-                return Response.ok(fileToSend).build();
-            } else if (fileType.equals(ElectionType.DATA_ACCESS.getValue())) {
+            if (type.equals(ElectionType.TRANSLATE_DUL.getValue())) {
+                List<ConsentSummaryDetail> details = summaryService.describeConsentSummaryDetail();
+                if (!details.isEmpty()) {
+                    StringBuilder summaryDetails = new StringBuilder();
+                    summaryDetails.append(details.get(0).headers()).append(System.lineSeparator());
+                    details.forEach(d -> summaryDetails.append(d.toString()).append(System.lineSeparator()));
+                    return Response.ok(summaryDetails.toString()).build();
+                }
+            } else if (type.equals(ElectionType.DATA_ACCESS.getValue())) {
                 List<DataAccessRequestSummaryDetail> details = summaryService.listDataAccessRequestSummaryDetails();
                 if (!details.isEmpty()) {
                     StringBuilder summaryDetails = new StringBuilder();

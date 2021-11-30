@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Calendar;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -10,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.HeaderSummary;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 
-public class DataAccessRequestSummaryDetail {
+public class DataAccessRequestSummaryDetail implements SummaryDetail {
 
   private DataAccessRequest dar;
   private Election accessElection;
@@ -249,25 +248,5 @@ public class DataAccessRequestSummaryDetail {
 
   private void setMaxNumberOfDACMembers(Integer maxNumberOfDACMembers) {
     this.maxNumberOfDACMembers = maxNumberOfDACMembers;
-  }
-
-  private String formatLongToDate(long time) {
-    Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis(time);
-    int day = cal.get(Calendar.DAY_OF_MONTH);
-    int month = cal.get(Calendar.MONTH) + 1;
-    int year = cal.get(Calendar.YEAR);
-    return String.format("%d/%d/%d", month, day, year);
-  }
-
-  private String booleanToString(Boolean b) {
-    if (Objects.nonNull(b)) {
-      return b ? "YES" : "NO";
-    }
-    return "-";
-  }
-
-  private String nullToString(String b) {
-    return (Objects.nonNull(b) && !b.isBlank()) ? b : "-";
   }
 }

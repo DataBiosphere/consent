@@ -9,11 +9,13 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
 import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.service.ElectionService;
@@ -72,14 +74,14 @@ public class ConsentCasesResourceTest {
     }
 
     @Test
-    public void testGetConsentSummaryDetailFileDUL() throws Exception {
-        File file = File.createTempFile("temp", ".txt");
-        when(summaryService.describeConsentSummaryDetail()).thenReturn(file);
+    public void testGetConsentSummaryDetailFileDUL() {
+        List<ConsentSummaryDetail> details = Collections.emptyList();
+        when(summaryService.describeConsentSummaryDetail()).thenReturn(details);
         initResource();
         Response response = resource.getConsentSummaryDetailFile(ElectionType.TRANSLATE_DUL.getValue(), null);
         Assert.assertEquals(200, response.getStatus());
-        Object summaryFile = response.getEntity();
-        assertNotNull(summaryFile);
+        Object summaryDetails = response.getEntity();
+        assertNull(summaryDetails);
     }
 
     @Test

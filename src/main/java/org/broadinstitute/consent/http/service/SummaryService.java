@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.enumeration.HeaderSummary;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
@@ -152,11 +153,13 @@ public class SummaryService {
         return summary;
     }
 
-    public File describeConsentSummaryDetail() {
-        File file = null;
+    public List<ConsentSummaryDetail> describeConsentSummaryDetail() {
+        List<ConsentSummaryDetail> details = new ArrayList<>();
+//        File file = null;
         try {
-            file = File.createTempFile("summary", ".txt");
-            try (FileWriter summaryWriter = new FileWriter(file)) {
+//            file = File.createTempFile("summary", ".txt");
+//            try (FileWriter summaryWriter = new FileWriter(file)) {
+//            try {
                 List<String> statuses = Stream.of(ElectionStatus.CLOSED.getValue(), ElectionStatus.CANCELED.getValue()).
                         map(String::toLowerCase).
                         collect(Collectors.toList());
@@ -165,7 +168,7 @@ public class SummaryService {
                     List<String> consentIds = reviewedElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
                     List<Integer> electionIds = reviewedElections.stream().map(Election::getElectionId).collect(Collectors.toList());
                     Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(electionIds);
-                    setSummaryHeader(summaryWriter, maxNumberOfDACMembers);
+//                    setSummaryHeader(summaryWriter, maxNumberOfDACMembers);
                     Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
                     List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
                     Collection<Integer> dacUserIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
@@ -175,40 +178,48 @@ public class SummaryService {
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
                         List<Integer> electionVotesUserIds = electionVotes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
                         Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
-                        List<Vote> electionDACVotes = electionVotes.stream().filter(ev -> ev.getType().equals("DAC")).collect(Collectors.toList());
+//                        List<Vote> electionDACVotes = electionVotes.stream().filter(ev -> ev.getType().equals("DAC")).collect(Collectors.toList());
                         Vote chairPersonVote =  electionVotes.stream().filter(ev -> ev.getType().equals(CHAIRPERSON)).collect(singletonCollector());
                         User chairPerson =  users.stream().filter(du -> du.getDacUserId().equals(chairPersonVote.getDacUserId())).collect(singletonCollector());
-                        summaryWriter.write(delimiterCheck(electionConsent.getName()) + SEPARATOR);
-                        summaryWriter.write(election.getVersion() + SEPARATOR);
-                        summaryWriter.write(election.getStatus() + SEPARATOR);
-                        summaryWriter.write(booleanToString(election.getArchived()) + SEPARATOR);
-                        summaryWriter.write(delimiterCheck(electionConsent.getTranslatedUseRestriction())+ SEPARATOR);
-                        summaryWriter.write(formatLongToDate(electionConsent.getCreateDate().getTime()) + SEPARATOR);
-                        summaryWriter.write( chairPerson.getDisplayName() + SEPARATOR);
-                        summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
-                        summaryWriter.write( nullToString(chairPersonVote.getRationale()) + SEPARATOR);
-                        if (CollectionUtils.isNotEmpty(electionDACVotes)) {
-                            for (Vote vote : electionDACVotes) {
-                                List<User> user = electionUsers.stream().filter(du -> du.getDacUserId().equals(vote.getDacUserId())).collect(Collectors.toList());
-                                summaryWriter.write( user.get(0).getDisplayName() + SEPARATOR);
-                                summaryWriter.write( booleanToString(vote.getVote()) + SEPARATOR);
-                                summaryWriter.write( nullToString(vote.getRationale())+ SEPARATOR);
-                            }
-                            for (int i = 0; i < (maxNumberOfDACMembers - electionVotes.size()); i++) {
-                                summaryWriter.write(
-                                        SEPARATOR);
-                            }
-                        }
-                        summaryWriter.write(END_OF_LINE);
+                        details.add(new ConsentSummaryDetail(
+                          election,
+                          electionConsent,
+                          electionVotes,
+                          electionUsers,
+                          chairPersonVote,
+                          chairPerson,
+                          maxNumberOfDACMembers
+                        ));
+//                        summaryWriter.write(delimiterCheck(electionConsent.getName()) + SEPARATOR);
+//                        summaryWriter.write(election.getVersion() + SEPARATOR);
+//                        summaryWriter.write(election.getStatus() + SEPARATOR);
+//                        summaryWriter.write(booleanToString(election.getArchived()) + SEPARATOR);
+//                        summaryWriter.write(delimiterCheck(electionConsent.getTranslatedUseRestriction())+ SEPARATOR);
+//                        summaryWriter.write(formatLongToDate(electionConsent.getCreateDate().getTime()) + SEPARATOR);
+//                        summaryWriter.write( chairPerson.getDisplayName() + SEPARATOR);
+//                        summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
+//                        summaryWriter.write( nullToString(chairPersonVote.getRationale()) + SEPARATOR);
+//                        if (CollectionUtils.isNotEmpty(electionDACVotes)) {
+//                            for (Vote vote : electionDACVotes) {
+//                                List<User> user = electionUsers.stream().filter(du -> du.getDacUserId().equals(vote.getDacUserId())).collect(Collectors.toList());
+//                                summaryWriter.write( user.get(0).getDisplayName() + SEPARATOR);
+//                                summaryWriter.write( booleanToString(vote.getVote()) + SEPARATOR);
+//                                summaryWriter.write( nullToString(vote.getRationale())+ SEPARATOR);
+//                            }
+//                            for (int i = 0; i < (maxNumberOfDACMembers - electionVotes.size()); i++) {
+//                                summaryWriter.write(
+//                                        SEPARATOR);
+//                            }
+//                        }
+//                        summaryWriter.write(END_OF_LINE);
                     }
-                }else file = null;
-                summaryWriter.flush();
-            }
-            return file;
+                } //else file = null;
+//                summaryWriter.flush();
+//            }
         } catch (Exception e) {
             logger.error("There is an error trying to create statistics file, error: "+ e.getMessage());
         }
-        return file;
+        return details;
     }
 
   /**
