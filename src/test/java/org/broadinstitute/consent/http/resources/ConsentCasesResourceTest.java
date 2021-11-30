@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -84,11 +83,22 @@ public class ConsentCasesResourceTest {
     }
 
     @Test
-    public void testGetConsentSummaryDetailFileDataAccess() throws Exception {
+    public void testGetConsentSummaryDetailFileDataAccess() {
         List<DataAccessRequestSummaryDetail> details = Collections.emptyList();
         when(summaryService.listDataAccessRequestSummaryDetails()).thenReturn(details);
         initResource();
         Response response = resource.getConsentSummaryDetailFile(ElectionType.DATA_ACCESS.getValue(), null);
+        Assert.assertEquals(200, response.getStatus());
+        Object summaryDetails = response.getEntity();
+        assertNull(summaryDetails);
+    }
+
+    @Test
+    public void testGetConsentSummaryDetailFileNoSelection() {
+        List<DataAccessRequestSummaryDetail> details = Collections.emptyList();
+        when(summaryService.listDataAccessRequestSummaryDetails()).thenReturn(details);
+        initResource();
+        Response response = resource.getConsentSummaryDetailFile(null, null);
         Assert.assertEquals(200, response.getStatus());
         Object summaryDetails = response.getEntity();
         assertNull(summaryDetails);
