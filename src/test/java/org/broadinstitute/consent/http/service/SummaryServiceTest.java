@@ -180,39 +180,6 @@ public class SummaryServiceTest {
         assertTrue("The list for closed negative cases should be three: ", matchSummaryList.get(1).getReviewedNegativeCases().equals(3));
     }
 
-    @Test(expected = IllegalStateException.class )
-    public void testSingletonCollectorException() throws Exception {
-        List<String> strings = Arrays.asList("One item", "Another item");
-        strings.stream().filter(s -> s.length() > 0).collect(SummaryService.singletonCollector());
-    }
-
-    @Test
-    public void testSingletonCollector() throws Exception {
-        List<String> strings = Arrays.asList("One item");
-        String string = strings.stream().filter(s -> s.length() > 0).collect(SummaryService.singletonCollector());
-        assertTrue("The returned element equals the only element in the list ", string.equals("One item"));
-
-        strings = new ArrayList<>();
-        string = strings.stream().filter(s -> s.length() > 0).collect(SummaryService.singletonCollector());
-        assertTrue("There are no elements, so the returned string should be null ", Objects.isNull(string));
-    }
-
-    @Test
-    public void testFormatTimeToDate() throws Exception {
-        Calendar myCalendar = new GregorianCalendar(2016, 2, 11);
-        String getAsString = summaryService.formatLongToDate(myCalendar.getTimeInMillis());
-        assertTrue(getAsString + " is the same date string for March 3, 2016 ", getAsString.equals("3/11/2016"));
-    }
-
-    @Test
-    public void testDelimiterCheck(){
-        String testString = "\"Samples\" Restricted for use with \"cancer\" [DOID_162(CC)]\bFuture use \"\"\\\" for methods" +
-                " research (analytic/software/technology development) is prohibited [NMDS]\bNotes:\bFuture use as a" +
-                " control set for\"' diseases other\' than\" those specified is not prohibited\n\"";
-        int count = StringUtils.countMatches(summaryService.delimiterCheck(testString), "\"");
-        assertThat(count, is(2));
-    }
-
     /** Private methods for mocking **/
 
     private List<Election> electionsList(String electionType, String status){

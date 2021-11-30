@@ -175,10 +175,10 @@ public class SummaryService {
               votes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
           Collection<User> users = userDAO.findUsers(dacUserIds);
           for (Election election : reviewedElections) {
-            Consent electionConsent =
+            Optional<Consent> electionConsent =
                 consents.stream()
                     .filter(c -> c.getConsentId().equals(election.getReferenceId()))
-                    .collect(singletonCollector());
+                    .findFirst();
             List<Vote> electionVotes =
                 votes.stream()
                     .filter(ev -> ev.getElectionId().equals(election.getElectionId()))
@@ -189,23 +189,23 @@ public class SummaryService {
                 users.stream()
                     .filter(du -> electionVotesUserIds.contains(du.getDacUserId()))
                     .collect(Collectors.toSet());
-            Vote chairPersonVote =
+            Optional<Vote> chairPersonVote =
                 electionVotes.stream()
                     .filter(ev -> ev.getType().equals(CHAIRPERSON))
-                    .collect(singletonCollector());
-            User chairPerson =
-                users.stream()
-                    .filter(du -> du.getDacUserId().equals(chairPersonVote.getDacUserId()))
-                    .collect(singletonCollector());
-            details.add(
-                new ConsentSummaryDetail(
+                    .findFirst();
+            Optional<User> chairPerson = chairPersonVote
+                .flatMap(vote -> users.stream()
+                .filter(du -> du.getDacUserId().equals(vote.getDacUserId()))
+                .findFirst());
+            ConsentSummaryDetail detail = new ConsentSummaryDetail(
                     election,
-                    electionConsent,
+                    electionConsent.orElse(null),
                     electionVotes,
                     electionUsers,
-                    chairPersonVote,
-                    chairPerson,
-                    maxNumberOfDACMembers));
+                    chairPersonVote.orElse(null),
+                    chairPerson.orElse(null),
+                    maxNumberOfDACMembers);
+            details.add(detail);
           }
         }
       } catch (Exception e) {
@@ -405,40 +405,6 @@ public class SummaryService {
                             HeaderSummary.DATA_OWNER_COMMENT.getValue() + SEPARATOR);
         }
         summaryWriter.write(END_OF_LINE);
-    }
-
-    public static <T> Collector<T, ?, T> singletonCollector() {
-        return Collectors.collectingAndThen(
-                Collectors.toList(),
-                list -> {
-                    if(CollectionUtils.isEmpty(list)){
-                        return null;
-                    }
-                    if (list.size() != 1) {
-                        throw new IllegalStateException();
-                    }
-                    return list.get(0);
-                }
-        );
-    }
-
-    public String formatLongToDate(long time) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(time);
-        int day = cal.get(Calendar.DAY_OF_MONTH);
-        int month = cal.get(Calendar.MONTH) + 1;
-        int year = cal.get(Calendar.YEAR);
-        return String.format("%d/%d/%d", month, day, year);
-    }
-
-    public String delimiterCheck(String delimitatedString){
-        if (StringUtils.isNotEmpty(delimitatedString)) {
-            return TEXT_DELIMITER +
-                    delimitatedString.replaceAll(TEXT_DELIMITER, "'") + TEXT_DELIMITER;
-        } else {
-            return "";
-        }
-
     }
 
 }

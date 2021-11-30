@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import java.util.Calendar;
+import java.util.Objects;
 
 /**
  * Utility Interface Trait for writing out Summary Details 
@@ -22,7 +23,7 @@ public interface SummaryDetail {
   }
 
   default String booleanToString(Boolean b) {
-    if (b != null) {
+    if (Objects.nonNull(b)) {
       return b ? "YES" : "NO";
     }
     return "-";
@@ -38,6 +39,6 @@ public interface SummaryDetail {
   }
 
   default String nullToString(String b) {
-    return b != null && !b.isEmpty() ? b : "-";
+    return Objects.nonNull(b) && !b.isEmpty() ? b : "-";
   }
 }

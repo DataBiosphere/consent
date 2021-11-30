@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.enumeration.HeaderSummary;
@@ -80,15 +81,32 @@ public class ConsentSummaryDetail implements SummaryDetail {
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append(delimiterCheck(getConsent().getName())).append(TAB);
-    builder.append(getElection().getVersion()).append(TAB);
-    builder.append(getElection().getStatus()).append(TAB);
-    builder.append(booleanToString(getElection().getArchived())).append(TAB);
-    builder.append(delimiterCheck(getConsent().getTranslatedUseRestriction())).append(TAB);
-    builder.append(formatLongToDate(getConsent().getCreateDate().getTime())).append(TAB);
-    builder.append(getChairPerson().getDisplayName()).append(TAB);
-    builder.append(booleanToString(getChairPersonVote().getVote())).append(TAB);
-    builder.append(nullToString(getChairPersonVote().getRationale())).append(TAB);
+    if (Objects.nonNull(getConsent())) {
+      builder.append(delimiterCheck(getConsent().getName()));
+    }
+    builder.append(TAB);
+    builder.append(getElection().getVersion());
+    builder.append(TAB);
+    builder.append(getElection().getStatus());
+    builder.append(TAB);
+    builder.append(booleanToString(getElection().getArchived()));
+    builder.append(TAB);
+    builder.append(delimiterCheck(getConsent().getTranslatedUseRestriction()));
+    builder.append(TAB);
+    builder.append(formatLongToDate(getConsent().getCreateDate().getTime()));
+    builder.append(TAB);
+    if (Objects.nonNull(getChairPerson())) {
+      builder.append(nullToString(getChairPerson().getDisplayName()));
+    }
+    builder.append(TAB);
+    if (Objects.nonNull(getChairPersonVote())) {
+      builder.append(booleanToString(getChairPersonVote().getVote()));
+    }
+    builder.append(TAB);
+    if (Objects.nonNull(getChairPersonVote())) {
+      builder.append(nullToString(getChairPersonVote().getRationale()));
+    }
+    builder.append(TAB);
     getElectionVotes().stream()
         .filter(ev -> ev.getType().equals(VoteType.DAC.getValue()))
         .forEach(
@@ -97,13 +115,12 @@ public class ConsentSummaryDetail implements SummaryDetail {
                   getElectionUsers().stream()
                       .filter(u -> v.getDacUserId().equals(u.getDacUserId()))
                       .findFirst();
-              if (user.isPresent()) {
-                builder.append(user.get().getDisplayName()).append(TAB);
-              } else {
-                builder.append(TAB);
-              }
-              builder.append(booleanToString(v.getVote())).append(TAB);
-              builder.append(nullToString(v.getRationale())).append(TAB);
+              user.ifPresent(value -> builder.append(value.getDisplayName()));
+              builder.append(TAB);
+              builder.append(booleanToString(v.getVote()));
+              builder.append(TAB);
+              builder.append(nullToString(v.getRationale()));
+              builder.append(TAB);
               // Append extra tabs for the case where there are more election users in other rows
               // than there are election users for this row.
               builder.append(
