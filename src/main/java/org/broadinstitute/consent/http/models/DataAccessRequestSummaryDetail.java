@@ -158,7 +158,6 @@ public class DataAccessRequestSummaryDetail {
     // Append extra tabs for the case where there are more DAC members in other rows
     // than there are DAC members for this row.
     builder.append(TAB.repeat(Math.max(0, (getMaxNumberOfDACMembers() - getDacMembers().size()))));
-    // TODO: Need to get the real restriction, not the thing on the data
     builder
         .append(booleanToString(Objects.isNull(getDar().getData().getRestriction())))
         .append(TAB);
