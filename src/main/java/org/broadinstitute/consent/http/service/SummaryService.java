@@ -154,72 +154,64 @@ public class SummaryService {
     }
 
     public List<ConsentSummaryDetail> describeConsentSummaryDetail() {
-        List<ConsentSummaryDetail> details = new ArrayList<>();
-//        File file = null;
-        try {
-//            file = File.createTempFile("summary", ".txt");
-//            try (FileWriter summaryWriter = new FileWriter(file)) {
-//            try {
-                List<String> statuses = Stream.of(ElectionStatus.CLOSED.getValue(), ElectionStatus.CANCELED.getValue()).
-                        map(String::toLowerCase).
-                        collect(Collectors.toList());
-                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), statuses);
-                if (!CollectionUtils.isEmpty(reviewedElections)) {
-                    List<String> consentIds = reviewedElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-                    List<Integer> electionIds = reviewedElections.stream().map(Election::getElectionId).collect(Collectors.toList());
-                    Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(electionIds);
-//                    setSummaryHeader(summaryWriter, maxNumberOfDACMembers);
-                    Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
-                    List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
-                    Collection<Integer> dacUserIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
-                    Collection<User> users = userDAO.findUsers(dacUserIds);
-                    for (Election election : reviewedElections) {
-                        Consent electionConsent = consents.stream().filter(c -> c.getConsentId().equals(election.getReferenceId())).collect(singletonCollector());
-                        List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
-                        List<Integer> electionVotesUserIds = electionVotes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
-                        Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
-//                        List<Vote> electionDACVotes = electionVotes.stream().filter(ev -> ev.getType().equals("DAC")).collect(Collectors.toList());
-                        Vote chairPersonVote =  electionVotes.stream().filter(ev -> ev.getType().equals(CHAIRPERSON)).collect(singletonCollector());
-                        User chairPerson =  users.stream().filter(du -> du.getDacUserId().equals(chairPersonVote.getDacUserId())).collect(singletonCollector());
-                        details.add(new ConsentSummaryDetail(
-                          election,
-                          electionConsent,
-                          electionVotes,
-                          electionUsers,
-                          chairPersonVote,
-                          chairPerson,
-                          maxNumberOfDACMembers
-                        ));
-//                        summaryWriter.write(delimiterCheck(electionConsent.getName()) + SEPARATOR);
-//                        summaryWriter.write(election.getVersion() + SEPARATOR);
-//                        summaryWriter.write(election.getStatus() + SEPARATOR);
-//                        summaryWriter.write(booleanToString(election.getArchived()) + SEPARATOR);
-//                        summaryWriter.write(delimiterCheck(electionConsent.getTranslatedUseRestriction())+ SEPARATOR);
-//                        summaryWriter.write(formatLongToDate(electionConsent.getCreateDate().getTime()) + SEPARATOR);
-//                        summaryWriter.write( chairPerson.getDisplayName() + SEPARATOR);
-//                        summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
-//                        summaryWriter.write( nullToString(chairPersonVote.getRationale()) + SEPARATOR);
-//                        if (CollectionUtils.isNotEmpty(electionDACVotes)) {
-//                            for (Vote vote : electionDACVotes) {
-//                                List<User> user = electionUsers.stream().filter(du -> du.getDacUserId().equals(vote.getDacUserId())).collect(Collectors.toList());
-//                                summaryWriter.write( user.get(0).getDisplayName() + SEPARATOR);
-//                                summaryWriter.write( booleanToString(vote.getVote()) + SEPARATOR);
-//                                summaryWriter.write( nullToString(vote.getRationale())+ SEPARATOR);
-//                            }
-//                            for (int i = 0; i < (maxNumberOfDACMembers - electionVotes.size()); i++) {
-//                                summaryWriter.write(
-//                                        SEPARATOR);
-//                            }
-//                        }
-//                        summaryWriter.write(END_OF_LINE);
-                    }
-                } //else file = null;
-//                summaryWriter.flush();
-//            }
-        } catch (Exception e) {
-            logger.error("There is an error trying to create statistics file, error: "+ e.getMessage());
+      List<ConsentSummaryDetail> details = new ArrayList<>();
+      try {
+        List<String> statuses =
+            Stream.of(ElectionStatus.CLOSED.getValue(), ElectionStatus.CANCELED.getValue())
+                .map(String::toLowerCase)
+                .collect(Collectors.toList());
+        List<Election> reviewedElections =
+            electionDAO.findElectionsWithFinalVoteByTypeAndStatus(
+                ElectionType.TRANSLATE_DUL.getValue(), statuses);
+        if (!CollectionUtils.isEmpty(reviewedElections)) {
+          List<String> consentIds =
+              reviewedElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
+          List<Integer> electionIds =
+              reviewedElections.stream().map(Election::getElectionId).collect(Collectors.toList());
+          Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(electionIds);
+          Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
+          List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
+          Collection<Integer> dacUserIds =
+              votes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
+          Collection<User> users = userDAO.findUsers(dacUserIds);
+          for (Election election : reviewedElections) {
+            Consent electionConsent =
+                consents.stream()
+                    .filter(c -> c.getConsentId().equals(election.getReferenceId()))
+                    .collect(singletonCollector());
+            List<Vote> electionVotes =
+                votes.stream()
+                    .filter(ev -> ev.getElectionId().equals(election.getElectionId()))
+                    .collect(Collectors.toList());
+            List<Integer> electionVotesUserIds =
+                electionVotes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
+            Collection<User> electionUsers =
+                users.stream()
+                    .filter(du -> electionVotesUserIds.contains(du.getDacUserId()))
+                    .collect(Collectors.toSet());
+            Vote chairPersonVote =
+                electionVotes.stream()
+                    .filter(ev -> ev.getType().equals(CHAIRPERSON))
+                    .collect(singletonCollector());
+            User chairPerson =
+                users.stream()
+                    .filter(du -> du.getDacUserId().equals(chairPersonVote.getDacUserId()))
+                    .collect(singletonCollector());
+            details.add(
+                new ConsentSummaryDetail(
+                    election,
+                    electionConsent,
+                    electionVotes,
+                    electionUsers,
+                    chairPersonVote,
+                    chairPerson,
+                    maxNumberOfDACMembers));
+          }
         }
-        return details;
+      } catch (Exception e) {
+        logger.error("There is an error trying to create statistics file, error: " + e.getMessage());
+      }
+      return details;
     }
 
   /**
@@ -398,29 +390,6 @@ public class SummaryService {
         }
     }
 
-    private void setSummaryHeader(FileWriter summaryWriter , Integer maxNumberOfDACMembers) throws IOException {
-        summaryWriter.write(
-                HeaderSummary.CONSENT.getValue() + SEPARATOR +
-                        HeaderSummary.VERSION.getValue() + SEPARATOR +
-                        HeaderSummary.STATUS.getValue() + SEPARATOR +
-                        HeaderSummary.ARCHIVED.getValue() + SEPARATOR +
-                        HeaderSummary.STRUCT_LIMITATIONS.getValue() + SEPARATOR +
-                        HeaderSummary.DATE.getValue() + SEPARATOR +
-                        HeaderSummary.CHAIRPERSON.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_DECISION.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_DECISION_RATIONALE.getValue() + SEPARATOR);
-        for (int i = 1; i < maxNumberOfDACMembers; i++) {
-            summaryWriter.write(
-                    HeaderSummary.USER.getValue() + SEPARATOR +
-                    HeaderSummary.VOTE.getValue() + SEPARATOR +
-                    HeaderSummary.RATIONALE.getValue() + SEPARATOR);
-        }
-        summaryWriter.write(
-                HeaderSummary.USER.getValue() + SEPARATOR +
-                HeaderSummary.VOTE.getValue() + SEPARATOR +
-                HeaderSummary.RATIONALE.getValue()+ END_OF_LINE);
-    }
-
     private void setDatasetElectionsHeader(FileWriter summaryWriter , Integer maxNumberOfVotes) throws IOException {
         summaryWriter.write(
                 HeaderSummary.DATA_REQUEST_ID.getValue() + SEPARATOR +
@@ -451,17 +420,6 @@ public class SummaryService {
                     return list.get(0);
                 }
         );
-    }
-
-    private String booleanToString(Boolean b) {
-        if(b != null) {
-            return b ? "YES" : "NO";
-        }
-        return "-";
-    }
-
-    private String nullToString(String b) {
-        return b != null && !b.isEmpty()  ? b : "-";
     }
 
     public String formatLongToDate(long time) {
