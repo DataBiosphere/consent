@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -16,8 +15,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
-import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Summary;
