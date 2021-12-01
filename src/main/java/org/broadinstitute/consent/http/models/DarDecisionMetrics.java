@@ -6,7 +6,6 @@ import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
-import org.apache.commons.collections4.CollectionUtils;
 
 /**
  * Generate a row of dar decision data in the form of:
@@ -163,7 +162,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
       if (Objects.nonNull(election.getFinalVoteDate())) {
         this.dateApproved = election.getFinalVoteDate();
       } else {
-        this.dateApproved = election.getLastUpdateDate();
+        this.dateApproved = election.getLastUpdate();
       }
     }
   }
@@ -184,7 +183,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
       if (Objects.nonNull(election.getFinalVoteDate())) {
         this.dateDenied = election.getFinalVoteDate();
       } else {
-        this.dateDenied = election.getLastUpdateDate();
+        this.dateDenied = election.getLastUpdate();
       }
     }
   }
@@ -205,7 +204,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
       Date finalVoteDate =
         Objects.nonNull(election.getFinalVoteDate())
           ? election.getFinalVoteDate()
-          : election.getLastUpdateDate();
+          : election.getLastUpdate();
       if (Objects.nonNull(finalVoteDate)) {
         Calendar submittedDate = Calendar.getInstance();
         Calendar finalDate = Calendar.getInstance();

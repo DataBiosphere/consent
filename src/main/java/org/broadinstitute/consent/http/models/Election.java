@@ -128,14 +128,6 @@ public class Election {
         this.status = status;
     }
 
-    public Date getLastUpdateDate() {
-        return lastUpdate;
-    }
-
-    public void setLastUpdateDate(Date lastUpdate) {
-        this.lastUpdate = lastUpdate;
-    }
-
     public Date getCreateDate() {
         return createDate;
     }
