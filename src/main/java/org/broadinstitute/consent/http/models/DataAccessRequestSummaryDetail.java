@@ -171,7 +171,7 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
   private void appendVoteDetails(Optional<Vote> vote, StringBuilder builder) {
     if (vote.isPresent()) {
       builder.append(booleanToString(vote.get().getVote())).append(TAB);
-      builder.append(nullToString(vote.get().getRationale())).append(TAB);
+      builder.append(unwrapLines(nullToString(vote.get().getRationale()))).append(TAB);
     } else {
       builder.append(nullToString(null)).append(TAB);
       builder.append(nullToString(null)).append(TAB);

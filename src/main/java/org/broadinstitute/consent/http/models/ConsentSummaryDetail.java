@@ -104,7 +104,7 @@ public class ConsentSummaryDetail implements SummaryDetail {
     }
     builder.append(TAB);
     if (Objects.nonNull(getChairPersonVote())) {
-      builder.append(nullToString(getChairPersonVote().getRationale()));
+      builder.append(unwrapLines(nullToString(getChairPersonVote().getRationale())));
     }
     builder.append(TAB);
     getElectionVotes().stream()
@@ -119,7 +119,7 @@ public class ConsentSummaryDetail implements SummaryDetail {
               builder.append(TAB);
               builder.append(booleanToString(v.getVote()));
               builder.append(TAB);
-              builder.append(nullToString(v.getRationale()));
+              builder.append(unwrapLines(nullToString(v.getRationale())));
               builder.append(TAB);
               // Append extra tabs for the case where there are more election users in other rows
               // than there are election users for this row.

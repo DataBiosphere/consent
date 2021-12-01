@@ -41,4 +41,8 @@ public interface SummaryDetail {
   default String nullToString(String b) {
     return Objects.nonNull(b) && !b.isEmpty() ? b : "-";
   }
+  
+  default String unwrapLines(String b) {
+    return b.replaceAll("\\t", " ").replaceAll("\\n", " ");
+  }
 }
