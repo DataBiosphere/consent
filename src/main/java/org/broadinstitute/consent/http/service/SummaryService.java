@@ -161,7 +161,7 @@ public class SummaryService {
             Stream.of(ElectionStatus.CLOSED.getValue(), ElectionStatus.CANCELED.getValue())
                 .map(String::toLowerCase)
                 .collect(Collectors.toList());
-        List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), statuses).stream().distinct().collect(Collectors.toUnmodifiableList());
+        List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), statuses).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toUnmodifiableList());
         if (!CollectionUtils.isEmpty(reviewedElections)) {
           List<String> consentIds =
               reviewedElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
@@ -223,8 +223,8 @@ public class SummaryService {
    */
   public List<DataAccessRequestSummaryDetail> listDataAccessRequestSummaryDetails() {
     List<DataAccessRequestSummaryDetail> details = new ArrayList<>();
-    List<Election> accessElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue()).stream().distinct().collect(Collectors.toUnmodifiableList());
-    List<Election> rpElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue()).stream().distinct().collect(Collectors.toUnmodifiableList());
+    List<Election> accessElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue()).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toUnmodifiableList());
+    List<Election> rpElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue()).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toUnmodifiableList());
     if (!accessElections.isEmpty()) {
       List<String> referenceIds = accessElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
       List<DataAccessRequest> dataAccessRequests = referenceIds.isEmpty() ? Collections.emptyList() : dataAccessRequestService.getDataAccessRequestsByReferenceIds(referenceIds);
