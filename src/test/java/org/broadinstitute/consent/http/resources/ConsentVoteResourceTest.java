@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -221,4 +222,5 @@ public class ConsentVoteResourceTest {
         Response response = resource.options(consent.getConsentId());
         assertEquals(200, response.getStatus());
     }
+
 }

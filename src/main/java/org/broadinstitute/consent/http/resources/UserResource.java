@@ -307,7 +307,7 @@ public class UserResource extends Resource {
         JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
         userJson.add(RESEARCHER_PROPERTIES_FIELD, propsJson);
         userJson.add(LIBRARY_CARDS_FIELD, entriesJson);
-        if (Objects.nonNull(authUser.getUserStatusInfo())) {
+        if (authUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(authUser.getUserStatusInfo())) {
             JsonObject userStatusInfoJson = gson.toJsonTree(authUser.getUserStatusInfo()).getAsJsonObject();
             userJson.add(USER_STATUS_INFO_FIELD, userStatusInfoJson);
         }
