@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -51,6 +52,7 @@ public class ConsentVoteResourceTest {
         return consent;
     }
 
+    // TODO: Extract this class into an interface
     private class LogHandler extends Handler {
         Level lastLevel = Level.FINEST;
 
@@ -193,6 +195,14 @@ public class ConsentVoteResourceTest {
     }
 
     @Test
+    public void testDeleteVotesNull() throws Exception {
+        initResource();
+
+        Response response = resource.deleteVotes(null);
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
     public void testDeleteVotesError() throws Exception {
         Consent consent = createMockConsent();
 
@@ -212,4 +222,5 @@ public class ConsentVoteResourceTest {
         Response response = resource.options(consent.getConsentId());
         assertEquals(200, response.getStatus());
     }
+
 }
