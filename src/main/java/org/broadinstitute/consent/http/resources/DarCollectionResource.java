@@ -82,9 +82,7 @@ public class DarCollectionResource extends Resource {
       @Auth AuthUser authUser,
       @PathParam("collectionId") Integer collectionId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
-      validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

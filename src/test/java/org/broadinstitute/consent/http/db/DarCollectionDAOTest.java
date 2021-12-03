@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Consent;
@@ -23,6 +24,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
@@ -62,6 +64,13 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     assertNotNull(returned);
     assertEquals(collection.getDarCode(), returned.getDarCode());
     assertEquals(collection.getCreateUserId(), returned.getCreateUserId());
+    assertEquals(collection.getElectionMap().size(), 1);
+    assertEquals(collection.getVotes().size(), 1);
+    List<Election> electionList = collection.getElectionMap().values().stream().findFirst().orElse(null);
+    Election election = electionList.get(0);
+    Vote vote = collection.getVotes().values().stream().findFirst().orElse(null);
+    assertEquals("Open", election.getStatus());
+    assertEquals(election.getElectionId(), vote.getElectionId());
   }
 
   @Test

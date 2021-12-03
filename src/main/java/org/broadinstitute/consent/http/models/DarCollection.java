@@ -53,10 +53,14 @@ public class DarCollection {
   @JsonProperty
   private Map<String, List<Election>> electionMap;
 
+  @JsonProperty
+  private Map<Integer, Vote> votes;
+
   public DarCollection() {
     this.createDate = new Timestamp(System.currentTimeMillis());
     this.datasets = new HashSet<>();
     this.electionMap = new HashMap<>();
+    this.votes = new HashMap<>();
   }
 
   public DarCollection deepCopy() {
@@ -157,6 +161,20 @@ public class DarCollection {
       electionMap.put(referenceId, new ArrayList<>());
     }
     electionMap.get(referenceId).add(election);
+  }
+
+  public Map<Integer, Vote> getVotes() {
+    return votes;
+  }
+
+  public void setVotes(Map<Integer, Vote> votes) {
+    this.votes = votes;
+  }  
+
+  public void addVote(Vote vote) {
+    if(Objects.nonNull(vote)) {
+      votes.put(vote.getVoteId(), vote);
+    }
   }
 
   @Override
