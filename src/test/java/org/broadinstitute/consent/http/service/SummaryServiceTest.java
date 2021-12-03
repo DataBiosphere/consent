@@ -1,36 +1,44 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
-import java.util.ArrayList;
+import java.sql.Timestamp;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.collections.ListUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.AssociationType;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.Association;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 public class SummaryServiceTest {
 
@@ -43,7 +51,7 @@ public class SummaryServiceTest {
     @Mock
     private ConsentDAO consentDAO;
     @Mock
-    private DatasetDAO dataSetDAO;
+    private DatasetDAO datasetDAO;
     @Mock
     private MatchDAO matchDAO;
     @Mock
@@ -53,8 +61,74 @@ public class SummaryServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
-        summaryService = Mockito.spy(new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO, dataSetDAO, matchDAO));
+        openMocks(this);
+        summaryService = Mockito.spy(new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO,
+            datasetDAO, matchDAO));
+    }
+    
+    private void initService() {
+        summaryService = new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO,
+            datasetDAO, matchDAO);
+    }
+    
+    // Test that empty data will not throw errors
+    @Test
+    public void testListDataAccessRequestSummaryDetails_case1() {
+        initService();
+        List<DataAccessRequestSummaryDetail> details = summaryService.listDataAccessRequestSummaryDetails();
+        assertTrue(details.isEmpty());
+    }
+
+    // Test that minimal data will produce minimal results.
+    // This unfortunately requires quite a bit of setup.
+    @Test
+    public void testListDataAccessRequestSummaryDetails_case2() {
+        User voteUser = new User();
+        voteUser.setDacUserId(5);
+        voteUser.setDisplayName("Vote User Name");
+        User darUser = new User();
+        darUser.setDacUserId(10);
+        darUser.setDisplayName("DAR User Name");
+        List<Election> accessElections = List.of(createElection(ElectionType.DATA_ACCESS.getValue()));
+        List<Election> rpElections = List.of(createElectionWithReferenceId(ElectionType.RP.getValue(), accessElections.get(0).getReferenceId()));
+        List<Election> consentElections = List.of(createElection(ElectionType.TRANSLATE_DUL.getValue()));
+        List<Integer> accessElectionIds = accessElections.stream().map(Election::getElectionId).collect(Collectors.toList());
+        List<Integer> rpElectionIds = rpElections.stream().map(Election::getElectionId).collect(Collectors.toList());
+        List<Integer> consentElectionIds = consentElections.stream().map(Election::getElectionId).collect(Collectors.toList());
+        List<DataAccessRequest> dars = List.of(createDAR(accessElections.get(0).getReferenceId(), darUser.getDacUserId()));
+        List<Association> associations = List.of(createAssociation(dars.get(0).getData().getDatasetIds().get(0), consentElections.get(0).getReferenceId()));
+        List<String> associatedConsentIds = List.of(consentElections.get(0).getReferenceId());
+        List<Vote> accessVotes = createVotes(accessElections.get(0).getElectionId(), voteUser.getDacUserId());
+        List<Vote> rpVotes = createVotes(rpElections.get(0).getElectionId(), voteUser.getDacUserId());
+        List<Vote> consentVotes = createVotes(consentElections.get(0).getElectionId(), voteUser.getDacUserId());
+        List<Match> matchList = List.of(createMatch(associatedConsentIds.get(0), dars.get(0).getReferenceId()));
+        List<String> referenceIds = List.of(accessElections.get(0).getReferenceId());
+        List<Integer> datasetIds = dars.get(0).getData().getDatasetIds();
+
+        when(electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue())).thenReturn(accessElections);
+        when(electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue())).thenReturn(rpElections);
+        when(dataAccessRequestService.getDataAccessRequestsByReferenceIds(anyList())).thenReturn(dars);
+        when(datasetDAO.getAssociationsForDataSetIdList(datasetIds)).thenReturn(associations);
+        when(electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue())).thenReturn(consentElections);
+        when(voteDAO.findVotesByElectionIds(accessElectionIds)).thenReturn(accessVotes);
+        when(voteDAO.findVotesByElectionIds(rpElectionIds)).thenReturn(rpVotes);
+        when(voteDAO.findVotesByElectionIds(consentElectionIds)).thenReturn(consentVotes);
+        when(matchDAO.findMatchesForPurposeIds(referenceIds)).thenReturn(matchList);
+        when(userDAO.findUsers(List.of(voteUser.getDacUserId()))).thenReturn(List.of(voteUser));
+        when(userDAO.findUsers(List.of(darUser.getDacUserId()))).thenReturn(List.of(darUser));
+
+        initService();
+        List<DataAccessRequestSummaryDetail> details = summaryService.listDataAccessRequestSummaryDetails();
+        assertFalse(details.isEmpty());
+        // Should be able to print without errors.
+        try {
+            String headers = details.get(0).headers();
+            assertFalse(headers.isBlank());
+            String val = details.get(0).toString();
+            assertFalse(val.isBlank());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
     }
 
     // In this tests we won't validate the resulting file, we will just validate the methods being called for each response given by the mocks is accurate.
@@ -99,39 +173,6 @@ public class SummaryServiceTest {
         assertTrue("The list for closed negative cases should be three: ", matchSummaryList.get(1).getReviewedNegativeCases().equals(3));
     }
 
-    @Test(expected = IllegalStateException.class )
-    public void testSingletonCollectorException() throws Exception {
-        List<String> strings = Arrays.asList("One item", "Another item");
-        strings.stream().filter(s -> s.length() > 0).collect(SummaryService.singletonCollector());
-    }
-
-    @Test
-    public void testSingletonCollector() throws Exception {
-        List<String> strings = Arrays.asList("One item");
-        String string = strings.stream().filter(s -> s.length() > 0).collect(SummaryService.singletonCollector());
-        assertTrue("The returned element equals the only element in the list ", string.equals("One item"));
-
-        strings = new ArrayList<>();
-        string = strings.stream().filter(s -> s.length() > 0).collect(SummaryService.singletonCollector());
-        assertTrue("There are no elements, so the returned string should be null ", Objects.isNull(string));
-    }
-
-    @Test
-    public void testFormatTimeToDate() throws Exception {
-        Calendar myCalendar = new GregorianCalendar(2016, 2, 11);
-        String getAsString = summaryService.formatLongToDate(myCalendar.getTimeInMillis());
-        assertTrue(getAsString + " is the same date string for March 3, 2016 ", getAsString.equals("3/11/2016"));
-    }
-
-    @Test
-    public void testDelimiterCheck(){
-        String testString = "\"Samples\" Restricted for use with \"cancer\" [DOID_162(CC)]\bFuture use \"\"\\\" for methods" +
-                " research (analytic/software/technology development) is prohibited [NMDS]\bNotes:\bFuture use as a" +
-                " control set for\"' diseases other\' than\" those specified is not prohibited\n\"";
-        int count = StringUtils.countMatches(summaryService.delimiterCheck(testString), "\"");
-        assertThat(count, is(2));
-    }
-
     /** Private methods for mocking **/
 
     private List<Election> electionsList(String electionType, String status){
@@ -150,6 +191,71 @@ public class SummaryServiceTest {
         Vote v5 = new Vote(5, true, dacUserId, new Date(), new Date(), 5, "", voteType, false, false);
         Vote nul = new Vote(6, null, dacUserId, new Date(), new Date(), 6, "", voteType, false, false);
         return Arrays.asList(v1, v2, v3, v4, v5, nul);
+    }
+
+    private Match createMatch(String consentId, String referenceId) {
+        Match m = new Match();
+        m.setConsent(consentId);
+        m.setPurpose(referenceId);
+        m.setMatch(true);
+        return m;
+    }
+    
+    private Association createAssociation(Integer datasetId, String consentId) {
+        Association a = new Association();
+        a.setAssociationId(RandomUtils.nextInt(1, 100));
+        a.setAssociationType(AssociationType.SAMPLE_SET.getValue());
+        a.setDataSetId(datasetId);
+        a.setConsentId(consentId);
+        return a;
+    }
+
+    private DataAccessRequest createDAR(String referenceId, Integer userId) {
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setDatasetIds(List.of(1));
+        data.setReferenceId(referenceId);
+        data.setDarCode("DAR-" + RandomUtils.nextInt(100, 200));
+        data.setProjectTitle("Project-TEST");
+        DataAccessRequest dar = new DataAccessRequest();
+        dar.setReferenceId(referenceId);
+        dar.setUserId(userId);
+        dar.setData(data);
+        dar.setSortDate(new Timestamp(new Date().getTime()));
+        return dar;
+    }
+
+    private Election createElection(String electionType) {
+        ElectionType type = ElectionType.getFromValue(electionType);
+        Election e = new Election();
+        e.setReferenceId(UUID.randomUUID().toString());
+        e.setElectionType(type.getValue());
+        e.setElectionId(type.ordinal());
+        e.setCreateDate(new Date());
+        e.setLastUpdate(new Date());
+        e.setFinalVote(true);
+        e.setFinalVoteDate(new Date());
+        e.setFinalAccessVote(true);
+        return e;
+    }
+
+    private Election createElectionWithReferenceId(String electionType, String referenceId) {
+        Election e = createElection(electionType);
+        e.setReferenceId(referenceId);
+        return e;
+    }
+    
+    private List<Vote> createVotes(Integer electionId, Integer userId) {
+        return Arrays.stream(VoteType.values()).map(t -> {
+                Vote v = new Vote();
+                v.setVote(true);
+                v.setType(t.getValue());
+                v.setElectionId(electionId);
+                v.setCreateDate(new Date());
+                v.setUpdateDate(new Date());
+                v.setDacUserId(userId);
+                return v;
+            }
+        ).collect(Collectors.toUnmodifiableList());
     }
 
 }

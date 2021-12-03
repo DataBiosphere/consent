@@ -2,9 +2,9 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-
-import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
@@ -13,13 +13,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.models.SummaryDetail;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
@@ -58,20 +57,27 @@ public class ConsentCasesResource extends Resource {
     @Path("/summary/file")
     @Produces("text/plain")
     @PermitAll
-    public Response getConsentSummaryDetailFile(@QueryParam("fileType") String fileType, @Auth AuthUser authUser) {
-        ResponseBuilder response;
-        File fileToSend = null;
-        if (fileType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-            fileToSend = summaryService.describeConsentSummaryDetail();
-        } else if (fileType.equals(ElectionType.DATA_ACCESS.getValue())) {
-            fileToSend = summaryService.describeDataAccessRequestSummaryDetail();
+    public Response getConsentSummaryDetailFile(@QueryParam("type") String type, @Auth AuthUser authUser) {
+        try {
+            if (Objects.isNull(type)) {
+                type = ElectionType.DATA_ACCESS.getValue();
+            }
+            List<? extends SummaryDetail> details = new ArrayList<>();
+            if (type.equals(ElectionType.TRANSLATE_DUL.getValue())) {
+                details = summaryService.describeConsentSummaryDetail();
+            } else if (type.equals(ElectionType.DATA_ACCESS.getValue())) {
+                details = summaryService.listDataAccessRequestSummaryDetails();
+            }
+            if (!details.isEmpty()) {
+                StringBuilder detailsBuilder = new StringBuilder();
+                detailsBuilder.append(details.get(0).headers()).append(System.lineSeparator());
+                details.forEach(d -> detailsBuilder.append(d.toString()).append(System.lineSeparator()));
+                return Response.ok(detailsBuilder.toString()).build();
+            }
+            return Response.ok().build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
         }
-        if ((fileToSend != null)) {
-            response = Response.ok(fileToSend);
-        } else {
-            response = Response.ok();
-        }
-        return response.build();
     }
 
 

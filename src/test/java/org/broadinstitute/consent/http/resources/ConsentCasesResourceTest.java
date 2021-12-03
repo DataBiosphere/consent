@@ -1,15 +1,22 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
+import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
@@ -18,7 +25,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 public class ConsentCasesResourceTest {
 
@@ -35,7 +41,7 @@ public class ConsentCasesResourceTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     @Test
@@ -55,7 +61,7 @@ public class ConsentCasesResourceTest {
         Response response = resource.getConsentSummaryCases(null);
         Assert.assertEquals(200, response.getStatus());
         Object summary = response.getEntity();
-        Assert.assertNotNull(summary);
+        assertNotNull(summary);
     }
 
     @Test
@@ -68,26 +74,38 @@ public class ConsentCasesResourceTest {
     }
 
     @Test
-    public void testGetConsentSummaryDetailFileDUL() throws Exception {
-        File file = File.createTempFile("temp", ".txt");
-        when(summaryService.describeConsentSummaryDetail()).thenReturn(file);
+    public void testGetConsentSummaryDetailFileDUL() {
+        List<ConsentSummaryDetail> details = Collections.emptyList();
+        when(summaryService.describeConsentSummaryDetail()).thenReturn(details);
         initResource();
         Response response = resource.getConsentSummaryDetailFile(ElectionType.TRANSLATE_DUL.getValue(), null);
         Assert.assertEquals(200, response.getStatus());
-        Object summaryFile = response.getEntity();
-        Assert.assertNotNull(summaryFile);
+        Object summaryDetails = response.getEntity();
+        assertNull(summaryDetails);
     }
 
     @Test
-    public void testGetConsentSummaryDetailFileDataAccess() throws Exception {
-        File file = File.createTempFile("temp", ".txt");
-        when(summaryService.describeDataAccessRequestSummaryDetail()).thenReturn(file);
+    public void testGetConsentSummaryDetailFileDataAccess() {
+        List<DataAccessRequestSummaryDetail> details = Collections.emptyList();
+        when(summaryService.listDataAccessRequestSummaryDetails()).thenReturn(details);
         initResource();
         Response response = resource.getConsentSummaryDetailFile(ElectionType.DATA_ACCESS.getValue(), null);
         Assert.assertEquals(200, response.getStatus());
-        Object summaryFile = response.getEntity();
-        Assert.assertNotNull(summaryFile);
+        Object summaryDetails = response.getEntity();
+        assertNull(summaryDetails);
     }
+
+    @Test
+    public void testGetConsentSummaryDetailFileNoSelection() {
+        List<DataAccessRequestSummaryDetail> details = Collections.emptyList();
+        when(summaryService.listDataAccessRequestSummaryDetails()).thenReturn(details);
+        initResource();
+        Response response = resource.getConsentSummaryDetailFile(null, null);
+        Assert.assertEquals(200, response.getStatus());
+        Object summaryDetails = response.getEntity();
+        assertNull(summaryDetails);
+    }
+
     @Test
     public void testDescribeClosedElections() {
         when(electionService.describeClosedElectionsByType(anyString(), notNull())).thenReturn(Collections.emptyList());

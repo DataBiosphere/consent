@@ -1,13 +1,13 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Date;
+import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.consent.http.db.mapper.AccessRPMapper;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DateMapper;
+import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
 import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.db.mapper.SimpleElectionMapper;
-import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
-import org.broadinstitute.consent.http.models.AccessRP;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -18,9 +18,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Date;
-import java.util.List;
 
 @RegisterRowMapper(ElectionMapper.class)
 public interface ElectionDAO extends Transactional<ElectionDAO> {
@@ -100,6 +97,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     Election findElectionByVoteId(@Bind("voteId") Integer voteId);
 
+    // TODO: This can return multiple rows per election id, e.g. ID 578 on staging.
+    // The root of the duplicate rows is in the vote inner join. When there are multiple chairperson
+    // votes, v.rationale and v.createDate can be different between the chairperson votes, leading 
+    // to duplicate rows.
+    // See https://broadworkbench.atlassian.net/browse/DUOS-1526
     @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, "
             + "e.lastUpdate, e.finalAccessVote, e.electionType,  e.dataUseLetter, e.dulName, e.archived, e.version from election e "
             + "inner join vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' "
@@ -224,10 +226,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "AND e.referenceId in (<referenceIds>) " +
             "left join vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' ")
      List<Election> findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(@BindList("referenceIds") List<String> referenceIds, @Bind("status") String status);
-
-     @RegisterRowMapper(AccessRPMapper.class)
-     @SqlQuery("select * from access_rp where electionAccessId in (<electionAccessIds>) ")
-     List<AccessRP> findAccessRPbyElectionAccessId(@BindList("electionAccessIds") List<Integer> electionAccessIds); 
 
     @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where lower(e.electionType) = lower(:type) group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
