@@ -109,7 +109,7 @@ public class VoteService {
     /**
      * @param votes List of Votes to update
      * @param voteValue Value to update the votes to
-     * @param rationale Value to update the rationales to
+     * @param rationale Value to update the rationales to. Only update if non-null.
      * @return The updated Vote
      */
     public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) {
