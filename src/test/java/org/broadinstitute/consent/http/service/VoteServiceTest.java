@@ -131,6 +131,44 @@ public class VoteServiceTest {
     }
 
     @Test
+    public void testUpdateVotesWithValue() {
+        Vote v = setUpTestVote(false, false);
+        Vote returnedVote = setUpTestVote(true, true);
+        returnedVote.setRationale("rationale");
+        when(voteDAO.findVotesByIds(any())).thenReturn(List.of(returnedVote));
+        initService();
+
+        List<Vote> votes = service.updateVotesWithValue(List.of(v), true, "rationale");
+        assertNotNull(votes);
+        assertFalse(votes.isEmpty());
+    }
+
+    @Test
+    public void testUpdateVotesWithValue_emptyList() {
+        initService();
+        List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
+        assertNotNull(votes);
+        assertTrue(votes.isEmpty());
+    }
+
+    @Test
+    public void testFindVotesByIds() {
+        when(voteDAO.findVotesByIds(any())).thenReturn(List.of(new Vote()));
+        initService();
+        List<Vote> votes = service.findVotesByIds(List.of(1));
+        assertNotNull(votes);
+        assertFalse(votes.isEmpty());
+    }
+
+    @Test
+    public void testFindVotesByIds_emptyList() {
+        initService();
+        List<Vote> votes = service.findVotesByIds(List.of());
+        assertNotNull(votes);
+        assertTrue(votes.isEmpty());
+    }
+
+    @Test
     public void testChairCreateVotesDataAccess() {
         setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
         initService();
