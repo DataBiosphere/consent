@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -83,6 +85,27 @@ public class VoteDAOTest extends DAOTestHelper {
 
         Vote foundVote = voteDAO.findVoteById(vote.getVoteId());
         assertNotNull(foundVote);
+    }
+
+    @Test
+    public void testFindVotesByIds() {
+        User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        User user2 = createUserWithRole(UserRoles.MEMBER.getRoleId());
+        User user3 = createUserWithRole(UserRoles.MEMBER.getRoleId());
+        User user4 = createUserWithRole(UserRoles.MEMBER.getRoleId());
+        Consent consent = createConsent(null);
+        DataSet dataset = createDataset();
+        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+        Vote vote2 = createDacVote(user2.getDacUserId(), election.getElectionId());
+        Vote vote3 = createDacVote(user3.getDacUserId(), election.getElectionId());
+        Vote vote4 = createDacVote(user4.getDacUserId(), election.getElectionId());
+        List<Integer> voteIds = List.of(vote.getVoteId(), vote2.getVoteId(), vote3.getVoteId(), vote4.getVoteId());
+
+        List<Vote> foundVotes = voteDAO.findVotesByIds(voteIds);
+        assertNotNull(foundVotes);
+        assertFalse(foundVotes.isEmpty());
+        assertTrue(foundVotes.stream().map(Vote::getVoteId).collect(Collectors.toList()).containsAll(voteIds));
     }
 
     @Test
