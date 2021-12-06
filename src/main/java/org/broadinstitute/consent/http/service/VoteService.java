@@ -109,9 +109,10 @@ public class VoteService {
     /**
      * @param votes List of Votes to update
      * @param voteValue Value to update the votes to
+     * @param rationale Value to update the rationales to
      * @return The updated Vote
      */
-    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue) {
+    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) {
         if (votes.isEmpty()) {
             return Collections.emptyList();
         }
@@ -120,7 +121,7 @@ public class VoteService {
             Date now = new Date();
             voteDAO.updateVote(
                     voteValue,
-                    vote.getRationale(),
+                    rationale,
                     now,
                     vote.getVoteId(),
                     vote.getIsReminderSent(),

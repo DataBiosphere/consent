@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Path("api/votes")
 public class VoteResource extends Resource {
@@ -40,11 +41,12 @@ public class VoteResource extends Resource {
      *
      * Error cases are:
      * 1. JSON Body is not a list of integers
-     * 2. Auth user is not the owner of the vote being updated
+     * 2. Auth user is not the owner of all votes being updated
      * 3. No votes match the list of ids provided
      *
      * @param authUser The AuthUser
      * @param vote The boolean value to update votes for
+     * @param rationale The string value for all rationales
      * @param json The list of vote ids, in json format
      * @return Response with results of the update.
      */
@@ -52,7 +54,11 @@ public class VoteResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed({CHAIRPERSON, MEMBER})
-    public Response updateVotes(@Auth AuthUser authUser, @QueryParam("vote") Boolean vote, String json) {
+    public Response updateVotes(
+            @Auth AuthUser authUser,
+            @QueryParam("vote") Boolean vote,
+            @QueryParam("rationale") String rationale,
+            String json) {
         // Validate input json - it needs to be an array of integers
         Gson gson = new Gson();
         Type intListType = new TypeToken<ArrayList<Integer>>(){}.getType();
@@ -80,7 +86,10 @@ public class VoteResource extends Resource {
             if (!authed) {
                 return createExceptionResponse(new NotFoundException());
             }
-            List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, vote);
+            if ( Objects.isNull(rationale)) {
+                rationale = "";
+            }
+            List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, vote, rationale);
             return Response.ok().entity(updatedVotes).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
