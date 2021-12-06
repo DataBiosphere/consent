@@ -1,0 +1,35 @@
+put:
+  summary: Updates Vote values by id List
+  description: Updates the Dataset from JSON
+  parameters:
+    - name: vote
+      in: query
+      description: The vote value to update for all votes
+      required: true
+      schema:
+        type: boolean
+    - name: rationale
+      in: query
+      description: Optional rationale to update for all votes
+      required: false
+      schema:
+        type: string
+  requestBody:
+    description: List of vote ids in JSON format
+    required: true
+    content:
+      application/json:
+        schema:
+          type: string
+          example: [1, 2, 3]
+  tags:
+    - Vote
+  responses:
+    200:
+      description: Successfully updated votes
+    400:
+      description: Bad Request (invalid input)
+    404:
+      description: Not Found
+    500:
+      description: Internal Error
