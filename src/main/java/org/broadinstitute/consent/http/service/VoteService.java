@@ -121,12 +121,12 @@ public class VoteService {
             Date now = new Date();
             voteDAO.updateVote(
                     voteValue,
-                    rationale,
+                    Objects.nonNull(rationale) ? rationale : vote.getRationale(),
                     now,
                     vote.getVoteId(),
                     vote.getIsReminderSent(),
                     vote.getElectionId(),
-                    Objects.isNull(vote.getCreateDate()) ? now : vote.getCreateDate(),
+                    Objects.nonNull(vote.getCreateDate()) ? vote.getCreateDate() : now,
                     vote.getHasConcerns()
             );
         });

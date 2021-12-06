@@ -86,9 +86,6 @@ public class VoteResource extends Resource {
             if (!authed) {
                 return createExceptionResponse(new NotFoundException());
             }
-            if ( Objects.isNull(rationale)) {
-                rationale = "";
-            }
             List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, vote, rationale);
             return Response.ok().entity(updatedVotes).build();
         } catch (Exception e) {
