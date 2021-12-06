@@ -12,9 +12,12 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.ws.rs.BadRequestException;
@@ -264,7 +267,7 @@ public class DarCollectionServiceTest {
   public void testCancelDarCollection_noElections() {
     Set<DataSet> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
-    collection.getDars().forEach(d -> d.getData().setStatus("Canceled"));
+    collection.getDars().values().forEach(d -> d.getData().setStatus("Canceled"));
     List<Election> elections = new ArrayList<>();
     when(electionDAO.findLastElectionsByReferenceIdsAndType(anyList(), anyString())).thenReturn(elections);
     doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
@@ -272,7 +275,7 @@ public class DarCollectionServiceTest {
     initService();
 
     DarCollection canceledCollection = service.cancelDarCollection(collection);
-    for (DataAccessRequest collectionDar : canceledCollection.getDars()) {
+    for (DataAccessRequest collectionDar : canceledCollection.getDars().values()) {
       assertEquals("canceled", collectionDar.getData().getStatus().toLowerCase());
     }
   }
@@ -292,9 +295,11 @@ public class DarCollectionServiceTest {
 
   private DarCollection generateMockDarCollection(Set<DataSet> datasets) {
     DarCollection collection = new DarCollection();
-    List<DataAccessRequest> dars = new ArrayList<>();
-    dars.add(generateMockDarWithDatasetId(datasets));
-    dars.add(generateMockDarWithDatasetId(datasets));
+    Map<String, DataAccessRequest> dars = new HashMap<>();
+    DataAccessRequest darOne = generateMockDarWithDatasetId(datasets);
+    DataAccessRequest darTwo = generateMockDarWithDatasetId(datasets);
+    dars.put(darOne.getReferenceId(), darOne);
+    dars.put(darTwo.getReferenceId(), darTwo);
     collection.setDars(dars);
     return collection;
   }
@@ -307,6 +312,7 @@ public class DarCollectionServiceTest {
     datasets.add(generateMockDatasetWithDataUse(datasetId));
     data.setDatasetIds(Collections.singletonList(datasetId));
     dar.setData(data);
+    dar.setReferenceId(UUID.randomUUID().toString());
     return dar;
   }
 

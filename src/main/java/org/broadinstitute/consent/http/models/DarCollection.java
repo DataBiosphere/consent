@@ -45,7 +45,7 @@ public class DarCollection {
   private Integer updateUserId;
 
   @JsonProperty
-  private List<DataAccessRequest> dars;
+  private Map<String, DataAccessRequest> dars;
 
   @JsonProperty
   private Set<DataSet> datasets;
@@ -117,22 +117,22 @@ public class DarCollection {
     this.updateUserId = updateUserId;
   }
 
-  public List<DataAccessRequest> getDars() {
+  public Map<String, DataAccessRequest> getDars() {
     if (Objects.isNull(dars)) {
-      return new ArrayList<>();
+      return new HashMap<>();
     }
     return dars;
   }
 
-  public void setDars(List<DataAccessRequest> dars) {
+  public void setDars(Map<String, DataAccessRequest> dars) {
     this.dars = dars;
   }
 
   public void addDar(DataAccessRequest dar) {
     if (Objects.isNull(dars)) {
-      this.setDars(new ArrayList<>());
+      this.setDars(new HashMap<>());
     }
-    dars.add(dar);
+    dars.put(dar.getReferenceId(), dar);
   }
 
   public void addDataset(DataSet dataset) {

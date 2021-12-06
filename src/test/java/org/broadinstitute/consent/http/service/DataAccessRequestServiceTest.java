@@ -662,7 +662,9 @@ public class DataAccessRequestServiceTest {
     public void testCreateDraftDarFromCanceledCollection_NoDarData() {
         User user = new User();
         DarCollection sourceCollection = new DarCollection();
-        sourceCollection.setDars(List.of(new DataAccessRequest()));
+        DataAccessRequest newDar = new DataAccessRequest();
+        newDar.setReferenceId(UUID.randomUUID().toString());
+        sourceCollection.addDar(newDar);
         initService();
         service.createDraftDarFromCanceledCollection(user, sourceCollection);
     }
@@ -673,9 +675,11 @@ public class DataAccessRequestServiceTest {
         DarCollection sourceCollection = new DarCollection();
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
+        data.setReferenceId(UUID.randomUUID().toString());
         data.setStatus("Not Canceled");
         dar.setData(data);
-        sourceCollection.setDars(List.of(dar));
+        dar.setReferenceId(data.getReferenceId());
+        sourceCollection.addDar(dar);
         initService();
         service.createDraftDarFromCanceledCollection(user, sourceCollection);
     }
@@ -686,10 +690,12 @@ public class DataAccessRequestServiceTest {
         DarCollection sourceCollection = new DarCollection();
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
+        data.setReferenceId(UUID.randomUUID().toString());
         data.setStatus(DarStatus.CANCELED.getValue());
         data.setDatasetIds(List.of());
         dar.setData(data);
-        sourceCollection.setDars(List.of(dar));
+        dar.setReferenceId(data.getReferenceId());
+        sourceCollection.addDar(dar);
         initService();
         service.createDraftDarFromCanceledCollection(user, sourceCollection);
     }
@@ -705,7 +711,7 @@ public class DataAccessRequestServiceTest {
         data.setReferenceId(UUID.randomUUID().toString());
         dar.setData(data);
         dar.setReferenceId(data.getReferenceId());
-        sourceCollection.setDars(List.of(dar));
+        sourceCollection.addDar(dar);
         when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of(1));
         initService();
         service.createDraftDarFromCanceledCollection(user, sourceCollection);
@@ -722,7 +728,7 @@ public class DataAccessRequestServiceTest {
         data.setReferenceId(UUID.randomUUID().toString());
         dar.setData(data);
         dar.setReferenceId(data.getReferenceId());
-        sourceCollection.setDars(List.of(dar));
+        sourceCollection.addDar(dar);
         when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of());
         doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(
             any(),

@@ -7,12 +7,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Consent;
@@ -45,7 +46,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
     assertNotNull(collection);
     assertEquals(dar.getCollectionId(), collection.getDarCollectionId());
-    List<String> ids = collection.getDars().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
+    List<String> ids = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
     assertTrue(ids.contains(dar.getReferenceId()));
   }
 
@@ -85,7 +86,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     // and DAC in such a way that all are connected via the dataset id.
     DataSet dataset = createDataset();
     DarCollection c = createDarCollection();
-    DataAccessRequest dar = c.getDars().get(0);
+    DataAccessRequest dar = new ArrayList<DataAccessRequest>(c.getDars().values()).get(0);
     if (Objects.isNull(dar)) {
       fail("DAR was not created in collection");
     }
@@ -104,7 +105,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   public void testFindDARCollectionIdsByInstitutionId() {
     // Set up a DAR Collection with a DAR, User, and Institution
     DarCollection c = createDarCollection();
-    DataAccessRequest dar = c.getDars().get(0);
+    DataAccessRequest dar = new ArrayList<DataAccessRequest>(c.getDars().values()).get(0);
     if (Objects.isNull(dar)) {
       fail("DAR was not created in collection");
     }
@@ -230,8 +231,8 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
 
     assertEquals(2, collectionsResult.size());
 
-    DataAccessRequest darOne = collectionsResult.get(0).getDars().get(0);
-    DataAccessRequest darTwo = collectionsResult.get(1).getDars().get(0);
+    DataAccessRequest darOne = new ArrayList<DataAccessRequest>(collectionsResult.get(0).getDars().values()).get(0);
+    DataAccessRequest darTwo = new ArrayList<DataAccessRequest>(collectionsResult.get(1).getDars().values()).get(0);
     int comparatorValue = darOne.getData().getDarCode().compareTo(darTwo.getData().getDarCode());
     assertTrue(comparatorValue < 0);
   }
@@ -248,7 +249,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     assertEquals(1, collections.size());
     DarCollection targetCollection = collections.get(0);
     assertEquals(5, targetCollection.getDars().size());
-    DataAccessRequest targetDar = targetCollection.getDars().get(0);
+    DataAccessRequest targetDar = new ArrayList<DataAccessRequest>(targetCollection.getDars().values()).get(0);
     assertEquals(targetDar.getData().getDarCode(), targetCollection.getDarCode());
   }
 
@@ -264,7 +265,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     assertEquals(1, collections.size());
     DarCollection targetCollection = collections.get(0);
     assertEquals(5, targetCollection.getDars().size());
-    DataAccessRequest targetDar = targetCollection.getDars().get(0);
+    DataAccessRequest targetDar = new ArrayList<DataAccessRequest>(targetCollection.getDars().values()).get(0);
     assertEquals(targetCollection.getDarCode(), targetDar.getData().getDarCode());
   }
 
@@ -280,7 +281,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     assertEquals(1, collections.size());
     DarCollection targetCollection = collections.get(0);
     assertEquals(5, targetCollection.getDars().size());
-    DataAccessRequest targetDar = targetCollection.getDars().get(0);
+    DataAccessRequest targetDar = new ArrayList<DataAccessRequest>(targetCollection.getDars().values()).get(0);
     assertEquals(targetCollection.getDarCode(), targetDar.getData().getDarCode());
   }
 
@@ -296,7 +297,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     assertEquals(1, collections.size());
     DarCollection targetCollection = collections.get(0);
     assertEquals(5, targetCollection.getDars().size());
-    DataAccessRequest targetDar = targetCollection.getDars().get(0);
+    DataAccessRequest targetDar = new ArrayList<DataAccessRequest>(targetCollection.getDars().values()).get(0);
     assertEquals(targetCollection.getDarCode(), targetDar.getData().getDarCode());
   }
 
@@ -311,7 +312,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     assertEquals(1, collections.size());
     DarCollection targetCollection = collections.get(0);
     assertEquals(5, targetCollection.getDars().size());
-    DataAccessRequest targetDar = targetCollection.getDars().get(0);
+    DataAccessRequest targetDar = new ArrayList<DataAccessRequest>(targetCollection.getDars().values()).get(0);
     assertEquals(targetDar.getData().getDarCode(), targetCollection.getDarCode());
   }
 
@@ -329,8 +330,8 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     assertEquals(2, collectionsResult.size());
     assertEquals(collections.get(0).getDarCode(), collectionsResult.get(0).getDarCode());
 
-    DataAccessRequest darResultOne = collectionsResult.get(0).getDars().get(0);
-    DataAccessRequest darResultTwo = collectionsResult.get(1).getDars().get(0);
+    DataAccessRequest darResultOne = new ArrayList<DataAccessRequest>(collectionsResult.get(0).getDars().values()).get(0);
+    DataAccessRequest darResultTwo = new ArrayList<DataAccessRequest>(collectionsResult.get(1).getDars().values()).get(0);
     assertEquals(collections.get(0).getDarCode(), darResultOne.getData().getDarCode());
     assertEquals(collections.get(1).getDarCode(), darResultTwo.getData().getDarCode());
   }
@@ -348,10 +349,10 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     assertEquals(2, collectionsResult.size());
     assertEquals(collectionsResult.get(0).getDarCode(), collections.get(0).getDarCode());
 
-    DataAccessRequest darResultOne = collectionsResult.get(0).getDars().get(0);
-    DataAccessRequest darResultTwo = collectionsResult.get(1).getDars().get(0);
-    DataAccessRequest expectedDarOne = collections.get(0).getDars().get(0);
-    DataAccessRequest expectedDarTwo = collections.get(1).getDars().get(0);
+    DataAccessRequest darResultOne = new ArrayList<DataAccessRequest>(collectionsResult.get(0).getDars().values()).get(0);
+    DataAccessRequest darResultTwo = new ArrayList<DataAccessRequest>(collectionsResult.get(1).getDars().values()).get(0);
+    DataAccessRequest expectedDarOne = new ArrayList<DataAccessRequest>(collections.get(0).getDars().values()).get(0);
+    DataAccessRequest expectedDarTwo = new ArrayList<DataAccessRequest>(collections.get(1).getDars().values()).get(0);
     assertEquals(expectedDarOne.getData().getDarCode(), darResultOne.getData().getDarCode());
     assertEquals(expectedDarTwo.getData().getDarCode(), darResultTwo.getData().getDarCode());
   }
@@ -359,7 +360,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
   @Test
   public void testFindAllDARCollectionsCreatedByUserId(){
     DarCollection collection = createDarCollection();
-    List<DataAccessRequest> dars = collection.getDars();
+    Map<String, DataAccessRequest> dars = collection.getDars();
     createDarCollection(); //create new collection associated with different user
     Integer userId = collection.getCreateUserId();
     List<DarCollection> collectionResult = darCollectionDAO.findDARCollectionsCreatedByUserId(userId);
@@ -367,15 +368,20 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     assertEquals(userId, collectionResult.get(0).getCreateUserId());
     Map<String, List<Election>> electionMap = collectionResult.get(0).getElectionMap();
     assertEquals(1, electionMap.size());
-    String referenceId = collectionResult.get(0).getDars().get(0).getReferenceId();
-    assertEquals(1, electionMap.get(referenceId).size());
+    List<String> keyset = electionMap.keySet().stream().collect(Collectors.toList());
+    String key = keyset.get(0);
+    List<Election> elections = electionMap.get(key);
+    assertEquals(1, elections.size());
 
-    List<DataAccessRequest> darsResult = collectionResult.get(0).getDars();
-    assertEquals(dars.size(), darsResult.size());
+    Collection<DataAccessRequest> darsResult = collectionResult.get(0).getDars().values();
+    assertEquals(dars.values().size(), darsResult.size());
 
+    List<DataAccessRequest> originalDars = new ArrayList<>(dars.values());
+    List<DataAccessRequest> resultDars = new ArrayList<>(dars.values());
+    
     for (int i = 0; i < dars.size(); i++) {
-      DataAccessRequest darOriginal = dars.get(i);
-      DataAccessRequest darResults = darsResult.get(i);
+      DataAccessRequest darOriginal = originalDars.get(i);
+      DataAccessRequest darResults = resultDars.get(i);
       assertEquals(darOriginal.getId(), darResults.getId());
       assertEquals(collection.getDarCode(), darResults.getData().getDarCode());
     }

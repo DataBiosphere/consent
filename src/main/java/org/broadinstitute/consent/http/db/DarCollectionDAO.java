@@ -190,7 +190,7 @@ public interface DarCollectionDAO {
       + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
       + "LEFT JOIN vote v "
       + "ON v.electionid = e.electionid "
-      + "INNER JOIN dacuser du "
+      + "LEFT JOIN dacuser du "
       + "ON du.dacuserid = v.dacuserid "
       + "WHERE c.collection_id = :collectionId;"
   )
