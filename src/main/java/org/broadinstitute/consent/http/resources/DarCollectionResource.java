@@ -83,9 +83,8 @@ public class DarCollectionResource extends Resource {
       @PathParam("collectionId") Integer collectionId) {
     try {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
-      // NOTE: restore this after front-end code is done, DO NOT MERGE UNTIL FRONT-END DESIGN IS DONE
       User user = userService.findUserByEmail(authUser.getEmail());
-      // validateUserIsCreator(user, collection);
+      validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

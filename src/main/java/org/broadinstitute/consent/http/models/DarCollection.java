@@ -51,10 +51,10 @@ public class DarCollection {
   private Set<DataSet> datasets;
 
   @JsonProperty
-  private Map<String, List<Election>> electionMap;
+  private Map<String, Map<Integer, Election>> electionMap;
 
   @JsonProperty
-  private Map<Integer, Vote> votes;
+  private Map<Integer, List<Vote>> votes;
 
   public DarCollection() {
     this.createDate = new Timestamp(System.currentTimeMillis());
@@ -147,33 +147,39 @@ public class DarCollection {
     return datasets;
   }
 
-  public void setElectionMap(Map<String, List<Election>> electionMap) {
+  public void setElectionMap(Map<String, Map<Integer, Election>> electionMap) {
     this.electionMap = electionMap;
   }
 
-  public Map<String, List<Election>> getElectionMap() {
+  public Map<String, Map<Integer, Election>> getElectionMap() {
     return electionMap;
   }
 
   public void addElection(Election election) {
-    String referenceId = election.getReferenceId();
-    if(!electionMap.containsKey(referenceId)){
-      electionMap.put(referenceId, new ArrayList<>());
+    if(Objects.nonNull(election.getReferenceId())) {
+      String referenceId = election.getReferenceId();
+      if(!electionMap.containsKey(referenceId)) {
+        electionMap.put(referenceId, new HashMap<>());
+      }
+      electionMap.get(referenceId).put(election.getElectionId(), election);
     }
-    electionMap.get(referenceId).add(election);
   }
 
-  public Map<Integer, Vote> getVotes() {
+  public Map<Integer, List<Vote>> getVotes() {
     return votes;
   }
 
-  public void setVotes(Map<Integer, Vote> votes) {
+  public void setVotes(Map<Integer, List<Vote>> votes) {
     this.votes = votes;
   }  
 
   public void addVote(Vote vote) {
-    if(Objects.nonNull(vote)) {
-      votes.put(vote.getVoteId(), vote);
+    if(Objects.nonNull(vote) && Objects.nonNull(vote.getElectionId())){
+      Integer electionId = vote.getElectionId();
+      if(!votes.containsKey(electionId)) {
+        votes.put(electionId, new ArrayList<>());
+      }
+      votes.get(electionId).add(vote);
     }
   }
 

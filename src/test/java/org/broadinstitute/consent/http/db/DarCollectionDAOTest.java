@@ -65,11 +65,12 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     assertNotNull(returned);
     assertEquals(collection.getDarCode(), returned.getDarCode());
     assertEquals(collection.getCreateUserId(), returned.getCreateUserId());
-    assertEquals(collection.getElectionMap().size(), 1);
-    assertEquals(collection.getVotes().size(), 1);
-    List<Election> electionList = collection.getElectionMap().values().stream().findFirst().orElse(null);
-    Election election = electionList.get(0);
-    Vote vote = collection.getVotes().values().stream().findFirst().orElse(null);
+    Map<Integer, Election> electionList = collection.getElectionMap().values().stream().findFirst().orElse(null);
+    Election election = electionList.values().stream().findFirst().orElse(null);
+    List<Vote> votes = collection.getVotes().get(election.getElectionId());
+    Vote vote = votes.get(0);
+    assertEquals(1, votes.size());
+    assertEquals(1, electionList.size());
     assertEquals("Open", election.getStatus());
     assertEquals(election.getElectionId(), vote.getElectionId());
   }
@@ -366,12 +367,15 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     List<DarCollection> collectionResult = darCollectionDAO.findDARCollectionsCreatedByUserId(userId);
     assertEquals(1, collectionResult.size());
     assertEquals(userId, collectionResult.get(0).getCreateUserId());
-    Map<String, List<Election>> electionMap = collectionResult.get(0).getElectionMap();
+    Map<String, Map<Integer, Election>> electionMap = collectionResult.get(0).getElectionMap();
     assertEquals(1, electionMap.size());
     List<String> keyset = electionMap.keySet().stream().collect(Collectors.toList());
-    String key = keyset.get(0);
-    List<Election> elections = electionMap.get(key);
+    String darReferenceId = keyset.get(0);
+    Map<Integer, Election> elections = electionMap.get(darReferenceId);
     assertEquals(1, elections.size());
+    Integer electionId = elections.keySet().stream().findFirst().orElse(null);
+    Election election = elections.values().stream().findFirst().orElse(null);
+    assertEquals(electionId, election.getElectionId());
 
     Collection<DataAccessRequest> darsResult = collectionResult.get(0).getDars().values();
     assertEquals(dars.values().size(), darsResult.size());
