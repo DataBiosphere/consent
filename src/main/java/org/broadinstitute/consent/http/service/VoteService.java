@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -103,6 +104,32 @@ public class VoteService {
                 vote.getHasConcerns()
         );
         return voteDAO.findVoteById(vote.getVoteId());
+    }
+
+    /**
+     * @param votes List of Votes to update
+     * @param voteValue Value to update the votes to
+     * @return The updated Vote
+     */
+    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue) {
+        if (votes.isEmpty()) {
+            return Collections.emptyList();
+        }
+        votes.forEach(vote -> {
+            validateVote(vote);
+            Date now = new Date();
+            voteDAO.updateVote(
+                    voteValue,
+                    vote.getRationale(),
+                    now,
+                    vote.getVoteId(),
+                    vote.getIsReminderSent(),
+                    vote.getElectionId(),
+                    Objects.isNull(vote.getCreateDate()) ? now : vote.getCreateDate(),
+                    vote.getHasConcerns()
+            );
+        });
+        return voteDAO.findVotesByIds(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
     }
 
     public Vote updateVoteById(Vote rec,  Integer voteId) throws IllegalArgumentException {
@@ -210,6 +237,13 @@ public class VoteService {
             notFoundException(voteId);
         }
         return vote;
+    }
+
+    public List<Vote> findVotesByIds(List<Integer> voteIds) {
+        if (voteIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return voteDAO.findVotesByIds(voteIds);
     }
 
     /**
