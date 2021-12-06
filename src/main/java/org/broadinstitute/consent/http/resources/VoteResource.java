@@ -4,9 +4,12 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.dropwizard.auth.Auth;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 
@@ -22,14 +25,17 @@ import javax.ws.rs.core.Response;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Path("api/votes")
 public class VoteResource extends Resource {
 
+    private final ElectionService electionService;
     private final UserService userService;
     private final VoteService voteService;
 
-    public VoteResource(UserService userService, VoteService voteService) {
+    public VoteResource(ElectionService electionService, UserService userService, VoteService voteService) {
+        this.electionService = electionService;
         this.userService = userService;
         this.voteService = voteService;
     }
@@ -75,15 +81,25 @@ public class VoteResource extends Resource {
         }
 
         try {
-            User user = userService.findUserByEmail(authUser.getEmail());
             List<Vote> votes = voteService.findVotesByIds(voteIds);
             if (votes.isEmpty()) {
                 return createExceptionResponse(new NotFoundException());
             }
+
             // Validate that the user is only updating their own votes:
+            User user = userService.findUserByEmail(authUser.getEmail());
             boolean authed = votes.stream().map(Vote::getDacUserId).allMatch(id -> id.equals(user.getDacUserId()));
             if (!authed) {
                 return createExceptionResponse(new NotFoundException());
+            }
+
+            // Validate that the elections are all in OPEN state
+            List<Election> elections = electionService.findElectionsByIds(votes.stream().map(Vote::getElectionId).collect(Collectors.toList()));
+            boolean allOpen = elections.stream().allMatch(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
+            if (!allOpen) {
+                return createExceptionResponse(
+                        new BadRequestException("Not all elections for votes are in OPEN state")
+                );
             }
             List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, vote, rationale);
             return Response.ok().entity(updatedVotes).build();
