@@ -3429,8 +3429,8 @@ paths:
                 type: object
         500:
           description: Internal Server Error
-  /api/vote:
-    $ref: './paths/vote.yaml'
+  /api/votes:
+    $ref: './paths/votes.yaml'
   /metrics/dac/decision:
     get:
       summary: Dac Decision Metrics
