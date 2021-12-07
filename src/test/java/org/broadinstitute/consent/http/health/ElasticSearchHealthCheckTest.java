@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.testcontainers.containers.MockServerContainer;
 
-import javax.ws.rs.InternalServerErrorException;
 import java.util.Collections;
 
 import static org.junit.Assert.assertFalse;
@@ -82,9 +81,11 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         assertFalse(result.isHealthy());
     }
 
-    @Test (expected = InternalServerErrorException.class)
+    @Test
     public void testCheckServerFailure() throws Exception {
         initHealthCheck("green", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-        healthCheck.check();
+
+        HealthCheck.Result result = healthCheck.check();
+        assertFalse(result.isHealthy());
     }
 }
