@@ -26,11 +26,22 @@ public class DarCollectionReducer implements LinkedHashMapRowReducer<Integer, Da
         if(Objects.nonNull(collection)) {
           if(Objects.nonNull(rowView.getColumn("dar_id", Integer.class))) {
             dar = rowView.getRow(DataAccessRequest.class);
-            DataAccessRequestData data = translate(rowView.getColumn("data", String.class));
-            dar.setData(data);
+            String referenceId = dar.getReferenceId();
+            DataAccessRequest savedDar = collection.getDars().get(referenceId);
+            if(Objects.isNull(savedDar)) {
+              DataAccessRequestData data = translate(rowView.getColumn("data", String.class));
+              dar.setData(data);
+            } else {
+              dar = savedDar;
+            }
           }
           if(Objects.nonNull(rowView.getColumn("e_election_id", Integer.class))) {
             election = rowView.getRow(Election.class);
+            Integer electionId = election.getElectionId();
+            Election savedElection = dar.getElections().get(electionId);
+            if(Objects.nonNull(savedElection)) {
+              election = savedElection;
+            }
           }
           if (Objects.nonNull(rowView.getColumn("v_vote_id", Integer.class))) {
             vote = rowView.getRow(Vote.class);
@@ -39,13 +50,16 @@ public class DarCollectionReducer implements LinkedHashMapRowReducer<Integer, Da
       } catch(MappingException e) {
         //ignore any exceptions
       }
+      if(Objects.nonNull(vote)) {
+        election.addVote(vote);
+      }
+
+      if(Objects.nonNull(election)) {
+        dar.addElection(election);
+      }
 
       if(Objects.nonNull(dar)) {
         collection.addDar(dar);
       }
-      if(Objects.nonNull(election)) {
-        collection.addElection(election);
-      }
-      collection.addVote(vote);
     }
 }

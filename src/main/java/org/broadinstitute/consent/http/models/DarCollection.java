@@ -8,9 +8,7 @@ import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Set;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 import java.util.Map;
 
@@ -50,17 +48,9 @@ public class DarCollection {
   @JsonProperty
   private Set<DataSet> datasets;
 
-  @JsonProperty
-  private Map<String, Map<Integer, Election>> darElectionMap;
-
-  @JsonProperty
-  private Map<Integer, List<Vote>> electionVoteMap;
-
   public DarCollection() {
     this.createDate = new Timestamp(System.currentTimeMillis());
     this.datasets = new HashSet<>();
-    this.darElectionMap = new HashMap<>();
-    this.electionVoteMap = new HashMap<>();
   }
 
   public DarCollection deepCopy() {
@@ -132,7 +122,13 @@ public class DarCollection {
     if (Objects.isNull(dars)) {
       this.setDars(new HashMap<>());
     }
-    dars.put(dar.getReferenceId(), dar);
+    if(Objects.nonNull(dar)) {
+      String referenceId = dar.getReferenceId();
+      DataAccessRequest savedDar = dars.get(referenceId);
+      if(Objects.isNull(savedDar)) {
+        dars.put(referenceId, dar);
+      }
+    }
   }
 
   public void addDataset(DataSet dataset) {
@@ -145,42 +141,6 @@ public class DarCollection {
 
   public Set<DataSet> getDatasets() {
     return datasets;
-  }
-
-  public void setDarElectionMap(Map<String, Map<Integer, Election>> darElectionMap) {
-    this.darElectionMap = darElectionMap;
-  }
-
-  public Map<String, Map<Integer, Election>> getDarElectionMap() {
-    return darElectionMap;
-  }
-
-  public void addElection(Election election) {
-    if(Objects.nonNull(election.getReferenceId())) {
-      String referenceId = election.getReferenceId();
-      if(!darElectionMap.containsKey(referenceId)) {
-        darElectionMap.put(referenceId, new HashMap<>());
-      }
-      darElectionMap.get(referenceId).put(election.getElectionId(), election);
-    }
-  }
-
-  public Map<Integer, List<Vote>> getElectionVoteMap() {
-    return electionVoteMap;
-  }
-
-  public void setVotes(Map<Integer, List<Vote>> electionVoteMap) {
-    this.electionVoteMap = electionVoteMap;
-  }  
-
-  public void addVote(Vote vote) {
-    if(Objects.nonNull(vote) && Objects.nonNull(vote.getElectionId())){
-      Integer electionId = vote.getElectionId();
-      if(!electionVoteMap.containsKey(electionId)) {
-        electionVoteMap.put(electionId, new ArrayList<>());
-      }
-      electionVoteMap.get(electionId).add(vote);
-    }
   }
 
   @Override

@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
+
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -43,6 +44,12 @@ public class DataAccessRequest {
   @JsonProperty public Timestamp submissionDate;
 
   @JsonProperty public Timestamp updateDate;
+
+  @JsonProperty private Map<Integer, Election> elections;
+
+  public DataAccessRequest() {
+    this.elections = new HashMap<>();
+  }
 
   public static boolean isNotCanceled(DataAccessRequest dar) {
     String status = dar.getData().getStatus();
@@ -123,6 +130,27 @@ public class DataAccessRequest {
 
   public void setUpdateDate(Timestamp updateDate) {
     this.updateDate = updateDate;
+  }
+
+  public void setElections(Map<Integer, Election> elections) {
+    this.elections = elections;
+  }
+
+  public Map<Integer, Election> getElections() {
+    return elections;
+  }
+
+  public void addElection(Election election) {
+    if(Objects.isNull(elections)) {
+      this.setElections(new HashMap<>());
+    }
+    if(Objects.nonNull(election)) {
+      Integer electionId = election.getElectionId();
+      Election savedRecord = elections.get(electionId);
+      if (Objects.isNull(savedRecord)) {
+        elections.put(electionId, election);
+      }
+    }
   }
 
   /**

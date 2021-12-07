@@ -50,3 +50,8 @@ properties:
   archived:
     type: boolean
     description: Determines if the election is archived.
+  votes:
+    type: object
+    description: Map of votes tied to this election (voteId - vote)
+    items:
+      $ref: './Vote.yaml'

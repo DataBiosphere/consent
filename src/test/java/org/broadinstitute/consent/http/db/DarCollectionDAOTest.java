@@ -65,14 +65,22 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     assertNotNull(returned);
     assertEquals(collection.getDarCode(), returned.getDarCode());
     assertEquals(collection.getCreateUserId(), returned.getCreateUserId());
-    Map<Integer, Election> electionList = collection.getDarElectionMap().values().stream().findFirst().orElse(null);
-    Election election = electionList.values().stream().findFirst().orElse(null);
-    List<Vote> votes = collection.getElectionVoteMap().get(election.getElectionId());
-    Vote vote = votes.get(0);
-    assertEquals(1, votes.size());
-    assertEquals(1, electionList.size());
-    assertEquals("Open", election.getStatus());
-    assertEquals(election.getElectionId(), vote.getElectionId());
+    List<Election> elections = collection.getDars().values().stream()
+      .map(d -> d.getElections().values())
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
+    
+      assertEquals(1, elections.size());
+
+      Election election = elections.get(0);
+      List<Vote> votes = election.getVotes().values().stream()
+        .collect(Collectors.toList());
+
+      Vote vote = votes.get(0);
+      
+      assertEquals(1, votes.size());
+      assertEquals("Open", election.getStatus());
+      assertEquals(election.getElectionId(), vote.getElectionId());
   }
 
   @Test
@@ -367,28 +375,19 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     List<DarCollection> collectionResult = darCollectionDAO.findDARCollectionsCreatedByUserId(userId);
     assertEquals(1, collectionResult.size());
     assertEquals(userId, collectionResult.get(0).getCreateUserId());
-    Map<String, Map<Integer, Election>> electionMap = collectionResult.get(0).getDarElectionMap();
-    assertEquals(1, electionMap.size());
-    List<String> keyset = electionMap.keySet().stream().collect(Collectors.toList());
-    String darReferenceId = keyset.get(0);
-    Map<Integer, Election> elections = electionMap.get(darReferenceId);
-    assertEquals(1, elections.size());
-    Integer electionId = elections.keySet().stream().findFirst().orElse(null);
-    Election election = elections.values().stream().findFirst().orElse(null);
-    assertEquals(electionId, election.getElectionId());
 
-    Collection<DataAccessRequest> darsResult = collectionResult.get(0).getDars().values();
-    assertEquals(dars.values().size(), darsResult.size());
-
-    List<DataAccessRequest> originalDars = new ArrayList<>(dars.values());
-    List<DataAccessRequest> resultDars = new ArrayList<>(dars.values());
+    DarCollection collectionRecord = collectionResult.get(0);
+    List<Election> electionList = dars.values().stream()
+      .map(d-> d.getElections().values())
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
     
-    for (int i = 0; i < dars.size(); i++) {
-      DataAccessRequest darOriginal = originalDars.get(i);
-      DataAccessRequest darResults = resultDars.get(i);
-      assertEquals(darOriginal.getId(), darResults.getId());
-      assertEquals(collection.getDarCode(), darResults.getData().getDarCode());
-    }
+    assertEquals(1, electionList.size());
+    List<String> referenceIds = collectionRecord.getDars().values().stream()
+      .map(DataAccessRequest::getReferenceId)
+      .collect(Collectors.toList());
+    
+    assertTrue(referenceIds.contains(electionList.get(0).getReferenceId()));
   }
 
   private String generateTestTerm(String targetString) {

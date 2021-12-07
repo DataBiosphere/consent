@@ -25,6 +25,11 @@ properties:
   darCode:
     type: string
     description: Unique DAR Code
+  elections:
+    type: object
+    description: Map of elections tied to the DAR (electionid - election)
+    items:
+      $ref: './Election.yaml' 
   partialDarCode:
     type: string
     description: Unique Partial DAR Code

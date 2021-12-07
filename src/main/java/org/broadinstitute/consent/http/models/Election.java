@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @JsonInclude(Include.NON_NULL)
 public class Election {
@@ -63,6 +65,9 @@ public class Election {
     @JsonProperty
     private String projectTitle;
 
+    @JsonProperty
+    private Map<Integer, Vote> votes;
+
     public Election() {
     }
 
@@ -77,6 +82,7 @@ public class Election {
         this.lastUpdate = lastUpdate;
         this.finalAccessVote = finalAccessVote;
         this.dataSetId = dataSetId;
+        this.votes = new HashMap<>();
     }
 
     public Election(Integer electionId, String electionType,
@@ -232,6 +238,27 @@ public class Election {
 
     public void setProjectTitle(String projectTitle) {
         this.projectTitle = projectTitle;
+    }
+
+    public Map<Integer, Vote> getVotes() {
+        return votes;
+    }
+
+    public void setVotes(Map<Integer, Vote> votes) {
+        this.votes = votes;
+    }
+
+    public void addVote(Vote vote) {
+        if(java.util.Objects.isNull(votes)) {
+            this.setVotes(new HashMap<>());
+        }
+        if(java.util.Objects.nonNull(vote)) {
+            Integer voteId = vote.getVoteId();
+            Vote savedVote = votes.get(voteId);
+            if(java.util.Objects.isNull(savedVote)) {
+                votes.put(voteId, vote);
+            }
+        }
     }
 
     @Override
