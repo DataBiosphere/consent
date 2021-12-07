@@ -51,16 +51,16 @@ public class DarCollection {
   private Set<DataSet> datasets;
 
   @JsonProperty
-  private Map<String, Map<Integer, Election>> electionMap;
+  private Map<String, Map<Integer, Election>> darElectionMap;
 
   @JsonProperty
-  private Map<Integer, List<Vote>> votes;
+  private Map<Integer, List<Vote>> electionVoteMap;
 
   public DarCollection() {
     this.createDate = new Timestamp(System.currentTimeMillis());
     this.datasets = new HashSet<>();
-    this.electionMap = new HashMap<>();
-    this.votes = new HashMap<>();
+    this.darElectionMap = new HashMap<>();
+    this.electionVoteMap = new HashMap<>();
   }
 
   public DarCollection deepCopy() {
@@ -147,39 +147,39 @@ public class DarCollection {
     return datasets;
   }
 
-  public void setElectionMap(Map<String, Map<Integer, Election>> electionMap) {
-    this.electionMap = electionMap;
+  public void setDarElectionMap(Map<String, Map<Integer, Election>> darElectionMap) {
+    this.darElectionMap = darElectionMap;
   }
 
-  public Map<String, Map<Integer, Election>> getElectionMap() {
-    return electionMap;
+  public Map<String, Map<Integer, Election>> getDarElectionMap() {
+    return darElectionMap;
   }
 
   public void addElection(Election election) {
     if(Objects.nonNull(election.getReferenceId())) {
       String referenceId = election.getReferenceId();
-      if(!electionMap.containsKey(referenceId)) {
-        electionMap.put(referenceId, new HashMap<>());
+      if(!darElectionMap.containsKey(referenceId)) {
+        darElectionMap.put(referenceId, new HashMap<>());
       }
-      electionMap.get(referenceId).put(election.getElectionId(), election);
+      darElectionMap.get(referenceId).put(election.getElectionId(), election);
     }
   }
 
-  public Map<Integer, List<Vote>> getVotes() {
-    return votes;
+  public Map<Integer, List<Vote>> getElectionVoteMap() {
+    return electionVoteMap;
   }
 
-  public void setVotes(Map<Integer, List<Vote>> votes) {
-    this.votes = votes;
+  public void setVotes(Map<Integer, List<Vote>> electionVoteMap) {
+    this.electionVoteMap = electionVoteMap;
   }  
 
   public void addVote(Vote vote) {
     if(Objects.nonNull(vote) && Objects.nonNull(vote.getElectionId())){
       Integer electionId = vote.getElectionId();
-      if(!votes.containsKey(electionId)) {
-        votes.put(electionId, new ArrayList<>());
+      if(!electionVoteMap.containsKey(electionId)) {
+        electionVoteMap.put(electionId, new ArrayList<>());
       }
-      votes.get(electionId).add(vote);
+      electionVoteMap.get(electionId).add(vote);
     }
   }
 
