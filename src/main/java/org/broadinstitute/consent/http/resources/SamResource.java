@@ -77,5 +77,4 @@ public class SamResource extends Resource {
       return createExceptionResponse(e);
     }
   }
-
 }
