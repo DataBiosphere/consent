@@ -102,10 +102,7 @@ public class SamService {
   public String getToSText() throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getToSTextUrl());
     HttpRequest request = clientUtil.buildUnAuthedGetRequest(genericUrl);
-    HttpHeaders headers = new HttpHeaders()
-            .setAccept(MediaType.TEXT_PLAIN)
-            .set("X-App-ID", "DUOS");
-    request.setHeaders(headers);
+    request.getHeaders().setAccept(MediaType.TEXT_PLAIN);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     return response.parseAsString();
   }
