@@ -102,5 +102,4 @@ public class SamResourceTest {
     Response response = resource.getRegistrationInfo(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
-
 }
