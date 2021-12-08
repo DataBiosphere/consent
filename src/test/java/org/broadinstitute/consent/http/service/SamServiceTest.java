@@ -184,7 +184,7 @@ public class SamServiceTest implements WithMockServer {
     mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", MediaType.TEXT_PLAIN.getType())).withStatusCode(200).withBody(mockText));
 
     try {
-      String text = service.getToSText(authUser);
+      String text = service.getToSText();
       assertEquals(mockText, text);
     } catch (Exception e) {
       fail(e.getMessage());

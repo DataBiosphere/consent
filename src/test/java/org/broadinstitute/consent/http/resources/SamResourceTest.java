@@ -23,20 +23,21 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class SamResourceTest {
 
-  @Mock AuthUser authUser;
+  @Mock private AuthUser authUser;
 
-  @Mock SamService service;
+  @Mock private SamService service;
 
-  @Mock UriInfo uriInfo;
+  @Mock private UriInfo uriInfo;
 
-  SamResource resource;
+  private SamResource resource;
 
   @Before
   public void setUp() {
-    MockitoAnnotations.openMocks(this);
+    openMocks(this);
   }
 
   private void initResource() {
@@ -102,14 +103,4 @@ public class SamResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
-  @Test
-  public void testGetToSText() throws Exception {
-    String mockText = "Plain Text";
-    when(service.getToSText(any())).thenReturn(mockText);
-    initResource();
-
-    Response response = resource.getToSText(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertEquals(mockText, response.getEntity().toString());
-  }
 }

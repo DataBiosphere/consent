@@ -3371,8 +3371,6 @@ paths:
     $ref: './paths/samRegisterSelfInfo.yaml'
   /api/sam/resource-types:
     $ref: './paths/samResourceTypes.yaml'
-  /api/sam/tos/text:
-    $ref: './paths/samTosText.yaml'
   /metrics/dac/decision:
     get:
       summary: Dac Decision Metrics
@@ -3445,7 +3443,8 @@ paths:
           description: All systems are OK
         500:
           description: Some number of subsystems are not OK.
-
+  /tos/text:
+    $ref: './paths/tosText.yaml'
   /version:
     get:
       summary: Current application version

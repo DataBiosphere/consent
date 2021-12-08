@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service.sam;
 
 import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.common.util.concurrent.FutureCallback;
@@ -98,10 +99,13 @@ public class SamService {
         listeningExecutorService);
   }
 
-  public String getToSText(AuthUser authUser) throws Exception {
+  public String getToSText() throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getToSTextUrl());
-    HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    request.getHeaders().setAccept(MediaType.TEXT_PLAIN);
+    HttpRequest request = clientUtil.buildUnAuthedGetRequest(genericUrl);
+    HttpHeaders headers = new HttpHeaders()
+            .setAccept(MediaType.TEXT_PLAIN)
+            .set("X-App-ID", "DUOS");
+    request.setHeaders(headers);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     return response.parseAsString();
   }
