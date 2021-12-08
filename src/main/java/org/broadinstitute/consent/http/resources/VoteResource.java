@@ -93,14 +93,6 @@ public class VoteResource extends Resource {
                 return createExceptionResponse(new NotFoundException());
             }
 
-            // Validate that the elections are all in OPEN state
-            List<Election> elections = electionService.findElectionsByIds(votes.stream().map(Vote::getElectionId).collect(Collectors.toList()));
-            boolean allOpen = elections.stream().allMatch(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
-            if (!allOpen) {
-                return createExceptionResponse(
-                        new BadRequestException("Not all elections for votes are in OPEN state")
-                );
-            }
             List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, vote, rationale);
             return Response.ok().entity(updatedVotes).build();
         } catch (Exception e) {

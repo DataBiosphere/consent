@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -22,6 +23,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -133,9 +135,12 @@ public class VoteServiceTest {
     @Test
     public void testUpdateVotesWithValue() {
         Vote v = setUpTestVote(false, false);
+        Election e = new Election();
+        e.setStatus(ElectionStatus.OPEN.getValue());
         Vote returnedVote = setUpTestVote(true, true);
         returnedVote.setRationale("rationale");
         when(voteDAO.findVotesByIds(any())).thenReturn(List.of(returnedVote));
+        when(electionDAO.findElectionsByIds(anyList())).thenReturn(List.of(e));
         initService();
 
         List<Vote> votes = service.updateVotesWithValue(List.of(v), true, "rationale");
@@ -149,6 +154,17 @@ public class VoteServiceTest {
         List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
         assertNotNull(votes);
         assertTrue(votes.isEmpty());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateVotesWithValue_closedElection() {
+        Vote v = setUpTestVote(false, false);
+        Election e = new Election();
+        e.setStatus(ElectionStatus.CLOSED.getValue());
+        when(electionDAO.findElectionsByIds(anyList())).thenReturn(List.of(e));
+        initService();
+
+        service.updateVotesWithValue(List.of(v), true, "rationale");
     }
 
     @Test

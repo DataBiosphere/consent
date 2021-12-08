@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -116,6 +117,14 @@ public class VoteService {
         if (votes.isEmpty()) {
             return Collections.emptyList();
         }
+
+        // Validate that the elections are all in OPEN state
+        List<Election> elections = electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).collect(Collectors.toList()));
+        boolean allOpen = !elections.isEmpty() && elections.stream().allMatch(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
+        if (!allOpen) {
+            throw new IllegalArgumentException("Not all elections for votes are in OPEN state");
+        }
+
         votes.forEach(vote -> {
             validateVote(vote);
             Date now = new Date();

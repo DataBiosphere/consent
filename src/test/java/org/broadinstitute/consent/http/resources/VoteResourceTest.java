@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -78,6 +79,18 @@ public class VoteResourceTest {
 
     Response response = resource.updateVotes(authUser, true, "rationale", "[1, 2, 3]");
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVotes_closedElection() {
+    user.setDacUserId(1);
+    vote.setDacUserId(2);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    doThrow(new IllegalArgumentException()).when(voteService).findVotesByIds(any());
+    initResource();
+
+    Response response = resource.updateVotes(authUser, true, "rationale", "[1, 2, 3]");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
