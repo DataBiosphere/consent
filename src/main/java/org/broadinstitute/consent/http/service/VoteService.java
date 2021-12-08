@@ -112,8 +112,9 @@ public class VoteService {
      * @param voteValue Value to update the votes to
      * @param rationale Value to update the rationales to. Only update if non-null.
      * @return The updated Vote
+     * @throws IllegalArgumentException when there are non-open elections on any of the votes
      */
-    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) {
+    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) throws IllegalArgumentException {
         if (votes.isEmpty()) {
             return Collections.emptyList();
         }
