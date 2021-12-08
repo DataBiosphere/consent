@@ -101,4 +101,15 @@ public class SamResourceTest {
     Response response = resource.getRegistrationInfo(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
+
+  @Test
+  public void testGetToSText() throws Exception {
+    String mockText = "Plain Text";
+    when(service.getToSText(any())).thenReturn(mockText);
+    initResource();
+
+    Response response = resource.getToSText(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(mockText, response.getEntity().toString());
+  }
 }
