@@ -1,12 +1,12 @@
 get:
-  summary: Gets the Terms of Service Text from Sam
-  description: Gets the Terms of Service Text from Sam
+  summary: Gets the DUOS translated Terms of Service Text from Sam
+  description: Gets the DUOS translated Terms of Service Text from Sam
   tags:
     - Sam
     - ToS
   responses:
     200:
-      description: Sam ToS Text
+      description: DUOS ToS Text
       content:
         text/plain:
           schema:

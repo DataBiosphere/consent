@@ -3445,6 +3445,8 @@ paths:
           description: Some number of subsystems are not OK.
   /tos/text:
     $ref: './paths/tosText.yaml'
+  /tos/text/duos:
+    $ref: './paths/tosTextDuos.yaml'
   /version:
     get:
       summary: Current application version
