@@ -7,17 +7,15 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.util.LogHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.UUID;
-import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
@@ -52,22 +50,6 @@ public class ConsentVoteResourceTest {
         return consent;
     }
 
-    // TODO: Extract this class into an interface
-    private class LogHandler extends Handler {
-        Level lastLevel = Level.FINEST;
-
-        public Level checkLevel() {
-            return lastLevel;
-        }
-
-        public void publish(LogRecord record) {
-            lastLevel = record.getLevel();
-        }
-
-        public void close(){}
-        public void flush(){}
-    }
-
     @Before
     public void setUp() {
         openMocks(this);
@@ -97,8 +79,7 @@ public class ConsentVoteResourceTest {
         Consent consent = createMockConsent();
 
         Logger logger = Logger.getLogger(ConsentVoteResource.class.getName());
-        LogHandler handler = new LogHandler();
-        handler.setLevel(Level.ALL);
+        LogHandler handler = new LogHandler(Level.ALL);
         logger.setUseParentHandlers(false);
         logger.addHandler(handler);
         logger.setLevel(Level.ALL);
