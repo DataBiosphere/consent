@@ -24,6 +24,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -95,5 +96,13 @@ public class SamService {
           }
         },
         listeningExecutorService);
+  }
+
+  public String getToSText(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(configuration.getToSTextUrl());
+    HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
+    request.getHeaders().setAccept(MediaType.TEXT_PLAIN);
+    HttpResponse response = clientUtil.handleHttpRequest(request);
+    return response.parseAsString();
   }
 }

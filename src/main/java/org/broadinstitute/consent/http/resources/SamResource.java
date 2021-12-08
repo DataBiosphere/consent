@@ -77,4 +77,16 @@ public class SamResource extends Resource {
       return createExceptionResponse(e);
     }
   }
+
+  @Path("tos/text")
+  @GET
+  @Produces("text/plain")
+  public Response getToSText(@Auth AuthUser authUser) {
+    try {
+      String text = samService.getToSText(authUser);
+      return Response.ok().entity(text).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 }

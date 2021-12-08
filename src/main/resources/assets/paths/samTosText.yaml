@@ -1,0 +1,14 @@
+get:
+  summary: Gets the Terms of Service Text from Sam
+  description: Gets the Terms of Service Text from Sam
+  tags:
+    - Sam
+  responses:
+    200:
+      description: Sam ToS Text
+      content:
+        text/plain:
+          schema:
+            type: string
+    500:
+      description: Internal Server Error

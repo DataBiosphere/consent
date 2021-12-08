@@ -64,4 +64,8 @@ public class ServicesConfiguration {
   public String postRegisterUserV2SelfUrl() {
     return getSamUrl() + "register/user/v2/self";
   }
+
+  public String getToSTextUrl() {
+    return getSamUrl() + "tos/text";
+  }
 }
