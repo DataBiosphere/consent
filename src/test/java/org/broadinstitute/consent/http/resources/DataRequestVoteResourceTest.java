@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.WithLogHandler;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -17,7 +18,6 @@ import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.util.LogHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -44,7 +44,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-public class DataRequestVoteResourceTest {
+public class DataRequestVoteResourceTest implements WithLogHandler {
     @Mock
     private EmailNotifierService emailNotifierService;
     @Mock
@@ -235,12 +235,7 @@ public class DataRequestVoteResourceTest {
         Vote vote = createMockVote("", 1, true);
         when(voteService.findVoteById(any())).thenReturn(vote);
 
-        Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
-        LogHandler handler = new LogHandler(Level.ALL);
-        logger.setUseParentHandlers(false);
-        logger.addHandler(handler);
-        logger.setLevel(Level.ALL);
-
+        LogHandler handler = createLogHandler(DataRequestVoteResource.class.getName());
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
         when(electionService.validateCollectDAREmailCondition(any())).thenReturn(true);
         doThrow(new IOException()).when(emailNotifierService).sendCollectMessage(any());

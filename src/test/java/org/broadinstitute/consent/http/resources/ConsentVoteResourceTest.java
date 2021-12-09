@@ -2,12 +2,12 @@ package org.broadinstitute.consent.http.resources;
 
 
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.WithLogHandler;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.util.LogHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-public class ConsentVoteResourceTest {
+public class ConsentVoteResourceTest implements WithLogHandler {
 
     @Mock
     private VoteService voteService;
@@ -77,12 +77,7 @@ public class ConsentVoteResourceTest {
     public void testCreateConsentVoteCollectMessageError() throws Exception {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
-
-        Logger logger = Logger.getLogger(ConsentVoteResource.class.getName());
-        LogHandler handler = new LogHandler(Level.ALL);
-        logger.setUseParentHandlers(false);
-        logger.addHandler(handler);
-        logger.setLevel(Level.ALL);
+        LogHandler handler = createLogHandler(ConsentVoteResource.class.getName());
 
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
         when(electionService.validateCollectEmailCondition(any())).thenReturn(true);
