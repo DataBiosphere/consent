@@ -81,6 +81,7 @@ public class DAOTestHelper {
     private static final List<String> createdConsentIds = new ArrayList<>();
     private static final List<Integer> createdElectionIds = new ArrayList<>();
     private static final List<Integer> createdUserIds = new ArrayList<>();
+    private static final List<Integer> createdVoteIds = new ArrayList<>();
     private static final List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
     private static final List<Integer> createdInstitutionIds = new ArrayList<>();
     private static final List<Integer> createdLibraryCardIds = new ArrayList<>();
@@ -159,6 +160,7 @@ public class DAOTestHelper {
             consentDAO.deleteAllAssociationsForConsent(id);
             consentDAO.deleteConsent(id);
         });
+        createdVoteIds.forEach(id -> voteDAO.deleteVoteById(id));
         createdElectionIds.forEach(id -> electionDAO.deleteAccessRP(id));
         createdElectionIds.forEach(id -> electionDAO.deleteElectionById(id));
         dataSetDAO.deleteDataSetsProperties(createdDataSetIds);
@@ -281,6 +283,7 @@ public class DAOTestHelper {
 
     protected Vote createFinalVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+        createdVoteIds.add(voteId);
         return voteDAO.findVoteById(voteId);
     }
 
@@ -597,8 +600,10 @@ public class DAOTestHelper {
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         DataSet dataset = createDataset();
         DataAccessRequest dar = insertDAR(user.getDacUserId(), collection_id, darCode);
-        createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-        createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        createFinalVote(user.getDacUserId(), cancelled.getElectionId());
+        createFinalVote(user.getDacUserId(), access.getElectionId());
         insertDAR(user.getDacUserId(), collection_id, darCode);
         insertDAR(user.getDacUserId(), collection_id, darCode);
         createdDarCollections.add(collection_id);

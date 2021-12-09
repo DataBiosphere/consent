@@ -82,8 +82,8 @@ public class DarCollectionResource extends Resource {
       @Auth AuthUser authUser,
       @PathParam("collectionId") Integer collectionId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
+      User user = userService.findUserByEmail(authUser.getEmail());
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
     } catch (Exception e) {
@@ -186,7 +186,7 @@ public class DarCollectionResource extends Resource {
 
   private void validateCollectionIsCanceled(DarCollection collection) {
     boolean isCanceled =
-        collection.getDars().stream()
+        collection.getDars().values().stream()
             .anyMatch(
                 d -> d.getData().getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()));
     if (!isCanceled) {

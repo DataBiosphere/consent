@@ -40,6 +40,9 @@ public class Vote {
     @JsonProperty
     private Boolean hasConcerns;
 
+    @JsonProperty
+    private String displayName;
+
     public Vote() {
     }
 
@@ -135,6 +138,14 @@ public class Vote {
 
     public void setHasConcerns(Boolean hasConcerns) {
         this.hasConcerns = hasConcerns;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     @Override

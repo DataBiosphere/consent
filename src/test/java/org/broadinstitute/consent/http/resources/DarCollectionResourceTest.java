@@ -14,7 +14,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.Response;
@@ -66,9 +69,8 @@ public class DarCollectionResourceTest {
 
   private DarCollection mockDarCollection() {
     DarCollection collection = new DarCollection();
-    collection.setDars(new ArrayList<>());
     for(int i = 0; i < 3; i++) {
-      collection.getDars().add(mockDataAccessRequestWithDatasetIds());
+      collection.addDar(mockDataAccessRequestWithDatasetIds());
     }
     return collection;
   }
@@ -342,9 +344,12 @@ public class DarCollectionResourceTest {
     when(collection.getCreateUserId()).thenReturn(userId);
     DataAccessRequest dar = mock(DataAccessRequest.class);
     DataAccessRequestData data = mock(DataAccessRequestData.class);
+    String referenceId = UUID.randomUUID().toString();
     when(data.getStatus()).thenReturn("Not Canceled");
     when(dar.getData()).thenReturn(data);
-    when(collection.getDars()).thenReturn(List.of(dar));
+    when(dar.getReferenceId()).thenReturn(referenceId);
+    Map<String, DataAccessRequest> darMap = Map.of(dar.getReferenceId(), dar);
+    when(collection.getDars()).thenReturn(darMap);
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     initResource();
 
@@ -362,9 +367,12 @@ public class DarCollectionResourceTest {
     when(collection.getCreateUserId()).thenReturn(userId);
     DataAccessRequest dar = mock(DataAccessRequest.class);
     DataAccessRequestData data = mock(DataAccessRequestData.class);
+    String referenceId = UUID.randomUUID().toString();
     when(data.getStatus()).thenReturn(DarStatus.CANCELED.getValue());
     when(dar.getData()).thenReturn(data);
-    when(collection.getDars()).thenReturn(List.of(dar));
+    when(dar.getReferenceId()).thenReturn(referenceId);
+    Map<String, DataAccessRequest> darMap = Map.of(dar.getReferenceId(), dar);
+    when(collection.getDars()).thenReturn(darMap);
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(dataAccessRequestService.createDraftDarFromCanceledCollection(any(), any())).thenReturn(new DataAccessRequest());
     initResource();
