@@ -91,8 +91,13 @@ public class DatasetResource extends Resource {
         if (duplicateProperties.size() > 0) {
             throw new BadRequestException("Dataset contains multiple values for the same property.");
         }
-        String name = inputDataset.getPropertyValue("Dataset Name");
-        if (Objects.isNull(name)) {
+        String name = "";
+        try {
+            name = inputDataset.getPropertyValue("Dataset Name");
+        } catch (IndexOutOfBoundsException e) {
+            throw new BadRequestException("Dataset name is required");
+        }
+        if (Objects.isNull(name) || name.isBlank()) {
             throw new BadRequestException("Dataset name is required");
         }
         DataSet datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
