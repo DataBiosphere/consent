@@ -59,6 +59,8 @@ public class DataAccessRequestResourceTest {
         MockitoAnnotations.initMocks(this);
     }
 
+    //TODO: Test getDataAccessRequestModalSummary using WithLogHandler interface
+
     /**
      * Positive case where a DAR references a numeric dataset id
      */

@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.WithLogHandler;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
@@ -10,15 +11,11 @@ import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.UUID;
-import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,7 +24,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-public class ConsentVoteResourceTest {
+public class ConsentVoteResourceTest implements WithLogHandler {
 
     @Mock
     private VoteService voteService;
@@ -50,22 +47,6 @@ public class ConsentVoteResourceTest {
         Consent consent = new Consent();
         consent.setConsentId(UUID.randomUUID().toString());
         return consent;
-    }
-
-    // TODO: Extract this class into an interface
-    private class LogHandler extends Handler {
-        Level lastLevel = Level.FINEST;
-
-        public Level checkLevel() {
-            return lastLevel;
-        }
-
-        public void publish(LogRecord record) {
-            lastLevel = record.getLevel();
-        }
-
-        public void close(){}
-        public void flush(){}
     }
 
     @Before
@@ -95,13 +76,7 @@ public class ConsentVoteResourceTest {
     public void testCreateConsentVoteCollectMessageError() throws Exception {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
-
-        Logger logger = Logger.getLogger(ConsentVoteResource.class.getName());
-        LogHandler handler = new LogHandler();
-        handler.setLevel(Level.ALL);
-        logger.setUseParentHandlers(false);
-        logger.addHandler(handler);
-        logger.setLevel(Level.ALL);
+        LogHandler handler = createLogHandler(ConsentVoteResource.class.getName());
 
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
         when(electionService.validateCollectEmailCondition(any())).thenReturn(true);
@@ -114,7 +89,7 @@ public class ConsentVoteResourceTest {
     }
 
     @Test
-    public void testCreateConsentVoteOtherError() throws Exception {
+    public void testCreateConsentVoteOtherError() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -126,7 +101,7 @@ public class ConsentVoteResourceTest {
     }
 
     @Test
-    public void testUpdateConsentVoteSuccess() throws Exception {
+    public void testUpdateConsentVoteSuccess() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -138,7 +113,7 @@ public class ConsentVoteResourceTest {
     }
 
     @Test
-    public void testUpdateConsentVoteError() throws Exception {
+    public void testUpdateConsentVoteError() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -150,7 +125,7 @@ public class ConsentVoteResourceTest {
     }
 
     @Test
-    public void testDescribe() throws Exception {
+    public void testDescribe() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -162,7 +137,7 @@ public class ConsentVoteResourceTest {
     }
 
     @Test
-    public void testDeleteVoteSuccess() throws Exception {
+    public void testDeleteVoteSuccess() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -173,7 +148,7 @@ public class ConsentVoteResourceTest {
     }
 
     @Test
-    public void testDeleteVoteError() throws Exception {
+    public void testDeleteVoteError() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -185,7 +160,7 @@ public class ConsentVoteResourceTest {
     }
 
     @Test
-    public void testDeleteVotesSuccess() throws Exception {
+    public void testDeleteVotesSuccess() {
         Consent consent = createMockConsent();
 
         initResource();
@@ -195,7 +170,7 @@ public class ConsentVoteResourceTest {
     }
 
     @Test
-    public void testDeleteVotesNull() throws Exception {
+    public void testDeleteVotesNull() {
         initResource();
 
         Response response = resource.deleteVotes(null);
@@ -214,7 +189,7 @@ public class ConsentVoteResourceTest {
     }
 
     @Test
-    public void testOptions() throws Exception {
+    public void testOptions() {
         Consent consent = createMockConsent();
 
         initResource();
