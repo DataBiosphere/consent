@@ -16,7 +16,6 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -90,7 +89,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
     }
 
     @Test
-    public void testCreateConsentVoteOtherError() throws Exception {
+    public void testCreateConsentVoteOtherError() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -102,7 +101,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
     }
 
     @Test
-    public void testUpdateConsentVoteSuccess() throws Exception {
+    public void testUpdateConsentVoteSuccess() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -114,7 +113,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
     }
 
     @Test
-    public void testUpdateConsentVoteError() throws Exception {
+    public void testUpdateConsentVoteError() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -126,7 +125,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
     }
 
     @Test
-    public void testDescribe() throws Exception {
+    public void testDescribe() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -138,7 +137,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
     }
 
     @Test
-    public void testDeleteVoteSuccess() throws Exception {
+    public void testDeleteVoteSuccess() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -149,7 +148,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
     }
 
     @Test
-    public void testDeleteVoteError() throws Exception {
+    public void testDeleteVoteError() {
         Vote vote = createMockVote();
         Consent consent = createMockConsent();
 
@@ -161,7 +160,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
     }
 
     @Test
-    public void testDeleteVotesSuccess() throws Exception {
+    public void testDeleteVotesSuccess() {
         Consent consent = createMockConsent();
 
         initResource();
@@ -171,7 +170,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
     }
 
     @Test
-    public void testDeleteVotesNull() throws Exception {
+    public void testDeleteVotesNull() {
         initResource();
 
         Response response = resource.deleteVotes(null);
@@ -190,7 +189,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
     }
 
     @Test
-    public void testOptions() throws Exception {
+    public void testOptions() {
         Consent consent = createMockConsent();
 
         initResource();

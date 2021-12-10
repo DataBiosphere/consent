@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.resources.DataRequestVoteResource;
-
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
