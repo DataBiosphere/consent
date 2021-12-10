@@ -4,7 +4,6 @@ import com.google.api.client.http.HttpStatusCodes;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Before;
@@ -22,8 +21,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class VoteResourceTest {
-
-  @Mock private ElectionService electionService;
 
   @Mock private UserService userService;
 
@@ -43,7 +40,7 @@ public class VoteResourceTest {
   }
 
   private void initResource() {
-    resource = new VoteResource(electionService, userService, voteService);
+    resource = new VoteResource(userService, voteService);
   }
 
   @Test
