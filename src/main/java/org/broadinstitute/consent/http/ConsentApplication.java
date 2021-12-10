@@ -72,6 +72,7 @@ import org.broadinstitute.consent.http.resources.ResearcherResource;
 import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.resources.SwaggerResource;
+import org.broadinstitute.consent.http.resources.TosResource;
 import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
@@ -255,6 +256,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new SamResource(samService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
         env.jersey().register(new NihAccountResource(nihService, userService));
+        env.jersey().register(new TosResource(samService));
         env.jersey().register(injector.getInstance(VersionResource.class));
 
         // Authentication filters

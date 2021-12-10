@@ -1,0 +1,15 @@
+get:
+  summary: Gets the DUOS translated Terms of Service Text from Sam
+  description: Gets the DUOS translated Terms of Service Text from Sam
+  tags:
+    - Sam
+    - ToS
+  responses:
+    200:
+      description: DUOS ToS Text
+      content:
+        text/plain:
+          schema:
+            type: string
+    500:
+      description: Internal Server Error

@@ -1,0 +1,11 @@
+type: object
+properties:
+  userSubjectId:
+    type: string
+    description: Sam User subject id
+  userEmail:
+    type: string
+    description: Sam User email
+  enabled:
+    type: boolean
+    description: Enabled status

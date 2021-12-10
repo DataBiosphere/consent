@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service.sam;
 
 import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.common.util.concurrent.FutureCallback;
@@ -24,6 +25,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -95,5 +97,13 @@ public class SamService {
           }
         },
         listeningExecutorService);
+  }
+
+  public String getToSText() throws Exception {
+    GenericUrl genericUrl = new GenericUrl(configuration.getToSTextUrl());
+    HttpRequest request = clientUtil.buildUnAuthedGetRequest(genericUrl);
+    request.getHeaders().setAccept(MediaType.TEXT_PLAIN);
+    HttpResponse response = clientUtil.handleHttpRequest(request);
+    return response.parseAsString();
   }
 }
