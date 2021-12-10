@@ -374,13 +374,6 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testGetDataSetSampleMissingFile() {
-        initResource();
-        Response response = resource.getDataSetSample();
-        assertEquals(404, response.getStatus());
-    }
-
-    @Test
     public void testDownloadDatasetsSuccess() {
         List<DatasetDTO> dtoList = new ArrayList<>();
         DatasetDTO testDTO = createMockDatasetDTO();

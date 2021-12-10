@@ -4,8 +4,11 @@ import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -208,15 +211,16 @@ public class DatasetResource extends Resource {
     public Response getDataSetSample() {
         String msg = "GETting Data Set Sample";
         logger().debug(msg);
-        String fileName = "DataSetSample.tsv";
+        String dataSetSample = "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
+                + "\n(Bucienne Monco) - Muc-1 Kidney Disease\tDNA, whole genome\thuman\tmuc-1, kidney disease\t31\tmuc-1 patients that developed cancer , 5 weeks after treatment\thttp://....\tJohn Doe\tMark Smith\tSC-20658\t1";
         InputStream inputStream = null;
         try {
-            inputStream = Resources.getResource(fileName).openStream();
+            inputStream = new ByteArrayInputStream(dataSetSample.getBytes());
         } catch (Exception e) {
             logger().error("Error when GETting dataset sample. Cause: " + e);
             return createExceptionResponse(e);
         }
-        return Response.ok(inputStream).header("Content-Disposition", "attachment; filename=" + fileName).build();
+        return Response.ok(inputStream).header("Content-Disposition", "attachment; filename=DataSetSample.tsv").build();
     }
 
     @POST
