@@ -23,20 +23,21 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class SamResourceTest {
 
-  @Mock AuthUser authUser;
+  @Mock private AuthUser authUser;
 
-  @Mock SamService service;
+  @Mock private SamService service;
 
-  @Mock UriInfo uriInfo;
+  @Mock private UriInfo uriInfo;
 
-  SamResource resource;
+  private SamResource resource;
 
   @Before
   public void setUp() {
-    MockitoAnnotations.openMocks(this);
+    openMocks(this);
   }
 
   private void initResource() {

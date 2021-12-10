@@ -250,14 +250,14 @@ public class DataAccessRequestService {
         if (Objects.isNull(sourceCollection.getDars()) || sourceCollection.getDars().isEmpty()) {
             throw new IllegalArgumentException("Source Collection must contain at least a single DAR");
         }
-        DataAccessRequest sourceDar = sourceCollection.getDars().get(0);
+        DataAccessRequest sourceDar = new ArrayList<DataAccessRequest>(sourceCollection.getDars().values()).get(0);
         DataAccessRequestData sourceData = sourceDar.getData();
         if (Objects.isNull(sourceData)) {
             throw new IllegalArgumentException("Source Collection must contain at least a single DAR with a populated data");
         }
         // Find all dataset ids for canceled DARs in the collection
         List<Integer> datasetIds = sourceCollection
-            .getDars().stream()
+            .getDars().values().stream()
             .map(DataAccessRequest::getData)
             .filter(d -> d.getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()))
             .map(DataAccessRequestData::getDatasetIds)
@@ -267,7 +267,7 @@ public class DataAccessRequestService {
             throw new IllegalArgumentException("Source Collection must contain references to at least a single canceled DAR's dataset");
         }
         List<String> canceledReferenceIds = sourceCollection
-            .getDars().stream()
+            .getDars().values().stream()
             .map(DataAccessRequest::getData)
             .filter(d -> d.getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()))
             .map(DataAccessRequestData::getReferenceId)

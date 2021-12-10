@@ -16,13 +16,11 @@ import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
@@ -184,7 +182,7 @@ public class DarCollectionService {
   public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections) {
 
     List<Integer> datasetIds = collections.stream()
-      .map(DarCollection::getDars)
+      .map(d-> d.getDars().values())
       .flatMap(Collection::stream)
       .map(d -> d.getData().getDatasetIds())
       .flatMap(Collection::stream)
@@ -196,7 +194,7 @@ public class DarCollectionService {
           .collect(Collectors.toMap(DataSet::getDataSetId, Function.identity()));
 
       return collections.stream().map(c -> {
-        Set<DataSet> collectionDatasets = c.getDars().stream()
+        Set<DataSet> collectionDatasets = c.getDars().values().stream()
           .map(DataAccessRequest::getData)
           .map(DataAccessRequestData::getDatasetIds)
           .flatMap(Collection::stream)
@@ -222,7 +220,7 @@ public class DarCollectionService {
   // If an election exists for a DAR within the collection, that DAR cannot be cancelled by the researcher
   // Since it's now under DAC review, it's up to the DAC Chair (or admin) to ultimately decline or cancel via elections
   public DarCollection cancelDarCollection(DarCollection collection) {
-    List<DataAccessRequest> dars = collection.getDars();
+    Collection<DataAccessRequest> dars = collection.getDars().values();
     List<String> referenceIds = dars.stream()
       .map(DataAccessRequest::getReferenceId)
       .collect(Collectors.toList());

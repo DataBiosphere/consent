@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.WithLogHandler;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -32,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,7 +43,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-public class DataRequestVoteResourceTest {
+public class DataRequestVoteResourceTest implements WithLogHandler {
     @Mock
     private EmailNotifierService emailNotifierService;
     @Mock
@@ -102,7 +104,7 @@ public class DataRequestVoteResourceTest {
         return dar;
     }
 
-    private void testCreateDataOwnerElection(Vote vote, User user, boolean returnEmptyList) throws Exception {
+    private void enableCreateDataOwnerElection(Vote vote, User user, boolean returnEmptyList) throws Exception {
         vote.setElectionId(1);
         if (returnEmptyList) {
             when(voteService.describeVoteByTypeAndElectionId(any(), any())).thenReturn(Collections.emptyList());
@@ -229,16 +231,17 @@ public class DataRequestVoteResourceTest {
         User user = createMockUser(role, 1);
         when(userService.findUserByEmail(any())).thenReturn(user);
 
-        Vote vote = createMockVote(VoteType.DATA_OWNER.getValue(), 1, true);
+        Vote vote = createMockVote("", 1, true);
         when(voteService.findVoteById(any())).thenReturn(vote);
 
+        LogHandler handler = createLogHandler(DataRequestVoteResource.class.getName());
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
         when(electionService.validateCollectDAREmailCondition(any())).thenReturn(true);
         doThrow(new IOException()).when(emailNotifierService).sendCollectMessage(any());
-        //TODO: Check logger to verify "severe" status has been posted (issue DUOS-1515)
 
         initResource();
         Response response = resource.createDataRequestVote(authUser, uriInfo, "", 1, "");
+        assertEquals(Level.SEVERE, handler.checkLevel());
         assertEquals(200, response.getStatus());
     }
 
@@ -312,7 +315,7 @@ public class DataRequestVoteResourceTest {
         DataAccessRequest dar = createMockDAR();
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
 
-        testCreateDataOwnerElection(vote, user, true);
+        enableCreateDataOwnerElection(vote, user, true);
 
         initResource();
         String json = "{\"electionId\":1,\"vote\":true}";
@@ -334,7 +337,7 @@ public class DataRequestVoteResourceTest {
         DataAccessRequest dar = createMockDAR();
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
 
-        testCreateDataOwnerElection(vote, user, false);
+        enableCreateDataOwnerElection(vote, user, false);
 
         initResource();
         String json = "{\"electionId\":1,\"vote\":true}";

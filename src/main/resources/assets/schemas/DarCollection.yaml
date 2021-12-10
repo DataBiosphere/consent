@@ -21,8 +21,8 @@ properties:
     type: integer
     description: ID of user that last updated the collection
   dars:
-    type: array
-    description: List of all DARs associated with the collection
+    type: Object
+    description: Map of all DARs associated with the collection (referenceId-dar)
     items:
       $ref: './DataAccessRequest.yaml'
   datasets:
@@ -30,11 +30,3 @@ properties:
     description: List of all datasets referenced across all DARs within the collection
     items:
       $ref: './Dataset.yaml'
-  electionMap:
-    type: object
-    description: Map of referenceIds to their associated elections
-    additionalProperties: 
-      type: array
-      description: List of elections associated to referenceId key
-      item:
-        $ref: './Election.yaml'

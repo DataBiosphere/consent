@@ -36,6 +36,13 @@ public class HttpClientUtil {
     return request;
   }
 
+  public HttpRequest buildUnAuthedGetRequest(GenericUrl genericUrl) throws Exception {
+    HttpTransport transport = new NetHttpTransport();
+    HttpRequest request = transport.createRequestFactory().buildGetRequest(genericUrl);
+    request.setHeaders(new HttpHeaders().set("X-App-ID", "DUOS"));
+    return request;
+  }
+
   public HttpRequest buildPostRequest(GenericUrl genericUrl, HttpContent content, AuthUser authUser)
       throws Exception {
     HttpTransport transport = new NetHttpTransport();

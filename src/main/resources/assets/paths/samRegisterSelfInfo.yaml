@@ -1,0 +1,16 @@
+get:
+  summary: Gets the Sam registration status info of the logged in user
+  description: Gets the Sam registration status info of the logged in user
+  tags:
+    - Sam
+  responses:
+    200:
+      description: Sam User Info
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/SamUserInfo.yaml'
+    404:
+      description: User not found
+    500:
+      description: Internal Server Error

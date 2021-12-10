@@ -3364,71 +3364,13 @@ paths:
         404:
           description: The user doesn't exist in the system
   /api/sam/register/self:
-    post:
-      summary: Create current user in the Sam system using current login credentials
-      description: Create current user in the Sam system using current login credentials
-      tags:
-        - Sam
-      responses:
-        200:
-          description: Sam User Info
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SamUserInfo'
-        409:
-          description: Conflict, user exists
-        500:
-          description: Internal Server Error
+    $ref: './paths/samRegisterSelf.yaml'
   /api/sam/register/self/diagnostics:
-    get:
-      summary: Gets the various Sam enabled statuses of the logged in user
-      description: Gets the various Sam enabled statuses of the logged in user
-      tags:
-        - Sam
-      responses:
-        200:
-          description: Sam Self Diagnostics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schema/SamSelfDiagnostics'
-        404:
-          description: User not found
-        500:
-          description: Internal Server Error
+    $ref: './paths/samRegisterSelfDiagnostics.yaml'
   /api/sam/register/self/info:
-    get:
-      summary: Gets the Sam registration status info of the logged in user
-      description: Gets the Sam registration status info of the logged in user
-      tags:
-        - Sam
-      responses:
-        200:
-          description: Sam User Info
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SamUserInfo'
-        404:
-          description: User not found
-        500:
-          description: Internal Server Error
+    $ref: './paths/samRegisterSelfInfo.yaml'
   /api/sam/resource-types:
-    get:
-      summary: Sam Resource Types
-      description: Sam Resource Types
-      tags:
-        - Sam
-      responses:
-        200:
-          description: Sam Resource Types
-          content:
-            application/json:
-              schema:
-                type: object
-        500:
-          description: Internal Server Error
+    $ref: './paths/samResourceTypes.yaml'
   /api/votes:
     $ref: './paths/votes.yaml'
   /metrics/dac/decision:
@@ -3503,7 +3445,10 @@ paths:
           description: All systems are OK
         500:
           description: Some number of subsystems are not OK.
-
+  /tos/text:
+    $ref: './paths/tosText.yaml'
+  /tos/text/duos:
+    $ref: './paths/tosTextDuos.yaml'
   /version:
     get:
       summary: Current application version
@@ -3579,43 +3524,7 @@ components:
           type: string
           description: Contains the eRA account expiration date in miliseconds. This will be 30 days from the user's authentication.
     Vote:
-      type: object
-      properties:
-        voteId:
-          type: integer
-          format: int32
-          description: Describes the id of the vote.
-        vote:
-          type: boolean
-          description: Describe the Positive or negative value of the vote
-        dacUserId:
-          type: integer
-          format: int32
-          description: Describes the id of the voter.
-        createDate:
-          type: string
-          format: date
-          description: Describes the date the vote was created.
-        updateDate:
-          type: string
-          format: date
-          description: Describes the date the vote was last modified.
-        electionId:
-          type: integer
-          format: int32
-          description: Describes the id of the election the election at which the vote belongs.
-        rationale:
-          type: string
-          description: If the final vote is NO, the voter can specify why in this field.
-        type:
-          type: string
-          description: Specifies the type of the vote (DAC, CHAIRPERSON, AGREEMENT, FINAL)
-        isReminderSent:
-          type: boolean
-          description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
-        hasConcerns:
-          type: boolean
-          description: For Dataset elections, it is a flag for DataSet owners concerns.
+      $ref: './schemas/Vote.yaml'
     MatchResult:
       type: object
       properties:
@@ -4021,29 +3930,9 @@ components:
           type: string
           description: Name of the user
     SamSelfDiagnostics:
-      type: object
-      properties:
-        enabled:
-          type: boolean
-          description: Enabled status
-        inAllUsersGroup:
-          type: boolean
-          description: All Users Group status
-        inGoogleProxyGroup:
-          type: boolean
-          description: Google Proxy Group status
+      $ref: './schemas/SamSelfDiagnostics.yaml'
     SamUserInfo:
-      type: object
-      properties:
-        userSubjectId:
-          type: string
-          description: Sam User subject id
-        userEmail:
-          type: string
-          description: Sam User email
-        enabled:
-          type: boolean
-          description: Enabled status
+      $ref: './schemas/SamUserInfo.yaml'
     ErrorResponse:
       properties:
         message:

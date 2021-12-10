@@ -1,0 +1,14 @@
+get:
+  summary: Sam Resource Types
+  description: Sam Resource Types
+  tags:
+    - Sam
+  responses:
+    200:
+      description: Sam Resource Types
+      content:
+        application/json:
+          schema:
+            type: object
+    500:
+      description: Internal Server Error
