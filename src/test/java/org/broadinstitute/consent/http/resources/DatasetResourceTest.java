@@ -150,8 +150,7 @@ public class DatasetResourceTest {
         resource.createDataset(authUser, uriInfo, json);
     }
 
-    @Test(expected = NullPointerException.class)
-    // TODO: Recode createDataset to return a BadRequestException with this test
+    @Test(expected = BadRequestException.class)
     public void testCreateDatasetEmptyName() {
         String json = createPropertiesJson("Dataset Name", "");
 
@@ -159,8 +158,7 @@ public class DatasetResourceTest {
         resource.createDataset(authUser, uriInfo, json);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    // TODO: Recode createDataset to return a BadRequestException with this test
+    @Test(expected = BadRequestException.class)
     public void testCreateDatasetMissingName() {
         String json = createPropertiesJson("Property", "test");
 
@@ -366,10 +364,9 @@ public class DatasetResourceTest {
         assertEquals(500, response.getStatus());
     }
 
-    // TODO: Recode getDataSetSample so it is possible to test missing file error case
     @Test
     public void testGetDataSetSample() {
-        List header = List.of("attachment; filename=DataSetSample.tsv");
+        List<String> header = List.of("attachment; filename=DataSetSample.tsv");
         initResource();
         Response response = resource.getDataSetSample();
         assertEquals(200, response.getStatus());
@@ -656,7 +653,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDownloadDatasetApprovedUsersSuccess() {
-        List header = List.of("attachment; filename =DatasetApprovedUsers.tsv");
+        List<String> header = List.of("attachment; filename=DatasetApprovedUsers.tsv");
         initResource();
         Response response = resource.downloadDatasetApprovedUsers(1);
         assertEquals(200, response.getStatus());
