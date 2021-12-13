@@ -653,7 +653,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDownloadDatasetApprovedUsersSuccess() {
-        List<String> header = List.of("attachment; filename =DatasetApprovedUsers.tsv");
+        List<String> header = List.of("attachment; filename=DatasetApprovedUsers.tsv");
         initResource();
         Response response = resource.downloadDatasetApprovedUsers(1);
         assertEquals(200, response.getStatus());

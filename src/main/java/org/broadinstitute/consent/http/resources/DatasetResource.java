@@ -354,7 +354,7 @@ public class DatasetResource extends Resource {
     public Response downloadDatasetApprovedUsers(@PathParam("datasetId") Integer datasetId) {
         try {
             return Response.ok(darService.createDataSetApprovedUsersDocument(datasetId))
-                    .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + "DatasetApprovedUsers.tsv")
+                    .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=DatasetApprovedUsers.tsv")
                     .build();
         } catch (Exception e) {
             return createExceptionResponse(e);
