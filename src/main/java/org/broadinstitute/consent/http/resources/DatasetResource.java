@@ -60,6 +60,35 @@ public class DatasetResource extends Resource {
     private final UserService userService;
     private final DataAccessRequestService darService;
 
+    private String dataSetSampleFileName = "DataSetSample.tsv";
+    private String dataSetSampleContent = "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
+            + "\n(Bucienne Monco) - Muc-1 Kidney Disease\tDNA, whole genome\thuman\tmuc-1, kidney disease\t31\tmuc-1 patients that developed cancer , 5 weeks after treatment\thttp://....\tJohn Doe\tMark Smith\tSC-20658\t1";
+
+    String getDataSetSampleFileName() {
+        return dataSetSampleFileName;
+    }
+
+    void setDataSetSampleFileName(String fileName) {
+        dataSetSampleFileName = fileName;
+    }
+
+    void resetDataSetSampleFileName() {
+        dataSetSampleFileName = "DataSetSample.tsv";
+    }
+
+    String getDataSetSampleContent() {
+        return dataSetSampleContent;
+    }
+
+    void setDataSetSampleContent(String content) {
+        dataSetSampleContent = content;
+    }
+
+    void resetDataSetSampleContent() {
+        dataSetSampleContent = "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
+                + "\n(Bucienne Monco) - Muc-1 Kidney Disease\tDNA, whole genome\thuman\tmuc-1, kidney disease\t31\tmuc-1 patients that developed cancer , 5 weeks after treatment\thttp://....\tJohn Doe\tMark Smith\tSC-20658\t1";
+    }
+
     @Inject
     public DatasetResource(ConsentService consentService, DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
         this.consentService = consentService;
@@ -209,16 +238,14 @@ public class DatasetResource extends Resource {
     public Response getDataSetSample() {
         String msg = "GETting Data Set Sample";
         logger().debug(msg);
-        String dataSetSample = "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
-                + "\n(Bucienne Monco) - Muc-1 Kidney Disease\tDNA, whole genome\thuman\tmuc-1, kidney disease\t31\tmuc-1 patients that developed cancer , 5 weeks after treatment\thttp://....\tJohn Doe\tMark Smith\tSC-20658\t1";
         InputStream inputStream = null;
         try {
-            inputStream = new ByteArrayInputStream(dataSetSample.getBytes());
+            inputStream = new ByteArrayInputStream(dataSetSampleContent.getBytes());
         } catch (Exception e) {
             logger().error("Error when GETting dataset sample. Cause: " + e);
             return createExceptionResponse(e);
         }
-        return Response.ok(inputStream).header("Content-Disposition", "attachment; filename=DataSetSample.tsv").build();
+        return Response.ok(inputStream).header("Content-Disposition", "attachment; filename=" + dataSetSampleFileName).build();
     }
 
     @POST
