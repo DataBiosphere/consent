@@ -60,9 +60,12 @@ public class DatasetResource extends Resource {
     private final UserService userService;
     private final DataAccessRequestService darService;
 
-    private String dataSetSampleFileName = "DataSetSample.tsv";
-    private String dataSetSampleContent = "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
+    private final String defaultDataSetSampleFileName = "DataSetSample.tsv";
+    private final String defaultDataSetSampleContent = "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
             + "\n(Bucienne Monco) - Muc-1 Kidney Disease\tDNA, whole genome\thuman\tmuc-1, kidney disease\t31\tmuc-1 patients that developed cancer , 5 weeks after treatment\thttp://....\tJohn Doe\tMark Smith\tSC-20658\t1";
+
+    private String dataSetSampleFileName;
+    private String dataSetSampleContent;
 
     String getDataSetSampleFileName() {
         return dataSetSampleFileName;
@@ -73,7 +76,7 @@ public class DatasetResource extends Resource {
     }
 
     void resetDataSetSampleFileName() {
-        dataSetSampleFileName = "DataSetSample.tsv";
+        dataSetSampleFileName = defaultDataSetSampleFileName;
     }
 
     String getDataSetSampleContent() {
@@ -85,8 +88,7 @@ public class DatasetResource extends Resource {
     }
 
     void resetDataSetSampleContent() {
-        dataSetSampleContent = "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
-                + "\n(Bucienne Monco) - Muc-1 Kidney Disease\tDNA, whole genome\thuman\tmuc-1, kidney disease\t31\tmuc-1 patients that developed cancer , 5 weeks after treatment\thttp://....\tJohn Doe\tMark Smith\tSC-20658\t1";
+        dataSetSampleContent = defaultDataSetSampleContent;
     }
 
     @Inject
@@ -95,6 +97,8 @@ public class DatasetResource extends Resource {
         this.datasetService = datasetService;
         this.userService = userService;
         this.darService = darService;
+        resetDataSetSampleFileName();
+        resetDataSetSampleContent();
     }
 
     @POST
