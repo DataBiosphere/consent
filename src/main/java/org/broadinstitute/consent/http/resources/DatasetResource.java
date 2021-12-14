@@ -1,17 +1,26 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.service.ConsentService;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -32,23 +41,15 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.service.ConsentService;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Path("api/dataset")
 public class DatasetResource extends Resource {
@@ -59,12 +60,45 @@ public class DatasetResource extends Resource {
     private final UserService userService;
     private final DataAccessRequestService darService;
 
+    private final String defaultDataSetSampleFileName = "DataSetSample.tsv";
+    private final String defaultDataSetSampleContent = "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
+            + "\n(Bucienne Monco) - Muc-1 Kidney Disease\tDNA, whole genome\thuman\tmuc-1, kidney disease\t31\tmuc-1 patients that developed cancer , 5 weeks after treatment\thttp://....\tJohn Doe\tMark Smith\tSC-20658\t1";
+
+    private String dataSetSampleFileName;
+    private String dataSetSampleContent;
+
+    String getDataSetSampleFileName() {
+        return dataSetSampleFileName;
+    }
+
+    void setDataSetSampleFileName(String fileName) {
+        dataSetSampleFileName = fileName;
+    }
+
+    void resetDataSetSampleFileName() {
+        dataSetSampleFileName = defaultDataSetSampleFileName;
+    }
+
+    String getDataSetSampleContent() {
+        return dataSetSampleContent;
+    }
+
+    void setDataSetSampleContent(String content) {
+        dataSetSampleContent = content;
+    }
+
+    void resetDataSetSampleContent() {
+        dataSetSampleContent = defaultDataSetSampleContent;
+    }
+
     @Inject
     public DatasetResource(ConsentService consentService, DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
         this.consentService = consentService;
         this.datasetService = datasetService;
         this.userService = userService;
         this.darService = darService;
+        resetDataSetSampleFileName();
+        resetDataSetSampleContent();
     }
 
     @POST
@@ -91,8 +125,13 @@ public class DatasetResource extends Resource {
         if (duplicateProperties.size() > 0) {
             throw new BadRequestException("Dataset contains multiple values for the same property.");
         }
-        String name = inputDataset.getPropertyValue("Dataset Name");
-        if (Objects.isNull(name)) {
+        String name = "";
+        try {
+            name = inputDataset.getPropertyValue("Dataset Name");
+        } catch (IndexOutOfBoundsException e) {
+            throw new BadRequestException("Dataset name is required");
+        }
+        if (Objects.isNull(name) || name.isBlank()) {
             throw new BadRequestException("Dataset name is required");
         }
         DataSet datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
@@ -203,15 +242,14 @@ public class DatasetResource extends Resource {
     public Response getDataSetSample() {
         String msg = "GETting Data Set Sample";
         logger().debug(msg);
-        String fileName = "DataSetSample.tsv";
         InputStream inputStream = null;
         try {
-            inputStream = Resources.getResource(fileName).openStream();
+            inputStream = new ByteArrayInputStream(dataSetSampleContent.getBytes());
         } catch (Exception e) {
             logger().error("Error when GETting dataset sample. Cause: " + e);
             return createExceptionResponse(e);
         }
-        return Response.ok(inputStream).header("Content-Disposition", "attachment; filename=" + fileName).build();
+        return Response.ok(inputStream).header("Content-Disposition", "attachment; filename=" + dataSetSampleFileName).build();
     }
 
     @POST
@@ -347,7 +385,7 @@ public class DatasetResource extends Resource {
     public Response downloadDatasetApprovedUsers(@PathParam("datasetId") Integer datasetId) {
         try {
             return Response.ok(darService.createDataSetApprovedUsersDocument(datasetId))
-                    .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + "DatasetApprovedUsers.tsv")
+                    .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=DatasetApprovedUsers.tsv")
                     .build();
         } catch (Exception e) {
             return createExceptionResponse(e);
