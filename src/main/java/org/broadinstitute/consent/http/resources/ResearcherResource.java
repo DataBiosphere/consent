@@ -1,9 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.ResearcherService;
-import org.broadinstitute.consent.http.service.UserService;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DELETE;
@@ -19,7 +17,7 @@ public class ResearcherResource extends Resource {
     private final ResearcherService researcherService;
 
     @Inject
-    public ResearcherResource(ResearcherService researcherService, UserService userService, LibraryCardService libraryCardService) {
+    public ResearcherResource(ResearcherService researcherService) {
         this.researcherService = researcherService;
     }
 

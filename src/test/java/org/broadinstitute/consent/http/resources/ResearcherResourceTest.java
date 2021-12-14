@@ -1,10 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.ResearcherService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -29,12 +25,6 @@ public class ResearcherResourceTest {
     ResearcherService researcherService;
 
     @Mock
-    UserService userService;
-
-    @Mock
-    LibraryCardService libraryCardService;
-
-    @Mock
     private UriInfo uriInfo;
 
     @Mock
@@ -51,7 +41,7 @@ public class ResearcherResourceTest {
     }
 
     private void initResource() {
-        resource = new ResearcherResource(researcherService, userService, libraryCardService);
+        resource = new ResearcherResource(researcherService);
     }
 
     @Test
