@@ -28,6 +28,7 @@ public class VoteResource extends Resource {
 
     private final UserService userService;
     private final VoteService voteService;
+    private final Gson gson = new Gson();
 
     public VoteResource(UserService userService, VoteService voteService) {
         this.userService = userService;
@@ -59,7 +60,6 @@ public class VoteResource extends Resource {
             @QueryParam("rationale") String rationale,
             String json) {
         // Validate input json - it needs to be an array of integers
-        Gson gson = new Gson();
         Type intListType = new TypeToken<ArrayList<Integer>>(){}.getType();
         List<Integer> voteIds;
         try {

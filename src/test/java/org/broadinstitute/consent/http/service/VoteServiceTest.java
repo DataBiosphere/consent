@@ -1,22 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -32,16 +15,38 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.Mockito;
+
+import javax.ws.rs.NotFoundException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class VoteServiceTest {
 
     private VoteService service;
 
+    @Mock
+    Jdbi jdbi;
     @Mock
     UserDAO userDAO;
     @Mock
@@ -55,7 +60,7 @@ public class VoteServiceTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         doNothings();
     }
 
@@ -66,7 +71,7 @@ public class VoteServiceTest {
     }
 
     private void initService() {
-        service = new VoteService(userDAO, dataSetAssociationDAO, electionDAO, voteDAO);
+        service = new VoteService(jdbi, userDAO, dataSetAssociationDAO, electionDAO, voteDAO);
     }
 
     @Test
@@ -116,7 +121,7 @@ public class VoteServiceTest {
         Vote v = setUpTestVote(false, false);
         initService();
 
-        Vote vote = service.updateVote(v, 11, "test");
+        service.updateVote(v, 11, "test");
     }
 
     @Test
@@ -147,6 +152,24 @@ public class VoteServiceTest {
         assertNotNull(votes);
         assertFalse(votes.isEmpty());
     }
+
+//    TODO: Not quite working yet ... need to mock out calls inside jdbi usehandle
+//    @Test
+//    public void testUpdateFinalVotesWithValue() {
+//        Vote v = setUpTestVote(false, false);
+//        v.setType(VoteType.FINAL.getValue());
+//        Election e = new Election();
+//        e.setStatus(ElectionStatus.OPEN.getValue());
+//        Vote returnedVote = setUpTestVote(true, true);
+//        returnedVote.setRationale("rationale");
+//        electionDAO = Mockito.spy(electionDAO);
+//        when(voteDAO.findVotesByIds(any())).thenReturn(List.of(returnedVote));
+//        when(electionDAO.findElectionsByIds(anyList())).thenReturn(List.of(e));
+//        initService();
+//
+//        service.updateVotesWithValue(List.of(v), true, "rationale");
+//        Mockito.verify(electionDAO).updateElectionStatus(anyList(), anyString());
+//    }
 
     @Test
     public void testUpdateVotesWithValue_emptyList() {
@@ -305,14 +328,14 @@ public class VoteServiceTest {
         when(voteDAO.findVotesByReferenceId("test"))
                 .thenReturn(null);
         initService();
-        List<Vote> votes = service.describeVotes("test");
+        service.describeVotes("test");
     }
 
     @Test
     public void testDescribeVotes() {
         Vote v = setUpTestVote(false, false);
         when(voteDAO.findVotesByReferenceId("test"))
-                .thenReturn(Arrays.asList(v));
+                .thenReturn(List.of(v));
         initService();
         List<Vote> votes = service.describeVotes("test");
         assertNotNull(votes);
@@ -367,9 +390,8 @@ public class VoteServiceTest {
 
     @Test
     public void testDeleteVotes() throws IllegalArgumentException, UnknownIdentifierException {
-        Vote v = setUpTestVote(false, false);
-        when(electionDAO.findElectionsWithFinalVoteByReferenceId(any()))
-                .thenReturn(Arrays.asList(new Election()));
+        setUpTestVote(false, false);
+        when(electionDAO.findElectionsWithFinalVoteByReferenceId(any())).thenReturn(List.of(new Election()));
         initService();
 
         service.deleteVotes("test");
@@ -381,7 +403,7 @@ public class VoteServiceTest {
                 .thenReturn(null);
         initService();
 
-        Vote vote = service.describeDataOwnerVote("test", 1);
+        service.describeDataOwnerVote("test", 1);
     }
 
     @Test

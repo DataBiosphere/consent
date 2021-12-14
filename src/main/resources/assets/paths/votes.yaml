@@ -1,6 +1,10 @@
 put:
   summary: Updates Vote values by id List
-  description: Updates the Dataset from JSON
+  description: | 
+    Updates Votes specified by the ids in provided list.
+    In the case of votes that impact elections, the associated 
+    election will also be updated. Examples include votes of 
+    type: "FINAL"
   parameters:
     - name: vote
       in: query

@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.jdbi.v3.core.Jdbi;
 
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
@@ -29,14 +30,16 @@ import java.util.stream.Collectors;
 
 public class VoteService {
 
+    private final Jdbi jdbi;
     private final UserDAO userDAO;
     private final DatasetAssociationDAO dataSetAssociationDAO;
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
 
     @Inject
-    public VoteService(UserDAO userDAO, DatasetAssociationDAO dataSetAssociationDAO,
+    public VoteService(Jdbi jdbi, UserDAO userDAO, DatasetAssociationDAO dataSetAssociationDAO,
                        ElectionDAO electionDAO, VoteDAO voteDAO) {
+        this.jdbi = jdbi;
         this.userDAO = userDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.electionDAO = electionDAO;
@@ -108,6 +111,9 @@ public class VoteService {
     }
 
     /**
+     * Update vote values. 'FINAL' votes impact elections so matching elections
+     * marked as ElectionStatus.CLOSED as well.
+     *
      * @param votes List of Votes to update
      * @param voteValue Value to update the votes to
      * @param rationale Value to update the rationales to. Only update if non-null.
@@ -125,11 +131,13 @@ public class VoteService {
         if (!allOpen) {
             throw new IllegalArgumentException("Not all elections for votes are in OPEN state");
         }
-
-        votes.forEach(vote -> {
-            validateVote(vote);
-            Date now = new Date();
-            voteDAO.updateVote(
+    votes.forEach(
+        vote -> {
+          validateVote(vote);
+          Date now = new Date();
+          jdbi.useHandle(
+              handle -> {
+                voteDAO.updateVote(
                     voteValue,
                     Objects.nonNull(rationale) ? rationale : vote.getRationale(),
                     now,
@@ -137,8 +145,12 @@ public class VoteService {
                     vote.getIsReminderSent(),
                     vote.getElectionId(),
                     Objects.nonNull(vote.getCreateDate()) ? vote.getCreateDate() : now,
-                    vote.getHasConcerns()
-            );
+                    vote.getHasConcerns());
+                if (vote.getType().equalsIgnoreCase(VoteType.FINAL.getValue())) {
+                  electionDAO.updateElectionStatus(
+                      List.of(vote.getElectionId()), ElectionStatus.CLOSED.getValue());
+                }
+              });
         });
         return voteDAO.findVotesByIds(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
     }
