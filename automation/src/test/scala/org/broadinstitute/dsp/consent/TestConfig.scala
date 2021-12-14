@@ -48,7 +48,6 @@ object TestConfig {
     token.getTokenValue
   }
 
-  lazy val fireCloudUrl: String = config.getString("consent.fireCloudUrl")
   lazy val profileUrl: String = config.getString("consent.profileUrl")
   lazy val ontologyUrl: String = config.getString("consent.ontologyUrl")
   lazy val adminHeader: Map[String, String] = Map("Authorization" -> s"Bearer ${getAccessToken("/accounts/duos-automation-admin.json")}")
