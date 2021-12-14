@@ -40,17 +40,11 @@ public class ResearcherResourceTest {
     @Mock
     UriBuilder uriBuilder;
 
-    private AuthUser authUser;
-
     private ResearcherResource resource;
 
     @Before
     public void setUp() throws Exception {
         openMocks(this);
-        GoogleUser googleUser = new GoogleUser();
-        googleUser.setName("Test User");
-        googleUser.setEmail("test@gmail.com");
-        authUser = new AuthUser(googleUser);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/api/researcher/"));

@@ -17,14 +17,10 @@ import javax.ws.rs.core.Response;
 public class ResearcherResource extends Resource {
 
     private final ResearcherService researcherService;
-    private final UserService userService;
-    private final LibraryCardService libraryCardService;
 
     @Inject
     public ResearcherResource(ResearcherService researcherService, UserService userService, LibraryCardService libraryCardService) {
         this.researcherService = researcherService;
-        this.userService = userService;
-        this.libraryCardService = libraryCardService;
     }
 
     @DELETE

@@ -228,7 +228,7 @@ object Requests {
 
     def getResearcherProperties(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get Researcher Properties")
-        .get("/api/researcher/" + userId)
+        .get("/api/user/" + userId)
         .headers(TestConfig.jsonHeader)
         .headers(additionalHeaders)
         .check(bodyString.saveAs(researcherPropertiesResponse))
