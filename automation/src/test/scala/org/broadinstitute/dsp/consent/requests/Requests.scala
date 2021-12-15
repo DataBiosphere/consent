@@ -224,7 +224,6 @@ object Requests {
 
   object Researcher {
     val researcherPropertiesResponse: String = "researcherPropertiesResponse"
-    val researcherProfileResponse: String = "researcherProfileResponse"
 
     def getResearcherProperties(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get Researcher Properties")
@@ -237,10 +236,7 @@ object Requests {
   }
 
   object FireCloud {
-    val fireCloudVerifyResponse: String = "fireCloudVerifyResponse"
-    val fireCloudVerifyStatus: String = "fireCloudVerifyStatus"
     val verifyTokenResponse: String = "verifyTokenResponse"
-    val registerUserResponse: String = "registerUserResponse"
     val saveNihUserResponse: String = "saveNihUserResponse"
 
     def verifyToken(expectedStatus: Int, token: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
