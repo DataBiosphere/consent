@@ -25,9 +25,6 @@ object DarChains {
             Requests.DataSet.getDataSetsByDataSetId(OK.code, "${dataSetIds(0)}", additionalHeaders, 0),
             Requests.DataSet.getDataSetsByDataSetId(OK.code, "${dataSetIds(1)}", additionalHeaders, 1))
     )
-    .exec(
-        Requests.Researcher.getResearcherProperties(OK.code, "${dacUserId}", additionalHeaders)
-    )
 
     def finalDarSubmit(additionalHeaders: Map[String, String]): ChainBuilder = {
         exitBlockOnFail {
