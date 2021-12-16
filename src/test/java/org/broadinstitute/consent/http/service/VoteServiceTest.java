@@ -15,12 +15,18 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.HandleCallback;
+import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.mockito.stubbing.OngoingStubbing;
 
 import javax.ws.rs.NotFoundException;
 import java.util.Collection;
@@ -38,6 +44,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -152,24 +159,6 @@ public class VoteServiceTest {
         assertNotNull(votes);
         assertFalse(votes.isEmpty());
     }
-
-//    TODO: Not quite working yet ... need to mock out calls inside jdbi usehandle
-//    @Test
-//    public void testUpdateFinalVotesWithValue() {
-//        Vote v = setUpTestVote(false, false);
-//        v.setType(VoteType.FINAL.getValue());
-//        Election e = new Election();
-//        e.setStatus(ElectionStatus.OPEN.getValue());
-//        Vote returnedVote = setUpTestVote(true, true);
-//        returnedVote.setRationale("rationale");
-//        electionDAO = Mockito.spy(electionDAO);
-//        when(voteDAO.findVotesByIds(any())).thenReturn(List.of(returnedVote));
-//        when(electionDAO.findElectionsByIds(anyList())).thenReturn(List.of(e));
-//        initService();
-//
-//        service.updateVotesWithValue(List.of(v), true, "rationale");
-//        Mockito.verify(electionDAO).updateElectionStatus(anyList(), anyString());
-//    }
 
     @Test
     public void testUpdateVotesWithValue_emptyList() {
