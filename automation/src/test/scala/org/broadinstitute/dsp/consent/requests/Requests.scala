@@ -224,7 +224,6 @@ object Requests {
 
   object Researcher {
     val researcherPropertiesResponse: String = "researcherPropertiesResponse"
-    val researcherProfileResponse: String = "researcherProfileResponse"
 
     def getResearcherProperties(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get Researcher Properties")
@@ -237,21 +236,8 @@ object Requests {
   }
 
   object FireCloud {
-    val fireCloudVerifyResponse: String = "fireCloudVerifyResponse"
-    val fireCloudVerifyStatus: String = "fireCloudVerifyStatus"
     val verifyTokenResponse: String = "verifyTokenResponse"
-    val registerUserResponse: String = "registerUserResponse"
     val saveNihUserResponse: String = "saveNihUserResponse"
-
-    def verifyUser(additionalHeaders: Map[String, String]): HttpRequestBuilder = {
-      http("Verify User with FireCloud")
-        .get(s"${TestConfig.fireCloudUrl}/me")
-        .headers(TestConfig.jsonHeader)
-        .headers(additionalHeaders)
-        .check(bodyString.saveAs(fireCloudVerifyResponse))
-        .check(status.saveAs(fireCloudVerifyStatus))
-        .check(status.not(500))
-    }
 
     def verifyToken(expectedStatus: Int, token: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Verify eRA Token")
@@ -260,16 +246,6 @@ object Requests {
         .headers(additionalHeaders)
         .body(StringBody(token))
         .check(bodyString.saveAs(verifyTokenResponse))
-        .check(status.is(expectedStatus))
-    }
-
-    def registerUser(expectedStatus: Int, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
-      http("Register FC User")
-        .post(s"${TestConfig.fireCloudUrl}/register/profile")
-        .headers(TestConfig.jsonHeader)
-        .headers(additionalHeaders)
-        .body(StringBody(body)).asJson
-        .check(bodyString.saveAs(registerUserResponse))
         .check(status.is(expectedStatus))
     }
 
