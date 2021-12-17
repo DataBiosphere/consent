@@ -17,7 +17,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/** This Service DAO represents */
+/**
+ * This class encompasses more complex transactions than are manageable using the DAO interface pattern.
+ * Standard practice should be to establish a transaction, handle updates, commit. Failures trigger a
+ * rollback. Jdbi.useHandle/withHandle/etc functions will auto-close any open connections for us.
+ */ 
 public class VoteServiceDAO {
 
   private final ElectionDAO electionDAO;
@@ -63,12 +67,9 @@ public class VoteServiceDAO {
           handle.getConnection().setAutoCommit(false);
           handle.useTransaction(
               h -> {
-                final String updateVoteWithRationale =
-                    "UPDATE vote SET vote = :vote, updatedate = :updateDate, rationale = :rationale WHERE voteid = :voteId";
-                final String updateVoteWithoutRationale =
-                    "UPDATE vote SET vote = :vote, updatedate = :updateDate WHERE voteid = :voteId";
-                final String updateElectionStatus =
-                    "UPDATE election SET status = :status WHERE electionid = :electionId";
+                final String updateVoteWithRationale = "UPDATE vote SET vote = :vote, updatedate = :updateDate, rationale = :rationale WHERE voteid = :voteId";
+                final String updateVoteWithoutRationale = "UPDATE vote SET vote = :vote, updatedate = :updateDate WHERE voteid = :voteId";
+                final String updateElectionStatus = "UPDATE election SET status = :status WHERE electionid = :electionId";
                 votes.forEach(
                     vote -> {
                       Date now = new Date();
