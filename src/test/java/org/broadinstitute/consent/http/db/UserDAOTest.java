@@ -1,19 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.broadinstitute.consent.http.enumeration.RoleStatus.getStatusByValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -24,10 +10,24 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.broadinstitute.consent.http.enumeration.RoleStatus.getStatusByValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class UserDAOTest extends DAOTestHelper {
 
@@ -143,14 +143,6 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindUsersWithNoRoles() {
-        User user = createUser();
-        Collection<Integer> userIds = Collections.singletonList(user.getDacUserId());
-        Collection<User> users = userDAO.findUsersWithRoles(userIds);
-        users.forEach(u -> assertTrue("User: " + u.getDacUserId() + " has roles", u.getRoles().isEmpty()));
-    }
-
-    @Test
     public void testFindDACUserByEmail() {
         User user = createUser();
         addUserRole(UserRoles.ALUMNI.getRoleId(), user.getDacUserId());
@@ -203,9 +195,11 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testFindUsers_noArgs() {
         createUser();
-        Collection<User> users = userDAO.findUsers();
+        List<User> users = new ArrayList<>(userDAO.findUsers());
         assertNotNull(users);
         assertFalse(users.isEmpty());
+        assertFalse(users.get(0).getProperties().isEmpty());
+        assertFalse(users.get(0).getRoles().isEmpty());
     }
 
     @Test

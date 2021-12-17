@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.db.mapper;
 
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -72,6 +74,18 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
       }
     } catch(MappingException e) {
       //Ignore exceptions here, user may not have a library card issued under this instiution
+    }
+    try {
+      if (Objects.nonNull(rowView.getColumn("up_property_id", Integer.class))) {
+        UserProperty p = rowView.getRow(UserProperty.class);
+        user.addProperty(p);
+        // Note that the completed field is deprecated and will be removed in a future PR. 
+        if (p.getPropertyKey().equalsIgnoreCase(UserFields.COMPLETED.getValue())) {
+          user.setProfileCompleted(Boolean.valueOf(p.getPropertyValue()));
+        }
+      }
+    } catch (MappingException e) {
+      // Ignore any attempt to map a column that doesn't exist
     }
   }
 

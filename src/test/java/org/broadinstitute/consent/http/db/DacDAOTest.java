@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -63,17 +65,17 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testFindAllDACUsersBySearchString_case1() {
         Dac dac = createDac();
-        User chair = createUser();
+        User chair = createUser(); // Creates a user with researcher role
         dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
 
-        List<User> users = dacDAO.findAllDACUsersBySearchString(chair.getEmail());
+        Set<User> users = dacDAO.findAllDACUsersBySearchString(chair.getEmail());
         assertFalse(users.isEmpty());
         Assert.assertEquals(1, users.size());
     }
 
     @Test
     public void testFindAllDACUsersBySearchString_case2() {
-        List<User> users = dacDAO.findAllDACUsersBySearchString("random");
+        Set<User> users = dacDAO.findAllDACUsersBySearchString("random");
         Assert.assertTrue(users.isEmpty());
     }
 
@@ -174,13 +176,13 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testFindUserRolesForUsers() {
         Dac dac = createDac();
-        User chair = createUser();
-        User member = createUser();
+        User chair = createUser(); // Creates a user with researcher role
+        User member = createUser(); // Creates a user with researcher role
         dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
         dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member.getDacUserId(), dac.getDacId());
         List<Integer> userIds = Arrays.asList(chair.getDacUserId(), member.getDacUserId());
-        List<UserRole> userRoles = dacDAO.findUserRolesForUsers(userIds);
-        Assert.assertEquals(userRoles.size(), 2);
+        List<UserRole> userRoles = dacDAO.findUserRolesForUsers(userIds).stream().distinct().collect(Collectors.toList());
+        Assert.assertEquals(userRoles.size(), 3);
     }
 
     @Test

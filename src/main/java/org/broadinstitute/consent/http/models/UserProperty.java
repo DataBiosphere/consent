@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 
 public class UserProperty {
 
@@ -69,5 +70,18 @@ public class UserProperty {
 
     public void setUserId(Integer userId) {
         this.userId = userId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserProperty property = (UserProperty) o;
+        return Objects.equal(propertyId, property.propertyId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(propertyId);
     }
 }
