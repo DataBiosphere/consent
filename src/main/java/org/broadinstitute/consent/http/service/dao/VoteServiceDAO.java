@@ -11,6 +11,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -73,29 +74,34 @@ public class VoteServiceDAO {
                 final String updateVoteWithRationale = "UPDATE vote SET vote = :vote, updatedate = :updateDate, rationale = :rationale WHERE voteid = :voteId";
                 final String updateVoteWithoutRationale = "UPDATE vote SET vote = :vote, updatedate = :updateDate WHERE voteid = :voteId";
                 final String updateElectionStatus = "UPDATE election SET status = :status WHERE electionid = :electionId";
-                votes.forEach(
-                    vote -> {
-                      Date now = new Date();
-                      Update updateVote;
-                      if (Objects.isNull(rationale)) {
-                        updateVote = h.createUpdate(updateVoteWithoutRationale);
-                        updateVote.bind("vote", voteValue);
-                        updateVote.bind("updateDate", now);
-                      } else {
-                        updateVote = h.createUpdate(updateVoteWithRationale);
-                        updateVote.bind("vote", voteValue);
-                        updateVote.bind("updateDate", now);
-                        updateVote.bind("rationale", rationale);
-                      }
-                      updateVote.bind("voteId", vote.getVoteId());
-                      updateVote.execute();
-                      if (vote.getType().equalsIgnoreCase(VoteType.FINAL.getValue())) {
-                        Update updateElection = h.createUpdate(updateElectionStatus);
-                        updateElection.bind("status", ElectionStatus.CLOSED.getValue());
-                        updateElection.bind("electionId", vote.getElectionId());
-                        updateElection.execute();
-                      }
-                    });
+                final Date now = new Date();
+                List<Update> dbUpdates = votes.stream()
+                    .map(vote -> {
+                        List<Update> updates = new ArrayList<>();
+                          Update updateVote;
+                          if (Objects.isNull(rationale)) {
+                            updateVote = h.createUpdate(updateVoteWithoutRationale);
+                            updateVote.bind("vote", voteValue);
+                            updateVote.bind("updateDate", now);
+                          } else {
+                            updateVote = h.createUpdate(updateVoteWithRationale);
+                            updateVote.bind("vote", voteValue);
+                            updateVote.bind("updateDate", now);
+                            updateVote.bind("rationale", rationale);
+                          }
+                          updateVote.bind("voteId", vote.getVoteId());
+                          updates.add(updateVote);
+                          if (vote.getType().equalsIgnoreCase(VoteType.FINAL.getValue())) {
+                            Update updateElection = h.createUpdate(updateElectionStatus);
+                            updateElection.bind("status", ElectionStatus.CLOSED.getValue());
+                            updateElection.bind("electionId", vote.getElectionId());
+                            updates.add(updateElection);
+                          }
+                          return updates;
+                    })
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+                dbUpdates.forEach(Update::execute);
                 h.commit();
               });
         });
