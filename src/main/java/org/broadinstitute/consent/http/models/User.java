@@ -324,21 +324,27 @@ public class User {
         if (Objects.isNull(this.getRoles())) {
             this.setRoles(new ArrayList<>());
         }
-        this.getRoles().add(userRole);
+        if (!this.getRoles().contains(userRole)) {
+            this.getRoles().add(userRole);
+        }
     }
 
     public void addProperty(UserProperty userProp) {
         if (Objects.isNull(this.getProperties())) {
             this.setProperties(new ArrayList<>());
         }
-        this.getProperties().add(userProp);
+        if (!this.getProperties().contains(userProp)) {
+            this.getProperties().add(userProp);
+        }
     }
 
     public void addLibraryCard(LibraryCard card) {
         if(Objects.isNull(this.getLibraryCards())) {
-            this.setLibraryCards(new ArrayList<LibraryCard>());
+            this.setLibraryCards(new ArrayList<>());
         }
-        this.getLibraryCards().add(card);
+        if (!this.getLibraryCards().contains(card)) {
+            this.getLibraryCards().add(card);
+        }
     }
 
     @Override

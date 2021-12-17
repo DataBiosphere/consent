@@ -24,6 +24,8 @@ import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserFields;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.Consent;
@@ -37,6 +39,7 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.jdbi.v3.core.Jdbi;
@@ -357,8 +360,18 @@ public class DAOTestHelper {
                 "." +
                 RandomStringUtils.randomAlphabetic(i3);
         Integer userId = userDAO.insertUser(email, "display name", new Date());
+        createUserProperty(userId, UserFields.ORCID.getValue());
+        addUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
         createdUserIds.add(userId);
         return userDAO.findUserById(userId);
+    }
+    
+    protected void createUserProperty(Integer userId, String field) {
+        UserProperty property = new UserProperty();
+        property.setPropertyKey(field);
+        property.setPropertyValue(UUID.randomUUID().toString());
+        property.setUserId(userId);
+        userPropertyDAO.insertAll(List.of(property));
     }
 
     protected User createUserWithInstitution() {

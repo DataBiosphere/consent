@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -105,13 +106,21 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlUpdate("delete from dacuser where dacuserid = :id")
     void deleteUserById(@Bind("id") Integer id);
 
-    @UseRowMapper(UserWithRolesMapper.class)
-    @SqlQuery("SELECT du.*, r.roleid, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, p.propertyvalue AS completed " +
-            " FROM dacuser du " +
-            " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
-            " LEFT JOIN roles r ON r.roleid = ur.role_id " +
-            " LEFT JOIN user_property p ON p.userid = du.dacuserid AND lower(propertykey) = 'completed' " +
-            " ORDER BY createdate DESC ")
+    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = UserRole.class)
+    @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery("SELECT "
+        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
+        + "     u.email_preference, u.status, u.rationale, u.institution_id, "
+        + "     u.era_commons_id, "
+        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name, " 
+        + "     p.propertyid AS up_property_id, p.propertykey AS up_property_key, p.propertyvalue AS up_property_value, p.userid AS up_user_id " 
+        + " FROM dacuser u "
+        + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
+        + " LEFT JOIN roles r ON r.roleid = ur.role_id " 
+        + " LEFT JOIN user_property p ON p.userid = u.dacuserid " 
+        + " ORDER BY u.createdate DESC ")
     Set<User> findUsers();
 
     @SqlQuery("select count(*) from user_role dr inner join roles r on r.roleId = dr.role_id where r.name = 'Admin'")
