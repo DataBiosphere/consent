@@ -74,24 +74,22 @@ public class VoteServiceDAO {
                 final Date now = new Date();
                 votes.forEach(
                     vote -> {
-                      Update updateVote;
+                      Update voteUpdate;
                       if (Objects.isNull(rationale)) {
-                        updateVote = h.createUpdate(updateVoteWithoutRationale);
-                        updateVote.bind("vote", voteValue);
-                        updateVote.bind("updateDate", now);
+                        voteUpdate = h.createUpdate(updateVoteWithoutRationale);
                       } else {
-                        updateVote = h.createUpdate(updateVoteWithRationale);
-                        updateVote.bind("vote", voteValue);
-                        updateVote.bind("updateDate", now);
-                        updateVote.bind("rationale", rationale);
+                        voteUpdate = h.createUpdate(updateVoteWithRationale);
+                        voteUpdate.bind("rationale", rationale);
                       }
-                      updateVote.bind("voteId", vote.getVoteId());
-                      updateVote.execute();
+                      voteUpdate.bind("vote", voteValue);
+                      voteUpdate.bind("updateDate", now);
+                      voteUpdate.bind("voteId", vote.getVoteId());
+                      voteUpdate.execute();
                       if (vote.getType().equalsIgnoreCase(VoteType.FINAL.getValue())) {
-                        Update updateElection = h.createUpdate(updateElectionStatus);
-                        updateElection.bind("status", ElectionStatus.CLOSED.getValue());
-                        updateElection.bind("electionId", vote.getElectionId());
-                        updateElection.execute();
+                        Update electionUpdate = h.createUpdate(updateElectionStatus);
+                        electionUpdate.bind("status", ElectionStatus.CLOSED.getValue());
+                        electionUpdate.bind("electionId", vote.getElectionId());
+                        electionUpdate.execute();
                       }
                     });
                 h.commit();
