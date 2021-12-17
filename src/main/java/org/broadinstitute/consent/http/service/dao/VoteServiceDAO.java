@@ -64,6 +64,9 @@ public class VoteServiceDAO {
     // Update all votes in an atomic transaction, rollback on all if any fail
     jdbi.useHandle(
         handle -> {
+          // By default, new connections are set to auto-commit which breaks our rollback strategy.
+          // Turn that off for this connection. This will not affect existing or new connections and 
+          // only applies to the current one in this handle.  
           handle.getConnection().setAutoCommit(false);
           handle.useTransaction(
               h -> {
