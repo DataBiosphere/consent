@@ -63,7 +63,7 @@ public interface DacDAO extends Transactional<DacDAO> {
               " where lower(du.displayName) like concat('%', lower(:term), '%') " +
               " or lower(du.email) like concat('%', lower(:term), '%') " +
               " or lower(du.additional_email) like concat('%', lower(:term), '%') ")
-    List<User> findAllDACUsersBySearchString(@Bind("term") String term);
+    Set<User> findAllDACUsersBySearchString(@Bind("term") String term);
 
     @SqlQuery("select * from dac where dac_id = :dacId")
     Dac findById(@Bind("dacId") Integer dacId);
