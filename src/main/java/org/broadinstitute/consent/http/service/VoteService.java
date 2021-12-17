@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -16,9 +15,10 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.jdbi.v3.core.Jdbi;
+import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 
 import javax.ws.rs.NotFoundException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,20 +30,20 @@ import java.util.stream.Collectors;
 
 public class VoteService {
 
-    private final Jdbi jdbi;
     private final UserDAO userDAO;
     private final DatasetAssociationDAO dataSetAssociationDAO;
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
+    private final VoteServiceDAO voteServiceDAO;
 
     @Inject
-    public VoteService(Jdbi jdbi, UserDAO userDAO, DatasetAssociationDAO dataSetAssociationDAO,
-                       ElectionDAO electionDAO, VoteDAO voteDAO) {
-        this.jdbi = jdbi;
+    public VoteService(UserDAO userDAO, DatasetAssociationDAO dataSetAssociationDAO,
+                       ElectionDAO electionDAO, VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
         this.userDAO = userDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
+        this.voteServiceDAO = voteServiceDAO;
     }
 
     /**
@@ -111,48 +111,17 @@ public class VoteService {
     }
 
     /**
-     * Update vote values. 'FINAL' votes impact elections so matching elections
-     * marked as ElectionStatus.CLOSED as well.
-     *
-     * @param votes List of Votes to update
-     * @param voteValue Value to update the votes to
-     * @param rationale Value to update the rationales to. Only update if non-null.
-     * @return The updated Vote
-     * @throws IllegalArgumentException when there are non-open elections on any of the votes
-     */
-    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) throws IllegalArgumentException {
-        if (votes.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        // Validate that the elections are all in OPEN state
-        List<Election> elections = electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).collect(Collectors.toList()));
-        boolean allOpen = !elections.isEmpty() && elections.stream().allMatch(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
-        if (!allOpen) {
-            throw new IllegalArgumentException("Not all elections for votes are in OPEN state");
-        }
-    votes.forEach(
-        vote -> {
-          validateVote(vote);
-          Date now = new Date();
-          jdbi.useHandle(
-              handle -> {
-                voteDAO.updateVote(
-                    voteValue,
-                    Objects.nonNull(rationale) ? rationale : vote.getRationale(),
-                    now,
-                    vote.getVoteId(),
-                    vote.getIsReminderSent(),
-                    vote.getElectionId(),
-                    Objects.nonNull(vote.getCreateDate()) ? vote.getCreateDate() : now,
-                    vote.getHasConcerns());
-                if (vote.getType().equalsIgnoreCase(VoteType.FINAL.getValue())) {
-                  electionDAO.updateElectionStatus(
-                      List.of(vote.getElectionId()), ElectionStatus.CLOSED.getValue());
-                }
-              });
-        });
-        return voteDAO.findVotesByIds(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
+    * Update vote values. 'FINAL' votes impact elections so matching elections marked as
+    * ElectionStatus.CLOSED as well.
+    *
+    * @param votes List of Votes to update
+    * @param voteValue Value to update the votes to
+    * @param rationale Value to update the rationales to. Only update if non-null.
+    * @return The updated Vote
+    * @throws IllegalArgumentException when there are non-open elections on any of the votes
+    */
+    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) throws IllegalArgumentException, SQLException {
+        return voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
     }
 
     public Vote updateVoteById(Vote rec,  Integer voteId) throws IllegalArgumentException {

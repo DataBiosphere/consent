@@ -6,7 +6,6 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -15,7 +14,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.jdbi.v3.core.Jdbi;
+import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,9 +33,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -45,17 +44,17 @@ public class VoteServiceTest {
     private VoteService service;
 
     @Mock
-    Jdbi jdbi;
+    private UserDAO userDAO;
     @Mock
-    UserDAO userDAO;
+    private DatasetAssociationDAO dataSetAssociationDAO;
     @Mock
-    DatasetAssociationDAO dataSetAssociationDAO;
+    private DatasetDAO datasetDAO;
     @Mock
-    DatasetDAO datasetDAO;
+    private ElectionDAO electionDAO;
     @Mock
-    ElectionDAO electionDAO;
+    private VoteDAO voteDAO;
     @Mock
-    VoteDAO voteDAO;
+    private VoteServiceDAO voteServiceDAO;
 
     @Before
     public void setUp() {
@@ -70,7 +69,7 @@ public class VoteServiceTest {
     }
 
     private void initService() {
-        service = new VoteService(jdbi, userDAO, dataSetAssociationDAO, electionDAO, voteDAO);
+        service = new VoteService(userDAO, dataSetAssociationDAO, electionDAO, voteDAO, voteServiceDAO);
     }
 
     @Test
@@ -137,38 +136,12 @@ public class VoteServiceTest {
     }
 
     @Test
-    public void testUpdateVotesWithValue() {
-        Vote v = setUpTestVote(false, false);
-        Election e = new Election();
-        e.setStatus(ElectionStatus.OPEN.getValue());
-        Vote returnedVote = setUpTestVote(true, true);
-        returnedVote.setRationale("rationale");
-        when(voteDAO.findVotesByIds(any())).thenReturn(List.of(returnedVote));
-        when(electionDAO.findElectionsByIds(anyList())).thenReturn(List.of(e));
+    public void testUpdateVotesWithValue() throws Exception {
         initService();
 
-        List<Vote> votes = service.updateVotesWithValue(List.of(v), true, "rationale");
-        assertNotNull(votes);
-        assertFalse(votes.isEmpty());
-    }
-
-    @Test
-    public void testUpdateVotesWithValue_emptyList() {
-        initService();
         List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
         assertNotNull(votes);
         assertTrue(votes.isEmpty());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testUpdateVotesWithValue_closedElection() {
-        Vote v = setUpTestVote(false, false);
-        Election e = new Election();
-        e.setStatus(ElectionStatus.CLOSED.getValue());
-        when(electionDAO.findElectionsByIds(anyList())).thenReturn(List.of(e));
-        initService();
-
-        service.updateVotesWithValue(List.of(v), true, "rationale");
     }
 
     @Test
