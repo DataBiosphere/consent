@@ -11,8 +11,6 @@ import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -21,7 +19,6 @@ import static org.broadinstitute.consent.http.service.ontology.ElasticSearchSupp
 
 public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
 
-    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchHealthCheck.class);
     private final RestClient client;
 
     @Override
@@ -53,13 +50,13 @@ public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
             JsonObject jsonResponse = JsonParser.parseString(stringResponse).getAsJsonObject();
             String status = jsonResponse.get("status").getAsString();
             if (status.equalsIgnoreCase("red")) {
-                return Result.unhealthy("ClusterHealth is RED\n" + jsonResponse.toString());
+                return Result.unhealthy("ClusterHealth is RED\n" + jsonResponse);
             }
             if (status.equalsIgnoreCase("yellow")) {
-                return Result.healthy("ClusterHealth is YELLOW\n" + jsonResponse.toString());
+                return Result.healthy("ClusterHealth is YELLOW\n" + jsonResponse);
             }
         } catch (IOException e) {
-            return Result.unhealthy(e.getMessage());
+            return Result.unhealthy("Unable to connect to ElasticSearch");
         }
         return Result.healthy("ClusterHealth is GREEN");
     }
