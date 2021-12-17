@@ -18,9 +18,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * This class encompasses more complex transactions than are manageable using the DAO interface pattern.
- * Standard practice should be to establish a transaction, handle updates, commit. Failures trigger a
- * rollback. Jdbi.useHandle/withHandle/etc functions will auto-close any open connections for us.
+ * Handle transactional, multi-table queries for vote operations.
  */ 
 public class VoteServiceDAO {
 

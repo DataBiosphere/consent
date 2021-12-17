@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class VoteServiceDAOTest extends DAOTestHelper {
@@ -44,6 +45,21 @@ public class VoteServiceDAOTest extends DAOTestHelper {
         assertEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
     }
 
+    @Test
+    public void testUpdateVotesWithValue_NoRationale() throws Exception {
+        User user = createUser();
+        DataAccessRequest dar = createDataAccessRequestV3();
+        DataSet dataset = createDataset();
+        Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        Vote vote = createFinalVote(user.getDacUserId(), election.getElectionId());
+        initService();
+
+        List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, null);
+        assertNotNull(votes);
+        assertFalse(votes.isEmpty());
+        assertTrue(votes.get(0).getVote());
+        assertNull(votes.get(0).getRationale());
+    }
     @Test
     public void testUpdateVotesWithValue_DacVote() throws Exception {
         User user = createUser();
