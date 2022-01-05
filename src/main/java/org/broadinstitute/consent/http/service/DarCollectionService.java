@@ -226,8 +226,8 @@ public class DarCollectionService {
    * Cancel a DarCollection as a researcher.
    *
    * If an election exists for a DAR within the collection, that DAR cannot be cancelled by the
-   * researcher // Since it's now under DAC review, it's up to the DAC Chair (or admin) to
-   * ultimately decline or cancel via elections
+   * researcher. Since it's now under DAC review, it's up to the DAC Chair (or admin) to
+   * ultimately decline or cancel the collection.
    *
    * @param collection The DarCollection
    * @return The canceled DarCollection
@@ -257,7 +257,7 @@ public class DarCollectionService {
   /**
    * Cancel a DarCollection as an admin.
    *
-   * Admins can cancel all DARs in a DarCollection without any
+   * Admins can cancel all DARs + elections in a DarCollection
    *
    * @param collection The DarCollection
    * @return The canceled DarCollection
@@ -322,12 +322,10 @@ public class DarCollectionService {
 
   // Private helper method to mark DataAccessRequests as 'Canceled'
   private void markDarsAsCancelled(Collection<DataAccessRequest> dars) {
-      List<String> activeDarIds = dars.stream()
+    List<String> activeDarIds = dars.stream()
       .filter(DataAccessRequest::isNotCanceled)
       .map(DataAccessRequest::getReferenceId)
       .collect(Collectors.toList());
-
-    // Cancel active dars that we can work on
     if(!activeDarIds.isEmpty()) {
       dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
     }
