@@ -326,7 +326,7 @@ public class DarCollectionService {
       .filter(DataAccessRequest::isNotCanceled)
       .map(DataAccessRequest::getReferenceId)
       .collect(Collectors.toList());
-    if(!activeDarIds.isEmpty()) {
+    if (!activeDarIds.isEmpty()) {
       dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
     }
 }
