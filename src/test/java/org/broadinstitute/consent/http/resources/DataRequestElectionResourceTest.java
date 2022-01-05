@@ -134,6 +134,7 @@ public class DataRequestElectionResourceTest {
         Assert.assertEquals(BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
+    @Deprecated
     @Test
     public void testDeleteElection() {
         doNothing().when(electionService).deleteElection(any());
@@ -146,6 +147,7 @@ public class DataRequestElectionResourceTest {
         Assert.assertEquals(OK.getStatusCode(), response.getStatus());
     }
 
+    @Deprecated
     @Test
     public void testDeleteElectionNotFound() {
         doThrow(new NotFoundException()).when(electionService).deleteElection(any());
@@ -158,6 +160,7 @@ public class DataRequestElectionResourceTest {
         Assert.assertEquals(NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
+    @Deprecated
     @Test
     public void testDeleteElectionBadRequest() {
         doThrow(new IllegalArgumentException()).when(electionService).deleteElection(any());

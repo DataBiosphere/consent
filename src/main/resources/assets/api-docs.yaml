@@ -1687,6 +1687,7 @@ paths:
           description: The DAR couldn't be found.
   /api/dataRequest/{requestId}/election/{id}:
     delete:
+      deprecated: true
       summary: deleteElection
       description: Deletes the election identified by the id.
       parameters:
