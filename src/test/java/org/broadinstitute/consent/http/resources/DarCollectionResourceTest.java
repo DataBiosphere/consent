@@ -1,26 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
 import com.google.api.client.http.HttpStatusCodes;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -41,6 +21,26 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 public class DarCollectionResourceTest {
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final List<UserRole> researcherRole = Collections.singletonList(
@@ -50,13 +50,13 @@ public class DarCollectionResourceTest {
 
   private DarCollectionResource resource;
 
-  @Mock private UserService userService;
+  @Mock private DataAccessRequestService dataAccessRequestService;
   @Mock private DatasetService datasetService;
   @Mock private DarCollectionService darCollectionService;
-  @Mock private DataAccessRequestService dataAccessRequestService;
+  @Mock private UserService userService;
 
   private void initResource() {
-    resource = new DarCollectionResource(userService, darCollectionService, dataAccessRequestService);
+    resource = new DarCollectionResource(dataAccessRequestService, darCollectionService, userService);
   }
 
   private DataAccessRequest mockDataAccessRequestWithDatasetIds() {
@@ -235,7 +235,7 @@ public class DarCollectionResourceTest {
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(null);
     initResource();
 
-    Response response = resource.cancelDarCollectionByCollectionId(authUser, 1);
+    Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, null);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -245,10 +245,10 @@ public class DarCollectionResourceTest {
     collection.setCreateUserId(researcher.getDacUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
-    when(darCollectionService.cancelDarCollection(any(DarCollection.class))).thenThrow(new BadRequestException());
+    when(darCollectionService.cancelDarCollectionAsResearcher(any(DarCollection.class))).thenThrow(new BadRequestException());
     initResource();
 
-    Response response = resource.cancelDarCollectionByCollectionId(authUser, 1);
+    Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, null);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
@@ -270,11 +270,11 @@ public class DarCollectionResourceTest {
     collection.setCreateUserId(researcher.getDacUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
-    when(darCollectionService.cancelDarCollection(any(DarCollection.class)))
+    when(darCollectionService.cancelDarCollectionAsResearcher(any(DarCollection.class)))
         .thenThrow(new InternalServerErrorException());
     initResource();
 
-    Response response = resource.cancelDarCollectionByCollectionId(authUser, 1);
+    Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, null);
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
@@ -318,7 +318,7 @@ public class DarCollectionResourceTest {
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(darCollectionService.getByCollectionId(any())).thenReturn(null);
     initResource();
-    
+
     Response response = resource.resubmitDarCollection(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
@@ -329,7 +329,7 @@ public class DarCollectionResourceTest {
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(darCollectionService.getByCollectionId(any())).thenReturn(new DarCollection());
     initResource();
-    
+
     Response response = resource.resubmitDarCollection(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }

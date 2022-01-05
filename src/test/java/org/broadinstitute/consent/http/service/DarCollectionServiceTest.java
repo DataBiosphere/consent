@@ -274,7 +274,7 @@ public class DarCollectionServiceTest {
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     initService();
 
-    DarCollection canceledCollection = service.cancelDarCollection(collection);
+    DarCollection canceledCollection = service.cancelDarCollectionAsResearcher(collection);
     for (DataAccessRequest collectionDar : canceledCollection.getDars().values()) {
       assertEquals("canceled", collectionDar.getData().getStatus().toLowerCase());
     }
@@ -285,12 +285,12 @@ public class DarCollectionServiceTest {
     Set<DataSet> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
 
-    when(electionDAO.getElectionIdsByReferenceIds(anyList())).thenReturn(List.of(1));
+    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(new Election()));
     doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     initService();
 
-    service.cancelDarCollection(collection);
+    service.cancelDarCollectionAsResearcher(collection);
   }
 
   private DarCollection generateMockDarCollection(Set<DataSet> datasets) {

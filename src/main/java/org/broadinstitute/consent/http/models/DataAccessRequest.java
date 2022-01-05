@@ -53,7 +53,7 @@ public class DataAccessRequest {
 
   public static boolean isNotCanceled(DataAccessRequest dar) {
     String status = dar.getData().getStatus();
-    return Objects.isNull(status) || status.toLowerCase() != "canceled";
+    return Objects.isNull(status) || !status.equalsIgnoreCase("canceled");
   }
 
   public Integer getId() {
