@@ -1,21 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -30,30 +14,50 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
+import javax.ws.rs.NotFoundException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class VoteServiceTest {
 
     private VoteService service;
 
     @Mock
-    UserDAO userDAO;
+    private UserDAO userDAO;
     @Mock
-    DatasetAssociationDAO dataSetAssociationDAO;
+    private DatasetAssociationDAO dataSetAssociationDAO;
     @Mock
-    DatasetDAO datasetDAO;
+    private DatasetDAO datasetDAO;
     @Mock
-    ElectionDAO electionDAO;
+    private ElectionDAO electionDAO;
     @Mock
-    VoteDAO voteDAO;
+    private VoteDAO voteDAO;
+    @Mock
+    private VoteServiceDAO voteServiceDAO;
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         doNothings();
     }
 
@@ -64,7 +68,7 @@ public class VoteServiceTest {
     }
 
     private void initService() {
-        service = new VoteService(userDAO, dataSetAssociationDAO, electionDAO, voteDAO);
+        service = new VoteService(userDAO, dataSetAssociationDAO, electionDAO, voteDAO, voteServiceDAO);
     }
 
     @Test
@@ -114,7 +118,7 @@ public class VoteServiceTest {
         Vote v = setUpTestVote(false, false);
         initService();
 
-        Vote vote = service.updateVote(v, 11, "test");
+        service.updateVote(v, 11, "test");
     }
 
     @Test
@@ -128,6 +132,32 @@ public class VoteServiceTest {
 
         Vote vote = service.updateVote(v, v.getVoteId(), "test");
         assertNotNull(vote);
+    }
+
+    @Test
+    public void testUpdateVotesWithValue() throws Exception {
+        initService();
+
+        List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
+        assertNotNull(votes);
+        assertTrue(votes.isEmpty());
+    }
+
+    @Test
+    public void testFindVotesByIds() {
+        when(voteDAO.findVotesByIds(any())).thenReturn(List.of(new Vote()));
+        initService();
+        List<Vote> votes = service.findVotesByIds(List.of(1));
+        assertNotNull(votes);
+        assertFalse(votes.isEmpty());
+    }
+
+    @Test
+    public void testFindVotesByIds_emptyList() {
+        initService();
+        List<Vote> votes = service.findVotesByIds(List.of());
+        assertNotNull(votes);
+        assertTrue(votes.isEmpty());
     }
 
     @Test
@@ -251,14 +281,14 @@ public class VoteServiceTest {
         when(voteDAO.findVotesByReferenceId("test"))
                 .thenReturn(null);
         initService();
-        List<Vote> votes = service.describeVotes("test");
+        service.describeVotes("test");
     }
 
     @Test
     public void testDescribeVotes() {
         Vote v = setUpTestVote(false, false);
         when(voteDAO.findVotesByReferenceId("test"))
-                .thenReturn(Arrays.asList(v));
+                .thenReturn(List.of(v));
         initService();
         List<Vote> votes = service.describeVotes("test");
         assertNotNull(votes);
@@ -313,9 +343,8 @@ public class VoteServiceTest {
 
     @Test
     public void testDeleteVotes() throws IllegalArgumentException, UnknownIdentifierException {
-        Vote v = setUpTestVote(false, false);
-        when(electionDAO.findElectionsWithFinalVoteByReferenceId(any()))
-                .thenReturn(Arrays.asList(new Election()));
+        setUpTestVote(false, false);
+        when(electionDAO.findElectionsWithFinalVoteByReferenceId(any())).thenReturn(List.of(new Election()));
         initService();
 
         service.deleteVotes("test");
@@ -327,7 +356,7 @@ public class VoteServiceTest {
                 .thenReturn(null);
         initService();
 
-        Vote vote = service.describeDataOwnerVote("test", 1);
+        service.describeDataOwnerVote("test", 1);
     }
 
     @Test
