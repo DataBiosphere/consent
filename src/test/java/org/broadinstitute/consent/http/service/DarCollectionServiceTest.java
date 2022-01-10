@@ -299,6 +299,45 @@ public class DarCollectionServiceTest {
   }
 
   @Test
+  public void testCancelDarCollectionAsResearcher_NoElections() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    DataAccessRequestData data = new DataAccessRequestData();
+    dar.setData(data);
+    DarCollection collection = createMockCollections(1).get(0);
+    collection.setDars(Map.of(dar.getReferenceId(), dar));
+    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of());
+    spy(electionDAO);
+    spy(dataAccessRequestDAO);
+    spy(darCollectionDAO);
+    initService();
+
+    service.cancelDarCollectionAsResearcher(collection);
+    verify(electionDAO, times(1)).findLastElectionsByReferenceIds(anyList());
+    verify(electionDAO, times(0)).updateElectionById(anyInt(), anyString(), any());
+    verify(dataAccessRequestDAO, times(1)).cancelByReferenceIds(anyList());
+    verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(anyInt());
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void testCancelDarCollectionAsResearcher_WithElections() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    DataAccessRequestData data = new DataAccessRequestData();
+    dar.setData(data);
+    DarCollection collection = createMockCollections(1).get(0);
+    collection.setDars(Map.of(dar.getReferenceId(), dar));
+    Election election = createMockElection();
+    election.setReferenceId(dar.getReferenceId());
+    election.setStatus(ElectionStatus.OPEN.getValue());
+    election.setElectionId(1);
+    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
+    initService();
+
+    service.cancelDarCollectionAsResearcher(collection);
+  }
+
+  @Test
   public void testCancelDarCollectionAsAdmin() {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
@@ -386,11 +425,6 @@ public class DarCollectionServiceTest {
     verify(electionDAO, times(0)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
     verify(darCollectionDAO, times(0)).findDARCollectionByCollectionId(anyInt());
-  }
-
-  @Test
-  public void testCancelDarCollectionAsResearcher() {
-
   }
 
   private DarCollection generateMockDarCollection(Set<DataSet> datasets) {
