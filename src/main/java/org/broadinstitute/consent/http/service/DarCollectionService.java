@@ -291,7 +291,7 @@ public class DarCollectionService {
    * @return The canceled DarCollection
    */
   public DarCollection cancelDarCollectionAsChair(DarCollection collection, User user) {
-    // Find DARs for which the chairperson has access to:
+    // Find dataset ids the chairperson has access to:
     List<Integer> datasetIds = datasetDAO.findDataSetsByAuthUserEmail(user.getEmail())
       .stream()
       .map(DataSet::getDataSetId)
