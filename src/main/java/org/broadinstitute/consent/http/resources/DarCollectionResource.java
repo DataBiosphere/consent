@@ -163,18 +163,11 @@ public class DarCollectionResource extends Resource {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
       isCollectionPresent(collection);
 
-      UserRoles actingRole;
+      // Default to the least impactful role if none provided.
+      UserRoles actingRole = UserRoles.RESEARCHER;
       if (Objects.nonNull(roleName)) {
         validateUserHasRoleName(user, roleName);
         actingRole = UserRoles.getUserRoleFromName(roleName);
-      } else {
-        if (user.hasUserRole(UserRoles.ADMIN)) {
-          actingRole = UserRoles.ADMIN;
-        } else if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
-          actingRole = UserRoles.CHAIRPERSON;
-        } else {
-          actingRole = UserRoles.RESEARCHER;
-        }
       }
 
       DarCollection cancelledCollection;

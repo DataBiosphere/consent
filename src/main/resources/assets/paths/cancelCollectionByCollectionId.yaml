@@ -15,7 +15,7 @@ put:
       description: | 
         String value that represents the role name to act as. If not provided,
         the system will cancel the collection and associated elections as the 
-        highest permissioned role the user has.
+        least permissioned role the user has (researcher) for safety.
       required: false
       schema:
         type: string
