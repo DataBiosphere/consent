@@ -264,7 +264,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findElectionsWithFinalVoteByTypeAndStatus(@Bind("type") String type, @BindList("status") List<String> status);
 
     @UseRowMapper(SimpleElectionMapper.class)
-    @SqlQuery("select distinct * from election e where  e.electionId in  (<electionIds>)")
+    @SqlQuery("SELECT DISTINCT * FROM election e WHERE e.electionid IN (<electionIds>)")
     List<Election> findElectionsByIds(@BindList("electionIds") List<Integer> electionIds);
 
     @UseRowMapper(SimpleElectionMapper.class)

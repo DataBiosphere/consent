@@ -15,10 +15,13 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 
 import javax.ws.rs.NotFoundException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -31,14 +34,16 @@ public class VoteService {
     private final DatasetAssociationDAO dataSetAssociationDAO;
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
+    private final VoteServiceDAO voteServiceDAO;
 
     @Inject
     public VoteService(UserDAO userDAO, DatasetAssociationDAO dataSetAssociationDAO,
-                       ElectionDAO electionDAO, VoteDAO voteDAO) {
+                       ElectionDAO electionDAO, VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
         this.userDAO = userDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
+        this.voteServiceDAO = voteServiceDAO;
     }
 
     /**
@@ -103,6 +108,20 @@ public class VoteService {
                 vote.getHasConcerns()
         );
         return voteDAO.findVoteById(vote.getVoteId());
+    }
+
+    /**
+    * Update vote values. 'FINAL' votes impact elections so matching elections marked as
+    * ElectionStatus.CLOSED as well.
+    *
+    * @param votes List of Votes to update
+    * @param voteValue Value to update the votes to
+    * @param rationale Value to update the rationales to. Only update if non-null.
+    * @return The updated Vote
+    * @throws IllegalArgumentException when there are non-open elections on any of the votes
+    */
+    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) throws IllegalArgumentException, SQLException {
+        return voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
     }
 
     public Vote updateVoteById(Vote rec,  Integer voteId) throws IllegalArgumentException {
@@ -210,6 +229,13 @@ public class VoteService {
             notFoundException(voteId);
         }
         return vote;
+    }
+
+    public List<Vote> findVotesByIds(List<Integer> voteIds) {
+        if (voteIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return voteDAO.findVotesByIds(voteIds);
     }
 
     /**

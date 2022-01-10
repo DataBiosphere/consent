@@ -61,6 +61,9 @@ public class DAOTestHelper {
     private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config("database.maxSize", String.valueOf(maxConnections));
 
     private static DropwizardTestSupport<ConsentConfiguration> testApp;
+    
+    protected static Jdbi jdbi;
+    
     protected static ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     protected static ConsentAuditDAO consentAuditDAO;
     protected static ConsentDAO consentDAO;
@@ -119,7 +122,7 @@ public class DAOTestHelper {
         String dbiExtension = "_" + RandomStringUtils.random(10, true, false);
         ConsentConfiguration configuration = testApp.getConfiguration();
         Environment environment = testApp.getEnvironment();
-        Jdbi jdbi = new JdbiFactory().build(environment, configuration.getDataSourceFactory(), DB_ENV + dbiExtension);
+        jdbi = new JdbiFactory().build(environment, configuration.getDataSourceFactory(), DB_ENV + dbiExtension);
         jdbi.installPlugin(new SqlObjectPlugin());
         jdbi.installPlugin(new Gson2Plugin());
         jdbi.installPlugin(new GuavaPlugin());
@@ -281,6 +284,7 @@ public class DAOTestHelper {
 
     protected Vote createDacVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
+        createdVoteIds.add(voteId);
         return voteDAO.findVoteById(voteId);
     }
 
