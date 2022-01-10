@@ -279,6 +279,75 @@ public class DarCollectionResourceTest {
   }
 
   @Test
+  public void testCancelDarCollection_asAdmin() {
+    List<UserRole> adminRole = List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRole, authUser.getEmail());
+
+    DarCollection collection = mockDarCollection();
+    collection.setCreateUserId(admin.getDacUserId());
+    when(userService.findUserByEmail(anyString())).thenReturn(admin);
+    when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
+    initResource();
+
+    Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, Resource.ADMIN);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testCancelDarCollection_asChair() {
+    List<UserRole> chairRole = List.of(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
+    User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+
+    DarCollection collection = mockDarCollection();
+    collection.setCreateUserId(chair.getDacUserId());
+    when(userService.findUserByEmail(anyString())).thenReturn(chair);
+    when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
+    initResource();
+
+    Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, Resource.CHAIRPERSON);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testCancelDarCollection_asChairAsAdmin() {
+    List<UserRole> chairRole = List.of(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
+    User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+
+    DarCollection collection = mockDarCollection();
+    collection.setCreateUserId(chair.getDacUserId());
+    when(userService.findUserByEmail(anyString())).thenReturn(chair);
+    when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
+    initResource();
+
+    Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, Resource.ADMIN);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testCancelDarCollection_asResearcher() {
+    DarCollection collection = mockDarCollection();
+    collection.setCreateUserId(researcher.getDacUserId());
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
+    initResource();
+
+    Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, Resource.RESEARCHER);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testCancelDarCollection_asResearcherAsAdmin() {
+    DarCollection collection = mockDarCollection();
+    collection.setCreateUserId(researcher.getDacUserId());
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
+    initResource();
+
+    Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, Resource.ADMIN);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
   public void testGetCollectionsByToken_InvalidToken() {
     initResource();
     Response response = resource.getCollectionsByToken(authUser, "badTokenString");
