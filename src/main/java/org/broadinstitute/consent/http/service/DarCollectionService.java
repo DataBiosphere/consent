@@ -248,21 +248,27 @@ public class DarCollectionService {
       throw new BadRequestException("Elections present on DARs; cannot cancel collection");
     }
 
-    // Cancel active dars that we can work on
-    markDarsAsCancelled(dars);
+    // Cancel active dars for the researcher
+    List<String> activeDarIds = dars.stream()
+      .filter(DataAccessRequest::isNotCanceled)
+      .map(DataAccessRequest::getReferenceId)
+      .collect(Collectors.toList());
+    if (!activeDarIds.isEmpty()) {
+      dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
+    }
 
     return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }
 
   /**
-   * Cancel a DarCollection as an admin.
+   * Cancel Elections for a DarCollection as an admin.
    *
-   * Admins can cancel all DARs + elections in a DarCollection
+   * Admins can cancel all elections in a DarCollection
    *
    * @param collection The DarCollection
-   * @return The canceled DarCollection
+   * @return The DarCollection whose elections have been canceled
    */
-  public DarCollection cancelDarCollectionAsAdmin(DarCollection collection) {
+  public DarCollection cancelDarCollectionElectionsAsAdmin(DarCollection collection) {
     Collection<DataAccessRequest> dars = collection.getDars().values();
     List<String> referenceIds = dars.stream()
       .map(DataAccessRequest::getReferenceId)
@@ -276,21 +282,18 @@ public class DarCollectionService {
     // Cancel all DAR elections
     cancelElectionsForReferenceIds(referenceIds);
 
-    // Cancel active dars that we can work on
-    markDarsAsCancelled(dars);
-
     return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }
 
   /**
-   * Cancel a DarCollection as a chairperson.
+   * Cancel Elections for a DarCollection as a chairperson.
    *
-   * Chairs can only cancel DARs that reference a dataset the chair is a DAC member for.
+   * Chairs can only cancel Elections that reference a dataset the chair is a DAC member for.
    *
    * @param collection The DarCollection
-   * @return The canceled DarCollection
+   * @return The DarCollection whose elections have been canceled
    */
-  public DarCollection cancelDarCollectionAsChair(DarCollection collection, User user) {
+  public DarCollection cancelDarCollectionElectionsAsChair(DarCollection collection, User user) {
     // Find dataset ids the chairperson has access to:
     List<Integer> datasetIds = datasetDAO.findDataSetsByAuthUserEmail(user.getEmail())
       .stream()
@@ -314,22 +317,8 @@ public class DarCollectionService {
     // Cancel filtered DAR elections
     cancelElectionsForReferenceIds(referenceIds);
 
-    // Cancel active dars that we can work on
-    markDarsAsCancelled(dars);
-
     return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }
-
-  // Private helper method to mark DataAccessRequests as 'Canceled'
-  private void markDarsAsCancelled(Collection<DataAccessRequest> dars) {
-    List<String> activeDarIds = dars.stream()
-      .filter(DataAccessRequest::isNotCanceled)
-      .map(DataAccessRequest::getReferenceId)
-      .collect(Collectors.toList());
-    if (!activeDarIds.isEmpty()) {
-      dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
-    }
-}
 
   // Private helper method to mark Elections as 'Canceled'
   private void cancelElectionsForReferenceIds(List<String> referenceIds) {

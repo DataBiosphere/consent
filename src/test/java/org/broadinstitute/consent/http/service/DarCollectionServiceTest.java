@@ -355,10 +355,10 @@ public class DarCollectionServiceTest {
     spy(darCollectionDAO);
     initService();
 
-    service.cancelDarCollectionAsAdmin(collection);
+    service.cancelDarCollectionElectionsAsAdmin(collection);
     verify(electionDAO, times(1)).findLastElectionsByReferenceIds(anyList());
     verify(electionDAO, times(1)).updateElectionById(anyInt(), anyString(), any());
-    verify(dataAccessRequestDAO, times(1)).cancelByReferenceIds(anyList());
+    verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(anyInt());
   }
 
@@ -387,11 +387,11 @@ public class DarCollectionServiceTest {
     spy(darCollectionDAO);
     initService();
 
-    service.cancelDarCollectionAsChair(collection, user);
+    service.cancelDarCollectionElectionsAsChair(collection, user);
     verify(datasetDAO, times(1)).findDataSetsByAuthUserEmail(anyString());
     verify(electionDAO, times(1)).findLastElectionsByReferenceIds(anyList());
     verify(electionDAO, times(1)).updateElectionById(anyInt(), anyString(), any());
-    verify(dataAccessRequestDAO, times(1)).cancelByReferenceIds(anyList());
+    verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(anyInt());
   }
 
@@ -419,7 +419,7 @@ public class DarCollectionServiceTest {
     spy(darCollectionDAO);
     initService();
 
-    service.cancelDarCollectionAsChair(collection, user);
+    service.cancelDarCollectionElectionsAsChair(collection, user);
     verify(datasetDAO, times(1)).findDataSetsByAuthUserEmail(anyString());
     verify(electionDAO, times(0)).findLastElectionsByReferenceIds(anyList());
     verify(electionDAO, times(0)).updateElectionById(anyInt(), anyString(), any());

@@ -173,10 +173,10 @@ public class DarCollectionResource extends Resource {
       DarCollection cancelledCollection;
       switch (Objects.requireNonNull(actingRole)) {
         case ADMIN:
-          cancelledCollection = darCollectionService.cancelDarCollectionAsAdmin(collection);
+          cancelledCollection = darCollectionService.cancelDarCollectionElectionsAsAdmin(collection);
           break;
         case CHAIRPERSON:
-          cancelledCollection = darCollectionService.cancelDarCollectionAsChair(collection, user);
+          cancelledCollection = darCollectionService.cancelDarCollectionElectionsAsChair(collection, user);
           break;
         default:
           validateUserIsCreator(user, collection);
