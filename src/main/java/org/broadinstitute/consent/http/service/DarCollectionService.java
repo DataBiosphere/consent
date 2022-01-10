@@ -227,7 +227,7 @@ public class DarCollectionService {
    *
    * If an election exists for a DAR within the collection, that DAR cannot be cancelled by the
    * researcher. Since it's now under DAC review, it's up to the DAC Chair (or admin) to
-   * ultimately decline or cancel the collection.
+   * ultimately decline or cancel the elections for the collection.
    *
    * @param collection The DarCollection
    * @return The canceled DarCollection
