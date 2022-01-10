@@ -7,6 +7,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -21,12 +24,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.ws.rs.BadRequestException;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -293,6 +298,41 @@ public class DarCollectionServiceTest {
     service.cancelDarCollectionAsResearcher(collection);
   }
 
+  @Test
+  public void testCancelDarCollectionAsAdmin() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    DataAccessRequestData data = new DataAccessRequestData();
+    dar.setData(data);
+    DarCollection collection = createMockCollections(1).get(0);
+    collection.setDars(Map.of(dar.getReferenceId(), dar));
+    Election election = createMockElection();
+    election.setReferenceId(dar.getReferenceId());
+    election.setStatus(ElectionStatus.OPEN.getValue());
+    election.setElectionId(1);
+    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
+    spy(electionDAO);
+    spy(dataAccessRequestDAO);
+    spy(darCollectionDAO);
+    initService();
+
+    service.cancelDarCollectionAsAdmin(collection);
+    verify(electionDAO, times(1)).findLastElectionsByReferenceIds(anyList());
+    verify(electionDAO, times(1)).updateElectionById(anyInt(), anyString(), any());
+    verify(dataAccessRequestDAO, times(1)).cancelByReferenceIds(anyList());
+    verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(anyInt());
+  }
+
+  @Test
+  public void testCancelDarCollectionAsChair() {
+
+  }
+
+  @Test
+  public void testCancelDarCollectionAsResearcher() {
+
+  }
+
   private DarCollection generateMockDarCollection(Set<DataSet> datasets) {
     DarCollection collection = new DarCollection();
     Map<String, DataAccessRequest> dars = new HashMap<>();
@@ -354,5 +394,12 @@ public class DarCollectionServiceTest {
               return collection;
             })
         .collect(Collectors.toList());
+  }
+
+  private Election createMockElection() {
+    Election election = new Election();
+    election.setElectionId(1);
+    election.setReferenceId(UUID.randomUUID().toString());
+    return election;
   }
 }
