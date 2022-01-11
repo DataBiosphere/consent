@@ -18,15 +18,19 @@ import org.broadinstitute.consent.http.service.UserService;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
@@ -204,6 +208,25 @@ public class DarCollectionResource extends Resource {
       DataAccessRequest draftDar = dataAccessRequestService.createDraftDarFromCanceledCollection(user, sourceCollection);
       return Response.ok().entity(draftDar).build();
     } catch(Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Path("{collectionId}/election")
+  @Consumes("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  public Response createElectionsForCollection(
+    @Context UriInfo info,
+    @Auth AuthUser authUser,
+    @PathParam("collectionId") Integer collectionId) {
+    DarCollection sourceCollection = darCollectionService.getByCollectionId(collectionId);
+    isCollectionPresent(sourceCollection);
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      DarCollection updatedCollection = darCollectionService.createElectionsForDarCollection(user, sourceCollection);
+      return Response.ok(updatedCollection).build();
+    } catch (Exception e) {
       return createExceptionResponse(e);
     }
   }

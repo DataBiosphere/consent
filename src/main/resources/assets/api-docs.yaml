@@ -132,6 +132,8 @@ paths:
     $ref: './paths/collectionsByRoleName.yaml'
   /api/collections/{collectionId}/cancel:
     $ref: './paths/cancelCollectionByCollectionId.yaml'
+  /api/collections/{collectionId}/election:
+    $ref: './paths/createCollectionElectionsByCollectionId.yaml'
   /api/collections/{collectionId}/resubmit:
     $ref: './paths/resubmitCollectionByCollectionId.yaml'
   /api/ontology:
@@ -1657,6 +1659,7 @@ paths:
         404:
           description: The election or the DAR couldn't be found.
     post:
+      deprecated: true
       summary: createDataRequestElection
       description: Creates an Access and RP Election for the DAR identified by the ID.
       parameters:

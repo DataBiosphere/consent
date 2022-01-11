@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -42,6 +43,7 @@ import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -51,9 +53,12 @@ public class DarCollectionServiceTest {
   private DarCollectionService service;
 
   @Mock private DarCollectionDAO darCollectionDAO;
+  @Mock private DarCollectionServiceDAO darCollectionServiceDAO;
   @Mock private DatasetDAO datasetDAO;
   @Mock private ElectionDAO electionDAO;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
+  @Mock private EmailNotifierService emailNotifierService;
+  @Mock private VoteDAO voteDAO;
 
   @Mock private User user;
 
@@ -457,7 +462,7 @@ public class DarCollectionServiceTest {
   }
 
   private void initService() {
-    service = new DarCollectionService(darCollectionDAO, datasetDAO, electionDAO, dataAccessRequestDAO);
+    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailNotifierService, voteDAO);
   }
 
   private void initWithPaginationToken(PaginationToken token, int unfilteredCount, int filteredCount) {
@@ -474,7 +479,7 @@ public class DarCollectionServiceTest {
     when(darCollectionDAO.findDARCollectionsCreatedByUserId(any())).thenReturn(unfilteredDars);
     when(darCollectionDAO.findAllDARCollectionsWithFiltersByUser(any(), any(), any(), any())).thenReturn(filteredDars);
     when(darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(any(), any(), any())).thenReturn(collectionIdDars);
-    service = new DarCollectionService(darCollectionDAO, datasetDAO, electionDAO, dataAccessRequestDAO);
+    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailNotifierService, voteDAO);
   }
 
   private List<DarCollection> createMockCollections(int count) {

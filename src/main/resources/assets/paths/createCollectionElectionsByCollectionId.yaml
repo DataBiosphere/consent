@@ -1,0 +1,26 @@
+post:
+  summary: Create Elections for Collection By ID
+  description: Returns created Elections for Dars in Collection
+  tags:
+    - DAR Collection
+    - Election
+  parameters:
+    - name: collectionId
+      in: path
+      description: DAR Collection Id
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: Returns target dar collection
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DarCollection.yaml'
+    400:
+      description: Bad Request
+    404:
+      description: Not Found
+    500:
+      description: Internal Server Error
