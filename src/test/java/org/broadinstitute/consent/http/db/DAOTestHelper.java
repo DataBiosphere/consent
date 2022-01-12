@@ -154,6 +154,15 @@ public class DAOTestHelper {
 
     @After
     public void tearDown() {
+        // Some ServiceDAO tests go around the election and vote creation id list process.
+        // Handle those first so that proper deletion order is preserved.
+        createdDataAccessRequestReferenceIds.forEach(darId -> {
+            List<Election> elections = electionDAO.findElectionsByReferenceId(darId);
+            createdElectionIds.addAll(elections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+            List<Vote> votes = voteDAO.findVotesByElectionIds(createdElectionIds);
+            createdVoteIds.addAll(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
+        });
+
         ApprovalExpirationTime aet = approvalExpirationTimeDAO.findApprovalExpirationTime();
         if (Objects.nonNull(aet) && aet.getId() > 0) {
             approvalExpirationTimeDAO.deleteApprovalExpirationTime(aet.getId());
@@ -167,14 +176,6 @@ public class DAOTestHelper {
             voteDAO.deleteVotes(id);
             consentDAO.deleteAllAssociationsForConsent(id);
             consentDAO.deleteConsent(id);
-        });
-        // Some ServiceDAO tests go around the election and vote creation id list process.
-        // Handle that here so that proper deletion order is preserved.
-        createdDataAccessRequestReferenceIds.forEach(darId -> {
-            List<Election> elections = electionDAO.findElectionsByReferenceId(darId);
-            createdElectionIds.addAll(elections.stream().map(Election::getElectionId).collect(Collectors.toList()));
-            List<Vote> votes = voteDAO.findVotesByElectionIds(createdElectionIds);
-            createdVoteIds.addAll(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
         });
         createdVoteIds.forEach(id -> voteDAO.deleteVoteById(id));
         createdElectionIds.forEach(id -> electionDAO.deleteAccessRP(id));
