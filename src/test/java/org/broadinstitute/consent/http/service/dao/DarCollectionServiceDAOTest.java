@@ -30,12 +30,6 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     serviceDAO = new DarCollectionServiceDAO(jdbi, userDAO);
   }
 
-  @After
-  public void tearDown() {
-
-    super.tearDown();
-  }
-
   @Test
   public void testCreateElectionsForDarCollection() throws Exception {
     initService();
@@ -61,6 +55,46 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
     assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
     assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
+  }
+
+  @Test
+  public void testCreateElectionsForDarCollectionManualReview() throws Exception {
+    initService();
+
+    DarCollection collection = setUpDarCollectionWithDacDataset();
+    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
+    assertNotNull(dar);
+    assertNotNull(dar.getData());
+    // Any sensitive subject triggers manual review required:
+    dar.getData().setPoa(true);
+    Date now = new Date();
+    dataAccessRequestDAO.updateDataByReferenceIdVersion2(
+      dar.getReferenceId(),
+      dar.getUserId(),
+      now,
+      now,
+      now,
+      dar.getData());
+
+    serviceDAO.createElectionsForDarCollection(collection);
+
+    List<Election> createdElections =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
+    List<Vote> createdVotes =
+        voteDAO.findVotesByElectionIds(
+            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+
+    // Ensure that we have an access and rp election
+    assertFalse(createdElections.isEmpty());
+    assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
+    assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
+    // Ensure that we have primary vote types
+    assertFalse(createdVotes.isEmpty());
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
+    assertTrue(createdVotes.stream().noneMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
   }
 
   private DarCollection setUpDarCollectionWithDacDataset() {
