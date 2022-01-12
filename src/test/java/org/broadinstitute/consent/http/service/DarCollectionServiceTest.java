@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -430,47 +431,6 @@ public class DarCollectionServiceTest {
     verify(electionDAO, times(0)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
     verify(darCollectionDAO, times(0)).findDARCollectionByCollectionId(anyInt());
-  }
-
-  @Test
-  public void testCreateElectionsForDarCollection() throws Exception {
-    User user = new User();
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setReferenceId(UUID.randomUUID().toString());
-    DarCollection collection = createMockCollections(1).get(0);
-    collection.setDars(Map.of(dar.getReferenceId(), dar));
-    Election election = createMockElection();
-    election.setStatus(ElectionStatus.CANCELED.getValue());
-    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
-    when(electionDAO.findLastElectionByReferenceIdAndType(anyString(), anyString())).thenReturn(election);
-    doNothing().when(darCollectionServiceDAO).createElectionsForDarCollection(any());
-    spy(electionDAO);
-    spy(voteDAO);
-    spy(emailNotifierService);
-    spy(darCollectionDAO);
-    initService();
-
-    service.createElectionsForDarCollection(user, collection);
-    verify(electionDAO, times(1)).findLastElectionByReferenceIdAndType(anyString(), anyString());
-    verify(voteDAO, times(1)).findVotesByElectionId(anyInt());
-    verify(emailNotifierService, times(1)).sendNewCaseMessageToList(anyList(), any());
-    verify(darCollectionDAO, times(1)).updateDarCollection(any(), any(), any());
-    verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testCreateElectionsForDarCollection_OpenElections() {
-    User user = new User();
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setReferenceId(UUID.randomUUID().toString());
-    DarCollection collection = createMockCollections(1).get(0);
-    collection.setDars(Map.of(dar.getReferenceId(), dar));
-    Election election = createMockElection();
-    election.setStatus(ElectionStatus.OPEN.getValue());
-    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
-    initService();
-
-    service.createElectionsForDarCollection(user, collection);
   }
 
   private DarCollection generateMockDarCollection(Set<DataSet> datasets) {
