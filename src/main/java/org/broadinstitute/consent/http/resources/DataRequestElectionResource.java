@@ -97,6 +97,7 @@ public class DataRequestElectionResource extends Resource {
         }
     }
 
+    @Deprecated
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")

@@ -10,6 +10,16 @@ put:
       required: true
       schema:
         type: integer
+    - name: roleName
+      in: query
+      description: | 
+        String value that represents the role name to act as. If not provided,
+        the system will cancel the collection and associated elections as the 
+        least permissioned role the user has (researcher) for safety.
+      required: false
+      schema:
+        type: string
+        enum: [Admin, Chairperson, Researcher]
   responses:
     200:
       description: Returns target dar collection with DARs canceled
@@ -17,8 +27,8 @@ put:
         application/json:
           schema:
             $ref: '../schemas/DarCollection.yaml'
-    400: 
-      description: Bad Request (result of elections present on DARs)
+    400:
+      description: Bad Request (result of elections present on DARs or the user not having the provided role name)
     404:
       description: Not Found
     500:

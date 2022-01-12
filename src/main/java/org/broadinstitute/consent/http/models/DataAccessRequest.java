@@ -51,9 +51,12 @@ public class DataAccessRequest {
     this.elections = new HashMap<>();
   }
 
-  public static boolean isNotCanceled(DataAccessRequest dar) {
-    String status = dar.getData().getStatus();
-    return Objects.isNull(status) || status.toLowerCase() != "canceled";
+  public static boolean isCanceled(DataAccessRequest dar) {
+    return
+      Objects.nonNull(dar) &&
+      Objects.nonNull(dar.getData()) &&
+      Objects.nonNull(dar.getData().getStatus()) &&
+      dar.getData().getStatus().equalsIgnoreCase("canceled");
   }
 
   public Integer getId() {

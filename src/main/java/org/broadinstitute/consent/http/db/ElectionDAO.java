@@ -99,7 +99,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     // TODO: This can return multiple rows per election id, e.g. ID 578 on staging.
     // The root of the duplicate rows is in the vote inner join. When there are multiple chairperson
-    // votes, v.rationale and v.createDate can be different between the chairperson votes, leading 
+    // votes, v.rationale and v.createDate can be different between the chairperson votes, leading
     // to duplicate rows.
     // See https://broadworkbench.atlassian.net/browse/DUOS-1526
     @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, "
@@ -164,27 +164,27 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery(
       "SELECT * from ( "
         + "SELECT e.*, v.vote finalvote, "
-        + "CASE "
-        + "WHEN v.updatedate IS NULL THEN v.createdate "
-        + "ELSE v.updatedate "
-        + "END as finalvotedate, "
-        + "v.rationale finalrationale, MAX(e.electionid) "
-        + "OVER (PARTITION BY e.referenceid, e.electiontype) AS latest "
-        + "FROM election e "
-        + "LEFT JOIN vote v ON e.electionid = v.electionid AND "
-        + "CASE "
-        + "WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final'"
-        + "WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
-        + "ELSE 'chairperson' "
-        + "END = LOWER(v.type) "
-        + "WHERE e.referenceid in(<referenceIds>) "
+        + "     CASE "
+        + "     WHEN v.updatedate IS NULL THEN v.createdate "
+        + "     ELSE v.updatedate "
+        + "     END as finalvotedate, "
+        + " v.rationale finalrationale, MAX(e.electionid) "
+        + " OVER (PARTITION BY e.referenceid, e.electiontype) AS latest "
+        + " FROM election e "
+        + " LEFT JOIN vote v ON e.electionid = v.electionid AND "
+        + "     CASE "
+        + "     WHEN LOWER(e.electiontype) = 'dataaccess' THEN 'final'"
+        + "     WHEN LOWER(e.electiontype) = 'dataset' THEN 'data_owner' "
+        + "     ELSE 'chairperson' "
+        + "     END = LOWER(v.type) "
+        + " WHERE e.referenceid IN (<referenceIds>) "
         + ") AS results "
-        + "WHERE results.latest = results.electionid "
-        + "ORDER BY results.electionid DESC, "
-        + "CASE "
-        + "WHEN results.finalvotedate IS NULL THEN results.lastupdate "
-        + "ELSE results.finalvotedate "
-        + "END DESC"
+        + " WHERE results.latest = results.electionid "
+        + " ORDER BY results.electionid DESC, "
+        + "     CASE "
+        + "     WHEN results.finalvotedate IS NULL THEN results.lastupdate "
+        + "     ELSE results.finalvotedate "
+        + "     END DESC"
     )
     @UseRowMapper(ElectionMapper.class)
     List<Election> findLastElectionsByReferenceIds(
@@ -329,21 +329,21 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
         + "INNER JOIN dac d on d.dac_id = c.dac_id "
         + "WHERE e.electionId IN (<electionIds>) "
         + "UNION "
-        + "SELECT d.*, e.electionid " 
-        + "FROM dac d " 
+        + "SELECT d.*, e.electionid "
+        + "FROM dac d "
         + "INNER JOIN consents "
-        + "ON d.dac_id = consents.dac_id " 
+        + "ON d.dac_id = consents.dac_id "
         + "INNER JOIN consentassociations ca "
-        + "ON ca.consentid = consents.consentid " 
+        + "ON ca.consentid = consents.consentid "
         + "INNER JOIN dataset data "
-        + "ON data.datasetid = ca.datasetid " 
+        + "ON data.datasetid = ca.datasetid "
         + "INNER JOIN election e "
         + "ON e.datasetid = data.datasetid "
         + "WHERE e.electionId IN (<electionIds>)"
     )
     @UseRowMapper(DacMapper.class)
     List<Dac> findAllDacsForElectionIds(@BindList("electionIds") List<Integer> electionIds);
-  
+
     /**
      * Find the OPEN elections that belong to this Dac
      *

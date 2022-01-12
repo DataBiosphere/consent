@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,15 +13,18 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
@@ -217,33 +221,112 @@ public class DarCollectionService {
           .setResults(Collections.emptyList())
           .setPaginationTokens(Collections.emptyList());
   }
-  // If an election exists for a DAR within the collection, that DAR cannot be cancelled by the researcher
-  // Since it's now under DAC review, it's up to the DAC Chair (or admin) to ultimately decline or cancel via elections
-  public DarCollection cancelDarCollection(DarCollection collection) {
+
+  /**
+   * Cancel a DarCollection as a researcher.
+   *
+   * If an election exists for a DAR within the collection, that DAR cannot be cancelled by the
+   * researcher. Since it's now under DAC review, it's up to the DAC Chair (or admin) to
+   * ultimately decline or cancel the elections for the collection.
+   *
+   * @param collection The DarCollection
+   * @return The canceled DarCollection
+   */
+  public DarCollection cancelDarCollectionAsResearcher(DarCollection collection) {
     Collection<DataAccessRequest> dars = collection.getDars().values();
     List<String> referenceIds = dars.stream()
       .map(DataAccessRequest::getReferenceId)
       .collect(Collectors.toList());
 
-    if(referenceIds.isEmpty()) {
+    if (referenceIds.isEmpty()) {
       logger.warn("DAR Collection does not have any associated DAR ids");
       return collection;
     }
 
-    List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(referenceIds);
-    if(!electionIds.isEmpty()) {
+    List<Election> elections = electionDAO.findLastElectionsByReferenceIds(referenceIds);
+    if(!elections.isEmpty()) {
       throw new BadRequestException("Elections present on DARs; cannot cancel collection");
     }
-    List<String> nonCanceledIds = dars.stream()
-      .filter(DataAccessRequest::isNotCanceled)
+
+    // Cancel active dars for the researcher
+    List<String> activeDarIds = dars.stream()
+      .filter(d -> !DataAccessRequest.isCanceled(d))
+      .map(DataAccessRequest::getReferenceId)
+      .collect(Collectors.toList());
+    if (!activeDarIds.isEmpty()) {
+      dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
+    }
+
+    return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+  }
+
+  /**
+   * Cancel Elections for a DarCollection as an admin.
+   *
+   * Admins can cancel all elections in a DarCollection
+   *
+   * @param collection The DarCollection
+   * @return The DarCollection whose elections have been canceled
+   */
+  public DarCollection cancelDarCollectionElectionsAsAdmin(DarCollection collection) {
+    Collection<DataAccessRequest> dars = collection.getDars().values();
+    List<String> referenceIds = dars.stream()
       .map(DataAccessRequest::getReferenceId)
       .collect(Collectors.toList());
 
-    //if no dars are valid, simply return the collection (since researcher cancelled DARs should be skipped over)
-    if(!nonCanceledIds.isEmpty()) {
-      dataAccessRequestDAO.cancelByReferenceIds(nonCanceledIds);
+    if (referenceIds.isEmpty()) {
+      logger.warn("DAR Collection does not have any associated DAR ids");
+      return collection;
     }
+
+    // Cancel all DAR elections
+    cancelElectionsForReferenceIds(referenceIds);
+
     return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }
-}
 
+  /**
+   * Cancel Elections for a DarCollection as a chairperson.
+   *
+   * Chairs can only cancel Elections that reference a dataset the chair is a DAC member for.
+   *
+   * @param collection The DarCollection
+   * @return The DarCollection whose elections have been canceled
+   */
+  public DarCollection cancelDarCollectionElectionsAsChair(DarCollection collection, User user) {
+    // Find dataset ids the chairperson has access to:
+    List<Integer> datasetIds = datasetDAO.findDataSetsByAuthUserEmail(user.getEmail())
+      .stream()
+      .map(DataSet::getDataSetId)
+      .collect(Collectors.toList());
+
+    // Filter the list of DARs we can operate on by the datasets accessible to this chairperson
+    List<DataAccessRequest> dars = collection.getDars().values().stream()
+      .filter(d -> datasetIds.containsAll(d.getData().getDatasetIds()))
+      .collect(Collectors.toList());
+
+    List<String> referenceIds = dars.stream()
+      .map(DataAccessRequest::getReferenceId)
+      .collect(Collectors.toList());
+
+    if (referenceIds.isEmpty()) {
+      logger.warn("DAR Collection does not have any associated DARs that this chairperson can access");
+      return collection;
+    }
+
+    // Cancel filtered DAR elections
+    cancelElectionsForReferenceIds(referenceIds);
+
+    return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+  }
+
+  // Private helper method to mark Elections as 'Canceled'
+  private void cancelElectionsForReferenceIds(List<String> referenceIds) {
+    List<Election> elections = electionDAO.findLastElectionsByReferenceIds(referenceIds);
+    elections.forEach(election -> {
+      if (!election.getStatus().equals(ElectionStatus.CANCELED.getValue())) {
+        electionDAO.updateElectionById(election.getElectionId(), ElectionStatus.CANCELED.getValue(), new Date());
+      }
+    });
+  }
+}
