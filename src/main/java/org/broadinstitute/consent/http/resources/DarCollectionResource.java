@@ -171,11 +171,14 @@ public class DarCollectionResource extends Resource {
       UserRoles actingRole = UserRoles.RESEARCHER;
       if (Objects.nonNull(roleName)) {
         validateUserHasRoleName(user, roleName);
-        actingRole = UserRoles.getUserRoleFromName(roleName);
+        UserRoles requestedRole = UserRoles.getUserRoleFromName(roleName);
+        if (Objects.nonNull(requestedRole)) {
+          actingRole = requestedRole;
+        }
       }
 
       DarCollection cancelledCollection;
-      switch (Objects.requireNonNull(actingRole)) {
+      switch (actingRole) {
         case ADMIN:
           cancelledCollection = darCollectionService.cancelDarCollectionElectionsAsAdmin(collection);
           break;
