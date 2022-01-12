@@ -333,6 +333,22 @@ public class DarCollectionService {
 
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection) {
     try {
+      List<String> referenceIds = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
+      if (!referenceIds.isEmpty()) {
+        List<Election> openElections = electionDAO.findLastElectionsByReferenceIds(referenceIds)
+          .stream()
+          .filter(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()))
+          .collect(Collectors.toList());
+        if (!openElections.isEmpty()) {
+          logger.error("Open elections exist for collection: " + collection.getDarCollectionId());
+          throw new IllegalArgumentException("Open elections exist for this collection.");
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Exception validating elections for collection: " + collection.getDarCollectionId());
+      throw e;
+    }
+    try {
       collectionServiceDAO.createElectionsForDarCollection(collection);
       collection.getDars().values().forEach(dar -> {
         Election accessElection = electionDAO.findLastElectionByReferenceIdAndType(dar.getReferenceId(), ElectionType.DATA_ACCESS.getValue());
@@ -348,7 +364,8 @@ public class DarCollectionService {
         }
       });
       // TOL ... is this the right thing to do? When a chair/admin creates an election,
-      // should we really set the update user/date here?
+      // should we really set the update user/date here? Thinking of ditching this, but if we do,
+      // then the user display could be affected where we sort by the sort date.
       darCollectionDAO.updateDarCollection(collection.getDarCollectionId(), user.getDacUserId(), new Date());
     } catch (Exception e) {
       logger.error("Exception creating elections and votes for collection: " + collection.getDarCollectionId());
