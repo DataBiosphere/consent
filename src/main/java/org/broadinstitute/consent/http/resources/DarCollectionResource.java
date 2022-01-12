@@ -28,7 +28,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -219,7 +218,6 @@ public class DarCollectionResource extends Resource {
   @Consumes("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON})
   public Response createElectionsForCollection(
-    @Context UriInfo info,
     @Auth AuthUser authUser,
     @PathParam("collectionId") Integer collectionId) {
     DarCollection sourceCollection = darCollectionService.getByCollectionId(collectionId);
