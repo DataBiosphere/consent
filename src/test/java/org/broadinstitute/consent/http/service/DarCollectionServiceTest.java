@@ -59,7 +59,6 @@ public class DarCollectionServiceTest {
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private EmailNotifierService emailNotifierService;
   @Mock private VoteDAO voteDAO;
-
   @Mock private User user;
 
   @Before
