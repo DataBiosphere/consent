@@ -17,6 +17,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -61,9 +63,9 @@ public class DAOTestHelper {
     private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config("database.maxSize", String.valueOf(maxConnections));
 
     private static DropwizardTestSupport<ConsentConfiguration> testApp;
-    
+
     protected static Jdbi jdbi;
-    
+
     protected static ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     protected static ConsentAuditDAO consentAuditDAO;
     protected static ConsentDAO consentDAO;
@@ -165,6 +167,14 @@ public class DAOTestHelper {
             voteDAO.deleteVotes(id);
             consentDAO.deleteAllAssociationsForConsent(id);
             consentDAO.deleteConsent(id);
+        });
+        // Some ServiceDAO tests go around the election and vote creation id list process.
+        // Handle that here so that proper deletion order is preserved.
+        createdDataAccessRequestReferenceIds.forEach(darId -> {
+            List<Election> elections = electionDAO.findElectionsByReferenceId(darId);
+            createdElectionIds.addAll(elections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+            List<Vote> votes = voteDAO.findVotesByElectionIds(createdElectionIds);
+            createdVoteIds.addAll(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
         });
         createdVoteIds.forEach(id -> voteDAO.deleteVoteById(id));
         createdElectionIds.forEach(id -> electionDAO.deleteAccessRP(id));
@@ -365,7 +375,7 @@ public class DAOTestHelper {
         createdUserIds.add(userId);
         return userDAO.findUserById(userId);
     }
-    
+
     protected void createUserProperty(Integer userId, String field) {
         UserProperty property = new UserProperty();
         property.setPropertyKey(field);
@@ -528,7 +538,7 @@ public class DAOTestHelper {
     /**
      * This method creates a number of DARs under a DarCollection and only returns the
      * last DAR created.
-     * 
+     *
      * @return Last DataAccessRequest of a DarCollection
      */
     protected DataAccessRequest createDataAccessRequestV3() {
@@ -627,4 +637,20 @@ public class DAOTestHelper {
         return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
     }
 
+    protected DarCollection createDarCollectionWithSingleDataAccessRequest() {
+        Date now = new Date();
+        User user = createUser();
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        DataAccessRequest dar = new DataAccessRequest();
+        dar.setReferenceId(UUID.randomUUID().toString());
+        DataAccessRequestData data = new DataAccessRequestData();
+        dar.setData(data);
+        dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getDacUserId(), now, now, now, now, data);
+        dataAccessRequestDAO.updateDraftForCollection(collection_id, dar.getReferenceId());
+        dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
+        createdDataAccessRequestReferenceIds.add(dar.getReferenceId());
+        createdDarCollections.add(collection_id);
+        return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+    }
 }
