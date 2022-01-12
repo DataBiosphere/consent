@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -167,11 +168,14 @@ public class DarCollectionResource extends Resource {
       UserRoles actingRole = UserRoles.RESEARCHER;
       if (Objects.nonNull(roleName)) {
         validateUserHasRoleName(user, roleName);
-        actingRole = UserRoles.getUserRoleFromName(roleName);
+        UserRoles requestedRole = UserRoles.getUserRoleFromName(roleName);
+        if (Objects.nonNull(requestedRole)) {
+          actingRole = requestedRole;
+        }
       }
 
       DarCollection cancelledCollection;
-      switch (Objects.requireNonNull(actingRole)) {
+      switch (actingRole) {
         case ADMIN:
           cancelledCollection = darCollectionService.cancelDarCollectionElectionsAsAdmin(collection);
           break;
