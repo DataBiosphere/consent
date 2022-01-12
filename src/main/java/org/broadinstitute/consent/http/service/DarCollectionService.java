@@ -250,7 +250,7 @@ public class DarCollectionService {
 
     // Cancel active dars for the researcher
     List<String> activeDarIds = dars.stream()
-      .filter(DataAccessRequest::isNotCanceled)
+      .filter(d -> !DataAccessRequest.isCanceled(d))
       .map(DataAccessRequest::getReferenceId)
       .collect(Collectors.toList());
     if (!activeDarIds.isEmpty()) {
