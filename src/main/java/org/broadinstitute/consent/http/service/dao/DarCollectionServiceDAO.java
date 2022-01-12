@@ -49,16 +49,16 @@ public class DarCollectionServiceDAO {
                 Integer datasetId = dar.getData().getDatasetIds().get(0);
                 List<User> voteUsers = findVoteUsersForDataset(datasetId);
                 inserts.add(createElectionInsert(handle, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, datasetId));
-                inserts.addAll(createVotesForUsers(handle, voteUsers, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
+                inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
                 inserts.add(createElectionInsert(handle, ElectionType.RP.getValue(), dar.getReferenceId(), now, datasetId));
-                inserts.addAll(createVotesForUsers(handle, voteUsers, ElectionType.RP.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
+                inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.RP.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
           });
           inserts.forEach(Update::execute);
           handle.commit();
         });
   }
 
-  private List<Update> createVotesForUsers(Handle handle, List<User> voteUsers, String electionType, String referenceId, Date now, Boolean isManualReview) {
+  private List<Update> createVoteInsertsForUsers(Handle handle, List<User> voteUsers, String electionType, String referenceId, Date now, Boolean isManualReview) {
     List<Update> userVotes = new ArrayList<>();
     voteUsers.forEach(
         u -> {
