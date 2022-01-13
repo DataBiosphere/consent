@@ -1,7 +1,7 @@
 # Local Development
 
-* Maven 3.5
-* Java 11
+* Maven 3.8
+* Java 17
 * Dropwizard Docs: http://www.dropwizard.io/
 
 ### Check out repository:
@@ -21,17 +21,13 @@ Ensure that your test environment supports that.
 
 #### Docker
 
-Consent docker images are stored in the cloud in the [Consent Dockerhub repo](https://hub.docker.com/r/broadinstitute/consent).
+Consent docker images are stored in GCR: `gcr.io/broad-dsp-gcr-public/consent`
 ```
-# to build the docker image
-./build.sh -d build
-
-# to build the docker image and push it to dockerhub 
-./build.sh -d push
-
-# to pull the docker image from dockerhub
-docker pull broadinstitute/consent
+# build the docker image
+docker build . -t consent
 ```
+
+This image can then be run with the proper configuration files provided.
 
 ### Render Configs 
 Specific to internal Broad systems:
@@ -54,13 +50,9 @@ java -jar /path/to/consent.jar server /path/to/config/file
 Visit local swagger page: https://local.broadinstitute.org:27443/swagger/
 
 ### Debugging
-Port 5005 is open in the configured docker compose. 
+Port 7777 is open in the configured docker compose. 
 Set up a remote debug configuration pointing to `local.broadinstitute.org`
 and the defaults should be correct.
-
-Execute the `fizzed-watcher:run` maven task  
-to enable hot reloading of class and resource files.
-
 
 ### Developing with a local Elastic Search instance:
 

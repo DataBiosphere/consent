@@ -10,7 +10,7 @@
   <name>Consent Management Services</name>
 
   <properties>
-    <java.version>11</java.version>
+    <java.version>17</java.version>
     <liquibase.version>4.7.0</liquibase.version>
     <dropwizard.version>2.0.28</dropwizard.version>
     <owl.version>5.1.19</owl.version>
