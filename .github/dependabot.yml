@@ -28,15 +28,5 @@ updates:
   - rushtong
   labels:
   - dependency
-  ignore:
-  - dependency-name: adoptopenjdk
-    versions:
-    - "> 8.pre.hotspot"
-  - dependency-name: broad-dsp-gcr-public/base/jre
-    versions:
-    - ">= 15.pre.alpine.a, < 16"
-  - dependency-name: openjdk
-    versions:
-    - "> 8"
   commit-message:
     prefix: dependency
