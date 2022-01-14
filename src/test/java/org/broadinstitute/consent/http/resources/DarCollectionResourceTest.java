@@ -449,4 +449,27 @@ public class DarCollectionResourceTest {
     Response response = resource.resubmitDarCollection(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
+
+  @Test
+  public void testCreateElectionsForCollection() {
+    User user = mock(User.class);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    DarCollection collection = mock(DarCollection.class);
+    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
+    initResource();
+
+    Response response = resource.createElectionsForCollection(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testCreateElectionsForCollectionNotFound() {
+    User user = mock(User.class);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getByCollectionId(any())).thenReturn(null);
+    initResource();
+
+    Response response = resource.createElectionsForCollection(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
 }
