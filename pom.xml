@@ -11,7 +11,7 @@
 
   <properties>
     <java.version>11</java.version>
-    <liquibase.version>4.6.2</liquibase.version>
+    <liquibase.version>4.7.0</liquibase.version>
     <dropwizard.version>2.0.28</dropwizard.version>
     <owl.version>5.1.19</owl.version>
     <postgres.version>42.3.1</postgres.version>
@@ -149,7 +149,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.9.0</version>
         <configuration>
           <release>11</release>
         </configuration>
@@ -237,7 +237,7 @@
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
-        <version>6.5.2</version>
+        <version>6.5.3</version>
         <configuration>
           <skipProvidedScope>true</skipProvidedScope>
           <skipRuntimeScope>true</skipRuntimeScope>
@@ -332,7 +332,7 @@
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>sendgrid-java</artifactId>
-      <version>4.8.1</version>
+      <version>4.8.2</version>
       <exclusions>
           <exclusion>
               <groupId>com.fasterxml.jackson.core</groupId>
@@ -363,7 +363,7 @@
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>java-http-client</artifactId>
-      <version>4.3.8</version>
+      <version>4.3.9</version>
       <exclusions>
         <exclusion>
           <artifactId>org.apache.httpcomponents</artifactId>
@@ -575,7 +575,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.2.2</version>
+      <version>2.2.3</version>
     </dependency>
 
     <dependency>
