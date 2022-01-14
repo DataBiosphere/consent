@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DarCollectionService {
 
@@ -331,22 +332,29 @@ public class DarCollectionService {
     return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }
 
+  /**
+   * DarCollections with no elections, or with previously canceled elections, are valid
+   * for initiating a new set of elections. Elections in open, closed, pending, or final
+   * states are not valid.
+   *
+   * @param user The User initiating new elections for a collection
+   * @param collection The DarCollection
+   * @return The updated DarCollection
+   */
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection) {
-    try {
-      List<String> referenceIds = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
-      if (!referenceIds.isEmpty()) {
-        List<Election> openElections = electionDAO.findLastElectionsByReferenceIds(referenceIds)
-          .stream()
-          .filter(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()))
-          .collect(Collectors.toList());
-        if (!openElections.isEmpty()) {
-          logger.error("Open elections exist for collection: " + collection.getDarCollectionId());
-          throw new IllegalArgumentException("Open elections exist for this collection.");
-        }
+    final List<String> invalidStatuses = Stream.of(
+            ElectionStatus.CLOSED, ElectionStatus.OPEN, ElectionStatus.FINAL, ElectionStatus.PENDING_APPROVAL
+    ).map(ElectionStatus::getValue).collect(Collectors.toList());
+    List<String> referenceIds = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
+    if (!referenceIds.isEmpty()) {
+      List<Election> nonCanceledElections = electionDAO.findLastElectionsByReferenceIds(referenceIds)
+        .stream()
+        .filter(e -> invalidStatuses.contains(e.getStatus()))
+        .collect(Collectors.toList());
+      if (!nonCanceledElections.isEmpty()) {
+        logger.error("Non-canceled elections exist for collection: " + collection.getDarCollectionId());
+        throw new IllegalArgumentException("Non-canceled elections exist for this collection.");
       }
-    } catch (Exception e) {
-      logger.error("Exception validating elections for collection: " + collection.getDarCollectionId());
-      throw e;
     }
     try {
       collectionServiceDAO.createElectionsForDarCollection(collection);
