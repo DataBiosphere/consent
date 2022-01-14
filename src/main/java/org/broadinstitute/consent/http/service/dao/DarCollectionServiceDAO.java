@@ -81,7 +81,7 @@ public class DarCollectionServiceDAO {
             + "  FROM election "
             + "  WHERE electiontype = :electionType "
             + "  AND referenceid = :referenceId "
-            + "  ORDER BY createdate desc " // Consider using version here ... or consider deprecating version altogether
+            + "  ORDER BY createdate desc "
             + "  LIMIT 1) ";
     Update insert = handle.createUpdate(sql);
     insert.bind("createDate", now);
