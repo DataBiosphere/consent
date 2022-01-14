@@ -220,9 +220,9 @@ public class DarCollectionResource extends Resource {
   public Response createElectionsForCollection(
     @Auth AuthUser authUser,
     @PathParam("collectionId") Integer collectionId) {
-    DarCollection sourceCollection = darCollectionService.getByCollectionId(collectionId);
-    isCollectionPresent(sourceCollection);
     try {
+      DarCollection sourceCollection = darCollectionService.getByCollectionId(collectionId);
+      isCollectionPresent(sourceCollection);
       User user = userService.findUserByEmail(authUser.getEmail());
       DarCollection updatedCollection = darCollectionService.createElectionsForDarCollection(user, sourceCollection);
       return Response.ok(updatedCollection).build();
