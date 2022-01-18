@@ -480,7 +480,6 @@ public class DarCollectionServiceTest {
     verify(electionDAO, times(1)).findLastElectionByReferenceIdAndType(any(), any());
     verify(voteDAO, times(1)).findVotesByElectionId(any());
     verify(emailNotifierService, times(1)).sendNewCaseMessageToList(any(), any());
-    verify(darCollectionDAO, times(1)).updateDarCollection(any(), any(), any());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
   }
 

@@ -371,10 +371,6 @@ public class DarCollectionService {
           logger.error("Did not find a created access election for DAR: " + dar.getReferenceId());
         }
       });
-      // TOL ... is this the right thing to do? When a chair/admin creates an election,
-      // should we really set the update user/date here? Thinking of ditching this, but if we do,
-      // then the user display could be affected where we sort by the sort date.
-      darCollectionDAO.updateDarCollection(collection.getDarCollectionId(), user.getDacUserId(), new Date());
     } catch (Exception e) {
       logger.error("Exception creating elections and votes for collection: " + collection.getDarCollectionId());
     }
