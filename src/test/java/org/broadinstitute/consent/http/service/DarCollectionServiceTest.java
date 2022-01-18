@@ -1,5 +1,42 @@
 package org.broadinstitute.consent.http.service;
 
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.PaginationResponse;
+import org.broadinstitute.consent.http.models.PaginationToken;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+
+import javax.ws.rs.BadRequestException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,48 +50,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import javax.ws.rs.BadRequestException;
-
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.DarCollectionDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.PaginationResponse;
-import org.broadinstitute.consent.http.models.PaginationToken;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
 public class DarCollectionServiceTest {
 
   private DarCollectionService service;
 
   @Mock private DarCollectionDAO darCollectionDAO;
+  @Mock private DarCollectionServiceDAO darCollectionServiceDAO;
   @Mock private DatasetDAO datasetDAO;
   @Mock private ElectionDAO electionDAO;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
-
+  @Mock private EmailNotifierService emailNotifierService;
+  @Mock private VoteDAO voteDAO;
   @Mock private User user;
 
   @Before
@@ -427,6 +433,56 @@ public class DarCollectionServiceTest {
     verify(darCollectionDAO, times(0)).findDARCollectionByCollectionId(anyInt());
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateElectionsForDarCollectionOpenElection() {
+    User user = new User();
+    user.setEmail("email");
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    DarCollection collection = createMockCollections(1).get(0);
+    collection.setDars(Map.of(dar.getReferenceId(), dar));
+    Election election = createMockElection();
+    election.setReferenceId(dar.getReferenceId());
+    election.setStatus(ElectionStatus.OPEN.getValue());
+    election.setElectionId(1);
+    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
+    initService();
+
+    service.createElectionsForDarCollection(user, collection);
+  }
+
+  @Test
+  public void testCreateElectionsForDarCollection() throws Exception {
+    User user = new User();
+    user.setEmail("email");
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    DarCollection collection = createMockCollections(1).get(0);
+    collection.setDars(Map.of(dar.getReferenceId(), dar));
+    Election election = createMockElection();
+    election.setReferenceId(dar.getReferenceId());
+    election.setStatus(ElectionStatus.CANCELED.getValue());
+    election.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    election.setElectionId(1);
+    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
+    when(electionDAO.findLastElectionByReferenceIdAndType(any(), any())).thenReturn(election);
+    when(voteDAO.findVotesByElectionId(any())).thenReturn(List.of(new Vote()));
+    spy(darCollectionServiceDAO);
+    spy(electionDAO);
+    spy(voteDAO);
+    spy(emailNotifierService);
+    spy(darCollectionDAO);
+    initService();
+
+    service.createElectionsForDarCollection(user, collection);
+    verify(darCollectionServiceDAO, times(1)).createElectionsForDarCollection(any());
+    verify(electionDAO, times(1)).findLastElectionsByReferenceIds(any());
+    verify(electionDAO, times(1)).findLastElectionByReferenceIdAndType(any(), any());
+    verify(voteDAO, times(1)).findVotesByElectionId(any());
+    verify(emailNotifierService, times(1)).sendNewCaseMessageToList(any(), any());
+    verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
+  }
+
   private DarCollection generateMockDarCollection(Set<DataSet> datasets) {
     DarCollection collection = new DarCollection();
     Map<String, DataAccessRequest> dars = new HashMap<>();
@@ -457,7 +513,7 @@ public class DarCollectionServiceTest {
   }
 
   private void initService() {
-    service = new DarCollectionService(darCollectionDAO, datasetDAO, electionDAO, dataAccessRequestDAO);
+    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailNotifierService, voteDAO);
   }
 
   private void initWithPaginationToken(PaginationToken token, int unfilteredCount, int filteredCount) {
@@ -474,7 +530,7 @@ public class DarCollectionServiceTest {
     when(darCollectionDAO.findDARCollectionsCreatedByUserId(any())).thenReturn(unfilteredDars);
     when(darCollectionDAO.findAllDARCollectionsWithFiltersByUser(any(), any(), any(), any())).thenReturn(filteredDars);
     when(darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(any(), any(), any())).thenReturn(collectionIdDars);
-    service = new DarCollectionService(darCollectionDAO, datasetDAO, electionDAO, dataAccessRequestDAO);
+    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailNotifierService, voteDAO);
   }
 
   private List<DarCollection> createMockCollections(int count) {
