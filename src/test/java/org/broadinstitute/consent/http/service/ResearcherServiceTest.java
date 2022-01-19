@@ -64,7 +64,7 @@ public class ResearcherServiceTest {
     }
 
     private void initService() {
-        service = new ResearcherService(userPropertyDAO, userDAO, emailNotifierService, userService);
+        service = new ResearcherService(userPropertyDAO, userDAO, emailNotifierService);
     }
 
     @Test

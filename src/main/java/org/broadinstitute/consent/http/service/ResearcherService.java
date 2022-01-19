@@ -2,11 +2,8 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
@@ -28,7 +25,6 @@ public class ResearcherService {
     private final UserPropertyDAO userPropertyDAO;
     private final UserDAO userDAO;
     private final EmailNotifierService emailNotifierService;
-    private final UserService userService;
     private static final String ACTION_REGISTERED = "registered";
 
     protected Logger logger() {
@@ -36,11 +32,10 @@ public class ResearcherService {
     }
 
     @Inject
-    public ResearcherService(UserPropertyDAO userPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService, UserService userService) {
+    public ResearcherService(UserPropertyDAO userPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService) {
         this.userPropertyDAO = userPropertyDAO;
         this.userDAO = userDAO;
         this.emailNotifierService = emailNotifierService;
-        this.userService = userService;
     }
 
     public List<UserProperty> setProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser) throws NotFoundException, IllegalArgumentException {
@@ -65,9 +60,6 @@ public class ResearcherService {
         if (!isProfileCompleted && isUpdatedProfileCompleted) {
             saveProperties(properties);
             notifyAdmins(user.getDacUserId());
-        } else if (hasUpdatedFields(user.getDacUserId(), validatedProperties, isUpdatedProfileCompleted)) {
-            saveProperties(properties);
-            userService.updateUserStatus(RoleStatus.PENDING.toString(), user.getDacUserId());
         } else {
             saveProperties(properties);
         }
@@ -131,26 +123,6 @@ public class ResearcherService {
                 properties.add(new UserProperty(userId, propertyKey, propertyValue))
         );
         return properties;
-    }
-
-    private Boolean hasUpdatedFields(Integer userId, Map<String, String> researcherPropertiesMap, Boolean isUpdatedProfileCompleted) {
-        boolean hasUpdatedFields = false;
-        if (isUpdatedProfileCompleted) {
-            String isThePI = researcherPropertiesMap.getOrDefault(UserFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), null);
-            String havePI = researcherPropertiesMap.getOrDefault(UserFields.DO_YOU_HAVE_PI.getValue(), null);
-            String pubmedID = researcherPropertiesMap.getOrDefault(UserFields.PUBMED_ID.getValue(), "");
-            String scientificURL = researcherPropertiesMap.getOrDefault(UserFields.SCIENTIFIC_URL.getValue(), "");
-            if (StringUtils.isNotEmpty(pubmedID) && StringUtils.isEmpty(
-                            userPropertyDAO.findPropertyValueByPK(userId, UserFields.PUBMED_ID.getValue())) ||
-                    StringUtils.isNotEmpty(scientificURL) && StringUtils.isEmpty(
-                            userPropertyDAO.findPropertyValueByPK(userId, UserFields.SCIENTIFIC_URL.getValue()))) {
-                hasUpdatedFields = true;
-            } else if (CollectionUtils.isNotEmpty(userPropertyDAO
-                    .findResearcherProperties(userId, isThePI, havePI, pubmedID, scientificURL))) {
-                hasUpdatedFields = true;
-            }
-        }
-        return hasUpdatedFields;
     }
 
     private void notifyAdmins(Integer userId) {
