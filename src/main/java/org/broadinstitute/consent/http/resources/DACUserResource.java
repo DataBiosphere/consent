@@ -116,33 +116,6 @@ public class DACUserResource extends Resource {
         }
     }
 
-    @PUT
-    @Path("/status/{userId}")
-    @Consumes("application/json")
-    @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    public Response updateStatus(@PathParam("userId") Integer userId, String json) {
-        Optional<String> statusOpt = getMemberNameStringFromJson(json, "status");
-        Optional<String> rationaleOpt = getMemberNameStringFromJson(json, "rationale");
-        User user = userService.findUserById(userId);
-        if (statusOpt.isPresent()) {
-            try {
-                user = userService.updateUserStatus(statusOpt.get(), userId);
-            } catch (Exception e) {
-                return createExceptionResponse(e);
-            }
-        }
-        if (rationaleOpt.isPresent()) {
-            try {
-                user = userService.updateUserRationale(rationaleOpt.get(), userId);
-            } catch (Exception e) {
-                return createExceptionResponse(e);
-            }
-        }
-        return Response.ok(user).build();
-    }
-
-
     /**
      * Convenience method to find the email preference from legacy json structure.
      *
