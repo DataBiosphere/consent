@@ -189,7 +189,6 @@ public class UserService {
         return userDAO.findUserById(userId);
     }
 
-
     public User updateDACUserById(Map<String, User> dac, Integer id) throws IllegalArgumentException, NotFoundException {
         User updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
         // validate user exists
