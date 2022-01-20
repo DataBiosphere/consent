@@ -4,11 +4,9 @@ import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Objects;
 
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
-import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
@@ -29,14 +27,6 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
         create_user = rowView.getRow(User.class);
     }
 
-    // Status is an enum type and we need to get the string value
-    try {
-      if (Objects.nonNull(rowView.getColumn("u_status", Integer.class))) {
-        create_user.setStatus(getStatus(rowView, "u_status"));
-      }
-    } catch (MappingException e) {
-      // Ignore any attempt to map a column that doesn't exist
-    }
 
     User update_user = new User();
     update_user.setDacUserId(rowView.getColumn("u2_dacuserid", Integer.class));
@@ -48,14 +38,6 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
     update_user.setRationale(rowView.getColumn("u2_rationale", String.class));
     update_user.setEraCommonsId(rowView.getColumn("u2_era_commons_id", String.class));
 
-    // Status is an enum type and we need to get the string value
-    try {
-      if (Objects.nonNull(rowView.getColumn("u_status", Integer.class))) {
-        update_user.setStatus(getStatus(rowView, "u2_status"));
-      }
-    } catch (MappingException e) {
-      // Ignore any attempt to map a column that doesn't exist
-    }
 
     institution.setCreateUser(create_user);
     institution.setUpdateUser(update_user);
@@ -66,14 +48,6 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
       institution.addSigningOfficial(so_user);
     }
 
-  }
-
-  private String getStatus(RowView r, String columnName) {
-    try {
-      return RoleStatus.getStatusByValue(r.getColumn(columnName, Integer.class));
-    } catch (Exception e) {
-      return null;
-    }
   }
 
 }
