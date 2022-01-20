@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
@@ -22,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.broadinstitute.consent.http.enumeration.RoleStatus.getStatusByValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;

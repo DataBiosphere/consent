@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -24,14 +23,7 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
         map.computeIfAbsent(
             rowView.getColumn("dacuserid", Integer.class),
             id -> rowView.getRow(User.class));
-    // Status is an enum type and we need to get the string value
-    try {
-      if (Objects.nonNull(rowView.getColumn("status", Integer.class))) {
-        user.setStatus(getStatus(rowView));
-      }
-    } catch (MappingException e) {
-      // Ignore any attempt to map a column that doesn't exist
-    }
+
     try {
       if (Objects.nonNull(rowView.getColumn("user_role_id", Integer.class))) {
         UserRole ur = rowView.getRow(UserRole.class);
@@ -79,21 +71,13 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
       if (Objects.nonNull(rowView.getColumn("up_property_id", Integer.class))) {
         UserProperty p = rowView.getRow(UserProperty.class);
         user.addProperty(p);
-        // Note that the completed field is deprecated and will be removed in a future PR. 
+        // Note that the completed field is deprecated and will be removed in a future PR.
         if (p.getPropertyKey().equalsIgnoreCase(UserFields.COMPLETED.getValue())) {
           user.setProfileCompleted(Boolean.valueOf(p.getPropertyValue()));
         }
       }
     } catch (MappingException e) {
       // Ignore any attempt to map a column that doesn't exist
-    }
-  }
-
-  private String getStatus(RowView r) {
-    try {
-      return RoleStatus.getStatusByValue(r.getColumn("status", Integer.class));
-    } catch (Exception e) {
-      return null;
     }
   }
 }
