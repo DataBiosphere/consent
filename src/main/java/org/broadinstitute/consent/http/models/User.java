@@ -46,9 +46,6 @@ public class User {
     private Boolean emailPreference;
 
     @JsonProperty
-    private String status;
-
-    @JsonProperty
     private String rationale;
 
     @JsonProperty
@@ -121,7 +118,6 @@ public class User {
         setAdditionalEmail(u);
         setEmailPreference(u);
         setRoles(u);
-        setStatus(u);
         setRationale(u);
         setInstitutionId(u);
     }
@@ -178,11 +174,6 @@ public class User {
         }
     }
 
-    private void setStatus(User u) {
-        if (!StringUtils.isEmpty(u.getStatus())) {
-            this.setStatus(u.getStatus());
-        }
-    }
 
     private void setRationale(User u) {
         if (!StringUtils.isEmpty(u.getRationale())) {
@@ -260,14 +251,6 @@ public class User {
         this.emailPreference = emailPreference;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
     public String getRationale() {
         return rationale;
     }
@@ -315,7 +298,7 @@ public class User {
     public void setLibraryCards(List<LibraryCard> cards) {
         this.libraryCards = cards;
     }
-    
+
     public List<LibraryCard> getLibraryCards() {
         return this.libraryCards;
     }
