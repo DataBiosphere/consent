@@ -9,7 +9,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -179,15 +178,6 @@ public class UserService {
         return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
     }
 
-    public User updateUserStatus(String status, Integer userId) {
-        Integer statusId = RoleStatus.getValueByStatus(status);
-        validateExistentUserById(userId);
-        if (statusId == null) {
-            throw new IllegalArgumentException(status + " is not a valid status.");
-        }
-        userDAO.updateUserStatus(statusId, userId);
-        return userDAO.findUserById(userId);
-    }
 
     public User updateDACUserById(Map<String, User> dac, Integer id) throws IllegalArgumentException, NotFoundException {
         User updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);

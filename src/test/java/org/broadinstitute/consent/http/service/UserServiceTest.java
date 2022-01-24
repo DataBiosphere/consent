@@ -27,7 +27,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -284,17 +283,6 @@ public class UserServiceTest {
         service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
     }
 
-    @Test
-    public void testUpdateUserStatus() {
-        User u = generateUser();
-        when(userDAO.findUserById(u.getDacUserId()))
-                .thenReturn(u);
-        doNothing().when(userDAO).updateUserStatus(any(), any());
-        initService();
-        User user = service.updateUserStatus(RoleStatus.APPROVED.toString(), u.getDacUserId());
-        assertNotNull(user);
-        assertEquals(u.getDacUserId(), user.getDacUserId());
-    }
 
     @Test
     public void testUpdateDACUserById() {
