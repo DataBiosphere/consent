@@ -513,7 +513,6 @@ public class DataAccessRequestServiceTest {
         user.setDacUserId(1);
         user.setEmail("test@test.com");
         user.setDisplayName("Test User");
-        user.setRationale("");
         initService();
 
         DARModalDetailsDTO darModalDetailsDTO = service.DARModalDetailsDTOBuilder(dar, user, electionService);

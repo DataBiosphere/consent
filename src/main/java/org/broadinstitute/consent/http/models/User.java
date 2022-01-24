@@ -240,10 +240,6 @@ public class User {
         this.emailPreference = emailPreference;
     }
 
-    public void setRationale(String rationale) {
-        this.rationale = rationale;
-    }
-
     public Boolean getProfileCompleted() {
         return profileCompleted;
     }
