@@ -575,8 +575,6 @@ public class DataAccessRequestService {
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(DataAccessRequest dataAccessRequest, User user, ElectionService electionService) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
         List<DataSet> datasets = populateDatasets(dataAccessRequest);
-        Optional<User> optionalUser = Optional.ofNullable(user);
-        String rationale = optionalUser.isPresent() ? user.getRationale() : "";
         User researcher = userDAO.findUserById(dataAccessRequest.getUserId());
         Boolean hasProps = Objects.nonNull(researcher) && Objects.nonNull(researcher.getProperties());
         Optional<UserProperty> department = hasProps ? researcher.getProperties().stream().filter(
@@ -594,7 +592,6 @@ public class DataAccessRequestService {
         return darModalDetailsDTO
                 .setNeedDOApproval(electionService.darDatasetElectionStatus(dataAccessRequest.getReferenceId()))
                 .setResearcherName(researcher.getDisplayName())
-                .setRationale(rationale)
                 .setUserId(dataAccessRequest.getUserId())
                 .setDarCode(Objects.nonNull(dataAccessRequest.getData()) ? dataAccessRequest.getData().getDarCode() : "")
                 .setPrincipalInvestigator(DarUtil.findPI(researcher))
