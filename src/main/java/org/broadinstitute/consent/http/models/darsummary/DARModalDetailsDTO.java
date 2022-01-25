@@ -17,7 +17,6 @@ public class DARModalDetailsDTO {
     private String researcherName = "";
     private String institutionName;
     private String projectTitle;
-    private String rationale;
     private String department;
     private String city;
     private String country;
@@ -283,16 +282,6 @@ public class DARModalDetailsDTO {
         return this;
     }
 
-
-
-    public String getRationale() {
-        return rationale;
-    }
-
-    public DARModalDetailsDTO setRationale(String rationale) {
-        this.rationale = rationale;
-        return this;
-    }
 
     public Integer getUserId() {
         return userId;
