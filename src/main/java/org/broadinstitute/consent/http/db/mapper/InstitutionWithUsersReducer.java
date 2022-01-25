@@ -35,7 +35,6 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
     update_user.setCreateDate(rowView.getColumn("u2_createdate", Timestamp.class));
     update_user.setAdditionalEmail(rowView.getColumn("u2_additional_email", String.class));
     update_user.setEmailPreference(rowView.getColumn("u2_email_preference", Boolean.class));
-    update_user.setRationale(rowView.getColumn("u2_rationale", String.class));
     update_user.setEraCommonsId(rowView.getColumn("u2_era_commons_id", String.class));
 
 

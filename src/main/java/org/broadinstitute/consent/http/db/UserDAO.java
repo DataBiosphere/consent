@@ -32,7 +32,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.rationale, u.institution_id, "
+        + "     u.email_preference, u.institution_id, "
         + "     u.era_commons_id, "
         + Institution.QUERY_FIELDS_WITH_I_PREFIX + ", "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name  "
@@ -53,7 +53,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.rationale, u.institution_id, "
+        + "     u.email_preference, u.institution_id, "
         + "     u.era_commons_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
@@ -82,7 +82,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.rationale, u.institution_id, "
+        + "     u.email_preference, u.institution_id, "
         + "     u.era_commons_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
@@ -112,7 +112,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.rationale, u.institution_id, "
+        + "     u.email_preference, u.institution_id, "
         + "     u.era_commons_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name, "
         + "     p.propertyid AS up_property_id, p.propertykey AS up_property_key, p.propertyvalue AS up_property_value, p.userid AS up_user_id "
@@ -138,7 +138,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.rationale, u.institution_id, "
+        + "     u.email_preference, u.institution_id, "
         + "     u.era_commons_id, "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "

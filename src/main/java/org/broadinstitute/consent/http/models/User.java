@@ -46,9 +46,6 @@ public class User {
     private Boolean emailPreference;
 
     @JsonProperty
-    private String rationale;
-
-    @JsonProperty
     private Boolean profileCompleted;
 
     @JsonProperty
@@ -118,7 +115,6 @@ public class User {
         setAdditionalEmail(u);
         setEmailPreference(u);
         setRoles(u);
-        setRationale(u);
         setInstitutionId(u);
     }
 
@@ -171,13 +167,6 @@ public class User {
     private void setRoles(User u) {
         if (CollectionUtils.isNotEmpty(u.getRoles())) {
             this.setRoles(u.getRoles());
-        }
-    }
-
-
-    private void setRationale(User u) {
-        if (!StringUtils.isEmpty(u.getRationale())) {
-            this.setRationale(u.getRationale());
         }
     }
 
@@ -249,14 +238,6 @@ public class User {
 
     public void setEmailPreference(Boolean emailPreference) {
         this.emailPreference = emailPreference;
-    }
-
-    public String getRationale() {
-        return rationale;
-    }
-
-    public void setRationale(String rationale) {
-        this.rationale = rationale;
     }
 
     public Boolean getProfileCompleted() {
