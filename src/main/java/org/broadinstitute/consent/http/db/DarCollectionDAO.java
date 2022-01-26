@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.db.mapper.DarCollectionReducer;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
@@ -21,7 +22,8 @@ public interface DarCollectionDAO {
 
   String getCollectionAndDars =
       " SELECT c.*, i.institution_name, u.displayname AS researcher, " +
-          User.QUERY_FIELDS_WITH_U_PREFIX +
+          User.QUERY_FIELDS_WITH_U_PREFIX + ", " +
+          Institution.QUERY_FIELDS_WITH_I_PREFIX + ", " +
           "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
           "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
           "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
@@ -58,6 +60,7 @@ public interface DarCollectionDAO {
    * @return List<DarCollection>
    */
   @RegisterBeanMapper(value = User.class, prefix = "u")
+  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
@@ -89,6 +92,7 @@ public interface DarCollectionDAO {
   List<Integer> findDARCollectionIdsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
+  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
@@ -98,6 +102,7 @@ public interface DarCollectionDAO {
           @BindList("collectionIds") List<Integer> collectionIds);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
+  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
@@ -121,14 +126,16 @@ public interface DarCollectionDAO {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     " SELECT c.*, " +
-        User.QUERY_FIELDS_WITH_U_PREFIX +
+        User.QUERY_FIELDS_WITH_U_PREFIX + ", " +
+        Institution.QUERY_FIELDS_WITH_I_PREFIX + ", " +
         "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
         "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
         "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
         "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
         "FROM dar_collection c " +
         "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid " +
-        "INNER JOIN data_access_request dar on c.collection_id = dar.collection_id;"
+        "INNER JOIN data_access_request dar on c.collection_id = dar.collection_id " +
+        "LEFT JOIN institution i ON i.institution_id = u.institution_id "
   )
   List<DarCollection> findAllDARCollections();
 
@@ -138,7 +145,8 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = Election.class, prefix = "e")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery("SELECT c.*, " +
-      User.QUERY_FIELDS_WITH_U_PREFIX
+      User.QUERY_FIELDS_WITH_U_PREFIX + ", " +
+      Institution.QUERY_FIELDS_WITH_I_PREFIX + ", "
       + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
       + "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, "
       + "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
@@ -149,6 +157,7 @@ public interface DarCollectionDAO {
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid "
       + "AND c.create_user_id = :userId "
+      + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
       + "LEFT JOIN ("
           + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
           + "FROM election"
@@ -168,13 +177,15 @@ public interface DarCollectionDAO {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT c.*, " +
-      User.QUERY_FIELDS_WITH_U_PREFIX +
+      User.QUERY_FIELDS_WITH_U_PREFIX + ", " +
+      Institution.QUERY_FIELDS_WITH_I_PREFIX + ", " +
       "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
       "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
       "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
       "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
     "FROM dar_collection c " +
     "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid " +
+    "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
     "WHERE c.collection_id = (SELECT collection_id FROM data_access_request WHERE reference_id = :referenceId)")
   DarCollection findDARCollectionByReferenceId(@Bind("referenceId") String referenceId);
@@ -192,7 +203,8 @@ public interface DarCollectionDAO {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT c.*, "
-      + User.QUERY_FIELDS_WITH_U_PREFIX
+      + User.QUERY_FIELDS_WITH_U_PREFIX + ", "
+      + Institution.QUERY_FIELDS_WITH_I_PREFIX + ", "
       + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
       + "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, "
       + "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
@@ -203,6 +215,7 @@ public interface DarCollectionDAO {
       + "v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.displayname as v_display_name "
       + "FROM dar_collection c "
       + "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid "
+      + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "LEFT JOIN ("
           + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "

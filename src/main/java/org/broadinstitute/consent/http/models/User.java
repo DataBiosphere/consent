@@ -29,7 +29,7 @@ public class User {
           " u.additional_email as u_additional_email, " +
           " u.email_preference as u_email_preference, " +
           " u.institution_id as u_institution_id," +
-          " u.era_commons_id as u_era_commons_id, ";
+          " u.era_commons_id as u_era_commons_id ";
 
     @JsonProperty
     private Integer dacUserId;

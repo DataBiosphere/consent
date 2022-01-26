@@ -4,6 +4,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.core.mapper.MappingException;
@@ -22,6 +23,7 @@ public class DarCollectionReducer
     Election election = null;
     Vote vote = null;
     User user = null;
+    Institution institution = null;
     DarCollection collection =
         map.computeIfAbsent(
             rowView.getColumn("collection_id", Integer.class),
@@ -53,6 +55,9 @@ public class DarCollectionReducer
         if (Objects.nonNull(rowView.getColumn("u_dacuserid", Integer.class))) {
           user = rowView.getRow(User.class);
         }
+        if (Objects.nonNull(rowView.getColumn("i_institution_id", Integer.class))) {
+          institution = rowView.getRow(Institution.class);
+        }
       }
     } catch (MappingException e) {
       // ignore any exceptions
@@ -70,6 +75,9 @@ public class DarCollectionReducer
     }
 
     if (Objects.nonNull(user)) {
+      if (Objects.nonNull(institution)) {
+        user.setInstitution(institution);
+      }
       collection.setCreateUser(user);
     }
   }
