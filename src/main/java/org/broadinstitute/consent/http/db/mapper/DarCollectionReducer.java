@@ -29,6 +29,12 @@ public class DarCollectionReducer
             rowView.getColumn("collection_id", Integer.class),
             id -> rowView.getRow(DarCollection.class));
     try {
+      if (Objects.nonNull(rowView.getColumn("u_dacuserid", Integer.class))) {
+        user = rowView.getRow(User.class);
+      }
+      if (Objects.nonNull(rowView.getColumn("i_id", Integer.class))) {
+        institution = rowView.getRow(Institution.class);
+      }
       if (Objects.nonNull(collection)) {
         if (Objects.nonNull(rowView.getColumn("dar_id", Integer.class))) {
           dar = rowView.getRow(DataAccessRequest.class);
@@ -51,12 +57,6 @@ public class DarCollectionReducer
         }
         if (Objects.nonNull(rowView.getColumn("v_vote_id", Integer.class))) {
           vote = rowView.getRow(Vote.class);
-        }
-        if (Objects.nonNull(rowView.getColumn("u_dacuserid", Integer.class))) {
-          user = rowView.getRow(User.class);
-        }
-        if (Objects.nonNull(rowView.getColumn("i_id", Integer.class))) {
-          institution = rowView.getRow(Institution.class);
         }
       }
     } catch (MappingException e) {
