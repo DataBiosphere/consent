@@ -55,7 +55,7 @@ public class DarCollectionReducer
         if (Objects.nonNull(rowView.getColumn("u_dacuserid", Integer.class))) {
           user = rowView.getRow(User.class);
         }
-        if (Objects.nonNull(rowView.getColumn("i_institution_id", Integer.class))) {
+        if (Objects.nonNull(rowView.getColumn("i_id", Integer.class))) {
           institution = rowView.getRow(Institution.class);
         }
       }

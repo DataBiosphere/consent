@@ -121,6 +121,7 @@ public interface DarCollectionDAO {
    * @return List<DarCollection>
    */
   @RegisterBeanMapper(value = User.class, prefix = "u")
+  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
@@ -140,6 +141,7 @@ public interface DarCollectionDAO {
   List<DarCollection> findAllDARCollections();
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
+  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @RegisterBeanMapper(value = Election.class, prefix = "e")
@@ -156,13 +158,13 @@ public interface DarCollectionDAO {
       + "FROM dar_collection c "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid "
-      + "AND c.create_user_id = :userId "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
       + "LEFT JOIN ("
           + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
           + "FROM election"
       + ") AS e "
-      + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL)"
+      + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
+      + "WHERE c.create_user_id = :userId "
   )
   List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
 
@@ -172,6 +174,7 @@ public interface DarCollectionDAO {
    * @return DarCollection
    */
   @RegisterBeanMapper(value = User.class, prefix = "u")
+  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
@@ -196,6 +199,7 @@ public interface DarCollectionDAO {
    * @return DarCollection
    */
   @RegisterBeanMapper(value = User.class, prefix = "u")
+  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @RegisterBeanMapper(value = Election.class, prefix = "e")
