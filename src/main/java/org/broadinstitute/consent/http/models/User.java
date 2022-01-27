@@ -21,6 +21,16 @@ import java.util.Objects;
 
 public class User {
 
+  public static final String QUERY_FIELDS_WITH_U_PREFIX =
+          " u.dacuserid as u_dacuserid, " +
+          " u.email as u_email, " +
+          " u.displayname as u_displayname, " +
+          " u.createdate as u_createdate, " +
+          " u.additional_email as u_additional_email, " +
+          " u.email_preference as u_email_preference, " +
+          " u.institution_id as u_institution_id," +
+          " u.era_commons_id as u_era_commons_id ";
+
     @JsonProperty
     private Integer dacUserId;
 

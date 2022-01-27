@@ -34,6 +34,9 @@ public class DarCollection {
   private Timestamp createDate;
 
   @JsonProperty
+  private User createUser;
+
+  @JsonProperty
   private Integer createUserId;
 
   @JsonProperty
@@ -81,6 +84,14 @@ public class DarCollection {
 
   public void setCreateDate(Timestamp createDate) {
     this.createDate = createDate;
+  }
+
+  public User getCreateUser() {
+    return createUser;
+  }
+
+  public void setCreateUser(User createUser) {
+    this.createUser = createUser;
   }
 
   public Integer getCreateUserId() {
