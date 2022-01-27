@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -30,8 +29,6 @@ public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
       user.setCreateDate(r.getDate("createDate"));
       user.setAdditionalEmail(r.getString("additional_email"));
       user.setEmailPreference(r.getBoolean("email_preference"));
-      user.setStatus(getStatus(r));
-      user.setRationale(r.getString("rationale"));
       user.setRoles(new ArrayList<>());
       if (hasColumn(r, "completed")) {
         user.setProfileCompleted(Boolean.valueOf(r.getString("completed")));
@@ -60,14 +57,6 @@ public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
               r.getString("name"),
               dacId);
       user.addRole(role);
-    }
-  }
-
-  private String getStatus(ResultSet r) {
-    try {
-      return RoleStatus.getStatusByValue(r.getInt("status"));
-    } catch (Exception e) {
-      return null;
     }
   }
 }

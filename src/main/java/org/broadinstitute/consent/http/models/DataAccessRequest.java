@@ -198,7 +198,7 @@ public class DataAccessRequest {
             (Objects.nonNull(this.getData().getPoa()) && this.getData().getPoa()) ||
                 (Objects.nonNull(this.getData().getPopulation()) && this.getData().getPopulation()) ||
                 (Objects.nonNull(this.getData().getOther()) && this.getData().getOther()) ||
-                (Objects.nonNull(this.getData().getOtherText()) && !this.getData().getOtherText().strip().isEmpty()) ||
+                (Objects.nonNull(this.getData().getOtherText()) && !this.getData().getOtherText().isBlank()) ||
                 (Objects.nonNull(this.getData().getIllegalBehavior()) && this.getData().getIllegalBehavior()) ||
                 (Objects.nonNull(this.getData().getAddiction()) && this.getData().getAddiction()) ||
                 (Objects.nonNull(this.getData().getSexualDiseases()) && this.getData().getSexualDiseases()) ||

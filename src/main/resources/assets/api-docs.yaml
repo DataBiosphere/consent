@@ -132,6 +132,8 @@ paths:
     $ref: './paths/collectionsByRoleName.yaml'
   /api/collections/{collectionId}/cancel:
     $ref: './paths/cancelCollectionByCollectionId.yaml'
+  /api/collections/{collectionId}/election:
+    $ref: './paths/createCollectionElectionsByCollectionId.yaml'
   /api/collections/{collectionId}/resubmit:
     $ref: './paths/resubmitCollectionByCollectionId.yaml'
   /api/ontology:
@@ -1023,36 +1025,7 @@ paths:
           description: Malformed user entity or improper institution update
         403:
           description: User must have appropriate roles to update different users' information.
-  /api/dacuser/status/{userId}:
-    put:
-      summary: updateUserStatusById
-      description: |
-        DEPRECATED: Use PUT /api/dacuser/{id}
-        Update a user's status by user id
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-        - name: json
-          in: body
-          schema:
-            type: object
-          description: |
-            JSON object with a "status" member. Statuses allowed are "pending", "approved", or
-            "rejected".
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the updated user
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        500:
-          description: Server Error
+
   /api/dar/v2:
     post:
       summary: Create Data Access Request, version 2
@@ -1657,6 +1630,7 @@ paths:
         404:
           description: The election or the DAR couldn't be found.
     post:
+      deprecated: true
       summary: createDataRequestElection
       description: Creates an Access and RP Election for the DAR identified by the ID.
       parameters:

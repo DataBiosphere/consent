@@ -40,8 +40,6 @@ public class ResearcherServiceTest {
     @Mock
     private EmailNotifierService emailNotifierService;
 
-    @Mock
-    private UserService userService;
 
     private ResearcherService service;
 
@@ -64,7 +62,7 @@ public class ResearcherServiceTest {
     }
 
     private void initService() {
-        service = new ResearcherService(userPropertyDAO, userDAO, emailNotifierService, userService);
+        service = new ResearcherService(userPropertyDAO, userDAO, emailNotifierService);
     }
 
     @Test
@@ -183,7 +181,6 @@ public class ResearcherServiceTest {
         doNothing().when(userPropertyDAO).deletePropertiesByUserAndKey(any());
         doNothing().when(userPropertyDAO).insertAll(any());
         doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(any());
-        when(userService.updateUserStatus(any(), any())).thenReturn(user);
         doNothing().when(emailNotifierService).sendNewResearcherCreatedMessage(any(), any());
         initService();
 
@@ -212,7 +209,6 @@ public class ResearcherServiceTest {
         doNothing().when(userPropertyDAO).deletePropertiesByUserAndKey(any());
         doNothing().when(userPropertyDAO).insertAll(any());
         doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(any());
-        when(userService.updateUserStatus(any(), any())).thenReturn(user);
         doNothing().when(emailNotifierService).sendNewResearcherCreatedMessage(any(), any());
         initService();
 

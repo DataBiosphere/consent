@@ -55,6 +55,7 @@ public class DataRequestElectionResource extends Resource {
     @POST
     @Consumes("application/json")
     @RolesAllowed({ADMIN, CHAIRPERSON})
+    @Deprecated
     public Response createDataRequestElection(@Context UriInfo info, Election rec,
                                               @PathParam("requestId") String requestId) {
         URI uri;

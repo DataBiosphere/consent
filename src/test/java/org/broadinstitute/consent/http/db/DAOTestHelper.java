@@ -1,22 +1,10 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
-import static org.junit.Assert.fail;
-
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -30,6 +18,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -41,7 +30,6 @@ import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
@@ -53,6 +41,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
+import static org.junit.Assert.fail;
+
 public class DAOTestHelper {
 
     public static final String POSTGRES_IMAGE = "postgres:11.6-alpine";
@@ -61,9 +63,9 @@ public class DAOTestHelper {
     private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config("database.maxSize", String.valueOf(maxConnections));
 
     private static DropwizardTestSupport<ConsentConfiguration> testApp;
-    
+
     protected static Jdbi jdbi;
-    
+
     protected static ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     protected static ConsentAuditDAO consentAuditDAO;
     protected static ConsentDAO consentDAO;
@@ -152,6 +154,15 @@ public class DAOTestHelper {
 
     @After
     public void tearDown() {
+        // Some ServiceDAO tests go around the election and vote creation id list process.
+        // Handle those first so that proper deletion order is preserved.
+        createdDataAccessRequestReferenceIds.forEach(darId -> {
+            List<Election> elections = electionDAO.findElectionsByReferenceId(darId);
+            createdElectionIds.addAll(elections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+            List<Vote> votes = voteDAO.findVotesByElectionIds(createdElectionIds);
+            createdVoteIds.addAll(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
+        });
+
         ApprovalExpirationTime aet = approvalExpirationTimeDAO.findApprovalExpirationTime();
         if (Objects.nonNull(aet) && aet.getId() > 0) {
             approvalExpirationTimeDAO.deleteApprovalExpirationTime(aet.getId());
@@ -365,7 +376,7 @@ public class DAOTestHelper {
         createdUserIds.add(userId);
         return userDAO.findUserById(userId);
     }
-    
+
     protected void createUserProperty(Integer userId, String field) {
         UserProperty property = new UserProperty();
         property.setPropertyKey(field);
@@ -528,7 +539,7 @@ public class DAOTestHelper {
     /**
      * This method creates a number of DARs under a DarCollection and only returns the
      * last DAR created.
-     * 
+     *
      * @return Last DataAccessRequest of a DarCollection
      */
     protected DataAccessRequest createDataAccessRequestV3() {
@@ -627,4 +638,20 @@ public class DAOTestHelper {
         return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
     }
 
+    protected DarCollection createDarCollectionWithSingleDataAccessRequest() {
+        Date now = new Date();
+        User user = createUser();
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        DataAccessRequest dar = new DataAccessRequest();
+        dar.setReferenceId(UUID.randomUUID().toString());
+        DataAccessRequestData data = new DataAccessRequestData();
+        dar.setData(data);
+        dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getDacUserId(), now, now, now, now, data);
+        dataAccessRequestDAO.updateDraftForCollection(collection_id, dar.getReferenceId());
+        dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
+        createdDataAccessRequestReferenceIds.add(dar.getReferenceId());
+        createdDarCollections.add(collection_id);
+        return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+    }
 }

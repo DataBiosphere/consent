@@ -205,7 +205,7 @@ public class DataAccessRequestServiceTest {
         Integer collectionId = newDars.get(0).getCollectionId();
         for(DataAccessRequest darElement: newDars) {
             assertEquals(collectionId, darElement.getCollectionId());
-        }   
+        }
     }
 
     @Test
@@ -513,8 +513,6 @@ public class DataAccessRequestServiceTest {
         user.setDacUserId(1);
         user.setEmail("test@test.com");
         user.setDisplayName("Test User");
-        user.setStatus("approved");
-        user.setRationale("");
         initService();
 
         DARModalDetailsDTO darModalDetailsDTO = service.DARModalDetailsDTOBuilder(dar, user, electionService);

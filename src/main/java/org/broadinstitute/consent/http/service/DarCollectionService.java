@@ -1,24 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -29,23 +18,46 @@ import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DarCollectionService {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final DarCollectionDAO darCollectionDAO;
+  private final DarCollectionServiceDAO collectionServiceDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
+  private final VoteDAO voteDAO;
+
+  private final EmailNotifierService emailNotifierService;
 
   @Inject
-  public DarCollectionService(DarCollectionDAO darCollectionDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO) {
+  public DarCollectionService(DarCollectionDAO darCollectionDAO, DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, EmailNotifierService emailNotifierService, VoteDAO voteDAO) {
     this.darCollectionDAO = darCollectionDAO;
+    this.collectionServiceDAO = collectionServiceDAO;
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
+    this.emailNotifierService = emailNotifierService;
+    this.voteDAO = voteDAO;
   }
 
   public List<DarCollection> getAllCollections() {
@@ -317,6 +329,51 @@ public class DarCollectionService {
     // Cancel filtered DAR elections
     cancelElectionsForReferenceIds(referenceIds);
 
+    return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+  }
+
+  /**
+   * DarCollections with no elections, or with previously canceled elections, are valid
+   * for initiating a new set of elections. Elections in open, closed, pending, or final
+   * states are not valid.
+   *
+   * @param user The User initiating new elections for a collection
+   * @param collection The DarCollection
+   * @return The updated DarCollection
+   */
+  public DarCollection createElectionsForDarCollection(User user, DarCollection collection) {
+    final List<String> invalidStatuses = Stream.of(
+            ElectionStatus.CLOSED, ElectionStatus.OPEN, ElectionStatus.FINAL, ElectionStatus.PENDING_APPROVAL
+    ).map(ElectionStatus::getValue).collect(Collectors.toList());
+    List<String> referenceIds = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
+    if (!referenceIds.isEmpty()) {
+      List<Election> nonCanceledElections = electionDAO.findLastElectionsByReferenceIds(referenceIds)
+        .stream()
+        .filter(e -> invalidStatuses.contains(e.getStatus()))
+        .collect(Collectors.toList());
+      if (!nonCanceledElections.isEmpty()) {
+        logger.error("Non-canceled elections exist for collection: " + collection.getDarCollectionId());
+        throw new IllegalArgumentException("Non-canceled elections exist for this collection.");
+      }
+    }
+    try {
+      collectionServiceDAO.createElectionsForDarCollection(collection);
+      collection.getDars().values().forEach(dar -> {
+        Election accessElection = electionDAO.findLastElectionByReferenceIdAndType(dar.getReferenceId(), ElectionType.DATA_ACCESS.getValue());
+        if (Objects.nonNull(accessElection)) {
+          List<Vote> votes = voteDAO.findVotesByElectionId(accessElection.getElectionId());
+          try {
+            emailNotifierService.sendNewCaseMessageToList(votes, accessElection);
+          } catch (Exception e) {
+            logger.error("Unable to send new case message to DAC members for DAR: " + dar.getReferenceId());
+          }
+        } else {
+          logger.error("Did not find a created access election for DAR: " + dar.getReferenceId());
+        }
+      });
+    } catch (Exception e) {
+      logger.error("Exception creating elections and votes for collection: " + collection.getDarCollectionId());
+    }
     return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }
 

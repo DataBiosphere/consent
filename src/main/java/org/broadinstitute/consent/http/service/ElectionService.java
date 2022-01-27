@@ -127,6 +127,7 @@ public class ElectionService {
         return elections.stream().distinct().collect(Collectors.toList());
     }
 
+    @Deprecated // Use election creation per entity, i.e. DarCollectionService.createElectionsForDarCollection()
     public Election createElection(Election election, String referenceId, ElectionType electionType) throws Exception {
         Election consentElection = validateAndGetDULElection(referenceId, electionType);
         validateAvailableUsers(consentElection);

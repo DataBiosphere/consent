@@ -133,13 +133,4 @@ public class UserRoleDAOTest extends DAOTestHelper {
         Assert.assertNotNull(userRole);
     }
 
-    @Test
-    public void testConvertJsonToUserRole() {
-        String json = "{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}";
-        UserRole userRole = new UserRole(json);
-        Assert.assertNotNull(userRole);
-        Assert.assertEquals(userRole.getRoleId().intValue(), 1);
-        Assert.assertEquals(userRole.getName(), "name");
-    }
-
 }

@@ -21,6 +21,16 @@ import java.util.Objects;
 
 public class User {
 
+  public static final String QUERY_FIELDS_WITH_U_PREFIX =
+          " u.dacuserid as u_dacuserid, " +
+          " u.email as u_email, " +
+          " u.displayname as u_displayname, " +
+          " u.createdate as u_createdate, " +
+          " u.additional_email as u_additional_email, " +
+          " u.email_preference as u_email_preference, " +
+          " u.institution_id as u_institution_id," +
+          " u.era_commons_id as u_era_commons_id ";
+
     @JsonProperty
     private Integer dacUserId;
 
@@ -44,12 +54,6 @@ public class User {
 
     @JsonProperty
     private Boolean emailPreference;
-
-    @JsonProperty
-    private String status;
-
-    @JsonProperty
-    private String rationale;
 
     @JsonProperty
     private Boolean profileCompleted;
@@ -121,8 +125,6 @@ public class User {
         setAdditionalEmail(u);
         setEmailPreference(u);
         setRoles(u);
-        setStatus(u);
-        setRationale(u);
         setInstitutionId(u);
     }
 
@@ -175,18 +177,6 @@ public class User {
     private void setRoles(User u) {
         if (CollectionUtils.isNotEmpty(u.getRoles())) {
             this.setRoles(u.getRoles());
-        }
-    }
-
-    private void setStatus(User u) {
-        if (!StringUtils.isEmpty(u.getStatus())) {
-            this.setStatus(u.getStatus());
-        }
-    }
-
-    private void setRationale(User u) {
-        if (!StringUtils.isEmpty(u.getRationale())) {
-            this.setRationale(u.getRationale());
         }
     }
 
@@ -260,22 +250,6 @@ public class User {
         this.emailPreference = emailPreference;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getRationale() {
-        return rationale;
-    }
-
-    public void setRationale(String rationale) {
-        this.rationale = rationale;
-    }
-
     public Boolean getProfileCompleted() {
         return profileCompleted;
     }
@@ -315,7 +289,7 @@ public class User {
     public void setLibraryCards(List<LibraryCard> cards) {
         this.libraryCards = cards;
     }
-    
+
     public List<LibraryCard> getLibraryCards() {
         return this.libraryCards;
     }
