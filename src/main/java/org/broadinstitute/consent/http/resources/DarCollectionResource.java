@@ -231,6 +231,31 @@ public class DarCollectionResource extends Resource {
     }
   }
 
+  // @GET
+  // @Path("role/{rolename}/query")
+  // @Consumes("application/json")
+  // @PermitAll
+  // public Response queryCollectionsByFiltersAndUserRoles(
+  //   @Auth AuthUser authUser,
+  //   @PathParam("roleName") String roleName,
+  //   @QueryParam("sortOrder") String sortOrder,
+  //   @QueryParam("filterTerm") String filterTerm,
+  //   @QueryParam("sortField") String sortField,
+  //   @QueryParam("pageSize") int pageSize
+  // ) {
+  //   try{
+
+    
+  //     User user = userService.findUserByEmail(authUser.getEmail());
+  //     validateUserHasRoleName(user, roleName);
+  //     PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields, DarCollection.defaultTokenSortField);
+  //     PaginationResponse<DarCollection> response = darCollectionService.queryCollectionsByFiltersAndUserRoles(user, token, roleName);
+  //     return Response.ok().entity(response).build();
+  //   } catch(Exception e) {
+  //     return createExceptionResponse(e);
+  //   }
+  // }
+
   private void validateCollectionIsCanceled(DarCollection collection) {
     boolean isCanceled =
         collection.getDars().values().stream()

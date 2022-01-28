@@ -177,6 +177,23 @@ public class DarCollectionService {
             .setPaginationTokens(orderedTokenStrings);
   }
 
+  // public PaginationResponse<DarCollection> queryCollectionsByFiltersAndUserRoles(User user, PaginationToken token, String roleName) {
+    
+  // }
+
+  // private int getCountForUnfilteredQueryByRole(User user, String userRole) {
+  //   if(userRole.equalsIgnoreCase(UserRoles.ADMIN.getRoleName()) {
+  //     return darCollectionDAO.findAllDARCollections().size(); //Make new query to count specific query
+  //   } else if (userRole.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+  //     return darCollectionDAO.findDARCollectionIdsByInstitutionId(user.getInstitutionId()).size(); //make new query to only get count
+  //   } else if (
+  //       userRole.equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName()) ||
+  //       userRole.equalsIgnoreCase(UserRoles.MEMBER.getRoleName())
+  //   ) {
+  //     return darCollectionDAO.findDarCollectionByDacId(/*logic for dac id needed*/);
+  //   }
+  // }
+
   public DarCollection getByReferenceId(String referenceId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
     if (Objects.isNull(collection)) {
