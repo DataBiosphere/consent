@@ -87,8 +87,8 @@ public class UserRole {
         if (!(o instanceof UserRole)) {
             return false;
         }
-        UserRole otherConsent = (UserRole) o;
-        return Objects.equal(this.getUserRoleId(), otherConsent.getUserRoleId());
+        UserRole otherUserRole = (UserRole) o;
+        return Objects.equal(this.getUserRoleId(), otherUserRole.getUserRoleId());
     }
 
     @Override
