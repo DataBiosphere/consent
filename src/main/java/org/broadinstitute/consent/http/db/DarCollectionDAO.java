@@ -247,37 +247,27 @@ public interface DarCollectionDAO {
    */
   @SqlUpdate("DELETE FROM dar_collection WHERE collection_id = :collectionId")
   void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
+
   
-  @SqlQuery("SELECT COUNT(DISTINCT c.dar_collection_id) "
-    + "FROM dar_collection c "
-    + "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id "
-    + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-    + "INNER JOIN data_accesss_request dar ON c.collection_id = dar.collection_id "
-  )
+  String coreCountQuery = "SELECT COUNT(DISTINCT c.dar_collection_id) "
+      + "FROM dar_collection c "
+      + "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id "
+      + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
+      + "INNER JOIN data_accesss_request dar ON c.collection_id = dar.collection_id ";
+  
+  @SqlQuery(coreCountQuery)
   Integer returnUnfilteredCollectionCount();
 
-  @SqlQuery("SELECT COUNT(DISTINCT c.dar_collection_id) "
-    + "FROM dar_collection c "
-    + "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id "
-    + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-    + "INNER JOIN data_accesss_request dar ON c.collection_id = dar.collection_id "
-    + "WHERE c.create_user_id = :userId")
+  @SqlQuery(
+    coreCountQuery + "WHERE c.create_user_id = :userId")
   Integer returnUnfilteredResearcherCollectionCount(@Bind("userId") Integer userId);
 
-  @SqlQuery("SELECT COUNT(DISTINCT c.dar_collection_id) "
-    + "FROM dar_collection c "
-    + "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id "
-    + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-    + "INNER JOIN data_accesss_request dar ON c.collection_id = dar.collection_id "
-    + "WHERE c.institutionId = :institutionId")
+  @SqlQuery(coreCountQuery + "WHERE c.institutionId = :institutionId")
   Integer returnUnfilteredInstitutionCollectionCount(@Bind("userId") Integer userId);
   
-  @SqlQuery("SELECT COUNT(DISTINCT c.dar_collection_id) "
-    + "FROM dar_collection c "
-    + "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id "
-    + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-    + "INNER JOIN data_accesss_request dar ON c.collection_id = dar.collection_id "
-    + "WHERE (((dar.data#>> '{}')::jsonb -> 'datasetIds') -> 0)::int in <datasetIds> "
-    + "AND dar.draft = false") 
+  @SqlQuery(
+    coreCountQuery
+      + "WHERE (((dar.data#>> '{}')::jsonb -> 'datasetIds') -> 0)::int in <datasetIds> "
+      + "AND dar.draft = false") 
   Integer returnUnfilteredDacCollectionCountViaDatasetIds(@Bind("datasetIds") List<Integer> datasetIds);
 }
