@@ -23,6 +23,7 @@ public class DarCollection {
   );
 
   public static String defaultTokenSortField = "darCode";
+  public static String defaultTokenSortOrder = "DESC";
 
   //This query is specific to DAR Collections, which is why it's defined here
   public static final String DAR_FILTER_QUERY_COLUMNS = 

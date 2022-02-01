@@ -133,6 +133,8 @@ public class DarCollectionService {
     return addDatasetsToCollections(collections);
   }
 
+  //TODO: remove this function if the userRole version works
+  //TODO: replace calls to this method with the new version
   /**
    * Find all filtered DAR Collections for a user
    *  1. Fetch unfiltered count: Query #1
@@ -177,22 +179,93 @@ public class DarCollectionService {
             .setPaginationTokens(orderedTokenStrings);
   }
 
-  // public PaginationResponse<DarCollection> queryCollectionsByFiltersAndUserRoles(User user, PaginationToken token, String roleName) {
-    
-  // }
+  //TODO: write this function up
+  //TODO: make sure this function works as expected
+  //Question: Why bother fetching by ids on the later query? The entire query has been searched with sortOrder and filter
+  //At this point you can just slice from the first query result directly
+  //If you want to read from ids for the later requests (change page for example), you can make another function that focuses on that (where you can exclude that initial query)
+  //(Downside of this is that initial query won't update if new collections are made)
+  //Otherwise if that initial fetch always happens then there's no reason to do a second query over sliced ids over the subList(startIndex, endIndex) option
+  public PaginationResponse<DarCollection> queryCollectionsByFiltersAndUserRoles(User user, PaginationToken token, String roleName) {
+    List<Integer> dacIds = user.getRoles().stream()
+      .filter(role -> Objects.nonNull(role.getDacId()))
+      .map(UserRole::getDacId)
+      .distinct()
+      .collect(Collectors.toList());
 
-  // private int getCountForUnfilteredQueryByRole(User user, String userRole) {
-  //   if(userRole.equalsIgnoreCase(UserRoles.ADMIN.getRoleName()) {
-  //     return darCollectionDAO.findAllDARCollections().size(); //Make new query to count specific query
-  //   } else if (userRole.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-  //     return darCollectionDAO.findDARCollectionIdsByInstitutionId(user.getInstitutionId()).size(); //make new query to only get count
-  //   } else if (
-  //       userRole.equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName()) ||
-  //       userRole.equalsIgnoreCase(UserRoles.MEMBER.getRoleName())
-  //   ) {
-  //     return darCollectionDAO.findDarCollectionByDacId(/*logic for dac id needed*/);
-  //   }
-  // }
+    Integer unfilteredCount = getCountForUnfilteredQueryByRole(user, roleName);
+    if(unfilteredCount == 0) {
+      createEmptyPaginationResponse(unfilteredCount);
+    }
+    token.setUnfilteredCount(unfilteredCount);
+
+    List<DarCollection> filteredCollections = getFilteredCollectionsByUserRole(user, roleName, token, dacIds);
+    if(filteredCollections.isEmpty()) {
+      return createEmptyPaginationResponse(0);
+    }
+    token.setFilteredCount(filteredCollections.size());
+    List<DarCollection> slicedCollections = new ArrayList<>();
+    if(token.getStartIndex() <= token.getEndIndex()) {
+      slicedCollections.subList(token.getStartIndex(), token.getEndIndex());
+    } else {
+      logger.warn(String.format("Invalid pagination state: startIndex %s endIndex: %s", token.getStartIndex(), token.getEndIndex()));
+    }
+    List<PaginationToken> orderedTokens = token.createListOfPaginationTokensFromSelf();
+    List<String> orderedTokenStrings = orderedTokens.stream().map(PaginationToken::toBase64).collect(Collectors.toList());
+    return new PaginationResponse<DarCollection>()
+      .setUnfilteredCount(token.getUnfilteredCount())
+      .setFilteredCount(token.getFilteredCount())
+      .setFilteredPageCount(orderedTokens.size())
+      .setResults(slicedCollections)
+      .setPaginationTokens(orderedTokenStrings);
+  }
+
+  //Helper function for use in queryCollectionsByFilteresAndUserRoles
+  private List<DarCollection> getFilteredCollectionsByUserRole(User user, String userRole, PaginationToken token, List<Integer> dacIds) {
+    String sortOrder = Objects.isNull(token.getSortDirection()) ? DarCollection.defaultTokenSortOrder : token.getSortDirection();
+    String sortField = Objects.isNull(token.getSortField()) ? DarCollection.defaultTokenSortField : token.getSortField();
+    String filterTerm = Objects.isNull(token.getFilterTerm()) ? "" : token.getFilterTerm();
+    List<DarCollection> collection;
+    if(userRole.equalsIgnoreCase(UserRoles.ADMIN.getRoleName())) {
+      collection = darCollectionDAO.getFilteredListForAdmin(sortField, sortOrder, filterTerm);
+    }
+    else if (userRole.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+      collection = darCollectionDAO.getFilteredListForSigningOfficial(sortField, sortOrder, user.getInstitutionId(), filterTerm);
+    } else if (
+      userRole.equalsIgnoreCase(UserRoles.MEMBER.getRoleName()) ||
+      userRole.equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName())
+    ) {
+      List<Integer> datasetIds = datasetDAO.findDatasetIdsByDacIds(dacIds);
+      List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacAndDatasetIds(dacIds, datasetIds);
+      collection = darCollectionDAO.getFilteredListForDACByCollectionIds(sortField, sortOrder, collectionIds, filterTerm);
+    } else {
+      collection = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
+    }
+
+    return collection;
+  }
+
+  //Helper method, used to get unfiltered query count for queryCollectionsByFiltersAndUserRoles
+  private Integer getCountForUnfilteredQueryByRole(User user, String userRole) {
+    Integer size = 0;
+    if(userRole.equalsIgnoreCase(UserRoles.ADMIN.getRoleName())) {
+      size = darCollectionDAO.returnUnfilteredCollectionCount(); //Make new query to count specific query
+    } else if (userRole.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+      size = darCollectionDAO.returnUnfilteredCountForInstitution(user.getInstitutionId()); //make new query to only get count
+    } else if (
+        userRole.equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName()) ||
+        userRole.equalsIgnoreCase(UserRoles.MEMBER.getRoleName())
+    ) {
+      List<Integer> dacIds = user.getRoles()
+        .stream()
+        .map(UserRole::getDacId)
+        .distinct()
+        .collect(Collectors.toList());
+      
+      size = (Integer) darCollectionDAO.findDARCollectionIdsByDacIds(dacIds).size();
+    }
+    return size;
+  }
 
   public DarCollection getByReferenceId(String referenceId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);

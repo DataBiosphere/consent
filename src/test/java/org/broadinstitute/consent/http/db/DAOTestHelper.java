@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -346,6 +347,7 @@ public class DAOTestHelper {
         createdConsentIds.add(consentId);
         return consentDAO.findConsentById(consentId);
     }
+    
 
     protected Match createMatch() {
         DataAccessRequest dar = createDataAccessRequestV3();
@@ -569,6 +571,16 @@ public class DAOTestHelper {
         return user.getInstitutionId();
     }
 
+    protected DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId, int datasetId, int userId, String darCode) {
+        DataAccessRequestData data = new DataAccessRequestData();
+        List<Integer> datasetIds = Collections.singletonList(datasetId);
+        data.setDatasetIds(datasetIds);
+        String referenceId = RandomStringUtils.randomAlphanumeric(20);
+        dataAccessRequestDAO.insertVersion3(collectionId, referenceId, userId, new Date(), new Date(), new Date(), new Date(), data);
+        createdDataAccessRequestReferenceIds.add(referenceId);
+        return dataAccessRequestDAO.findByReferenceId(referenceId);
+    }
+
     private DataAccessRequest insertDAR(Integer userId, Integer collectionId, String darCode) {
         DataAccessRequestData data;
         Date now = new Date();
@@ -623,7 +635,7 @@ public class DAOTestHelper {
     }
 
     protected DarCollection createDarCollection() {
-        User user = createUser();
+        User user = createUserWithInstitution();
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         DataSet dataset = createDataset();
@@ -636,6 +648,20 @@ public class DAOTestHelper {
         insertDAR(user.getDacUserId(), collection_id, darCode);
         createdDarCollections.add(collection_id);
         return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+    }
+
+    protected DarCollection createDarCollectionWithDatasetAndConsentAssociation(int dacId, User user, DataSet dataset) {
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDataSetId(), user.getDacUserId(), darCode);
+        Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        createFinalVote(user.getDacUserId(), cancelled.getElectionId());
+        createFinalVote(user.getDacUserId(), access.getElectionId());
+        Consent consent = createConsent(dacId);
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        createdDarCollections.add(collectionId);
+        return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     }
 
     protected DarCollection createDarCollectionWithSingleDataAccessRequest() {

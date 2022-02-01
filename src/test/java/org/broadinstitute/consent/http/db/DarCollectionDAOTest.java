@@ -1,12 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -29,6 +23,8 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
+
+import static org.junit.Assert.*;
 
 public class DarCollectionDAOTest extends DAOTestHelper  {
 
@@ -388,6 +384,63 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
       .collect(Collectors.toList());
     
     assertTrue(referenceIds.contains(electionList.get(0).getReferenceId()));
+  }
+
+  @Test
+  public void findDARCollectionIdsByDacAndDatasetIds() {
+    //set up a dataset
+    //set up a dar, set datasetIds = [datasetId]
+    //create a consent and consent association for the dataset link
+    Dac dac = createDac();
+    User user = createUser();
+    DataSet dataset = createDataset();
+    DarCollection collection = createDarCollectionWithDatasetAndConsentAssociation(dac.getDacId(), user, dataset);
+    DarCollection collection2 = createDarCollection();
+    List<Integer> dacIds = Collections.singletonList(dac.getDacId());
+    List<Integer> datasetIds = Collections.singletonList(dataset.getDataSetId());
+    List<Integer> collectionIds = Collections.singletonList(collection.getDarCollectionId());
+    List<Integer> fetchedCollectionIds = darCollectionDAO.findDARCollectionIdsByDacAndDatasetIds(dacIds, datasetIds);
+    assertNotNull(fetchedCollectionIds);
+    assertEquals(collectionIds.size(), fetchedCollectionIds.size());
+    assertEquals(collection.getDarCollectionId(), fetchedCollectionIds.get(0));
+    assertNotEquals(collection2.getDarCollectionId(), fetchedCollectionIds.get(0));
+  }
+
+  @Test
+  public void testReturnUnfilteredCollectionCount() {
+    createDarCollection();
+    createDarCollection();
+    int count = darCollectionDAO.returnUnfilteredCollectionCount();
+    assertEquals(count, 2);
+  }
+
+  @Test
+  public void testReturnUnfilteredCountForInstitution() {
+    DarCollection collection = createDarCollection();
+    User user = userDAO.findUserById(collection.getCreateUserId());
+    createDarCollection();
+    int count = darCollectionDAO.returnUnfilteredCountForInstitution(user.getInstitutionId());
+    assertEquals(count, 1);
+  }
+
+  @Test
+  public void testReturnUnfilteredResearcherCollectionCount() {
+    DarCollection collection = createDarCollection();
+    User user = userDAO.findUserById(collection.getCreateUserId());
+    createDarCollection();
+    int count = darCollectionDAO.returnUnfilteredResearcherCollectionCount(user.getDacUserId());
+    assertEquals(count, 1);
+  }
+
+  @Test
+  public void testGetFilteredListForSigningOfficial() {
+    DarCollection collection = createDarCollection();
+    User user = userDAO.findUserById((collection.getCreateUserId()));
+    createDarCollection();
+    createDarCollection();
+    String filterTerm = collection.getDarCode();
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForSigningOfficial("darCode", "DESC", user.getInstitutionId(), filterTerm);
+    assertEquals(collections.size(), 1);
   }
 
   private String generateTestTerm(String targetString) {
