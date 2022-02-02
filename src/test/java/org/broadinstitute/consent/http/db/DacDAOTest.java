@@ -176,13 +176,13 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testFindUserRolesForUsers() {
         Dac dac = createDac();
-        User chair = createUser(); // Creates a user with researcher role
-        User member = createUser(); // Creates a user with researcher role
-        dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
-        dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member.getDacUserId(), dac.getDacId());
+        User chair = createUser(); // Creates a user with researcher role; UserRole #1
+        User member = createUser(); // Creates a user with researcher role; UserRole #2
+        dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId()); // ; UserRole #3
+        dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member.getDacUserId(), dac.getDacId()); // ; UserRole #4
         List<Integer> userIds = Arrays.asList(chair.getDacUserId(), member.getDacUserId());
         List<UserRole> userRoles = dacDAO.findUserRolesForUsers(userIds).stream().distinct().collect(Collectors.toList());
-        Assert.assertEquals(userRoles.size(), 3);
+        Assert.assertEquals(userRoles.size(), 4);
     }
 
     @Test
