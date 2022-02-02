@@ -25,12 +25,12 @@ public interface DarCollectionDAO {
       " SELECT c.*, i.institution_name, u.displayname AS researcher, " +
           User.QUERY_FIELDS_WITH_U_PREFIX + ", " +
           Institution.QUERY_FIELDS_WITH_I_PREFIX + ", " +
-          DarCollection.DAR_FILTER_QUERY_COLUMNS + //NOTE: make sure this works
+          DarCollection.DAR_FILTER_QUERY_COLUMNS +
       " FROM dar_collection c " +
       " INNER JOIN dacuser u ON u.dacuserid = c.create_user_id " +
       " LEFT JOIN institution i ON i.institution_id = u.institution_id " +
       " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id ";
-  
+
 
   //NOTE: check old references to this, make sure the references are updated to account for changes
   String filterQuery =
@@ -38,14 +38,12 @@ public interface DarCollectionDAO {
       " AND (" +
       DarCollection.FILTER_TERMS_QUERY +
       " )";
-      
-  
 
   String getCollectionsAndDarsViaIds =
-  getCollectionAndDars 
+  getCollectionAndDars
   + filterQuery +
     "ORDER BY <sortField> <sortOrder>";
-  
+
   String orderStatement = " ORDER BY <sortField> <sortOrder>";
 
   /**
@@ -304,16 +302,16 @@ public interface DarCollectionDAO {
 //  )
 //  Integer returnUnfilteredDacCollectionCountViaDatasetIds(@Bind("datasetIds") List<Integer> datasetIds);
 
-  //TODO: flesh out new query methods below, write new tests for them as well 
+  //TODO: flesh out new query methods below, write new tests for them as well
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(getCollectionAndDars + " WHERE " + DarCollection.FILTER_TERMS_QUERY + orderStatement)
+  @SqlQuery(getCollectionAndDars + " WHERE (" + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
   List<DarCollection> getFilteredListForAdmin(
-    @Bind("sortField") String sortField,
-    @Bind("sortOrder") String sortOrder,
+    @Define("sortField") String sortField,
+    @Define("sortOrder") String sortOrder,
     @Bind("filterTerm") String filterTerm
   );
 
@@ -323,11 +321,11 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
-      + " WHERE i.institution_id = :institutionId AND "
-      + DarCollection.FILTER_TERMS_QUERY + orderStatement)
+      + " WHERE u.institution_id = :institutionId AND ("
+      + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
   List<DarCollection> getFilteredListForSigningOfficial(
-      @Bind("sortField") String sortField,
-      @Bind("sortOrder") String sortOrder,
+      @Define("sortField") String sortField,
+      @Define("sortOrder") String sortOrder,
       @Bind("institutionId") Integer institutionId,
       @Bind("filterTerm") String filterTerm);
 
@@ -336,14 +334,13 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(getCollectionAndDars 
-    + " WHERE c.collection_id IN (<collectionIds>) AND "
-    + DarCollection.FILTER_TERMS_QUERY + orderStatement
-  )
+  @SqlQuery(getCollectionAndDars
+    + " WHERE c.collection_id IN (<collectionIds>) AND ("
+    + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
   List<DarCollection> getFilteredListForDACByCollectionIds(
-    @Bind("sortField") String sortField,
-    @Bind("sortOrder") String sortOrder,
-    @Bind("collectionIds") List<Integer> collectionIds,
+    @Define("sortField") String sortField,
+    @Define("sortOrder") String sortOrder,
+    @BindList("collectionIds") List<Integer> collectionIds,
     @Bind("filterTerm") String filterTerm
   );
 
@@ -353,11 +350,11 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
-      + " WHERE c.create_user_id = :userId AND "
-      + DarCollection.FILTER_TERMS_QUERY + orderStatement)
+      + " WHERE c.create_user_id = :userId AND ("
+      + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
   List<DarCollection> getFilteredListForResearcher(
-      @Bind("sortField") String sortField,
-      @Bind("sortOrder") String sortOrder,
+      @Define("sortField") String sortField,
+      @Define("sortOrder") String sortOrder,
       @Bind("userId") Integer userId,
       @Bind("filterTerm") String filterTerm);
 }

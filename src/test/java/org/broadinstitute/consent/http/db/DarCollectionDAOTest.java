@@ -388,9 +388,6 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
 
   @Test
   public void findDARCollectionIdsByDacAndDatasetIds() {
-    //set up a dataset
-    //set up a dar, set datasetIds = [datasetId]
-    //create a consent and consent association for the dataset link
     Dac dac = createDac();
     User user = createUser();
     DataSet dataset = createDataset();
@@ -411,7 +408,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     createDarCollection();
     createDarCollection();
     int count = darCollectionDAO.returnUnfilteredCollectionCount();
-    assertEquals(count, 2);
+    assertEquals(2, count);
   }
 
   @Test
@@ -420,7 +417,7 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     User user = userDAO.findUserById(collection.getCreateUserId());
     createDarCollection();
     int count = darCollectionDAO.returnUnfilteredCountForInstitution(user.getInstitutionId());
-    assertEquals(count, 1);
+    assertEquals(1, count);
   }
 
   @Test
@@ -429,20 +426,221 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     User user = userDAO.findUserById(collection.getCreateUserId());
     createDarCollection();
     int count = darCollectionDAO.returnUnfilteredResearcherCollectionCount(user.getDacUserId());
-    assertEquals(count, 1);
+    assertEquals(1, count);
   }
 
   @Test
-  public void testGetFilteredListForSigningOfficial() {
+  public void testGetFilteredListForSigningOfficialOnDarCode() {
     DarCollection collection = createDarCollection();
     User user = userDAO.findUserById((collection.getCreateUserId()));
     createDarCollection();
     createDarCollection();
     String filterTerm = collection.getDarCode();
-    List<DarCollection> collections = darCollectionDAO.getFilteredListForSigningOfficial("darCode", "DESC", user.getInstitutionId(), filterTerm);
-    assertEquals(collections.size(), 1);
+    String testTerm = generateTestTerm(filterTerm);
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForSigningOfficial("dar_code", "DESC", user.getInstitutionId(), testTerm);
+    assertEquals(1, collections.size());
+    List<DarCollection> negativeTestCollection = darCollectionDAO.getFilteredListForSigningOfficial("dar_code", "DESC", user.getInstitutionId(), "negativeTerm");
+    assertEquals(0, negativeTestCollection.size());
   }
 
+  @Test
+  public void testGetFilteredListForSigningOfficialOnResearcher() {
+    DarCollection collection = createDarCollection();
+    User user = userDAO.findUserById((collection.getCreateUserId()));
+    createDarCollection();
+    createDarCollection();
+    String filterTerm = user.getDisplayName();
+    String testTerm = generateTestTerm(filterTerm);
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForSigningOfficial("researcher", "DESC", user.getInstitutionId(), testTerm);
+    assertEquals(1, collections.size());
+    List<DarCollection> negativeTestCollection = darCollectionDAO.getFilteredListForSigningOfficial("researcher", "DESC", user.getInstitutionId(), "negativeTerm");
+    assertEquals(0, negativeTestCollection.size());
+  }
+
+  @Test
+  public void testGetFilteredListForSigningOfficialOnProjectTitle() {
+    DarCollection collection = createDarCollection();
+    User user = userDAO.findUserById((collection.getCreateUserId()));
+    DataAccessRequest targetDar = collection.getDars().values().stream().findAny().get();
+    String filterTerm = targetDar.getData().getProjectTitle();
+    String testTerm = generateTestTerm(filterTerm);
+    createDarCollection();
+    createDarCollection();
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForSigningOfficial("projectTitle", "DESC", user.getInstitutionId(), testTerm);
+    assertEquals(1, collections.size());
+    List<DarCollection> negativeTestCollection = darCollectionDAO.getFilteredListForSigningOfficial("projectTitle", "DESC", user.getInstitutionId(), "negativeTerm");
+    assertEquals(0, negativeTestCollection.size());
+  }
+
+  @Test
+  public void testGetFilteredListForSigningOfficialOnInstitution() {
+    DarCollection collection = createDarCollection();
+    User user = userDAO.findUserById((collection.getCreateUserId()));
+    String institutionName = user.getInstitution().getName();
+    String testTerm = generateTestTerm(institutionName);
+    createDarCollection();
+    createDarCollection();
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForSigningOfficial("institution_name", "DESC", user.getInstitutionId(), testTerm);
+    assertEquals(1, collections.size());
+    List<DarCollection> negativeTestCollection = darCollectionDAO.getFilteredListForSigningOfficial("institution_name", "DESC", user.getInstitutionId(), "negativeTerm");
+    assertEquals(0, negativeTestCollection.size());
+  }
+
+   @Test
+   public void testGetFilteredListForDacByCollectionIdsOnDarCode() {
+     Dac dac = createDac();
+     User user = createUser();
+     DataSet dataset = createDataset();
+     DarCollection collection = createDarCollectionWithDatasetAndConsentAssociation(dac.getDacId(), user, dataset);
+     createDarCollection();
+     String testTerm = generateTestTerm(collection.getDarCode());
+     List<Integer> collectionIds = Collections.singletonList(collection.getDarCollectionId());
+     List<DarCollection> collections = darCollectionDAO.getFilteredListForDACByCollectionIds("dar_code", "DESC", collectionIds, testTerm);
+     assertEquals(1, collections.size());
+     List<DarCollection> negativeTest = darCollectionDAO.getFilteredListForDACByCollectionIds("dar_code", "DESC", collectionIds, "negativetest");
+     assertEquals(0, negativeTest.size());
+   }
+
+  @Test
+  public void testGetFilteredListForDacByCollectionIdsOnProjectTitle() {
+    Dac dac = createDac();
+    User user = createUser();
+    DataSet dataset = createDataset();
+    DataSet secondDataset = createDataset();
+    DarCollection collection = createDarCollectionWithDatasetAndConsentAssociation(dac.getDacId(), user, dataset);
+    DarCollection negativeCollection = createDarCollectionWithDatasetAndConsentAssociation(dac.getDacId(), user, secondDataset);
+    DataAccessRequest targetDar = collection.getDars().values().stream().findAny().get();
+    DataAccessRequest negativeDar = negativeCollection.getDars().values().stream().findAny().get();
+    String testTerm = generateTestTerm(targetDar.getData().getProjectTitle());
+    String negativeTerm = generateTestTerm(negativeDar.getData().getProjectTitle());
+    List<Integer> collectionIds = Collections.singletonList(collection.getDarCollectionId());
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForDACByCollectionIds("projectTitle", "DESC", collectionIds, testTerm);
+    assertEquals(1, collections.size());
+    List<DarCollection> negativeTest = darCollectionDAO.getFilteredListForDACByCollectionIds("projectTitle", "DESC", collectionIds, negativeTerm);
+    assertEquals(0, negativeTest.size());
+  }
+
+  @Test
+  public void testGetFilteredListForDacByCollectionIdsOnResearcher() {
+    Dac dac = createDac();
+    User user = createUser();
+    DataSet dataset = createDataset();
+    DarCollection collection = createDarCollectionWithDatasetAndConsentAssociation(dac.getDacId(), user, dataset);
+    createDarCollection();
+    String testTerm = generateTestTerm(user.getDisplayName());
+    List<Integer> collectionIds = Collections.singletonList(collection.getDarCollectionId());
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForDACByCollectionIds("researcher", "DESC", collectionIds, testTerm);
+    assertEquals(1, collections.size());
+    List<DarCollection> negativeTest = darCollectionDAO.getFilteredListForDACByCollectionIds("researcher", "DESC", collectionIds, "negativetest");
+    assertEquals(0, negativeTest.size());
+  }
+
+  @Test
+  public void testGetFilteredListForDacByCollectionIdsOnInstitution() {
+    DarCollection collection = createDarCollection();
+    User user = userDAO.findUserById(collection.getCreateUserId());
+    String testTerm = generateTestTerm(user.getInstitution().getName());
+    List<Integer> collectionIds = Collections.singletonList(collection.getDarCollectionId());
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForDACByCollectionIds("institution_name", "DESC", collectionIds, testTerm);
+    assertEquals(1, collections.size());
+    List<DarCollection> negativeTest = darCollectionDAO.getFilteredListForDACByCollectionIds("institution_name", "DESC", collectionIds, "negativetest");
+    assertEquals(0, negativeTest.size());
+  }
+
+  @Test
+  public void testGetFilteredListForResearcherOnProjectTitle() {
+    DarCollection collection = createDarCollection();
+    createDarCollection();
+    User user = userDAO.findUserById(collection.getCreateUserId());
+    DataAccessRequest dar = collection.getDars().values().stream().findAny().get();
+    String testTerm = generateTestTerm(dar.getData().getProjectTitle());
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForResearcher("projectTitle", "DESC", user.getDacUserId(), testTerm);
+    List<DarCollection> negativeCollections = darCollectionDAO.getFilteredListForResearcher("projectTitle", "DESC", user.getDacUserId(), "negativeTest");
+    assertEquals(1, collections.size());
+    assertEquals(0, negativeCollections.size());
+  }
+
+  @Test
+  public void testGetFilteredListForResearcherOnDarCode() {
+    DarCollection collection = createDarCollection();
+    createDarCollection();
+    User user = userDAO.findUserById(collection.getCreateUserId());
+    String testTerm = generateTestTerm(collection.getDarCode());
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForResearcher("projectTitle", "DESC", user.getDacUserId(), testTerm);
+    List<DarCollection> negativeCollections = darCollectionDAO.getFilteredListForResearcher("projectTitle", "DESC", user.getDacUserId(), "negativeTest");
+    assertEquals(1, collections.size());
+    assertEquals(0, negativeCollections.size());
+  }
+
+  @Test
+  public void testGetFilteredListForResearcherOnInstitution() {
+    DarCollection collection = createDarCollection();
+    createDarCollection();
+    User user = userDAO.findUserById(collection.getCreateUserId());
+    String testTerm = generateTestTerm(user.getInstitution().getName());
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForResearcher("institution_name", "DESC", user.getDacUserId(), testTerm);
+    List<DarCollection> negativeCollections = darCollectionDAO.getFilteredListForResearcher("institution_name", "DESC", user.getDacUserId(), "negativeTest");
+    assertEquals(1, collections.size());
+    assertEquals(0, negativeCollections.size());
+  }
+
+  @Test
+  public void testGetFilteredListForAdminOnDarCode() {
+    DarCollection collection = createDarCollection();
+    createDarCollection();
+    String testTerm = "(?=.*" + collection.getDarCode() + ")";
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForAdmin("dar_code", "DESC", testTerm);
+    List<DarCollection> negativeCollections = darCollectionDAO.getFilteredListForAdmin("dar_code", "DESC", "negativeTest");
+    assertEquals(1, collections.size());
+    assertEquals(0, negativeCollections.size());
+    List<DarCollection> emptyTermCollections = darCollectionDAO.getFilteredListForAdmin("dar_code", "DESC", "");
+    assertEquals(2, emptyTermCollections.size());
+  }
+
+  @Test
+  public void testGetFilteredListForAdminOnProjectTitle() {
+    DarCollection collection = createDarCollection();
+    createDarCollection();
+    String projectTitle = collection.getDars().values().stream().findAny().get().getData().getProjectTitle();
+    String testTerm = generateTestTerm(projectTitle);
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForAdmin("projectTitle", "DESC", testTerm);
+    List<DarCollection> negativeCollections = darCollectionDAO.getFilteredListForAdmin("projectTitle", "DESC", "negativeTest");
+    List<DarCollection> emptyTermCollections = darCollectionDAO.getFilteredListForAdmin("projectTitle", "DESC", "");
+    assertEquals(2, collections.size());
+    assertEquals(0, negativeCollections.size());
+    assertEquals(2, emptyTermCollections.size());
+  }
+
+  @Test
+  public void testGetFilteredListForAdminOnInstitution() {
+    DarCollection collection = createDarCollection();
+    createDarCollection();
+    User user = userDAO.findUserById(collection.getCreateUserId());
+    String testTerm = generateTestTerm(user.getInstitution().getName());
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForAdmin("institution_name", "DESC", testTerm);
+    List<DarCollection> negativeCollections = darCollectionDAO.getFilteredListForAdmin("institution_name", "DESC", "negativeTest");
+    List<DarCollection> emptyTermCollections = darCollectionDAO.getFilteredListForAdmin("institution_name", "DESC", "");
+    assertEquals(1, collections.size());
+    assertEquals(0, negativeCollections.size());
+    assertEquals(2, emptyTermCollections.size());
+  }
+
+  @Test
+  public void testGetFilteredListForAdminOnResearcher() {
+    DarCollection collection = createDarCollection();
+    createDarCollection();
+    User user = userDAO.findUserById(collection.getCreateUserId());
+    String testTerm = generateTestTerm(user.getDisplayName());
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForAdmin("researcher", "DESC", testTerm);
+    List<DarCollection> negativeCollections = darCollectionDAO.getFilteredListForAdmin("researcher", "DESC", "negativeTest");
+    List<DarCollection> emptyTermCollections = darCollectionDAO.getFilteredListForAdmin("researcher", "DESC", "");
+    assertEquals(1, collections.size());
+    assertEquals(0, negativeCollections.size());
+    assertEquals(2, emptyTermCollections.size());
+  }
+
+   //NOTE: this is needed to format terms for queries
+   // formatting should happen in the service class, but it needs to be reproduced here for DAO testing
   private String generateTestTerm(String targetString) {
     return "(?=.*" + targetString.substring(0, 4) + ")";
   }

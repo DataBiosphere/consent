@@ -575,6 +575,7 @@ public class DAOTestHelper {
         DataAccessRequestData data = new DataAccessRequestData();
         List<Integer> datasetIds = Collections.singletonList(datasetId);
         data.setDatasetIds(datasetIds);
+        data.setProjectTitle(RandomStringUtils.random(10));
         String referenceId = RandomStringUtils.randomAlphanumeric(20);
         dataAccessRequestDAO.insertVersion3(collectionId, referenceId, userId, new Date(), new Date(), new Date(), new Date(), data);
         createdDataAccessRequestReferenceIds.add(referenceId);
