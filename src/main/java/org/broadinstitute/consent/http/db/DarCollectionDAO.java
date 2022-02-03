@@ -20,10 +20,14 @@ import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 
 public interface DarCollectionDAO {
 
+  String QUERY_FIELD_SEPARATOR = ", ";
+
   String getCollectionAndDars =
       " SELECT c.*, i.institution_name, u.displayname AS researcher, " +
-          User.QUERY_FIELDS_WITH_U_PREFIX + ", " +
-          Institution.QUERY_FIELDS_WITH_I_PREFIX + ", " +
+          User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
+          Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
+          Election.QUERY_FIELDS_WITH_E_PREFIX + QUERY_FIELD_SEPARATOR +
+          Vote.QUERY_FIELDS_WITH_V_PREFIX + QUERY_FIELD_SEPARATOR +
           "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
           "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
           "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
@@ -32,7 +36,10 @@ public interface DarCollectionDAO {
       " FROM dar_collection c " +
       " INNER JOIN dacuser u ON u.dacuserid = c.create_user_id " +
       " LEFT JOIN institution i ON i.institution_id = u.institution_id " +
-      " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id ";
+      " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
+      " LEFT JOIN (SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest FROM election) AS e " +
+      "   ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) " +
+      " LEFT JOIN vote v ON v.electionid = e.electionid ";
 
   String filterQuery =
     " WHERE c.create_user_id = :userId " +
@@ -63,6 +70,8 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
+  @RegisterBeanMapper(value = Election.class, prefix = "e")
+  @RegisterBeanMapper(value = Vote.class, prefix = "v")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionsAndDarsViaIds)
   List<DarCollection> findAllDARCollectionsWithFiltersByUser(
@@ -95,6 +104,8 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
+  @RegisterBeanMapper(value = Election.class, prefix = "e")
+  @RegisterBeanMapper(value = Vote.class, prefix = "v")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     getCollectionAndDars + " WHERE c.collection_id in (<collectionIds>)")
@@ -105,6 +116,8 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
+  @RegisterBeanMapper(value = Election.class, prefix = "e")
+  @RegisterBeanMapper(value = Vote.class, prefix = "v")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     getCollectionAndDars
@@ -127,8 +140,8 @@ public interface DarCollectionDAO {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     " SELECT c.*, " +
-        User.QUERY_FIELDS_WITH_U_PREFIX + ", " +
-        Institution.QUERY_FIELDS_WITH_I_PREFIX + ", " +
+        User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
+        Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
         "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
         "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
         "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
@@ -147,8 +160,8 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = Election.class, prefix = "e")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery("SELECT c.*, " +
-      User.QUERY_FIELDS_WITH_U_PREFIX + ", " +
-      Institution.QUERY_FIELDS_WITH_I_PREFIX + ", "
+      User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
+      Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
       + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
       + "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, "
       + "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
@@ -180,8 +193,8 @@ public interface DarCollectionDAO {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT c.*, " +
-      User.QUERY_FIELDS_WITH_U_PREFIX + ", " +
-      Institution.QUERY_FIELDS_WITH_I_PREFIX + ", " +
+      User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
+      Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
       "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
       "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
       "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
@@ -207,8 +220,8 @@ public interface DarCollectionDAO {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT c.*, "
-      + User.QUERY_FIELDS_WITH_U_PREFIX + ", "
-      + Institution.QUERY_FIELDS_WITH_I_PREFIX + ", "
+      + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+      + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
       + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
       + "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, "
       + "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
