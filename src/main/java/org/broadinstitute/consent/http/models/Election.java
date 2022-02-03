@@ -11,6 +11,10 @@ import java.util.Map;
 @JsonInclude(Include.NON_NULL)
 public class Election {
 
+    public static final String ELECTION_FIELDS_E_PREFIX =
+            "e.electionid AS e_election_id, e.referenceid AS e_reference_id, e.status AS e_status, e.createdate AS e_create_date, "
+            + "e.lastupdate AS e_last_update, e.datasetid AS e_dataset_id, e.electiontype AS e_election_type, e.latest, ";
+
     @JsonProperty
     private Integer electionId;
 

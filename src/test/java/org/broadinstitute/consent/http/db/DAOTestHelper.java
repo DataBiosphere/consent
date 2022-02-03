@@ -651,16 +651,23 @@ public class DAOTestHelper {
         return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
     }
 
-    protected DarCollection createDarCollectionWithDatasetAndConsentAssociation(int dacId, User user, DataSet dataset) {
+    protected void createConsentAndAssociationWithDatasetIdAndDACId(int datasetId, int dacId ) {
+        Consent consent = createConsent(dacId);
+        createAssociation(consent.getConsentId(), datasetId);
+    }
+
+    protected DarCollection createDarCollectionWithDatasetsAndConsentAssociation(int dacId, User user, List<DataSet> datasets) {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
-        DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDataSetId(), user.getDacUserId(), darCode);
-        Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-        Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-        createFinalVote(user.getDacUserId(), cancelled.getElectionId());
-        createFinalVote(user.getDacUserId(), access.getElectionId());
-        Consent consent = createConsent(dacId);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        datasets.stream()
+                .forEach(dataset-> {
+                    DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDataSetId(), user.getDacUserId(), darCode);
+                    Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+                    Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+                    createFinalVote(user.getDacUserId(), cancelled.getElectionId());
+                    createFinalVote(user.getDacUserId(), access.getElectionId());
+                    createConsentAndAssociationWithDatasetIdAndDACId(dataset.getDataSetId(), dacId);
+                });
         createdDarCollections.add(collectionId);
         return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     }

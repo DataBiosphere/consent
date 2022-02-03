@@ -179,13 +179,7 @@ public class DarCollectionService {
             .setPaginationTokens(orderedTokenStrings);
   }
 
-  //TODO: write this function up
-  //TODO: make sure this function works as expected
-  //Question: Why bother fetching by ids on the later query? The entire query has been searched with sortOrder and filter
-  //At this point you can just slice from the first query result directly
-  //If you want to read from ids for the later requests (change page for example), you can make another function that focuses on that (where you can exclude that initial query)
-  //(Downside of this is that initial query won't update if new collections are made)
-  //Otherwise if that initial fetch always happens then there's no reason to do a second query over sliced ids over the subList(startIndex, endIndex) option
+ //TODO: update function to take roles into account
   public PaginationResponse<DarCollection> queryCollectionsByFiltersAndUserRoles(User user, PaginationToken token, String roleName) {
     List<Integer> dacIds = user.getRoles().stream()
       .filter(role -> Objects.nonNull(role.getDacId()))
@@ -220,24 +214,23 @@ public class DarCollectionService {
       .setPaginationTokens(orderedTokenStrings);
   }
 
-  //Helper function for use in queryCollectionsByFilteresAndUserRoles
+  //Helper function for use in queryCollectionsByFiltersAndUserRoles
   private List<DarCollection> getFilteredCollectionsByUserRole(User user, String userRole, PaginationToken token, List<Integer> dacIds) {
     String sortOrder = Objects.isNull(token.getSortDirection()) ? DarCollection.defaultTokenSortOrder : token.getSortDirection();
     String sortField = Objects.isNull(token.getSortField()) ? DarCollection.defaultTokenSortField : token.getSortField();
     String filterTerm = Objects.isNull(token.getFilterTerm()) ? "" : token.getFilterTerm();
     List<DarCollection> collection;
     if(userRole.equalsIgnoreCase(UserRoles.ADMIN.getRoleName())) {
-      collection = darCollectionDAO.getFilteredListForAdmin(sortField, sortOrder, filterTerm);
+      collection = darCollectionDAO.getFilteredCollectionsForAdmin(sortField, sortOrder, filterTerm);
     }
     else if (userRole.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-      collection = darCollectionDAO.getFilteredListForSigningOfficial(sortField, sortOrder, user.getInstitutionId(), filterTerm);
+      collection = darCollectionDAO.getFilteredCollectionsForSigningOfficial(sortField, sortOrder, user.getInstitutionId(), filterTerm);
     } else if (
       userRole.equalsIgnoreCase(UserRoles.MEMBER.getRoleName()) ||
       userRole.equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName())
     ) {
-      List<Integer> datasetIds = datasetDAO.findDatasetIdsByDacIds(dacIds);
-      List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacAndDatasetIds(dacIds, datasetIds);
-      collection = darCollectionDAO.getFilteredListForDACByCollectionIds(sortField, sortOrder, collectionIds, filterTerm);
+      List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
+      collection = darCollectionDAO.getFilteredCollectionsForDACByCollectionIds(sortField, sortOrder, collectionIds, filterTerm);
     } else {
       collection = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
     }
@@ -261,7 +254,6 @@ public class DarCollectionService {
         .map(UserRole::getDacId)
         .distinct()
         .collect(Collectors.toList());
-      
       size = (Integer) darCollectionDAO.findDARCollectionIdsByDacIds(dacIds).size();
     }
     return size;
