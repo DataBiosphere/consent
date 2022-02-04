@@ -41,33 +41,6 @@ public class DarCollection {
         " OR EXISTS " +
         " (SELECT FROM jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasets') dataset " +
         " WHERE dataset ->> 'label' ~* :filterTerm)";
-
-  public static final String SELECT_AND_JOIN_COLLECTION_ELECTION_VOTE_CLAUSE =
-          "SELECT c.*, " +
-            User.QUERY_FIELDS_WITH_U_PREFIX + ", u.displayname AS researcher, " +
-            Institution.QUERY_FIELDS_WITH_I_PREFIX + ", " +
-            "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
-            "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
-            "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
-            "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, " + "(dar.data #>> '{}')::jsonb AS data, " +
-            "(dar.data #>> '{}')::jsonb ->> 'projectTitle' as projectTitle, " +
-            "e.electionid AS e_election_id, e.referenceid AS e_reference_id, e.status AS e_status, e.createdate AS e_create_date, " +
-            "e.lastupdate AS e_last_update, e.datasetid AS e_dataset_id, e.electiontype AS e_election_type, e.latest, " +
-            "v.voteid as v_vote_id, v.vote as v_vote, v.dacuserid as v_dac_user_id, v.rationale as v_rationale, v.electionid as v_election_id, " +
-            "v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.displayname as v_display_name " +
-          "FROM dar_collection c " +
-          "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid " +
-          "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
-          "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
-          "LEFT JOIN (" +
-            "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest " +
-            "FROM election" +
-          ") AS e " +
-          "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) " +
-          "LEFT JOIN vote v " +
-          "ON v.electionid = e.electionid " +
-          "LEFT JOIN dacuser du " +
-          "ON du.dacuserid = v.dacuserid ";
   
   @JsonProperty
   private Integer darCollectionId;
