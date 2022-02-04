@@ -10,6 +10,16 @@ import java.util.Date;
 @JsonInclude(Include.NON_NULL)
 public class Vote {
 
+  public static final String QUERY_FIELDS_WITH_V_PREFIX =
+      "v.voteid as v_vote_id, "
+          + " v.vote as v_vote, "
+          + " v.dacuserid as v_dac_user_id, "
+          + " v.rationale as v_rationale, "
+          + " v.electionid as v_election_id, "
+          + "v.createdate as v_create_date, "
+          + " v.updatedate as v_update_date, "
+          + " v.type as v_type ";
+
     @JsonProperty
     private Integer voteId;
 
