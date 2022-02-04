@@ -5,15 +5,11 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.PaginationResponse;
-import org.broadinstitute.consent.http.models.PaginationToken;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -112,9 +108,10 @@ public class DarCollectionResource extends Resource {
   }
 
   private boolean checkSoRole(User user, DarCollection collection) {
-    // 1. Look at the user's institution id
-    // 2. Compare with the DarCollection creator user's institution id
-    return true;
+    Integer creatorInstitutionId = collection.getCreateUser().getInstitutionId();
+    boolean institutionsMatch = Objects.nonNull(creatorInstitutionId) && creatorInstitutionId.equals(user.getInstitutionId());
+
+    return user.hasUserRole(UserRoles.SIGNINGOFFICIAL) && institutionsMatch;
   }
 
   @GET
