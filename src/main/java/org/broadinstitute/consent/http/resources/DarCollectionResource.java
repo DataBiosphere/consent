@@ -85,7 +85,7 @@ public class DarCollectionResource extends Resource {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
       User user = userService.findUserByEmail(authUser.getEmail());
 
-      if (checkAdminRole(user) || checkDacRole(user, collection) || checkSoRole(user, collection)) {
+      if (checkAdminPermissions(user) || checkDacPermissions(user, collection) || checkSoPermissions(user, collection)) {
         return Response.ok().entity(collection).build();
       }
       validateUserIsCreator(user, collection);
@@ -95,24 +95,24 @@ public class DarCollectionResource extends Resource {
     }
   }
 
-  private boolean checkAdminRole(User user) {
+  private boolean checkAdminPermissions(User user) {
     return user.hasUserRole(UserRoles.ADMIN);
   }
 
-  private boolean checkDacRole(User user, DarCollection collection) {
+  private boolean checkDacPermissions(User user, DarCollection collection) {
     List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
-    boolean anyDatasetIdsMatch =
-            collection.getDars().values().stream()
+
+    return collection.getDars().values().stream()
             .map(DataAccessRequest::getData)
             .map(DataAccessRequestData::getDatasetIds)
+            .flatMap(List::stream)
             .anyMatch(userDatasetIds::contains);
-
-    return anyDatasetIdsMatch;
   }
 
-  private boolean checkSoRole(User user, DarCollection collection) {
+  private boolean checkSoPermissions(User user, DarCollection collection) {
     Integer creatorInstitutionId = collection.getCreateUser().getInstitutionId();
-    boolean institutionsMatch = Objects.nonNull(creatorInstitutionId) && creatorInstitutionId.equals(user.getInstitutionId());
+    boolean institutionsMatch = Objects.nonNull(creatorInstitutionId)
+            && creatorInstitutionId.equals(user.getInstitutionId());
 
     return user.hasUserRole(UserRoles.SIGNINGOFFICIAL) && institutionsMatch;
   }
