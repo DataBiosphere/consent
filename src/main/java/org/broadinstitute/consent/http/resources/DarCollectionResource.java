@@ -89,10 +89,9 @@ public class DarCollectionResource extends Resource {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
       User user = userService.findUserByEmail(authUser.getEmail());
 
-      if (checkAdminRole(user)) return Response.ok().entity(collection).build();
-      if (checkDacRole(user, collection)) return Response.ok().entity(collection).build();
-      if (checkSoRole(user, collection)) return Response.ok().entity(collection).build();
-
+      if (checkAdminRole(user) || checkDacRole(user, collection) || checkSoRole(user, collection)) {
+        return Response.ok().entity(collection).build();
+      }
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
     } catch (Exception e) {
@@ -101,8 +100,7 @@ public class DarCollectionResource extends Resource {
   }
 
   private boolean checkAdminRole(User user) {
-    // check the user's roles to see if there's an admin role
-    return true;
+    return user.hasUserRole(UserRoles.ADMIN);
   }
 
   private boolean checkDacRole(User user, DarCollection collection) {
