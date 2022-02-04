@@ -100,11 +100,14 @@ public class DarCollectionResource extends Resource {
   }
 
   private boolean checkDacRole(User user, DarCollection collection) {
-    // 1. Find all dataset ids by the user
-    //   1a. darCollectionService.findDatasetIdsByUser
-    // 2. Find all dataset ids from the collection's dars' DataAccessRequestData
-    // 3. Compare, if any exist, then true
-    return true;
+    List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
+    boolean anyDatasetIdsMatch =
+            collection.getDars().values().stream()
+            .map(DataAccessRequest::getData)
+            .map(DataAccessRequestData::getDatasetIds)
+            .anyMatch(userDatasetIds::contains);
+
+    return anyDatasetIdsMatch;
   }
 
   private boolean checkSoRole(User user, DarCollection collection) {
