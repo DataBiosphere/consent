@@ -88,11 +88,35 @@ public class DarCollectionResource extends Resource {
     try {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
       User user = userService.findUserByEmail(authUser.getEmail());
+
+      if (checkAdminRole(user)) return Response.ok().entity(collection).build();
+      if (checkDacRole(user, collection)) return Response.ok().entity(collection).build();
+      if (checkSoRole(user, collection)) return Response.ok().entity(collection).build();
+
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private boolean checkAdminRole(User user) {
+    // check the user's roles to see if there's an admin role
+    return true;
+  }
+
+  private boolean checkDacRole(User user, DarCollection collection) {
+    // 1. Find all dataset ids by the user
+    //   1a. darCollectionService.findDatasetIdsByUser
+    // 2. Find all dataset ids from the collection's dars' DataAccessRequestData
+    // 3. Compare, if any exist, then true
+    return true;
+  }
+
+  private boolean checkSoRole(User user, DarCollection collection) {
+    // 1. Look at the user's institution id
+    // 2. Compare with the DarCollection creator user's institution id
+    return true;
   }
 
   @GET
