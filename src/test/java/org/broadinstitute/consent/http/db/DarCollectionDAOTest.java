@@ -124,6 +124,9 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     assertEquals(c.getDarCollectionId(), collectionIds.get(0));
   }
 
+  //NOTE: I would like to remove these filter tests and add them to the new query based methods
+  //Should be done on a separate ticket (it'll take time and it'll be long)
+  //For now I'm leaving them here since it still confirms the integrity of the filter query
   @Test
   public void testFindDARCollectionByCollectionIdWithOrder_ASC() {
     DarCollection collectionOne = createDarCollection();
@@ -386,6 +389,8 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     assertTrue(referenceIds.contains(electionList.get(0).getReferenceId()));
   }
 
+
+  //NOTE: below are tests for the query/pagination method by user role
   @Test
   public void testReturnUnfilteredCollectionCount() {
     createDarCollection();
@@ -583,26 +588,6 @@ public void testFindAllDARCollectionsWithFilters_InstitutionTerm() {
     assertEquals(1, collections.size());
     assertEquals(0, negativeCollections.size());
     assertEquals(2, emptyTermCollections.size());
-  }
-
-  @Test
-  public void testGetFilteredListForResearcherByTokenCollectionIds() {
-    DarCollection firstCollection = createDarCollection();
-    User user = userDAO.findUserById(firstCollection.getCreateUserId());
-    DarCollection secondCollection = createDarCollection();
-    List<Integer> collectionIds = List.of(firstCollection.getDarCollectionId(), secondCollection.getDarCollectionId());
-    List<DarCollection> collections = darCollectionDAO.getFilteredListForResearcherByTokenCollectionIds(collectionIds, user.getDacUserId());
-    assertEquals(1, collections.size());
-  }
-
-  @Test
-  public void testGetFilteredListForInstitutionByTokenCollectionIds() {
-    DarCollection firstCollection = createDarCollection();
-    User user = userDAO.findUserById(firstCollection.getCreateUserId());
-    DarCollection secondCollection = createDarCollection();
-    List<Integer> collectionIds = List.of(firstCollection.getDarCollectionId(), secondCollection.getDarCollectionId());
-    List<DarCollection> fetchedCollections = darCollectionDAO.getFilteredListForInstitutionByTokenCollectionIds(collectionIds, user.getInstitutionId());
-    assertEquals(1, fetchedCollections.size());
   }
 
    //NOTE: this is needed to format terms for queries

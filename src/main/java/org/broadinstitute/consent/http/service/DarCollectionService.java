@@ -133,8 +133,9 @@ public class DarCollectionService {
     return addDatasetsToCollections(collections);
   }
 
-  //Initial filter function that queries for collections based on filter term, sort criteria, and user role
-  //Should be used when user makes initial queries on the front-end (new/updated search term, new/updated column sort)
+  /*
+    Role based queries for Collection, this method should be utilized for search queries and pagination requests
+  */
   public PaginationResponse<DarCollection> queryCollectionsByFiltersAndUserRoles(User user, PaginationToken token, String roleName) {
     List<Integer> dacIds = getDacIdsFromUser(user);
     Integer unfilteredCount = getCountForUnfilteredQueryByRole(user, roleName);
@@ -150,7 +151,7 @@ public class DarCollectionService {
     token.setFilteredCount(filteredCollections.size());
     List<DarCollection> slicedCollections = new ArrayList<>();
     if(token.getStartIndex() <= token.getEndIndex()) {
-      slicedCollections.subList(token.getStartIndex(), token.getEndIndex());
+      slicedCollections = filteredCollections.subList(token.getStartIndex(), token.getEndIndex());
     } else {
       logger.warn(String.format("Invalid pagination state: startIndex %s endIndex: %s", token.getStartIndex(), token.getEndIndex()));
     }
@@ -185,38 +186,9 @@ public class DarCollectionService {
     } else {
       collection = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
     }
-
     return collection;
   }
 
-
-  //service method that returns collections as determined by collectionIds arrayList
-  //Method assumes that role validation has occured on the resource method
-  public List<DarCollection> getCollectionsFromTokenIds(List<Integer> collectionIds, User user, String roleName) {
-    List<Integer> dacIds = getDacIdsFromUser(user);
-    return getFilteredCollectionsByUserRoleAndCollectionIds(user, roleName, collectionIds, dacIds);
-  }
-
-
-  private List<DarCollection> getFilteredCollectionsByUserRoleAndCollectionIds(User user, String roleName, List<Integer> collectionIds, List<Integer> dacIds) {
-    List<DarCollection> collection = new ArrayList<>();
-    if(roleName.equalsIgnoreCase(UserRoles.ADMIN.getRoleName())) {
-      collection = darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
-    } else if (roleName.equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName())) {
-      collection = darCollectionDAO.getFilteredListForResearcherByTokenCollectionIds(collectionIds, user.getDacUserId());
-    } else if (roleName.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-      collection = darCollectionDAO.getFilteredListForInstitutionByTokenCollectionIds(collectionIds, user.getInstitutionId());
-    } else if (
-            roleName.equalsIgnoreCase(UserRoles.MEMBER.getRoleName()) ||
-            roleName.equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName())
-    ) {
-      List<Integer> dacDatasetIds = datasetDAO.findDatasetIdsByDacIds(dacIds);
-      //I'm filtering the collections in a separate query, I don't want to make the current collection query even more complex with consent linking
-      List<Integer> filteredCollectionIds = darCollectionDAO.findDARCollectionIdsByDacAndDatasetIds(dacIds, dacDatasetIds);
-      collection = darCollectionDAO.findDARCollectionByCollectionIds(filteredCollectionIds);
-    }
-    return collection;
-  }
 
   private List<Integer> getDacIdsFromUser (User user) {
     return user.getRoles().stream()

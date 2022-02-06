@@ -112,45 +112,45 @@ public class DarCollectionResource extends Resource {
     }
   }
 
-  @GET
-  @Path("query")
-  @Produces("application/json")
-  @RolesAllowed(RESEARCHER)
-  public Response getCollectionsByInitialQuery(
-    @Auth AuthUser authUser,
-    @QueryParam("filterTerm") String filterTerm,
-    @QueryParam("sortField") String sortField,
-    @QueryParam("sortOrder") String sortOrder,
-    @QueryParam("pageSize") int pageSize
-  ) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields, DarCollection.defaultTokenSortField);
-      PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(token, user);
-      return Response.ok().entity(paginationResponse).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
+//  @GET
+//  @Path("query")
+//  @Produces("application/json")
+//  @RolesAllowed(RESEARCHER)
+//  public Response getCollectionsByInitialQuery(
+//    @Auth AuthUser authUser,
+//    @QueryParam("filterTerm") String filterTerm,
+//    @QueryParam("sortField") String sortField,
+//    @QueryParam("sortOrder") String sortOrder,
+//    @QueryParam("pageSize") int pageSize
+//  ) {
+//    try {
+//      User user = userService.findUserByEmail(authUser.getEmail());
+//      PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields, DarCollection.defaultTokenSortField);
+//      PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(token, user);
+//      return Response.ok().entity(paginationResponse).build();
+//    } catch (Exception e) {
+//      return createExceptionResponse(e);
+//    }
+//  }
 
-  @GET
-  @Path("paginated")
-  @Produces("application/json")
-  @RolesAllowed(RESEARCHER)
-  public Response getCollectionsByToken(
-    @Auth AuthUser authUser,
-    @QueryParam("token") String token
-  ) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      String json = getDecodedJson(token);
-      PaginationToken paginationToken = convertJsonToPaginationToken(json);
-      PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(paginationToken, user);
-      return Response.ok(paginationResponse).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
+//  @GET
+//  @Path("paginated")
+//  @Produces("application/json")
+//  @RolesAllowed(RESEARCHER)
+//  public Response getCollectionsByToken(
+//    @Auth AuthUser authUser,
+//    @QueryParam("token") String token
+//  ) {
+//    try {
+//      User user = userService.findUserByEmail(authUser.getEmail());
+//      String json = getDecodedJson(token);
+//      PaginationToken paginationToken = convertJsonToPaginationToken(json);
+//      PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(paginationToken, user);
+//      return Response.ok(paginationResponse).build();
+//    } catch (Exception e) {
+//      return createExceptionResponse(e);
+//    }
+//  }
 
   @PUT
   @Path("{id}/cancel")
@@ -231,30 +231,49 @@ public class DarCollectionResource extends Resource {
     }
   }
 
-  // @GET
-  // @Path("role/{rolename}/query")
-  // @Consumes("application/json")
-  // @PermitAll
-  // public Response queryCollectionsByFiltersAndUserRoles(
-  //   @Auth AuthUser authUser,
-  //   @PathParam("roleName") String roleName,
-  //   @QueryParam("sortOrder") String sortOrder,
-  //   @QueryParam("filterTerm") String filterTerm,
-  //   @QueryParam("sortField") String sortField,
-  //   @QueryParam("pageSize") int pageSize
-  // ) {
-  //   try{
+   @GET
+   @Path("role/{roleName}/query")
+   @Consumes("application/json")
+   @PermitAll
+   public Response queryCollectionsByFiltersAndUserRoles(
+     @Auth AuthUser authUser,
+     @PathParam("roleName") String roleName,
+     @QueryParam("sortOrder") String sortOrder,
+     @QueryParam("filterTerm") String filterTerm,
+     @QueryParam("sortField") String sortField,
+     @QueryParam("pageSize") int pageSize
+   ) {
+     try{
+       User user = userService.findUserByEmail(authUser.getEmail());
+       validateUserHasRoleName(user, roleName);
+       PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields, DarCollection.defaultTokenSortField);
+       PaginationResponse<DarCollection> response = darCollectionService.queryCollectionsByFiltersAndUserRoles(user, token, roleName);
+       return Response.ok().entity(response).build();
+     } catch(Exception e) {
+       return createExceptionResponse(e);
+     }
+   }
 
-    
-  //     User user = userService.findUserByEmail(authUser.getEmail());
-  //     validateUserHasRoleName(user, roleName);
-  //     PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields, DarCollection.defaultTokenSortField);
-  //     PaginationResponse<DarCollection> response = darCollectionService.queryCollectionsByFiltersAndUserRoles(user, token, roleName);
-  //     return Response.ok().entity(response).build();
-  //   } catch(Exception e) {
-  //     return createExceptionResponse(e);
-  //   }
-  // }
+  @GET
+  @Path("role/{roleName}/paginated")
+  @Produces("application/json")
+  @RolesAllowed(RESEARCHER)
+  public Response getCollectionsByToken(
+          @Auth AuthUser authUser,
+          @QueryParam("token") String token,
+          @PathParam("roleName") String roleName
+  ) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateUserHasRoleName(user, roleName);
+      String json = getDecodedJson(token);
+      PaginationToken paginationToken = convertJsonToPaginationToken(json);
+      PaginationResponse<DarCollection> paginationResponse = darCollectionService.queryCollectionsByFiltersAndUserRoles(user, paginationToken, roleName);
+      return Response.ok(paginationResponse).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 
   private void validateCollectionIsCanceled(DarCollection collection) {
     boolean isCanceled =

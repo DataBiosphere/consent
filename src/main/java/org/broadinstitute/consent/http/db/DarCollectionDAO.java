@@ -89,24 +89,6 @@ public interface DarCollectionDAO {
           + " AND consent.dac_id IN (<dacIds>) ")
   List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds);
 
-  //TODO: write tests for this query
-  //Query to be used for DAC token queries
-  @SqlQuery(" SELECT DISTINCT c.collection_id "
-          + " FROM dar_collection c, "
-          + "     (SELECT DISTINCT dar.collection_id, jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasetIds')::integer AS dataset_id FROM data_access_request dar) AS dar_datasets, "
-          + "     consentassociations ca,"
-          + "     consents consent "
-          + " WHERE c.collection_id = dar_datasets.collection_id "
-          + " AND dar_datasets.dataset_id = ca.datasetid "
-          + " AND consent.consentid = ca.consentid "
-          + " AND consent.dac_id IN (<dacIds>) "
-          + " AND dar_datasets.dataset_id IN (<datasetIds>) "
-  )
-  List<Integer> findDARCollectionIdsByDacAndDatasetIds(
-          @BindList("dacIds") List<Integer> dacIds,
-          @BindList("datasetIds") List<Integer> datasetIds
-  );
-
   @SqlQuery(
       " SELECT distinct c.collection_id "
           + " FROM dar_collection c"
@@ -290,7 +272,6 @@ public interface DarCollectionDAO {
   void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
 
 
-  //TODO: write new filter queries below, write new tests
   String coreCountQuery = "SELECT COUNT(DISTINCT c.collection_id) "
       + "FROM dar_collection c "
       + "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id "
@@ -356,16 +337,6 @@ public interface DarCollectionDAO {
       @Bind("userId") Integer userId,
       @Bind("filterTerm") String filterTerm);
 
-
-  /*NOTE:
-    Not sure how to approach this query. The only link between a collection and a DAC is via datasets (with the linking models in between)
-    That can be solved cleanly by using darCollectionDAO.findDarCollectionIdsByDacIds
-    But that also means this method needs to be used carefully, which I'm not happy about
-    (Can't just use with any array of collection ids, it needs to be verified)
-    I'd rather have this be easy to implement rather than context based.
-    The obvious solution is to just tie the datasets in this query, but the query will just get bigger
-    Any suggestions would be appreciated
-  */
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
@@ -381,40 +352,6 @@ public interface DarCollectionDAO {
           @Define("sortOrder") String sortOrder,
           @BindList("collectionIds") List<Integer> collectionIds,
           @Bind("filterTerm") String filterTerm
-  );
-
-  /*
-    Below are the token based queries
-    The pagination tokens carry arrays of arrays<collectionIds> with each page being an element in the outer array
-    Resource and service methods should handle the verification steps,
-    so these DAO methods should take the collection ids while enforcing role based permissions as established in the database
-  */
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-  @RegisterBeanMapper(value = Election.class, prefix = "e")
-  @RegisterBeanMapper(value = Vote.class, prefix = "v")
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(getCollectionAndDars
-          + " WHERE c.collection_id IN (<collectionIds>) AND c.create_user_id = :userId")
-  List<DarCollection> getFilteredListForResearcherByTokenCollectionIds(
-          @BindList("collectionIds") List<Integer> collectionIds,
-          @Bind("userId") Integer userId
-  );
-
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-  @RegisterBeanMapper(value = Election.class, prefix = "e")
-  @RegisterBeanMapper(value = Vote.class, prefix = "v")
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(getCollectionAndDars
-          + " WHERE c.collection_id IN (<collectionIds>) AND u.institution_id = :institutionId")
-  List<DarCollection> getFilteredListForInstitutionByTokenCollectionIds(
-          @BindList("collectionIds") List<Integer> collectionIds,
-          @Bind("institutionId") Integer institutionId
   );
 }
 
