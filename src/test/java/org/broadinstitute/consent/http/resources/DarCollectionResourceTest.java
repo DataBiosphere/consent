@@ -24,7 +24,16 @@ import org.mockito.Mock;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.Response;
-import java.util.*;
+
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,11 +45,11 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DarCollectionResourceTest {
   private final AuthUser authUser = new AuthUser("test@test.com");
-  private final List<UserRole> researcherRole = Collections.singletonList(
+  private final List<UserRole> researcherRole = List.of(
     new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())
   );
   private final User researcher = new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRole, authUser.getEmail());
-  private final List<UserRole> signingOfficialRole = Collections.singletonList(
+  private final List<UserRole> signingOfficialRole = List.of(
           new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
   private final User signingOfficial = new User(4, authUser.getEmail(), "Display Name", new Date(), signingOfficialRole, authUser.getEmail());
 
@@ -58,7 +67,7 @@ public class DarCollectionResourceTest {
   private DataAccessRequest mockDataAccessRequestWithDatasetIds() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setDatasetIds(Collections.singletonList(RandomUtils.nextInt(1, 100)));
+    data.setDatasetIds(List.of(RandomUtils.nextInt(1, 100)));
     dar.setData(data);
     return dar;
   }
@@ -251,7 +260,7 @@ public class DarCollectionResourceTest {
 
   @Test
   public void testGetCollectionByIdChair() {
-    List<UserRole> chairRole = Collections.singletonList(
+    List<UserRole> chairRole = List.of(
             new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
     User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
     DarCollection collection = mockDarCollection();
@@ -274,7 +283,7 @@ public class DarCollectionResourceTest {
 
   @Test
   public void testGetCollectionByIdDacMember() {
-    List<UserRole> chairRole = Collections.singletonList(
+    List<UserRole> chairRole = List.of(
             new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName()));
     User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
     DarCollection collection = mockDarCollection();
@@ -297,7 +306,7 @@ public class DarCollectionResourceTest {
 
   @Test
   public void testGetCollectionByIdDacMemberNoDatasetIdMatch() {
-    List<UserRole> chairRole = Collections.singletonList(
+    List<UserRole> chairRole = List.of(
             new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
     User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
     DarCollection collection = mockDarCollection();
