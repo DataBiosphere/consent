@@ -160,7 +160,7 @@ public class DAOTestHelper {
         createdDataAccessRequestReferenceIds.forEach(darId -> {
             List<Election> elections = electionDAO.findElectionsByReferenceId(darId);
             createdElectionIds.addAll(elections.stream().map(Election::getElectionId).collect(Collectors.toList()));
-            if(!createdElectionIds.isEmpty()) {
+            if (!createdElectionIds.isEmpty()) {
                 List<Vote> votes = voteDAO.findVotesByElectionIds(createdElectionIds);
                 createdVoteIds.addAll(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
             }
