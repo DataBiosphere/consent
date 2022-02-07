@@ -85,7 +85,7 @@ public class DarCollectionResource extends Resource {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
       User user = userService.findUserByEmail(authUser.getEmail());
 
-      if (checkAdminPermissions(user) || checkDacPermissions(user, collection) || checkSoPermissions(user, collection)) {
+      if (checkAdminPermissions(user) || checkSoPermissions(user, collection) || checkDacPermissions(user, collection)) {
         return Response.ok().entity(collection).build();
       }
       validateUserIsCreator(user, collection);
@@ -102,10 +102,8 @@ public class DarCollectionResource extends Resource {
   private boolean checkDacPermissions(User user, DarCollection collection) {
     List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
 
-    return collection.getDars().values().stream()
-            .map(DataAccessRequest::getData)
-            .map(DataAccessRequestData::getDatasetIds)
-            .flatMap(List::stream)
+    return collection.getDatasets().stream()
+            .map(DataSet::getDataSetId)
             .anyMatch(userDatasetIds::contains);
   }
 
