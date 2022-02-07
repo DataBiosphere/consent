@@ -386,8 +386,6 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     assertTrue(referenceIds.contains(electionList.get(0).getReferenceId()));
   }
 
-
-  //NOTE: below are tests for the query/pagination method by user role
   @Test
   public void testReturnUnfilteredCollectionCount() {
     createDarCollection();
