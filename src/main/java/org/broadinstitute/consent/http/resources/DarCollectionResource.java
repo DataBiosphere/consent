@@ -269,7 +269,7 @@ public class DarCollectionResource extends Resource {
       String json = getDecodedJson(token);
       PaginationToken paginationToken = convertJsonToPaginationToken(json);
       PaginationResponse<DarCollection> paginationResponse = darCollectionService.queryCollectionsByFiltersAndUserRoles(user, paginationToken, roleName);
-      return Response.ok(paginationResponse).build();
+      return Response.ok().entity(paginationResponse).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

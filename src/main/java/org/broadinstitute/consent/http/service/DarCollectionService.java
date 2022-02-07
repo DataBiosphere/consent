@@ -171,22 +171,22 @@ public class DarCollectionService {
     String sortOrder = Objects.isNull(token.getSortDirection()) ? DarCollection.defaultTokenSortOrder : token.getSortDirection();
     String sortField = Objects.isNull(token.getSortField()) ? DarCollection.defaultTokenSortField : token.getSortField();
     String filterTerm = Objects.isNull(token.getFilterTerm()) ? "" : token.getFilterTerm();
-    List<DarCollection> collection;
+    List<DarCollection> collections;
     if(userRole.equalsIgnoreCase(UserRoles.ADMIN.getRoleName())) {
-      collection = darCollectionDAO.getFilteredCollectionsForAdmin(sortField, sortOrder, filterTerm);
+      collections = darCollectionDAO.getFilteredCollectionsForAdmin(sortField, sortOrder, filterTerm);
     }
     else if (userRole.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-      collection = darCollectionDAO.getFilteredCollectionsForSigningOfficial(sortField, sortOrder, user.getInstitutionId(), filterTerm);
+      collections = darCollectionDAO.getFilteredCollectionsForSigningOfficial(sortField, sortOrder, user.getInstitutionId(), filterTerm);
     } else if (
       userRole.equalsIgnoreCase(UserRoles.MEMBER.getRoleName()) ||
       userRole.equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName())
     ) {
       List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
-      collection = darCollectionDAO.getFilteredCollectionsForDACByCollectionIds(sortField, sortOrder, collectionIds, filterTerm);
+      collections = darCollectionDAO.getFilteredCollectionsForDACByCollectionIds(sortField, sortOrder, collectionIds, filterTerm);
     } else {
-      collection = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
+      collections = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
     }
-    return collection;
+    return addDatasetsToCollections(collections);
   }
 
 
@@ -216,6 +216,8 @@ public class DarCollectionService {
         .distinct()
         .collect(Collectors.toList());
       size = (Integer) darCollectionDAO.findDARCollectionIdsByDacIds(dacIds).size();
+    } else {
+      return darCollectionDAO.returnUnfilteredResearcherCollectionCount(user.getDacUserId());
     }
     return size;
   }

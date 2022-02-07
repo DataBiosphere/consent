@@ -566,7 +566,31 @@ public class DarCollectionServiceTest {
     assertEquals(1, (int)response.getFilteredPageCount());
   }
 
-  private void queryCollectionsAssertions(PaginationResponse response, int expectedUnfilteredCount, int expectedFilteredCount) {
+  @Test
+  public void testQueryCollectionsByFiltersAndUserRolesForResearcher() {
+    User user = new User();
+    user.setDacUserId(1);
+    String dacRoleName = UserRoles.RESEARCHER.getRoleName();
+    Integer dacRoleId = UserRoles.RESEARCHER.getRoleId();
+    UserRole memberRole = new UserRole(dacRoleId, dacRoleName);
+    user.addRole(memberRole);
+    int pageSize = 10;
+    int mockCollectionSize = 3;
+    List<DarCollection> mockCollection = createMockCollections(mockCollectionSize);
+    PaginationToken token = initPaginationToken("darCode", "DESC", "", pageSize);
+    when(darCollectionDAO.returnUnfilteredResearcherCollectionCount(anyInt())).thenReturn(mockCollectionSize);
+    when(darCollectionDAO.getFilteredListForResearcher(anyString(), anyString(), anyInt(), anyString()))
+        .thenReturn(mockCollection);
+    initService();
+    PaginationResponse<DarCollection> response = service.queryCollectionsByFiltersAndUserRoles(user, token,
+        dacRoleName);
+    assertNotNull(response);
+    assertEquals(mockCollectionSize, (int) response.getUnfilteredCount());
+    assertEquals(3, (int) response.getFilteredCount());
+    assertEquals(1, (int) response.getFilteredPageCount());
+  }
+
+  private void queryCollectionsAssertions(PaginationResponse<DarCollection> response, int expectedUnfilteredCount, int expectedFilteredCount) {
     assertEquals(expectedUnfilteredCount, (int)response.getUnfilteredCount());
     assertEquals(expectedFilteredCount, (int)response.getFilteredCount());
     assertEquals(1, (int)response.getFilteredPageCount());

@@ -252,17 +252,17 @@ public class DarCollectionResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
-//  @Test
-//  public void testGetCollectionsByInitialQuery() {
-//    PaginationResponse<DarCollection> paginationResponse = new PaginationResponse<>();
-//    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-//    when(darCollectionService.getCollectionsWithFilters(any(PaginationToken.class), any(User.class)))
-//      .thenReturn(paginationResponse);
-//    initResource();
-//
-//    Response response = resource.getCollectionsByInitialQuery(authUser, "filterTerm", "projectTitle", "asc", 10);
-//    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-//  }
+  @Test
+  public void testQueryCollectionsByFiltersAndUserRoles() {
+    PaginationResponse<DarCollection> paginationResponse = new PaginationResponse<>();
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    when(darCollectionService.queryCollectionsByFiltersAndUserRoles(any(User.class), any(PaginationToken.class), anyString()))
+      .thenReturn(paginationResponse);
+    initResource();
+
+    Response response = resource.queryCollectionsByFiltersAndUserRoles(authUser, "researcher", "DESC", "filterTerm", "projectTitle", 10);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
 
   @Test
   public void testCancelDarCollection_InternalErrorStatus() {
@@ -347,39 +347,42 @@ public class DarCollectionResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
-//  @Test
-//  public void testGetCollectionsByToken_InvalidToken() {
-//    initResource();
-//    Response response = resource.getCollectionsByToken(authUser, "badTokenString");
-//    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-//  }
+  @Test
+  public void testGetCollectionsByToken_InvalidToken() {
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    initResource();
+    Response response = resource.getCollectionsByToken(authUser, "badTokenString", "researcher");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
 
-//  @Test
-//  public void testGetCollectionsByToken_NullToken() {
-//    initResource();
-//    Response response = resource.getCollectionsByToken(authUser, null);
-//    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-//  }
+  @Test
+  public void testGetCollectionsByToken_NullToken() {
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    initResource();
+    Response response = resource.getCollectionsByToken(authUser, null, "researcher");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
 
-//  @Test
-//  public void testGetCollectionsByToken_EmptyStringToken() {
-//    initResource();
-//    Response response = resource.getCollectionsByToken(authUser, "");
-//    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-//  }
+  @Test
+  public void testGetCollectionsByToken_EmptyStringToken() {
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    initResource();
+    Response response = resource.getCollectionsByToken(authUser, "", "researcher");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
 
-//  @Test
-//  public void testGetCollectionsByToken() {
-//    PaginationResponse<DarCollection> paginationResponse = new PaginationResponse<>();
-//    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-//    when(darCollectionService.getCollectionsWithFilters(any(PaginationToken.class), any(User.class)))
-//      .thenReturn(paginationResponse);
-//    initResource();
-//
-//    String token = "eyJwYWdlIjoyLCJwYWdlU2l6ZSI6MSwic29ydEZpZWxkIjoiZGFyX2NvZGUiLCJzb3J0RGlyZWN0aW9uIjoiREVTQyIsImZpbHRlcmVkQ291bnQiOjQsImZpbHRlcmVkUGFnZUNvdW50Ijo0LCJ1bmZpbHRlcmVkQ291bnQiOjQsImFjY2VwdGFibGVTb3J0RmllbGRzIjp7InByb2plY3RUaXRsZSI6InByb2plY3RUaXRsZSIsInJlc2VhcmNoZXIiOiJyZXNlYXJjaGVyIiwiaW5zdGl0dXRpb24iOiJpbnN0aXR1dGlvbl9uYW1lIiwiZGFyQ29kZSI6ImRhcl9jb2RlIn19";
-//    Response response = resource.getCollectionsByToken(authUser, token);
-//    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-//  }
+  @Test
+  public void testGetCollectionsByToken() {
+    PaginationResponse<DarCollection> paginationResponse = new PaginationResponse<>();
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    when(darCollectionService.queryCollectionsByFiltersAndUserRoles(any(User.class), any(PaginationToken.class), anyString()))
+            .thenReturn(paginationResponse);
+    initResource();
+
+    String token = "eyJwYWdlIjoyLCJwYWdlU2l6ZSI6MSwic29ydEZpZWxkIjoiZGFyX2NvZGUiLCJzb3J0RGlyZWN0aW9uIjoiREVTQyIsImZpbHRlcmVkQ291bnQiOjQsImZpbHRlcmVkUGFnZUNvdW50Ijo0LCJ1bmZpbHRlcmVkQ291bnQiOjQsImFjY2VwdGFibGVTb3J0RmllbGRzIjp7InByb2plY3RUaXRsZSI6InByb2plY3RUaXRsZSIsInJlc2VhcmNoZXIiOiJyZXNlYXJjaGVyIiwiaW5zdGl0dXRpb24iOiJpbnN0aXR1dGlvbl9uYW1lIiwiZGFyQ29kZSI6ImRhcl9jb2RlIn19";
+    Response response = resource.getCollectionsByToken(authUser, token, "researcher");
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
 
   @Test
   public void testResubmitDarCollection_CollectionNotFound() {
