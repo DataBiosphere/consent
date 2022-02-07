@@ -20,12 +20,10 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.Response;
-import javax.xml.crypto.Data;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;

@@ -9,7 +9,6 @@ import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -90,6 +89,7 @@ public class DarCollectionResource extends Resource {
       }
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
+
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
