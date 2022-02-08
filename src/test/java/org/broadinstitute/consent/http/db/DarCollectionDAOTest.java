@@ -31,8 +31,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     assertEquals(UserFields.ORCID.getValue(), userProperties.get(0).getPropertyKey());
     assertEquals(collection.getCreateUser().getDacUserId(), userProperties.get(0).getUserId());
   }
-
-  //TODO: see if test is flaky
+  
   @Test
   public void testFindAllDarCollectionsMultipleUserProperties() {
     DarCollection collection = createDarCollectionMultipleUserProperties();
