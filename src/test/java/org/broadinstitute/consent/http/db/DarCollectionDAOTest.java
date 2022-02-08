@@ -115,14 +115,22 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     List<UserProperty> userProperties = returned.getCreateUser().getProperties();
     Integer userId = collection.getCreateUser().getDacUserId();
     assertEquals(4, userProperties.size());
-    assertEquals(UserFields.ORCID.getValue(), userProperties.get(0).getPropertyKey());
-    assertEquals(userId, userProperties.get(0).getUserId());
-    assertEquals(UserFields.PI_NAME.getValue(), userProperties.get(1).getPropertyKey());
-    assertEquals(userId, userProperties.get(1).getUserId());
-    assertEquals(UserFields.PI_EMAIL.getValue(), userProperties.get(2).getPropertyKey());
-    assertEquals(userId, userProperties.get(2).getUserId());
-    assertEquals(UserFields.DEPARTMENT.getValue(), userProperties.get(3).getPropertyKey());
-    assertEquals(userId, userProperties.get(3).getUserId());
+    List<String> userPropertyValues = userProperties.stream()
+            .map(property -> property.getPropertyKey())
+            .collect(Collectors.toList());
+    assertEquals(4, userProperties.size());
+    assert(userPropertyValues.containsAll(
+            List.of(
+                    UserFields.ORCID.getValue(),
+                    UserFields.PI_NAME.getValue(),
+                    UserFields.PI_EMAIL.getValue(),
+                    UserFields.DEPARTMENT.getValue()
+            )
+    ));
+    userProperties.stream()
+            .forEach(property -> {
+              assertEquals(userId, property.getUserId());
+            });
   }
 
   @Test
