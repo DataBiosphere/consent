@@ -10,16 +10,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.enumeration.UserFields;
+import org.broadinstitute.consent.http.models.*;
 import org.junit.Test;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
@@ -30,10 +22,41 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
 
   @Test
   public void testFindAllDARCollections() {
-    DarCollection collection = createDarCollection();
+    DarCollection collection = createDarCollectionMultipleUserProperties();
     List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
     assertTrue(allAfter.contains(collection));
     assertEquals(1, allAfter.size());
+    List<UserProperty> userProperties = allAfter.get(0).getCreateUser().getProperties();
+    assertEquals(4, userProperties.size());
+    assertEquals(UserFields.ORCID.getValue(), userProperties.get(0).getPropertyKey());
+    assertEquals(collection.getCreateUser().getDacUserId(), userProperties.get(0).getUserId());
+  }
+
+  //TODO: see if test is flaky
+  @Test
+  public void testFindAllDarCollectionsMultipleUserProperties() {
+    DarCollection collection = createDarCollectionMultipleUserProperties();
+    List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
+    assertTrue(allAfter.contains(collection));
+    assertEquals(1, allAfter.size());
+    List<UserProperty> userProperties = allAfter.get(0).getCreateUser().getProperties();
+    List<String> userPropertyValues = userProperties.stream()
+            .map(property -> property.getPropertyKey())
+            .collect(Collectors.toList());
+    Integer userId = collection.getCreateUser().getDacUserId();
+    assertEquals(4, userProperties.size());
+    assert(userPropertyValues.containsAll(
+            List.of(
+                    UserFields.ORCID.getValue(),
+                    UserFields.PI_NAME.getValue(),
+                    UserFields.PI_EMAIL.getValue(),
+                    UserFields.DEPARTMENT.getValue()
+            )
+    ));
+    userProperties.stream()
+            .forEach(property -> {
+              assertEquals(userId, property.getUserId());
+            });
   }
 
   @Test
@@ -56,7 +79,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
 
   @Test
   public void testFindDARCollectionByCollectionId() {
-    DarCollection collection = createDarCollection();
+    DarCollection collection = createDarCollectionMultipleUserProperties();
     DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
     assertNotNull(returned);
     assertEquals(collection.getDarCode(), returned.getDarCode());
@@ -65,7 +88,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
       .map(d -> d.getElections().values())
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
-    
+
       assertEquals(1, elections.size());
 
       Election election = elections.get(0);
@@ -73,10 +96,34 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
         .collect(Collectors.toList());
 
       Vote vote = votes.get(0);
-      
+
       assertEquals(1, votes.size());
       assertEquals("Open", election.getStatus());
       assertEquals(election.getElectionId(), vote.getElectionId());
+
+    List<UserProperty> userProperties = returned.getCreateUser().getProperties();
+    assertEquals(4, userProperties.size());
+    assertEquals(UserFields.ORCID.getValue(), userProperties.get(0).getPropertyKey());
+    assertEquals(collection.getCreateUser().getDacUserId(), userProperties.get(0).getUserId());
+  }
+
+  @Test
+  public void testFindDARCollectionByCollectionIdMultipleUserProperties() {
+    DarCollection collection = createDarCollectionMultipleUserProperties();
+    DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+    assertNotNull(returned);
+
+    List<UserProperty> userProperties = returned.getCreateUser().getProperties();
+    Integer userId = collection.getCreateUser().getDacUserId();
+    assertEquals(4, userProperties.size());
+    assertEquals(UserFields.ORCID.getValue(), userProperties.get(0).getPropertyKey());
+    assertEquals(userId, userProperties.get(0).getUserId());
+    assertEquals(UserFields.PI_NAME.getValue(), userProperties.get(1).getPropertyKey());
+    assertEquals(userId, userProperties.get(1).getUserId());
+    assertEquals(UserFields.PI_EMAIL.getValue(), userProperties.get(2).getPropertyKey());
+    assertEquals(userId, userProperties.get(2).getUserId());
+    assertEquals(UserFields.DEPARTMENT.getValue(), userProperties.get(3).getPropertyKey());
+    assertEquals(userId, userProperties.get(3).getUserId());
   }
 
   @Test
@@ -364,7 +411,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
 
   @Test
   public void testFindAllDARCollectionsCreatedByUserId(){
-    DarCollection collection = createDarCollection();
+    DarCollection collection = createDarCollectionMultipleUserProperties();
     Map<String, DataAccessRequest> dars = collection.getDars();
     createDarCollection(); //create new collection associated with different user
     Integer userId = collection.getCreateUserId();
@@ -377,13 +424,40 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
       .map(d-> d.getElections().values())
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
-    
+
     assertEquals(1, electionList.size());
     List<String> referenceIds = collectionRecord.getDars().values().stream()
       .map(DataAccessRequest::getReferenceId)
       .collect(Collectors.toList());
-    
+
     assertTrue(referenceIds.contains(electionList.get(0).getReferenceId()));
+
+    List<UserProperty> userProperties = collectionResult.get(0).getCreateUser().getProperties();
+    assertEquals(4, userProperties.size());
+    assertEquals(UserFields.ORCID.getValue(), userProperties.get(0).getPropertyKey());
+    assertEquals(collection.getCreateUser().getDacUserId(), userProperties.get(0).getUserId());
+  }
+
+  @Test
+  public void testFindAllDARCollectionsCreatedByUserIdWithMultipleProperties(){
+    DarCollection collection = createDarCollectionMultipleUserProperties();
+    Map<String, DataAccessRequest> dars = collection.getDars();
+    createDarCollection(); //create new collection associated with different user
+    Integer userId = collection.getCreateUserId();
+    List<DarCollection> collectionResult = darCollectionDAO.findDARCollectionsCreatedByUserId(userId);
+    assertEquals(1, collectionResult.size());
+
+    DarCollection collectionRecord = collectionResult.get(0);
+    List<UserProperty> userProperties = collectionRecord.getCreateUser().getProperties();
+    assertEquals(4, userProperties.size());
+    assertEquals(UserFields.ORCID.getValue(), userProperties.get(0).getPropertyKey());
+    assertEquals(userId, userProperties.get(0).getUserId());
+    assertEquals(UserFields.PI_NAME.getValue(), userProperties.get(1).getPropertyKey());
+    assertEquals(userId, userProperties.get(1).getUserId());
+    assertEquals(UserFields.PI_EMAIL.getValue(), userProperties.get(2).getPropertyKey());
+    assertEquals(userId, userProperties.get(2).getUserId());
+    assertEquals(UserFields.DEPARTMENT.getValue(), userProperties.get(3).getPropertyKey());
+    assertEquals(userId, userProperties.get(3).getUserId());
   }
 
   @Test

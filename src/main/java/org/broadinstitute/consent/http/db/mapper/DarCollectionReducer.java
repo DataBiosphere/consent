@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -23,13 +24,20 @@ public class DarCollectionReducer
     Election election = null;
     Vote vote = null;
     User user = null;
+    UserProperty userProperty = null;
     Institution institution = null;
     DarCollection collection =
         map.computeIfAbsent(
             rowView.getColumn("collection_id", Integer.class),
             id -> rowView.getRow(DarCollection.class));
+    if (Objects.nonNull(collection) && Objects.nonNull(collection.getCreateUser())) {
+      user = collection.getCreateUser();
+    }
     try {
-      if (Objects.nonNull(rowView.getColumn("u_dacuserid", Integer.class))) {
+      if (Objects.nonNull(rowView.getColumn("up_property_id", Integer.class))) {
+        userProperty = rowView.getRow(UserProperty.class);
+      }
+      if (Objects.isNull(user) && Objects.nonNull(rowView.getColumn("u_dacuserid", Integer.class))) {
         user = rowView.getRow(User.class);
       }
       if (Objects.nonNull(rowView.getColumn("i_id", Integer.class))) {
@@ -77,6 +85,9 @@ public class DarCollectionReducer
     if (Objects.nonNull(user)) {
       if (Objects.nonNull(institution)) {
         user.setInstitution(institution);
+      }
+      if (Objects.nonNull(userProperty)) {
+        user.addProperty(userProperty);
       }
       collection.setCreateUser(user);
     }

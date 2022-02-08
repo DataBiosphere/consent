@@ -381,6 +381,15 @@ public class DAOTestHelper {
         return userDAO.findUserById(userId);
     }
 
+    protected User createUserMultipleProperties() {
+        User user = createUser();
+        Integer userId = user.getDacUserId();
+        createUserProperty(userId, UserFields.PI_NAME.getValue());
+        createUserProperty(userId, UserFields.PI_EMAIL.getValue());
+        createUserProperty(userId, UserFields.DEPARTMENT.getValue());
+        return userDAO.findUserById(userId);
+    }
+
     protected void createUserProperty(Integer userId, String field) {
         UserProperty property = new UserProperty();
         property.setPropertyKey(field);
@@ -673,6 +682,23 @@ public class DAOTestHelper {
         createdDarCollections.add(collectionId);
         return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     }
+
+    protected DarCollection createDarCollectionMultipleUserProperties() {
+        User user = createUserMultipleProperties();
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        DataSet dataset = createDataset();
+        DataAccessRequest dar = insertDAR(user.getDacUserId(), collection_id, darCode);
+        Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        createFinalVote(user.getDacUserId(), cancelled.getElectionId());
+        createFinalVote(user.getDacUserId(), access.getElectionId());
+        insertDAR(user.getDacUserId(), collection_id, darCode);
+        insertDAR(user.getDacUserId(), collection_id, darCode);
+        createdDarCollections.add(collection_id);
+        return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+    }
+
 
     protected DarCollection createDarCollectionWithSingleDataAccessRequest() {
         Date now = new Date();
