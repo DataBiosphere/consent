@@ -104,7 +104,7 @@ public class DataAccessRequestService {
     public Integer getTotalUnReviewedDars(AuthUser authUser) {
         List<String> unReviewedDarIds = getUnReviewedDarsForUser(authUser).
                 stream().
-                map(d -> d.getReferenceId()).
+                map(DataAccessRequest::getReferenceId).
                 collect(toList());
         Integer unReviewedDarCount = 0;
         if (!unReviewedDarIds.isEmpty()) {
@@ -250,28 +250,30 @@ public class DataAccessRequestService {
         if (Objects.isNull(sourceCollection.getDars()) || sourceCollection.getDars().isEmpty()) {
             throw new IllegalArgumentException("Source Collection must contain at least a single DAR");
         }
-        DataAccessRequest sourceDar = new ArrayList<DataAccessRequest>(sourceCollection.getDars().values()).get(0);
+        DataAccessRequest sourceDar = new ArrayList<>(sourceCollection.getDars().values()).get(0);
         DataAccessRequestData sourceData = sourceDar.getData();
         if (Objects.isNull(sourceData)) {
             throw new IllegalArgumentException("Source Collection must contain at least a single DAR with a populated data");
         }
+
         // Find all dataset ids for canceled DARs in the collection
         List<Integer> datasetIds = sourceCollection
-            .getDars().values().stream()
-            .map(DataAccessRequest::getData)
-            .filter(d -> d.getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()))
-            .map(DataAccessRequestData::getDatasetIds)
-            .flatMap(Collection::stream)
-            .collect(Collectors.toUnmodifiableList());
+                .getDars().values().stream()
+                .map(DataAccessRequest::getData)
+                .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getStatus()))
+                .map(DataAccessRequestData::getDatasetIds)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toUnmodifiableList());
         if (datasetIds.isEmpty()) {
             throw new IllegalArgumentException("Source Collection must contain references to at least a single canceled DAR's dataset");
         }
+
         List<String> canceledReferenceIds = sourceCollection
-            .getDars().values().stream()
-            .map(DataAccessRequest::getData)
-            .filter(d -> d.getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()))
-            .map(DataAccessRequestData::getReferenceId)
-            .collect(Collectors.toUnmodifiableList());
+                .getDars().values().stream()
+                .map(DataAccessRequest::getData)
+                .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getStatus()))
+                .map(DataAccessRequestData::getReferenceId)
+                .collect(Collectors.toUnmodifiableList());
         List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(canceledReferenceIds);
         if (!electionIds.isEmpty()) {
             String errorMessage = "Found 'Open' elections for canceled DARs in collection id: " + sourceCollection.getDarCollectionId();
@@ -280,10 +282,9 @@ public class DataAccessRequestService {
         }
 
         List<String> sourceReferenceIds = sourceCollection
-            .getDars()
-            .values()
-            .stream().map(DataAccessRequest::getReferenceId)
-            .collect(Collectors.toList());
+                .getDars().values().stream()
+                .map(DataAccessRequest::getReferenceId)
+                .collect(Collectors.toList());
         dataAccessRequestDAO.archiveByReferenceIds(sourceReferenceIds);
 
         String referenceId = UUID.randomUUID().toString();
