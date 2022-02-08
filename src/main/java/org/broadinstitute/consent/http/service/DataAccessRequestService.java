@@ -278,6 +278,14 @@ public class DataAccessRequestService {
             logger.warn(errorMessage);
             throw new IllegalArgumentException(errorMessage);
         }
+
+        List<String> sourceReferenceIds = sourceCollection
+            .getDars()
+            .values()
+            .stream().map(DataAccessRequest::getReferenceId)
+            .collect(Collectors.toList());
+        dataAccessRequestDAO.archiveByReferenceIds(sourceReferenceIds);
+
         String referenceId = UUID.randomUUID().toString();
         Date now = new Date();
         // Clone the dar's data object and reset values that need to be updated for the clone

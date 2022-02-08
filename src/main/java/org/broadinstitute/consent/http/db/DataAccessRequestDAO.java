@@ -45,7 +45,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       "SELECT id, reference_id, collection_id, draft, user_id, create_date, sort_date, submission_date, update_date, "
           + "(data #>> '{}')::jsonb AS data FROM data_access_request "
-          + " WHERE draft = false" 
+          + " WHERE draft = false"
           + " AND ((data #>> '{}')::jsonb->>'datasetIds')::jsonb @> :datasetId::jsonb")
   List<DataAccessRequest> findAllDataAccessRequestsByDatasetId(@Bind("datasetId") String datasetId);
 
@@ -240,4 +240,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         + " WHERE draft != true")
   List<DataAccessRequest> findAllDataAccessRequestsForInstitution(@Bind("institutionId") Integer institutionId);
 
+  @SqlUpdate(
+      " UPDATE data_access_request "
+          + " SET data = jsonb_set ((data #>> '{}')::jsonb, '{status}', '\"Archived\"', true) "
+          + " WHERE reference_id = IN (<referenceIds>)")
+  void archiveByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 }
