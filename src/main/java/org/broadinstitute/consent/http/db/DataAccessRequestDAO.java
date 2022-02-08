@@ -241,8 +241,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   List<DataAccessRequest> findAllDataAccessRequestsForInstitution(@Bind("institutionId") Integer institutionId);
 
   @SqlUpdate(
-      " UPDATE data_access_request "
+      " UPDATE data_access_request"
           + " SET data = jsonb_set ((data #>> '{}')::jsonb, '{status}', '\"Archived\"', true) "
-          + " WHERE reference_id = IN (<referenceIds>)")
+          + " WHERE reference_id IN (<referenceIds>)")
   void archiveByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 }

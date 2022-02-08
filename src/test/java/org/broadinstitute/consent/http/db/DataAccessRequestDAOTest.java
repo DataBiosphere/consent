@@ -10,9 +10,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+
+import junit.framework.TestCase;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Test;
 
@@ -243,5 +246,77 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest updatedDraft = dataAccessRequestDAO.findByReferenceId(referenceId);
         assertEquals(false, updatedDraft.getDraft());
         assertEquals(collectionId, updatedDraft.getCollectionId());
+    }
+
+    @Test
+    public void testArchiveByReferenceIdsStatusChange() {
+        DataAccessRequest dar = createDataAccessRequestV3();
+        List<String> referenceIds = List.of(dar.getReferenceId());
+        dataAccessRequestDAO.cancelByReferenceIds(referenceIds);
+        DataAccessRequest canceledDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+
+        assertEquals(dar.getReferenceId(), canceledDar.getReferenceId());
+        assertEquals("Canceled", canceledDar.getData().getStatus());
+        assertNotNull(canceledDar.getData().getHmb());
+        assertEquals(dar.getData().getHmb(), canceledDar.getData().getHmb());
+        assertNotNull(canceledDar.getData().getMethods());
+        assertEquals(dar.getData().getMethods(), canceledDar.getData().getMethods());
+        assertNotNull(canceledDar.getData().getAddress1());
+        assertEquals(dar.getData().getAddress1(), canceledDar.getData().getAddress1());
+
+        dataAccessRequestDAO.archiveByReferenceIds(referenceIds);
+        DataAccessRequest archivedDar = dataAccessRequestDAO.findByReferenceId(canceledDar.getReferenceId());
+
+        assertEquals(dar.getReferenceId(), archivedDar.getReferenceId());
+        assertEquals("Archived", archivedDar.getData().getStatus());
+        assertNotNull(archivedDar.getData().getHmb());
+        assertEquals(dar.getData().getHmb(), archivedDar.getData().getHmb());
+        assertNotNull(archivedDar.getData().getMethods());
+        assertEquals(dar.getData().getMethods(), archivedDar.getData().getMethods());
+        assertNotNull(archivedDar.getData().getAddress1());
+        assertEquals(dar.getData().getAddress1(), archivedDar.getData().getAddress1());
+    }
+
+    @Test
+    public void testArchiveByReferenceIdsStatusCreated() {
+        DataAccessRequest dar = createDataAccessRequestV3();
+        List<String> referenceIds = List.of(dar.getReferenceId());
+        assertNull(dar.getData().getStatus());
+
+        dataAccessRequestDAO.archiveByReferenceIds(referenceIds);
+        DataAccessRequest archivedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+
+        assertEquals(dar.getReferenceId(), archivedDar.getReferenceId());
+        assertNotNull(archivedDar.getData().getStatus());
+        assertEquals("Archived", archivedDar.getData().getStatus());
+        assertNotNull(archivedDar.getData().getHmb());
+        assertEquals(dar.getData().getHmb(), archivedDar.getData().getHmb());
+        assertNotNull(archivedDar.getData().getMethods());
+        assertEquals(dar.getData().getMethods(), archivedDar.getData().getMethods());
+        assertNotNull(archivedDar.getData().getAddress1());
+        assertEquals(dar.getData().getAddress1(), archivedDar.getData().getAddress1());
+    }
+
+    @Test
+    public void testArchiveByReferenceIdsMultipleDars() {
+        DataAccessRequest dar = createDataAccessRequestV3();
+        DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
+        List<String> referenceIds = new ArrayList<>(collection.getDars().keySet());
+        assertTrue(referenceIds.size() > 1);
+
+        referenceIds.stream()
+                .map(id -> dataAccessRequestDAO.findByReferenceId(id))
+                .map(DataAccessRequest::getData)
+                .map(DataAccessRequestData::getStatus)
+                .forEach(TestCase::assertNull);
+
+        dataAccessRequestDAO.archiveByReferenceIds(referenceIds);
+
+        referenceIds.stream()
+                .map(id -> dataAccessRequestDAO.findByReferenceId(id))
+                .map(DataAccessRequest::getData)
+                .map(DataAccessRequestData::getStatus)
+                .forEach(s -> assertEquals("Archived", s));
+
     }
 }
