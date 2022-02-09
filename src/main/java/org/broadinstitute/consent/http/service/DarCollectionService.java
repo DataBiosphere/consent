@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
+import org.broadinstitute.consent.http.resources.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,23 +173,26 @@ public class DarCollectionService {
     String sortField = Objects.isNull(token.getSortField()) ? DarCollection.defaultTokenSortField : token.getSortField();
     String filterTerm = Objects.isNull(token.getFilterTerm()) ? "" : token.getFilterTerm();
     List<DarCollection> collections;
-    if(userRole.equalsIgnoreCase(UserRoles.ADMIN.getRoleName())) {
-      collections = darCollectionDAO.getFilteredCollectionsForAdmin(sortField, sortOrder, filterTerm);
+    List<Integer> collectionIds;
+
+    switch (userRole) {
+      case Resource.ADMIN:
+        collections = darCollectionDAO.getFilteredCollectionsForAdmin(sortField, sortOrder, filterTerm);
+        break;
+      case Resource.SIGNINGOFFICIAL:
+        collections = darCollectionDAO.getFilteredCollectionsForSigningOfficial(sortField, sortOrder, user.getInstitutionId(), filterTerm);
+        break;
+      case Resource.CHAIRPERSON:
+      case Resource.MEMBER:
+        collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
+        collections = darCollectionDAO.getFilteredCollectionsForDACByCollectionIds(sortField, sortOrder, collectionIds, filterTerm);
+        break;
+      default:
+        collections = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
     }
-    else if (userRole.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-      collections = darCollectionDAO.getFilteredCollectionsForSigningOfficial(sortField, sortOrder, user.getInstitutionId(), filterTerm);
-    } else if (
-      userRole.equalsIgnoreCase(UserRoles.MEMBER.getRoleName()) ||
-      userRole.equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName())
-    ) {
-      List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
-      collections = darCollectionDAO.getFilteredCollectionsForDACByCollectionIds(sortField, sortOrder, collectionIds, filterTerm);
-    } else {
-      collections = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
-    }
+    
     return addDatasetsToCollections(collections);
   }
-
 
   private List<Integer> getDacIdsFromUser (User user) {
     return user.getRoles().stream()
@@ -202,22 +206,25 @@ public class DarCollectionService {
   //Verifies user role and determines unfiltered count total via DAO methods
   private Integer getCountForUnfilteredQueryByRole(User user, String userRole) {
     Integer size = 0;
-    if(userRole.equalsIgnoreCase(UserRoles.ADMIN.getRoleName())) {
-      size = darCollectionDAO.returnUnfilteredCollectionCount(); //Make new query to count specific query
-    } else if (userRole.equalsIgnoreCase(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-      size = darCollectionDAO.returnUnfilteredCountForInstitution(user.getInstitutionId()); //make new query to only get count
-    } else if (
-        userRole.equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName()) ||
-        userRole.equalsIgnoreCase(UserRoles.MEMBER.getRoleName())
-    ) {
-      List<Integer> dacIds = user.getRoles()
-        .stream()
-        .map(UserRole::getDacId)
-        .distinct()
-        .collect(Collectors.toList());
-      size = (Integer) darCollectionDAO.findDARCollectionIdsByDacIds(dacIds).size();
-    } else {
-      return darCollectionDAO.returnUnfilteredResearcherCollectionCount(user.getDacUserId());
+
+    switch(userRole) {
+      case Resource.ADMIN:
+        size = darCollectionDAO.returnUnfilteredCollectionCount(); //Make new query to count specific query
+        break;
+      case Resource.SIGNINGOFFICIAL:
+        size = darCollectionDAO.returnUnfilteredCountForInstitution(user.getInstitutionId()); //make new query to only get count
+        break;
+      case Resource.CHAIRPERSON:
+      case Resource.MEMBER:
+        List<Integer> dacIds = user.getRoles()
+                .stream()
+                .map(UserRole::getDacId)
+                .distinct()
+                .collect(Collectors.toList());
+        size = (Integer) darCollectionDAO.findDARCollectionIdsByDacIds(dacIds).size();
+        break;
+      default:
+        size = darCollectionDAO.returnUnfilteredResearcherCollectionCount(user.getDacUserId());
     }
     return size;
   }

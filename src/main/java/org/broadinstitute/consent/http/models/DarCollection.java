@@ -31,7 +31,7 @@ public class DarCollection {
       "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
       "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
       "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, " +
-      "(dar.data #>> '{}')::jsonb ->> 'projectTitle' as projectTitle";
+      "(dar.data #>> '{}')::jsonb ->> 'projectTitle' as projectTitle ";
   
   public static final String FILTER_TERMS_QUERY = 
     "COALESCE(i.institution_name, '') ~* :filterTerm " +
@@ -40,7 +40,7 @@ public class DarCollection {
         " OR c.dar_code ~* :filterTerm " +
         " OR EXISTS " +
         " (SELECT FROM jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasets') dataset " +
-        " WHERE dataset ->> 'label' ~* :filterTerm)";
+        " WHERE dataset ->> 'label' ~* :filterTerm) ";
   
   @JsonProperty
   private Integer darCollectionId;

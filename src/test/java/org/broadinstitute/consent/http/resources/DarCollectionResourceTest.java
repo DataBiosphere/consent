@@ -197,24 +197,6 @@ public class DarCollectionResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
-//  @Test
-//  public void testGetCollectionsByInitialQuery_BadSortField() {
-//    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-//    initResource();
-//
-//    Response response = resource.getCollectionsByInitialQuery(authUser, "filterTerm", "badSortFieldName", "ASC", 10);
-//    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-//  }
-
-//  @Test
-//  public void testGetCollectionsByInitialQuery_BadSortOrder() {
-//    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-//    initResource();
-//
-//    Response response = resource.getCollectionsByInitialQuery(authUser, "filterTerm", "projectTitle", "badSortOrder", 10);
-//    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-//  }
-
   @Test
   public void testCancelDarCollection_OKStatus() {
     DarCollection collection = mockDarCollection();

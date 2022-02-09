@@ -241,14 +241,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " where c.dac_id = :dacId ")
     Set<DatasetDTO> findDatasetsByDac(@Bind("dacId") Integer dacId);
 
-    //TODO: write tests for this function, makes sure it works as expected
-    @SqlQuery(
-        " SELECT d.datasetid FROM dataset d " +
-        " INNER JOIN consentassociations a on a.dataSetId = d.dataSetId " +
-        " INNER JOIN consents c on c.consentId = a.consentId " +
-        " where c.dac_id IN (<dacIds>)")
-    List<Integer> findDatasetIdsByDacIds(@Bind("dacIds") List<Integer> dacIds);
-
     /**
      * DACs -> Consents -> Consent Associations -> DataSets
      * DataSets -> DatasetProperties -> Dictionary
