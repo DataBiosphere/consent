@@ -50,7 +50,7 @@ public class PaginationToken {
     this.pageSize = Objects.nonNull(pageSize) ? pageSize : 10;
     this.sortField = Objects.isNull(sortField) ? acceptableSortFields.get(defaultField) : validateSortField(sortField);
     this.sortDirection = Objects.isNull(sortDirection) ? "DESC" : validateSortDirection(sortDirection);
-    this.filterTerm = filterTerm;
+    this.filterTerm = Objects.isNull(filterTerm) ? "" : "(?=.*" + filterTerm + ")";
     checkForValidNumbers();
   }
 

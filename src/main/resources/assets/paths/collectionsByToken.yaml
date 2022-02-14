@@ -10,6 +10,18 @@ get:
       description: Base64 encoded string representing pagination token for request
       schema:
         type: string
+    - name: roleName
+      in: path
+      description: String value that represents user role (to define query scope)
+      schema:
+        type: string
+        default: Researcher
+        enum:
+          - Researcher
+          - SigningOfficial
+          - Member
+          - Chairperson
+          - Admin
   responses:
     200:
       description: Returns a PaginationResponse carrying DAR Collections for given page and Pagination Tokens
