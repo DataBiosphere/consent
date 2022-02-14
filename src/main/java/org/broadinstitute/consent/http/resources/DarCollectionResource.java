@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
@@ -88,11 +89,36 @@ public class DarCollectionResource extends Resource {
     try {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
       User user = userService.findUserByEmail(authUser.getEmail());
+
+      if (checkAdminPermissions(user) || checkSoPermissions(user, collection) || checkDacPermissions(user, collection)) {
+        return Response.ok().entity(collection).build();
+      }
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
+
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private boolean checkAdminPermissions(User user) {
+    return user.hasUserRole(UserRoles.ADMIN);
+  }
+
+  private boolean checkDacPermissions(User user, DarCollection collection) {
+    List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
+
+    return collection.getDatasets().stream()
+            .map(DataSet::getDataSetId)
+            .anyMatch(userDatasetIds::contains);
+  }
+
+  private boolean checkSoPermissions(User user, DarCollection collection) {
+    Integer creatorInstitutionId = collection.getCreateUser().getInstitutionId();
+    boolean institutionsMatch = Objects.nonNull(creatorInstitutionId)
+            && creatorInstitutionId.equals(user.getInstitutionId());
+
+    return user.hasUserRole(UserRoles.SIGNINGOFFICIAL) && institutionsMatch;
   }
 
   @GET

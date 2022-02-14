@@ -61,6 +61,13 @@ public class DarCollectionService {
     this.voteDAO = voteDAO;
   }
 
+  public List<Integer> findDatasetIdsByUser(User user) {
+    return datasetDAO.findDataSetsByAuthUserEmail(user.getEmail())
+        .stream()
+        .map(DataSet::getDataSetId)
+        .collect(Collectors.toList());
+  }
+
   public List<DarCollection> getAllCollections() {
     return addDatasetsToCollections(darCollectionDAO.findAllDARCollections());
   }
