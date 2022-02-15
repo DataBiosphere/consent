@@ -27,7 +27,12 @@ get:
       description: String value that represents field to order by
       schema:
         type: string
-      default: "darCode"
+        default: "darCode"
+        enum:
+          - researcher
+          - darCode
+          - projectTitle
+          - institution
     - name: sortOrder
       in: query
       description: String value that represents direction of ordering
