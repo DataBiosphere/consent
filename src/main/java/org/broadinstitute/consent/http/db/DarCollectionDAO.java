@@ -314,6 +314,7 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @RegisterBeanMapper(value = Election.class, prefix = "e")
   @RegisterBeanMapper(value = Vote.class, prefix = "v")
+  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
           + " WHERE (" + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
@@ -329,6 +330,7 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @RegisterBeanMapper(value = Election.class, prefix = "e")
   @RegisterBeanMapper(value = Vote.class, prefix = "v")
+  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
       + " WHERE u.institution_id = :institutionId AND ("
@@ -345,6 +347,7 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @RegisterBeanMapper(value = Election.class, prefix = "e")
   @RegisterBeanMapper(value = Vote.class, prefix = "v")
+  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
       + " WHERE c.create_user_id = :userId AND ("
