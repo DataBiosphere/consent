@@ -6,5 +6,8 @@
         <createIndex tableName="data_access_request" indexName="data_access_request_collection_id_index">
           <column name="collection_id"/>
         </createIndex>
+        <createIndex tableName="election" indexName="election_referenceid_index">
+          <column name="referenceid"/>
+        </createIndex>
   </changeSet>
 </databaseChangeLog>
