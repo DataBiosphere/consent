@@ -1,0 +1,41 @@
+put:
+  summary: update
+  description: |
+    Updates the user identified by the ID. Requires the authenticated user to have the same id as that of the user being updated except in the admin case - admins can update information for other users. A user's email cannot be updated. 
+    * The following fields can be updated via this endpoint
+      * Display Name
+      * Additional Email
+      * Institution Id
+      * Email Preference
+    * Users with the "Signing Official" are not permitted to change their institution. Such calls will result in a "Bad Request". "Signing Official" users are, however, allowed to save their
+        institution if it is not already set.
+  parameters:
+    - name: id
+      in: path
+      description: The id of the updated user
+      required: true
+      schema:
+        type: string
+  requestBody:
+    description: The updated user information in JSON format
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            updatedUser:
+              $ref: '../schemas/User.yaml'
+  tags:
+    - User
+  responses:
+    200:
+      description: Returns the updated user.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/User.yaml'
+    400:
+      description: Malformed user entity or improper institution update
+    403:
+      description: User must have appropriate roles to update different users' information.

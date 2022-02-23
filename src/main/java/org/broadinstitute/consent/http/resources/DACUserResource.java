@@ -103,6 +103,10 @@ public class DACUserResource extends Resource {
             }
             validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), findByAuthUser(authUser), userId);
             URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
+            // The `updateDACUserById` method only updates the following fields:
+            // * Display Name
+            // * Additional Email
+            // * Institution
             User user = userService.updateDACUserById(userMap, userId);
             // Update email preference
             JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();

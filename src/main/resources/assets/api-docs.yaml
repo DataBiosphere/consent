@@ -984,48 +984,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
   /api/dacuser/{id}:
-    put:
-      summary: update
-      description: |
-        Updates the user identified by the ID. Requires the authenticated user to have the same id
-        as that of the user being updated except in the admin case - admins can update information
-        for other users. A user's email cannot be updated. Role changes are not allowed for Chairperson
-        and Member roles using this endpoint. All Chairperson and Member changes (additions or removals)
-        are ignored. See [DAC](/#!/DAC) endpoints for **POST/DELETE** endpoints for
-        **/api/dac/{dacId}/chair/{userId}** and **/api/dac/{dacId}/member/{userId}** calls.
-        Users with the "Signing Official" are not permitted to change their institution. Such calls
-        will result in a "Bad Request". "Signing Official" users are, however, allowed to save their
-        institution if it is not already set.
-      parameters:
-        - name: id
-          in: path
-          description: The id of the updated user
-          required: true
-          schema:
-            type: string
-        - name: user
-          in: body
-          description: The updated user information
-          required: true
-          schema:
-            type: object
-            properties:
-              updatedUser:
-                $ref: '#/components/schemas/User'
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the updated user.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        400:
-          description: Malformed user entity or improper institution update
-        403:
-          description: User must have appropriate roles to update different users' information.
-
+    $ref: './paths/userById.yaml'
   /api/dar/v2:
     post:
       summary: Create Data Access Request, version 2
