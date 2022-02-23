@@ -82,9 +82,11 @@ public class SamResourceTest {
   @Test
   public void testGetSelfDiagnostics() throws Exception {
     UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
+            .setAdminEnabled(RandomUtils.nextBoolean())
             .setEnabled(RandomUtils.nextBoolean())
             .setInAllUsersGroup(RandomUtils.nextBoolean())
-            .setInGoogleProxyGroup(RandomUtils.nextBoolean());
+            .setInGoogleProxyGroup(RandomUtils.nextBoolean())
+            .setTosAccepted(RandomUtils.nextBoolean());
     when(service.getSelfDiagnostics(any())).thenReturn(diagnostics);
     initResource();
     Response response = resource.getSelfDiagnostics(authUser);
@@ -94,6 +96,7 @@ public class SamResourceTest {
   @Test
   public void testGetRegistrationInfo() throws Exception {
     UserStatusInfo userInfo = new UserStatusInfo()
+            .setAdminEnabled(RandomUtils.nextBoolean())
             .setUserEmail("test@test.org")
             .setUserSubjectId(RandomStringUtils.random(10, false, true))
             .setEnabled(RandomUtils.nextBoolean());

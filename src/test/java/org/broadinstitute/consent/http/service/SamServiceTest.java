@@ -75,6 +75,7 @@ public class SamServiceTest implements WithMockServer {
   @Test
   public void testGetRegistrationInfo() throws Exception {
     UserStatusInfo userInfo = new UserStatusInfo()
+            .setAdminEnabled(RandomUtils.nextBoolean())
             .setUserEmail("test@test.org")
             .setUserSubjectId(RandomStringUtils.random(10, false, true))
             .setEnabled(RandomUtils.nextBoolean());
@@ -135,9 +136,11 @@ public class SamServiceTest implements WithMockServer {
   @Test
   public void testGetSelfDiagnostics() throws Exception {
     UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
+            .setAdminEnabled(RandomUtils.nextBoolean())
             .setEnabled(RandomUtils.nextBoolean())
             .setInAllUsersGroup(RandomUtils.nextBoolean())
-            .setInGoogleProxyGroup(RandomUtils.nextBoolean());
+            .setInGoogleProxyGroup(RandomUtils.nextBoolean())
+            .setTosAccepted(RandomUtils.nextBoolean());
     mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(diagnostics.toString()));
 
     UserStatusDiagnostics userDiagnostics = service.getSelfDiagnostics(authUser);
