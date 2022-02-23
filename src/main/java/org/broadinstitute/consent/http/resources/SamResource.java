@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -73,6 +74,18 @@ public class SamResource extends Resource {
     try {
       UserStatusInfo userInfo = samService.getRegistrationInfo(authUser);
       return Response.ok().entity(userInfo.toString()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @Path("register/self/tos")
+  @POST
+  @Produces("application/json")
+  public Response postSelfTos(@Auth AuthUser authUser) {
+    try {
+      TosResponse tosResponse = samService.postTosAcceptedStatus(authUser);
+      return Response.ok().entity(tosResponse).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

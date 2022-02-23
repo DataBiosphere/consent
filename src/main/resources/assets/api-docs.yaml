@@ -3303,6 +3303,8 @@ paths:
     $ref: './paths/samRegisterSelfDiagnostics.yaml'
   /api/sam/register/self/info:
     $ref: './paths/samRegisterSelfInfo.yaml'
+  /api/sam/register/self/tos:
+    $ref: './paths/samRegisterSelfTos.yaml'
   /api/sam/resource-types:
     $ref: './paths/samResourceTypes.yaml'
   /api/votes:
