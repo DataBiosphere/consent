@@ -1,5 +1,8 @@
 type: object
 properties:
+  adminEnabled:
+    type: boolean
+    description: Admin Enabled status
   enabled:
     type: boolean
     description: Enabled status
@@ -9,3 +12,6 @@ properties:
   inGoogleProxyGroup:
     type: boolean
     description: Google Proxy Group status
+  tosAccepted:
+    type: boolean
+    description: Terms of Service Acceptance status
