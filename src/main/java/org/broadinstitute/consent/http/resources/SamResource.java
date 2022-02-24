@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
 
+import javax.annotation.security.PermitAll;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -33,6 +34,7 @@ public class SamResource extends Resource {
   @Path("resource-types")
   @GET
   @Produces("application/json")
+  @PermitAll
   public Response getResourceTypes(@Auth AuthUser authUser) {
     try {
       List<ResourceType> types = samService.getResourceTypes(authUser);
@@ -45,6 +47,7 @@ public class SamResource extends Resource {
   @Path("register/self")
   @POST
   @Produces("application/json")
+  @PermitAll
   public Response postRegistrationInfo(@Auth AuthUser authUser, @Context UriInfo uriInfo) {
     try {
       URI location = URI.create(uriInfo.getBaseUri() + "/api/sam/register/self/info");
@@ -58,6 +61,7 @@ public class SamResource extends Resource {
   @Path("register/self/diagnostics")
   @GET
   @Produces("application/json")
+  @PermitAll
   public Response getSelfDiagnostics(@Auth AuthUser authUser) {
     try {
       UserStatusDiagnostics selfDiagnostics = samService.getSelfDiagnostics(authUser);
@@ -70,6 +74,7 @@ public class SamResource extends Resource {
   @Path("register/self/info")
   @GET
   @Produces("application/json")
+  @PermitAll
   public Response getRegistrationInfo(@Auth AuthUser authUser) {
     try {
       UserStatusInfo userInfo = samService.getRegistrationInfo(authUser);
@@ -82,6 +87,7 @@ public class SamResource extends Resource {
   @Path("register/self/tos")
   @POST
   @Produces("application/json")
+  @PermitAll
   public Response postSelfTos(@Auth AuthUser authUser) {
     try {
       TosResponse tosResponse = samService.postTosAcceptedStatus(authUser);
