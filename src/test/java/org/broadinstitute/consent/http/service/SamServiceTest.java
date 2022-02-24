@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -189,6 +190,21 @@ public class SamServiceTest implements WithMockServer {
     try {
       String text = service.getToSText();
       assertEquals(mockText, text);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
+  }
+
+  @Test
+  public void testPostTosAcceptedStatus() {
+    TosResponse.Enabled enabled = new TosResponse.Enabled()
+      .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true).setLdap(true);
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(tosResponse.toString()));
+
+    try {
+      service.postTosAcceptedStatus(authUser);
     } catch (Exception e) {
       fail(e.getMessage());
     }
