@@ -95,7 +95,7 @@ public class DACUserResource extends Resource {
             if (existingUser.getUserRoleIdsFromUser().contains(UserRoles.SIGNINGOFFICIAL.getRoleId())) {
                 // A SO should be able to update their institution if they don't have one
                 // If they do have one, it cannot be changed through this endpoint.
-                if (Objects.nonNull(existingUser.getInstitutionId())) {
+                if (Objects.nonNull(userToUpdate.getInstitutionId()) && Objects.nonNull(existingUser.getInstitutionId())) {
                     if (!Objects.equals(userToUpdate.getInstitutionId(), existingUser.getInstitutionId())) {
                         throw new BadRequestException("Signing Officials are not permitted to update their institution. Please contact support.");
                     }
@@ -114,7 +114,8 @@ public class DACUserResource extends Resource {
             getEmailPreferenceValueFromUserJson(updateUser.toString()).ifPresent(aBoolean ->
                     userService.updateEmailPreference(aBoolean, user.getDacUserId())
             );
-            return Response.ok(uri).entity(user).build();
+            JsonObject jsonUser = userService.constructUserJsonObjectWithProperties(authUser, userId);
+            return Response.ok(uri).entity(jsonUser).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

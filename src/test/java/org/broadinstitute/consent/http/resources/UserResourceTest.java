@@ -83,7 +83,7 @@ public class UserResourceTest {
   }
 
   private void initResource() {
-    userResource = new UserResource(libraryCardService, researcherService, samService, userService);
+    userResource = new UserResource(researcherService, samService, userService);
   }
 
   @Test
@@ -343,7 +343,7 @@ public class UserResourceTest {
     Integer institutionId = 1;
     doThrow(new NotFoundException()).when(userService).findUsersByInstitutionId(institutionId);
     initResource();
-    
+
     Response response = userResource.getUsersByInstitution(authUser, institutionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
@@ -353,7 +353,7 @@ public class UserResourceTest {
     Integer institutionId = null;
     doThrow(new IllegalArgumentException()).when(userService).findUsersByInstitutionId(institutionId);
     initResource();
-    
+
     Response response = userResource.getUsersByInstitution(authUser, institutionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
@@ -362,7 +362,7 @@ public class UserResourceTest {
   public void testGetUsersByInstitutionSuccess() {
     when(userService.findUsersByInstitutionId(any())).thenReturn(Collections.emptyList());
     initResource();
-    
+
     Response response = userResource.getUsersByInstitution(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
