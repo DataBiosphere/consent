@@ -40,9 +40,9 @@ import org.slf4j.LoggerFactory;
 
 public class UserService {
 
-    private final static String LIBRARY_CARDS_FIELD = "libraryCards";
-    private final static String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
-    private final static String USER_STATUS_INFO_FIELD = "userStatusInfo";
+    public final static String LIBRARY_CARDS_FIELD = "libraryCards";
+    public final static String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
+    public final static String USER_STATUS_INFO_FIELD = "userStatusInfo";
 
     private final UserPropertyDAO userPropertyDAO;
     private final UserDAO userDAO;
@@ -255,7 +255,7 @@ public class UserService {
      * @param userId The User. This is the user we want to return properties for
      * @return JsonObject.
      */
-    public JsonObject constructUserJsonObjectWithProperties(AuthUser authUser, Integer userId) {
+    public JsonObject findUserWithPropertiesAsJsonObjectById(AuthUser authUser, Integer userId) {
         Gson gson = new Gson();
         User user = findUserById(userId);
         List<UserProperty> props = findAllUserProperties(user.getDacUserId());

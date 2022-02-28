@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+
+import com.google.gson.JsonObject;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -28,10 +30,13 @@ import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
@@ -403,6 +408,29 @@ public class UserServiceTest {
         assertNotNull(users);
         assertEquals(1, users.size());
         assertEquals(user.getDacUserId(), users.get(0).getDacUserId());
+    }
+
+    @Test
+    public void testFindUserWithPropertiesAsJsonObjectById() {
+        User user = generateUser();
+        UserStatusInfo info = new UserStatusInfo()
+            .setUserEmail(user.getEmail())
+            .setEnabled(true)
+            .setUserSubjectId("subjectId");
+        AuthUser authUser = new AuthUser()
+            .setEmail(user.getEmail())
+            .setAuthToken(RandomStringUtils.random(30, true, false))
+            .setUserStatusInfo(info);
+        when(userDAO.findUserById(anyInt())).thenReturn(user);
+        when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
+        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt())).thenReturn(List.of(new UserProperty()));
+
+        initService();
+        JsonObject userJson = service.findUserWithPropertiesAsJsonObjectById(authUser, user.getDacUserId());
+        assertNotNull(userJson);
+        assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
+        assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
+        assertTrue(userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
     }
 
     private User generateUser() {

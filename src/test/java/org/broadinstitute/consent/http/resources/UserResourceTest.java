@@ -3,8 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import liquibase.pro.packaged.G;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -118,7 +116,7 @@ public class UserResourceTest {
 
   @Test
   public void testGetUserByIdNotFound() {
-    when(userService.constructUserJsonObjectWithProperties(any(), any())).thenThrow(new NotFoundException());
+    when(userService.findUserWithPropertiesAsJsonObjectById(any(), any())).thenThrow(new NotFoundException());
     initResource();
 
     Response response = userResource.getUserById(authUser, 1);
@@ -219,8 +217,6 @@ public class UserResourceTest {
 
   @Test
   public void testCreateFailingGoogleIdentity() {
-    User user = new User();
-    user.setEmail(TEST_EMAIL);
     initResource();
 
     Response response = userResource.createResearcher(uriInfo, new AuthUser(TEST_EMAIL));
@@ -377,7 +373,7 @@ public class UserResourceTest {
     when(userService.findUserById(any())).thenReturn(user);
     Gson gson = new Gson();
     JsonElement userJson = gson.toJsonTree(user);
-    when(userService.constructUserJsonObjectWithProperties(any(), any())).thenReturn(userJson.getAsJsonObject());
+    when(userService.findUserWithPropertiesAsJsonObjectById(any(), any())).thenReturn(userJson.getAsJsonObject());
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.RESEARCHER.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -400,7 +396,7 @@ public class UserResourceTest {
     when(userService.findUserById(any())).thenReturn(user);
     Gson gson = new Gson();
     JsonElement userJson = gson.toJsonTree(user);
-    when(userService.constructUserJsonObjectWithProperties(any(), any())).thenReturn(userJson.getAsJsonObject());
+    when(userService.findUserWithPropertiesAsJsonObjectById(any(), any())).thenReturn(userJson.getAsJsonObject());
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.ADMIN.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
