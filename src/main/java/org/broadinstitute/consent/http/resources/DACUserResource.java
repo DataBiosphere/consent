@@ -114,7 +114,7 @@ public class DACUserResource extends Resource {
             getEmailPreferenceValueFromUserJson(updateUser.toString()).ifPresent(aBoolean ->
                     userService.updateEmailPreference(aBoolean, user.getDacUserId())
             );
-            JsonObject jsonUser = userService.findUserWithPropertiesAsJsonObjectById(authUser, userId);
+            JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
             return Response.ok(uri).entity(jsonUser).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

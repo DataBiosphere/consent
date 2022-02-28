@@ -426,7 +426,7 @@ public class UserServiceTest {
         when(userPropertyDAO.findResearcherPropertiesByUser(anyInt())).thenReturn(List.of(new UserProperty()));
 
         initService();
-        JsonObject userJson = service.findUserWithPropertiesAsJsonObjectById(authUser, user.getDacUserId());
+        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
         assertNotNull(userJson);
         assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
         assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());

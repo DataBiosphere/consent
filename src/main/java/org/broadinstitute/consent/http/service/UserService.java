@@ -255,7 +255,7 @@ public class UserService {
      * @param userId The User. This is the user we want to return properties for
      * @return JsonObject.
      */
-    public JsonObject findUserWithPropertiesAsJsonObjectById(AuthUser authUser, Integer userId) {
+    public JsonObject findUserWithPropertiesByIdAsJsonObject(AuthUser authUser, Integer userId) {
         Gson gson = new Gson();
         User user = findUserById(userId);
         List<UserProperty> props = findAllUserProperties(user.getDacUserId());

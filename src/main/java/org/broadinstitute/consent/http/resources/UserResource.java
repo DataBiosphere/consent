@@ -93,7 +93,7 @@ public class UserResource extends Resource {
             if (Objects.isNull(authUser.getUserStatusInfo())) {
                 samService.asyncPostRegistrationInfo(authUser);
             }
-            JsonObject userJson = userService.findUserWithPropertiesAsJsonObjectById(authUser, user.getDacUserId());
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -106,7 +106,7 @@ public class UserResource extends Resource {
     @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
     public Response getUserById(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
         try {
-            JsonObject userJson = userService.findUserWithPropertiesAsJsonObjectById(authUser, userId);
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -152,7 +152,7 @@ public class UserResource extends Resource {
                 if (!currentUserRoleIds.contains(roleId)) {
                     UserRole role = new UserRole(roleId, UserRoles.getUserRoleFromId(roleId).getRoleName());
                     userService.insertUserRoles(Collections.singletonList(role), user.getDacUserId());
-                    JsonObject userJson = userService.findUserWithPropertiesAsJsonObjectById(authUser, userId);
+                    JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
                     return Response.ok().entity(gson.toJson(userJson)).build();
                 } else {
                     return Response.notModified().build();
@@ -177,12 +177,12 @@ public class UserResource extends Resource {
             }
             List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
             if (!currentUserRoleIds.contains(roleId)) {
-                JsonObject userJson = userService.findUserWithPropertiesAsJsonObjectById(authUser, userId);
+                JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
                 return Response.ok().entity(gson.toJson(userJson)).build();
             }
             User auth = userService.findUserByEmail(authUser.getEmail());
             userService.deleteUserRole(auth, userId, roleId);
-            JsonObject userJson = userService.findUserWithPropertiesAsJsonObjectById(authUser, userId);
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
             return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -258,7 +258,7 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             researcherService.setProperties(userPropertiesMap, authUser);
-            JsonObject userJson = userService.findUserWithPropertiesAsJsonObjectById(authUser, user.getDacUserId());
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
             return Response.created(info.getRequestUriBuilder().build()).entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -273,7 +273,7 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             researcherService.updateProperties(userProperties, authUser, validate);
-            JsonObject userJson = userService.findUserWithPropertiesAsJsonObjectById(authUser, user.getDacUserId());
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
             return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

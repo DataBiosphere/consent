@@ -116,7 +116,7 @@ public class UserResourceTest {
 
   @Test
   public void testGetUserByIdNotFound() {
-    when(userService.findUserWithPropertiesAsJsonObjectById(any(), any())).thenThrow(new NotFoundException());
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenThrow(new NotFoundException());
     initResource();
 
     Response response = userResource.getUserById(authUser, 1);
@@ -373,7 +373,7 @@ public class UserResourceTest {
     when(userService.findUserById(any())).thenReturn(user);
     Gson gson = new Gson();
     JsonElement userJson = gson.toJsonTree(user);
-    when(userService.findUserWithPropertiesAsJsonObjectById(any(), any())).thenReturn(userJson.getAsJsonObject());
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(userJson.getAsJsonObject());
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.RESEARCHER.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -396,7 +396,7 @@ public class UserResourceTest {
     when(userService.findUserById(any())).thenReturn(user);
     Gson gson = new Gson();
     JsonElement userJson = gson.toJsonTree(user);
-    when(userService.findUserWithPropertiesAsJsonObjectById(any(), any())).thenReturn(userJson.getAsJsonObject());
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(userJson.getAsJsonObject());
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.ADMIN.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
