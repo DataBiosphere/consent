@@ -433,6 +433,29 @@ public class UserServiceTest {
         assertTrue(userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
     }
 
+    @Test
+    public void testFindUserWithPropertiesAsJsonObjectByIdNonAuthUser() {
+        User user = generateUser();
+        UserStatusInfo info = new UserStatusInfo()
+            .setUserEmail(user.getEmail())
+            .setEnabled(true)
+            .setUserSubjectId("subjectId");
+        AuthUser authUser = new AuthUser()
+            .setEmail("not the user's email address")
+            .setAuthToken(RandomStringUtils.random(30, true, false))
+            .setUserStatusInfo(info);
+        when(userDAO.findUserById(anyInt())).thenReturn(user);
+        when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
+        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt())).thenReturn(List.of(new UserProperty()));
+
+        initService();
+        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
+        assertNotNull(userJson);
+        assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
+        assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
+        assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
+    }
+
     private User generateUser() {
         User u = new User();
         int i1 = RandomUtils.nextInt(5, 10);
