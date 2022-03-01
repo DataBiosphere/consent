@@ -13,10 +13,13 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
@@ -392,11 +395,19 @@ public class UserServiceTest {
         User u1 = generateUser();
         User u2 = generateUser();
         User u3 = generateUser();
-        when(userDAO.findUsers()).thenReturn(Set.of(u1, u2, u3));
+        List<User> returnedUsers = new ArrayList<>();
+        returnedUsers.add(u1);
+        if (!returnedUsers.contains(u2)) {
+            returnedUsers.add(u2);
+        }
+        if (!returnedUsers.contains(u3)) {
+            returnedUsers.add(u3);
+        }
+        when(userDAO.findUsers()).thenReturn(new HashSet<>(returnedUsers));
         initService();
         List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
         assertNotNull(users);
-        assertEquals(3, users.size());
+        assertEquals(returnedUsers.size(), users.size());
     }
 
     @Test
