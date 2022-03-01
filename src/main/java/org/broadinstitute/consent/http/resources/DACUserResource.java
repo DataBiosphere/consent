@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -90,7 +91,7 @@ public class DACUserResource extends Resource {
         Map<String, User> userMap = constructUserMapFromJson(json);
         try {
             User userToUpdate = userMap.get(UserRolesHandler.UPDATED_USER_KEY);
-            User existingUser = userService.findUserById(userToUpdate.getDacUserId());
+            User existingUser = userService.findUserById(userId);
             // Signing Officials are prohibited from changing their institution
             if (existingUser.getUserRoleIdsFromUser().contains(UserRoles.SIGNINGOFFICIAL.getRoleId())) {
                 // A SO should be able to update their institution if they don't have one
@@ -114,8 +115,9 @@ public class DACUserResource extends Resource {
             getEmailPreferenceValueFromUserJson(updateUser.toString()).ifPresent(aBoolean ->
                     userService.updateEmailPreference(aBoolean, user.getDacUserId())
             );
+            Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
-            return Response.ok(uri).entity(jsonUser).build();
+            return Response.ok(uri).entity(gson.toJson(jsonUser)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
