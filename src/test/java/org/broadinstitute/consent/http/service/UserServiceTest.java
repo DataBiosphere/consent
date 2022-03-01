@@ -458,9 +458,9 @@ public class UserServiceTest {
 
     private User generateUser() {
         User u = new User();
-        int i1 = RandomUtils.nextInt(5, 10);
-        int i2 = RandomUtils.nextInt(5, 10);
-        int i3 = RandomUtils.nextInt(3, 5);
+        int i1 = RandomUtils.nextInt(10, 50);
+        int i2 = RandomUtils.nextInt(10, 50);
+        int i3 = RandomUtils.nextInt(5, 25);
         String email = RandomStringUtils.randomAlphabetic(i1) +
                 "@" +
                 RandomStringUtils.randomAlphabetic(i2) +
