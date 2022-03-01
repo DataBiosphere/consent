@@ -1,0 +1,14 @@
+post:
+  summary: Accept ToS for current user in the Sam system using current login credentials
+  description: Accept ToS for current user in the Sam system using current login credentials
+  tags:
+    - Sam
+  responses:
+    200:
+      description: Accept ToS
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/SamTosResponse.yaml'
+    500:
+      description: Internal Server Error

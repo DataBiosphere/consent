@@ -5,9 +5,20 @@ import com.google.gson.Gson;
 /** This represents the Sam response to GET /register/user/v2/self/diagnostics */
 public class UserStatusDiagnostics {
 
+  private Boolean adminEnabled;
   private Boolean enabled;
   private Boolean inAllUsersGroup;
   private Boolean inGoogleProxyGroup;
+  private Boolean tosAccepted;
+
+  public Boolean getAdminEnabled() {
+    return adminEnabled;
+  }
+
+  public UserStatusDiagnostics setAdminEnabled(Boolean adminEnabled) {
+    this.adminEnabled = adminEnabled;
+    return this;
+  }
 
   public Boolean getEnabled() {
     return enabled;
@@ -33,6 +44,15 @@ public class UserStatusDiagnostics {
 
   public UserStatusDiagnostics setInGoogleProxyGroup(Boolean inGoogleProxyGroup) {
     this.inGoogleProxyGroup = inGoogleProxyGroup;
+    return this;
+  }
+
+  public Boolean getTosAccepted() {
+    return tosAccepted;
+  }
+
+  public UserStatusDiagnostics setTosAccepted(Boolean tosAccepted) {
+    this.tosAccepted = tosAccepted;
     return this;
   }
 
