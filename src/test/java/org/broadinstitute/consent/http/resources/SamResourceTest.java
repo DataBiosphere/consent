@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ActionPattern;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.ResourceTypeRole;
+import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -14,7 +15,6 @@ import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -82,9 +82,11 @@ public class SamResourceTest {
   @Test
   public void testGetSelfDiagnostics() throws Exception {
     UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
+            .setAdminEnabled(RandomUtils.nextBoolean())
             .setEnabled(RandomUtils.nextBoolean())
             .setInAllUsersGroup(RandomUtils.nextBoolean())
-            .setInGoogleProxyGroup(RandomUtils.nextBoolean());
+            .setInGoogleProxyGroup(RandomUtils.nextBoolean())
+            .setTosAccepted(RandomUtils.nextBoolean());
     when(service.getSelfDiagnostics(any())).thenReturn(diagnostics);
     initResource();
     Response response = resource.getSelfDiagnostics(authUser);
@@ -94,12 +96,25 @@ public class SamResourceTest {
   @Test
   public void testGetRegistrationInfo() throws Exception {
     UserStatusInfo userInfo = new UserStatusInfo()
+            .setAdminEnabled(RandomUtils.nextBoolean())
             .setUserEmail("test@test.org")
             .setUserSubjectId(RandomStringUtils.random(10, false, true))
             .setEnabled(RandomUtils.nextBoolean());
     when(service.getRegistrationInfo(any())).thenReturn(userInfo);
     initResource();
     Response response = resource.getRegistrationInfo(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testPostSelfTos() throws Exception {
+    TosResponse.Enabled enabled = new TosResponse.Enabled()
+      .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true).setLdap(true);
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+    when(service.postTosAcceptedStatus(any())).thenReturn(tosResponse);
+    initResource();
+    Response response = resource.postSelfTos(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 }
