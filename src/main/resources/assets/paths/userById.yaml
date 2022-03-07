@@ -1,5 +1,5 @@
 put:
-  summary: update
+  summary: Update a limited set of user fields
   description: |
     Updates the user identified by the ID. Requires the authenticated user to have the same id as that of the user being updated except in the admin case - admins can update information for other users. A user's email cannot be updated. 
     * The following fields can be updated via this endpoint
@@ -17,7 +17,7 @@ put:
       schema:
         type: string
   requestBody:
-    description: The updated user information in JSON format
+    description: The updated user fields in JSON format
     required: true
     content:
       application/json:
@@ -25,12 +25,21 @@ put:
           type: object
           properties:
             updatedUser:
-              $ref: '../schemas/User.yaml'
+              type: object
+              properties:
+                displayName:
+                  type: string
+                additionalEmail:
+                  type: string
+                institutionId:
+                  type: number
+                emailPreference:
+                  type: boolean
   tags:
     - User
   responses:
     200:
-      description: Returns the updated user.
+      description: The updated user.
       content:
         application/json:
           schema:

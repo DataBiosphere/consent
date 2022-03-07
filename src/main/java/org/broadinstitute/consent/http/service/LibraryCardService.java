@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -21,6 +23,7 @@ public class LibraryCardService {
     private final InstitutionDAO institutionDAO;
     private final UserDAO userDAO;
 
+    @Inject
     public LibraryCardService(LibraryCardDAO libraryCardDAO, InstitutionDAO institutionDAO, UserDAO userDAO) {
         this.libraryCardDAO = libraryCardDAO;
         this.institutionDAO = institutionDAO;
@@ -38,7 +41,7 @@ public class LibraryCardService {
         checkForValidInstitution(libraryCard.getInstitutionId());
         LibraryCard processedCard = processUserOnNewLC(libraryCard);
         Date createDate = new Date();
-        Integer id = this.libraryCardDAO.insertLibraryCard(
+        Integer id = libraryCardDAO.insertLibraryCard(
                 processedCard.getUserId(),
                 processedCard.getInstitutionId(),
                 processedCard.getEraCommonsId(),
@@ -47,18 +50,18 @@ public class LibraryCardService {
                 processedCard.getCreateUserId(),
                 createDate
         );
-        return this.libraryCardDAO.findLibraryCardById(id);
+        return libraryCardDAO.findLibraryCardById(id);
     }
 
     public LibraryCard updateLibraryCard(LibraryCard libraryCard, Integer id, Integer userId) {
-        LibraryCard updateCard = this.libraryCardDAO.findLibraryCardById(id);
+        LibraryCard updateCard = libraryCardDAO.findLibraryCardById(id);
         throwIfNull(updateCard);
         checkUserId(userId);
         checkForValidUser(libraryCard.getUserId());
         checkForValidInstitution(libraryCard.getInstitutionId());
 
         Date updateDate = new Date();
-        this.libraryCardDAO.updateLibraryCardById(
+        libraryCardDAO.updateLibraryCardById(
                 id,
                 libraryCard.getUserId(),
                 libraryCard.getInstitutionId(),
@@ -68,36 +71,36 @@ public class LibraryCardService {
                 userId,
                 updateDate
         );
-        return this.libraryCardDAO.findLibraryCardById(id);
+        return libraryCardDAO.findLibraryCardById(id);
     }
 
     public void deleteLibraryCardById(Integer id) {
         LibraryCard card = findLibraryCardById(id);
         throwIfNull(card);
-        this.libraryCardDAO.deleteLibraryCardById(id);
+        libraryCardDAO.deleteLibraryCardById(id);
     }
 
     public List<LibraryCard> findAllLibraryCards() {
-        return this.libraryCardDAO.findAllLibraryCards();
+        return libraryCardDAO.findAllLibraryCards();
     }
 
     public List<LibraryCard> findLibraryCardsByUserId(Integer userId) {
-        return this.libraryCardDAO.findLibraryCardsByUserId(userId);
+        return libraryCardDAO.findLibraryCardsByUserId(userId);
     }
 
     public List<LibraryCard> findLibraryCardsByInstitutionId(Integer institutionId) {
-        return this.libraryCardDAO.findLibraryCardsByInstitutionId(institutionId);
+        return libraryCardDAO.findLibraryCardsByInstitutionId(institutionId);
     }
 
     public LibraryCard findLibraryCardById(Integer libraryCardId) {
-        LibraryCard libraryCard = this.libraryCardDAO.findLibraryCardById(libraryCardId);
+        LibraryCard libraryCard = libraryCardDAO.findLibraryCardById(libraryCardId);
         throwIfNull(libraryCard);
         return libraryCard;
     }
 
     private void checkForValidInstitution(Integer institutionId) {
         checkInstitutionId(institutionId);
-        Institution institution = this.institutionDAO.findInstitutionById(institutionId);
+        Institution institution = institutionDAO.findInstitutionById(institutionId);
 
         if (Objects.isNull(institution)) {
             throw new IllegalArgumentException("Invalid Institution Id");
@@ -109,7 +112,7 @@ public class LibraryCardService {
             return;
         }
 
-        User user = this.userDAO.findUserById(userId);
+        User user = userDAO.findUserById(userId);
         if (Objects.isNull(user)) {
             throw new IllegalArgumentException("Invalid User Id");
         }
@@ -158,7 +161,7 @@ public class LibraryCardService {
 
         if(foundCard.isPresent()) {
             throw new ConsentConflictException();
-        } 
+        }
     }
 
     //Helper method to process user data on create LC payload

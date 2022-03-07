@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -83,7 +85,7 @@ public class UserResourceTest {
   }
 
   private void initResource() {
-    userResource = new UserResource(libraryCardService, researcherService, samService, userService);
+    userResource = new UserResource(researcherService, samService, userService);
   }
 
   @Test
@@ -114,7 +116,7 @@ public class UserResourceTest {
 
   @Test
   public void testGetUserByIdNotFound() {
-    when(userService.findUserById(any())).thenThrow(new NotFoundException());
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenThrow(new NotFoundException());
     initResource();
 
     Response response = userResource.getUserById(authUser, 1);
@@ -215,8 +217,6 @@ public class UserResourceTest {
 
   @Test
   public void testCreateFailingGoogleIdentity() {
-    User user = new User();
-    user.setEmail(TEST_EMAIL);
     initResource();
 
     Response response = userResource.createResearcher(uriInfo, new AuthUser(TEST_EMAIL));
@@ -343,7 +343,7 @@ public class UserResourceTest {
     Integer institutionId = 1;
     doThrow(new NotFoundException()).when(userService).findUsersByInstitutionId(institutionId);
     initResource();
-    
+
     Response response = userResource.getUsersByInstitution(authUser, institutionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
@@ -353,7 +353,7 @@ public class UserResourceTest {
     Integer institutionId = null;
     doThrow(new IllegalArgumentException()).when(userService).findUsersByInstitutionId(institutionId);
     initResource();
-    
+
     Response response = userResource.getUsersByInstitution(authUser, institutionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
@@ -362,7 +362,7 @@ public class UserResourceTest {
   public void testGetUsersByInstitutionSuccess() {
     when(userService.findUsersByInstitutionId(any())).thenReturn(Collections.emptyList());
     initResource();
-    
+
     Response response = userResource.getUsersByInstitution(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
@@ -371,6 +371,9 @@ public class UserResourceTest {
   public void testDeleteRoleFromUser() {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
+    Gson gson = new Gson();
+    JsonElement userJson = gson.toJsonTree(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(userJson.getAsJsonObject());
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.RESEARCHER.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -391,6 +394,9 @@ public class UserResourceTest {
   public void testDeleteRoleFromUser_UserWithoutRole() {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
+    Gson gson = new Gson();
+    JsonElement userJson = gson.toJsonTree(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(userJson.getAsJsonObject());
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.ADMIN.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
