@@ -470,7 +470,7 @@ public class DarCollectionServiceTest {
     initService();
 
     service.createElectionsForDarCollection(user, collection);
-    verify(darCollectionServiceDAO, times(1)).createElectionsForDarCollection(any());
+    verify(darCollectionServiceDAO, times(1)).createElectionsForDarCollection(any(), any());
     verify(electionDAO, times(1)).findLastElectionsByReferenceIds(any());
     verify(electionDAO, times(1)).findLastElectionByReferenceIdAndType(any(), any());
     verify(voteDAO, times(1)).findVotesByElectionId(any());

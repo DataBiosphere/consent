@@ -11,6 +11,8 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
 
@@ -28,18 +30,20 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
   private DarCollectionServiceDAO serviceDAO;
 
   private void initService() {
-    serviceDAO = new DarCollectionServiceDAO(jdbi, userDAO);
+    serviceDAO = new DarCollectionServiceDAO(dataSetDAO, electionDAO, jdbi, userDAO);
   }
 
   @Test
   public void testCreateElectionsForDarCollection() throws Exception {
     initService();
 
+    User user = new User();
+    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
 
-    serviceDAO.createElectionsForDarCollection(collection);
+    serviceDAO.createElectionsForDarCollection(user, collection);
 
     List<Election> createdElections =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
@@ -63,6 +67,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
   public void testCreateElectionsForDarCollectionManualReview() throws Exception {
     initService();
 
+    User user = new User();
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
@@ -78,7 +83,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
       now,
       dar.getData());
 
-    serviceDAO.createElectionsForDarCollection(collection);
+    serviceDAO.createElectionsForDarCollection(user, collection);
 
     List<Election> createdElections =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
@@ -102,19 +107,20 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
   public void testCreateElectionsForDarCollectionAfterCancelingEarlierElections() throws Exception {
     initService();
 
+    User user = new User();
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
 
     // create elections & votes:
-    serviceDAO.createElectionsForDarCollection(collection);
+    serviceDAO.createElectionsForDarCollection(user, collection);
 
     // cancel those elections:
     electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId())).forEach(e ->
         electionDAO.updateElectionById(e.getElectionId(), ElectionStatus.CANCELED.getValue(), new Date()));
 
     // re-create elections & new votes:
-    serviceDAO.createElectionsForDarCollection(collection);
+    serviceDAO.createElectionsForDarCollection(user, collection);
 
     List<Election> createdElections =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
