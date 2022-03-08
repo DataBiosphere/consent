@@ -81,7 +81,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateVotesWithValue_MultipleVotes() throws Exception {
+  public void testUpdateVotesWithValue_MultipleVotesOpenElections() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     DataSet dataset = createDataset();
@@ -107,7 +107,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     assertTrue(votes.isEmpty());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testUpdateVotesWithValue_closedElection() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
@@ -116,6 +116,10 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
     initService();
 
-    serviceDAO.updateVotesWithValue(List.of(vote), true, "rationale");
+    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, "rationale");
+    assertNotNull(votes);
+    assertFalse(votes.isEmpty());
+    assertTrue(votes.get(0).getVote());
+    assertEquals("rationale", votes.get(0).getRationale());
   }
 }
