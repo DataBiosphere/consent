@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service.dao;
 
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
@@ -121,7 +122,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testUpdateVotesWithValue_CancelledElection() throws Exception {
+  public void testUpdateVotesWithValue_CanceledElection() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     DataSet dataset = createDataset();
@@ -146,80 +147,31 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     String rationale = "rationale";
     initService();
 
-    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
+    serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
   }
 
   @Test
   public void testUpdateVotesWithValue_OpenRPElection() throws Exception {
-    User user = createUser();
-    DataAccessRequest dar = createDataAccessRequestV3();
-    DataSet dataset = createDataset();
-    Election election = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
-    Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
-    initService();
-
-    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, "rationale");
-    assertNotNull(votes);
-    assertFalse(votes.isEmpty());
-    assertTrue(votes.get(0).getVote());
-    assertEquals("rationale", votes.get(0).getRationale());
+    testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.OPEN);
   }
 
   @Test
   public void testUpdateVotesWithValue_ClosedRPElection() throws Exception {
-    User user = createUser();
-    DataAccessRequest dar = createDataAccessRequestV3();
-    DataSet dataset = createDataset();
-    Election election = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
-    closeElection(election);
-    Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
-    initService();
-
-    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, "rationale");
-    assertNotNull(votes);
-    assertFalse(votes.isEmpty());
-    assertTrue(votes.get(0).getVote());
-    assertEquals("rationale", votes.get(0).getRationale());
+    testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.CLOSED);
   }
 
   @Test
-  public void testUpdateVotesWithValue_CancelledRPElection() throws Exception {
-    User user = createUser();
-    DataAccessRequest dar = createDataAccessRequestV3();
-    DataSet dataset = createDataset();
-    Election election = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
-    changeElectionStatus(election, ElectionStatus.CANCELED);
-    Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
-    String rationale = "rationale";
-    initService();
-
-    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
-    assertNotNull(votes);
-    assertFalse(votes.isEmpty());
-    assertTrue(votes.get(0).getVote());
-    assertEquals(rationale, votes.get(0).getRationale());
+  public void testUpdateVotesWithValue_CanceledRPElection() throws Exception {
+    testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.CANCELED);
   }
 
   @Test
   public void testUpdateVotesWithValue_FinalRPElection() throws Exception {
-    User user = createUser();
-    DataAccessRequest dar = createDataAccessRequestV3();
-    DataSet dataset = createDataset();
-    Election election = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
-    changeElectionStatus(election, ElectionStatus.FINAL);
-    Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
-    String rationale = "rationale";
-    initService();
-
-    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
-    assertNotNull(votes);
-    assertFalse(votes.isEmpty());
-    assertTrue(votes.get(0).getVote());
-    assertEquals(rationale, votes.get(0).getRationale());
+    testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.FINAL);
   }
 
   @Test
-  public void testUpdateVotesWithValue_MultipleRPElectionsDifferentStatuses() throws Exception {
+  public void testUpdateVotesWithValue_MultipleRPElections() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     DataSet dataset = createDataset();
@@ -239,5 +191,44 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     assertFalse(votes.isEmpty());
     votes.forEach(v -> assertTrue(v.getVote()));
     votes.forEach(v -> assertEquals(rationale, v.getRationale()));
+  }
+
+  @Test
+  public void testUpdateVotesWithValue_MultipleElectionTypes() throws Exception {
+    User user = createUser();
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataSet dataset = createDataset();
+    Election rpElection1 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election rpElection2 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election accessElection = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    closeElection(rpElection1);
+    Vote vote1 = createDacVote(user.getDacUserId(), rpElection1.getElectionId());
+    Vote vote2 = createDacVote(user.getDacUserId(), rpElection2.getElectionId());
+    Vote vote3 = createDacVote(user.getDacUserId(), accessElection.getElectionId());
+    String rationale = "rationale";
+    initService();
+
+    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
+    assertNotNull(votes);
+    assertFalse(votes.isEmpty());
+    votes.forEach(v -> assertTrue(v.getVote()));
+    votes.forEach(v -> assertEquals(rationale, v.getRationale()));
+  }
+
+  private void testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus status) throws Exception {
+    User user = createUser();
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataSet dataset = createDataset();
+    Election election = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
+    changeElectionStatus(election, status);
+    Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+    String rationale = "rationale";
+    initService();
+
+    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
+    assertNotNull(votes);
+    assertFalse(votes.isEmpty());
+    assertTrue(votes.get(0).getVote());
+    assertEquals(rationale, votes.get(0).getRationale());
   }
 }
