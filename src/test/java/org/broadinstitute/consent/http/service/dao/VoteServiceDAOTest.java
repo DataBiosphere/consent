@@ -112,6 +112,23 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     DataSet dataset = createDataset();
+    Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    closeElection(election);
+    Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+    initService();
+
+    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, "rationale");
+    assertNotNull(votes);
+    assertFalse(votes.isEmpty());
+    assertTrue(votes.get(0).getVote());
+    assertEquals("rationale", votes.get(0).getRationale());
+  }
+
+  @Test
+  public void testUpdateVotesWithValue_cancelledElection() throws Exception {
+    User user = createUser();
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataSet dataset = createDataset();
     Election election = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
     initService();
