@@ -50,6 +50,7 @@ public class VoteServiceDAO {
       return Collections.emptyList();
     }
     validateElectionsCanUpdateVotes(votes);
+
     // Update all votes in an atomic transaction, rollback on all if any fail
     jdbi.useHandle(
         handle -> {
@@ -89,7 +90,7 @@ public class VoteServiceDAO {
     return voteDAO.findVotesByIds(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
   }
 
-  private void validateElectionsCanUpdateVotes(List<Vote> votes) {
+  private void validateElectionsCanUpdateVotes(List<Vote> votes) throws IllegalArgumentException{
       List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
                               .map(Vote::getElectionId)
                               .collect(Collectors.toList()));
@@ -102,9 +103,7 @@ public class VoteServiceDAO {
   private boolean allOpenOrRp(List<Election> elections) {
       return !elections.isEmpty()
               && elections.stream()
-              .allMatch(e -> {
-                  return e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())
-                          || e.getElectionType().equalsIgnoreCase(ElectionType.RP.getValue());
-              });
+              .allMatch(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())
+                      || e.getElectionType().equalsIgnoreCase(ElectionType.RP.getValue()));
   }
 }
