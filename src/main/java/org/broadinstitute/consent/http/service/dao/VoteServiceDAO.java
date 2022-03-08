@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 /**
  * Handle transactional, multi-table queries for vote operations.
- */ 
+ */
 public class VoteServiceDAO {
 
   private final ElectionDAO electionDAO;
@@ -55,7 +56,8 @@ public class VoteServiceDAO {
     boolean allOpen =
         !elections.isEmpty()
             && elections.stream()
-                .allMatch(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
+                .allMatch(e -> {return e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()) ||
+                e.getElectionType().equalsIgnoreCase(ElectionType.RP.getValue());});
     if (!allOpen) {
       throw new IllegalArgumentException("Not all elections for votes are in OPEN state");
     }
