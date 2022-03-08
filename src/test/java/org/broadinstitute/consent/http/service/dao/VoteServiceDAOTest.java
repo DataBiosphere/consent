@@ -113,7 +113,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = createDataAccessRequestV3();
     DataSet dataset = createDataset();
     Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    closeElection(election);
+    changeElectionStatus(election, ElectionStatus.CLOSED);
     Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
     initService();
 
@@ -137,16 +137,14 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     DataSet dataset = createDataset();
-    Election election1 = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    Election election2 = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    Election election3 = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    Vote vote1 = createDacVote(user.getDacUserId(), election1.getElectionId());
-    Vote vote2 = createDacVote(user.getDacUserId(), election2.getElectionId());
-    Vote vote3 = createDacVote(user.getDacUserId(), election3.getElectionId());
+    Election openElection = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election canceledElection = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    Vote vote1 = createDacVote(user.getDacUserId(), openElection.getElectionId());
+    Vote vote2 = createDacVote(user.getDacUserId(), canceledElection.getElectionId());
     String rationale = "rationale";
     initService();
 
-    serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
+    serviceDAO.updateVotesWithValue(List.of(vote1, vote2), true, rationale);
   }
 
   @Test
@@ -170,6 +168,11 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  public void testUpdateVotesWithValue_PendingApprovalRPElection() throws Exception {
+    testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.PENDING_APPROVAL);
+  }
+
+  @Test
   public void testUpdateVotesWithValue_MultipleRPElections() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
@@ -178,7 +181,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     Election election2 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
     Election election3 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
     changeElectionStatus(election2, ElectionStatus.CANCELED);
-    closeElection(election3);
+    changeElectionStatus(election3, ElectionStatus.CLOSED);
     Vote vote1 = createDacVote(user.getDacUserId(), election1.getElectionId());
     Vote vote2 = createDacVote(user.getDacUserId(), election2.getElectionId());
     Vote vote3 = createDacVote(user.getDacUserId(), election3.getElectionId());
@@ -200,7 +203,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     Election rpElection1 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
     Election rpElection2 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
     Election accessElection = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    closeElection(rpElection1);
+    changeElectionStatus(rpElection1, ElectionStatus.CLOSED);
     Vote vote1 = createDacVote(user.getDacUserId(), rpElection1.getElectionId());
     Vote vote2 = createDacVote(user.getDacUserId(), rpElection2.getElectionId());
     Vote vote3 = createDacVote(user.getDacUserId(), accessElection.getElectionId());
