@@ -13,12 +13,17 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+
+import com.google.gson.JsonObject;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -28,10 +33,13 @@ import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
@@ -387,11 +395,19 @@ public class UserServiceTest {
         User u1 = generateUser();
         User u2 = generateUser();
         User u3 = generateUser();
-        when(userDAO.findUsers()).thenReturn(Set.of(u1, u2, u3));
+        List<User> returnedUsers = new ArrayList<>();
+        returnedUsers.add(u1);
+        if (!returnedUsers.contains(u2)) {
+            returnedUsers.add(u2);
+        }
+        if (!returnedUsers.contains(u3)) {
+            returnedUsers.add(u3);
+        }
+        when(userDAO.findUsers()).thenReturn(new HashSet<>(returnedUsers));
         initService();
         List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
         assertNotNull(users);
-        assertEquals(3, users.size());
+        assertEquals(returnedUsers.size(), users.size());
     }
 
     @Test
@@ -405,11 +421,57 @@ public class UserServiceTest {
         assertEquals(user.getDacUserId(), users.get(0).getDacUserId());
     }
 
+    @Test
+    public void testFindUserWithPropertiesAsJsonObjectById() {
+        User user = generateUser();
+        UserStatusInfo info = new UserStatusInfo()
+            .setUserEmail(user.getEmail())
+            .setEnabled(true)
+            .setUserSubjectId("subjectId");
+        AuthUser authUser = new AuthUser()
+            .setEmail(user.getEmail())
+            .setAuthToken(RandomStringUtils.random(30, true, false))
+            .setUserStatusInfo(info);
+        when(userDAO.findUserById(anyInt())).thenReturn(user);
+        when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
+        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt())).thenReturn(List.of(new UserProperty()));
+
+        initService();
+        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
+        assertNotNull(userJson);
+        assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
+        assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
+        assertTrue(userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
+    }
+
+    @Test
+    public void testFindUserWithPropertiesAsJsonObjectByIdNonAuthUser() {
+        User user = generateUser();
+        UserStatusInfo info = new UserStatusInfo()
+            .setUserEmail(user.getEmail())
+            .setEnabled(true)
+            .setUserSubjectId("subjectId");
+        AuthUser authUser = new AuthUser()
+            .setEmail("not the user's email address")
+            .setAuthToken(RandomStringUtils.random(30, true, false))
+            .setUserStatusInfo(info);
+        when(userDAO.findUserById(anyInt())).thenReturn(user);
+        when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
+        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt())).thenReturn(List.of(new UserProperty()));
+
+        initService();
+        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
+        assertNotNull(userJson);
+        assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
+        assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
+        assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
+    }
+
     private User generateUser() {
         User u = new User();
-        int i1 = RandomUtils.nextInt(5, 10);
-        int i2 = RandomUtils.nextInt(5, 10);
-        int i3 = RandomUtils.nextInt(3, 5);
+        int i1 = RandomUtils.nextInt(10, 50);
+        int i2 = RandomUtils.nextInt(10, 50);
+        int i3 = RandomUtils.nextInt(5, 25);
         String email = RandomStringUtils.randomAlphabetic(i1) +
                 "@" +
                 RandomStringUtils.randomAlphabetic(i2) +

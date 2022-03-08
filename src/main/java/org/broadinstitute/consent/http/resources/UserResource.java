@@ -3,15 +3,20 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.ResearcherService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.sam.SamService;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -29,37 +34,23 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.LibraryCard;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.LibraryCardService;
-import org.broadinstitute.consent.http.service.ResearcherService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
-import org.broadinstitute.consent.http.service.sam.SamService;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Path("api/user")
 public class UserResource extends Resource {
 
-    private final static String LIBRARY_CARDS_FIELD = "libraryCards";
-    private final static String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
-    private final static String USER_STATUS_INFO_FIELD = "userStatusInfo";
-
-    private final LibraryCardService libraryCardService;
     private final UserService userService;
     private final ResearcherService researcherService;
     private final Gson gson = new Gson();
     private final SamService samService;
 
     @Inject
-    public UserResource(LibraryCardService libraryCardService, ResearcherService researcherService,
+    public UserResource(ResearcherService researcherService,
                         SamService samService, UserService userService) {
-        this.libraryCardService = libraryCardService;
         this.researcherService = researcherService;
         this.samService = samService;
         this.userService = userService;
@@ -102,7 +93,7 @@ public class UserResource extends Resource {
             if (Objects.isNull(authUser.getUserStatusInfo())) {
                 samService.asyncPostRegistrationInfo(authUser);
             }
-            JsonObject userJson = constructUserJsonObject(authUser, user);
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -115,8 +106,7 @@ public class UserResource extends Resource {
     @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
     public Response getUserById(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
         try {
-            User user = userService.findUserById(userId);
-            JsonObject userJson = constructUserJsonObject(authUser, user);
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -162,8 +152,7 @@ public class UserResource extends Resource {
                 if (!currentUserRoleIds.contains(roleId)) {
                     UserRole role = new UserRole(roleId, UserRoles.getUserRoleFromId(roleId).getRoleName());
                     userService.insertUserRoles(Collections.singletonList(role), user.getDacUserId());
-                    user = userService.findUserById(userId);
-                    JsonObject userJson = constructUserJsonObject(authUser, user);
+                    JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
                     return Response.ok().entity(gson.toJson(userJson)).build();
                 } else {
                     return Response.notModified().build();
@@ -188,13 +177,12 @@ public class UserResource extends Resource {
             }
             List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
             if (!currentUserRoleIds.contains(roleId)) {
-                JsonObject userJson = constructUserJsonObject(authUser, user);
+                JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
                 return Response.ok().entity(gson.toJson(userJson)).build();
             }
             User auth = userService.findUserByEmail(authUser.getEmail());
             userService.deleteUserRole(auth, userId, roleId);
-            user = userService.findUserById(userId);
-            JsonObject userJson = constructUserJsonObject(authUser, user);
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
             return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -270,8 +258,7 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             researcherService.setProperties(userPropertiesMap, authUser);
-            User updatedUser = userService.findUserById(user.getDacUserId());
-            JsonObject userJson = constructUserJsonObject(authUser, updatedUser);
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
             return Response.created(info.getRequestUriBuilder().build()).entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -286,32 +273,10 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             researcherService.updateProperties(userProperties, authUser, validate);
-            User updatedUser = userService.findUserById(user.getDacUserId());
-            JsonObject userJson = constructUserJsonObject(authUser, updatedUser);
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
             return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
-
-    /**
-     * Convenience method for a generic user object with custom properties added
-     * @param user The User
-     * @return JsonObject version of the user with researcher properties and library card entries
-     */
-    private JsonObject constructUserJsonObject(AuthUser authUser, User user) {
-        List<UserProperty> props = userService.findAllUserProperties(user.getDacUserId());
-        List<LibraryCard> entries = libraryCardService.findLibraryCardsByUserId(user.getDacUserId());
-        JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
-        JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
-        JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
-        userJson.add(RESEARCHER_PROPERTIES_FIELD, propsJson);
-        userJson.add(LIBRARY_CARDS_FIELD, entriesJson);
-        if (authUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(authUser.getUserStatusInfo())) {
-            JsonObject userStatusInfoJson = gson.toJsonTree(authUser.getUserStatusInfo()).getAsJsonObject();
-            userJson.add(USER_STATUS_INFO_FIELD, userStatusInfoJson);
-        }
-        return userJson;
-    }
-
 }

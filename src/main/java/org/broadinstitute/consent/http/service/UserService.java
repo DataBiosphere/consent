@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -10,6 +13,7 @@ import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -35,6 +39,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class UserService {
+
+    public final static String LIBRARY_CARDS_FIELD = "libraryCards";
+    public final static String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
+    public final static String USER_STATUS_INFO_FIELD = "userStatusInfo";
 
     private final UserPropertyDAO userPropertyDAO;
     private final UserDAO userDAO;
@@ -240,6 +248,30 @@ public class UserService {
         return userDAO.getUsersWithNoInstitution();
     }
 
+    /**
+     * Convenience method to return a response-friendly json object of the user.
+     *
+     * @param authUser The AuthUser. Used to determine if we should return auth user properties
+     * @param userId The User. This is the user we want to return properties for
+     * @return JsonObject.
+     */
+    public JsonObject findUserWithPropertiesByIdAsJsonObject(AuthUser authUser, Integer userId) {
+        Gson gson = new Gson();
+        User user = findUserById(userId);
+        List<UserProperty> props = findAllUserProperties(user.getDacUserId());
+        List<LibraryCard> entries = libraryCardDAO.findLibraryCardsByUserId(user.getDacUserId());
+        JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
+        JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
+        JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
+        userJson.add(RESEARCHER_PROPERTIES_FIELD, propsJson);
+        userJson.add(LIBRARY_CARDS_FIELD, entriesJson);
+        if (authUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(authUser.getUserStatusInfo())) {
+            JsonObject userStatusInfoJson = gson.toJsonTree(authUser.getUserStatusInfo()).getAsJsonObject();
+            userJson.add(USER_STATUS_INFO_FIELD, userStatusInfoJson);
+        }
+        return userJson;
+    }
+
     private void validateRequiredFields(User user) {
         if (Objects.isNull(user.getDisplayName()) || StringUtils.isEmpty(user.getDisplayName())) {
             throw new BadRequestException("Display Name cannot be empty");
@@ -255,12 +287,6 @@ public class UserService {
                 throw new BadRequestException("Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);
             }
         });
-    }
-
-    private void validateExistentUserById(Integer id) {
-        if (userDAO.findUserById(id) == null) {
-            throw new NotFoundException("The user for the specified id does not exist");
-        }
     }
 
     public void insertUserRoles(List<UserRole> roles, Integer dacUserId) {
