@@ -81,7 +81,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateVotesWithValue_MultipleVotesOpenElections() throws Exception {
+  public void testUpdateVotesWithValue_MultipleVotes() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     DataSet dataset = createDataset();
@@ -108,7 +108,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateVotesWithValue_closedElection() throws Exception {
+  public void testUpdateVotesWithValue_ClosedElection() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     DataSet dataset = createDataset();
@@ -125,18 +125,41 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateVotesWithValue_cancelledElection() throws Exception {
+  public void testUpdateVotesWithValue_CancelledElection() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     DataSet dataset = createDataset();
     Election election = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+    String rationale = "rationale";
     initService();
 
-    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, "rationale");
+    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
     assertTrue(votes.get(0).getVote());
-    assertEquals("rationale", votes.get(0).getRationale());
+    assertEquals(rationale, votes.get(0).getRationale());
+  }
+
+  @Test
+  public void testUpdateVotesWithValue_MultipleElectionsDifferentStatuses() throws Exception {
+    User user = createUser();
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataSet dataset = createDataset();
+    Election election1 = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election election2 = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election election3 = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    closeElection(election3);
+    Vote vote1 = createDacVote(user.getDacUserId(), election1.getElectionId());
+    Vote vote2 = createDacVote(user.getDacUserId(), election2.getElectionId());
+    Vote vote3 = createDacVote(user.getDacUserId(), election3.getElectionId());
+    String rationale = "rationale";
+    initService();
+
+    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
+    assertNotNull(votes);
+    assertFalse(votes.isEmpty());
+    votes.forEach(v -> assertTrue(v.getVote()));
+    votes.forEach(v -> assertEquals(rationale, v.getRationale()));
   }
 }
