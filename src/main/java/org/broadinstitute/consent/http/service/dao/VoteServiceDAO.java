@@ -54,7 +54,7 @@ public class VoteServiceDAO {
         electionDAO.findElectionsByIds(
             votes.stream().map(Vote::getElectionId).collect(Collectors.toList()));
     if (!canUpdateAllElections(elections)) {
-      throw new IllegalArgumentException("Not all elections for votes are in OPEN state");
+      throw new IllegalArgumentException("Not all elections for votes are in OPEN state or for Research Purposes");
     }
     // Update all votes in an atomic transaction, rollback on all if any fail
     jdbi.useHandle(
