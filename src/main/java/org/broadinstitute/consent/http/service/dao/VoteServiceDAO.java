@@ -53,7 +53,7 @@ public class VoteServiceDAO {
     List<Election> elections =
         electionDAO.findElectionsByIds(
             votes.stream().map(Vote::getElectionId).collect(Collectors.toList()));
-    if (!canUpdateAllElections(elections)) {
+    if (!allOpenOrRp(elections)) {
       throw new IllegalArgumentException("Not all elections for votes are in OPEN state or for Research Purposes");
     }
     // Update all votes in an atomic transaction, rollback on all if any fail
@@ -95,12 +95,23 @@ public class VoteServiceDAO {
     return voteDAO.findVotesByIds(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
   }
 
-  private boolean canUpdateAllElections(List<Election> elections) {
+
+  private void validateElectionsCanUpdateVotes(List<Vote> votes) {
+      List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
+                              .map(Vote::getElectionId)
+                              .collect(Collectors.toList()));
+
+      if (!allOpenOrRp(elections)) {
+          throw new IllegalArgumentException("Not all elections for votes are in OPEN state or for Research Purposes");
+      }
+  }
+
+  private boolean allOpenOrRp(List<Election> elections) {
       return !elections.isEmpty()
               && elections.stream()
-                      .allMatch(e -> {
-                          return e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())
-                                  || e.getElectionType().equalsIgnoreCase(ElectionType.RP.getValue());
-                      });
+              .allMatch(e -> {
+                  return e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())
+                          || e.getElectionType().equalsIgnoreCase(ElectionType.RP.getValue());
+              });
   }
 }
