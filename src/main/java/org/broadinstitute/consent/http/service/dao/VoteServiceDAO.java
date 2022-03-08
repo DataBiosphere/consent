@@ -49,13 +49,7 @@ public class VoteServiceDAO {
     if (votes.isEmpty()) {
       return Collections.emptyList();
     }
-    // Validate that the elections are all in OPEN state
-    List<Election> elections =
-        electionDAO.findElectionsByIds(
-            votes.stream().map(Vote::getElectionId).collect(Collectors.toList()));
-    if (!allOpenOrRp(elections)) {
-      throw new IllegalArgumentException("Not all elections for votes are in OPEN state or for Research Purposes");
-    }
+    validateElectionsCanUpdateVotes(votes);
     // Update all votes in an atomic transaction, rollback on all if any fail
     jdbi.useHandle(
         handle -> {
@@ -94,7 +88,6 @@ public class VoteServiceDAO {
         });
     return voteDAO.findVotesByIds(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
   }
-
 
   private void validateElectionsCanUpdateVotes(List<Vote> votes) {
       List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
