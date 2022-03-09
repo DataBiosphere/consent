@@ -95,8 +95,10 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
-    votes.forEach(v -> assertTrue(v.getVote()));
-    votes.forEach(v -> assertEquals(rationale, v.getRationale()));
+    votes.forEach(v -> {
+      assertTrue(v.getVote());
+      assertEquals(rationale, v.getRationale());
+    });
   }
 
   @Test
@@ -191,8 +193,10 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
-    votes.forEach(v -> assertTrue(v.getVote()));
-    votes.forEach(v -> assertEquals(rationale, v.getRationale()));
+    votes.forEach(v -> {
+      assertTrue(v.getVote());
+      assertEquals(rationale, v.getRationale());
+    });
   }
 
   @Test
@@ -213,8 +217,10 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
-    votes.forEach(v -> assertTrue(v.getVote()));
-    votes.forEach(v -> assertEquals(rationale, v.getRationale()));
+    votes.forEach(v -> {
+      assertTrue(v.getVote());
+      assertEquals(rationale, v.getRationale());
+    });
   }
 
   private void testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus status) throws Exception {
