@@ -118,10 +118,14 @@ public class VoteService {
     * @param voteValue Value to update the votes to
     * @param rationale Value to update the rationales to. Only update if non-null.
     * @return The updated Vote
-    * @throws IllegalArgumentException when there are non-open elections on any of the votes
+    * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
     */
     public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) throws IllegalArgumentException, SQLException {
-        return voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
+        try {
+            return voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unable to update election votes.");
+        }
     }
 
     public Vote updateVoteById(Vote rec,  Integer voteId) throws IllegalArgumentException {
