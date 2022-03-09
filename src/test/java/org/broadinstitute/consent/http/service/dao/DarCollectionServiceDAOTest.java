@@ -136,7 +136,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
 
     // Add another DAR with Dataset to collection.
     // This one should not be available to the chairperson created above.
-    DataAccessRequest dar2 = addDatasetWithDacToCollection(collection);
+    DataAccessRequest dar2 = addDARWithDacAndDatasetToCollection(collection);
 
     serviceDAO.createElectionsForDarCollection(chair.get(), collection);
 
@@ -163,47 +163,13 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertTrue(nonCreatedElections.isEmpty());
   }
 
-  @Test
-  public void testCreateElectionsForDarCollectionManualReview() throws Exception {
-    initService();
-
-    User user = new User();
-    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    DarCollection collection = setUpDarCollectionWithDacDataset();
-    Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
-    assertTrue(dar.isPresent());
-    assertNotNull(dar.get().getData());
-    // Any sensitive subject triggers manual review required:
-    dar.get().getData().setPoa(true);
-    Date now = new Date();
-    dataAccessRequestDAO.updateDataByReferenceIdVersion2(
-      dar.get().getReferenceId(),
-      dar.get().getUserId(),
-      now,
-      now,
-      now,
-      dar.get().getData());
-
-    serviceDAO.createElectionsForDarCollection(user, collection);
-
-    List<Election> createdElections =
-        electionDAO.findLastElectionsByReferenceIds(List.of(dar.get().getReferenceId()));
-    List<Vote> createdVotes =
-        voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
-
-    // Ensure that we have an access and rp election
-    assertFalse(createdElections.isEmpty());
-    assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
-    assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
-    // Ensure that we have primary vote types
-    assertFalse(createdVotes.isEmpty());
-    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
-    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
-    assertTrue(createdVotes.stream().noneMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
-  }
-
+  /**
+   * This test covers the case where:
+   *  - User is an admin
+   *  - Elections have been created for a Collection
+   *  - Elections are then canceled
+   *  - Elections re-created correctly
+   */
   @Test
   public void testCreateElectionsForDarCollectionAfterCancelingEarlierElections() throws Exception {
     initService();
@@ -234,6 +200,9 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(ElectionType.RP.getValue())).count());
   }
 
+  /**
+   * Helper method to generate a DarCollection with a Dac, a Dataset, and a create User
+   */
   private DarCollection setUpDarCollectionWithDacDataset() {
     DarCollection collection = createDarCollectionWithSingleDataAccessRequest();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
@@ -246,7 +215,11 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     return darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
   }
 
-  private DataAccessRequest addDatasetWithDacToCollection(DarCollection collection) {
+  /**
+   * Helper method to add a DAR to a collection. This creates a new
+   * DAC/Dataset/Chair/Member to facilitate the creation.
+   */
+  private DataAccessRequest addDARWithDacAndDatasetToCollection(DarCollection collection) {
     // Create new DAC and Dataset:
     Dac dac = createDac();
     createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());

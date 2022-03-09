@@ -8,7 +8,6 @@ import io.dropwizard.testing.ResourceHelpers;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.rdf.api.Dataset;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -711,7 +710,7 @@ public class DAOTestHelper {
         DataSet dataset = createDataset();
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
-        DataAccessRequest dar = createDarForCollection(user, collectionId, dataset);
+        createDarForCollection(user, collectionId, dataset);
         createdDarCollections.add(collectionId);
         return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     }
