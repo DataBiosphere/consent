@@ -10,6 +10,8 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -43,6 +45,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     assertEquals(rationale, votes.get(0).getRationale());
     Election foundElection = electionDAO.findElectionById(vote.getElectionId());
     assertEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
+    assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
   }
 
   @Test
@@ -59,6 +62,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     assertFalse(votes.isEmpty());
     assertTrue(votes.get(0).getVote());
     assertNull(votes.get(0).getRationale());
+    assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
   }
 
   @Test
@@ -78,6 +82,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     assertEquals(rationale, votes.get(0).getRationale());
     Election foundElection = electionDAO.findElectionById(vote.getElectionId());
     assertNotEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
+    assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
   }
 
   @Test
@@ -93,11 +98,16 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     initService();
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
+
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
+    List<Integer> requestVoteIds = Stream.of(vote1, vote2, vote3)
+            .map(Vote::getVoteId)
+            .collect(Collectors.toList());
     votes.forEach(v -> {
       assertTrue(v.getVote());
       assertEquals(rationale, v.getRationale());
+      assertTrue(requestVoteIds.contains(v.getVoteId()));
     });
   }
 
@@ -191,11 +201,16 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     initService();
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
+
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
+    List<Integer> requestVoteIds = Stream.of(vote1, vote2, vote3)
+            .map(Vote::getVoteId)
+            .collect(Collectors.toList());
     votes.forEach(v -> {
       assertTrue(v.getVote());
       assertEquals(rationale, v.getRationale());
+      assertTrue(requestVoteIds.contains(v.getVoteId()));
     });
   }
 
@@ -215,11 +230,16 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     initService();
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
+
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
+    List<Integer> requestVoteIds = Stream.of(vote1, vote2, vote3)
+            .map(Vote::getVoteId)
+            .collect(Collectors.toList());
     votes.forEach(v -> {
       assertTrue(v.getVote());
       assertEquals(rationale, v.getRationale());
+      assertTrue(requestVoteIds.contains(v.getVoteId()));
     });
   }
 
@@ -238,5 +258,6 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     assertFalse(votes.isEmpty());
     assertTrue(votes.get(0).getVote());
     assertEquals(rationale, votes.get(0).getRationale());
+    assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
   }
 }
