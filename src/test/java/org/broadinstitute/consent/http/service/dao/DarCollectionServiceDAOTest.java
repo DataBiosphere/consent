@@ -126,6 +126,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
     assertTrue(dar.isPresent());
+    assertFalse(dar.get().getData().getDatasetIds().isEmpty());
     Integer datasetId = dar.get().getData().getDatasetIds().get(0);
     assertNotNull(datasetId);
     Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
