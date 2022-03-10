@@ -72,6 +72,53 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
 
   /**
    * This test covers the case where:
+   *  - User is an admin
+   *  - Collection has 2 DAR/Dataset combinations
+   *  - User is an Admin
+   *  - Elections created should only be for ALL the DAR/Dataset combinations
+   */
+  @Test
+  public void testCreateElectionsForDarCollectionWithMultipleDatasetsForAdmin() throws Exception {
+    initService();
+
+    User user = new User();
+    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    DarCollection collection = setUpDarCollectionWithDacDataset();
+    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
+    assertNotNull(dar);
+
+    // Add another DAR with Dataset in a separate DAC to the collection
+    DataAccessRequest dar2 = addDARWithDacAndDatasetToCollection(collection);
+    // refresh the collection
+    collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+
+    serviceDAO.createElectionsForDarCollection(user, collection);
+
+    List<Election> createdElections =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
+    List<Vote> createdVotes =
+        voteDAO.findVotesByElectionIds(
+            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+
+    // Ensure that we have an access and rp election
+    assertFalse(createdElections.isEmpty());
+    assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
+    assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
+    // Ensure that we have primary vote types
+    assertFalse(createdVotes.isEmpty());
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
+
+    // Make sure that we DID create elections for the additional DAR/Dataset combination
+    List<Election> additionalCreatedElections =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar2.getReferenceId()));
+    assertFalse(additionalCreatedElections.isEmpty());
+  }
+
+  /**
+   * This test covers the case where:
    *  - User is a chairperson
    *  - Collection has 1 DAR/Dataset combinations
    *  - Elections created should be for the DAR/Dataset for the user
@@ -138,6 +185,8 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     // Add another DAR with Dataset to collection.
     // This one should not be available to the chairperson created above.
     DataAccessRequest dar2 = addDARWithDacAndDatasetToCollection(collection);
+    // refresh the collection
+    collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
 
     serviceDAO.createElectionsForDarCollection(chair.get(), collection);
 
