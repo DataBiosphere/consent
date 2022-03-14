@@ -62,6 +62,22 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindDACUserByIdWithLibraryCard() {
+        User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+        assertNotNull(user);
+        assertFalse(user.getRoles().isEmpty());
+
+        addUserRole(UserRoles.RESEARCHER.getRoleId(), user.getDacUserId());
+        LibraryCard lc = createLibraryCard(user);
+
+        User user2 = userDAO.findUserById(user.getDacUserId());
+        assertNotNull(user2);
+        assertEquals(user.getEmail(), user2.getEmail());
+        assertFalse(user2.getLibraryCards().isEmpty());
+        assertTrue(user2.getLibraryCards().contains(lc));
+    }
+
+    @Test
     public void testFindUsers_withIdCollection() {
         User user = createUser();
         Collection<User> users = userDAO.findUsers(Collections.singletonList(user.getDacUserId()));
@@ -162,6 +178,22 @@ public class UserDAOTest extends DAOTestHelper {
 
         User user2 = userDAO.findUserByEmail("no.one@nowhere.com");
         Assert.assertNull(user2);
+    }
+
+    @Test
+    public void testFindDACUserByEmailWithLibraryCard() {
+        User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+        assertNotNull(user);
+        assertFalse(user.getRoles().isEmpty());
+
+        addUserRole(UserRoles.RESEARCHER.getRoleId(), user.getDacUserId());
+        LibraryCard lc = createLibraryCard(user);
+
+        User user2 = userDAO.findUserByEmail(user.getEmail());
+        assertNotNull(user2);
+        assertEquals(user.getEmail(), user2.getEmail());
+        assertFalse(user2.getLibraryCards().isEmpty());
+        assertTrue(user2.getLibraryCards().contains(lc));
     }
 
     @Test

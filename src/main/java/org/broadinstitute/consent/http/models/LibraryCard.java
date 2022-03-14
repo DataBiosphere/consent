@@ -1,29 +1,34 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Date;
-
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
+import java.util.Date;
 
 public class LibraryCard {
 
-    private Integer id;
-    private Integer userId;
-    private Integer institutionId;
-    private String eraCommonsId;
-    private String userName;
-    private String userEmail;
-    private Date createDate;
-    private Integer createUserId;
-    private Date updateDate;
-    private Integer updateUserId;
+  public static final String QUERY_FIELDS_WITH_LC_PREFIX =
+      " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, "
+          + " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, "
+          + " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, "
+          + " lc.update_user_id AS lc_update_user_id ";
 
-    private Institution institution;
+  private Integer id;
+  private Integer userId;
+  private Integer institutionId;
+  private String eraCommonsId;
+  private String userName;
+  private String userEmail;
+  private Date createDate;
+  private Integer createUserId;
+  private Date updateDate;
+  private Integer updateUserId;
+
+  private Institution institution;
 
   public LibraryCard() {
     this.createDate = new Date();
   }
-  
+
   public Integer getId() {
     return id;
   }
@@ -117,9 +122,6 @@ public class LibraryCard {
     if (libraryCard == this) return true;
     if (libraryCard == null || libraryCard.getClass() != getClass()) return false;
     LibraryCard other = (LibraryCard) libraryCard;
-    return new EqualsBuilder()
-          .append(id, other.getId())
-          .isEquals();
+    return new EqualsBuilder().append(id, other.getId()).isEquals();
   }
-    
 }

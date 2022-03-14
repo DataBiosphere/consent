@@ -111,8 +111,6 @@ public class UserService {
         if (user == null) {
             throw new NotFoundException("Unable to find user with id: " + id);
         }
-        List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getDacUserId());
-        user.setLibraryCards(cards);
         return user;
     }
 
@@ -259,7 +257,7 @@ public class UserService {
         Gson gson = new Gson();
         User user = findUserById(userId);
         List<UserProperty> props = findAllUserProperties(user.getDacUserId());
-        List<LibraryCard> entries = libraryCardDAO.findLibraryCardsByUserId(user.getDacUserId());
+        List<LibraryCard> entries = Objects.nonNull(user.getLibraryCards()) ? user.getLibraryCards() : List.of();
         JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
         JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
         JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
