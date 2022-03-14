@@ -197,7 +197,7 @@ public class DarCollectionService {
       default:
         collections = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
     }
-    
+
     return addDatasetsToCollections(collections);
   }
 
@@ -401,22 +401,8 @@ public class DarCollectionService {
    * @return The updated DarCollection
    */
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection) {
-    final List<String> invalidStatuses = Stream.of(
-            ElectionStatus.CLOSED, ElectionStatus.OPEN, ElectionStatus.FINAL, ElectionStatus.PENDING_APPROVAL
-    ).map(ElectionStatus::getValue).collect(Collectors.toList());
-    List<String> referenceIds = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
-    if (!referenceIds.isEmpty()) {
-      List<Election> nonCanceledElections = electionDAO.findLastElectionsByReferenceIds(referenceIds)
-        .stream()
-        .filter(e -> invalidStatuses.contains(e.getStatus()))
-        .collect(Collectors.toList());
-      if (!nonCanceledElections.isEmpty()) {
-        logger.error("Non-canceled elections exist for collection: " + collection.getDarCollectionId());
-        throw new IllegalArgumentException("Non-canceled elections exist for this collection.");
-      }
-    }
     try {
-      collectionServiceDAO.createElectionsForDarCollection(collection);
+      collectionServiceDAO.createElectionsForDarCollection(user, collection);
       collection.getDars().values().forEach(dar -> {
         Election accessElection = electionDAO.findLastElectionByReferenceIdAndType(dar.getReferenceId(), ElectionType.DATA_ACCESS.getValue());
         if (Objects.nonNull(accessElection)) {

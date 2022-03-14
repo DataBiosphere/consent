@@ -428,24 +428,6 @@ public class DarCollectionServiceTest {
     verify(darCollectionDAO, times(0)).findDARCollectionByCollectionId(anyInt());
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testCreateElectionsForDarCollectionOpenElection() {
-    User user = new User();
-    user.setEmail("email");
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setReferenceId(UUID.randomUUID().toString());
-    DarCollection collection = createMockCollections(1).get(0);
-    collection.setDars(Map.of(dar.getReferenceId(), dar));
-    Election election = createMockElection();
-    election.setReferenceId(dar.getReferenceId());
-    election.setStatus(ElectionStatus.OPEN.getValue());
-    election.setElectionId(1);
-    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
-    initService();
-
-    service.createElectionsForDarCollection(user, collection);
-  }
-
   @Test
   public void testCreateElectionsForDarCollection() throws Exception {
     User user = new User();
@@ -470,8 +452,7 @@ public class DarCollectionServiceTest {
     initService();
 
     service.createElectionsForDarCollection(user, collection);
-    verify(darCollectionServiceDAO, times(1)).createElectionsForDarCollection(any());
-    verify(electionDAO, times(1)).findLastElectionsByReferenceIds(any());
+    verify(darCollectionServiceDAO, times(1)).createElectionsForDarCollection(any(), any());
     verify(electionDAO, times(1)).findLastElectionByReferenceIdAndType(any(), any());
     verify(voteDAO, times(1)).findVotesByElectionId(any());
     verify(emailNotifierService, times(1)).sendNewCaseMessageToList(any(), any());
@@ -493,7 +474,7 @@ public class DarCollectionServiceTest {
 
     PaginationResponse<DarCollection> collectionResponse = service.queryCollectionsByFiltersAndUserRoles(user, token, adminName);
     assertNotNull(collectionResponse);
-    int responseUnfilteredCount = (int)collectionResponse.getUnfilteredCount();
+    int responseUnfilteredCount = collectionResponse.getUnfilteredCount();
     assertEquals(unfilteredCount, responseUnfilteredCount);
     assertEquals(mockCollectionSize, (int)collectionResponse.getFilteredCount());
     assertEquals(1, (int)collectionResponse.getFilteredPageCount());

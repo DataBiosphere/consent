@@ -705,19 +705,31 @@ public class DAOTestHelper {
 
 
     protected DarCollection createDarCollectionWithSingleDataAccessRequest() {
-        Date now = new Date();
         User user = createUser();
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-        Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        Dac dac = createDac();
+        createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+        createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
+        Consent consent = createConsent(dac.getDacId());
+        DataSet dataset = createDataset();
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        createDarForCollection(user, collectionId, dataset);
+        createdDarCollections.add(collectionId);
+        return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    }
+
+    protected DataAccessRequest createDarForCollection(User user, Integer collectionId, DataSet dataset) {
+        Date now = new Date();
         DataAccessRequest dar = new DataAccessRequest();
         dar.setReferenceId(UUID.randomUUID().toString());
         DataAccessRequestData data = new DataAccessRequestData();
+        data.setDatasetIds(List.of(dataset.getDataSetId()));
         dar.setData(data);
         dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getDacUserId(), now, now, now, now, data);
-        dataAccessRequestDAO.updateDraftForCollection(collection_id, dar.getReferenceId());
+        dataAccessRequestDAO.updateDraftForCollection(collectionId, dar.getReferenceId());
         dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
         createdDataAccessRequestReferenceIds.add(dar.getReferenceId());
-        createdDarCollections.add(collection_id);
-        return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+        return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     }
 }
