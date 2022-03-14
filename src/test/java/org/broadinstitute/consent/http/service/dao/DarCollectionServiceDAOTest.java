@@ -176,6 +176,8 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertFalse(dar.get().getData().getDatasetIds().isEmpty());
     Integer datasetId = dar.get().getData().getDatasetIds().get(0);
     assertNotNull(datasetId);
+
+    // Find the dac chairperson for the current DAR/Dataset combination
     Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
     assertTrue(dac.isPresent());
     List<User> dacUsers = dacDAO.findMembersByDacId(dac.get().getDacId());
@@ -221,7 +223,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    *  - Elections re-created correctly
    */
   @Test
-  public void testCreateElectionsForDarCollectionAfterCancelingEarlierElections() throws Exception {
+  public void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsAdmin() throws Exception {
     initService();
 
     User user = new User();
@@ -248,6 +250,69 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertEquals(2, createdElections.size());
     assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())).count());
     assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(ElectionType.RP.getValue())).count());
+  }
+
+  /**
+   * This test covers the case where:
+   *  - User is a chair
+   *  - Collection has 2 DAR/Dataset combinations
+   *  - Elections have been created for a Collection
+   *  - User is a DAC chair for only one of the DAR/Dataset combinations
+   *  - All elections are canceled
+   *  - Chair specific elections are re-created correctly
+   *  - Elections created should only be for the DAR/Dataset for the user
+   */
+  @Test
+  public void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsChair() throws Exception {
+    initService();
+
+    // Start off with a collection and a single DAR
+    DarCollection collection = setUpDarCollectionWithDacDataset();
+    Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
+    assertTrue(dar.isPresent());
+    assertFalse(dar.get().getData().getDatasetIds().isEmpty());
+    Integer datasetId = dar.get().getData().getDatasetIds().get(0);
+    assertNotNull(datasetId);
+
+    // Find the dac chairperson for the current DAR/Dataset combination
+    Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
+    assertTrue(dac.isPresent());
+    List<User> dacUsers = dacDAO.findMembersByDacId(dac.get().getDacId());
+    Optional<User> chair = dacUsers.stream().filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON)).findFirst();
+    assertTrue(chair.isPresent());
+
+    // Add another DAR with Dataset to collection.
+    // This one should not be available to the chairperson created above.
+    DataAccessRequest dar2 = addDARWithDacAndDatasetToCollection(collection);
+
+    // refresh the collection
+    collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+
+    // create elections & votes:
+    serviceDAO.createElectionsForDarCollection(chair.get(), collection);
+
+    // cancel elections for all DARs in the collection:
+    collection.getDars().values().forEach(d ->
+      electionDAO.findLastElectionsByReferenceIds(List.of(d.getReferenceId())).forEach(e ->
+          electionDAO.updateElectionById(e.getElectionId(), ElectionStatus.CANCELED.getValue(), new Date()))
+    );
+
+    // re-create elections & new votes:
+    serviceDAO.createElectionsForDarCollection(chair.get(), collection);
+
+    List<Election> createdElections =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar.get().getReferenceId()));
+
+    // Ensure that we have the right number of access and rp elections, i.e. 1 each
+    assertFalse(createdElections.isEmpty());
+    assertEquals(2, createdElections.size());
+    assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())).count());
+    assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(ElectionType.RP.getValue())).count());
+
+    // Make sure we did not create elections for the DAR/Dataset that the chair does not have access to.
+    List<Election> nonCreatedElections =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar2.getReferenceId()));
+    assertTrue(nonCreatedElections.isEmpty());
   }
 
   /**
