@@ -290,9 +290,13 @@ public class DAOTestHelper {
     }
 
     protected void closeElection(Election election) {
+        changeElectionStatus(election, ElectionStatus.CLOSED);
+    }
+
+    protected void changeElectionStatus(Election election, ElectionStatus status) {
         electionDAO.updateElectionById(
                 election.getElectionId(),
-                ElectionStatus.CLOSED.getValue(),
+                status.getValue(),
                 new Date());
     }
 

@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 /**
  * Handle transactional, multi-table queries for vote operations.
- */ 
+ */
 public class VoteServiceDAO {
 
   private final ElectionDAO electionDAO;
@@ -48,17 +49,8 @@ public class VoteServiceDAO {
     if (votes.isEmpty()) {
       return Collections.emptyList();
     }
-    // Validate that the elections are all in OPEN state
-    List<Election> elections =
-        electionDAO.findElectionsByIds(
-            votes.stream().map(Vote::getElectionId).collect(Collectors.toList()));
-    boolean allOpen =
-        !elections.isEmpty()
-            && elections.stream()
-                .allMatch(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
-    if (!allOpen) {
-      throw new IllegalArgumentException("Not all elections for votes are in OPEN state");
-    }
+    validateElectionsCanUpdateVotes(votes);
+
     // Update all votes in an atomic transaction, rollback on all if any fail
     jdbi.useHandle(
         handle -> {
@@ -96,5 +88,22 @@ public class VoteServiceDAO {
               });
         });
     return voteDAO.findVotesByIds(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
+  }
+
+  private void validateElectionsCanUpdateVotes(List<Vote> votes) throws IllegalArgumentException{
+      List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
+                              .map(Vote::getElectionId)
+                              .collect(Collectors.toList()));
+
+      if (!allOpenOrRp(elections)) {
+          throw new IllegalArgumentException("Not all elections for votes are in OPEN state or for Research Purposes");
+      }
+  }
+
+  private boolean allOpenOrRp(List<Election> elections) {
+      return !elections.isEmpty()
+              && elections.stream()
+              .allMatch(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())
+                      || e.getElectionType().equalsIgnoreCase(ElectionType.RP.getValue()));
   }
 }
