@@ -1,0 +1,43 @@
+post:
+  summary: Create Data Access Request, version 2
+  description: Creates a Data Access Request
+  requestBody:
+    description: The fields that represent a DAR in json format.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/DataAccessRequest.yaml'
+  tags:
+    - Data Access Request
+  responses:
+    200:
+      description: Returns the created Data Access Request.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DataAccessRequest.yaml'
+    403:
+      description: A user is required to have a Library Card to submit Data Access Requests
+    500:
+      description: Internal Server Error.
+get:
+  summary: Get all Data Access Requests
+  description: Returns the list of all Data Access Requests
+  tags:
+    - Data Access Request
+  responses:
+    200:
+      description: Returns a list of Data Access Requests
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DataAccessRequest.yaml'
+    403:
+      description: The user is not authorized to see all DARs
+    500:
+      description: Server Error
