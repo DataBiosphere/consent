@@ -83,7 +83,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
         List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
         userRoleDAO.updateUserRoles(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), UserRoles.MEMBER.getRoleId());
         List<UserRole> newRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
-        Assert.assertFalse(Arrays.equals(currentRoles.toArray(), newRoles.toArray()));
+        Assert.assertFalse(currentRoles.get(0).getRoleId().equals(newRoles.get(0).getRoleId()));
     }
 
     @Test

@@ -2,9 +2,10 @@ package org.broadinstitute.consent.http.service.sam;
 
 import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.json.JsonHttpContent;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -16,6 +17,7 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -105,5 +107,14 @@ public class SamService {
     request.getHeaders().setAccept(MediaType.TEXT_PLAIN);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     return response.parseAsString();
+  }
+
+  public TosResponse postTosAcceptedStatus(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(configuration.postTosAcceptedUrl());
+    JsonHttpContent content = new JsonHttpContent(new GsonFactory(), "app.terra.bio/#terms-of-service");
+    HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
+    HttpResponse response = clientUtil.handleHttpRequest(request);
+    String body = response.parseAsString();
+    return new Gson().fromJson(body, TosResponse.class);
   }
 }

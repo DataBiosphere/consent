@@ -11,13 +11,14 @@
 
   <properties>
     <java.version>17</java.version>
-    <liquibase.version>4.7.1</liquibase.version>
+    <liquibase.version>4.8.0</liquibase.version>
     <dropwizard.version>2.0.28</dropwizard.version>
-    <owl.version>5.1.19</owl.version>
-    <postgres.version>42.3.1</postgres.version>
-    <rdf4j-rio.version>3.7.4</rdf4j-rio.version>
-    <swagger.ui.version>4.2.1</swagger.ui.version>
+    <owl.version>5.1.20</owl.version>
+    <postgres.version>42.3.3</postgres.version>
+    <rdf4j-rio.version>3.7.5</rdf4j-rio.version>
+    <swagger.ui.version>4.5.2</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
+    <mockserver.version>5.12.0</mockserver.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -107,12 +108,24 @@
         <version>1.0.0</version>
         <executions>
           <execution>
+            <id>buildClassesOutput</id>
             <phase>generate-resources</phase>
             <goals>
               <goal>write-project-properties</goal>
             </goals>
             <configuration>
               <outputFile>${project.build.outputDirectory}/mvn.properties</outputFile>
+            </configuration>
+          </execution>
+          <!-- This second execution regenerates the full properties file in test classes -->
+          <execution>
+            <id>testClassesOutput</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>write-project-properties</goal>
+            </goals>
+            <configuration>
+              <outputFile>${project.build.testOutputDirectory}/mvn.properties</outputFile>
             </configuration>
           </execution>
         </executions>
@@ -149,7 +162,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.9.0</version>
+        <version>3.10.1</version>
         <configuration>
           <release>11</release>
         </configuration>
@@ -169,7 +182,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.2.0</version>
+        <version>3.3.0</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
@@ -237,7 +250,7 @@
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
-        <version>6.5.3</version>
+        <version>7.0.0</version>
         <configuration>
           <skipProvidedScope>true</skipProvidedScope>
           <skipRuntimeScope>true</skipRuntimeScope>
@@ -261,7 +274,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.27.1</version>
+        <version>3.28.0</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -306,33 +319,33 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.13.1</version>
+      <version>2.13.2</version>
     </dependency>
 
     <!-- Addressing OWASP warning: https://nvd.nist.gov/vuln/detail/CVE-2020-25649 -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>2.13.1</version>
+      <version>2.13.2</version>
     </dependency>
 
     <dependency>
       <groupId>xerces</groupId>
       <artifactId>xercesImpl</artifactId>
-      <version>2.12.1</version>
+      <version>2.12.2</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.parboiled/parboiled-java -->
     <dependency>
       <groupId>org.parboiled</groupId>
       <artifactId>parboiled-java</artifactId>
-      <version>1.4.0</version>
+      <version>1.4.1</version>
     </dependency>
 
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>sendgrid-java</artifactId>
-      <version>4.8.2</version>
+      <version>4.9.0</version>
       <exclusions>
           <exclusion>
               <groupId>com.fasterxml.jackson.core</groupId>
@@ -363,7 +376,7 @@
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>java-http-client</artifactId>
-      <version>4.3.9</version>
+      <version>4.5.0</version>
       <exclusions>
         <exclusion>
           <artifactId>org.apache.httpcomponents</artifactId>
@@ -471,7 +484,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>4.3.1</version>
+      <version>4.4.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -503,7 +516,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>31.0.1-jre</version>
+      <version>31.1-jre</version>
     </dependency>
 
     <!-- Pulling in directly to evict older, transitive dependencies -->
@@ -545,14 +558,14 @@
     <dependency>
       <groupId>org.mock-server</groupId>
       <artifactId>mockserver-client-java</artifactId>
-      <version>5.11.2</version>
+      <version>${mockserver.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
-      <version>1.33.1</version>
+      <version>1.33.2</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.guava</groupId>
@@ -569,13 +582,13 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-storage</artifactId>
-      <version>v1-rev20211201-1.32.1</version>
+      <version>v1-rev20220210-1.32.1</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.3.0</version>
+      <version>2.4.5</version>
     </dependency>
 
     <dependency>
@@ -605,7 +618,7 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.8.9</version>
+      <version>2.9.0</version>
     </dependency>
 
     <dependency>
@@ -625,7 +638,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>7.16.3</version>
+      <version>8.1.0</version>
     </dependency>
 
     <!-- See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/11441966 -->

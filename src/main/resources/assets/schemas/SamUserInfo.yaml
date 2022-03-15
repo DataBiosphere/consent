@@ -1,5 +1,8 @@
 type: object
 properties:
+  adminEnabled:
+    type: boolean
+    description: Admin Enabled status
   userSubjectId:
     type: string
     description: Sam User subject id

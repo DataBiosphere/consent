@@ -354,6 +354,9 @@ public class User {
 
     @Transient
     public List<Integer> getUserRoleIdsFromUser() {
+        if (Objects.isNull(this.getRoles())) {
+            return List.of();
+        }
         return this.getRoles()
           .stream()
           .map(UserRole::getRoleId)

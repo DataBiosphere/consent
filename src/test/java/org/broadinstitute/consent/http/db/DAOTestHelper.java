@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -159,8 +160,10 @@ public class DAOTestHelper {
         createdDataAccessRequestReferenceIds.forEach(darId -> {
             List<Election> elections = electionDAO.findElectionsByReferenceId(darId);
             createdElectionIds.addAll(elections.stream().map(Election::getElectionId).collect(Collectors.toList()));
-            List<Vote> votes = voteDAO.findVotesByElectionIds(createdElectionIds);
-            createdVoteIds.addAll(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
+            if (!createdElectionIds.isEmpty()) {
+                List<Vote> votes = voteDAO.findVotesByElectionIds(createdElectionIds);
+                createdVoteIds.addAll(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
+            }
         });
 
         ApprovalExpirationTime aet = approvalExpirationTimeDAO.findApprovalExpirationTime();
@@ -287,9 +290,13 @@ public class DAOTestHelper {
     }
 
     protected void closeElection(Election election) {
+        changeElectionStatus(election, ElectionStatus.CLOSED);
+    }
+
+    protected void changeElectionStatus(Election election, ElectionStatus status) {
         electionDAO.updateElectionById(
                 election.getElectionId(),
-                ElectionStatus.CLOSED.getValue(),
+                status.getValue(),
                 new Date());
     }
 
@@ -347,6 +354,7 @@ public class DAOTestHelper {
         return consentDAO.findConsentById(consentId);
     }
 
+
     protected Match createMatch() {
         DataAccessRequest dar = createDataAccessRequestV3();
         Dac dac = createDac();
@@ -374,6 +382,15 @@ public class DAOTestHelper {
         createUserProperty(userId, UserFields.ORCID.getValue());
         addUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
         createdUserIds.add(userId);
+        return userDAO.findUserById(userId);
+    }
+
+    protected User createUserMultipleProperties() {
+        User user = createUser();
+        Integer userId = user.getDacUserId();
+        createUserProperty(userId, UserFields.PI_NAME.getValue());
+        createUserProperty(userId, UserFields.PI_EMAIL.getValue());
+        createUserProperty(userId, UserFields.DEPARTMENT.getValue());
         return userDAO.findUserById(userId);
     }
 
@@ -569,6 +586,17 @@ public class DAOTestHelper {
         return user.getInstitutionId();
     }
 
+    protected DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId, int datasetId, int userId, String darCode) {
+        DataAccessRequestData data = new DataAccessRequestData();
+        List<Integer> datasetIds = Collections.singletonList(datasetId);
+        data.setDatasetIds(datasetIds);
+        data.setProjectTitle(RandomStringUtils.random(10));
+        String referenceId = RandomStringUtils.randomAlphanumeric(20);
+        dataAccessRequestDAO.insertVersion3(collectionId, referenceId, userId, new Date(), new Date(), new Date(), new Date(), data);
+        createdDataAccessRequestReferenceIds.add(referenceId);
+        return dataAccessRequestDAO.findByReferenceId(referenceId);
+    }
+
     private DataAccessRequest insertDAR(Integer userId, Integer collectionId, String darCode) {
         DataAccessRequestData data;
         Date now = new Date();
@@ -623,7 +651,7 @@ public class DAOTestHelper {
     }
 
     protected DarCollection createDarCollection() {
-        User user = createUser();
+        User user = createUserWithInstitution();
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         DataSet dataset = createDataset();
@@ -638,20 +666,70 @@ public class DAOTestHelper {
         return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
     }
 
-    protected DarCollection createDarCollectionWithSingleDataAccessRequest() {
-        Date now = new Date();
-        User user = createUser();
+    protected void createConsentAndAssociationWithDatasetIdAndDACId(int datasetId, int dacId ) {
+        Consent consent = createConsent(dacId);
+        createAssociation(consent.getConsentId(), datasetId);
+    }
+
+    protected DarCollection createDarCollectionWithDatasetsAndConsentAssociation(int dacId, User user, List<DataSet> datasets) {
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        datasets.stream()
+                .forEach(dataset-> {
+                    DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDataSetId(), user.getDacUserId(), darCode);
+                    Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+                    Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+                    createFinalVote(user.getDacUserId(), cancelled.getElectionId());
+                    createFinalVote(user.getDacUserId(), access.getElectionId());
+                    createConsentAndAssociationWithDatasetIdAndDACId(dataset.getDataSetId(), dacId);
+                });
+        createdDarCollections.add(collectionId);
+        return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    }
+
+    protected DarCollection createDarCollectionMultipleUserProperties() {
+        User user = createUserMultipleProperties();
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        DataSet dataset = createDataset();
+        DataAccessRequest dar = insertDAR(user.getDacUserId(), collection_id, darCode);
+        Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        createFinalVote(user.getDacUserId(), cancelled.getElectionId());
+        createFinalVote(user.getDacUserId(), access.getElectionId());
+        insertDAR(user.getDacUserId(), collection_id, darCode);
+        insertDAR(user.getDacUserId(), collection_id, darCode);
+        createdDarCollections.add(collection_id);
+        return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+    }
+
+
+    protected DarCollection createDarCollectionWithSingleDataAccessRequest() {
+        User user = createUser();
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Dac dac = createDac();
+        createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+        createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
+        Consent consent = createConsent(dac.getDacId());
+        DataSet dataset = createDataset();
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        createDarForCollection(user, collectionId, dataset);
+        createdDarCollections.add(collectionId);
+        return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    }
+
+    protected DataAccessRequest createDarForCollection(User user, Integer collectionId, DataSet dataset) {
+        Date now = new Date();
         DataAccessRequest dar = new DataAccessRequest();
         dar.setReferenceId(UUID.randomUUID().toString());
         DataAccessRequestData data = new DataAccessRequestData();
+        data.setDatasetIds(List.of(dataset.getDataSetId()));
         dar.setData(data);
         dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getDacUserId(), now, now, now, now, data);
-        dataAccessRequestDAO.updateDraftForCollection(collection_id, dar.getReferenceId());
+        dataAccessRequestDAO.updateDraftForCollection(collectionId, dar.getReferenceId());
         dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
         createdDataAccessRequestReferenceIds.add(dar.getReferenceId());
-        createdDarCollections.add(collection_id);
-        return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+        return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     }
 }

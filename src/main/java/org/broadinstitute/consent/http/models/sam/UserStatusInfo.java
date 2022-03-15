@@ -5,9 +5,19 @@ import com.google.gson.Gson;
 /** This represents the Sam response to GET /register/user/v2/self/info */
 public class UserStatusInfo {
 
+  private Boolean adminEnabled;
   private String userSubjectId;
   private String userEmail;
   private Boolean enabled;
+
+  public Boolean getAdminEnabled() {
+    return adminEnabled;
+  }
+
+  public UserStatusInfo setAdminEnabled(Boolean adminEnabled) {
+    this.adminEnabled = adminEnabled;
+    return this;
+  }
 
   public String getUserSubjectId() {
     return userSubjectId;

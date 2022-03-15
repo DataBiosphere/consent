@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
@@ -88,11 +89,36 @@ public class DarCollectionResource extends Resource {
     try {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
       User user = userService.findUserByEmail(authUser.getEmail());
+
+      if (checkAdminPermissions(user) || checkSoPermissions(user, collection) || checkDacPermissions(user, collection)) {
+        return Response.ok().entity(collection).build();
+      }
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
+
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private boolean checkAdminPermissions(User user) {
+    return user.hasUserRole(UserRoles.ADMIN);
+  }
+
+  private boolean checkDacPermissions(User user, DarCollection collection) {
+    List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
+
+    return collection.getDatasets().stream()
+            .map(DataSet::getDataSetId)
+            .anyMatch(userDatasetIds::contains);
+  }
+
+  private boolean checkSoPermissions(User user, DarCollection collection) {
+    Integer creatorInstitutionId = collection.getCreateUser().getInstitutionId();
+    boolean institutionsMatch = Objects.nonNull(creatorInstitutionId)
+            && creatorInstitutionId.equals(user.getInstitutionId());
+
+    return user.hasUserRole(UserRoles.SIGNINGOFFICIAL) && institutionsMatch;
   }
 
   @GET
@@ -107,46 +133,6 @@ public class DarCollectionResource extends Resource {
       DarCollection collection = darCollectionService.getByReferenceId(referenceId);
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Path("query")
-  @Produces("application/json")
-  @RolesAllowed(RESEARCHER)
-  public Response getCollectionsByInitialQuery(
-    @Auth AuthUser authUser,
-    @QueryParam("filterTerm") String filterTerm,
-    @QueryParam("sortField") String sortField,
-    @QueryParam("sortOrder") String sortOrder,
-    @QueryParam("pageSize") int pageSize
-  ) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields, DarCollection.defaultTokenSortField);
-      PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(token, user);
-      return Response.ok().entity(paginationResponse).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Path("paginated")
-  @Produces("application/json")
-  @RolesAllowed(RESEARCHER)
-  public Response getCollectionsByToken(
-    @Auth AuthUser authUser,
-    @QueryParam("token") String token
-  ) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      String json = getDecodedJson(token);
-      PaginationToken paginationToken = convertJsonToPaginationToken(json);
-      PaginationResponse<DarCollection> paginationResponse = darCollectionService.getCollectionsWithFilters(paginationToken, user);
-      return Response.ok(paginationResponse).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -226,6 +212,50 @@ public class DarCollectionResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       DarCollection updatedCollection = darCollectionService.createElectionsForDarCollection(user, sourceCollection);
       return Response.ok(updatedCollection).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+   @GET
+   @Path("role/{roleName}/query")
+   @Consumes("application/json")
+   @PermitAll
+   public Response queryCollectionsByFiltersAndUserRoles(
+     @Auth AuthUser authUser,
+     @PathParam("roleName") String roleName,
+     @QueryParam("sortOrder") String sortOrder,
+     @QueryParam("filterTerm") String filterTerm,
+     @QueryParam("sortField") String sortField,
+     @QueryParam("pageSize") int pageSize
+   ) {
+     try{
+       User user = userService.findUserByEmail(authUser.getEmail());
+       validateUserHasRoleName(user, roleName);
+       PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields, DarCollection.defaultTokenSortField);
+       PaginationResponse<DarCollection> response = darCollectionService.queryCollectionsByFiltersAndUserRoles(user, token, roleName);
+       return Response.ok().entity(response).build();
+     } catch(Exception e) {
+       return createExceptionResponse(e);
+     }
+   }
+
+  @GET
+  @Path("role/{roleName}/paginated")
+  @Produces("application/json")
+  @RolesAllowed(RESEARCHER)
+  public Response getCollectionsByToken(
+          @Auth AuthUser authUser,
+          @QueryParam("token") String token,
+          @PathParam("roleName") String roleName
+  ) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateUserHasRoleName(user, roleName);
+      String json = getDecodedJson(token);
+      PaginationToken paginationToken = convertJsonToPaginationToken(json);
+      PaginationResponse<DarCollection> paginationResponse = darCollectionService.queryCollectionsByFiltersAndUserRoles(user, paginationToken, roleName);
+      return Response.ok().entity(paginationResponse).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

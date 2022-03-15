@@ -1,12 +1,16 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
+import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -16,20 +20,46 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class DarCollectionServiceDAO {
 
+  private final DatasetDAO datasetDAO;
+  private final ElectionDAO electionDAO;
   private final Jdbi jdbi;
   private final UserDAO userDAO;
 
   @Inject
-  public DarCollectionServiceDAO(Jdbi jdbi, UserDAO userDAO) {
+  public DarCollectionServiceDAO(DatasetDAO datasetDAO, ElectionDAO electionDAO, Jdbi jdbi, UserDAO userDAO) {
+    this.datasetDAO = datasetDAO;
+    this.electionDAO = electionDAO;
     this.jdbi = jdbi;
     this.userDAO = userDAO;
   }
 
-  public void createElectionsForDarCollection(DarCollection collection) throws SQLException {
+  /**
+   * Find all Dar Collection + Dataset combinations that are available to the user.
+   *    - Admins have all available to them
+   *    - Chairs can only create elections for datasets in their DACs
+   *
+   * DarCollections with no elections, or with previously canceled elections, are valid
+   * for initiating a new set of elections. Any DAR elections in open state should be ignored.
+   *
+   * @param user The User initiating new elections for a collection
+   * @param collection The DarCollection
+   */
+  public void createElectionsForDarCollection(User user, DarCollection collection) throws SQLException {
     final Date now = new Date();
+    boolean isAdmin = user.hasUserRole(UserRoles.ADMIN);
+    // If the user is not an admin, we need to know what datasets they have access to.
+    List<Integer> dacUserDatasetIds = isAdmin ?
+        List.of() :
+        datasetDAO
+            .findDataSetsByAuthUserEmail(user.getEmail())
+            .stream()
+            .map(DataSet::getDataSetId)
+            .collect(Collectors.toList());
     jdbi.useHandle(
         handle -> {
           // By default, new connections are set to auto-commit which breaks our rollback strategy.
@@ -46,12 +76,23 @@ public class DarCollectionServiceDAO {
           //    3. RP Election
           //    4. Member votes for rp election
           collection.getDars().values().forEach(dar -> {
+                // If there is an existing open election for this DAR, we can ignore it
+                Election lastDataAccessElection = electionDAO.findLastElectionByReferenceIdAndType(dar.getReferenceId(), ElectionType.DATA_ACCESS.getValue());
+                boolean ignore = Objects.nonNull(lastDataAccessElection) && lastDataAccessElection.getStatus().equals(ElectionStatus.OPEN.getValue());
+
+                // If the user is not an admin, then the dataset must be in the list of the user's DAC Datasets
+                // Otherwise, we need to skip election creation for this DAR as well.
                 Integer datasetId = dar.getData().getDatasetIds().get(0);
-                List<User> voteUsers = findVoteUsersForDataset(datasetId);
-                inserts.add(createElectionInsert(handle, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, datasetId));
-                inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
-                inserts.add(createElectionInsert(handle, ElectionType.RP.getValue(), dar.getReferenceId(), now, datasetId));
-                inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.RP.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
+                if (!isAdmin && !dacUserDatasetIds.contains(datasetId)) {
+                    ignore = true;
+                }
+                if (!ignore) {
+                    List<User> voteUsers = findVoteUsersForDataset(datasetId);
+                    inserts.add(createElectionInsert(handle, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, datasetId));
+                    inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
+                    inserts.add(createElectionInsert(handle, ElectionType.RP.getValue(), dar.getReferenceId(), now, datasetId));
+                    inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.RP.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
+                }
           });
           inserts.forEach(Update::execute);
           handle.commit();

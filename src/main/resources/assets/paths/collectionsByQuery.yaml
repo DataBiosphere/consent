@@ -4,6 +4,19 @@ get:
   tags:
     - DAR Collection
   parameters:
+    - name: roleName
+      in: path
+      description: String value that represents role (used to determine query scope)
+      required: true
+      schema:
+        type: string
+        default: Researcher
+        enum:
+          - Researcher
+          - SigningOfficial
+          - Member
+          - Chairperson
+          - Admin
     - name: filterTerm
       in: query
       description: String value that represents term(s) to search upon
@@ -14,7 +27,12 @@ get:
       description: String value that represents field to order by
       schema:
         type: string
-      default: "darCode"
+        default: "darCode"
+        enum:
+          - researcher
+          - darCode
+          - projectTitle
+          - institution
     - name: sortOrder
       in: query
       description: String value that represents direction of ordering
