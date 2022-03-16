@@ -93,4 +93,60 @@ public class VoteResource extends Resource {
             return createExceptionResponse(e);
         }
     }
+
+    /**
+     * This API will take a boolean vote value as a query param and apply it to the list of vote ids
+     * passed in as a list of integer vote ids.
+     *
+     * Error cases are:
+     * 1. Vote is null
+     * 2. Auth user is not the owner of all votes being updated
+     * 3. No votes match the list of ids provided
+     *
+     * @param authUser The AuthUser
+     * @param json The boolean value to update votes to, string value for all rationales,
+     *             and list of vote ids, in json format
+     * @return Response with results of the update.
+     */
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed({CHAIRPERSON, MEMBER})
+    public Response updateVotes2(
+            @Auth AuthUser authUser,
+            String json) {
+        // Validate input json - it needs to be an array of integers
+        Type intListType = new TypeToken<ArrayList<Integer>>(){}.getType();
+        List<Integer> voteIds;
+        try {
+            voteIds = new ArrayList<>(gson.fromJson(json, intListType));
+        } catch (Exception e) {
+            return createExceptionResponse(
+                    new BadRequestException("Unable to parse required vote ids: " + json)
+            );
+        }
+
+        if (voteIds.isEmpty()) {
+            return createExceptionResponse(new NotFoundException());
+        }
+
+        try {
+            List<Vote> votes = voteService.findVotesByIds(voteIds);
+            if (votes.isEmpty()) {
+                return createExceptionResponse(new NotFoundException());
+            }
+
+            // Validate that the user is only updating their own votes:
+            User user = userService.findUserByEmail(authUser.getEmail());
+            boolean authed = votes.stream().map(Vote::getDacUserId).allMatch(id -> id.equals(user.getDacUserId()));
+            if (!authed) {
+                return createExceptionResponse(new NotFoundException());
+            }
+
+            List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, vote, rationale);
+            return Response.ok().entity(updatedVotes).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
 }
