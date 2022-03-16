@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Path("api/votes")
 public class VoteResource extends Resource {
@@ -91,6 +92,79 @@ public class VoteResource extends Resource {
             return Response.ok().entity(updatedVotes).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
+        }
+    }
+
+    /**
+     * This API will update the rationale for a list of vote ids.
+     * The Rationale for RP Votes can be updated for any election status.
+     * The Rationale for DataAccess Votes can only be updated for OPEN elections.
+     * In all cases, one can only update their own votes.
+     *
+     * @param authUser The AuthUser
+     * @param json The rationale and vote ids to update
+     * @return Response with results of the update.
+     */
+    @Path("rationale")
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed({CHAIRPERSON, MEMBER})
+    public Response updateVoteRationale(@Auth AuthUser authUser, String json) {
+        User user = userService.findUserByEmail(authUser.getEmail());
+        RationaleUpdate update;
+        try {
+            update = new Gson().fromJson(json, RationaleUpdate.class);
+        } catch (Exception e) {
+            return createExceptionResponse(
+                    new BadRequestException("Unable to parse rationale update: " + json)
+            );
+        }
+        if (Objects.isNull(update) || Objects.isNull(update.voteIds) || update.voteIds.isEmpty()) {
+            return createExceptionResponse(
+                    new BadRequestException("Unable to update empty vote ids: " + json)
+            );
+        }
+        List<Vote> votes = voteService.findVotesByIds(update.voteIds);
+        if (votes.isEmpty()) {
+            return createExceptionResponse(new NotFoundException());
+        }
+
+        // Ensure the user is only updating their votes
+        boolean permitted = votes.stream().allMatch(vote -> vote.getDacUserId().equals(user.getDacUserId()));
+        if (!permitted) {
+            return createExceptionResponse(new NotFoundException());
+        }
+
+        try {
+            List<Vote> updatedVotes = voteService.updateRationaleByVoteIds(update.voteIds, update.rationale);
+            return Response.ok().entity(updatedVotes).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    static class RationaleUpdate {
+        List<Integer> voteIds;
+        String rationale;
+
+        public RationaleUpdate() {
+        }
+
+        public List<Integer> getVoteIds() {
+            return voteIds;
+        }
+
+        public void setVoteIds(List<Integer> voteIds) {
+            this.voteIds = voteIds;
+        }
+
+        public String getRationale() {
+            return rationale;
+        }
+
+        public void setRationale(String rationale) {
+            this.rationale = rationale;
         }
     }
 }
