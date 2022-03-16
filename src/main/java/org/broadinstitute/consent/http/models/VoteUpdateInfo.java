@@ -15,7 +15,7 @@ public class VoteUpdateInfo {
     @JsonProperty
     private List<Integer> voteIds;
 
-    public VoteUpdateInfo() {};
+    public VoteUpdateInfo() {}
 
     public VoteUpdateInfo(Boolean vote, String rationale, List<Integer> voteIds) {
         this.vote = vote;

@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.resources;
 
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
