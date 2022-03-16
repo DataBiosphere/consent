@@ -103,10 +103,6 @@ public class DataAccessRequestResourceVersion2Test {
   public void testCreateDataAccessRequestNoLibraryCard() {
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
-      when(dataAccessRequestService.createDataAccessRequest(any(), any()))
-          .thenReturn(Collections.emptyList());
-      doNothing().when(matchService).reprocessMatchesForPurpose(any());
-      doNothing().when(emailNotifierService).sendNewDARRequestMessage(any(), any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
