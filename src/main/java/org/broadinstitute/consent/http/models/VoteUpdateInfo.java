@@ -25,12 +25,23 @@ public class VoteUpdateInfo {
         return vote;
     }
 
+    public void setVote(Boolean vote) {
+        this.vote = vote;
+    }
+
     public String getRationale() {
         return rationale;
+    }
+
+    public void setRationale(String rationale) {
+        this.rationale = rationale;
     }
 
     public List<Integer> getVoteIds() {
         return voteIds;
     }
 
+    public void setVoteIds(List<Integer> voteIds) {
+        this.voteIds = voteIds;
+    }
 }

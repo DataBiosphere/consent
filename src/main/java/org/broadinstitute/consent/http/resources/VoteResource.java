@@ -53,7 +53,7 @@ public class VoteResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed({CHAIRPERSON, MEMBER})
-    public Response updateVotes2(
+    public Response updateVotes(
             @Auth AuthUser authUser,
             String json) {
         VoteUpdateInfo voteUpdateInfo;
