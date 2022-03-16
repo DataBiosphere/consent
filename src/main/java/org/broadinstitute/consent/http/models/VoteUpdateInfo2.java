@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public class VoteUpdateInfo {
+public class VoteUpdateInfo2 {
 
     @JsonProperty
     private Boolean vote;
@@ -15,11 +15,11 @@ public class VoteUpdateInfo {
     @JsonProperty
     private List<Integer> voteIds;
 
-    public VoteUpdateInfo() {
+    public VoteUpdateInfo2() {
 
     }
 
-    public VoteUpdateInfo(Boolean vote, String rationale, List<Integer> voteIds) {
+    public VoteUpdateInfo2(Boolean vote, String rationale, List<Integer> voteIds) {
         this.vote = vote;
         this.rationale = rationale;
         this.voteIds = voteIds;

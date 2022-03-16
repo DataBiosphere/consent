@@ -1,12 +1,13 @@
 package org.broadinstitute.consent.http.resources;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.VoteUpdateInfo;
+
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 
@@ -86,6 +87,52 @@ public class VoteResource extends Resource {
             return Response.ok().entity(updatedVotes).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
+        }
+    }
+
+    static class VoteUpdateInfo {
+
+        @JsonProperty
+        private Boolean vote;
+
+        @JsonProperty
+        private String rationale;
+
+        @JsonProperty
+        private List<Integer> voteIds;
+
+        public VoteUpdateInfo() {
+
+        }
+
+        public VoteUpdateInfo(Boolean vote, String rationale, List<Integer> voteIds) {
+            this.vote = vote;
+            this.rationale = rationale;
+            this.voteIds = voteIds;
+        }
+
+        public Boolean getVote() {
+            return vote;
+        }
+
+        public void setVote(Boolean vote) {
+            this.vote = vote;
+        }
+
+        public String getRationale() {
+            return rationale;
+        }
+
+        public void setRationale(String rationale) {
+            this.rationale = rationale;
+        }
+
+        public List<Integer> getVoteIds() {
+            return voteIds;
+        }
+
+        public void setVoteIds(List<Integer> voteIds) {
+            this.voteIds = voteIds;
         }
     }
 }
