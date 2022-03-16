@@ -76,6 +76,19 @@ public class VoteResourceTest {
   }
 
   @Test
+  public void testUpdateVotes_noVoteValue() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
+    initResource();
+
+    VoteUpdateInfo voteUpdateInfo = new VoteUpdateInfo();
+    voteUpdateInfo.setRationale("example");
+    voteUpdateInfo.setVoteIds(List.of(1, 2, 3));
+    Response response = resource.updateVotes(authUser, gson.toJson(voteUpdateInfo, VoteUpdateInfo.class));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
   public void testUpdateVotes_invalidUser() {
     user.setDacUserId(1);
     vote.setDacUserId(2);
