@@ -60,6 +60,7 @@ public class VoteResourceTest {
     VoteResource.VoteUpdateInfo voteUpdateInfo = new VoteResource.VoteUpdateInfo();
     voteUpdateInfo.setVote(true);
     voteUpdateInfo.setRationale("example");
+
     Response response = resource.updateVotes(authUser, gson.toJson(voteUpdateInfo, VoteResource.VoteUpdateInfo.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
@@ -93,6 +94,7 @@ public class VoteResourceTest {
     VoteResource.VoteUpdateInfo voteUpdateInfo = new VoteResource.VoteUpdateInfo();
     voteUpdateInfo.setRationale("example");
     voteUpdateInfo.setVoteIds(List.of(1, 2, 3));
+
     Response response = resource.updateVotes(authUser, gson.toJson(voteUpdateInfo, VoteResource.VoteUpdateInfo.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
@@ -160,6 +162,7 @@ public class VoteResourceTest {
     VoteResource.VoteUpdateInfo voteUpdateInfo = new VoteResource.VoteUpdateInfo();
     voteUpdateInfo.setVote(false);
     voteUpdateInfo.setVoteIds(List.of(1, 2, 3));
+
     Response response = resource.updateVotes(authUser, gson.toJson(voteUpdateInfo, VoteResource.VoteUpdateInfo.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
