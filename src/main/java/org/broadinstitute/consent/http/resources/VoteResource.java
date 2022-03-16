@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Path("api/votes")
 public class VoteResource extends Resource {
@@ -124,13 +125,15 @@ public class VoteResource extends Resource {
                     new BadRequestException("Unable to parse required vote update information")
             );
         }
-
-        if (voteIds.isEmpty()) {
+        if (Objects.isNull(voteUpdateInfo.getVote())) {
+            return createExceptionResponse(new BadRequestException("Vote value is required"));
+        }
+        if (voteUpdateInfo.getVoteIds().isEmpty()) {
             return createExceptionResponse(new NotFoundException());
         }
 
         try {
-            List<Vote> votes = voteService.findVotesByIds(voteIds);
+            List<Vote> votes = voteService.findVotesByIds(voteUpdateInfo.getVoteIds());
             if (votes.isEmpty()) {
                 return createExceptionResponse(new NotFoundException());
             }
@@ -142,7 +145,7 @@ public class VoteResource extends Resource {
                 return createExceptionResponse(new NotFoundException());
             }
 
-            List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, vote, rationale);
+            List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, voteUpdateInfo.getVote(), voteUpdateInfo.getRationale());
             return Response.ok().entity(updatedVotes).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
