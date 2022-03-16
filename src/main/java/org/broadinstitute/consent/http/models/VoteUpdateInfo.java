@@ -14,4 +14,16 @@ public class VoteUpdateInfo {
 
     @JsonProperty
     private List<Integer> voteIds;
+
+    public Boolean getVote() {
+        return vote;
+    }
+
+    public String getRationale() {
+        return rationale;
+    }
+
+    public List<Integer> getVoteId() {
+        return voteIds;
+    }
 }
