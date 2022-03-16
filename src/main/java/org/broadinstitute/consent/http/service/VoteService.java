@@ -335,4 +335,8 @@ public class VoteService {
         throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
     }
 
+    public List<Vote> updateRationaleByVoteIds(List<Integer> voteIds, String rationale) {
+        voteDAO.updateRationaleByVoteIds(voteIds, rationale);
+        return findVotesByIds(voteIds);
+    }
 }

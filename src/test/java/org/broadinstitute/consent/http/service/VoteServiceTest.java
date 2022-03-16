@@ -30,6 +30,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -369,6 +370,20 @@ public class VoteServiceTest {
         Vote vote = service.describeDataOwnerVote("test", 1);
         assertNotNull(vote);
         assertEquals(v.getVoteId(), vote.getVoteId());
+    }
+
+    @Test
+    public void testUpdateRationaleByVoteIds() {
+        doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
+        Vote v = setUpTestVote(true, true);
+        when(voteDAO.findVoteById(anyInt())).thenReturn(v);
+        initService();
+
+        try {
+            service.updateRationaleByVoteIds(List.of(1), "rationale");
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
     }
 
     private void setUpUserAndElectionVotes(UserRoles userRoles) {

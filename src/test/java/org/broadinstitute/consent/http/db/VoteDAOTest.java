@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReviewVote;
@@ -243,27 +244,27 @@ public class VoteDAOTest extends DAOTestHelper {
         assertEquals(vote.getVoteId(), foundVotes.get(0).getVoteId());
     }
 
-    @Test
-    public void testFindVoteByElectionIdAndType() {
-        User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        Dac dac = createDac();
-        Consent consent = createConsent(dac.getDacId());
-        DataSet dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
-        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
-
-        Vote foundVote = voteDAO.findVoteByElectionIdAndType(election.getElectionId(), vote.getType());
-        assertNotNull(foundVote);
-        assertEquals(vote.getVoteId(), foundVote.getVoteId());
-
-        Vote foundVote2 = voteDAO.findVoteByElectionIdAndType(election.getElectionId(), vote.getType().toLowerCase());
-        assertNotNull(foundVote2);
-        assertEquals(vote.getVoteId(), foundVote2.getVoteId());
-
-        Vote foundVote3 = voteDAO.findVoteByElectionIdAndType(election.getElectionId(), vote.getType().toUpperCase());
-        assertNotNull(foundVote3);
-        assertEquals(vote.getVoteId(), foundVote3.getVoteId());
-    }
+//    @Test
+//    public void testFindVoteByElectionIdAndType() {
+//        User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+//        Dac dac = createDac();
+//        Consent consent = createConsent(dac.getDacId());
+//        DataSet dataset = createDataset();
+//        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+//        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+//
+//        Vote foundVote = voteDAO.findVoteByElectionIdAndType(election.getElectionId(), vote.getType());
+//        assertNotNull(foundVote);
+//        assertEquals(vote.getVoteId(), foundVote.getVoteId());
+//
+//        Vote foundVote2 = voteDAO.findVoteByElectionIdAndType(election.getElectionId(), vote.getType().toLowerCase());
+//        assertNotNull(foundVote2);
+//        assertEquals(vote.getVoteId(), foundVote2.getVoteId());
+//
+//        Vote foundVote3 = voteDAO.findVoteByElectionIdAndType(election.getElectionId(), vote.getType().toUpperCase());
+//        assertNotNull(foundVote3);
+//        assertEquals(vote.getVoteId(), foundVote3.getVoteId());
+//    }
 
     @Test
     public void testFindChairPersonVoteByElectionIdAndDACUserId() {
@@ -608,4 +609,20 @@ public class VoteDAOTest extends DAOTestHelper {
         assertTrue(v);
     }
 
+    @Test
+    public void testUpdateRationaleByVoteIds() {
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        User user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
+        DataAccessRequest dar = createDataAccessRequestV3();
+        Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        Vote dacVote = createDacVote(user.getDacUserId(), election.getElectionId());
+        assertNull(dacVote.getRationale());
+
+        String rationale = RandomStringUtils.random(10, true, false);
+        voteDAO.updateRationaleByVoteIds(List.of(dacVote.getVoteId()), rationale);
+
+        Vote updatedVote = voteDAO.findVoteById(dacVote.getVoteId());
+        assertEquals(rationale, updatedVote.getRationale());
+    }
 }
