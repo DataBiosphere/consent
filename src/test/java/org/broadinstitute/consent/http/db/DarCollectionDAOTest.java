@@ -43,6 +43,13 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     assertEquals(1, allAfter.size());
     List<UserProperty> userProperties = allAfter.get(0).getCreateUser().getProperties();
     assertFalse(userProperties.isEmpty());
+    List<Election> elections = collection.getDars().values().stream()
+      .map(DataAccessRequest::getElections)
+      .map(electionMap -> electionMap.values())
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
+    assertNotNull(elections);
+    assertTrue(elections.size() > 0);
     userProperties.forEach(p -> assertEquals(collection.getCreateUserId(), p.getUserId()));
   }
 
