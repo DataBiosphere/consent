@@ -58,7 +58,9 @@ public class VoteResourceTest {
   @Test
   public void testUpdateVotes_nullIds() {
     initResource();
-    VoteUpdateInfo voteUpdateInfo = new VoteUpdateInfo(true, "example", null);
+    VoteUpdateInfo voteUpdateInfo = new VoteUpdateInfo();
+    voteUpdateInfo.setVote(true);
+    voteUpdateInfo.setRationale("example");
     Response response = resource.updateVotes(authUser, gson.toJson(voteUpdateInfo, VoteUpdateInfo.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
@@ -156,7 +158,9 @@ public class VoteResourceTest {
     when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
     initResource();
 
-    VoteUpdateInfo voteUpdateInfo = new VoteUpdateInfo(false, null, List.of(1, 2, 3));
+    VoteUpdateInfo voteUpdateInfo = new VoteUpdateInfo();
+    voteUpdateInfo.setVote(false);
+    voteUpdateInfo.setVoteIds(List.of(1, 2, 3));
     Response response = resource.updateVotes(authUser, gson.toJson(voteUpdateInfo, VoteUpdateInfo.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
