@@ -154,6 +154,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select vote from vote v where v.electionId = :electionId and lower(v.type) = 'chairperson'")
     Boolean findChairPersonVoteByElectionId(@Bind("electionId") Integer electionId);
 
-    @SqlUpdate("UPDATE vote v SET rationale = :rational WHERE v.voteid IN (<voteIds>)")
-    void updateRationaleByVoteIds(List<Integer> voteIds, String rationale);
+    @SqlUpdate("UPDATE vote v SET rationale = :rationale WHERE v.voteid IN (<voteIds>)")
+    void updateRationaleByVoteIds(@BindList("voteIds") List<Integer> voteIds, @Bind("rationale") String rationale);
 }
