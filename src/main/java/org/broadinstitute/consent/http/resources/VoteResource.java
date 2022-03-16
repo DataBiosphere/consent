@@ -144,7 +144,7 @@ public class VoteResource extends Resource {
         }
     }
 
-    static class RationaleUpdate {
+    public static class RationaleUpdate {
         List<Integer> voteIds;
         String rationale;
 
