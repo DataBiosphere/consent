@@ -26,28 +26,20 @@ import java.util.Set;
 @SuppressWarnings("SqlDialectInspection")
 public interface UserDAO extends Transactional<UserDAO> {
 
-    String QUERY_FIELD_SEPARATOR = ", ";
-
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
     @RegisterBeanMapper(value = Institution.class, prefix = "i")
-    @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
-    @RegisterBeanMapper(value = Institution.class, prefix = "lci")
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.institution_id, "
         + "     u.era_commons_id, "
-        + Institution.QUERY_FIELDS_WITH_LCI_PREFIX + QUERY_FIELD_SEPARATOR
-        + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
-        + LibraryCard.QUERY_FIELDS_WITH_LC_PREFIX + QUERY_FIELD_SEPARATOR
+        + Institution.QUERY_FIELDS_WITH_I_PREFIX + ", "
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name  "
         + " FROM dacuser u "
-        + " LEFT JOIN institution i ON u.institution_id = i.institution_id "
-        + " LEFT JOIN library_card lc ON lc.user_id = u.dacuserid "
-        + " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id"
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
         + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+        + " LEFT JOIN institution i ON u.institution_id = i.institution_id"
         + " WHERE u.dacuserid = :dacUserId")
     User findUserById(@Bind("dacUserId") Integer dacUserId);
 
@@ -87,22 +79,13 @@ public interface UserDAO extends Transactional<UserDAO> {
 
     @RegisterBeanMapper(value = User.class)
     @RegisterBeanMapper(value = UserRole.class)
-    @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
-    @RegisterBeanMapper(value = Institution.class, prefix = "lci")
-    @RegisterBeanMapper(value = Institution.class, prefix = "i")
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
         + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
         + "     u.email_preference, u.institution_id, "
         + "     u.era_commons_id, "
-        + Institution.QUERY_FIELDS_WITH_LCI_PREFIX + QUERY_FIELD_SEPARATOR
-        + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
-        + LibraryCard.QUERY_FIELDS_WITH_LC_PREFIX + QUERY_FIELD_SEPARATOR
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
         + " FROM dacuser u "
-        + " LEFT JOIN institution i ON u.institution_id = i.institution_id "
-        + " LEFT JOIN library_card lc ON lc.user_id = u.dacuserid "
-        + " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id"
         + " LEFT JOIN user_role ur ON ur.user_id = u.dacuserid "
         + " LEFT JOIN roles r ON r.roleid = ur.role_id "
         + " WHERE LOWER(u.email) = LOWER(:email)")
@@ -222,7 +205,7 @@ public interface UserDAO extends Transactional<UserDAO> {
                 " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
                 " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, " +
                 " lc.update_user_id AS lc_update_user_id, " +
-                Institution.QUERY_FIELDS_WITH_LCI_PREFIX + QUERY_FIELD_SEPARATOR +
+                Institution.QUERY_FIELDS_WITH_LCI_PREFIX + ", " +
                 Institution.QUERY_FIELDS_WITH_I_PREFIX +
             " FROM dacuser du " +
             " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
