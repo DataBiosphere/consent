@@ -313,7 +313,7 @@ public class VoteService {
             .filter(election -> !election.getStatus().equals(ElectionStatus.OPEN.getValue()))
             .collect(Collectors.toList());
         if (!nonOpenAccessElections.isEmpty()) {
-            throw new IllegalArgumentException("There are open Data Access elections for provided votes");
+            throw new IllegalArgumentException("There are non-open Data Access elections for provided votes");
         }
 
         // If there are non-DataAccess or non-RP elections, throw an error
@@ -322,7 +322,7 @@ public class VoteService {
             .filter(election -> !election.getElectionType().equals(ElectionType.RP.getValue()))
             .collect(Collectors.toList());
         if (!disallowedElections.isEmpty()) {
-            throw new IllegalArgumentException("There are non Data Access/RP elections for provided votes");
+            throw new IllegalArgumentException("There are non-Data Access/RP elections for provided votes");
         }
 
         voteDAO.updateRationaleByVoteIds(voteIds, rationale);
