@@ -351,11 +351,11 @@ public class VoteService {
         List<Election> elections = electionDAO.findElectionsByIds(electionIds);
 
         // If there are any DataAccess elections in a non-open state, throw an error
-        List<Election> nonOpenElections = elections.stream()
+        List<Election> nonOpenAccessElections = elections.stream()
             .filter(election -> election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
             .filter(election -> !election.getStatus().equals(ElectionStatus.OPEN.getValue()))
             .collect(Collectors.toList());
-        if (!nonOpenElections.isEmpty()) {
+        if (!nonOpenAccessElections.isEmpty()) {
             throw new IllegalArgumentException("There are open Data Access elections for provided votes");
         }
 
