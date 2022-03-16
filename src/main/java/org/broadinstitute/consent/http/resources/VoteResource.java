@@ -7,6 +7,7 @@ import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.VoteUpdateInfo;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 
@@ -115,14 +116,12 @@ public class VoteResource extends Resource {
     public Response updateVotes2(
             @Auth AuthUser authUser,
             String json) {
-        // Validate input json - it needs to be an array of integers
-        Type intListType = new TypeToken<ArrayList<Integer>>(){}.getType();
-        List<Integer> voteIds;
+        VoteUpdateInfo voteUpdateInfo;
         try {
-            voteIds = new ArrayList<>(gson.fromJson(json, intListType));
+            voteUpdateInfo = gson.fromJson(json, VoteUpdateInfo.class);
         } catch (Exception e) {
             return createExceptionResponse(
-                    new BadRequestException("Unable to parse required vote ids: " + json)
+                    new BadRequestException("Unable to parse required vote update information")
             );
         }
 
