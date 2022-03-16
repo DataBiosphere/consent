@@ -15,27 +15,22 @@ public class VoteUpdateInfo {
     @JsonProperty
     private List<Integer> voteIds;
 
-    public Boolean getVote() {
-        return vote;
+    public VoteUpdateInfo(Boolean vote, String rationale, List<Integer> voteIds) {
+        this.vote = vote;
+        this.rationale = rationale;
+        this.voteIds = voteIds;
     }
 
-    public void setVote(Boolean vote) {
-        this.vote = vote;
+    public Boolean getVote() {
+        return vote;
     }
 
     public String getRationale() {
         return rationale;
     }
 
-    public void setRationale(String rationale) {
-        this.rationale = rationale;
-    }
-
     public List<Integer> getVoteIds() {
         return voteIds;
     }
 
-    public void setVoteIds(List<Integer> voteIds) {
-        this.voteIds = voteIds;
-    }
 }
