@@ -177,9 +177,9 @@ public class UserServiceTest {
         User u = generateUser();
         LibraryCard one = generateLibraryCard(u);
         LibraryCard two = generateLibraryCard(u);
-        u.addLibraryCard(one);
-        u.addLibraryCard(two);
+        List<LibraryCard> cards = List.of(one, two);
         when(userDAO.findUserById(any())).thenReturn(u);
+        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(cards);
         initService();
 
         User user = service.findUserById(u.getDacUserId());
