@@ -56,6 +56,14 @@ public class VoteResourceTest {
   }
 
   @Test
+  public void testUpdateVotes_nullIds() {
+    initResource();
+    VoteUpdateInfo voteUpdateInfo = new VoteUpdateInfo(true, "example", null);
+    Response response = resource.updateVotes(authUser, gson.toJson(voteUpdateInfo, VoteUpdateInfo.class));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
   public void testUpdateVotes_noIds() {
     initResource();
     VoteUpdateInfo voteUpdateInfo = new VoteUpdateInfo(true, "example", new ArrayList<>());
@@ -115,7 +123,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes() {
+  public void testUpdateVotesTrue() {
     user.setDacUserId(1);
     vote.setDacUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -123,6 +131,32 @@ public class VoteResourceTest {
     initResource();
 
     VoteUpdateInfo voteUpdateInfo = new VoteUpdateInfo(true, "example", List.of(1, 2, 3));
+    Response response = resource.updateVotes(authUser, gson.toJson(voteUpdateInfo, VoteUpdateInfo.class));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVotesFalse() {
+    user.setDacUserId(1);
+    vote.setDacUserId(1);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
+    initResource();
+
+    VoteUpdateInfo voteUpdateInfo = new VoteUpdateInfo(false, "example", List.of(1, 2, 3));
+    Response response = resource.updateVotes(authUser, gson.toJson(voteUpdateInfo, VoteUpdateInfo.class));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVotes_noRationale() {
+    user.setDacUserId(1);
+    vote.setDacUserId(1);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
+    initResource();
+
+    VoteUpdateInfo voteUpdateInfo = new VoteUpdateInfo(false, null, List.of(1, 2, 3));
     Response response = resource.updateVotes(authUser, gson.toJson(voteUpdateInfo, VoteUpdateInfo.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
