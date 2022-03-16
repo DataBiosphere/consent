@@ -49,14 +49,14 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_invalidJson2() {
+  public void testUpdateVotes_invalidJson() {
     initResource();
     Response response = resource.updateVotes2(authUser, "{\"vote\": true, \"ID\":12345}");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
-  public void testUpdateVotes_noIds2() {
+  public void testUpdateVotes_noIds() {
     initResource();
     VoteUpdateInfo voteUpdateInfo = new VoteUpdateInfo(true, "example", new ArrayList<>());
     Response response = resource.updateVotes2(authUser, gson.toJson(voteUpdateInfo, VoteUpdateInfo.class));
@@ -65,7 +65,7 @@ public class VoteResourceTest {
 
 
   @Test
-  public void testUpdateVotes_noVotesForIds2() {
+  public void testUpdateVotes_noVotesForIds() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(Collections.emptyList());
     initResource();
@@ -76,7 +76,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_invalidUser2() {
+  public void testUpdateVotes_invalidUser() {
     user.setDacUserId(1);
     vote.setDacUserId(2);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -89,7 +89,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_closedElection2() {
+  public void testUpdateVotes_closedElection() {
     user.setDacUserId(1);
     vote.setDacUserId(2);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -101,9 +101,8 @@ public class VoteResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
-
   @Test
-  public void testUpdateVotes2() {
+  public void testUpdateVotes() {
     user.setDacUserId(1);
     vote.setDacUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -114,7 +113,4 @@ public class VoteResourceTest {
     Response response = resource.updateVotes2(authUser, gson.toJson(voteUpdateInfo, VoteUpdateInfo.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
-
-
-
 }
