@@ -10,27 +10,15 @@ put:
     In the case of votes that impact elections, the associated 
     election will also be updated. Examples include votes of 
     type: "FINAL"
-  parameters:
-    - name: vote
-      in: query
-      description: The vote value to update for all votes
-      required: true
-      schema:
-        type: boolean
-    - name: rationale
-      in: query
-      description: Optional rationale to update for all votes
-      required: false
-      schema:
-        type: string
+
   requestBody:
-    description: List of vote ids in JSON format
+    description: Vote value, rationale (optional), and list of vote ids in JSON format
     required: true
     content:
       application/json:
         schema:
           type: string
-          example: [1, 2, 3]
+          example: { "vote": true|false, "rationale": "rationale string", "voteIds": [1, 2, 3] }
   tags:
     - Vote
   responses:
