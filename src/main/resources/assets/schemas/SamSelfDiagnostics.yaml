@@ -2,7 +2,9 @@ type: object
 properties:
   adminEnabled:
     type: boolean
-    description: Admin Enabled status
+    description: | 
+      Admin enabled/disabled status used to indicate whether or not a Terra admin has 
+      explicitly disabled a user in the system
   enabled:
     type: boolean
     description: Enabled status
