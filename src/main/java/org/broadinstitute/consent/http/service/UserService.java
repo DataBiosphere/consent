@@ -112,7 +112,9 @@ public class UserService {
             throw new NotFoundException("Unable to find user with id: " + id);
         }
         List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getDacUserId());
-        user.setLibraryCards(cards);
+        if (Objects.nonNull(cards) && !cards.isEmpty()) {
+            user.setLibraryCards(cards);
+        }
         return user;
     }
 
@@ -120,6 +122,10 @@ public class UserService {
         User user = userDAO.findUserByEmail(email);
         if (user == null) {
             throw new NotFoundException("Unable to find user with email: " + email);
+        }
+        List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getDacUserId());
+        if (Objects.nonNull(cards) && !cards.isEmpty()) {
+            user.setLibraryCards(cards);
         }
         return user;
     }
@@ -259,7 +265,7 @@ public class UserService {
         Gson gson = new Gson();
         User user = findUserById(userId);
         List<UserProperty> props = findAllUserProperties(user.getDacUserId());
-        List<LibraryCard> entries = libraryCardDAO.findLibraryCardsByUserId(user.getDacUserId());
+        List<LibraryCard> entries = Objects.nonNull(user.getLibraryCards()) ? user.getLibraryCards() : List.of();
         JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
         JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
         JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();

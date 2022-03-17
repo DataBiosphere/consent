@@ -986,47 +986,7 @@ paths:
   /api/dacuser/{id}:
     $ref: './paths/userById.yaml'
   /api/dar/v2:
-    post:
-      summary: Create Data Access Request, version 2
-      description: Creates a Data Access Request
-      parameters:
-        - name: dar
-          in: body
-          description: The fields that represent a DAR in json format.
-          required: true
-          schema:
-            $ref: './schemas/DataAccessRequest.yaml'
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the created Data Access Request.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: './schemas/DataAccessRequest.yaml'
-        500:
-          description: Internal Server Error.
-    get:
-      summary: Get all Data Access Requests
-      description: Returns the list of all Data Access Requests
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns a list of Data Access Requests
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: './schemas/DataAccessRequest.yaml'
-        403:
-          description: The user is not authorized to see all DARs
-        500:
-          description: Server Error
+    $ref: './paths/darV2.yaml'
   /api/dar/v2/{referenceId}:
     get:
       summary: Get a Data Access Request by Reference Id
