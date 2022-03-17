@@ -1,29 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.google.cloud.storage.BlobId;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -31,6 +9,8 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -41,7 +21,31 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessRequestResourceVersion2Test {
 
@@ -62,7 +66,7 @@ public class DataAccessRequestResourceVersion2Test {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    openMocks(this);
   }
 
   private void initResource() {
@@ -79,8 +83,9 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testCreateDataAccessRequest() {
+  public void testCreateDataAccessRequestWithLibraryCard() {
     try {
+      user.addLibraryCard(new LibraryCard());
       when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.createDataAccessRequest(any(), any()))
           .thenReturn(Collections.emptyList());
@@ -91,7 +96,19 @@ public class DataAccessRequestResourceVersion2Test {
     }
     initResource();
     Response response = resource.createDataAccessRequest(authUser, info, "");
-    assertEquals(201, response.getStatus());
+    assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testCreateDataAccessRequestNoLibraryCard() {
+    try {
+      when(userService.findUserByEmail(any())).thenReturn(user);
+    } catch (Exception e) {
+      fail("Initialization Exception: " + e.getMessage());
+    }
+    initResource();
+    Response response = resource.createDataAccessRequest(authUser, info, "");
+    assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -378,24 +395,24 @@ public class DataAccessRequestResourceVersion2Test {
   @Test
   public void getDataAccessRequests() {
     initResource();
-    List list = Collections.emptyList();
+    List<DataAccessRequest> list = Collections.emptyList();
     when(dataAccessRequestService.getDataAccessRequestsByUserRole(any())).thenReturn(list);
     Response res = resource.getDataAccessRequests(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
-    assertEquals(true, res.hasEntity());
+    assertTrue(res.hasEntity());
   }
 
   @Test
   public void getDraftDataAccessRequests() {
     initResource();
-    List list = Collections.emptyList();
+    List<DataAccessRequest> list = Collections.emptyList();
     User user = new User();
     user.setDacUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findAllDraftDataAccessRequestsByUser(any())).thenReturn(list);
     Response res = resource.getDraftDataAccessRequests(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
-    assertEquals(true, res.hasEntity());
+    assertTrue(res.hasEntity());
   }
 
   @Test
@@ -418,7 +435,7 @@ public class DataAccessRequestResourceVersion2Test {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     Response res = resource.getDraftDar(authUser, "id");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
-    assertEquals(true, res.hasEntity());
+    assertTrue(res.hasEntity());
   }
 
   @Test
@@ -456,14 +473,14 @@ public class DataAccessRequestResourceVersion2Test {
   @Test
   public void getDraftManageDataAccessRequests() {
     initResource();
-    List list = Collections.emptyList();
+    List<DataAccessRequestManage> list = Collections.emptyList();
     User user = new User();
     user.setDacUserId(10);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.getDraftDataAccessRequestManage(any())).thenReturn(list);
     Response res = resource.getDraftManageDataAccessRequests(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
-    assertEquals(true, res.hasEntity());
+    assertTrue(res.hasEntity());
   }
 
   @Test
