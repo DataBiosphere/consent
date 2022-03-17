@@ -115,7 +115,7 @@ public class VoteResourceTest {
   @Test
   public void testUpdateVotes_closedElection() {
     user.setDacUserId(1);
-    vote.setDacUserId(2);
+    vote.setDacUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new IllegalArgumentException()).when(voteService).findVotesByIds(any());
     initResource();
