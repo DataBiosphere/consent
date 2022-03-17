@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Date;
-import java.util.List;
-
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -17,11 +14,13 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
+import java.util.Date;
+import java.util.List;
+
 /**
  * For all json queries, note the double `??` for jdbi3 escaped jsonb operators:
  * https://jdbi.org/#_postgresql
  */
-@SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
 @RegisterRowMapper(DataAccessRequestMapper.class)
 public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO> {
 

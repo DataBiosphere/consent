@@ -17,12 +17,6 @@ import java.util.List;
 @RegisterRowMapper(UserPropertyMapper.class)
 public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
 
-    String ARE_YOU_PRINCIPAL_INVESTIGATOR = "isThePI";
-    String DO_YOU_HAVE_PI = "havePI";
-    String PUBMED_ID = "pubmedID";
-    String SCIENTIFIC_URL = "scientificURL";
-
-
     @SqlQuery("SELECT * FROM user_property WHERE userid = :userId")
     List<UserProperty> findResearcherPropertiesByUser(@Bind("userId") Integer userId);
 
@@ -37,18 +31,6 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
 
     @SqlBatch("DELETE FROM user_property WHERE userid = :userId AND propertykey = :propertyKey")
     void deletePropertiesByUserAndKey(@BindBean Collection<UserProperty> researcherProperties);
-
-    @SqlQuery(value = "SELECT * FROM user_property WHERE " +
-            "(propertykey = '" + ARE_YOU_PRINCIPAL_INVESTIGATOR + "' AND  propertyvalue != :isThePI) OR " +
-            "(propertykey = '" + DO_YOU_HAVE_PI + "' AND  propertyvalue != :havePI) OR " +
-            "(propertykey = '" + PUBMED_ID + "' AND  propertyvalue != :pubmedID) OR " +
-            "(propertykey = '" + SCIENTIFIC_URL + "' AND  propertyvalue != :scientificURL) " +
-            " AND userid = :userId")
-    List<UserProperty> findResearcherProperties(@Bind("userId") Integer userId, @Bind("isThePI") String isThePI,
-                                                      @Bind("havePI") String havePI, @Bind("pubmedID") String pubmedID, @Bind("scientificURL") String scientificURL);
-
-    @SqlQuery("SELECT propertyvalue FROM user_property WHERE userid = :userId and propertykey = :propertyKey")
-    String findPropertyValueByPK(@Bind("userId") Integer userId, @Bind("propertyKey") String propertyKey);
 
     @SqlQuery("SELECT * FROM user_property WHERE userid IN (<userIds>)")
     List<UserProperty> findResearcherPropertiesByUserIds(@BindList("userIds") List<Integer> userIds);
