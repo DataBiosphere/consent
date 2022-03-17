@@ -166,16 +166,16 @@ public class Vote {
 
 
 
-    public static class VoteUpdateInfo {
+    public static class VoteUpdate {
         private Boolean vote;
         private String rationale;
         private List<Integer> voteIds;
 
-        public VoteUpdateInfo() {
+        public VoteUpdate() {
 
         }
 
-        public VoteUpdateInfo(Boolean vote, String rationale, List<Integer> voteIds) {
+        public VoteUpdate(Boolean vote, String rationale, List<Integer> voteIds) {
             this.vote = vote;
             this.rationale = rationale;
             this.voteIds = voteIds;

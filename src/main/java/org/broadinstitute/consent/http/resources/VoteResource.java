@@ -54,24 +54,24 @@ public class VoteResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({CHAIRPERSON, MEMBER})
     public Response updateVotes(@Auth AuthUser authUser, String json) {
-        Vote.VoteUpdateInfo voteUpdateInfo;
+        Vote.VoteUpdate voteUpdate;
         try {
-            voteUpdateInfo = gson.fromJson(json, Vote.VoteUpdateInfo.class);
+            voteUpdate = gson.fromJson(json, Vote.VoteUpdate.class);
         } catch (Exception e) {
             return createExceptionResponse(
                     new BadRequestException("Unable to parse required vote update information")
             );
         }
 
-        if (Objects.isNull(voteUpdateInfo.getVote())) {
+        if (Objects.isNull(voteUpdate.getVote())) {
             return createExceptionResponse(new BadRequestException("Vote value is required"));
         }
-        if (Objects.isNull(voteUpdateInfo.getVoteIds()) || voteUpdateInfo.getVoteIds().isEmpty()) {
+        if (Objects.isNull(voteUpdate.getVoteIds()) || voteUpdate.getVoteIds().isEmpty()) {
             return createExceptionResponse(new BadRequestException("Vote ids are required"));
         }
 
         try {
-            List<Vote> votes = voteService.findVotesByIds(voteUpdateInfo.getVoteIds());
+            List<Vote> votes = voteService.findVotesByIds(voteUpdate.getVoteIds());
             if (votes.isEmpty()) {
                 return createExceptionResponse(new NotFoundException());
             }
@@ -83,7 +83,7 @@ public class VoteResource extends Resource {
                 return createExceptionResponse(new NotFoundException());
             }
 
-            List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, voteUpdateInfo.getVote(), voteUpdateInfo.getRationale());
+            List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, voteUpdate.getVote(), voteUpdate.getRationale());
             return Response.ok().entity(updatedVotes).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
