@@ -106,20 +106,20 @@ public class VoteResource extends Resource {
     @RolesAllowed({CHAIRPERSON, MEMBER})
     public Response updateVoteRationale(@Auth AuthUser authUser, String json) {
         User user = userService.findUserByEmail(authUser.getEmail());
-        RationaleUpdate update;
+        Vote.RationaleUpdate update;
         try {
-            update = new Gson().fromJson(json, RationaleUpdate.class);
+            update = new Gson().fromJson(json, Vote.RationaleUpdate.class);
         } catch (Exception e) {
             return createExceptionResponse(
                     new BadRequestException("Unable to parse rationale update: " + json)
             );
         }
-        if (Objects.isNull(update) || Objects.isNull(update.voteIds) || update.voteIds.isEmpty()) {
+        if (Objects.isNull(update) || Objects.isNull(update.getVoteIds()) || update.getVoteIds().isEmpty()) {
             return createExceptionResponse(
                     new BadRequestException("Unable to update empty vote ids: " + json)
             );
         }
-        List<Vote> votes = voteService.findVotesByIds(update.voteIds);
+        List<Vote> votes = voteService.findVotesByIds(update.getVoteIds());
         if (votes.isEmpty()) {
             return createExceptionResponse(new NotFoundException());
         }
@@ -131,34 +131,10 @@ public class VoteResource extends Resource {
         }
 
         try {
-            List<Vote> updatedVotes = voteService.updateRationaleByVoteIds(update.voteIds, update.rationale);
+            List<Vote> updatedVotes = voteService.updateRationaleByVoteIds(update.getVoteIds(), update.getRationale());
             return Response.ok().entity(updatedVotes).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
-        }
-    }
-
-    public static class RationaleUpdate {
-        List<Integer> voteIds;
-        String rationale;
-
-        public RationaleUpdate() {
-        }
-
-        public List<Integer> getVoteIds() {
-            return voteIds;
-        }
-
-        public void setVoteIds(List<Integer> voteIds) {
-            this.voteIds = voteIds;
-        }
-
-        public String getRationale() {
-            return rationale;
-        }
-
-        public void setRationale(String rationale) {
-            this.rationale = rationale;
         }
     }
 }

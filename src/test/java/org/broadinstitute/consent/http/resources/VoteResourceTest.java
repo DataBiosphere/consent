@@ -178,7 +178,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVoteRationale_EmptyVoteIds() {
-    VoteResource.RationaleUpdate update = new VoteResource.RationaleUpdate();
+    Vote.RationaleUpdate update = new Vote.RationaleUpdate();
     update.setRationale("Rationale");
     initResource();
 
@@ -191,7 +191,7 @@ public class VoteResourceTest {
     user.setDacUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(List.of());
-    VoteResource.RationaleUpdate update = new VoteResource.RationaleUpdate();
+    Vote.RationaleUpdate update = new Vote.RationaleUpdate();
     update.setVoteIds(List.of(1));
     update.setRationale("Rationale");
     initResource();
@@ -206,7 +206,7 @@ public class VoteResourceTest {
     vote.setDacUserId(2);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
-    VoteResource.RationaleUpdate update = new VoteResource.RationaleUpdate();
+    Vote.RationaleUpdate update = new Vote.RationaleUpdate();
     update.setVoteIds(List.of(1));
     update.setRationale("Rationale");
     initResource();
@@ -222,7 +222,7 @@ public class VoteResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
     when(voteService.updateRationaleByVoteIds(any(), any())).thenReturn(List.of(vote));
-    VoteResource.RationaleUpdate update = new VoteResource.RationaleUpdate();
+    Vote.RationaleUpdate update = new Vote.RationaleUpdate();
     update.setVoteIds(List.of(1));
     update.setRationale("Rationale");
     initResource();
