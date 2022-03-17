@@ -1,29 +1,28 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Date;
-
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
+import java.util.Date;
 
 public class LibraryCard {
 
-    private Integer id;
-    private Integer userId;
-    private Integer institutionId;
-    private String eraCommonsId;
-    private String userName;
-    private String userEmail;
-    private Date createDate;
-    private Integer createUserId;
-    private Date updateDate;
-    private Integer updateUserId;
+  private Integer id;
+  private Integer userId;
+  private Integer institutionId;
+  private String eraCommonsId;
+  private String userName;
+  private String userEmail;
+  private Date createDate;
+  private Integer createUserId;
+  private Date updateDate;
+  private Integer updateUserId;
 
-    private Institution institution;
+  private Institution institution;
 
   public LibraryCard() {
     this.createDate = new Date();
   }
-  
+
   public Integer getId() {
     return id;
   }
@@ -117,9 +116,6 @@ public class LibraryCard {
     if (libraryCard == this) return true;
     if (libraryCard == null || libraryCard.getClass() != getClass()) return false;
     LibraryCard other = (LibraryCard) libraryCard;
-    return new EqualsBuilder()
-          .append(id, other.getId())
-          .isEquals();
+    return new EqualsBuilder().append(id, other.getId()).isEquals();
   }
-    
 }
