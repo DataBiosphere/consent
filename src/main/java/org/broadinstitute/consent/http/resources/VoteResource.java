@@ -91,7 +91,6 @@ public class VoteResource extends Resource {
     }
 
     static class VoteUpdateInfo {
-
         private Boolean vote;
         private String rationale;
         private List<Integer> voteIds;
