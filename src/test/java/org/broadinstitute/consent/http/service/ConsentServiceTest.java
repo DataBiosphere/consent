@@ -328,7 +328,6 @@ public class ConsentServiceTest {
         Election mockElection = this.getTestElection();
         when(electionDAO.findLastElectionByReferenceIdAndType(anyString(), anyString())).thenReturn(mockElection);
 
-        Timestamp updateDate = new Timestamp(new Date().getTime());
         LocalDate localDate = LocalDate.now();
         ZoneId defaultZoneId = ZoneId.systemDefault();
         Consent testConsent = this.getTestConsent();
@@ -392,13 +391,6 @@ public class ConsentServiceTest {
         consent.setDataUse(new DataUse());
 
         return consent;
-    }
-
-    private DataSet getTestDataset() {
-        DataSet dataset = new DataSet();
-        dataset.setDataSetId(1);
-        dataset.setObjectId("test dataset");
-        return dataset;
     }
 
     private ConsentAssociation buildConsentAssociation(String atype, String... elements) {

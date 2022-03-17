@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 
 public class DefaultAuthFilterTest {
 
-    public static final int CREATED = Response.Status.CREATED.getStatusCode();
     private Optional principal = Optional.of("Testing DefaulthAuthFilter");
 
     @Rule
