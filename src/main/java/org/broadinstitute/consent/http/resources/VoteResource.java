@@ -92,13 +92,8 @@ public class VoteResource extends Resource {
 
     static class VoteUpdateInfo {
 
-        @JsonProperty
         private Boolean vote;
-
-        @JsonProperty
         private String rationale;
-
-        @JsonProperty
         private List<Integer> voteIds;
 
         public VoteUpdateInfo() {
