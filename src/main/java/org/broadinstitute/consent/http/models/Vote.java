@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 
 import java.util.Date;
+import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class Vote {
@@ -161,5 +162,47 @@ public class Vote {
     @Override
     public String toString() {
         return new Gson().toJson(this);
+    }
+
+
+
+    public static class VoteUpdate {
+        private Boolean vote;
+        private String rationale;
+        private List<Integer> voteIds;
+
+        public VoteUpdate() {
+
+        }
+
+        public VoteUpdate(Boolean vote, String rationale, List<Integer> voteIds) {
+            this.vote = vote;
+            this.rationale = rationale;
+            this.voteIds = voteIds;
+        }
+
+        public Boolean getVote() {
+            return vote;
+        }
+
+        public void setVote(Boolean vote) {
+            this.vote = vote;
+        }
+
+        public String getRationale() {
+            return rationale;
+        }
+
+        public void setRationale(String rationale) {
+            this.rationale = rationale;
+        }
+
+        public List<Integer> getVoteIds() {
+            return voteIds;
+        }
+
+        public void setVoteIds(List<Integer> voteIds) {
+            this.voteIds = voteIds;
+        }
     }
 }
