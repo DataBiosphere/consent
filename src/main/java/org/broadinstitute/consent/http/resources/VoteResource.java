@@ -54,9 +54,9 @@ public class VoteResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({CHAIRPERSON, MEMBER})
     public Response updateVotes(@Auth AuthUser authUser, String json) {
-        VoteUpdateInfo voteUpdateInfo;
+        Vote.VoteUpdateInfo voteUpdateInfo;
         try {
-            voteUpdateInfo = gson.fromJson(json, VoteUpdateInfo.class);
+            voteUpdateInfo = gson.fromJson(json, Vote.VoteUpdateInfo.class);
         } catch (Exception e) {
             return createExceptionResponse(
                     new BadRequestException("Unable to parse required vote update information")
