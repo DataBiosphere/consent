@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
