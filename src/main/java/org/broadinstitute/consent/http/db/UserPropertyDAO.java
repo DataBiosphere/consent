@@ -17,12 +17,6 @@ import java.util.List;
 @RegisterRowMapper(UserPropertyMapper.class)
 public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
 
-    String ARE_YOU_PRINCIPAL_INVESTIGATOR = "isThePI";
-    String DO_YOU_HAVE_PI = "havePI";
-    String PUBMED_ID = "pubmedID";
-    String SCIENTIFIC_URL = "scientificURL";
-
-
     @SqlQuery("SELECT * FROM user_property WHERE userid = :userId")
     List<UserProperty> findResearcherPropertiesByUser(@Bind("userId") Integer userId);
 
