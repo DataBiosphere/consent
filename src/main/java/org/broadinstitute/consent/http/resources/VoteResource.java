@@ -88,4 +88,53 @@ public class VoteResource extends Resource {
             return createExceptionResponse(e);
         }
     }
+
+    /**
+     * This API will update the rationale for a list of vote ids.
+     * The Rationale for RP Votes can be updated for any election status.
+     * The Rationale for DataAccess Votes can only be updated for OPEN elections.
+     * In all cases, one can only update their own votes.
+     *
+     * @param authUser The AuthUser
+     * @param json The rationale and vote ids to update
+     * @return Response with results of the update.
+     */
+    @Path("rationale")
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed({CHAIRPERSON, MEMBER})
+    public Response updateVoteRationale(@Auth AuthUser authUser, String json) {
+        User user = userService.findUserByEmail(authUser.getEmail());
+        Vote.RationaleUpdate update;
+        try {
+            update = new Gson().fromJson(json, Vote.RationaleUpdate.class);
+        } catch (Exception e) {
+            return createExceptionResponse(
+                    new BadRequestException("Unable to parse rationale update: " + json)
+            );
+        }
+        if (Objects.isNull(update) || Objects.isNull(update.getVoteIds()) || update.getVoteIds().isEmpty()) {
+            return createExceptionResponse(
+                    new BadRequestException("Unable to update empty vote ids: " + json)
+            );
+        }
+        List<Vote> votes = voteService.findVotesByIds(update.getVoteIds());
+        if (votes.isEmpty()) {
+            return createExceptionResponse(new NotFoundException());
+        }
+
+        // Ensure the user is only updating their votes
+        boolean permitted = votes.stream().allMatch(vote -> vote.getDacUserId().equals(user.getDacUserId()));
+        if (!permitted) {
+            return createExceptionResponse(new NotFoundException());
+        }
+
+        try {
+            List<Vote> updatedVotes = voteService.updateRationaleByVoteIds(update.getVoteIds(), update.getRationale());
+            return Response.ok().entity(updatedVotes).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
 }

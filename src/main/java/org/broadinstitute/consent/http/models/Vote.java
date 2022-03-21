@@ -205,4 +205,28 @@ public class Vote {
             this.voteIds = voteIds;
         }
     }
+
+    public static class RationaleUpdate {
+        private List<Integer> voteIds;
+        private String rationale;
+
+        public RationaleUpdate() {
+        }
+
+        public List<Integer> getVoteIds() {
+            return voteIds;
+        }
+
+        public void setVoteIds(List<Integer> voteIds) {
+            this.voteIds = voteIds;
+        }
+
+        public String getRationale() {
+            return rationale;
+        }
+
+        public void setRationale(String rationale) {
+            this.rationale = rationale;
+        }
+    }
 }

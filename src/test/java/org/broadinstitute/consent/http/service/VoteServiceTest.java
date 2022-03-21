@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -30,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -369,6 +371,75 @@ public class VoteServiceTest {
         Vote vote = service.describeDataOwnerVote("test", 1);
         assertNotNull(vote);
         assertEquals(v.getVoteId(), vote.getVoteId());
+    }
+
+    @Test
+    public void testUpdateRationaleByVoteIds() {
+        doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
+        Vote v = setUpTestVote(true, true);
+        when(voteDAO.findVoteById(anyInt())).thenReturn(v);
+        initService();
+
+        try {
+            service.updateRationaleByVoteIds(List.of(1), "rationale");
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testUpdateRationaleByVoteIds_DataAccessAndRPElections() {
+        doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
+        Vote v = setUpTestVote(true, true);
+        when(voteDAO.findVoteById(anyInt())).thenReturn(v);
+
+        Election accessElection = new Election();
+        accessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        accessElection.setStatus(ElectionStatus.OPEN.getValue());
+        Election rpElection = new Election();
+        rpElection.setElectionType(ElectionType.RP.getValue());
+        rpElection.setStatus(ElectionStatus.OPEN.getValue());
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection, rpElection));
+
+        initService();
+
+        try {
+            service.updateRationaleByVoteIds(List.of(1), "rationale");
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateRationaleByVoteIds_NonOpenDataAccessElection() {
+        doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
+        Vote v = setUpTestVote(true, true);
+        when(voteDAO.findVoteById(anyInt())).thenReturn(v);
+
+        Election election = new Election();
+        election.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        election.setStatus(ElectionStatus.CLOSED.getValue());
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
+        initService();
+
+        service.updateRationaleByVoteIds(List.of(1), "rationale");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateRationaleByVoteIds_NonDataAccessElection() {
+        doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
+        Vote v = setUpTestVote(true, true);
+        when(voteDAO.findVoteById(anyInt())).thenReturn(v);
+
+        Election election = new Election();
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
+        election.setStatus(ElectionStatus.OPEN.getValue());
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
+        initService();
+
+        service.updateRationaleByVoteIds(List.of(1), "rationale");
     }
 
     private void setUpUserAndElectionVotes(UserRoles userRoles) {
