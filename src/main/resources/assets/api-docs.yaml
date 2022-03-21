@@ -2874,6 +2874,25 @@ paths:
           description: User not found
         500:
           description: Server error.
+  /api/user/me/dac/datasets:
+    get:
+      summary: Get datasets from currently authenticated user's DACs
+      description: Get datasets from currently authenticated user's DACs
+      tags:
+        - User
+      responses: 
+        200: 
+          description: Set of Datasets that are under the purview of User's dacs
+          content: 
+            application/json:
+              schema: 
+                type: object
+                items: 
+                  $ref: '#/components/schemas/Dataset'
+        404:
+          description: User not found
+        500:
+          description: Server error
   /api/user/institution/{institutionId}:
     $ref: './paths/userInstitutionByInstitutionId.yaml'
   /api/user/institution/unassigned:

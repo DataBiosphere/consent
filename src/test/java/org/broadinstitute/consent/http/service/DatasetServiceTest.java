@@ -40,6 +40,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -145,6 +146,14 @@ public class DatasetServiceTest {
         initService();
 
         datasetService.disableDataset(dataSetId, false);
+    }
+
+    @Test
+    public void testFindDatasetsByDacIds() {
+        when(datasetDAO.findDatasetsByDacIds(anyList())).thenReturn(Collections.emptySet());
+        initService();
+
+        datasetService.findDatasetsByDacIds(List.of(1,2,3));
     }
 
     @Test

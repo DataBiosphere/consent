@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -42,6 +43,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -57,6 +59,8 @@ public class UserResourceTest {
   @Mock private ResearcherService researcherService;
 
   @Mock private SamService samService;
+  
+  @Mock private DatasetService datasetService;
 
   private UserResource userResource;
 
@@ -85,7 +89,7 @@ public class UserResourceTest {
   }
 
   private void initResource() {
-    userResource = new UserResource(researcherService, samService, userService);
+    userResource = new UserResource(researcherService, samService, userService, datasetService);
   }
 
   @Test
@@ -435,6 +439,17 @@ public class UserResourceTest {
 
     Map<String, String> propMap = new HashMap<>();
     Response response = userResource.updateProperties(authUser, false, propMap);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testGetDatasetsFromUserDacs() {
+    User user = createUserWithRole();
+    when(datasetService.findDatasetsByDacIds(anyList())).thenReturn(Collections.emptySet());
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    initResource();
+
+    Response response = userResource.getDatasetsFromUserDacs(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 

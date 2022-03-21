@@ -95,6 +95,10 @@ public class DatasetService {
         return datasetDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
     }
 
+    public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
+        return datasetDAO.findDatasetsByDacIds(dacIds);
+    }
+
     /**
      * Create a minimal consent from the data provided in a Dataset.
      *
