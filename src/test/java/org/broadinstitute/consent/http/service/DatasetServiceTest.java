@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -154,6 +155,18 @@ public class DatasetServiceTest {
         initService();
 
         datasetService.findDatasetsByDacIds(List.of(1,2,3));
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testFindDatasetsByDacIdsEmptyList() {
+        initService();
+        datasetService.findDatasetsByDacIds(Collections.emptyList());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testFindDatasetsByDacIdsNullList() {
+        initService();
+        datasetService.findDatasetsByDacIds(null);
     }
 
     @Test

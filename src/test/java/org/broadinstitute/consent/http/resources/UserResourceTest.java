@@ -445,6 +445,8 @@ public class UserResourceTest {
   @Test
   public void testGetDatasetsFromUserDacs() {
     User user = createUserWithRole();
+    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    user.addRole(admin);
     when(datasetService.findDatasetsByDacIds(anyList())).thenReturn(Collections.emptySet());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     initResource();
@@ -452,6 +454,7 @@ public class UserResourceTest {
     Response response = userResource.getDatasetsFromUserDacs(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
+
 
   private User createUserWithRole() {
     User user = new User();

@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
 import java.sql.Timestamp;
@@ -96,6 +97,9 @@ public class DatasetService {
     }
 
     public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
+        if(Objects.isNull(dacIds) || dacIds.isEmpty()) {
+            throw new BadRequestException("No dataset IDs provided");
+        }
         return datasetDAO.findDatasetsByDacIds(dacIds);
     }
 

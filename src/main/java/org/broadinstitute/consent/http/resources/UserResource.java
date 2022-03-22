@@ -109,7 +109,7 @@ public class UserResource extends Resource {
     @GET
     @Path("/me/dac/datasets")
     @Produces("application/json")
-    @PermitAll
+    @RolesAllowed({CHAIRPERSON, MEMBER})
     public Response getDatasetsFromUserDacs(@Auth AuthUser authUser) {
         try {
             Set<DatasetDTO> datasets;
