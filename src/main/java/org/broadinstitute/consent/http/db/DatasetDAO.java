@@ -245,6 +245,21 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      * DACs -> Consents -> Consent Associations -> DataSets
      * DataSets -> DatasetProperties -> Dictionary
      *
+     * @return Set of datasets, with properties, that are associated with the provided DAC IDs
+     */
+    @UseRowMapper(DataSetPropertiesMapper.class)
+    @SqlQuery("select d.*, k.key, p.propertyValue, c.consentId, c.dac_id, c.translatedUseRestriction, c.datause from dataset d " +
+            " left outer join datasetproperty p on p.dataSetId = d.dataSetId " +
+            " left outer join dictionary k on k.keyId = p.propertyKey " +
+            " inner join consentassociations a on a.dataSetId = d.dataSetId " +
+            " inner join consents c on c.consentId = a.consentId " +
+            " where c.dac_id IN (<dacIds>) ")
+    Set<DatasetDTO> findDatasetsByDacIds(@BindList("dacIds") List<Integer> dacIds);
+
+    /**
+     * DACs -> Consents -> Consent Associations -> DataSets
+     * DataSets -> DatasetProperties -> Dictionary
+     *
      * @return Set of datasets, with properties, that are associated to any Dac.
      */
     @UseRowMapper(DataSetPropertiesMapper.class)

@@ -149,6 +149,20 @@ public class DatasetDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindDatasetsByDacIds() {
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+
+        DataSet datasetTwo = createDataset();
+        Dac dacTwo = createDac();
+        createConsentAndAssociationWithDatasetIdAndDACId(dataset.getDataSetId(), dac.getDacId());
+        createConsentAndAssociationWithDatasetIdAndDACId(datasetTwo.getDataSetId(), dacTwo.getDacId());
+        List<Integer> datasetIds = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
+        Set<DatasetDTO> datasets = dataSetDAO.findDatasetsByDacIds(List.of(dac.getDacId(), dacTwo.getDacId()));
+        datasets.stream().forEach(d -> assertTrue(datasetIds.contains(d.getDataSetId())));
+    }
+
+    @Test
     public void testFindDatasetWithDataUseByIdList() {
         DataSet dataset = createDataset();
         Dac dac = createDac();
