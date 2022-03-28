@@ -3271,6 +3271,8 @@ paths:
     $ref: './paths/samResourceTypes.yaml'
   /api/votes:
     $ref: './paths/votes.yaml'
+  /api/votes/rationale:
+    $ref: './paths/votesRationale.yaml'
   /metrics/dac/decision:
     get:
       summary: Dac Decision Metrics

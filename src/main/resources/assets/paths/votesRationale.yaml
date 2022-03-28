@@ -1,0 +1,29 @@
+put:
+  summary: Update Vote Rationale by id List
+  description: | 
+    Update Votes' Rationale specified by the ids in provided list.
+     * The Rationale for RP Votes can be updated for any election status.
+     * The Rationale for DataAccess Votes can only be updated for OPEN elections.
+     * In all cases, one can only update their own votes.
+  requestBody:
+    description: Rationale and List of vote ids in JSON object
+    required: true
+    content:
+      application/json:
+        schema:
+          type: string
+          example: {
+            "rationale": "rationale",
+            "voteIds": [1, 2, 3]
+          }
+  tags:
+    - Vote
+  responses:
+    200:
+      description: Successfully updated votes
+    400:
+      description: Bad Request (invalid input)
+    404:
+      description: Not Found
+    500:
+      description: Internal Error
