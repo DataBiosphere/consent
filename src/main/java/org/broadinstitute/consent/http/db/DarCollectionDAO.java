@@ -30,11 +30,8 @@ public interface DarCollectionDAO {
           Election.QUERY_FIELDS_WITH_E_PREFIX + QUERY_FIELD_SEPARATOR +
           Vote.QUERY_FIELDS_WITH_V_PREFIX + QUERY_FIELD_SEPARATOR +
           UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR +
-          "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
-          "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
-          "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
-          "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, " +
-          "(dar.data #>> '{}')::jsonb ->> 'projectTitle' as projectTitle " +
+          //todo: can we use DarCollection.DAR_FILTER_QUERY_COLUMNS here? they are identical
+              DarCollection.DAR_FILTER_QUERY_COLUMNS +
       " FROM dar_collection c " +
       " INNER JOIN dacuser u ON u.dacuserid = c.create_user_id " +
       " LEFT JOIN user_property up ON u.dacuserid = up.userid AND up.propertykey in ('isThePI', 'piName', 'havePI', 'piERACommonsID') " +
@@ -46,6 +43,9 @@ public interface DarCollectionDAO {
 
   String filterQuery =
     " WHERE c.create_user_id = :userId " +
+      " AND (" +
+      DarCollection.FILTER_ARCHIVED_QUERY +
+      " )" +
       " AND (" +
       DarCollection.FILTER_TERMS_QUERY +
       " )";
@@ -90,7 +90,8 @@ public interface DarCollectionDAO {
           + " WHERE c.collection_id = dar_datasets.collection_id "
           + " AND dar_datasets.dataset_id = ca.datasetid "
           + " AND consent.consentid = ca.consentid "
-          + " AND consent.dac_id IN (<dacIds>) ")
+          + " AND consent.dac_id IN (<dacIds>) "
+          + " AND " + DarCollection.FILTER_ARCHIVED_QUERY )
   List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds);
 
   @SqlQuery(
@@ -98,7 +99,8 @@ public interface DarCollectionDAO {
           + " FROM dar_collection c"
           + " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id"
           + " INNER JOIN dacuser u ON dar.user_id = u.dacuserid"
-          + " WHERE u.institution_id = :institutionId ")
+          + " WHERE u.institution_id = :institutionId AND "
+          + " AND " + DarCollection.FILTER_ARCHIVED_QUERY )
   List<Integer> findDARCollectionIdsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
@@ -159,7 +161,8 @@ public interface DarCollectionDAO {
         "INNER JOIN data_access_request dar on c.collection_id = dar.collection_id " +
         "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
         " LEFT JOIN (SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest FROM election) AS e " +
-        "   ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
+        "   ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) " +
+            " WHERE " + DarCollection.FILTER_ARCHIVED_QUERY
   )
   List<DarCollection> findAllDARCollections();
 
@@ -191,6 +194,7 @@ public interface DarCollectionDAO {
       + ") AS e "
       + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
       + "WHERE c.create_user_id = :userId "
+      + " AND " + DarCollection.FILTER_ARCHIVED_QUERY
   )
   List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
 
@@ -219,7 +223,8 @@ public interface DarCollectionDAO {
     "LEFT JOIN user_property up ON u.dacuserid = up.userid " +
     "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
-    "WHERE c.collection_id = (SELECT collection_id FROM data_access_request WHERE reference_id = :referenceId)")
+    "WHERE c.collection_id = (SELECT collection_id FROM data_access_request WHERE reference_id = :referenceId)" +
+    " AND " + DarCollection.FILTER_ARCHIVED_QUERY)
   DarCollection findDARCollectionByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
@@ -263,6 +268,7 @@ public interface DarCollectionDAO {
       + "LEFT JOIN dacuser du "
       + "ON du.dacuserid = v.dacuserid "
       + "WHERE c.collection_id = :collectionId;"
+      + " AND " + DarCollection.FILTER_ARCHIVED_QUERY
   )
   DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId);
 
@@ -298,7 +304,8 @@ public interface DarCollectionDAO {
       + "FROM dar_collection c "
       + "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-      + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id ";
+      + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
+      + " WHERE " + DarCollection.FILTER_ARCHIVED_QUERY;
 
   //Count methods for unfiltered results listed below
   //DAC version is not included since a method that returns collectionIds for a DAC already exists
