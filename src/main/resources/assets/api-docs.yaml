@@ -2874,6 +2874,8 @@ paths:
           description: User not found
         500:
           description: Server error.
+  /api/user/me/dac/datasets:
+    $ref: './paths/getDatasetsFromUserDacs.yaml'
   /api/user/institution/{institutionId}:
     $ref: './paths/userInstitutionByInstitutionId.yaml'
   /api/user/institution/unassigned:

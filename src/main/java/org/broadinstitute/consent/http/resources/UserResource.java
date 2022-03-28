@@ -11,7 +11,9 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
@@ -39,6 +41,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Path("api/user")
 public class UserResource extends Resource {
@@ -47,13 +51,15 @@ public class UserResource extends Resource {
     private final ResearcherService researcherService;
     private final Gson gson = new Gson();
     private final SamService samService;
+    private final DatasetService datasetService;
 
     @Inject
     public UserResource(ResearcherService researcherService,
-                        SamService samService, UserService userService) {
+                        SamService samService, UserService userService, DatasetService datasetService) {
         this.researcherService = researcherService;
         this.samService = samService;
         this.userService = userService;
+        this.datasetService = datasetService;
     }
 
     @GET
@@ -95,6 +101,25 @@ public class UserResource extends Resource {
             }
             JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
             return Response.ok(gson.toJson(userJson)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Path("/me/dac/datasets")
+    @Produces("application/json")
+    @RolesAllowed({CHAIRPERSON, MEMBER})
+    public Response getDatasetsFromUserDacs(@Auth AuthUser authUser) {
+        try {
+            Set<DatasetDTO> datasets;
+            User user = userService.findUserByEmail(authUser.getEmail());
+            List<Integer> dacIds = user.getRoles().stream()
+                .filter(r -> Objects.nonNull(r.getDacId()))
+                .map(UserRole::getDacId)
+                .collect(Collectors.toList());
+            datasets = dacIds.isEmpty() ? Set.of() : datasetService.findDatasetsByDacIds(dacIds);
+            return Response.ok().entity(datasets).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

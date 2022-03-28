@@ -197,7 +197,6 @@ public class DacResource extends Resource {
         return Response.ok().entity(datasets).build();
     }
 
-
     @GET
     @Path("users/{term}")
     @Produces("application/json")
