@@ -18,12 +18,10 @@ import org.parboiled.common.FileUtils;
 public class SwaggerResource {
 
   private static final Logger logger = Logger.getLogger(SwaggerResource.class.getName());
-  // Default swagger ui library if not found in properties
-  // should not hard-code the actual version here!
   private static final String DEFAULT_LIB = "META-INF/resources/webjars/swagger-ui/latest/";
   private static final String MEDIA_TYPE_GIF = new MediaType("image", "gif").toString();
   protected static final String MEDIA_TYPE_CSS = new MediaType("text", "css").toString();
-  protected static final String MEDIA_TYPE_JS = new MediaType("application", "js").toString();
+  protected static final String MEDIA_TYPE_JS = new MediaType("application", "javascript").toString();
   protected static final String MEDIA_TYPE_PNG = new MediaType("image", "png").toString();
 
   private final GoogleOAuth2Config config;
