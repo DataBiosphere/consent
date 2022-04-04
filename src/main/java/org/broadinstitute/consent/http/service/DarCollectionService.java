@@ -401,7 +401,7 @@ public class DarCollectionService {
    */
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection) {
     try {
-      collectionServiceDAO.createElectionsForDarCollection(user, collection);
+      List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarCollection(user, collection);
       collection.getDars().values().forEach(dar -> {
         Election accessElection = electionDAO.findLastElectionByReferenceIdAndType(dar.getReferenceId(), ElectionType.DATA_ACCESS.getValue());
         if (Objects.nonNull(accessElection)) {
