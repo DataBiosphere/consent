@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -18,7 +17,6 @@ import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.slf4j.Logger;
@@ -402,19 +400,12 @@ public class DarCollectionService {
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection) {
     try {
       List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarCollection(user, collection);
-      collection.getDars().values().forEach(dar -> {
-        Election accessElection = electionDAO.findLastElectionByReferenceIdAndType(dar.getReferenceId(), ElectionType.DATA_ACCESS.getValue());
-        if (Objects.nonNull(accessElection)) {
-          List<Vote> votes = voteDAO.findVotesByElectionId(accessElection.getElectionId());
-          try {
-            emailNotifierService.sendNewCaseMessageToList(votes, accessElection);
-          } catch (Exception e) {
-            logger.error("Unable to send new case message to DAC members for DAR: " + dar.getReferenceId());
-          }
-        } else {
-          logger.error("Did not find a created access election for DAR: " + dar.getReferenceId());
-        }
-      });
+      List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
+      try {
+        emailNotifierService.sendDarNewCollectionMessage(voteUsers, collection);
+      } catch (Exception e) {
+        logger.error("Unable to send new case message to DAC members for DAR Collection: " + collection.getDarCode());
+      }
     } catch (Exception e) {
       logger.error("Exception creating elections and votes for collection: " + collection.getDarCollectionId());
     }

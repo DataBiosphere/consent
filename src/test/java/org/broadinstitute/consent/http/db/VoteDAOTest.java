@@ -1,23 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
@@ -26,6 +14,20 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class VoteDAOTest extends DAOTestHelper {
 
@@ -624,5 +626,39 @@ public class VoteDAOTest extends DAOTestHelper {
 
         Vote updatedVote = voteDAO.findVoteById(dacVote.getVoteId());
         assertEquals(rationale, updatedVote.getRationale());
+    }
+
+    @Test
+    public void testFindVoteUsersByElectionReferenceIdList_Empty() {
+        // Empty case
+        List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(List.of("invalid reference id"));
+        assertTrue(voteUsers.isEmpty());
+    }
+
+    @Test
+    public void testFindVoteUsersByElectionReferenceIdList() {
+        // Populated case requires:
+        // * DAC
+        // * Dataset
+        // * DarCollection
+        // * DarCollection User (helper method also creates votes for user, so make that user a chairperson)
+        // * Access Election
+        // * Some number of Votes for election for chairperson
+        Dac dac = createDac();
+        User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+        DataSet dataset = createDataset();
+        // This creates an election and votes for the user passed in as the creator
+        DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(dac.getDacId(), chair, List.of(dataset));
+        Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
+        assertTrue(dar.isPresent());
+        Election election = createAccessElection(dar.get().getReferenceId(), dataset.getDataSetId());
+        createDacVote(chair.getDacUserId(), election.getElectionId());
+        createChairpersonVote(chair.getDacUserId(), election.getElectionId());
+        createFinalVote(chair.getDacUserId(), election.getElectionId());
+
+        List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(List.of(dar.get().getReferenceId()));
+        assertFalse(voteUsers.isEmpty());
+        assertEquals(1, voteUsers.size());
+        assertEquals(chair.getDacUserId(), voteUsers.get(0).getDacUserId());
     }
 }

@@ -597,6 +597,11 @@ public class DAOTestHelper {
         return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
 
+    /*
+     * This method should be replaced as it creates a DAR from a json file which
+     * does not have accurate FK relationships.
+     */
+    @Deprecated
     private DataAccessRequest insertDAR(Integer userId, Integer collectionId, String darCode) {
         DataAccessRequestData data;
         Date now = new Date();
