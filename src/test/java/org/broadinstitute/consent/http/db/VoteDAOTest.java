@@ -641,9 +641,8 @@ public class VoteDAOTest extends DAOTestHelper {
         // * DAC
         // * Dataset
         // * DarCollection
-        // * DarCollection User (helper method also creates votes for user, so make that user a chairperson)
-        // * Access Election
-        // * Some number of Votes for election for chairperson
+        // * DarCollection User
+        //      helper method also creates elections and votes for user, so make that user a chairperson
         Dac dac = createDac();
         User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         DataSet dataset = createDataset();
@@ -651,10 +650,6 @@ public class VoteDAOTest extends DAOTestHelper {
         DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(dac.getDacId(), chair, List.of(dataset));
         Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
         assertTrue(dar.isPresent());
-        Election election = createAccessElection(dar.get().getReferenceId(), dataset.getDataSetId());
-        createDacVote(chair.getDacUserId(), election.getElectionId());
-        createChairpersonVote(chair.getDacUserId(), election.getElectionId());
-        createFinalVote(chair.getDacUserId(), election.getElectionId());
 
         List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(List.of(dar.get().getReferenceId()));
         assertFalse(voteUsers.isEmpty());
