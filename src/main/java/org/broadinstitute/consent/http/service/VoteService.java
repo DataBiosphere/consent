@@ -111,23 +111,6 @@ public class VoteService {
         return voteDAO.findVoteById(vote.getVoteId());
     }
 
-    /**
-    * Update vote values. 'FINAL' votes impact elections so matching elections marked as
-    * ElectionStatus.CLOSED as well.
-    *
-    * @param votes List of Votes to update
-    * @param voteValue Value to update the votes to
-    * @param rationale Value to update the rationales to. Only update if non-null.
-    * @return The updated Vote
-    * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
-    */
-    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) throws IllegalArgumentException, SQLException {
-        try {
-            return voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unable to update election votes.");
-        }
-    }
 
     public Vote updateVoteById(Vote rec,  Integer voteId) throws IllegalArgumentException {
         Vote vote = voteDAO.findVoteById(voteId);
@@ -291,6 +274,40 @@ public class VoteService {
             throw new NotFoundException("Vote doesn't exist for the specified dataOwnerId");
         }
         return vote;
+    }
+
+    /**
+     * Update vote values. 'FINAL' votes impact elections so matching elections marked as
+     * ElectionStatus.CLOSED as well.
+     *
+     * @param votes List of Votes to update
+     * @param voteValue Value to update the votes to
+     * @param rationale Value to update the rationales to. Only update if non-null.
+     * @return The updated Vote
+     * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
+     */
+    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) throws IllegalArgumentException, SQLException {
+        try {
+            if (votes.isEmpty()) {
+                return Collections.emptyList();
+            }
+            List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
+                    .map(Vote::getElectionId)
+                    .collect(Collectors.toList()));
+
+
+            boolean allOpenOrRp = !elections.isEmpty()
+                    && elections.stream()
+                    .allMatch(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())
+                            || e.getElectionType().equalsIgnoreCase(ElectionType.RP.getValue()));
+            if (!allOpenOrRp) {
+                throw new IllegalArgumentException("Not all elections for votes are in OPEN state or for Research Purposes");
+            }
+
+            return voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unable to update election votes.");
+        }
     }
 
     /**
