@@ -46,11 +46,6 @@ public class VoteServiceDAO {
    */
   public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale)
       throws IllegalArgumentException, SQLException {
-    if (votes.isEmpty()) {
-      return Collections.emptyList();
-    }
-    validateElectionsCanUpdateVotes(votes);
-
     // Update all votes in an atomic transaction, rollback on all if any fail
     jdbi.useHandle(
         handle -> {
@@ -88,22 +83,5 @@ public class VoteServiceDAO {
               });
         });
     return voteDAO.findVotesByIds(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
-  }
-
-  private void validateElectionsCanUpdateVotes(List<Vote> votes) throws IllegalArgumentException{
-      List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
-                              .map(Vote::getElectionId)
-                              .collect(Collectors.toList()));
-
-      if (!allOpenOrRp(elections)) {
-          throw new IllegalArgumentException("Not all elections for votes are in OPEN state or for Research Purposes");
-      }
-  }
-
-  private boolean allOpenOrRp(List<Election> elections) {
-      return !elections.isEmpty()
-              && elections.stream()
-              .allMatch(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())
-                      || e.getElectionType().equalsIgnoreCase(ElectionType.RP.getValue()));
   }
 }
