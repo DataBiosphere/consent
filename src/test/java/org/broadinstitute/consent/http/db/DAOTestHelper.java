@@ -149,10 +149,11 @@ public class DAOTestHelper {
         // Order is important for FK constraints
         testingDAO.deleteAllApprovalTimes();
         testingDAO.deleteAllVotes();
-        testingDAO.deleteAllConsentAudit();
+        testingDAO.deleteAllConsentAudits();
         testingDAO.deleteAllMatchEntities();
         testingDAO.deleteAllConsentAssociations();
         testingDAO.deleteAllConsents();
+        testingDAO.deleteAllAccessRps();
         testingDAO.deleteAllElections();
         testingDAO.deleteAllDatasetProperties();
         testingDAO.deleteAllDatasets();
