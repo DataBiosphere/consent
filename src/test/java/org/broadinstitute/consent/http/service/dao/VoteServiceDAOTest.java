@@ -25,7 +25,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   private VoteServiceDAO serviceDAO;
 
   private void initService() {
-    serviceDAO = new VoteServiceDAO(electionDAO, jdbi, voteDAO);
+    serviceDAO = new VoteServiceDAO(jdbi, voteDAO);
   }
 
   @Test

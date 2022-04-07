@@ -23,13 +23,11 @@ import java.util.stream.Collectors;
  */
 public class VoteServiceDAO {
 
-  private final ElectionDAO electionDAO;
   private final Jdbi jdbi;
   private final VoteDAO voteDAO;
 
   @Inject
-  public VoteServiceDAO(ElectionDAO electionDAO, Jdbi jdbi, VoteDAO voteDAO) {
-    this.electionDAO = electionDAO;
+  public VoteServiceDAO(Jdbi jdbi, VoteDAO voteDAO) {
     this.jdbi = jdbi;
     this.voteDAO = voteDAO;
   }
