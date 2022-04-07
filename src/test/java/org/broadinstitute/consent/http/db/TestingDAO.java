@@ -1,0 +1,65 @@
+package org.broadinstitute.consent.http.db;
+
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
+
+@SuppressWarnings("SqlWithoutWhere")
+public interface TestingDAO extends Transactional<TestingDAO> {
+
+  @SqlUpdate("DELETE FROM vote")
+  void deleteAllVotes();
+
+  @SqlUpdate("DELETE FROM approval_expiration_time")
+  void deleteAllApprovalTimes();
+
+  @SqlUpdate("DELETE FROM consent_audit")
+  void deleteAllConsentAudit();
+
+  @SqlUpdate("DELETE FROM match_entity")
+  void deleteAllMatchEntities();
+
+  @SqlUpdate("DELETE FROM consentassociations")
+  void deleteAllConsentAssociations();
+
+  @SqlUpdate("DELETE FROM consents")
+  void deleteAllConsents();
+
+  @SqlUpdate("DELETE FROM election")
+  void deleteAllElections();
+
+  @SqlUpdate("DELETE FROM datasetproperty")
+  void deleteAllDatasetProperties();
+
+  @SqlUpdate("DELETE FROM dataset")
+  void deleteAllDatasets();
+
+  @SqlUpdate("DELETE FROM user_role where dac_id is not null")
+  void deleteAllDacUserRoles();
+
+  @SqlUpdate("DELETE FROM dac")
+  void deleteAllDacs();
+
+  @SqlUpdate("DELETE FROM library_card")
+  void deleteAllLibraryCards();
+
+  @SqlUpdate("DELETE FROM institution")
+  void deleteAllInstitutions();
+
+  @SqlUpdate("DELETE FROM user_property")
+  void deleteAllUserProperties();
+
+  @SqlUpdate("DELETE FROM user_role")
+  void deleteAllUserRoles();
+
+  @SqlUpdate("DELETE FROM dacuser")
+  void deleteAllUsers();
+
+  @SqlUpdate("DELETE FROM data_access_request")
+  void deleteAllDARs();
+
+  @SqlUpdate("DELETE FROM dar_collection")
+  void deleteAllDARCollections();
+
+  @SqlUpdate("DELETE FROM counter")
+  void deleteAllCounters();
+}
