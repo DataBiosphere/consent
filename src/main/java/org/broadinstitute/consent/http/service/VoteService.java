@@ -286,26 +286,11 @@ public class VoteService {
      * @return The updated Vote
      * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
      */
-    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) throws IllegalArgumentException, SQLException {
+    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) throws IllegalArgumentException {
+        validateVotesCanUpdate(votes);
         try {
-            if (votes.isEmpty()) {
-                return Collections.emptyList();
-            }
-            List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
-                    .map(Vote::getElectionId)
-                    .collect(Collectors.toList()));
-
-
-            boolean allOpenOrRp = !elections.isEmpty()
-                    && elections.stream()
-                    .allMatch(e -> e.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())
-                            || e.getElectionType().equalsIgnoreCase(ElectionType.RP.getValue()));
-            if (!allOpenOrRp) {
-                throw new IllegalArgumentException("Not all elections for votes are in OPEN state or for Research Purposes");
-            }
-
             return voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
-        } catch (IllegalArgumentException e) {
+        } catch (SQLException e) {
             throw new IllegalArgumentException("Unable to update election votes.");
         }
     }
@@ -318,32 +303,37 @@ public class VoteService {
      * @param voteIds List of vote ids for DataAccess and RP elections
      * @param rationale The rationale to update
      * @return List of updated votes
+     * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
      */
-    public List<Vote> updateRationaleByVoteIds(List<Integer> voteIds, String rationale) {
+    public List<Vote> updateRationaleByVoteIds(List<Integer> voteIds, String rationale) throws IllegalArgumentException {
         List<Vote> votes = voteDAO.findVotesByIds(voteIds);
-        List<Integer> electionIds = votes.stream().map(Vote::getElectionId).collect(Collectors.toList());
-        List<Election> elections = electionDAO.findElectionsByIds(electionIds);
+        validateVotesCanUpdate(votes);
+        voteDAO.updateRationaleByVoteIds(voteIds, rationale);
+        return findVotesByIds(voteIds);
+    }
+
+    private void validateVotesCanUpdate(List<Vote> votes) throws IllegalArgumentException {
+        List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
+                .map(Vote::getElectionId)
+                .collect(Collectors.toList()));
 
         // If there are any DataAccess elections in a non-open state, throw an error
         List<Election> nonOpenAccessElections = elections.stream()
-            .filter(election -> election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
-            .filter(election -> !election.getStatus().equals(ElectionStatus.OPEN.getValue()))
-            .collect(Collectors.toList());
+                .filter(election -> election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
+                .filter(election -> !election.getStatus().equals(ElectionStatus.OPEN.getValue()))
+                .collect(Collectors.toList());
         if (!nonOpenAccessElections.isEmpty()) {
             throw new IllegalArgumentException("There are non-open Data Access elections for provided votes");
         }
 
         // If there are non-DataAccess or non-RP elections, throw an error
         List<Election> disallowedElections = elections.stream()
-            .filter(election -> !election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
-            .filter(election -> !election.getElectionType().equals(ElectionType.RP.getValue()))
-            .collect(Collectors.toList());
+                .filter(election -> !election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
+                .filter(election -> !election.getElectionType().equals(ElectionType.RP.getValue()))
+                .collect(Collectors.toList());
         if (!disallowedElections.isEmpty()) {
             throw new IllegalArgumentException("There are non-Data Access/RP elections for provided votes");
         }
-
-        voteDAO.updateRationaleByVoteIds(voteIds, rationale);
-        return findVotesByIds(voteIds);
     }
 
     private boolean isDacChairPerson(Dac dac, User user) {
