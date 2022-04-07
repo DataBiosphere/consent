@@ -443,7 +443,7 @@ public class DarCollectionServiceTest {
     election.setElectionId(1);
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
     when(electionDAO.findLastElectionByReferenceIdAndType(any(), any())).thenReturn(election);
-    when(voteDAO.findVotesByElectionId(any())).thenReturn(List.of(new Vote()));
+    when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(new User()));
     spy(darCollectionServiceDAO);
     spy(electionDAO);
     spy(voteDAO);
@@ -453,9 +453,8 @@ public class DarCollectionServiceTest {
 
     service.createElectionsForDarCollection(user, collection);
     verify(darCollectionServiceDAO, times(1)).createElectionsForDarCollection(any(), any());
-    verify(electionDAO, times(1)).findLastElectionByReferenceIdAndType(any(), any());
-    verify(voteDAO, times(1)).findVotesByElectionId(any());
-    verify(emailNotifierService, times(1)).sendNewCaseMessageToList(any(), any());
+    verify(voteDAO, times(1)).findVoteUsersByElectionReferenceIdList(any());
+    verify(emailNotifierService, times(1)).sendDarNewCollectionMessage(any(), any());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
   }
 
