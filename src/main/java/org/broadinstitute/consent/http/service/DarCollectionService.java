@@ -44,7 +44,6 @@ public class DarCollectionService {
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
   private final VoteDAO voteDAO;
-
   private final EmailNotifierService emailNotifierService;
 
   @Inject
