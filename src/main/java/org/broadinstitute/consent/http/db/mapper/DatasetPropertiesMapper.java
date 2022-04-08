@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class DataSetPropertiesMapper implements RowMapper<DatasetDTO>, RowMapperHelper {
+public class DatasetPropertiesMapper implements RowMapper<DatasetDTO>, RowMapperHelper {
 
   private final Map<Integer, DatasetDTO> dataSets = new LinkedHashMap<>();
   private static final String PROPERTY_KEY = "key";

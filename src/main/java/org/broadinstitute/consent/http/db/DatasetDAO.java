@@ -8,7 +8,7 @@ import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
-import org.broadinstitute.consent.http.db.mapper.DataSetPropertiesMapper;
+import org.broadinstitute.consent.http.db.mapper.DatasetPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
@@ -114,7 +114,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           "ORDER BY d.datasetid, k.displayorder")
     Set<Dataset> findDatasetWithDataUseByIdList(@BindList("datasetIds") List<Integer> datasetIds);
 
-    @UseRowMapper(DataSetPropertiesMapper.class)
+    @UseRowMapper(DatasetPropertiesMapper.class)
     @SqlQuery(
         " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause "
             + " FROM dataset d "
@@ -128,7 +128,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             + " ORDER BY d.datasetid ")
     Set<DatasetDTO> findDatasetsByUserId(@Bind("userId") Integer userId);
 
-    @UseRowMapper(DataSetPropertiesMapper.class)
+    @UseRowMapper(DatasetPropertiesMapper.class)
     @SqlQuery(
         " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause "
             + " FROM dataset d "
@@ -140,7 +140,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             + " ORDER BY d.datasetid ")
     Set<DatasetDTO> findActiveDatasets();
 
-    @UseRowMapper(DataSetPropertiesMapper.class)
+    @UseRowMapper(DatasetPropertiesMapper.class)
     @SqlQuery(
         " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause "
             + " FROM dataset d "
@@ -151,7 +151,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             + " ORDER BY d.datasetid ")
     Set<DatasetDTO> findAllDatasets();
 
-    @UseRowMapper(DataSetPropertiesMapper.class)
+    @UseRowMapper(DatasetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
           "LEFT OUTER JOIN datasetproperty dp on dp.datasetid = d.datasetid " +
@@ -167,7 +167,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     )
     Set<DatasetProperty> findDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
-    @UseRowMapper(DataSetPropertiesMapper.class)
+    @UseRowMapper(DatasetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction, c.datause " +
             "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
@@ -232,7 +232,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      *
      * @return Set of datasets, with properties, that are associated to a single DAC.
      */
-    @UseRowMapper(DataSetPropertiesMapper.class)
+    @UseRowMapper(DatasetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, p.propertyValue, c.consentId, c.dac_id, c.translatedUseRestriction, c.datause from dataset d " +
             " left outer join datasetproperty p on p.dataSetId = d.dataSetId " +
             " left outer join dictionary k on k.keyId = p.propertyKey " +
@@ -247,7 +247,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      *
      * @return Set of datasets, with properties, that are associated with the provided DAC IDs
      */
-    @UseRowMapper(DataSetPropertiesMapper.class)
+    @UseRowMapper(DatasetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, p.propertyValue, c.consentId, c.dac_id, c.translatedUseRestriction, c.datause from dataset d " +
             " left outer join datasetproperty p on p.dataSetId = d.dataSetId " +
             " left outer join dictionary k on k.keyId = p.propertyKey " +
@@ -262,7 +262,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      *
      * @return Set of datasets, with properties, that are associated to any Dac.
      */
-    @UseRowMapper(DataSetPropertiesMapper.class)
+    @UseRowMapper(DatasetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, p.propertyvalue, c.consentid, c.dac_id, c.translateduserestriction, c.datause " +
             " FROM dataset d " +
             " LEFT OUTER JOIN datasetproperty p ON p.datasetid = d.datasetid " +
