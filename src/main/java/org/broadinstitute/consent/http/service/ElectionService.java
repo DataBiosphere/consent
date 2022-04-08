@@ -12,7 +12,7 @@ import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
+import org.broadinstitute.consent.http.enumeration.DatasetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -389,22 +389,22 @@ public class ElectionService {
         List<Integer> dataSets =  Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
         List<Dataset> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
         if(CollectionUtils.isEmpty(dsForApproval)) {
-            return DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
+            return DatasetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
         } else {
             Election darElection = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(darReferenceId, ElectionType.DATA_ACCESS.getValue());
             List<Election> dsElectionsToVoteOn = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(Arrays.asList(darReferenceId), ElectionType.DATA_SET.getValue());
             if((!(Objects.isNull(darElection)) && darElection.getStatus().equals(ElectionStatus.OPEN.getValue())) || CollectionUtils.isEmpty(dsElectionsToVoteOn)){
-                return DataSetElectionStatus.DS_PENDING.getValue();
+                return DatasetElectionStatus.DS_PENDING.getValue();
             } else {
                 for(Election e: dsElectionsToVoteOn){
                     if(e.getStatus().equals(ElectionStatus.OPEN.getValue())){
-                        return DataSetElectionStatus.DS_PENDING.getValue();
+                        return DatasetElectionStatus.DS_PENDING.getValue();
                     } else if(!e.getFinalAccessVote()){
-                        return DataSetElectionStatus.DS_DENIED.getValue();
+                        return DatasetElectionStatus.DS_DENIED.getValue();
                     }
                 }
             }
-            return DataSetElectionStatus.DS_APPROVED.getValue();
+            return DatasetElectionStatus.DS_APPROVED.getValue();
         }
     }
 
