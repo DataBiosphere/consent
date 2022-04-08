@@ -8,7 +8,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
@@ -109,7 +109,7 @@ public class DarCollectionResource extends Resource {
     List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
 
     return collection.getDatasets().stream()
-            .map(DataSet::getDataSetId)
+            .map(Dataset::getDataSetId)
             .anyMatch(userDatasetIds::contains);
   }
 

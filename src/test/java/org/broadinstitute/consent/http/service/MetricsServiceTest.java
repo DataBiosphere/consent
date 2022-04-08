@@ -14,7 +14,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -184,11 +184,11 @@ public class MetricsServiceTest {
     return dars.stream().map(dar -> service.new DarMetricsSummary(dar)).collect(Collectors.toList());
   }
 
-  private List<DataSet> generateDatasets(int count) {
+  private List<Dataset> generateDatasets(int count) {
     return IntStream.range(1, count + 1)
         .mapToObj(
             i -> {
-              DataSet d = new DataSet();
+              Dataset d = new Dataset();
               d.setAlias(count);
               d.setDataSetId(count);
               d.setName(UUID.randomUUID().toString());

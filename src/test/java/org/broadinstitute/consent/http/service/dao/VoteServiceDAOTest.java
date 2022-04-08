@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service.dao;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -32,7 +32,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   public void testUpdateVotesWithValue_FinalVote() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote = createFinalVote(user.getDacUserId(), election.getElectionId());
     String rationale = "rationale";
@@ -52,7 +52,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   public void testUpdateVotesWithValue_NoRationale() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote = createFinalVote(user.getDacUserId(), election.getElectionId());
     initService();
@@ -69,7 +69,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   public void testUpdateVotesWithValue_DacVote() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
     String rationale = "rationale";
@@ -89,7 +89,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   public void testUpdateVotesWithValue_MultipleVotes() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote1 = createDacVote(user.getDacUserId(), election.getElectionId());
     Vote vote2 = createDacVote(user.getDacUserId(), election.getElectionId());
@@ -116,7 +116,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   public void testUpdateVotesWithValue_MultipleElectionTypes() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     Election rpElection1 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
     Election rpElection2 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
     Election accessElection = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());

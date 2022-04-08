@@ -18,7 +18,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.ConsentService;
@@ -83,7 +83,7 @@ public class DataAccessRequestResourceTest {
     public void testDescribeConsentForDarCase2() {
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(user.getDacUserId()).thenReturn(dar.getUserId());
@@ -124,7 +124,7 @@ public class DataAccessRequestResourceTest {
     public void testDescribeConsentForDarCase5() {
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(user.getDacUserId()).thenReturn(dar.getUserId() + 1);

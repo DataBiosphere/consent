@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -193,7 +193,7 @@ public class DatasetResourceTest {
 
     @Test(expected = ClientErrorException.class)
     public void testCreateDatasetNameInUse() {
-        DataSet inUse = new DataSet();
+        Dataset inUse = new Dataset();
         when(datasetService.getDatasetByName("test")).thenReturn(inUse);
 
         String json = createPropertiesJson("Dataset Name", "test");
@@ -222,7 +222,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testUpdateDatasetSuccess() {
-        DataSet preexistingDataset = new DataSet();
+        Dataset preexistingDataset = new Dataset();
         String json = createPropertiesJson("Dataset Name", "test");
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.of(preexistingDataset));
@@ -269,7 +269,7 @@ public class DatasetResourceTest {
         invalidProperties.add(new DataSetPropertyDTO("Invalid Property", "test"));
         when(datasetService.findInvalidProperties(any())).thenReturn(invalidProperties);
 
-        DataSet preexistingDataset = new DataSet();
+        Dataset preexistingDataset = new Dataset();
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         String json = createPropertiesJson(invalidProperties);
 
@@ -285,7 +285,7 @@ public class DatasetResourceTest {
         duplicateProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
         when(datasetService.findDuplicateProperties(any())).thenReturn(duplicateProperties);
 
-        DataSet preexistingDataset = new DataSet();
+        Dataset preexistingDataset = new Dataset();
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         String json = createPropertiesJson(duplicateProperties);
 
@@ -296,7 +296,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testUpdateDatasetNoContent() {
-        DataSet preexistingDataset = new DataSet();
+        Dataset preexistingDataset = new Dataset();
         String json = createPropertiesJson("Dataset Name", "test");
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.empty());
@@ -334,7 +334,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testValidateDatasetNameSuccess() {
-        DataSet testDataset = new DataSet();
+        Dataset testDataset = new Dataset();
         when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
         initResource();
         Response response = resource.validateDatasetName("test");
@@ -411,7 +411,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDeleteSuccessAdmin() {
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
 
         when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
         when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
@@ -424,7 +424,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDeleteSuccessChairperson() {
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         Consent consent = new Consent();
         consent.setDacId(1);
@@ -445,7 +445,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDeleteErrorNoDacIds() {
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
 
         when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -461,7 +461,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDeleteErrorNullConsent() {
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         Consent consent = new Consent();
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
@@ -481,7 +481,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDeleteErrorMismatch() {
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         Consent consent = new Consent();
         consent.setDacId(2);
@@ -502,7 +502,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDisableDataSetSuccessAdmin() {
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
 
         when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
         when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
@@ -515,7 +515,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDisableDataSetSuccessChairperson() {
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         Consent consent = new Consent();
         consent.setDacId(1);
@@ -536,7 +536,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDisableDataSetErrorNoDacIds() {
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
 
         when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -552,7 +552,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDisableDataSetErrorNullConsent() {
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         Consent consent = new Consent();
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
@@ -572,7 +572,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDisableDataSetErrorMismatch() {
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         Consent consent = new Consent();
         consent.setDacId(2);
@@ -634,7 +634,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testUpdateNeedsReviewDataSetsSuccess() {
-        DataSet dataSet = new DataSet();
+        Dataset dataSet = new Dataset();
         when(datasetService.updateNeedsReviewDataSets(any(), any())).thenReturn(dataSet);
 
         initResource();

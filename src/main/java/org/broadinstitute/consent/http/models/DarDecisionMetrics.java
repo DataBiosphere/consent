@@ -53,7 +53,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
   public DarDecisionMetrics(
     DataAccessRequest dar,
     Dac dac,
-    DataSet dataset,
+    Dataset dataset,
     Election accessElection,
     Election rpElection,
     Match match) {
@@ -112,7 +112,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
     return datasetId;
   }
 
-  private void setDatasetId(DataSet dataset) {
+  private void setDatasetId(Dataset dataset) {
     if (Objects.nonNull(dataset)) {
       this.datasetId = dataset.getDatasetIdentifier();
     }
@@ -227,7 +227,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
 
   private void setDacDecision(Election election) {
     //NOTE: finalVote is pulled from the associated vote
-    //Vote records are vastly more reliable than election vote status 
+    //Vote records are vastly more reliable than election vote status
     if (Objects.nonNull(election) && Objects.nonNull(election.getFinalVote())) {
       this.dacDecision = election.getFinalVote() ? YES : NO;
     }

@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.models;
 import java.util.Date;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
-public class DataSetProperty {
+public class DatasetProperty {
 
     private Integer propertyId;
     private Integer dataSetId;
@@ -11,16 +11,16 @@ public class DataSetProperty {
     private String propertyValue;
     private Date createDate;
 
-    public DataSetProperty(){
+    public DatasetProperty(){
     }
 
-    public DataSetProperty(Integer propertyId, Integer  dataSetId, Integer propertyKey, String propertyValue,
+    public DatasetProperty(Integer propertyId, Integer  dataSetId, Integer propertyKey, String propertyValue,
                            Date createDate) {
         this(dataSetId, propertyKey, propertyValue, createDate);
         this.propertyId = propertyId;
     }
 
-    public DataSetProperty(Integer  dataSetId, Integer propertyKey, String propertyValue,
+    public DatasetProperty(Integer  dataSetId, Integer propertyKey, String propertyValue,
                            Date createDate){
         this.dataSetId = dataSetId;
         this.propertyKey = propertyKey;
@@ -77,7 +77,7 @@ public class DataSetProperty {
         if (getClass() != obj.getClass())
             return false;
 
-        DataSetProperty other = (DataSetProperty) obj;
+        DatasetProperty other = (DatasetProperty) obj;
         return new EqualsBuilder()
               .append(dataSetId, other.dataSetId)
               .append(propertyKey, other.propertyKey)

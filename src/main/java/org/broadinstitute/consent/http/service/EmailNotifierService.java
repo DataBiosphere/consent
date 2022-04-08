@@ -34,7 +34,7 @@ import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -193,7 +193,7 @@ public class EmailNotifierService {
         }
     }
 
-    public void sendAdminFlaggedDarApproved(String darCode, List<User> admins, Map<User, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
+    public void sendAdminFlaggedDarApproved(String darCode, List<User> admins, Map<User, List<Dataset>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
         if(isServiceActive){
             for(User admin: admins) {
                 Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVER_URL);

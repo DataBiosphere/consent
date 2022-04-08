@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 
-public class DataSetAudit {
+public class DatasetAudit {
 
   @JsonProperty private Integer dataSetAuditId;
 
@@ -22,9 +22,9 @@ public class DataSetAudit {
 
   @JsonProperty private String action;
 
-  public DataSetAudit() {}
+  public DatasetAudit() {}
 
-  public DataSetAudit(
+  public DatasetAudit(
       Integer dataSetId,
       String objectId,
       String name,

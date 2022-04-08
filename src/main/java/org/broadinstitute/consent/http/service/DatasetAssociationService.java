@@ -18,7 +18,7 @@ import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -42,7 +42,7 @@ public class DatasetAssociationService {
 
     public List<DatasetAssociation> createDatasetUsersAssociation(Integer dataSetId, List<Integer> userIds) {
         verifyUsers(userIds);
-        DataSet d = dsDAO.findDataSetById(dataSetId);
+        Dataset d = dsDAO.findDataSetById(dataSetId);
         if (Objects.isNull(d)) {
             throw new NotFoundException("Invalid DatasetId");
         }
@@ -77,9 +77,9 @@ public class DatasetAssociationService {
         return usersMap;
     }
 
-    public Map<User, List<DataSet>> findDataOwnersWithAssociatedDataSets(List<Integer> dataSetIdList) {
+    public Map<User, List<Dataset>> findDataOwnersWithAssociatedDataSets(List<Integer> dataSetIdList) {
         List<DatasetAssociation> dataSetAssociations = dsAssociationDAO.getDatasetAssociations(dataSetIdList);
-        Map<User, List<DataSet>> dataOwnerDataSetMap = new HashMap<>();
+        Map<User, List<Dataset>> dataOwnerDataSetMap = new HashMap<>();
         dataSetAssociations.forEach(dsa -> {
             User dataOwner = userDAO.findUserById(dsa.getDacuserId());
             if (!dataOwnerDataSetMap.containsKey(dataOwner)) {
@@ -93,7 +93,7 @@ public class DatasetAssociationService {
     }
 
     public List<DatasetAssociation> updateDatasetAssociations(Integer dataSetId, List<Integer> userIds) {
-        DataSet d = dsDAO.findDataSetById(dataSetId);
+        Dataset d = dsDAO.findDataSetById(dataSetId);
         if (Objects.isNull(d)) {
             throw new NotFoundException("Invalid DatasetId");
         }
