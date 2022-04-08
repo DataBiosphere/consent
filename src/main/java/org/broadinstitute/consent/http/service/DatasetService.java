@@ -16,7 +16,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +111,7 @@ public class DatasetService {
      */
     public Consent createConsentForDataset(DatasetDTO dataset) {
         String consentId = UUID.randomUUID().toString();
-        Optional<DataSetPropertyDTO> nameProp = dataset.getProperties()
+        Optional<DatasetPropertyDTO> nameProp = dataset.getProperties()
               .stream()
               .filter(p -> p.getPropertyName().equalsIgnoreCase(DATASET_NAME_KEY))
               .findFirst();
@@ -238,7 +238,7 @@ public class DatasetService {
         Dataset old = getDatasetWithPropertiesById(datasetId);
         Set<DatasetProperty> oldProperties = old.getProperties();
 
-        List<DataSetPropertyDTO> updateDatasetPropertyDTOs = dataset.getProperties();
+        List<DatasetPropertyDTO> updateDatasetPropertyDTOs = dataset.getProperties();
         List<DatasetProperty> updateDatasetProperties = processDatasetProperties(datasetId,
               updateDatasetPropertyDTOs);
 
@@ -292,7 +292,7 @@ public class DatasetService {
 
 
     public List<DatasetProperty> processDatasetProperties(Integer datasetId,
-                                                          List<DataSetPropertyDTO> properties) {
+                                                          List<DatasetPropertyDTO> properties) {
         Date now = new Date();
         List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
         List<String> keys = dictionaries.stream().map(Dictionary::getKey)
@@ -309,7 +309,7 @@ public class DatasetService {
               .collect(Collectors.toList());
     }
 
-    public List<DataSetPropertyDTO> findInvalidProperties(List<DataSetPropertyDTO> properties) {
+    public List<DatasetPropertyDTO> findInvalidProperties(List<DatasetPropertyDTO> properties) {
         List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
         List<String> keys = dictionaries.stream().map(Dictionary::getKey)
               .collect(Collectors.toList());
@@ -319,14 +319,14 @@ public class DatasetService {
               .collect(Collectors.toList());
     }
 
-    public List<DataSetPropertyDTO> findDuplicateProperties(List<DataSetPropertyDTO> properties) {
+    public List<DatasetPropertyDTO> findDuplicateProperties(List<DatasetPropertyDTO> properties) {
         Set<String> uniqueKeys = properties.stream()
-              .map(DataSetPropertyDTO::getPropertyName)
+              .map(DatasetPropertyDTO::getPropertyName)
               .collect(Collectors.toSet());
         if (uniqueKeys.size() != properties.size()) {
-            List<DataSetPropertyDTO> allDuplicateProperties = new ArrayList<>();
+            List<DatasetPropertyDTO> allDuplicateProperties = new ArrayList<>();
             uniqueKeys.forEach(key -> {
-                List<DataSetPropertyDTO> propertiesPerKey = properties.stream()
+                List<DatasetPropertyDTO> propertiesPerKey = properties.stream()
                       .filter(property -> property.getPropertyName().equals(key))
                       .collect(Collectors.toList());
                 if (propertiesPerKey.size() > 1) {
@@ -396,10 +396,10 @@ public class DatasetService {
         return filteredDatasetsContainingPartial.stream().map(ds ->
               {
                   HashMap<String, String> map = new HashMap<>();
-                  List<DataSetPropertyDTO> properties = ds.getProperties();
-                  Optional<DataSetPropertyDTO> datasetName = properties.stream()
+                  List<DatasetPropertyDTO> properties = ds.getProperties();
+                  Optional<DatasetPropertyDTO> datasetName = properties.stream()
                         .filter(p -> p.getPropertyName().equalsIgnoreCase("Dataset Name")).findFirst();
-                  Optional<DataSetPropertyDTO> pi = properties.stream()
+                  Optional<DatasetPropertyDTO> pi = properties.stream()
                         .filter(p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
                         .findFirst();
                   String datasetNameString =

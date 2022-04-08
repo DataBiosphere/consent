@@ -10,7 +10,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -85,15 +85,15 @@ public class DatasetResourceTest {
         resource = new DatasetResource(consentService, datasetService, userService, darService);
     }
 
-    private String createPropertiesJson(List<DataSetPropertyDTO> properties) {
+    private String createPropertiesJson(List<DatasetPropertyDTO> properties) {
         DatasetDTO json = new DatasetDTO();
         json.setProperties(properties);
         return new Gson().toJson(json);
     }
 
     private String createPropertiesJson(String propertyName, String propertyValue) {
-        List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
-        jsonProperties.add(new DataSetPropertyDTO(propertyName, propertyValue));
+        List<DatasetPropertyDTO> jsonProperties = new ArrayList<>();
+        jsonProperties.add(new DatasetPropertyDTO(propertyName, propertyValue));
         return createPropertiesJson(jsonProperties);
     }
 
@@ -101,7 +101,7 @@ public class DatasetResourceTest {
         DatasetDTO mockDTO = new DatasetDTO();
         mockDTO.setDataSetId(RandomUtils.nextInt(100, 1000));
         mockDTO.setDatasetName("test");
-        mockDTO.addProperty(new DataSetPropertyDTO("Property", "test"));
+        mockDTO.addProperty(new DatasetPropertyDTO("Property", "test"));
 
         return mockDTO;
     }
@@ -168,8 +168,8 @@ public class DatasetResourceTest {
 
     @Test(expected = BadRequestException.class)
     public void testCreateDatasetInvalidProperty() {
-        List<DataSetPropertyDTO> invalidProperties = new ArrayList<>();
-        invalidProperties.add(new DataSetPropertyDTO("Invalid Property", "test"));
+        List<DatasetPropertyDTO> invalidProperties = new ArrayList<>();
+        invalidProperties.add(new DatasetPropertyDTO("Invalid Property", "test"));
         when(datasetService.findInvalidProperties(any())).thenReturn(invalidProperties);
 
         String json = createPropertiesJson(invalidProperties);
@@ -180,9 +180,9 @@ public class DatasetResourceTest {
 
     @Test(expected = BadRequestException.class)
     public void testCreateDatasetDuplicateProperties() {
-        List<DataSetPropertyDTO> duplicateProperties = new ArrayList<>();
-        duplicateProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
-        duplicateProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
+        List<DatasetPropertyDTO> duplicateProperties = new ArrayList<>();
+        duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
+        duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
         when(datasetService.findDuplicateProperties(any())).thenReturn(duplicateProperties);
 
         String json = createPropertiesJson(duplicateProperties);
@@ -265,8 +265,8 @@ public class DatasetResourceTest {
 
     @Test
     public void testUpdateDatasetInvalidProperty() {
-        List<DataSetPropertyDTO> invalidProperties = new ArrayList<>();
-        invalidProperties.add(new DataSetPropertyDTO("Invalid Property", "test"));
+        List<DatasetPropertyDTO> invalidProperties = new ArrayList<>();
+        invalidProperties.add(new DatasetPropertyDTO("Invalid Property", "test"));
         when(datasetService.findInvalidProperties(any())).thenReturn(invalidProperties);
 
         Dataset preexistingDataset = new Dataset();
@@ -280,9 +280,9 @@ public class DatasetResourceTest {
 
     @Test
     public void testUpdateDatasetDuplicateProperties() {
-        List<DataSetPropertyDTO> duplicateProperties = new ArrayList<>();
-        duplicateProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
-        duplicateProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
+        List<DatasetPropertyDTO> duplicateProperties = new ArrayList<>();
+        duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
+        duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
         when(datasetService.findDuplicateProperties(any())).thenReturn(duplicateProperties);
 
         Dataset preexistingDataset = new Dataset();

@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -114,14 +114,14 @@ public class DatasetResource extends Resource {
         if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
             throw new BadRequestException("Dataset must contain required properties");
         }
-        List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
+        List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
         if (invalidProperties.size() > 0) {
             List<String> invalidKeys = invalidProperties.stream()
-                .map(DataSetPropertyDTO::getPropertyName)
+                .map(DatasetPropertyDTO::getPropertyName)
                 .collect(Collectors.toList());
             throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
         }
-        List<DataSetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
+        List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
         if (duplicateProperties.size() > 0) {
             throw new BadRequestException("Dataset contains multiple values for the same property.");
         }
@@ -168,14 +168,14 @@ public class DatasetResource extends Resource {
             if (Objects.isNull(datasetExists)) {
                 throw new NotFoundException("Could not find the dataset with id: " + datasetId);
             }
-            List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
+            List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
             if (invalidProperties.size() > 0) {
                 List<String> invalidKeys = invalidProperties.stream()
-                    .map(DataSetPropertyDTO::getPropertyName)
+                    .map(DatasetPropertyDTO::getPropertyName)
                     .collect(Collectors.toList());
                 throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
             }
-            List<DataSetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
+            List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
             if (duplicateProperties.size() > 0) {
                 throw new BadRequestException("Dataset contains multiple values for the same property.");
             }
@@ -284,10 +284,10 @@ public class DatasetResource extends Resource {
 
             for (DatasetDTO row : rows) {
                 StringBuilder sbr = new StringBuilder();
-                DataSetPropertyDTO property = new DataSetPropertyDTO("Consent ID",row.getConsentId());
-                List<DataSetPropertyDTO> props = row.getProperties();
+                DatasetPropertyDTO property = new DatasetPropertyDTO("Consent ID",row.getConsentId());
+                List<DatasetPropertyDTO> props = row.getProperties();
                 props.add(property);
-                for (DataSetPropertyDTO prop : props) {
+                for (DatasetPropertyDTO prop : props) {
                     if (sbr.length() > 0)
                         sbr.append(TSV_DELIMITER);
                     sbr.append(prop.getPropertyValue());
