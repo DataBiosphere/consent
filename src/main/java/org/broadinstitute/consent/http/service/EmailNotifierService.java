@@ -153,7 +153,7 @@ public class EmailNotifierService {
 
     public void sendDarNewCollectionMessage(List<User> users, DarCollection darCollection) throws MessagingException, IOException, TemplateException {
         if (isServiceActive) {
-            String electionType = ElectionType.DATA_ACCESS.getValue();
+            String electionType = "Data Access Request";
             String entityName = darCollection.getDarCode();
             for (User user: users) {
                 Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, entityName, SERVER_URL);
