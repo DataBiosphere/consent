@@ -374,6 +374,150 @@ public class VoteServiceTest {
     }
 
     @Test
+    public void testUpdateVotesWithValue_NoRationale() throws Exception {
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
+        Vote v = setUpTestVote(true, true);
+        when(voteDAO.findVoteById(anyInt())).thenReturn(v);
+        when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
+
+        Election accessElection = new Election();
+        accessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        accessElection.setStatus(ElectionStatus.OPEN.getValue());
+        Election rpElection = new Election();
+        rpElection.setElectionType(ElectionType.RP.getValue());
+        rpElection.setStatus(ElectionStatus.OPEN.getValue());
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection, rpElection));
+
+        initService();
+
+        try {
+            service.updateVotesWithValue(List.of(v), true, null);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testUpdateVotesWithValue_emptyList() throws Exception {
+        when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of());
+        initService();
+        List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
+        assertNotNull(votes);
+        assertTrue(votes.isEmpty());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateVotesWithValue_ClosedElection() throws Exception {
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
+        Vote v = setUpTestVote(true, true);
+        when(voteDAO.findVoteById(anyInt())).thenReturn(v);
+        when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
+
+        Election closedAccessElection = new Election();
+        closedAccessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        closedAccessElection.setStatus(ElectionStatus.CLOSED.getValue());
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(closedAccessElection));
+
+        initService();
+
+        service.updateVotesWithValue(List.of(v), true, "rationale");
+    }
+
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateVotesWithValue_MultipleElectionsDifferentStatuses() throws Exception {
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
+        Vote v = setUpTestVote(true, true);
+        when(voteDAO.findVoteById(anyInt())).thenReturn(v);
+        when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
+
+        Election openAccessElection = new Election();
+        openAccessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        openAccessElection.setStatus(ElectionStatus.OPEN.getValue());
+        Election closedAccessElection = new Election();
+        closedAccessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        closedAccessElection.setStatus(ElectionStatus.CLOSED.getValue());
+        Election canceledAccessElection = new Election();
+        canceledAccessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        canceledAccessElection.setStatus(ElectionStatus.CANCELED.getValue());
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(openAccessElection, closedAccessElection, canceledAccessElection));
+
+        initService();
+
+        service.updateVotesWithValue(List.of(v), true, "rationale");
+    }
+
+    @Test
+    public void testUpdateVotesWithValue_OpenRPElection() throws Exception {
+        testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.OPEN);
+    }
+
+    @Test
+    public void testUpdateVotesWithValue_ClosedRPElection() throws Exception {
+        testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.CLOSED);
+    }
+
+    @Test
+    public void testUpdateVotesWithValue_CanceledRPElection() throws Exception {
+        testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.CANCELED);
+    }
+
+    @Test
+    public void testUpdateVotesWithValue_FinalRPElection() throws Exception {
+        testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.FINAL);
+    }
+
+    @Test
+    public void testUpdateVotesWithValue_PendingApprovalRPElection() throws Exception {
+        testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.PENDING_APPROVAL);
+    }
+
+    @Test
+    public void testUpdateVotesWithValue_MultipleElectionTypes() throws Exception {
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
+        Vote v = setUpTestVote(true, true);
+        when(voteDAO.findVoteById(anyInt())).thenReturn(v);
+        when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
+
+        Election accessElection = new Election();
+        accessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        accessElection.setStatus(ElectionStatus.OPEN.getValue());
+        Election rpElection = new Election();
+        rpElection.setElectionType(ElectionType.RP.getValue());
+        rpElection.setStatus(ElectionStatus.OPEN.getValue());
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection, rpElection));
+
+        initService();
+
+        try {
+            service.updateVotesWithValue(List.of(v), true, "rationale");
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    private void testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus status) throws Exception {
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
+        Vote v = setUpTestVote(true, true);
+        when(voteDAO.findVoteById(anyInt())).thenReturn(v);
+        when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
+
+        Election rpElection = new Election();
+        rpElection.setElectionType(ElectionType.RP.getValue());
+        rpElection.setStatus(status.getValue());
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(rpElection));
+
+        initService();
+
+        try {
+            service.updateVotesWithValue(List.of(v), true, "rationale");
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+
+    @Test
     public void testUpdateRationaleByVoteIds() {
         doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
         when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());

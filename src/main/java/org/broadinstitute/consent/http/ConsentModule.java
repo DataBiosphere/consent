@@ -364,7 +364,6 @@ public class ConsentModule extends AbstractModule {
     @Provides
     VoteServiceDAO providesVoteServiceDAO() {
         return new VoteServiceDAO(
-        providesElectionDAO(),
         providesJdbi(),
         providesVoteDAO());
     }

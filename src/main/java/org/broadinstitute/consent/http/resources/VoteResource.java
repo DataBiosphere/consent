@@ -62,11 +62,13 @@ public class VoteResource extends Resource {
             );
         }
 
-        if (Objects.isNull(voteUpdate.getVote())) {
-            return createExceptionResponse(new BadRequestException("Vote value is required"));
+        if (Objects.isNull(voteUpdate) || Objects.isNull(voteUpdate.getVoteIds()) || voteUpdate.getVoteIds().isEmpty()) {
+            return createExceptionResponse(
+                    new BadRequestException("Unable to update empty vote ids: " + json)
+            );
         }
-        if (Objects.isNull(voteUpdate.getVoteIds()) || voteUpdate.getVoteIds().isEmpty()) {
-            return createExceptionResponse(new BadRequestException("Vote ids are required"));
+        if (Objects.isNull(voteUpdate.getVote())) {
+            return createExceptionResponse(new BadRequestException("Unable to update without vote value"));
         }
 
         try {
