@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ public class AdminDarApprovedModel {
 
     private String serverUrl;
 
-    public AdminDarApprovedModel(String user, String referenceId, Map<User, List<DataSet>> dataOwnersDataSets, String serverUrl) {
+    public AdminDarApprovedModel(String user, String referenceId, Map<User, List<Dataset>> dataOwnersDataSets, String serverUrl) {
         this.userName = user;
         this.referenceId = referenceId;
         this.serverUrl = serverUrl;
@@ -42,7 +42,7 @@ public class AdminDarApprovedModel {
         return dol;
     }
 
-    private List<DatasetOwnerListModel> ownersMapToTemplateList(Map<User, List<DataSet>> dataOwnersDataSets){
+    private List<DatasetOwnerListModel> ownersMapToTemplateList(Map<User, List<Dataset>> dataOwnersDataSets){
         List<DatasetOwnerListModel> templateList = new ArrayList<>();
         Set<User> owners = dataOwnersDataSets.keySet();
         for(User owner: owners){

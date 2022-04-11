@@ -12,7 +12,7 @@ import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
+import org.broadinstitute.consent.http.enumeration.DatasetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -22,7 +22,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
@@ -387,24 +387,24 @@ public class ElectionService {
     public String darDatasetElectionStatus(String darReferenceId){
         DataAccessRequest dar = describeDataAccessRequestById(darReferenceId);
         List<Integer> dataSets =  Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
-        List<DataSet> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
+        List<Dataset> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
         if(CollectionUtils.isEmpty(dsForApproval)) {
-            return DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
+            return DatasetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
         } else {
             Election darElection = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(darReferenceId, ElectionType.DATA_ACCESS.getValue());
             List<Election> dsElectionsToVoteOn = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(Arrays.asList(darReferenceId), ElectionType.DATA_SET.getValue());
             if((!(Objects.isNull(darElection)) && darElection.getStatus().equals(ElectionStatus.OPEN.getValue())) || CollectionUtils.isEmpty(dsElectionsToVoteOn)){
-                return DataSetElectionStatus.DS_PENDING.getValue();
+                return DatasetElectionStatus.DS_PENDING.getValue();
             } else {
                 for(Election e: dsElectionsToVoteOn){
                     if(e.getStatus().equals(ElectionStatus.OPEN.getValue())){
-                        return DataSetElectionStatus.DS_PENDING.getValue();
+                        return DatasetElectionStatus.DS_PENDING.getValue();
                     } else if(!e.getFinalAccessVote()){
-                        return DataSetElectionStatus.DS_DENIED.getValue();
+                        return DatasetElectionStatus.DS_DENIED.getValue();
                     }
                 }
             }
-            return DataSetElectionStatus.DS_APPROVED.getValue();
+            return DatasetElectionStatus.DS_APPROVED.getValue();
         }
     }
 
@@ -413,7 +413,7 @@ public class ElectionService {
         return electionId != null ? electionDAO.findElectionById(electionId) : null;
     }
 
-    public List<Election> createDataSetElections(String referenceId, Map<User, List<DataSet>> dataOwnerDataSet){
+    public List<Election> createDataSetElections(String referenceId, Map<User, List<Dataset>> dataOwnerDataSet){
         List<Integer> electionsIds = new ArrayList<>();
         dataOwnerDataSet.forEach((user,dataSets) -> {
             dataSets.stream().forEach(dataSet -> {
@@ -448,19 +448,19 @@ public class ElectionService {
             if (Objects.isNull(dataAccessRequest) || Objects.isNull(dataAccessRequest.getData())) {
                 throw new NotFoundException();
             }
-            List<DataSet> dataSets = verifyActiveDataSets(dataAccessRequest, referenceId);
+            List<Dataset> dataSets = verifyActiveDataSets(dataAccessRequest, referenceId);
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
             consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), ElectionStatus.CLOSED.getValue());
         }
         return consentElection;
     }
 
-    private List<DataSet> verifyActiveDataSets(DataAccessRequest dar, String referenceId) throws Exception {
+    private List<Dataset> verifyActiveDataSets(DataAccessRequest dar, String referenceId) throws Exception {
         List<Integer> dataSets = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
-        List<DataSet> dataSetList = dataSets.isEmpty() ? Collections.emptyList() : dataSetDAO.findDatasetsByIdList(dataSets);
+        List<Dataset> dataSetList = dataSets.isEmpty() ? Collections.emptyList() : dataSetDAO.findDatasetsByIdList(dataSets);
         List<String> disabledDataSets = dataSetList.stream()
                 .filter(ds -> !ds.getActive())
-                .map(DataSet::getObjectId)
+                .map(Dataset::getObjectId)
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(disabledDataSets)) {
             boolean createElection = disabledDataSets.size() != dataSetList.size();
@@ -476,11 +476,11 @@ public class ElectionService {
         return dataSetList;
     }
 
-    private void updateDataAccessRequest(List<DataSet> dataSets, DataAccessRequest dar, String referenceId) {
+    private void updateDataAccessRequest(List<Dataset> dataSets, DataAccessRequest dar, String referenceId) {
         List<DatasetDetailEntry> activeDatasetDetailEntries = new ArrayList<>();
         List<Integer> activeDatasetIds = new ArrayList<>();
-        List<DataSet> activeDataSets = dataSets.stream()
-                .filter(DataSet::getActive)
+        List<Dataset> activeDataSets = dataSets.stream()
+                .filter(Dataset::getActive)
                 .collect(Collectors.toList());
         activeDataSets.forEach((dataSet) -> {
             activeDatasetIds.add(dataSet.getDataSetId());
@@ -636,7 +636,7 @@ public class ElectionService {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
         List<Integer> dataSetIdList = dar.getData().getDatasetIds();
         if (CollectionUtils.isNotEmpty(dataSetIdList)) {
-            List<DataSet> dataSets = dataSetDAO.findDatasetsByIdList(dataSetIdList);
+            List<Dataset> dataSets = dataSetDAO.findDatasetsByIdList(dataSetIdList);
             List<DatasetMailDTO> datasetsDetail = new ArrayList<>();
             dataSets.forEach(ds ->
                     datasetsDetail.add(new DatasetMailDTO(ds.getName(), ds.getDatasetIdentifier()))

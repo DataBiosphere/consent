@@ -46,7 +46,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -583,7 +583,7 @@ public class DataAccessRequestService {
 
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(DataAccessRequest dataAccessRequest, User user, ElectionService electionService) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
-        List<DataSet> datasets = populateDatasets(dataAccessRequest);
+        List<Dataset> datasets = populateDatasets(dataAccessRequest);
         User researcher = userDAO.findUserById(dataAccessRequest.getUserId());
         Boolean hasProps = Objects.nonNull(researcher) && Objects.nonNull(researcher.getProperties());
         Optional<UserProperty> department = hasProps ? researcher.getProperties().stream().filter(
@@ -620,7 +620,7 @@ public class DataAccessRequestService {
                 .setRus(Objects.nonNull(dataAccessRequest.getData()) ? dataAccessRequest.getData().getRus() : "");
     }
 
-    private List<DataSet> populateDatasets(DataAccessRequest dar) {
+    private List<Dataset> populateDatasets(DataAccessRequest dar) {
         List<Integer> datasetIds = Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
         if (!datasetIds.isEmpty()) {
             return dataSetDAO.findDataSetsByIdList(datasetIds);
@@ -640,7 +640,7 @@ public class DataAccessRequestService {
             return activeDars;
         }
         List<Integer> dataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()).stream().
-                map(DataSet::getDataSetId).
+                map(Dataset::getDataSetId).
                 collect(Collectors.toList());
         return activeDars.stream().
                 filter(d -> d.getData().getDatasetIds().stream().anyMatch(dataSetIds::contains)).

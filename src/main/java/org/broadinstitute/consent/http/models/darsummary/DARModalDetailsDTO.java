@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.models.darsummary;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.OntologyEntry;
 import org.broadinstitute.consent.http.models.UserProperty;
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ public class DARModalDetailsDTO {
     private boolean requiresManualReview = false;
     private Integer userId;
     private String needDOApproval = "";
-    private List<DataSet> datasets;
+    private List<Dataset> datasets;
     private List<UserProperty> researcherProperties;
     private String rus;
 
@@ -255,11 +255,11 @@ public class DARModalDetailsDTO {
         return this;
     }
 
-    public List<DataSet> getDatasets() {
+    public List<Dataset> getDatasets() {
         return datasets;
     }
 
-    public DARModalDetailsDTO setDatasets(List<DataSet> datasets) {
+    public DARModalDetailsDTO setDatasets(List<Dataset> datasets) {
         this.datasets = datasets;
         return this;
     }

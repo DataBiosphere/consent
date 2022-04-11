@@ -13,7 +13,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
@@ -245,10 +245,10 @@ public class DarCollectionServiceTest {
   @Test
   public void testAddDatasetsToCollection() {
     List<DarCollection> collections = new ArrayList<>();
-    Set<DataSet> datasets = new HashSet<>();
+    Set<Dataset> datasets = new HashSet<>();
     collections.add(generateMockDarCollection(datasets));
     List<Integer> datasetIds = datasets.stream()
-      .map(DataSet::getDataSetId)
+      .map(Dataset::getDataSetId)
       .sorted()
       .collect(Collectors.toList());
 
@@ -259,11 +259,11 @@ public class DarCollectionServiceTest {
     assertEquals(1, collections.size());
 
     DarCollection collection = collections.get(0);
-    Set<DataSet> datasetsFromCollection = collection.getDatasets();
+    Set<Dataset> datasetsFromCollection = collection.getDatasets();
     assertEquals(datasetIds.size(), datasetsFromCollection.size());
 
     List<Integer> collectionDatasetIds = datasetsFromCollection.stream()
-      .map(DataSet::getDataSetId)
+      .map(Dataset::getDataSetId)
       .sorted()
       .collect(Collectors.toList());
     assertEquals(datasetIds, collectionDatasetIds);
@@ -271,7 +271,7 @@ public class DarCollectionServiceTest {
 
   @Test
   public void testCancelDarCollection_noElections() {
-    Set<DataSet> datasets = new HashSet<>();
+    Set<Dataset> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
     collection.getDars().values().forEach(d -> d.getData().setStatus("Canceled"));
     List<Election> elections = new ArrayList<>();
@@ -288,7 +288,7 @@ public class DarCollectionServiceTest {
 
   @Test(expected = BadRequestException.class)
   public void testCancelDarCollection_electionPresent() {
-    Set<DataSet> datasets = new HashSet<>();
+    Set<Dataset> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
 
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(new Election()));
@@ -367,7 +367,7 @@ public class DarCollectionServiceTest {
   public void testCancelDarCollectionAsChair_ChairHasDatasets() {
     User user = new User();
     user.setEmail("email");
-    DataSet dataset = new DataSet();
+    Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
@@ -400,7 +400,7 @@ public class DarCollectionServiceTest {
   public void testCancelDarCollectionAsChair_ChairHasNoDatasets() {
     User user = new User();
     user.setEmail("email");
-    DataSet dataset = new DataSet();
+    Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
@@ -583,7 +583,7 @@ public class DarCollectionServiceTest {
     return new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm, DarCollection.acceptableSortFields, DarCollection.defaultTokenSortField);
   }
 
-  private DarCollection generateMockDarCollection(Set<DataSet> datasets) {
+  private DarCollection generateMockDarCollection(Set<Dataset> datasets) {
     DarCollection collection = new DarCollection();
     Map<String, DataAccessRequest> dars = new HashMap<>();
     DataAccessRequest darOne = generateMockDarWithDatasetId(datasets);
@@ -594,7 +594,7 @@ public class DarCollectionServiceTest {
     return collection;
   }
 
-  private DataAccessRequest generateMockDarWithDatasetId(Set<DataSet> datasets) {
+  private DataAccessRequest generateMockDarWithDatasetId(Set<Dataset> datasets) {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
 
@@ -606,8 +606,8 @@ public class DarCollectionServiceTest {
     return dar;
   }
 
-  private DataSet generateMockDatasetWithDataUse(Integer datasetId) {
-    DataSet dataset = new DataSet();
+  private Dataset generateMockDatasetWithDataUse(Integer datasetId) {
+    Dataset dataset = new Dataset();
     dataset.setDataSetId(datasetId);
     return dataset;
   }

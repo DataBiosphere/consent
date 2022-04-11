@@ -25,7 +25,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.User;
@@ -150,7 +150,7 @@ public class PendingCaseService {
                 if (CollectionUtils.isNotEmpty(dataOwnerVotes)) {
                     dataOwnerVotes.forEach(v -> {
                         DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(election.getReferenceId());
-                        DataSet dataSet = dataSetDAO.findDataSetById(election.getDataSetId());
+                        Dataset dataSet = dataSetDAO.findDataSetById(election.getDataSetId());
                         dataOwnerCase.setAlias(dataSet.getAlias());
                         dataOwnerCase.setDarCode(dataAccessRequest != null ? dataAccessRequest.getData().getDarCode() : null);
                         dataOwnerCase.setDataSetId(dataSet.getDataSetId());

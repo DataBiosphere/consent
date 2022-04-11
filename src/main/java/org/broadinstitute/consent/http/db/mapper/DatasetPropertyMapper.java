@@ -2,14 +2,14 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class DatasetPropertyMapper implements RowMapper<DataSetProperty> {
+public class DatasetPropertyMapper implements RowMapper<DatasetProperty> {
 
-    public DataSetProperty map(ResultSet r, StatementContext ctx) throws SQLException {
-      return new DataSetProperty(
+    public DatasetProperty map(ResultSet r, StatementContext ctx) throws SQLException {
+      return new DatasetProperty(
           r.getInt("propertyid"),
           r.getInt("datasetid"),
           r.getInt("propertykey"),

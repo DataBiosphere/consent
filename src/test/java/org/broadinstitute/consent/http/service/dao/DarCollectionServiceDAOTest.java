@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -340,7 +340,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
     Consent consent = createConsent(dac.getDacId());
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
     // Create new DAR with Dataset and add it to the collection
