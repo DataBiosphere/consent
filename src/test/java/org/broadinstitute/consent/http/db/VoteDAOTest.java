@@ -645,7 +645,7 @@ public class VoteDAOTest extends DAOTestHelper {
         //      helper method also creates elections and votes for user, so make that user a chairperson
         Dac dac = createDac();
         User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         // This creates an election and votes for the user passed in as the creator
         DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(dac.getDacId(), chair, List.of(dataset));
         Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
