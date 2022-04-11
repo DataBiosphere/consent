@@ -151,7 +151,7 @@ public class EmailNotifierService {
         }
     }
 
-    public void sendDarNewCollectionMessage(List<User> users, DarCollection darCollection) throws MessagingException, IOException, TemplateException {
+    public void sendDarNewCollectionElectionMessage(List<User> users, DarCollection darCollection) throws MessagingException, IOException, TemplateException {
         if (isServiceActive) {
             String electionType = "Data Access Request";
             String entityName = darCollection.getDarCode();

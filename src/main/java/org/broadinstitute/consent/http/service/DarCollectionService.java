@@ -401,7 +401,7 @@ public class DarCollectionService {
       List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarCollection(user, collection);
       List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
       try {
-        emailNotifierService.sendDarNewCollectionMessage(voteUsers, collection);
+        emailNotifierService.sendDarNewCollectionElectionMessage(voteUsers, collection);
       } catch (Exception e) {
         logger.error("Unable to send new case message to DAC members for DAR Collection: " + collection.getDarCode());
       }

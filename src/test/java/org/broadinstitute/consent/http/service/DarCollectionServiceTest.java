@@ -19,7 +19,6 @@ import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.junit.Before;
 import org.junit.Test;
@@ -454,7 +453,7 @@ public class DarCollectionServiceTest {
     service.createElectionsForDarCollection(user, collection);
     verify(darCollectionServiceDAO, times(1)).createElectionsForDarCollection(any(), any());
     verify(voteDAO, times(1)).findVoteUsersByElectionReferenceIdList(any());
-    verify(emailNotifierService, times(1)).sendDarNewCollectionMessage(any(), any());
+    verify(emailNotifierService, times(1)).sendDarNewCollectionElectionMessage(any(), any());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
   }
 
