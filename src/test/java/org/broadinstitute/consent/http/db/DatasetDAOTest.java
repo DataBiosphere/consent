@@ -38,6 +38,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertNotNull(foundDataset);
         assertEquals(dac.getDacId(), foundDataset.getDacId());
         assertEquals(consent.getConsentId(), foundDataset.getConsentId());
+        assertEquals(consent.getTranslatedUseRestriction(), foundDataset.getTranslatedUseRestriction());
     }
 
     @Test
@@ -53,6 +54,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(1, datasets.size());
         assertEquals(dac.getDacId(), datasets.get(0).getDacId());
         assertEquals(consent.getConsentId(), datasets.get(0).getConsentId());
+        assertEquals(consent.getTranslatedUseRestriction(), datasets.get(0).getTranslatedUseRestriction());
     }
 
     @Test
@@ -67,6 +69,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(1, datasets.size());
         assertEquals(dac.getDacId(), datasets.get(0).getDacId());
         assertEquals(consent.getConsentId(), datasets.get(0).getConsentId());
+        assertEquals(consent.getTranslatedUseRestriction(), datasets.get(0).getTranslatedUseRestriction());
     }
 
     @Test
@@ -81,6 +84,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(1, datasets.size());
         assertEquals(dac.getDacId(), datasets.get(0).getDacId());
         assertEquals(consent.getConsentId(), datasets.get(0).getConsentId());
+        assertEquals(consent.getTranslatedUseRestriction(), datasets.get(0).getTranslatedUseRestriction());
     }
 
     @Test
@@ -97,6 +101,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertTrue(foundDataset.isPresent());
         assertEquals(dac.getDacId(), foundDataset.get().getDacId());
         assertEquals(consent.getConsentId(), foundDataset.get().getConsentId());
+        assertEquals(consent.getTranslatedUseRestriction(), foundDataset.get().getTranslatedUseRestriction());
     }
 
     // User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
