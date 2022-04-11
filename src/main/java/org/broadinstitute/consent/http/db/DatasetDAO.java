@@ -47,7 +47,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     Integer insertDatasetV2(@Bind("name") String name, @Bind("createDate") Timestamp createDate, @Bind("createUserId") Integer createUserId, @Bind("objectId") String objectId, @Bind("active") Boolean active);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
         " FROM dataset d " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
@@ -60,7 +60,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     Integer findDataSetIdByObjectId(@Bind("objectId") String objectId);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
         " FROM dataset d " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
@@ -113,7 +113,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     void updateDatasetUpdateUserAndDate(@Bind("datasetId") Integer datasetId, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
+    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
           "LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
           "LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
@@ -192,7 +192,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     List<Dictionary> getMappedFieldsOrderByDisplayOrder();
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
         " FROM dataset d " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
@@ -211,7 +211,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     Dataset getDatasetByName(@Bind("name") String name);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
         " FROM dataset d " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
@@ -231,7 +231,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      * @return List of datasets that are visible to the user via DACs.
      */
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
         " FROM dataset d " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
@@ -311,7 +311,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     List<Pair<Integer, Integer>> findDatasetAndDacIds();
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
         " FROM dataset d " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +

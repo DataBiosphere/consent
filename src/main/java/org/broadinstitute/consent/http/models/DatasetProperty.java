@@ -8,6 +8,7 @@ public class DatasetProperty {
     private Integer propertyId;
     private Integer dataSetId;
     private Integer propertyKey;
+    private String propertyKeyName;
     private String propertyValue;
     private Date createDate;
 
@@ -52,6 +53,14 @@ public class DatasetProperty {
         this.propertyKey = propertyKey;
     }
 
+    public String getPropertyKeyName() {
+        return propertyKeyName;
+    }
+
+    public void setPropertyKeyName(String propertyKeyName) {
+        this.propertyKeyName = propertyKeyName;
+    }
+
     public String getPropertyValue() {
         return propertyValue;
     }
@@ -80,6 +89,7 @@ public class DatasetProperty {
         DatasetProperty other = (DatasetProperty) obj;
         return new EqualsBuilder()
               .append(dataSetId, other.dataSetId)
+              .append(propertyKeyName, other.propertyKeyName)
               .append(propertyKey, other.propertyKey)
               .append(propertyValue, other.propertyValue)
               .isEquals();

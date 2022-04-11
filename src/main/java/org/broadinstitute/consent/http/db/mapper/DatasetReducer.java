@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
@@ -23,6 +24,24 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       dataset.setTranslatedUseRestriction(
         rowView.getColumn("translateduserestriction", String.class)
       );
+    }
+    if (Objects.nonNull(rowView.getColumn("key", String.class)) &&
+      Objects.nonNull(rowView.getColumn("propertyvalue", String.class)) &&
+      Objects.nonNull(rowView.getColumn("propertykey", Integer.class)) &&
+      Objects.nonNull(rowView.getColumn("propertyid", Integer.class))
+      ) {
+        String key = rowView.getColumn("key", String.class);
+        String propVal =  rowView.getColumn("propertyvalue", String.class);
+        Integer propKey = rowView.getColumn("propertykey", Integer.class);
+        Integer propId = rowView.getColumn("propertyid", Integer.class);
+        DatasetProperty prop = new DatasetProperty();
+        prop.setDataSetId(dataset.getDataSetId());
+        prop.setPropertyId(propId);
+        prop.setPropertyValue(propVal);
+        prop.setPropertyKey(propKey);
+        prop.setPropertyKeyName(key);
+        prop.setCreateDate(dataset.getCreateDate());
+        dataset.addProperty(prop);
     }
   }
 }

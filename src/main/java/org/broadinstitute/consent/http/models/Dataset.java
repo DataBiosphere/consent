@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
@@ -168,6 +170,13 @@ public class Dataset {
 
     public void setProperties(Set<DatasetProperty> properties) {
         this.properties = properties;
+    }
+
+    public void addProperty(DatasetProperty property) {
+        if (Objects.isNull(this.properties)) {
+            this.properties = new HashSet<>();
+        }
+        this.properties.add(property);
     }
 
     public Boolean getActive() {

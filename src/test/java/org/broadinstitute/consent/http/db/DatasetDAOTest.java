@@ -39,6 +39,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(dac.getDacId(), foundDataset.getDacId());
         assertEquals(consent.getConsentId(), foundDataset.getConsentId());
         assertEquals(consent.getTranslatedUseRestriction(), foundDataset.getTranslatedUseRestriction());
+        assertFalse(foundDataset.getProperties().isEmpty());
     }
 
     @Test
@@ -55,6 +56,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(dac.getDacId(), datasets.get(0).getDacId());
         assertEquals(consent.getConsentId(), datasets.get(0).getConsentId());
         assertEquals(consent.getTranslatedUseRestriction(), datasets.get(0).getTranslatedUseRestriction());
+        assertFalse(datasets.get(0).getProperties().isEmpty());
     }
 
     @Test
@@ -70,6 +72,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(dac.getDacId(), datasets.get(0).getDacId());
         assertEquals(consent.getConsentId(), datasets.get(0).getConsentId());
         assertEquals(consent.getTranslatedUseRestriction(), datasets.get(0).getTranslatedUseRestriction());
+        assertFalse(datasets.get(0).getProperties().isEmpty());
     }
 
     @Test
@@ -85,6 +88,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(dac.getDacId(), datasets.get(0).getDacId());
         assertEquals(consent.getConsentId(), datasets.get(0).getConsentId());
         assertEquals(consent.getTranslatedUseRestriction(), datasets.get(0).getTranslatedUseRestriction());
+        assertFalse(datasets.get(0).getProperties().isEmpty());
     }
 
     @Test
@@ -102,6 +106,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(dac.getDacId(), foundDataset.get().getDacId());
         assertEquals(consent.getConsentId(), foundDataset.get().getConsentId());
         assertEquals(consent.getTranslatedUseRestriction(), foundDataset.get().getTranslatedUseRestriction());
+        assertFalse(foundDataset.get().getProperties().isEmpty());
     }
 
     // User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
