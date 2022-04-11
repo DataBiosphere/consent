@@ -56,7 +56,7 @@ public class DarCollectionServiceDAO {
     List<Integer> dacUserDatasetIds = isAdmin ?
         List.of() :
         datasetDAO
-            .findDataSetsByAuthUserEmail(user.getEmail())
+            .findDatasetsByAuthUserEmail(user.getEmail())
             .stream()
             .map(Dataset::getDataSetId)
             .collect(Collectors.toList());

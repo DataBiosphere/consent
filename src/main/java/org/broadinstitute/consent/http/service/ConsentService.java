@@ -313,7 +313,7 @@ public class ConsentService {
             if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) == null){
                 throw new NotFoundException();
             } else {
-                Integer datasetId = dataSetDAO.findDataSetIdByObjectId(objectId);
+                Integer datasetId = dataSetDAO.findDatasetIdByObjectId(objectId);
                 consentDAO.deleteOneAssociation(consentId, associationType, datasetId);
             }
 
@@ -341,7 +341,7 @@ public class ConsentService {
         Handle h = jdbi.open();
         PreparedBatch insertBatch = h.prepareBatch("insert into consentassociations (consentId, associationType, dataSetId) values (?, ?, ?)");
         for (String id : ids) {
-            insertBatch.add(consentId, associationType, dataSetDAO.findDataSetIdByObjectId(id));
+            insertBatch.add(consentId, associationType, dataSetDAO.findDatasetIdByObjectId(id));
         }
         List<Long> insertedIds = insertBatch.
                 executeAndReturnGeneratedKeys("associationid").

@@ -62,11 +62,11 @@ public class DatasetService {
     }
 
     public List<Dataset> getDataSetsForConsent(String consentId) {
-        return datasetDAO.getDataSetsForConsent(consentId);
+        return datasetDAO.getDatasetsForConsent(consentId);
     }
 
     public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
-        return datasetDAO.findDataSetsByReceiveOrder(dataSetId);
+        return datasetDAO.findDatasetsByReceiveOrder(dataSetId);
     }
 
     public Collection<Dictionary> describeDictionaryByDisplayOrder() {
@@ -80,7 +80,7 @@ public class DatasetService {
     public void disableDataset(Integer datasetId, Boolean active) {
         Dataset dataset = datasetDAO.findDatasetById(datasetId);
         if (dataset != null) {
-            datasetDAO.updateDataSetActive(dataset.getDataSetId(), active);
+            datasetDAO.updateDatasetActive(dataset.getDataSetId(), active);
         }
     }
 
@@ -93,7 +93,7 @@ public class DatasetService {
     }
 
     public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
-        return datasetDAO.findNeedsApprovalDatasetByDataSetId(dataSetIdList);
+        return datasetDAO.findNeedsApprovalDatasetByDatasetId(dataSetIdList);
     }
 
     public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
@@ -347,10 +347,10 @@ public class DatasetService {
             try {
                 datasetDAO.useTransaction(h -> {
                     try {
-                        h.insertDataSetAudit(dsAudit);
+                        h.insertDatasetAudit(dsAudit);
                         h.deleteUserAssociationsByDatasetId(datasetId);
                         h.deleteDatasetPropertiesByDatasetId(datasetId);
-                        h.deleteConsentAssociationsByDataSetId(datasetId);
+                        h.deleteConsentAssociationsByDatasetId(datasetId);
                         h.deleteDatasetById(datasetId);
                     } catch (Exception e) {
                         h.rollback();

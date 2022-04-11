@@ -237,7 +237,7 @@ public class SummaryService {
             .flatMap(List::stream)
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
-      List<Association> associations = datasetIds.isEmpty() ? Collections.emptyList() : datasetDAO.getAssociationsForDataSetIdList(datasetIds);
+      List<Association> associations = datasetIds.isEmpty() ? Collections.emptyList() : datasetDAO.getAssociationsForDatasetIdList(datasetIds);
       List<String> associatedConsentIds = associations.stream().map(Association::getConsentId).collect(Collectors.toList());
       List<Election> consentElections = associatedConsentIds.isEmpty() ? Collections.emptyList() : electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
       List<Integer> accessElectionIds = accessElections.stream().map(Election::getElectionId).collect(Collectors.toList());

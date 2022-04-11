@@ -50,7 +50,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Consent consent = createConsent(dac.getDacId());
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
-        List<Dataset> datasets = dataSetDAO.findNeedsApprovalDatasetByDataSetId(List.of(dataset.getDataSetId()));
+        List<Dataset> datasets = dataSetDAO.findNeedsApprovalDatasetByDatasetId(List.of(dataset.getDataSetId()));
         assertFalse(datasets.isEmpty());
         assertEquals(1, datasets.size());
         assertEquals(dac.getDacId(), datasets.get(0).getDacId());
@@ -119,7 +119,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         User user = createUser();
         createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), dac.getDacId());
 
-        List<Dataset> datasets = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail());
+        List<Dataset> datasets = dataSetDAO.findDatasetsByAuthUserEmail(user.getEmail());
         assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
@@ -131,7 +131,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
-        List<Dataset> datasets = dataSetDAO.findNonDACDataSets();
+        List<Dataset> datasets = dataSetDAO.findNonDACDatasets();
         assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));

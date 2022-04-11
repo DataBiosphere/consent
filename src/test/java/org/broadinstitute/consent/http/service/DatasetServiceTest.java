@@ -94,7 +94,7 @@ public class DatasetServiceTest {
 
     @Test
     public void testGetDatasetsForConsent() {
-        when(datasetDAO.getDataSetsForConsent(getDatasets().get(0).getConsentName()))
+        when(datasetDAO.getDatasetsForConsent(getDatasets().get(0).getConsentName()))
                 .thenReturn(getDatasets());
         initService();
 
@@ -106,7 +106,7 @@ public class DatasetServiceTest {
 
     @Test
     public void testDescribeDataSetsByReceiveOrder() {
-        when(datasetDAO.findDataSetsByReceiveOrder(Collections.singletonList(1)))
+        when(datasetDAO.findDatasetsByReceiveOrder(Collections.singletonList(1)))
             .thenReturn(new HashSet<>(getDatasetDTOs()));
         initService();
 
@@ -142,7 +142,7 @@ public class DatasetServiceTest {
         Integer dataSetId = 1;
         when(datasetDAO.findDatasetById(dataSetId))
                 .thenReturn(getDatasets().get(0));
-        doNothing().when(datasetDAO).updateDataSetActive(any(), any());
+        doNothing().when(datasetDAO).updateDatasetActive(any(), any());
 
         initService();
 
@@ -183,7 +183,7 @@ public class DatasetServiceTest {
 
     @Test
     public void testFindNeedsApprovalDataSetsByObjectId() {
-        when(datasetDAO.findNeedsApprovalDatasetByDataSetId(Collections.singletonList(1)))
+        when(datasetDAO.findNeedsApprovalDatasetByDatasetId(Collections.singletonList(1)))
                 .thenReturn(getDatasets());
         initService();
 
@@ -197,11 +197,11 @@ public class DatasetServiceTest {
         Integer dataSetId = 1;
         when(datasetDAO.findDatasetById(any()))
                 .thenReturn(getDatasets().get(0));
-        when(datasetDAO.insertDataSetAudit(any()))
+        when(datasetDAO.insertDatasetAudit(any()))
                 .thenReturn(1);
         doNothing().when(datasetDAO).deleteUserAssociationsByDatasetId(any());
-        doNothing().when(datasetDAO).deleteDataSetsProperties(any());
-        doNothing().when(datasetDAO).deleteConsentAssociationsByDataSetId(any());
+        doNothing().when(datasetDAO).deleteDatasetsProperties(any());
+        doNothing().when(datasetDAO).deleteConsentAssociationsByDatasetId(any());
 
         initService();
         datasetService.deleteDataset(dataSetId, 1);

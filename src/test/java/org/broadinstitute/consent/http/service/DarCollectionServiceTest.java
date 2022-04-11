@@ -380,7 +380,7 @@ public class DarCollectionServiceTest {
     election.setReferenceId(dar.getReferenceId());
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
-    when(datasetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(List.of(dataset));
+    when(datasetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(List.of(dataset));
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
     spy(datasetDAO);
     spy(electionDAO);
@@ -389,7 +389,7 @@ public class DarCollectionServiceTest {
     initService();
 
     service.cancelDarCollectionElectionsAsChair(collection, user);
-    verify(datasetDAO, times(1)).findDataSetsByAuthUserEmail(anyString());
+    verify(datasetDAO, times(1)).findDatasetsByAuthUserEmail(anyString());
     verify(electionDAO, times(1)).findLastElectionsByReferenceIds(anyList());
     verify(electionDAO, times(1)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
@@ -413,7 +413,7 @@ public class DarCollectionServiceTest {
     election.setReferenceId(dar.getReferenceId());
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
-    when(datasetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(List.of());
+    when(datasetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(List.of());
     spy(datasetDAO);
     spy(electionDAO);
     spy(dataAccessRequestDAO);
@@ -421,7 +421,7 @@ public class DarCollectionServiceTest {
     initService();
 
     service.cancelDarCollectionElectionsAsChair(collection, user);
-    verify(datasetDAO, times(1)).findDataSetsByAuthUserEmail(anyString());
+    verify(datasetDAO, times(1)).findDatasetsByAuthUserEmail(anyString());
     verify(electionDAO, times(0)).findLastElectionsByReferenceIds(anyList());
     verify(electionDAO, times(0)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
