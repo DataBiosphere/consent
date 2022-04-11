@@ -440,7 +440,7 @@ public class DAOTestHelper {
         ds.setAlias(RandomUtils.nextInt(1, 1000));
         Integer id = dataSetDAO.insertDataset(ds.getName(), ds.getCreateDate(), ds.getObjectId(), ds.getActive(), ds.getAlias());
         createDatasetProperties(id);
-        return dataSetDAO.findDataSetById(id);
+        return dataSetDAO.findDatasetById(id);
     }
 
     protected LibraryCard createLibraryCard() {

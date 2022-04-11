@@ -47,6 +47,25 @@ public class Dataset {
     @JsonProperty
     public DataUse dataUse;
 
+    @JsonProperty
+    private Integer dacId;
+
+    @JsonProperty
+    private String consentId;
+
+    @JsonProperty
+    private String translatedUseRestriction;
+
+    @JsonProperty
+    private Boolean deletable;
+
+    @JsonProperty
+    private Boolean isAssociatedToDataOwners;
+
+    @JsonProperty
+    private Boolean updateAssociationToDataOwnerAllowed;
+
+
     private Set<DatasetProperty> properties;
 
     public Dataset() {
@@ -197,5 +216,53 @@ public class Dataset {
 
     public static String parseAliasToIdentifier(Integer alias) {
         return PREFIX + StringUtils.leftPad(alias.toString(), 6, "0");
+    }
+
+    public Integer getDacId() {
+        return dacId;
+    }
+
+    public void setDacId(Integer dacId) {
+        this.dacId = dacId;
+    }
+
+    public String getConsentId() {
+        return consentId;
+    }
+
+    public void setConsentId(String consentId) {
+        this.consentId = consentId;
+    }
+
+    public String getTranslatedUseRestriction() {
+        return translatedUseRestriction;
+    }
+
+    public void setTranslatedUseRestriction(String translatedUseRestriction) {
+        this.translatedUseRestriction = translatedUseRestriction;
+    }
+
+    public Boolean getDeletable() {
+        return deletable;
+    }
+
+    public void setDeletable(Boolean deletable) {
+        this.deletable = deletable;
+    }
+
+    public Boolean getAssociatedToDataOwners() {
+        return isAssociatedToDataOwners;
+    }
+
+    public void setAssociatedToDataOwners(Boolean associatedToDataOwners) {
+        isAssociatedToDataOwners = associatedToDataOwners;
+    }
+
+    public Boolean getUpdateAssociationToDataOwnerAllowed() {
+        return updateAssociationToDataOwnerAllowed;
+    }
+
+    public void setUpdateAssociationToDataOwnerAllowed(Boolean updateAssociationToDataOwnerAllowed) {
+        this.updateAssociationToDataOwnerAllowed = updateAssociationToDataOwnerAllowed;
     }
 }

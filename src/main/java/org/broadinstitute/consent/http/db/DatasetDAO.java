@@ -46,17 +46,23 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @GetGeneratedKeys
     Integer insertDatasetV2(@Bind("name") String name, @Bind("createDate") Timestamp createDate, @Bind("createUserId") Integer createUserId, @Bind("objectId") String objectId, @Bind("active") Boolean active);
 
-    @SqlQuery("select * from dataset where dataSetId = :dataSetId")
-    Dataset findDataSetById(@Bind("dataSetId") Integer dataSetId);
+    @SqlQuery("SELECT d.*, c.dac_id, c.consentid " +
+        " FROM dataset d " +
+        " LEFT JOIN consentassociations a ON d.datasetid = a.datasetid " +
+        " LEFT JOIN consents c ON a.consentid = c.consentid " +
+        " WHERE d.datasetid = :datasetId")
+    Dataset findDatasetById(@Bind("datasetId") Integer datasetId);
 
-    @SqlQuery("select * from dataset where dataSetId in (<dataSetIdList>)")
-    List<Dataset> findDataSetsByIdList(@BindList("dataSetIdList") List<Integer> dataSetIdList);
-
-    @SqlQuery("select * from dataset where objectId = :objectId")
+    @SqlQuery("select datasetid from dataset where objectid = :objectId")
     Integer findDataSetIdByObjectId(@Bind("objectId") String objectId);
 
-    @SqlQuery("SELECT * FROM dataset WHERE dataSetId IN (<dataSetIdList>) AND needs_approval = true")
-    List<Dataset> findNeedsApprovalDataSetByDataSetId(@BindList("dataSetIdList") List<Integer> dataSetIdList);
+    @SqlQuery(" SELECT d.*, c.dac_id, c.consentid " +
+        " FROM dataset d " +
+        " LEFT JOIN consentassociations a ON d.datasetid = a.datasetid " +
+        " LEFT JOIN consents c ON a.consentid = c.consentid " +
+        " WHERE d.datasetid IN (<datasetIdList>) " +
+        " AND d.needs_approval = true ")
+    List<Dataset> findNeedsApprovalDatasetByDataSetId(@BindList("datasetIdList") List<Integer> datasetIdList);
 
     @Deprecated
     @SqlBatch("insert into dataset (name, createDate, objectId, active, alias) values (:name, :createDate, :objectId, :active, :alias)")
@@ -87,9 +93,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     @SqlUpdate("DELETE from datasetproperty WHERE datasetid = :datasetId AND propertykey = :propertyKey")
     void deleteDatasetPropertyByKey(@Bind("datasetId") Integer datasetId, @Bind("propertyKey") Integer propertyKey);
-
-    @SqlBatch("delete from dataset where dataSetId = :dataSetId")
-    void deleteDataSets(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
     @SqlUpdate("DELETE FROM dataset WHERE datasetid = :datasetId")
     void deleteDatasetById(@Bind("datasetId") Integer datasetId);
@@ -182,8 +185,12 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlQuery("SELECT * FROM dictionary d WHERE d.displayOrder is not null  order by displayOrder")
     List<Dictionary> getMappedFieldsOrderByDisplayOrder();
 
-    @SqlQuery("SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)")
-    List<Dataset> getDataSetsForObjectIdList(@BindList("objectIdList") List<String> objectIdList);
+    @SqlQuery(" SELECT d.*, c.dac_id, c.consentid " +
+        " FROM dataset d " +
+        " LEFT JOIN consentassociations a ON d.datasetid = a.datasetid " +
+        " LEFT JOIN consents c ON a.consentid = c.consentid " +
+        " WHERE d.objectid IN (<objectIdList>) ")
+    List<Dataset> getDatasetsForObjectIdList(@BindList("objectIdList") List<String> objectIdList);
 
     @SqlQuery("SELECT ds.* FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ca.consentId = :consentId")
     List<Dataset> getDataSetsForConsent(@Bind("consentId") String consentId);
@@ -194,8 +201,12 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlQuery("SELECT * FROM dataset WHERE LOWER(name) = LOWER(:name)")
     Dataset getDatasetByName(@Bind("name") String name);
 
-    @SqlQuery("SELECT * FROM dataset WHERE datasetid in (<dataSetIds>) ")
-    List<Dataset> findDatasetsByIdList(@BindList("dataSetIds") List<Integer> dataSetIds);
+    @SqlQuery(" SELECT d.*, c.dac_id, c.consentid " +
+        " FROM dataset d " +
+        " LEFT JOIN consentassociations a ON d.datasetid = a.datasetid " +
+        " LEFT JOIN consents c ON a.consentid = c.consentid " +
+        " WHERE d.datasetid in (<datasetIds>) ")
+    List<Dataset> findDatasetsByIdList(@BindList("datasetIds") List<Integer> datasetIds);
 
     @RegisterRowMapper(AssociationMapper.class)
     @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId IN (<dataSetIdList>)")
@@ -207,10 +218,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      * @param email User email
      * @return List of datasets that are visible to the user via DACs.
      */
-    @SqlQuery(" SELECT d.* " +
+    @SqlQuery(" SELECT d.*, c.dac_id, c.consentid " +
             " FROM dataset d " +
-            " LEFT OUTER JOIN consentassociations a ON d.dataSetId = a.dataSetId " +
-            " LEFT OUTER JOIN consents c ON a.consentId = c.consentId " +
+            " LEFT JOIN consentassociations a ON d.dataSetId = a.dataSetId " +
+            " LEFT JOIN consents c ON a.consentId = c.consentId " +
             " INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
             " INNER JOIN dacuser u ON ur.user_id = u.dacUserId and u.email = :email ")
     List<Dataset> findDataSetsByAuthUserEmail(@Bind("email") String email);
@@ -285,9 +296,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     List<Pair<Integer, Integer>> findDatasetAndDacIds();
 
     @UseRowMapper(DatasetMapper.class)
-    @SqlQuery("select d.* from dataset d " +
-            " inner join consentassociations a on a.dataSetId = d.dataSetId and a.consentId = :consentId " +
-            " where d.active = true ")
+    @SqlQuery(" SELECT d.*, c.dac_id, c.consentid " +
+        " FROM dataset d " +
+        " INNER JOIN consents c ON c.consentid = :consentId " +
+        " INNER JOIN consentassociations a ON a.datasetid = d.datasetid AND a.consentid = c.consentid " +
+        " WHERE d.active = true ")
     Set<Dataset> findDatasetsForConsentId(@Bind("consentId") String consentId);
 
 }

@@ -339,7 +339,7 @@ public class SummaryService {
                 for (Election election : elections) {
                     summaryWriter.write( dar_code + SEPARATOR);
                     summaryWriter.write( dar_election_result + SEPARATOR);
-                    Dataset dataset = datasetDAO.findDataSetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
+                    Dataset dataset = datasetDAO.findDatasetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
                     summaryWriter.write( dataset.getObjectId() + SEPARATOR);
                     summaryWriter.write( dataset.getName() + SEPARATOR);
                     summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);

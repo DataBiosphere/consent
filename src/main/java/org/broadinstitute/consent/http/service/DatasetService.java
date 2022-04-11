@@ -78,22 +78,22 @@ public class DatasetService {
     }
 
     public void disableDataset(Integer datasetId, Boolean active) {
-        Dataset dataset = datasetDAO.findDataSetById(datasetId);
+        Dataset dataset = datasetDAO.findDatasetById(datasetId);
         if (dataset != null) {
             datasetDAO.updateDataSetActive(dataset.getDataSetId(), active);
         }
     }
 
     public Dataset updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval) {
-        if (datasetDAO.findDataSetById(dataSetId) == null) {
+        if (datasetDAO.findDatasetById(dataSetId) == null) {
             throw new NotFoundException("DataSet doesn't exist");
         }
         datasetDAO.updateDatasetNeedsApproval(dataSetId, needsApproval);
-        return datasetDAO.findDataSetById(dataSetId);
+        return datasetDAO.findDatasetById(dataSetId);
     }
 
     public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
-        return datasetDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
+        return datasetDAO.findNeedsApprovalDatasetByDataSetId(dataSetIdList);
     }
 
     public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
@@ -207,7 +207,7 @@ public class DatasetService {
     }
 
     public Dataset findDatasetById(Integer id) {
-        return datasetDAO.findDataSetById(id);
+        return datasetDAO.findDatasetById(id);
     }
 
     public Set<Dataset> getDatasetWithDataUseByIds(List<Integer> datasetIds) {
@@ -219,7 +219,7 @@ public class DatasetService {
     }
 
     public Dataset getDatasetWithPropertiesById(Integer datasetId) {
-        Dataset dataset = datasetDAO.findDataSetById(datasetId);
+        Dataset dataset = datasetDAO.findDatasetById(datasetId);
         Set<DatasetProperty> properties = getDatasetProperties(datasetId);
         dataset.setProperties(properties);
         return dataset;
@@ -339,7 +339,7 @@ public class DatasetService {
     }
 
     public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
-        Dataset dataset = datasetDAO.findDataSetById(datasetId);
+        Dataset dataset = datasetDAO.findDatasetById(datasetId);
         if (Objects.nonNull(dataset)) {
             // Some legacy dataset names can be null
             String dsAuditName = Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();

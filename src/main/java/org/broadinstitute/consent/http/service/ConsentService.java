@@ -364,7 +364,7 @@ public class ConsentService {
 
     private void processAssociation(List<String> objectIds) {
         if (CollectionUtils.isNotEmpty(objectIds)) {
-            List<Dataset> dataSets = dataSetDAO.getDataSetsForObjectIdList(objectIds);
+            List<Dataset> dataSets = dataSetDAO.getDatasetsForObjectIdList(objectIds);
             List<String> existentObjectsId = dataSets.stream().map(Dataset::getObjectId).collect(Collectors.toList());
             List<Dataset> dataSetsToCreate = new ArrayList<>();
             if(CollectionUtils.isNotEmpty(dataSets)) {

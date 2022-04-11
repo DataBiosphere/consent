@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
+
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -14,6 +16,18 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
       dataset.setDataSetId(r.getInt("dataSetId"));
       dataset.setObjectId(r.getString("objectId"));
       dataset.setName(r.getString("name"));
+      if (hasColumn(r, "dac_id")) {
+        int dacId = r.getInt("dac_id");
+        if (dacId > 0) {
+          dataset.setDacId(dacId);
+        }
+      }
+      if (hasColumn(r, "consentid")) {
+        String consentId = r.getString("consentid");
+      if (Objects.nonNull(consentId)) {
+          dataset.setConsentId(consentId);
+        }
+      }
       if (hasColumn(r, "createdate")) {
           dataset.setCreateDate(r.getDate("createdate"));
       }

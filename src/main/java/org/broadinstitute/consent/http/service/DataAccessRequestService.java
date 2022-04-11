@@ -623,7 +623,7 @@ public class DataAccessRequestService {
     private List<Dataset> populateDatasets(DataAccessRequest dar) {
         List<Integer> datasetIds = Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
         if (!datasetIds.isEmpty()) {
-            return dataSetDAO.findDataSetsByIdList(datasetIds);
+            return dataSetDAO.findDatasetsByIdList(datasetIds);
         }
         return Collections.emptyList();
     }

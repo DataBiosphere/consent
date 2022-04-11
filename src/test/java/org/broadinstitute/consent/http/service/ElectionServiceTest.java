@@ -531,7 +531,7 @@ public class ElectionServiceTest {
     public void testDarDatasetElectionStatus_NoApproval() {
         when(dataAccessRequestService.findByReferenceId(sampleElection1.getReferenceId()))
                 .thenReturn(sampleDataAccessRequest1);
-        when(dataSetDAO.findNeedsApprovalDataSetByDataSetId(any()))
+        when(dataSetDAO.findNeedsApprovalDatasetByDataSetId(any()))
                 .thenReturn(Arrays.asList());
         initService();
 
@@ -543,7 +543,7 @@ public class ElectionServiceTest {
     public void testDarDatasetElectionStatus_Pending() {
         when(dataAccessRequestService.findByReferenceId(sampleElection1.getReferenceId()))
                 .thenReturn(sampleDataAccessRequest1);
-        when(dataSetDAO.findNeedsApprovalDataSetByDataSetId(any()))
+        when(dataSetDAO.findNeedsApprovalDatasetByDataSetId(any()))
                 .thenReturn(Arrays.asList(sampleDataset1));
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any()))
                 .thenReturn(sampleElection1);
@@ -559,7 +559,7 @@ public class ElectionServiceTest {
     public void testDarDatasetElectionStatus_OpenElection() {
         when(dataAccessRequestService.findByReferenceId(sampleElection1.getReferenceId()))
           .thenReturn(sampleDataAccessRequest1);
-        when(dataSetDAO.findNeedsApprovalDataSetByDataSetId(any()))
+        when(dataSetDAO.findNeedsApprovalDatasetByDataSetId(any()))
                 .thenReturn(Arrays.asList(sampleDataset1));
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any()))
                 .thenReturn(sampleElection2);
@@ -575,7 +575,7 @@ public class ElectionServiceTest {
     public void testDarDatasetElectionStatus_DeniedElection() {
         when(dataAccessRequestService.findByReferenceId(sampleElection1.getReferenceId()))
           .thenReturn(sampleDataAccessRequest1);
-        when(dataSetDAO.findNeedsApprovalDataSetByDataSetId(any()))
+        when(dataSetDAO.findNeedsApprovalDatasetByDataSetId(any()))
                 .thenReturn(Arrays.asList(sampleDataset1));
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any()))
                 .thenReturn(sampleElection2);
@@ -591,7 +591,7 @@ public class ElectionServiceTest {
     public void testDarDatasetElectionStatus_ApprovedElection() {
         when(dataAccessRequestService.findByReferenceId(sampleElection1.getReferenceId()))
           .thenReturn(sampleDataAccessRequest1);
-        when(dataSetDAO.findNeedsApprovalDataSetByDataSetId(any()))
+        when(dataSetDAO.findNeedsApprovalDatasetByDataSetId(any()))
                 .thenReturn(Arrays.asList(sampleDataset1));
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any()))
                 .thenReturn(sampleElection2);

@@ -506,7 +506,7 @@ public class DataAccessRequestServiceTest {
         when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
         when(dataAccessRequestDAO.findByReferenceId(any()))
                 .thenReturn(dar);
-        when(dataSetDAO.findDataSetsByIdList(dar.data.getDatasetIds()))
+        when(dataSetDAO.findDatasetsByIdList(dar.data.getDatasetIds()))
                 .thenReturn(Collections.singletonList(ds));
 
         User user = new User();
