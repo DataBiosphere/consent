@@ -10,6 +10,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -40,6 +41,22 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(consent.getConsentId(), foundDataset.getConsentId());
         assertEquals(consent.getTranslatedUseRestriction(), foundDataset.getTranslatedUseRestriction());
         assertFalse(foundDataset.getProperties().isEmpty());
+        assertTrue(foundDataset.getDeletable());
+    }
+
+    @Test
+    public void testFindDatasetByIdWithDacAndConsentNotDeletable() {
+        User user = createUser();
+        Dataset dataset = createDataset();
+        Dac dac = createDac();
+        // This helper method creates a consent and association so we don't have to
+        createDarCollectionWithDatasetsAndConsentAssociation(dac.getDacId(), user, List.of(dataset));
+
+        Dataset foundDataset = dataSetDAO.findDatasetById(dataset.getDataSetId());
+        assertNotNull(foundDataset);
+        assertEquals(dac.getDacId(), foundDataset.getDacId());
+        assertFalse(foundDataset.getProperties().isEmpty());
+        assertFalse(foundDataset.getDeletable());
     }
 
     @Test
