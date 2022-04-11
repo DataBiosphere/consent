@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
@@ -60,7 +60,7 @@ public class DarCollectionService {
   public List<Integer> findDatasetIdsByUser(User user) {
     return datasetDAO.findDataSetsByAuthUserEmail(user.getEmail())
         .stream()
-        .map(DataSet::getDataSetId)
+        .map(Dataset::getDataSetId)
         .collect(Collectors.toList());
   }
 
@@ -260,12 +260,12 @@ public class DarCollectionService {
       .collect(Collectors.toList());
 
     if(!datasetIds.isEmpty()) {
-      Set<DataSet> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
-      Map<Integer, DataSet> datasetMap = datasets.stream()
-          .collect(Collectors.toMap(DataSet::getDataSetId, Function.identity()));
+      Set<Dataset> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
+      Map<Integer, Dataset> datasetMap = datasets.stream()
+          .collect(Collectors.toMap(Dataset::getDataSetId, Function.identity()));
 
       return collections.stream().map(c -> {
-        Set<DataSet> collectionDatasets = c.getDars().values().stream()
+        Set<Dataset> collectionDatasets = c.getDars().values().stream()
           .map(DataAccessRequest::getData)
           .map(DataAccessRequestData::getDatasetIds)
           .flatMap(Collection::stream)
@@ -364,7 +364,7 @@ public class DarCollectionService {
     // Find dataset ids the chairperson has access to:
     List<Integer> datasetIds = datasetDAO.findDataSetsByAuthUserEmail(user.getEmail())
       .stream()
-      .map(DataSet::getDataSetId)
+      .map(Dataset::getDataSetId)
       .collect(Collectors.toList());
 
     // Filter the list of DARs we can operate on by the datasets accessible to this chairperson

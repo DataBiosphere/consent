@@ -33,7 +33,7 @@ import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.jdbi.v3.core.Handle;
@@ -364,18 +364,18 @@ public class ConsentService {
 
     private void processAssociation(List<String> objectIds) {
         if (CollectionUtils.isNotEmpty(objectIds)) {
-            List<DataSet> dataSets = dataSetDAO.getDataSetsForObjectIdList(objectIds);
-            List<String> existentObjectsId = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
-            List<DataSet> dataSetsToCreate = new ArrayList<>();
+            List<Dataset> dataSets = dataSetDAO.getDataSetsForObjectIdList(objectIds);
+            List<String> existentObjectsId = dataSets.stream().map(Dataset::getObjectId).collect(Collectors.toList());
+            List<Dataset> dataSetsToCreate = new ArrayList<>();
             if(CollectionUtils.isNotEmpty(dataSets)) {
                 objectIds.stream().forEach(objectId -> {
                     if(!existentObjectsId.contains(objectId)) {
-                        dataSetsToCreate.add(new DataSet(objectId));
+                        dataSetsToCreate.add(new Dataset(objectId));
                     }
                 });
             } else {
                 objectIds.stream().forEach(objectId -> {
-                    dataSetsToCreate.add(new DataSet(objectId));
+                    dataSetsToCreate.add(new Dataset(objectId));
                 });
             }
             dataSetDAO.insertAll(dataSetsToCreate);

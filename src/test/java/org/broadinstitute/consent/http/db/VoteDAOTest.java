@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReviewVote;
 import org.broadinstitute.consent.http.models.User;
@@ -35,7 +35,7 @@ public class VoteDAOTest extends DAOTestHelper {
     public void testFindVotesByReferenceId() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
@@ -48,7 +48,7 @@ public class VoteDAOTest extends DAOTestHelper {
     public void testFindElectionReviewVotesByElectionId() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getDacUserId(), election.getElectionId());
 
@@ -61,7 +61,7 @@ public class VoteDAOTest extends DAOTestHelper {
     public void testFindElectionReviewVotesByElectionIdAndType() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
@@ -82,7 +82,7 @@ public class VoteDAOTest extends DAOTestHelper {
     public void testFindVoteById() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
@@ -97,7 +97,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user3 = createUserWithRole(UserRoles.MEMBER.getRoleId());
         User user4 = createUserWithRole(UserRoles.MEMBER.getRoleId());
         Consent consent = createConsent(null);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
         Vote vote2 = createDacVote(user2.getDacUserId(), election.getElectionId());
@@ -116,7 +116,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
@@ -131,12 +131,12 @@ public class VoteDAOTest extends DAOTestHelper {
     public void testFindVotesByElectionIds() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getDacUserId(), election.getElectionId());
 
         Consent consent2 = createConsent(null);
-        DataSet dataset2 = createDataset();
+        Dataset dataset2 = createDataset();
         Election election2 = createAccessElection(consent2.getConsentId(), dataset2.getDataSetId());
         createDacVote(user.getDacUserId(), election2.getElectionId());
         List<Integer> electionIds = Arrays.asList(election.getElectionId(), election2.getElectionId());
@@ -151,12 +151,12 @@ public class VoteDAOTest extends DAOTestHelper {
     public void testFindVotesByTypeAndElectionIds() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         Consent consent2 = createConsent(null);
-        DataSet dataset2 = createDataset();
+        Dataset dataset2 = createDataset();
         Election election2 = createAccessElection(consent2.getConsentId(), dataset2.getDataSetId());
         createDacVote(user.getDacUserId(), election2.getElectionId());
         List<Integer> electionIds = Arrays.asList(election.getElectionId(), election2.getElectionId());
@@ -181,7 +181,7 @@ public class VoteDAOTest extends DAOTestHelper {
     public void testFindVotesByElectionIdAndType() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
@@ -206,7 +206,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
@@ -222,7 +222,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
@@ -236,7 +236,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
@@ -273,7 +273,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createFinalVote(user.getDacUserId(), election.getElectionId());
 
@@ -287,7 +287,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
@@ -306,7 +306,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
@@ -318,7 +318,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testCreateVote() {
         User user = createUser();
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -332,7 +332,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateVote() {
         User user = createUser();
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -360,7 +360,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateVoteReminderFlag() {
         User user = createUser();
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -378,7 +378,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testFindVotesByReferenceIdTypeAndUser() {
         User user = createUser();
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -400,7 +400,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testFindVoteByTypeAndElectionId() {
         User user = createUser();
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -425,7 +425,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testFindTotalFinalVoteByElectionTypeAndVote() {
         User user = createUser();
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -456,7 +456,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testFindMaxNumberOfDACMembers() {
         User user = createUser();
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -483,7 +483,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user1 = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         User user2 = createUserWithRole(UserRoles.MEMBER.getRoleId());
         User user3 = createUserWithRole(UserRoles.MEMBER.getRoleId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -499,7 +499,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testFindDataOwnerPendingVotesByElectionId() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -528,7 +528,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testFindVotesOnOpenElections() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -544,7 +544,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testRemoveVotesByIds() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -558,7 +558,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testFindVotesByElectionIdsAndUser() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -577,7 +577,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testFindVotesByUserId() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -591,7 +591,7 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testFindChairPersonVoteByElectionId() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
@@ -613,7 +613,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
     @Test
     public void testUpdateRationaleByVoteIds() {
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         DataAccessRequest dar = createDataAccessRequestV3();

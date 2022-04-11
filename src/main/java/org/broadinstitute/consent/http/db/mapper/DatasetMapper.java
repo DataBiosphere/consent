@@ -2,15 +2,15 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class DataSetMapper implements RowMapper<DataSet>, RowMapperHelper {
+public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
 
-  public DataSet map(ResultSet r, StatementContext ctx) throws SQLException {
-      DataSet dataset = new DataSet();
+  public Dataset map(ResultSet r, StatementContext ctx) throws SQLException {
+      Dataset dataset = new Dataset();
       dataset.setDataSetId(r.getInt("dataSetId"));
       dataset.setObjectId(r.getString("objectId"));
       dataset.setName(r.getString("name"));

@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Handle;
@@ -60,7 +60,7 @@ public class DarCollectionServiceDAO {
         datasetDAO
             .findDataSetsByAuthUserEmail(user.getEmail())
             .stream()
-            .map(DataSet::getDataSetId)
+            .map(Dataset::getDataSetId)
             .collect(Collectors.toList());
     jdbi.useHandle(
         handle -> {

@@ -42,7 +42,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
@@ -123,7 +123,7 @@ public class DataAccessRequestServiceTest {
         e.setReferenceId(dar.getReferenceId());
         e.setElectionId(genericId);
         when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), any())).thenReturn(Collections.singletonList(e));
-        DataSet ds = new DataSet();
+        Dataset ds = new Dataset();
         ds.setConsentName(dar.getReferenceId());
         ds.setDataSetId(1);
         ds.setName("test dataset");
@@ -497,7 +497,7 @@ public class DataAccessRequestServiceTest {
         Institution institution = new Institution();
         institution.setId(1);
         institution.setName("Institution");
-        DataSet ds = new DataSet();
+        Dataset ds = new Dataset();
         ds.setDataSetId(1);
         ds.setName("DS-1");
         ds.setConsentName(dar.getReferenceId());

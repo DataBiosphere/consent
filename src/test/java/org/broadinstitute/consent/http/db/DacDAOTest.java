@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -27,7 +27,7 @@ public class DacDAOTest extends DAOTestHelper {
         int count = 4;
         for (int i = 1; i <= count; i++) {
             Dac d = createDac();
-            DataSet ds = createDataset();
+            Dataset ds = createDataset();
             Consent c = createConsent(d.getDacId());
             createAssociation(c.getConsentId(), ds.getDataSetId());
         };
@@ -189,11 +189,11 @@ public class DacDAOTest extends DAOTestHelper {
     public void testFindDacsForDatasetIds() {
         Dac dac = createDac();
         Consent consent1 = createConsent(dac.getDacId());
-        DataSet dataSet1 = createDataset();
+        Dataset dataSet1 = createDataset();
         createAssociation(consent1.getConsentId(), dataSet1.getDataSetId());
 
         Consent consent2 = createConsent(dac.getDacId());
-        DataSet dataSet2 = createDataset();
+        Dataset dataSet2 = createDataset();
         createAssociation(consent2.getConsentId(), dataSet2.getDataSetId());
         Set<Dac> dacs = dacDAO.findDacsForDatasetIds(Arrays.asList(dataSet1.getDataSetId(), dataSet2.getDataSetId()));
         assertFalse(dacs.isEmpty());

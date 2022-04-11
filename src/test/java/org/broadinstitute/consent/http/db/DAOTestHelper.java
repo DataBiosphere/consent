@@ -20,8 +20,8 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -421,8 +421,8 @@ public class DAOTestHelper {
     }
 
     protected void createDatasetProperties(Integer datasetId) {
-        List<DataSetProperty> list = new ArrayList<>();
-        DataSetProperty dsp = new DataSetProperty();
+        List<DatasetProperty> list = new ArrayList<>();
+        DatasetProperty dsp = new DatasetProperty();
         dsp.setDataSetId(datasetId);
         dsp.setPropertyKey(1);
         dsp.setPropertyValue("Test_PropertyValue");
@@ -431,8 +431,8 @@ public class DAOTestHelper {
         dataSetDAO.insertDatasetProperties(list);
     }
 
-    protected DataSet createDataset() {
-        DataSet ds = new DataSet();
+    protected Dataset createDataset() {
+        Dataset ds = new Dataset();
         ds.setName("Name_" + RandomStringUtils.random(20, true, true));
         ds.setCreateDate(new Date());
         ds.setObjectId("Object ID_" + RandomStringUtils.random(20, true, true));
@@ -589,7 +589,7 @@ public class DAOTestHelper {
         User user = createUserWithInstitution();
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         DataAccessRequest dar = insertDAR(user.getDacUserId(), collection_id, darCode);
         Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
@@ -605,7 +605,7 @@ public class DAOTestHelper {
         createAssociation(consent.getConsentId(), datasetId);
     }
 
-    protected DarCollection createDarCollectionWithDatasetsAndConsentAssociation(int dacId, User user, List<DataSet> datasets) {
+    protected DarCollection createDarCollectionWithDatasetsAndConsentAssociation(int dacId, User user, List<Dataset> datasets) {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         datasets.stream()
@@ -624,7 +624,7 @@ public class DAOTestHelper {
         User user = createUserMultipleProperties();
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         DataAccessRequest dar = insertDAR(user.getDacUserId(), collection_id, darCode);
         Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
@@ -643,14 +643,14 @@ public class DAOTestHelper {
         createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         createDarForCollection(user, collectionId, dataset);
         return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     }
 
-    protected DataAccessRequest createDarForCollection(User user, Integer collectionId, DataSet dataset) {
+    protected DataAccessRequest createDarForCollection(User user, Integer collectionId, Dataset dataset) {
         Date now = new Date();
         DataAccessRequest dar = new DataAccessRequest();
         dar.setReferenceId(UUID.randomUUID().toString());

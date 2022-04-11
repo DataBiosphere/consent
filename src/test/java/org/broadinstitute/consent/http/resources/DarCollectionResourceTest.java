@@ -8,7 +8,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
@@ -80,10 +80,10 @@ public class DarCollectionResourceTest {
     return collection;
   }
 
-  private Set<DataSet> mockDatasetsForResearcherCollection() {
-    Set<DataSet> datasets = new HashSet<>();
+  private Set<Dataset> mockDatasetsForResearcherCollection() {
+    Set<Dataset> datasets = new HashSet<>();
     for(int i = 1; i < 3; i++) {
-      DataSet newDataset = new DataSet();
+      Dataset newDataset = new Dataset();
       newDataset.setDataSetId(i);
       datasets.add(newDataset);
     }
@@ -267,7 +267,7 @@ public class DarCollectionResourceTest {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getDacUserId());
 
-    DataSet dataSet = new DataSet();
+    Dataset dataSet = new Dataset();
     dataSet.setDataSetId(2);
     collection.addDataset(dataSet);
 
@@ -290,7 +290,7 @@ public class DarCollectionResourceTest {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getDacUserId());
 
-    DataSet dataSet = new DataSet();
+    Dataset dataSet = new Dataset();
     dataSet.setDataSetId(2);
     collection.addDataset(dataSet);
 
@@ -313,7 +313,7 @@ public class DarCollectionResourceTest {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getDacUserId());
 
-    DataSet dataSet = new DataSet();
+    Dataset dataSet = new Dataset();
     dataSet.setDataSetId(3);
     collection.addDataset(dataSet);
 
@@ -335,7 +335,7 @@ public class DarCollectionResourceTest {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getDacUserId());
 
-    DataSet dataSet = new DataSet();
+    Dataset dataSet = new Dataset();
     dataSet.setDataSetId(3);
     collection.addDataset(dataSet);
 

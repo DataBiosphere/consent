@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataUse;
 
 
@@ -32,7 +32,7 @@ public class DatasetDTO {
     private Boolean deletable;
 
     @JsonProperty
-    private List<DataSetPropertyDTO> properties;
+    private List<DatasetPropertyDTO> properties;
 
     @JsonProperty
     private Boolean active;
@@ -86,7 +86,7 @@ public class DatasetDTO {
         this.dacId = dacId;
     }
 
-    public DatasetDTO(List<DataSetPropertyDTO> properties) {
+    public DatasetDTO(List<DatasetPropertyDTO> properties) {
         this.properties= properties;
     }
 
@@ -115,14 +115,14 @@ public class DatasetDTO {
     }
 
     public String getPropertyValue(String propertyName){
-        return properties.get(properties.indexOf(new DataSetPropertyDTO(propertyName, ""))).getPropertyValue();
+        return properties.get(properties.indexOf(new DatasetPropertyDTO(propertyName, ""))).getPropertyValue();
     }
 
-    public List<DataSetPropertyDTO> getProperties() {
+    public List<DatasetPropertyDTO> getProperties() {
         return properties;
     }
 
-    public void setProperties(List<DataSetPropertyDTO> properties) {
+    public void setProperties(List<DatasetPropertyDTO> properties) {
         this.properties = properties;
     }
 
@@ -167,7 +167,7 @@ public class DatasetDTO {
     }
 
     public void setAlias(Integer alias) {
-        this.alias = DataSet.parseAliasToIdentifier(alias);
+        this.alias = Dataset.parseAliasToIdentifier(alias);
     }
 
     public String getAlias(){
@@ -198,7 +198,7 @@ public class DatasetDTO {
 
     public void setUpdateUserId(Integer updateUserId) { this.updateUserId = updateUserId; }
 
-    public void addProperty(DataSetPropertyDTO property) {
+    public void addProperty(DatasetPropertyDTO property) {
         if (this.getProperties() == null) {
             this.setProperties(new ArrayList<>());
         }
