@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -364,6 +365,7 @@ public class DatasetService {
         }
     }
 
+    @Deprecated
     public Set<DatasetDTO> describeDatasets(Integer userId) {
         List<DataAccessRequestData> darDatas = dataAccessRequestDAO.findAllDataAccessRequestDatas();
         List<Integer> datasetIdsInUse = darDatas
@@ -428,5 +430,18 @@ public class DatasetService {
 
     private boolean userHasRole(String roleName, Integer dacUserId) {
         return userRoleDAO.findRoleByNameAndUser(roleName, dacUserId) != null;
+    }
+
+    public List<Dataset> findAllDatasetsByUser(User user) {
+        List<Dataset> datasets = new ArrayList<>();
+        if (user.hasUserRole(UserRoles.ADMIN)) {
+            datasets.addAll(datasetDAO.getAllDatasets());
+        } else {
+            datasets.addAll(datasetDAO.getActiveDatasets());
+            if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
+                datasets.addAll(datasetDAO.findDatasetsByAuthUserEmail(user.getEmail()));
+            }
+        }
+        return datasets;
     }
 }

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import liquibase.pro.packaged.G;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -204,6 +205,22 @@ public class DatasetResource extends Resource {
             User user = userService.findUserByEmail(authUser.getEmail());
             Collection<DatasetDTO> dataSetList = datasetService.describeDatasets(user.getDacUserId());
             return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Produces("application/json")
+    @PermitAll
+    @Path("/v2")
+    public Response findAllDatasetsByUser(@Auth AuthUser authUser) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
+            // Gson filters null props by default
+            Gson gson = new Gson();
+            return Response.ok(gson.toJson(datasets)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

@@ -1,5 +1,12 @@
 type: object
 properties:
+  name:
+    type: string
+    description: The dataset name
+  datasetName:
+    type: string
+    deprecated: true
+    description: Legacy value for backwards compatibility, same as the dataset name
   dataSetId:
     type: integer
     format: int32
@@ -47,12 +54,12 @@ properties:
   needsApproval:
     type: boolean
     description: The Dataset need Data Owners approval
-  isAssociatedToDataOwners:
-    type: boolean
-    description: The Dataset is associated to a data owner
-  updateAssociationToDataOwnerAllowed:
-    type: boolean
-    description: You can update the data owners of this Dataset
+#  isAssociatedToDataOwners:
+#    type: boolean
+#    description: The Dataset is associated to a data owner
+#  updateAssociationToDataOwnerAllowed:
+#    type: boolean
+#    description: You can update the data owners of this Dataset
   alias:
     type: string
     description: The dataset id, string format

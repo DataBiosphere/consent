@@ -22,6 +22,10 @@ public class Dataset {
     @JsonProperty
     private String name;
 
+    // For backwards compatibility with DatasetDTO, this is an alias to the name property.
+    @JsonProperty
+    private String datasetName;
+
     @JsonProperty
     private Date createDate;
 
@@ -45,6 +49,9 @@ public class Dataset {
 
     @JsonProperty
     private Integer alias;
+
+    @JsonProperty
+    private String datasetIdentifier;
 
     @JsonProperty
     public DataUse dataUse;
@@ -77,6 +84,7 @@ public class Dataset {
         this.dataSetId = dataSetId;
         this.objectId = objectId;
         this.name = name;
+        this.datasetName = name;
         this.createDate = createDate;
         this.createUserId = createUserId;
         this.updateDate = updateDate;
@@ -89,6 +97,7 @@ public class Dataset {
         this.dataSetId = dataSetId;
         this.objectId = objectId;
         this.name = name;
+        this.datasetName = name;
         this.createDate = createDate;
         this.active = active;
         this.alias = alias;
@@ -98,6 +107,7 @@ public class Dataset {
         this.dataSetId = dataSetId;
         this.objectId = objectId;
         this.name = name;
+        this.datasetName = name;
         this.createDate = createDate;
         this.active = active;
     }
@@ -130,6 +140,14 @@ public class Dataset {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDatasetName() {
+        return datasetName;
+    }
+
+    public void setDatasetName(String datasetName) {
+        this.datasetName = datasetName;
     }
 
     public Date getCreateDate() {
@@ -217,6 +235,10 @@ public class Dataset {
 
     public void setAlias(Integer alias) {
         this.alias = alias;
+    }
+
+    public void setDatasetIdentifier() {
+        this.datasetIdentifier = parseAliasToIdentifier(this.getAlias());
     }
 
     public String getDatasetIdentifier() {

@@ -47,25 +47,26 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertTrue(foundDataset.getDeletable());
     }
 
-    // Ignoring this test for now. It fails when run with other tests in the class,
-    // but succeeds when run individually. Inspection of the objects in failure mode
-    // doesn't make sense at the moment so I still need to tackle this.
-    @Ignore
     @Test
     public void testFindDatasetByIdWithDacAndConsentNotDeletable() {
         User user = createUser();
         Dataset d1 = createDataset();
         Dataset d2 = createDataset();
         Dac dac = createDac();
-        // Create some collections that reference the created dataset
+        // Create a collection that reference the created datasets
         createDarCollectionWithDatasets(dac.getDacId(), user, List.of(d1, d2));
 
         Dataset foundDataset = datasetDAO.findDatasetById(d1.getDataSetId());
-        Dataset foundDataset2 = datasetDAO.findDatasetById(d2.getDataSetId());
         assertNotNull(foundDataset);
         assertEquals(dac.getDacId(), foundDataset.getDacId());
         assertFalse(foundDataset.getProperties().isEmpty());
         assertFalse(foundDataset.getDeletable());
+
+        Dataset foundDataset2 = datasetDAO.findDatasetById(d2.getDataSetId());
+        assertNotNull(foundDataset2);
+        assertEquals(dac.getDacId(), foundDataset2.getDacId());
+        assertFalse(foundDataset2.getProperties().isEmpty());
+        assertFalse(foundDataset2.getDeletable());
     }
 
     @Test

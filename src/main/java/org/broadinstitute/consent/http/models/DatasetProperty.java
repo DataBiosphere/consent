@@ -1,14 +1,15 @@
 package org.broadinstitute.consent.http.models;
 
+import com.google.common.base.Objects;
+
 import java.util.Date;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class DatasetProperty {
 
     private Integer propertyId;
     private Integer dataSetId;
     private Integer propertyKey;
-    private String propertyKeyName;
+    private String propertyName;
     private String propertyValue;
     private Date createDate;
 
@@ -53,12 +54,12 @@ public class DatasetProperty {
         this.propertyKey = propertyKey;
     }
 
-    public String getPropertyKeyName() {
-        return propertyKeyName;
+    public String getPropertyName() {
+        return propertyName;
     }
 
-    public void setPropertyKeyName(String propertyKeyName) {
-        this.propertyKeyName = propertyKeyName;
+    public void setPropertyName(String propertyName) {
+        this.propertyName = propertyName;
     }
 
     public String getPropertyValue() {
@@ -78,20 +79,15 @@ public class DatasetProperty {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DatasetProperty that = (DatasetProperty) o;
+        return Objects.equal(dataSetId, that.dataSetId) && Objects.equal(propertyName, that.propertyName) && Objects.equal(propertyValue, that.propertyValue);
+    }
 
-        DatasetProperty other = (DatasetProperty) obj;
-        return new EqualsBuilder()
-              .append(dataSetId, other.dataSetId)
-              .append(propertyKeyName, other.propertyKeyName)
-              .append(propertyKey, other.propertyKey)
-              .append(propertyValue, other.propertyValue)
-              .isEquals();
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(dataSetId, propertyName, propertyValue);
     }
 }
