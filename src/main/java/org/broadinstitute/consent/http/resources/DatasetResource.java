@@ -67,24 +67,8 @@ public class DatasetResource extends Resource {
     private String dataSetSampleFileName;
     private String dataSetSampleContent;
 
-    String getDataSetSampleFileName() {
-        return dataSetSampleFileName;
-    }
-
-    void setDataSetSampleFileName(String fileName) {
-        dataSetSampleFileName = fileName;
-    }
-
     void resetDataSetSampleFileName() {
         dataSetSampleFileName = defaultDataSetSampleFileName;
-    }
-
-    String getDataSetSampleContent() {
-        return dataSetSampleContent;
-    }
-
-    void setDataSetSampleContent(String content) {
-        dataSetSampleContent = content;
     }
 
     void resetDataSetSampleContent() {
@@ -217,7 +201,6 @@ public class DatasetResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
-            // Gson filters null props by default
             Gson gson = new Gson();
             return Response.ok(gson.toJson(datasets)).build();
         } catch (Exception e) {
