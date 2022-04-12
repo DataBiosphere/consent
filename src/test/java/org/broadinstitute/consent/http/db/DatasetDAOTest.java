@@ -53,7 +53,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset d1 = createDataset();
         Dataset d2 = createDataset();
         Dac dac = createDac();
-        // Create a collection that reference the created datasets
+        // Create a collection that references the created datasets
         createDarCollectionWithDatasets(dac.getDacId(), user, List.of(d1, d2));
 
         Dataset foundDataset = datasetDAO.findDatasetById(d1.getDataSetId());
