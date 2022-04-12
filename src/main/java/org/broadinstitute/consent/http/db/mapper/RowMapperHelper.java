@@ -17,6 +17,14 @@ public interface RowMapperHelper {
   Logger log = LoggerFactory.getLogger(RowMapperHelper.class);
 
   @SuppressWarnings({"rawtypes", "unchecked"})
+  /*
+   * Utility method to check if a column exists in the row view or not.
+   *
+   * @param rowView The RowView
+   * @param columnName The column name
+   * @param clazz The class that corresponds to the column
+   * @return True if the column is in the results, false otherwise
+   */
   default boolean hasColumn(RowView rowView, String columnName, Class clazz) {
     try {
       rowView.getColumn(columnName, clazz);
