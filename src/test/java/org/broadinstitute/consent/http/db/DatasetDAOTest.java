@@ -1,16 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -25,6 +18,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class DatasetDAOTest extends DAOTestHelper {
 
@@ -49,7 +48,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         User user = createUser();
         Dataset dataset = createDataset();
         Dac dac = createDac();
-        // This helper method creates a consent and association so we don't have to
+        // This helper method creates a consent and association
         createDarCollectionWithDatasetsAndConsentAssociation(dac.getDacId(), user, List.of(dataset));
 
         Dataset foundDataset = dataSetDAO.findDatasetById(dataset.getDataSetId());
