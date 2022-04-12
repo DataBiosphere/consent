@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -147,6 +148,17 @@ public class EmailNotifierService {
             mailService.sendReminderMessage(emails, data.get("entityName"), data.get("electionType"), template);
             emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
             voteDAO.updateVoteReminderFlag(voteId, true);
+        }
+    }
+
+    public void sendDarNewCollectionElectionMessage(List<User> users, DarCollection darCollection) throws MessagingException, IOException, TemplateException {
+        if (isServiceActive) {
+            String electionType = "Data Access Request";
+            String entityName = darCollection.getDarCode();
+            for (User user: users) {
+                Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, entityName, SERVER_URL);
+                sendNewCaseMessage(getEmails(Collections.singletonList(user)), electionType, entityName, template);
+            }
         }
     }
 

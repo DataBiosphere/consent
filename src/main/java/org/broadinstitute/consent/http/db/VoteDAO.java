@@ -3,7 +3,9 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.db.mapper.ElectionReviewVoteMapper;
 import org.broadinstitute.consent.http.db.mapper.VoteMapper;
 import org.broadinstitute.consent.http.models.ElectionReviewVote;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -152,4 +154,13 @@ public interface VoteDAO extends Transactional<VoteDAO> {
 
     @SqlUpdate("UPDATE vote v SET rationale = :rationale WHERE v.voteid IN (<voteIds>)")
     void updateRationaleByVoteIds(@BindList("voteIds") List<Integer> voteIds, @Bind("rationale") String rationale);
+
+    @RegisterBeanMapper(value = User.class)
+    @SqlQuery(" SELECT DISTINCT u.* " +
+        " FROM dacuser u " +
+        " INNER JOIN vote v ON v.dacuserid = u.dacuserid " +
+        " INNER JOIN election e ON v.electionid = e.electionid " +
+        " WHERE e.referenceid IN (<referenceIds>) ")
+    List<User> findVoteUsersByElectionReferenceIdList(@BindList("referenceIds") List<String> referenceIds);
+
 }
