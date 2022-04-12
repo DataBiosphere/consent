@@ -54,15 +54,12 @@ properties:
   needsApproval:
     type: boolean
     description: The Dataset need Data Owners approval
-#  isAssociatedToDataOwners:
-#    type: boolean
-#    description: The Dataset is associated to a data owner
-#  updateAssociationToDataOwnerAllowed:
-#    type: boolean
-#    description: You can update the data owners of this Dataset
   alias:
     type: string
-    description: The dataset id, string format
+    description: The dataset id, short format
+  datasetIdentifier:
+    type: string
+    description: The dataset identifier, long format
   objectId:
     type: string
     description: The sample collection ID, if defined
