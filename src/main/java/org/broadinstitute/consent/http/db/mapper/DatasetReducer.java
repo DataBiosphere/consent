@@ -6,15 +6,11 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
 
 public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>, RowMapperHelper {
-
-  Logger logger = LoggerFactory.getLogger(DatasetReducer.class);
 
   @Override
   public void accumulate(Map<Integer, Dataset> map, RowView rowView) {
@@ -28,38 +24,38 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       dataset.setConsentId(rowView.getColumn("consentid", String.class));
     }
     if (hasColumn(rowView, "datause", String.class)) {
-      dataset.setDataUse(DataUse.parseDataUse(rowView.getColumn("datause", String.class)).orElse(null));
+      dataset.setDataUse(
+          DataUse.parseDataUse(rowView.getColumn("datause", String.class)).orElse(null));
     }
     if (hasColumn(rowView, "translateduserestriction", String.class)) {
-      dataset.setTranslatedUseRestriction(rowView.getColumn("translateduserestriction", String.class));
+      dataset.setTranslatedUseRestriction(
+          rowView.getColumn("translateduserestriction", String.class));
     }
     if (hasColumn(rowView, "in_use", Integer.class)) {
       Integer dsIdInUse = rowView.getColumn("in_use", Integer.class);
       dataset.setDeletable(Objects.isNull(dsIdInUse));
     }
-    try {
-      if (hasColumn(rowView, "key", String.class)
-          && hasColumn(rowView, "propertyvalue", String.class)) {
-        String keyName = rowView.getColumn("key", String.class);
-        String propVal = rowView.getColumn("propertyvalue", String.class);
-        if (Objects.nonNull(keyName) && Objects.nonNull(propVal)) {
-          DatasetProperty prop = new DatasetProperty();
-          prop.setDataSetId(dataset.getDataSetId());
-          prop.setPropertyValue(propVal);
-          prop.setPropertyName(keyName);
-          dataset.addProperty(prop);
-        }
+    if (hasColumn(rowView, "key", String.class)
+        && hasColumn(rowView, "propertyvalue", String.class)) {
+      String keyName = rowView.getColumn("key", String.class);
+      String propVal = rowView.getColumn("propertyvalue", String.class);
+      if (Objects.nonNull(keyName) && Objects.nonNull(propVal)) {
+        DatasetProperty prop = new DatasetProperty();
+        prop.setDataSetId(dataset.getDataSetId());
+        prop.setPropertyValue(propVal);
+        prop.setPropertyName(keyName);
+        dataset.addProperty(prop);
       }
-    } catch (Exception e) {
-      logger.warn(e.getMessage(), e);
     }
     // The name property doesn't always come through, add it manually:
+    if (dataset.getProperties().stream().noneMatch(p -> p.getPropertyName().equals(DatasetService.DATASET_NAME_KEY))) {
+      DatasetProperty nameProp = new DatasetProperty();
+      nameProp.setPropertyName(DatasetService.DATASET_NAME_KEY);
+      nameProp.setPropertyValue(dataset.getName());
+      nameProp.setDataSetId(dataset.getDataSetId());
+      dataset.addProperty(nameProp);
+    }
     dataset.setDatasetName(dataset.getName());
-    DatasetProperty nameProp = new DatasetProperty();
-    nameProp.setPropertyName(DatasetService.DATASET_NAME_KEY);
-    nameProp.setPropertyValue(dataset.getName());
-    nameProp.setDataSetId(dataset.getDataSetId());
-    dataset.addProperty(nameProp);
     dataset.setDatasetIdentifier();
   }
 }
