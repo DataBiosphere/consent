@@ -18,6 +18,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
@@ -491,7 +492,7 @@ public class DatasetServiceTest {
     private Set<DatasetProperty> getDatasetProperties() {
         return IntStream.range(1, 11)
             .mapToObj(i ->
-                new DatasetProperty(1, i, "Test Value", new Date())
+                new DatasetProperty(1, i, "Test Value" + RandomStringUtils.randomAlphanumeric(25), new Date())
             ).collect(Collectors.toSet());
     }
 
