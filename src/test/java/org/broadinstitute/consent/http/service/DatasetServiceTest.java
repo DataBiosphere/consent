@@ -314,9 +314,14 @@ public class DatasetServiceTest {
         int datasetId = 1;
         DatasetDTO dataSetDTO = getDatasetDTO();
         Dataset dataset = getDatasets().get(0);
-        dataset.setProperties(getDatasetProperties());
+        Set<DatasetProperty> datasetProps = getDatasetProperties();
+        List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
+            new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue())
+        ).collect(Collectors.toList());
+        dataSetDTO.setProperties(dtoProps);
+        dataset.setProperties(datasetProps);
         when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-        when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
+        when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(datasetProps);
         when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
         initService();
 
