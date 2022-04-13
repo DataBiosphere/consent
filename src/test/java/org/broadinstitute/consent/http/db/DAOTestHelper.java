@@ -496,7 +496,7 @@ public class DAOTestHelper {
      */
     protected DataAccessRequest createDataAccessRequestV3() {
         User user = createUserWithInstitution();
-        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        String darCode = "DAR-" + RandomUtils.nextInt(1, 999999999);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         for(int i = 0; i < 4; i++) {
             insertDAR(user.getDacUserId(), collection_id, darCode);
@@ -529,6 +529,11 @@ public class DAOTestHelper {
         return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
 
+    /*
+     * This method should be replaced as it creates a DAR from a json file which
+     * does not have accurate FK relationships.
+     */
+    @Deprecated
     private DataAccessRequest insertDAR(Integer userId, Integer collectionId, String darCode) {
         DataAccessRequestData data;
         Date now = new Date();
