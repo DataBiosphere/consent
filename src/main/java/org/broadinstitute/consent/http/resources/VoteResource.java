@@ -3,16 +3,20 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
+
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.service.ElectionService;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -20,17 +24,20 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Path("api/votes")
 public class VoteResource extends Resource {
 
     private final UserService userService;
     private final VoteService voteService;
+    private final ElectionService electionService;
     private final Gson gson = new Gson();
 
-    public VoteResource(UserService userService, VoteService voteService) {
+    public VoteResource(UserService userService, VoteService voteService, ElectionService electionService) {
         this.userService = userService;
         this.voteService = voteService;
+        this.electionService = electionService;
     }
 
 
@@ -76,7 +83,10 @@ public class VoteResource extends Resource {
             if (votes.isEmpty()) {
                 return createExceptionResponse(new NotFoundException());
             }
-
+            //Validate that researcher behind the data access request has a library card and that the votes belong to one collection
+            if(voteUpdate.getVote()) {
+                isVoteUpdateValid(votes);
+            }
             // Validate that the user is only updating their own votes:
             User user = userService.findUserByEmail(authUser.getEmail());
             boolean authed = votes.stream().map(Vote::getDacUserId).allMatch(id -> id.equals(user.getDacUserId()));
@@ -137,6 +147,34 @@ public class VoteResource extends Resource {
             return Response.ok().entity(updatedVotes).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
+        }
+    }
+    
+    //Private helper function, checks to see if user has library card for chair votes that are getting an incoming "yes" update
+    private void isVoteUpdateValid(List<Vote> votes) {
+        //
+        List<Vote> targetVotes = votes.stream()
+            .filter(v -> {
+                String type = v.getType().toLowerCase();
+                return type == "chairperson" || type == "final";
+            })
+            .collect(Collectors.toList());
+        if(!targetVotes.isEmpty()) {
+            List<Integer> voteIds = targetVotes.stream()
+                .map(Vote::getVoteId)
+                .collect(Collectors.toList());
+            List<Election> targetElections = electionService.findElectionsByVoteIdsAndType(voteIds, "dataaccess");
+            if(!targetElections.isEmpty()) {
+                List<Integer> targetElectionIds = targetElections.stream()
+                    .map(Election::getElectionId)
+                    .collect(Collectors.toList());
+                List<Election> electionsWithCardHoldingUsers = electionService.findElectionsWithCardHoldingUsersByElectionIds(targetElectionIds);
+                //We want to make sure that each election is associated with a card holding user
+                //Therefore, if the number of electionsWithCardHoldingUsers does not equal the number of target elections, we can assume that there exists an election where a user does not have a LC
+                if(electionsWithCardHoldingUsers.size() != targetElections.size()) {
+                    throw new NotAllowedException("Some Data Access Requests have been submitted by users with no library card");
+                }
+            }
         }
     }
 }
