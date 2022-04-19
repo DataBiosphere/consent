@@ -2107,10 +2107,10 @@ paths:
           description: Server error.
   /api/dataset/download:
     post:
-      summary: downloadDataSets
+      summary: Download datasets by id list
       description: Returns the dataset Properties of the datasets whose Ids are in the idList
       requestBody:
-        description: List of DatasetIds.
+        description: List of Dataset Ids
         required: true
         content:
           application/json:
@@ -2122,7 +2122,7 @@ paths:
         - Datasets
       responses:
         200:
-          description: The Dataset was deleted.
+          description: The specified datasets were downloaded.
         500:
           description: Server error.
   /api/dataset/autocomplete/{partial}:
