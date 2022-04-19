@@ -225,16 +225,16 @@ public class Dataset {
         return alias;
     }
 
+    public void setAlias(Integer alias) {
+        this.alias = alias;
+    }
+
     public DataUse getDataUse() {
         return dataUse;
     }
 
     public void setDataUse(DataUse dataUse) {
         this.dataUse = dataUse;
-    }
-
-    public void setAlias(Integer alias) {
-        this.alias = alias;
     }
 
     public void setDatasetIdentifier() {
