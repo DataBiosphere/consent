@@ -14,7 +14,7 @@
     <liquibase.version>4.9.1</liquibase.version>
     <dropwizard.version>2.0.29</dropwizard.version>
     <owl.version>5.1.20</owl.version>
-    <postgres.version>42.3.3</postgres.version>
+    <postgres.version>42.3.4</postgres.version>
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
     <swagger.ui.version>4.5.2</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
@@ -541,7 +541,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.17.0</version>
+      <version>1.17.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -549,7 +549,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>mockserver</artifactId>
-      <version>1.17.0</version>
+      <version>1.17.1</version>
       <scope>test</scope>
     </dependency>
 
