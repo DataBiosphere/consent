@@ -197,7 +197,7 @@ public class DatasetResource extends Resource {
     @Produces("application/json")
     @PermitAll
     @Path("/v2")
-    public Response findAllDatasetsByUser(@Auth AuthUser authUser) {
+    public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
