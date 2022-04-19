@@ -9,6 +9,7 @@ import org.jdbi.v3.core.result.RowView;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>, RowMapperHelper {
 
@@ -48,12 +49,20 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       }
     }
     // The name property doesn't always come through, add it manually:
-    if (dataset.getProperties().stream().noneMatch(p -> p.getPropertyName().equals(DatasetService.DATASET_NAME_KEY))) {
-      DatasetProperty nameProp = new DatasetProperty();
-      nameProp.setPropertyName(DatasetService.DATASET_NAME_KEY);
-      nameProp.setPropertyValue(dataset.getName());
-      nameProp.setDataSetId(dataset.getDataSetId());
-      dataset.addProperty(nameProp);
+    Optional<DatasetProperty> nameProp =
+      Objects.isNull(dataset.getProperties()) ?
+        Optional.empty() :
+        dataset.getProperties()
+          .stream()
+          .filter(p -> Objects.nonNull(p.getPropertyName()))
+          .filter(p -> p.getPropertyName().equals(DatasetService.DATASET_NAME_KEY))
+          .findFirst();
+    if (nameProp.isEmpty()) {
+      DatasetProperty name = new DatasetProperty();
+      name.setPropertyName(DatasetService.DATASET_NAME_KEY);
+      name.setPropertyValue(dataset.getName());
+      name.setDataSetId(dataset.getDataSetId());
+      dataset.addProperty(name);
     }
     dataset.setDatasetName(dataset.getName());
     dataset.setDatasetIdentifier();
