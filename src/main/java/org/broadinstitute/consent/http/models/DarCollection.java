@@ -43,7 +43,7 @@ public class DarCollection {
         " WHERE dataset ->> 'label' ~* :filterTerm) ";
 
   public static final String FILTER_ARCHIVED_QUERY =
-    "(dar.data #>> '{}')::jsonb ->> 'status' == :\"Archived\"";
+    "(dar.data #>> '{}')::jsonb ->> 'status' != 'Archived' ";
 
   @JsonProperty
   private Integer darCollectionId;

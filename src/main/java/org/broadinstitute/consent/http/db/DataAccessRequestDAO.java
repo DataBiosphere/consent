@@ -31,8 +31,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @SqlQuery(
       "SELECT id, reference_id, collection_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
-          + "  WHERE not (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
-          + "  AND draft != true ")
+          + "  WHERE draft != true "
+          + "  AND data->>'status' != 'Archived' ")
   List<DataAccessRequest> findAllDataAccessRequests();
 
 
