@@ -2109,15 +2109,15 @@ paths:
     post:
       summary: downloadDataSets
       description: Returns the dataset Properties of the datasets whose Ids are in the idList
-      parameters:
-        - name: idList
-          in: body
-          description: List of DatasetIds.
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
+      requestBody:
+        description: List of DatasetIds.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
       tags:
         - Datasets
       responses:
