@@ -14,6 +14,8 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -634,6 +636,28 @@ public class ElectionServiceTest {
         initService();
         boolean isOpen = service.isDataSetElectionOpen();
         assertEquals(false, isOpen);
+    }
+
+    @Test
+    public void findElectionsByVoteIdsAndType() {
+        Election election = new Election();
+        when(electionDAO.findElectionsByVoteIdsAndType(anyList(), anyString()))
+                .thenReturn(List.of(election));
+        initService();
+        List<Election> elections = service.findElectionsByVoteIdsAndType(List.of(1,2), "test");
+        assertNotNull(elections);
+        assertEquals(1, elections.size());
+    }
+
+    @Test
+    public void findElectionsWithCardHoldingUsersByElectionIds() {
+        Election election = new Election();
+        when(electionDAO.findElectionsWithCardHoldingUsersByElectionIds(anyList()))
+            .thenReturn(List.of(election));
+        initService();
+        List<Election> elections = service.findElectionsWithCardHoldingUsersByElectionIds(List.of(1));
+        assertNotNull(elections);
+        assertEquals(1, elections.size());
     }
 
 }

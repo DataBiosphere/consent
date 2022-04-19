@@ -40,7 +40,6 @@ public class VoteResource extends Resource {
         this.electionService = electionService;
     }
 
-
     /**
      * This API will take a boolean vote value as a query param and apply it to the list of vote ids
      * passed in as a list of integer vote ids.
@@ -83,15 +82,17 @@ public class VoteResource extends Resource {
             if (votes.isEmpty()) {
                 return createExceptionResponse(new NotFoundException());
             }
-            //Validate that researcher behind the data access request has a library card and that the votes belong to one collection
-            if(voteUpdate.getVote()) {
-                isVoteUpdateValid(votes);
-            }
+
             // Validate that the user is only updating their own votes:
             User user = userService.findUserByEmail(authUser.getEmail());
             boolean authed = votes.stream().map(Vote::getDacUserId).allMatch(id -> id.equals(user.getDacUserId()));
             if (!authed) {
                 return createExceptionResponse(new NotFoundException());
+            }
+
+            // Validate that the researcher(s) behind the data access request(s) has a library card
+            if (voteUpdate.getVote()) {
+                voteUpdateLCCheck(votes);
             }
 
             List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, voteUpdate.getVote(), voteUpdate.getRationale());
@@ -151,19 +152,21 @@ public class VoteResource extends Resource {
     }
     
     //Private helper function, checks to see if user has library card for chair votes that are getting an incoming "yes" update
-    private void isVoteUpdateValid(List<Vote> votes) {
-        //
+    private void voteUpdateLCCheck(List<Vote> votes) {
+        //filter for chair or final votes
         List<Vote> targetVotes = votes.stream()
             .filter(v -> {
-                String type = v.getType().toLowerCase();
-                return type == "chairperson" || type == "final";
+                String type = v.getType();
+                return type.equalsIgnoreCase("chairperson") || type.equalsIgnoreCase("final");
             })
             .collect(Collectors.toList());
+        //if the filtered list is populated, get the vote ids and get the full vote records for those that have type = 'DataAccess'
         if(!targetVotes.isEmpty()) {
             List<Integer> voteIds = targetVotes.stream()
                 .map(Vote::getVoteId)
                 .collect(Collectors.toList());
             List<Election> targetElections = electionService.findElectionsByVoteIdsAndType(voteIds, "dataaccess");
+            //If DataAccess votes are present, get elections from DARs created by users with LCs
             if(!targetElections.isEmpty()) {
                 List<Integer> targetElectionIds = targetElections.stream()
                     .map(Election::getElectionId)
@@ -172,7 +175,7 @@ public class VoteResource extends Resource {
                 //We want to make sure that each election is associated with a card holding user
                 //Therefore, if the number of electionsWithCardHoldingUsers does not equal the number of target elections, we can assume that there exists an election where a user does not have a LC
                 if(electionsWithCardHoldingUsers.size() != targetElections.size()) {
-                    throw new NotAllowedException("Some Data Access Requests have been submitted by users with no library card");
+                    throw new BadRequestException("Some Data Access Requests have been submitted by users with no library card");
                 }
             }
         }
