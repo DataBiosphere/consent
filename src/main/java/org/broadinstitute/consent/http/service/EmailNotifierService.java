@@ -22,6 +22,7 @@ import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -35,6 +36,7 @@ import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -44,6 +46,7 @@ import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class EmailNotifierService {
 
+    private final DarCollectionDAO collectionDAO;
     private final ConsentDAO consentDAO;
     private final DataAccessRequestService dataAccessRequestService;
     private final UserDAO userDAO;
@@ -89,11 +92,12 @@ public class EmailNotifierService {
     }
 
     @Inject
-    public EmailNotifierService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
+    public EmailNotifierService(DarCollectionDAO collectionDAO, ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
                                 VoteDAO voteDAO, ElectionDAO electionDAO, UserDAO userDAO,
                                 MailMessageDAO emailDAO, MailService mailService,
                                 FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive,
                                 UserPropertyDAO userPropertyDAO) {
+        this.collectionDAO = collectionDAO;
         this.consentDAO = consentDAO;
         this.dataAccessRequestService = dataAccessRequestService;
         this.userDAO = userDAO;
@@ -107,19 +111,28 @@ public class EmailNotifierService {
         this.userPropertyDAO = userPropertyDAO;
     }
 
-    public void sendNewDARRequestMessage(String dataAccessRequestId, List<Integer> datasetIds) throws MessagingException, IOException, TemplateException {
+    public void sendNewDARCollectionMessage(Integer collectionId) throws MessagingException, IOException, TemplateException {
         if (isServiceActive) {
+            DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
             List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
-            if (CollectionUtils.isEmpty(users)) return;
-            List<Integer> usersId = users.stream().map(User::getDacUserId).collect(Collectors.toList());
-            Set<User> chairs = userDAO.findUsersForDatasetsByRole(datasetIds,
-                    Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
-            for (User chair : chairs) {
-                Map<String, String> data = retrieveForNewDAR(dataAccessRequestId, chair);
-                Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL);
-                mailService.sendNewDARRequests(getEmails(users), data.get("entityId"), data.get("electionType"), template);
-                emailDAO.insertBulkEmailNoVotes(usersId, dataAccessRequestId, 4, new Date(), template.toString());
+            List<Integer> datasetIds = collection.getDars().values().stream()
+                    .map(DataAccessRequest::getData)
+                    .map(DataAccessRequestData::getDatasetIds)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            List<User> chairPersons = userDAO
+                .findUsersForDatasetsByRole(datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()))
+                .stream()
+                .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
+                .collect(Collectors.toList());
+            users.addAll(chairPersons);
+            List<Integer> userIds = users.stream().map(User::getDacUserId).collect(Collectors.toList());
+            Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL);
+            for (User user : users) {
+                Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
+                mailService.sendNewDARRequests(getEmails(List.of(user)), data.get("entityId"), data.get("electionType"), template);
             }
+            emailDAO.insertBulkEmailNoVotes(userIds, collection.getDarCode(), 4, new Date(), template.toString());
         }
     }
 
@@ -248,12 +261,12 @@ public class EmailNotifierService {
 
     private Set<String> getEmails(List<User> users) {
         Set<String> emails = users.stream()
-                .map(u -> new ArrayList<String>(){{add(u.getEmail()); add(u.getAdditionalEmail());}})
+                .map(u -> List.of(u.getEmail(), u.getAdditionalEmail()))
                 .flatMap(Collection::stream)
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.toSet());
         List<String> academicEmails =  getAcademicEmails(users);
-        if(CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
+        if (CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
         return emails;
     }
 

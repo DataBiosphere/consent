@@ -75,11 +75,12 @@ public class DataAccessRequestService {
 
     private final DacService dacService;
     private final DataAccessReportsParser dataAccessReportsParser;
+    private final EmailNotifierService emailNotifierService;
     private static final String SUFFIX = "-A-";
 
     @Inject
     public DataAccessRequestService(CounterService counterService, DAOContainer container,
-            DacService dacService) {
+            DacService dacService, EmailNotifierService emailNotifierService) {
         this.consentDAO = container.getConsentDAO();
         this.counterService = counterService;
         this.dacDAO = container.getDacDAO();
@@ -93,6 +94,7 @@ public class DataAccessRequestService {
         this.institutionDAO = container.getInstitutionDAO();
         this.dacService = dacService;
         this.dataAccessReportsParser = new DataAccessReportsParser();
+        this.emailNotifierService = emailNotifierService;
     }
 
     /**
@@ -453,6 +455,11 @@ public class DataAccessRequestService {
                     DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
                     newDARList.add(createdDar);
                 }
+            }
+            try {
+                emailNotifierService.sendNewDARCollectionMessage(collectionId);
+            } catch (Exception e) {
+                logger.error("Exception sending email for collection id: " + collectionId, e);
             }
         }
         return newDARList;
