@@ -1,24 +1,31 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class FreeMarkerTemplateHelperTest {
 
@@ -29,7 +36,7 @@ public class FreeMarkerTemplateHelperTest {
 
     @Before
     public void setUp() throws IOException {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         when(freeMarkerConfig.getTemplateDirectory()).thenReturn("/freemarker");
         when(freeMarkerConfig.getDefaultEncoding()).thenReturn("UTF-8");
         helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
@@ -78,11 +85,14 @@ public class FreeMarkerTemplateHelperTest {
 
     @Test
     public void testGetNewDARRequestTemplate() throws Exception {
-        Writer template = helper.getNewDARRequestTemplate("localhost:1234");
+        Writer template = helper.getNewDARRequestTemplate("localhost:1234", "Admin", "Entity");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - New Data Access Request"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Admin!"));
+        assertEquals("Broad Data Use Oversight System - New Data Access Request", parsedTemplate.title());
+        Element userNameElement = parsedTemplate.getElementById("userName");
+        assertNotNull(userNameElement);
+        assertNotNull(userNameElement.text());
+        assertEquals("Hello Admin!", userNameElement.text());
     }
 
     @Test
