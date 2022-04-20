@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -52,6 +53,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final DataAccessRequestService dataAccessRequestService;
+  private final EmailNotifierService emailNotifierService;
   private final GCSService gcsService;
   private final MatchService matchService;
   private final UserService userService;
@@ -59,10 +61,12 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @Inject
   public DataAccessRequestResourceVersion2(
       DataAccessRequestService dataAccessRequestService,
+      EmailNotifierService emailNotifierService,
       GCSService gcsService,
       UserService userService,
       MatchService matchService) {
     this.dataAccessRequestService = dataAccessRequestService;
+    this.emailNotifierService = emailNotifierService;
     this.gcsService = gcsService;
     this.userService = userService;
     this.matchService = matchService;
@@ -98,6 +102,12 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest newDar = populateDarFromJsonString(user, dar);
       List<DataAccessRequest> results =
           dataAccessRequestService.createDataAccessRequest(user, newDar);
+      Integer collectionId = results.get(0).getCollectionId();
+      try {
+          emailNotifierService.sendNewDARCollectionMessage(collectionId);
+      } catch (Exception e) {
+          logger.error("Exception sending email for collection id: " + collectionId, e);
+      }
       URI uri = info.getRequestUriBuilder().build();
       for (DataAccessRequest r : results) {
         matchService.reprocessMatchesForPurpose(r.getReferenceId());

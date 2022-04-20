@@ -1,28 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
-import static java.util.stream.Collectors.toList;
-
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import javax.ws.rs.NotAcceptableException;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -56,6 +35,28 @@ import org.broadinstitute.consent.http.util.DarUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotFoundException;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
+
 @SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
 
@@ -75,12 +76,11 @@ public class DataAccessRequestService {
 
     private final DacService dacService;
     private final DataAccessReportsParser dataAccessReportsParser;
-    private final EmailNotifierService emailNotifierService;
     private static final String SUFFIX = "-A-";
 
     @Inject
     public DataAccessRequestService(CounterService counterService, DAOContainer container,
-            DacService dacService, EmailNotifierService emailNotifierService) {
+            DacService dacService) {
         this.consentDAO = container.getConsentDAO();
         this.counterService = counterService;
         this.dacDAO = container.getDacDAO();
@@ -94,7 +94,6 @@ public class DataAccessRequestService {
         this.institutionDAO = container.getInstitutionDAO();
         this.dacService = dacService;
         this.dataAccessReportsParser = new DataAccessReportsParser();
-        this.emailNotifierService = emailNotifierService;
     }
 
     /**
@@ -455,11 +454,6 @@ public class DataAccessRequestService {
                     DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
                     newDARList.add(createdDar);
                 }
-            }
-            try {
-                emailNotifierService.sendNewDARCollectionMessage(collectionId);
-            } catch (Exception e) {
-                logger.error("Exception sending email for collection id: " + collectionId, e);
             }
         }
         return newDARList;

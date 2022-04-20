@@ -113,26 +113,26 @@ public class EmailNotifierService {
 
     public void sendNewDARCollectionMessage(Integer collectionId) throws MessagingException, IOException, TemplateException {
         if (isServiceActive) {
-            DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
-            List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
-            List<Integer> datasetIds = collection.getDars().values().stream()
-                    .map(DataAccessRequest::getData)
-                    .map(DataAccessRequestData::getDatasetIds)
-                    .flatMap(List::stream)
-                    .collect(Collectors.toList());
-            List<User> chairPersons = userDAO
-                .findUsersForDatasetsByRole(datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()))
-                .stream()
-                .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
-                .collect(Collectors.toList());
-            users.addAll(chairPersons);
-            List<Integer> userIds = users.stream().map(User::getDacUserId).collect(Collectors.toList());
-            Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL);
-            for (User user : users) {
-                Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
-                mailService.sendNewDARRequests(getEmails(List.of(user)), data.get("entityId"), data.get("electionType"), template);
-            }
-            emailDAO.insertBulkEmailNoVotes(userIds, collection.getDarCode(), 4, new Date(), template.toString());
+//            DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
+//            List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
+//            List<Integer> datasetIds = collection.getDars().values().stream()
+//                    .map(DataAccessRequest::getData)
+//                    .map(DataAccessRequestData::getDatasetIds)
+//                    .flatMap(List::stream)
+//                    .collect(Collectors.toList());
+//            List<User> chairPersons = userDAO
+//                .findUsersForDatasetsByRole(datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()))
+//                .stream()
+//                .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
+//                .collect(Collectors.toList());
+//            users.addAll(chairPersons);
+//            List<Integer> userIds = users.stream().map(User::getDacUserId).collect(Collectors.toList());
+//            Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL);
+//            for (User user : users) {
+//                Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
+//                mailService.sendNewDARRequests(getEmails(List.of(user)), data.get("entityId"), data.get("electionType"), template);
+//            }
+//            emailDAO.insertBulkEmailNoVotes(userIds, collection.getDarCode(), 4, new Date(), template.toString());
         }
     }
 

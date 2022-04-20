@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -50,6 +51,7 @@ public class DataAccessRequestResourceVersion2Test {
 
   @Mock private DataAccessRequestService dataAccessRequestService;
   @Mock private MatchService matchService;
+  @Mock private EmailNotifierService emailNotifierService;
   @Mock private GCSService gcsService;
   @Mock private UserService userService;
   @Mock private UriInfo info;
@@ -74,7 +76,7 @@ public class DataAccessRequestResourceVersion2Test {
       when(info.getRequestUriBuilder()).thenReturn(builder);
       resource =
           new DataAccessRequestResourceVersion2(
-              dataAccessRequestService, gcsService, userService, matchService);
+              dataAccessRequestService, emailNotifierService, gcsService, userService, matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -88,6 +90,7 @@ public class DataAccessRequestResourceVersion2Test {
       when(dataAccessRequestService.createDataAccessRequest(any(), any()))
           .thenReturn(Collections.emptyList());
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
+      doNothing().when(emailNotifierService).sendNewDARCollectionMessage(any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }

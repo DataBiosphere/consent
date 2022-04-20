@@ -86,8 +86,6 @@ public class DataAccessRequestServiceTest {
     private InstitutionDAO institutionDAO;
     @Mock
     private ElectionService electionService;
-    @Mock
-    private EmailNotifierService emailNotifierService;
 
     private DataAccessRequestService service;
 
@@ -112,7 +110,7 @@ public class DataAccessRequestServiceTest {
         container.setDatasetDAO(dataSetDAO);
         container.setElectionDAO(electionDAO);
         container.setVoteDAO(voteDAO);
-        service = new DataAccessRequestService(counterService, container, dacService, emailNotifierService);
+        service = new DataAccessRequestService(counterService, container, dacService);
     }
 
     @Test
