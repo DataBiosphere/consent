@@ -1971,6 +1971,7 @@ paths:
     get:
       summary: Get Datasets
       description: Returns Dataset list filtered by authenticated user.
+      deprecated: true
       tags:
         - Datasets
       responses:
@@ -1984,31 +1985,7 @@ paths:
                   $ref: './schemas/Dataset.yaml'
 
   /api/dataset/v2:
-    post:
-      summary: Creates the Dataset from JSON
-      description: Creates the Dataset from JSON
-      requestBody:
-        description: Submitted dataset registration form. Dataset must contain the property Dataset Name with a unique value and a valid DataUse object.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: './schemas/Dataset.yaml'
-      tags:
-        - Datasets
-      responses:
-        201:
-          description: Successfully created Dataset
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/Dataset.yaml'
-        400:
-          description: External Error (invalid input)
-        409:
-          description: Dataset Name given is already in use by another dataset
-        500:
-          description: Internal Error (something went wrong processing a valid input)
+    $ref: './paths/datasetV2.yaml'
   /api/dataset/validate:
     get:
       summary: validateDatasetName

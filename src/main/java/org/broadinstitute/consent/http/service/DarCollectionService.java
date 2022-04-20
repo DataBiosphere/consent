@@ -58,7 +58,7 @@ public class DarCollectionService {
   }
 
   public List<Integer> findDatasetIdsByUser(User user) {
-    return datasetDAO.findDataSetsByAuthUserEmail(user.getEmail())
+    return datasetDAO.findDatasetsByAuthUserEmail(user.getEmail())
         .stream()
         .map(Dataset::getDataSetId)
         .collect(Collectors.toList());
@@ -362,7 +362,7 @@ public class DarCollectionService {
    */
   public DarCollection cancelDarCollectionElectionsAsChair(DarCollection collection, User user) {
     // Find dataset ids the chairperson has access to:
-    List<Integer> datasetIds = datasetDAO.findDataSetsByAuthUserEmail(user.getEmail())
+    List<Integer> datasetIds = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail())
       .stream()
       .map(Dataset::getDataSetId)
       .collect(Collectors.toList());

@@ -11,8 +11,8 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -67,24 +67,8 @@ public class DatasetResource extends Resource {
     private String dataSetSampleFileName;
     private String dataSetSampleContent;
 
-    String getDataSetSampleFileName() {
-        return dataSetSampleFileName;
-    }
-
-    void setDataSetSampleFileName(String fileName) {
-        dataSetSampleFileName = fileName;
-    }
-
     void resetDataSetSampleFileName() {
         dataSetSampleFileName = defaultDataSetSampleFileName;
-    }
-
-    String getDataSetSampleContent() {
-        return dataSetSampleContent;
-    }
-
-    void setDataSetSampleContent(String content) {
-        dataSetSampleContent = content;
     }
 
     void resetDataSetSampleContent() {
@@ -204,6 +188,21 @@ public class DatasetResource extends Resource {
             User user = userService.findUserByEmail(authUser.getEmail());
             Collection<DatasetDTO> dataSetList = datasetService.describeDatasets(user.getDacUserId());
             return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Produces("application/json")
+    @PermitAll
+    @Path("/v2")
+    public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
+            Gson gson = new Gson();
+            return Response.ok(gson.toJson(datasets)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

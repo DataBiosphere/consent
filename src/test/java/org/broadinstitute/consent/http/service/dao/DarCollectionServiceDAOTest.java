@@ -31,7 +31,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
   private DarCollectionServiceDAO serviceDAO;
 
   private void initService() {
-    serviceDAO = new DarCollectionServiceDAO(dataSetDAO, electionDAO, jdbi, userDAO);
+    serviceDAO = new DarCollectionServiceDAO(datasetDAO, electionDAO, jdbi, userDAO);
   }
 
   /**

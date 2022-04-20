@@ -387,7 +387,7 @@ public class ElectionService {
     public String darDatasetElectionStatus(String darReferenceId){
         DataAccessRequest dar = describeDataAccessRequestById(darReferenceId);
         List<Integer> dataSets =  Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
-        List<Dataset> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
+        List<Dataset> dsForApproval =  dataSetDAO.findNeedsApprovalDatasetByDatasetId(dataSets);
         if(CollectionUtils.isEmpty(dsForApproval)) {
             return DatasetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
         } else {

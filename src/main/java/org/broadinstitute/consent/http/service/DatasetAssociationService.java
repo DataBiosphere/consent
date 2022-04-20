@@ -42,7 +42,7 @@ public class DatasetAssociationService {
 
     public List<DatasetAssociation> createDatasetUsersAssociation(Integer dataSetId, List<Integer> userIds) {
         verifyUsers(userIds);
-        Dataset d = dsDAO.findDataSetById(dataSetId);
+        Dataset d = dsDAO.findDatasetById(dataSetId);
         if (Objects.isNull(d)) {
             throw new NotFoundException("Invalid DatasetId");
         }
@@ -58,7 +58,7 @@ public class DatasetAssociationService {
     }
 
     public Map<String, Collection<User>> findDataOwnersRelationWithDataset(Integer datasetId) {
-        List<DatasetAssociation> associationList = dsAssociationDAO.getDatasetAssociation(dsDAO.findDataSetById(datasetId).getDataSetId());
+        List<DatasetAssociation> associationList = dsAssociationDAO.getDatasetAssociation(dsDAO.findDatasetById(datasetId).getDataSetId());
         Collection<User> associatedUsers = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(associationList)) {
             Collection<Integer> usersIdList = associationList.stream().map(DatasetAssociation::getDacuserId).collect(
@@ -84,16 +84,16 @@ public class DatasetAssociationService {
             User dataOwner = userDAO.findUserById(dsa.getDacuserId());
             if (!dataOwnerDataSetMap.containsKey(dataOwner)) {
                 dataOwnerDataSetMap.put(userDAO.findUserById(dsa.getDacuserId()), new ArrayList<>(
-                    Collections.singletonList(dsDAO.findDataSetById(dsa.getDatasetId()))));
+                    Collections.singletonList(dsDAO.findDatasetById(dsa.getDatasetId()))));
             } else {
-                dataOwnerDataSetMap.get(userDAO.findUserById(dsa.getDacuserId())).add(dsDAO.findDataSetById(dsa.getDatasetId()));
+                dataOwnerDataSetMap.get(userDAO.findUserById(dsa.getDacuserId())).add(dsDAO.findDatasetById(dsa.getDatasetId()));
             }
         });
         return dataOwnerDataSetMap;
     }
 
     public List<DatasetAssociation> updateDatasetAssociations(Integer dataSetId, List<Integer> userIds) {
-        Dataset d = dsDAO.findDataSetById(dataSetId);
+        Dataset d = dsDAO.findDatasetById(dataSetId);
         if (Objects.isNull(d)) {
             throw new NotFoundException("Invalid DatasetId");
         }

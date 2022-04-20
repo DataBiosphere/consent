@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
@@ -63,7 +64,7 @@ public class DatasetResourceTest {
     private GoogleUser googleUser;
 
     @Mock
-    private User dacUser;
+    private User user;
 
     @Mock
     private UriInfo uriInfo;
@@ -118,8 +119,8 @@ public class DatasetResourceTest {
         when(datasetService.getDatasetDTO(any())).thenReturn(result);
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
-        when(userService.findUserByEmail(any())).thenReturn(dacUser);
-        when(dacUser.getDacUserId()).thenReturn(1);
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(user.getDacUserId()).thenReturn(1);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("/api/dataset/1"));
@@ -212,8 +213,8 @@ public class DatasetResourceTest {
         when(datasetService.createConsentForDataset(any())).thenReturn(consent);
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
-        when(userService.findUserByEmail(any())).thenReturn(dacUser);
-        when(dacUser.getDacUserId()).thenReturn(1);
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(user.getDacUserId()).thenReturn(1);
         initResource();
         Response response = resource.createDataset(authUser, uriInfo, json);
 
@@ -228,9 +229,9 @@ public class DatasetResourceTest {
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.of(preexistingDataset));
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
-        when(userService.findUserByEmail(any())).thenReturn(dacUser);
-        when(dacUser.getDacUserId()).thenReturn(1);
-        when(dacUser.hasUserRole(any())).thenReturn(true);
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(user.getDacUserId()).thenReturn(1);
+        when(user.hasUserRole(any())).thenReturn(true);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
@@ -302,9 +303,9 @@ public class DatasetResourceTest {
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.empty());
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
-        when(userService.findUserByEmail(any())).thenReturn(dacUser);
-        when(dacUser.getDacUserId()).thenReturn(1);
-        when(dacUser.hasUserRole(any())).thenReturn(true);
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(user.getDacUserId()).thenReturn(1);
+        when(user.hasUserRole(any())).thenReturn(true);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
@@ -315,7 +316,7 @@ public class DatasetResourceTest {
     @Test
     public void testDescribeDatasetsSuccess() {
         when(authUser.getEmail()).thenReturn("authUserEmail");
-        when(userService.findUserByEmail(any())).thenReturn(dacUser);
+        when(userService.findUserByEmail(any())).thenReturn(user);
         when(datasetService.describeDatasets(anyInt())).thenReturn(Collections.emptySet());
         initResource();
         Response response = resource.describeDataSets(authUser);
@@ -325,7 +326,7 @@ public class DatasetResourceTest {
     @Test
     public void testDescribeDatasetsError() {
         when(authUser.getEmail()).thenReturn("authUserEmail");
-        when(userService.findUserByEmail(any())).thenReturn(dacUser);
+        when(userService.findUserByEmail(any())).thenReturn(user);
         doThrow(new RuntimeException()).when(datasetService).describeDatasets(anyInt());
         initResource();
         Response response = resource.describeDataSets(authUser);
@@ -413,8 +414,8 @@ public class DatasetResourceTest {
     public void testDeleteSuccessAdmin() {
         Dataset dataSet = new Dataset();
 
-        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
-        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
         when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
         initResource();
@@ -430,12 +431,12 @@ public class DatasetResourceTest {
         consent.setDacId(1);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
-        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         role.setDacId(1);
-        when(dacUser.getRoles()).thenReturn(List.of(role));
+        when(user.getRoles()).thenReturn(List.of(role));
 
-        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
         when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
         initResource();
@@ -447,11 +448,11 @@ public class DatasetResourceTest {
     public void testDeleteErrorNoDacIds() {
         Dataset dataSet = new Dataset();
 
-        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
-        when(dacUser.getRoles()).thenReturn(List.of(role));
+        when(user.getRoles()).thenReturn(List.of(role));
 
-        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
         when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
         initResource();
@@ -466,12 +467,12 @@ public class DatasetResourceTest {
         Consent consent = new Consent();
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
-        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         role.setDacId(1);
-        when(dacUser.getRoles()).thenReturn(List.of(role));
+        when(user.getRoles()).thenReturn(List.of(role));
 
-        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
         when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
         initResource();
@@ -487,12 +488,12 @@ public class DatasetResourceTest {
         consent.setDacId(2);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
-        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         role.setDacId(1);
-        when(dacUser.getRoles()).thenReturn(List.of(role));
+        when(user.getRoles()).thenReturn(List.of(role));
 
-        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
         when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
         initResource();
@@ -504,8 +505,8 @@ public class DatasetResourceTest {
     public void testDisableDataSetSuccessAdmin() {
         Dataset dataSet = new Dataset();
 
-        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
-        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
         when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
         initResource();
@@ -521,12 +522,12 @@ public class DatasetResourceTest {
         consent.setDacId(1);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
-        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         role.setDacId(1);
-        when(dacUser.getRoles()).thenReturn(List.of(role));
+        when(user.getRoles()).thenReturn(List.of(role));
 
-        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
         when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
         initResource();
@@ -538,11 +539,11 @@ public class DatasetResourceTest {
     public void testDisableDataSetErrorNoDacIds() {
         Dataset dataSet = new Dataset();
 
-        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
-        when(dacUser.getRoles()).thenReturn(List.of(role));
+        when(user.getRoles()).thenReturn(List.of(role));
 
-        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
         when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
         initResource();
@@ -557,12 +558,12 @@ public class DatasetResourceTest {
         Consent consent = new Consent();
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
-        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         role.setDacId(1);
-        when(dacUser.getRoles()).thenReturn(List.of(role));
+        when(user.getRoles()).thenReturn(List.of(role));
 
-        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
         when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
         initResource();
@@ -578,12 +579,12 @@ public class DatasetResourceTest {
         consent.setDacId(2);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
-        when(dacUser.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
+        when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         role.setDacId(1);
-        when(dacUser.getRoles()).thenReturn(List.of(role));
+        when(user.getRoles()).thenReturn(List.of(role));
 
-        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacUser);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
         when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
         initResource();
@@ -611,8 +612,8 @@ public class DatasetResourceTest {
     public void testDatasetAutocompleteSuccess() {
         List<Map<String, String>> autocompleteMap = List.of(Collections.EMPTY_MAP);
         when(authUser.getEmail()).thenReturn("testauthuser@test.com");
-        when(userService.findUserByEmail(anyString())).thenReturn(dacUser);
-        when(dacUser.getDacUserId()).thenReturn(0);
+        when(userService.findUserByEmail(anyString())).thenReturn(user);
+        when(user.getDacUserId()).thenReturn(0);
         when(datasetService.autoCompleteDatasets(anyString(), anyInt())).thenReturn(autocompleteMap);
 
         initResource();
@@ -623,8 +624,8 @@ public class DatasetResourceTest {
     @Test
     public void testDatasetAutocompleteError() {
         when(authUser.getEmail()).thenReturn("testauthuser@test.com");
-        when(userService.findUserByEmail(anyString())).thenReturn(dacUser);
-        when(dacUser.getDacUserId()).thenReturn(0);
+        when(userService.findUserByEmail(anyString())).thenReturn(user);
+        when(user.getDacUserId()).thenReturn(0);
         doThrow(new RuntimeException()).when(datasetService).autoCompleteDatasets(anyString(), anyInt());
 
         initResource();
@@ -666,5 +667,14 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.downloadDatasetApprovedUsers(1);
         assertEquals(500, response.getStatus());
+    }
+
+    @Test
+    public void testFindAllDatasetsAvailableToUser() {
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(datasetService.findAllDatasetsByUser(any())).thenReturn(List.of(new Dataset()));
+        initResource();
+        Response response = resource.findAllDatasetsAvailableToUser(authUser);
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 }
