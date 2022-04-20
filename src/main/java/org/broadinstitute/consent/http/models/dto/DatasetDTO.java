@@ -10,7 +10,7 @@ import java.util.Objects;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataUse;
 
-
+@Deprecated
 public class DatasetDTO {
 
     @JsonProperty

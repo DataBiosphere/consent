@@ -65,12 +65,12 @@ public class SummaryServiceTest {
         summaryService = Mockito.spy(new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO,
             datasetDAO, matchDAO));
     }
-    
+
     private void initService() {
         summaryService = new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO,
             datasetDAO, matchDAO);
     }
-    
+
     // Test that empty data will not throw errors
     @Test
     public void testListDataAccessRequestSummaryDetails_case1() {
@@ -108,7 +108,7 @@ public class SummaryServiceTest {
         when(electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue())).thenReturn(accessElections);
         when(electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue())).thenReturn(rpElections);
         when(dataAccessRequestService.getDataAccessRequestsByReferenceIds(anyList())).thenReturn(dars);
-        when(datasetDAO.getAssociationsForDataSetIdList(datasetIds)).thenReturn(associations);
+        when(datasetDAO.getAssociationsForDatasetIdList(datasetIds)).thenReturn(associations);
         when(electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue())).thenReturn(consentElections);
         when(voteDAO.findVotesByElectionIds(accessElectionIds)).thenReturn(accessVotes);
         when(voteDAO.findVotesByElectionIds(rpElectionIds)).thenReturn(rpVotes);
@@ -200,7 +200,7 @@ public class SummaryServiceTest {
         m.setMatch(true);
         return m;
     }
-    
+
     private Association createAssociation(Integer datasetId, String consentId) {
         Association a = new Association();
         a.setAssociationId(RandomUtils.nextInt(1, 100));
@@ -243,7 +243,7 @@ public class SummaryServiceTest {
         e.setReferenceId(referenceId);
         return e;
     }
-    
+
     private List<Vote> createVotes(Integer electionId, Integer userId) {
         return Arrays.stream(VoteType.values()).map(t -> {
                 Vote v = new Vote();

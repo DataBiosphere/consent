@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@Deprecated
 public class DatasetPropertyDTO {
 
     @JsonProperty

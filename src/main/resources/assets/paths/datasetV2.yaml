@@ -1,0 +1,44 @@
+get:
+  summary: Get Datasets
+  description: | 
+    Returns Dataset list filtered by authenticated user role.
+    Admins can see all datasets, both active and inactive.
+    Chairpersons can see all active datasets and inactive ones 
+    associated to any of their Data Access Committees. 
+    All other users can see active datasets.
+  tags:
+    - Datasets
+  responses:
+    200:
+      description: A list of Datasets
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/Dataset.yaml'
+post:
+  summary: Creates the Dataset from JSON
+  description: Creates the Dataset from JSON
+  requestBody:
+    description: Submitted dataset registration form. Dataset must contain the property Dataset Name with a unique value and a valid DataUse object.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/Dataset.yaml'
+  tags:
+    - Datasets
+  responses:
+    201:
+      description: Successfully created Dataset
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dataset.yaml'
+    400:
+      description: External Error (invalid input)
+    409:
+      description: Dataset Name given is already in use by another dataset
+    500:
+      description: Internal Error (something went wrong processing a valid input)
