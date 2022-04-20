@@ -40,6 +40,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DatasetService {
 
@@ -433,15 +434,18 @@ public class DatasetService {
     }
 
     public List<Dataset> findAllDatasetsByUser(User user) {
-        List<Dataset> datasets = new ArrayList<>();
         if (user.hasUserRole(UserRoles.ADMIN)) {
-            datasets.addAll(datasetDAO.getAllDatasets());
+            return datasetDAO.getAllDatasets();
         } else {
-            datasets.addAll(datasetDAO.getActiveDatasets());
+            List<Dataset> datasets = datasetDAO.getActiveDatasets();
             if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
-                datasets.addAll(datasetDAO.findDatasetsByAuthUserEmail(user.getEmail()));
+                List<Dataset> chairDatasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
+                return Stream
+                    .concat(chairDatasets.stream(), datasets.stream())
+                    .distinct()
+                    .collect(Collectors.toList());
             }
+            return datasets;
         }
-        return datasets;
     }
 }

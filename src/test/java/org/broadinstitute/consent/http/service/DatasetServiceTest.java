@@ -12,6 +12,8 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -45,6 +47,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DatasetServiceTest {
@@ -463,6 +468,78 @@ public class DatasetServiceTest {
         Set<DatasetDTO> chairResult = datasetService.describeDatasets(2);
         assertNotNull(chairResult);
         assertEquals(chairResult.size(), singleDtoSet.size());
+    }
+
+    @Test
+    public void testFindAllDatasetsByUser_Admin() {
+        User user = new User();
+        UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+        user.addRole(admin);
+        Dataset dataset = new Dataset();
+        dataset.setDataSetId(1);
+        when(datasetDAO.getAllDatasets()).thenReturn(List.of(dataset));
+        spy(datasetDAO);
+        initService();
+
+        List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
+        assertFalse(datasets.isEmpty());
+        assertEquals(1, datasets.size());
+        assertEquals(dataset.getDataSetId(), datasets.get(0).getDataSetId());
+        verify(datasetDAO, times(1)).getAllDatasets();
+        verify(datasetDAO, times(0)).getActiveDatasets();
+        verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
+    }
+
+    @Test
+    public void testFindAllDatasetsByUser_Chair() {
+        User user = new User();
+        UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        user.addRole(chair);
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+        Dataset d2 = new Dataset();
+        d2.setDataSetId(2);
+        Dataset d3 = new Dataset();
+        d2.setDataSetId(3);
+        when(datasetDAO.getActiveDatasets()).thenReturn(List.of(d1, d2));
+        when(datasetDAO.findDatasetsByAuthUserEmail(any())).thenReturn(List.of(d2, d3));
+        spy(datasetDAO);
+        initService();
+
+        List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
+        assertFalse(datasets.isEmpty());
+        // Test that the two lists of datasets are distinctly combined in the final result
+        assertEquals(3, datasets.size());
+        assertTrue(datasets.contains(d1));
+        assertTrue(datasets.contains(d2));
+        assertTrue(datasets.contains(d3));
+        verify(datasetDAO, times(0)).getAllDatasets();
+        verify(datasetDAO, times(1)).getActiveDatasets();
+        verify(datasetDAO, times(1)).findDatasetsByAuthUserEmail(any());
+    }
+
+    @Test
+    public void testFindAllDatasetsByUser() {
+        // Test that the two lists of datasets are distinctly combined in the final result
+        User user = new User();
+        UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        user.addRole(researcher);
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+        Dataset d2 = new Dataset();
+        d2.setDataSetId(2);
+        when(datasetDAO.getActiveDatasets()).thenReturn(List.of(d1, d2));
+        spy(datasetDAO);
+        initService();
+
+        List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
+        assertFalse(datasets.isEmpty());
+        assertEquals(2, datasets.size());
+        assertTrue(datasets.contains(d1));
+        assertTrue(datasets.contains(d2));
+        verify(datasetDAO, times(0)).getAllDatasets();
+        verify(datasetDAO, times(1)).getActiveDatasets();
+        verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
     }
 
     /* Helper functions */

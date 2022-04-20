@@ -69,12 +69,6 @@ public class Dataset {
     private Boolean deletable;
 
     @JsonProperty
-    private Boolean isAssociatedToDataOwners;
-
-    @JsonProperty
-    private Boolean updateAssociationToDataOwnerAllowed;
-
-
     private Set<DatasetProperty> properties;
 
     public Dataset() {
@@ -281,19 +275,16 @@ public class Dataset {
         this.deletable = deletable;
     }
 
-    public Boolean getAssociatedToDataOwners() {
-        return isAssociatedToDataOwners;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Dataset dataset = (Dataset) o;
+        return com.google.common.base.Objects.equal(dataSetId, dataset.dataSetId);
     }
 
-    public void setAssociatedToDataOwners(Boolean associatedToDataOwners) {
-        isAssociatedToDataOwners = associatedToDataOwners;
-    }
-
-    public Boolean getUpdateAssociationToDataOwnerAllowed() {
-        return updateAssociationToDataOwnerAllowed;
-    }
-
-    public void setUpdateAssociationToDataOwnerAllowed(Boolean updateAssociationToDataOwnerAllowed) {
-        this.updateAssociationToDataOwnerAllowed = updateAssociationToDataOwnerAllowed;
+    @Override
+    public int hashCode() {
+        return com.google.common.base.Objects.hashCode(dataSetId);
     }
 }
