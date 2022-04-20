@@ -520,7 +520,6 @@ public class DatasetServiceTest {
 
     @Test
     public void testFindAllDatasetsByUser() {
-        // Test that the two lists of datasets are distinctly combined in the final result
         User user = new User();
         UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
         user.addRole(researcher);
