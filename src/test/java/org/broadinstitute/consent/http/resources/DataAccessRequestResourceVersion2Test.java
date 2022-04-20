@@ -7,6 +7,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
@@ -87,8 +88,14 @@ public class DataAccessRequestResourceVersion2Test {
     try {
       user.addLibraryCard(new LibraryCard());
       when(userService.findUserByEmail(any())).thenReturn(user);
+      DataAccessRequest dar = new DataAccessRequest();
+      dar.setReferenceId(UUID.randomUUID().toString());
+      dar.setCollectionId(1);
+      DataAccessRequestData data = new DataAccessRequestData();
+      data.setReferenceId(dar.getReferenceId());
+      dar.setData(data);
       when(dataAccessRequestService.createDataAccessRequest(any(), any()))
-          .thenReturn(Collections.emptyList());
+          .thenReturn(List.of(dar));
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
       doNothing().when(emailNotifierService).sendNewDARCollectionMessage(any());
     } catch (Exception e) {
