@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,12 +86,14 @@ public class DataAccessRequestServiceTest {
     private InstitutionDAO institutionDAO;
     @Mock
     private ElectionService electionService;
+    @Mock
+    private EmailNotifierService emailNotifierService;
 
     private DataAccessRequestService service;
 
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
+        openMocks(this);
         doNothings();
     }
 
@@ -109,7 +112,7 @@ public class DataAccessRequestServiceTest {
         container.setDatasetDAO(dataSetDAO);
         container.setElectionDAO(electionDAO);
         container.setVoteDAO(voteDAO);
-        service = new DataAccessRequestService(counterService, container, dacService);
+        service = new DataAccessRequestService(counterService, container, dacService, emailNotifierService);
     }
 
     @Test
