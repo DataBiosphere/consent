@@ -27,4 +27,4 @@ updates:
         versions:
           - ">= 15.pre.alpine.a, < 16"
     commit-message:
-      prefix: dependency
+      prefix: "[DUOS-1740][risk=no] dependency"
