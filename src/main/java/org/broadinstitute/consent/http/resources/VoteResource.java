@@ -4,6 +4,8 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
 
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -16,7 +18,6 @@ import org.broadinstitute.consent.http.service.ElectionService;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -157,7 +158,7 @@ public class VoteResource extends Resource {
         List<Vote> targetVotes = votes.stream()
             .filter(v -> {
                 String type = v.getType();
-                return type.equalsIgnoreCase("chairperson") || type.equalsIgnoreCase("final");
+                return type.equalsIgnoreCase(VoteType.CHAIRPERSON.getValue()) || type.equalsIgnoreCase(VoteType.FINAL.getValue());
             })
             .collect(Collectors.toList());
         //if the filtered list is populated, get the vote ids and get the full vote records for those that have type = 'DataAccess'
@@ -165,7 +166,7 @@ public class VoteResource extends Resource {
             List<Integer> voteIds = targetVotes.stream()
                 .map(Vote::getVoteId)
                 .collect(Collectors.toList());
-            List<Election> targetElections = electionService.findElectionsByVoteIdsAndType(voteIds, "dataaccess");
+            List<Election> targetElections = electionService.findElectionsByVoteIdsAndType(voteIds, ElectionType.DATA_ACCESS.getValue());
             //If DataAccess votes are present, get elections from DARs created by users with LCs
             if(!targetElections.isEmpty()) {
                 List<Integer> targetElectionIds = targetElections.stream()

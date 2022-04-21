@@ -385,7 +385,7 @@ public class ElectionService {
     }
 
     public List<Election> findElectionsWithCardHoldingUsersByElectionIds(List<Integer> electionIds) {
-        return electionDAO.findElectionsWithCardHoldingUsersByElectionIds(electionIds);
+        return !electionIds.isEmpty() ? electionDAO.findElectionsWithCardHoldingUsersByElectionIds(electionIds) : Collections.emptyList();
     }
 
     public String darDatasetElectionStatus(String darReferenceId){
@@ -431,7 +431,7 @@ public class ElectionService {
     }
 
     public List<Election> findElectionsByVoteIdsAndType(List<Integer> voteIds, String electionType) {
-        return electionDAO.findElectionsByVoteIdsAndType(voteIds, electionType);
+        return !voteIds.isEmpty() ? electionDAO.findElectionsByVoteIdsAndType(voteIds, electionType) : Collections.emptyList();
     }
 
     public boolean isDataSetElectionOpen() {
