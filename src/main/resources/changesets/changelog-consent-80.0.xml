@@ -5,15 +5,15 @@
     <changeSet id="80.0" author="smarks">
         <addColumn tableName="data_access_request">
             <column name="parent_reference_id" type="varchar(255)" defaultValue="null">
-                <constraints foreignKeyName="fkreferenceid" nullable="true"/>
+                <constraints foreignKeyName="fkReferenceId" nullable="true"/>
             </column>
         </addColumn>
 
         <addForeignKeyConstraint baseColumnNames="parent_reference_id"
                                  baseTableName="data_access_request"
-                                 constraintName="fkreferenceid"
-                                 onDelete="RESTRICT"
-                                 onUpdate="RESTRICT"
+                                 constraintName="fkReferenceId"
+                                 onDelete="NO ACTION"
+                                 onUpdate="NO ACTION"
                                  referencedColumnNames="reference_id"
                                  referencedTableName="data_access_request"/>
     </changeSet>
