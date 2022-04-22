@@ -25,9 +25,9 @@ public class DataAccessRequest {
 
   @JsonProperty public String referenceId;
 
-  @JsonProperty public String parentReferenceId;
-
   @JsonProperty public Integer collectionId;
+
+  @JsonProperty public String parentId;
 
   @JsonProperty public DataAccessRequestData data;
 
@@ -77,13 +77,13 @@ public class DataAccessRequest {
     this.referenceId = referenceId;
   }
 
-  public String getParentReferenceId() { return parentReferenceId; }
-
-  public void setParentReferenceId(String parentReferenceId) { this.parentReferenceId = parentReferenceId; }
-
   public Integer getCollectionId() { return collectionId; }
 
   public void setCollectionId(Integer collectionId) { this.collectionId = collectionId; }
+
+  public String getParentId() { return parentId; }
+
+  public void setParentId(String parentId) { this.parentId = parentId; }
 
   public DataAccessRequestData getData() {
     return data;
@@ -228,7 +228,6 @@ public class DataAccessRequest {
     if (Objects.nonNull(dar.getDraft())) copy.put("draft", dar.getDraft());
     if (Objects.nonNull(dar.getId())) copy.put("id", dar.getId());
     if (Objects.nonNull(dar.getReferenceId())) copy.put("referenceId", dar.getReferenceId());
-    if (Objects.nonNull(dar.getParentReferenceId())) copy.put("parentReferenceId", dar.getParentReferenceId());
     if (Objects.nonNull(dar.getSortDate())) copy.put("sortDate", dar.getSortDate().getTime());
     if (Objects.nonNull(dar.getSubmissionDate())) copy.put("submissionDate", dar.getSubmissionDate().getTime());
     if (Objects.nonNull(dar.getUpdateDate())) copy.put("updateDate", dar.getUpdateDate().getTime());
