@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -114,19 +115,20 @@ public class EmailNotifierService {
     public void sendNewDARCollectionMessage(Integer collectionId) throws MessagingException, IOException, TemplateException {
         if (isServiceActive) {
             DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
-            List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
+            List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
             List<Integer> datasetIds = collection.getDars().values().stream()
                     .map(DataAccessRequest::getData)
                     .map(DataAccessRequestData::getDatasetIds)
                     .flatMap(List::stream)
                     .collect(Collectors.toList());
-            List<User> chairPersons = userDAO
-                .findUsersForDatasetsByRole(datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()))
-                .stream()
+            Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+            // Ensure that admins/chairs are not double emailed
+            // and filter users that don't want to receive email
+            List<User> distinctUsers = Streams.concat(admins.stream(), chairPersons.stream())
                 .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
+                .distinct()
                 .collect(Collectors.toList());
-            users.addAll(chairPersons);
-            for (User user : users) {
+            for (User user : distinctUsers) {
                 Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL, user.getDisplayName(), collection.getDarCode());
                 Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
                 mailService.sendNewDARRequests(getEmails(List.of(user)), data.get("entityId"), data.get("electionType"), template);
