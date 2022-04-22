@@ -384,6 +384,10 @@ public class ElectionService {
         return closeElection;
     }
 
+    public List<Election> findElectionsWithCardHoldingUsersByElectionIds(List<Integer> electionIds) {
+        return !electionIds.isEmpty() ? electionDAO.findElectionsWithCardHoldingUsersByElectionIds(electionIds) : Collections.emptyList();
+    }
+
     public String darDatasetElectionStatus(String darReferenceId){
         DataAccessRequest dar = describeDataAccessRequestById(darReferenceId);
         List<Integer> dataSets =  Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
@@ -424,6 +428,10 @@ public class ElectionService {
             });
         });
         return CollectionUtils.isEmpty(electionsIds) ? null : electionDAO.findElectionsByIds(electionsIds);
+    }
+
+    public List<Election> findElectionsByVoteIdsAndType(List<Integer> voteIds, String electionType) {
+        return !voteIds.isEmpty() ? electionDAO.findElectionsByVoteIdsAndType(voteIds, electionType) : Collections.emptyList();
     }
 
     public boolean isDataSetElectionOpen() {
