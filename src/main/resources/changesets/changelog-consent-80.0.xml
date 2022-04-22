@@ -4,7 +4,7 @@
 
     <changeSet id="80.0" author="smarks">
         <addColumn tableName="data_access_request">
-            <column name="parent_id" type="varchar(255)" defaultValue="null">
+            <column name="parent_id" type="bigint" defaultValue="null">
                 <constraints foreignKeyName="fkParentId" nullable="true"/>
             </column>
         </addColumn>
