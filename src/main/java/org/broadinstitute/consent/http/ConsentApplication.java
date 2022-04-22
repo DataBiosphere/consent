@@ -260,7 +260,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new UserResource(researcherService, samService, userService, datasetService));
         env.jersey().register(new TosResource(samService));
         env.jersey().register(injector.getInstance(VersionResource.class));
-        env.jersey().register(new VoteResource(userService, voteService));
+        env.jersey().register(new VoteResource(userService, voteService, electionService));
 
         // Authentication filters
         final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();

@@ -325,4 +325,60 @@ public class ElectionDAOTest extends DAOTestHelper {
       electionDAO.findLastElectionsByReferenceIds(Collections.singletonList(UUID.randomUUID().toString()));
     assertTrue(elections.isEmpty());
   }
+
+  @Test
+  public void testFindElectionsByVoteIdsAndType_DataAccess() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    Dataset dataset = createDataset();
+    String referenceId = dar.getReferenceId();
+    int datasetId = dataset.getDataSetId();
+    Election accessElection = createAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+    User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    int userId = user.getDacUserId();
+    Vote accessVote = createChairpersonVote(userId, accessElection.getElectionId());
+    Vote rpVote = createChairpersonVote(userId, rpElection.getElectionId());
+    List<Integer> voteIds = List.of(accessVote.getVoteId(), rpVote.getVoteId());
+    List<Election> elections = electionDAO.findElectionsByVoteIdsAndType(voteIds, "dataaccess");
+    
+    assertEquals(1, elections.size());
+    assertEquals(accessElection.getElectionId(), elections.get(0).getElectionId());
+  }
+
+  @Test
+  public void testFindElectionsByVoteIdsAndType_RP() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    Dataset dataset = createDataset();
+    String referenceId = dar.getReferenceId();
+    int datasetId = dataset.getDataSetId();
+    Election accessElection = createAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+    User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    int userId = user.getDacUserId();
+    Vote accessVote = createChairpersonVote(userId, accessElection.getElectionId());
+    Vote rpVote = createChairpersonVote(userId, rpElection.getElectionId());
+    List<Integer> voteIds = List.of(accessVote.getVoteId(), rpVote.getVoteId());
+    List<Election> elections = electionDAO.findElectionsByVoteIdsAndType(voteIds, "rp");
+    
+    assertEquals(1, elections.size());
+    assertEquals(rpElection.getElectionId(), elections.get(0).getElectionId());
+  }
+
+  @Test
+  public void testFindElectionsWithCardHoldingUsersByElectionIds() {
+    User lcUser = createUser();
+    User nonLCUser = createUser();
+    Dataset dataset = createDataset();
+    int datasetId = dataset.getDataSetId();
+    createLibraryCard(lcUser);
+    DataAccessRequest lcDAR = createDataAccessRequestWithUserIdV3(lcUser.getDacUserId());
+    DataAccessRequest nonLCDAR = createDataAccessRequestWithUserIdV3(nonLCUser.getDacUserId());
+    Election lcElection = createAccessElection(lcDAR.getReferenceId(), datasetId);
+    Election nonLCElection = createAccessElection(nonLCDAR.getReferenceId(), datasetId);
+    List<Integer> electionIds = List.of(lcElection.getElectionId(), nonLCElection.getElectionId());
+    List<Election> elections = electionDAO.findElectionsWithCardHoldingUsersByElectionIds(electionIds);
+
+    assertEquals(1, elections.size());
+    assertEquals(elections.get(0).getElectionId(), lcElection.getElectionId());
+  }
 }

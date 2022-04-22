@@ -136,6 +136,15 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             " ORDER BY e.createdate ASC ")
     List<Election> findLastDataAccessElectionsWithFinalVoteByStatus(@Bind("status") String status);
 
+    @UseRowMapper(SimpleElectionMapper.class)
+    @SqlQuery(
+        "SELECT e.* FROM election e " +
+        "INNER JOIN data_access_request dar ON dar.reference_id = e.referenceid " +
+        "INNER JOIN dacuser du ON du.dacuserid = dar.user_id " +
+        "INNER JOIN library_card lc ON lc.user_id = du.dacuserid " +
+        "WHERE e.electionid IN (<electionIds>) ")
+    List<Election> findElectionsWithCardHoldingUsersByElectionIds(@BindList("electionIds") List <Integer> electionIds);
+
     @SqlQuery("SELECT DISTINCT e.electionId, e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, " +
             "       v.rationale finalRationale, v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, " +
             "       e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version " +
@@ -160,6 +169,17 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("SELECT * FROM election WHERE referenceid = :referenceId")
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
+
+    @UseRowMapper(SimpleElectionMapper.class)
+    @SqlQuery("SELECT * FROM election e " + 
+        "INNER JOIN vote v ON v.electionid = e.electionid " +
+        "WHERE LOWER(e.electiontype) = :electionType " + 
+        "AND v.voteid IN (<voteIds>)")
+	List<Election> findElectionsByVoteIdsAndType(
+	    @BindList("voteIds") List<Integer> voteIds,
+	    @Bind("electionType") String electionType
+	);
+
 
     @SqlQuery(
       "SELECT * from ( "
