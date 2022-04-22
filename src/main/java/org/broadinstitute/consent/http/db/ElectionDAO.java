@@ -176,8 +176,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
         "WHERE LOWER(e.electiontype) = :electionType " + 
         "AND v.voteid IN (<voteIds>)")
 	List<Election> findElectionsByVoteIdsAndType(
-		@BindList("voteIds") List<Integer> voteIds,
-		@Bind("electionType") String electionType
+	    @BindList("voteIds") List<Integer> voteIds,
+	    @Bind("electionType") String electionType
 	);
 
 
