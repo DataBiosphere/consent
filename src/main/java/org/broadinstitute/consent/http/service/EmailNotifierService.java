@@ -260,7 +260,12 @@ public class EmailNotifierService {
 
     private Set<String> getEmails(List<User> users) {
         Set<String> emails = users.stream()
-                .map(u -> List.of(u.getEmail(), u.getAdditionalEmail()))
+                .map(u -> {
+                    if (Objects.nonNull(u.getAdditionalEmail())) {
+                        return List.of(u.getEmail(), u.getAdditionalEmail());
+                    }
+                    return List.of(u.getEmail());
+                })
                 .flatMap(Collection::stream)
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.toSet());
