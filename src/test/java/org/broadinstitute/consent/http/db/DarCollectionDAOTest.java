@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -9,6 +11,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
@@ -120,6 +123,34 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     Integer userId = collection.getCreateUser().getDacUserId();
     assertFalse(userProperties.isEmpty());
     userProperties.forEach(p -> assertEquals(userId, p.getUserId()));
+  }
+
+  @Test
+  public void testFindDARCollectionByCollectionIdLibraryCard() {
+    User user = createUser();
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+    LibraryCard libraryCard = createLibraryCard(user);
+
+    DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    User returnedUser = collection.getCreateUser();
+    List<LibraryCard> returnedLibraryCards = returnedUser.getLibraryCards();
+    assertEquals(user, returnedUser);
+    assertEquals(1, returnedLibraryCards.size());
+    assertEquals(libraryCard, returnedLibraryCards.get(0));
+  }
+
+  @Test
+  public void testFindDARCollectionByCollectionIdNoLibraryCard() {
+    User user = createUser();
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+
+    DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    User returnedUser = collection.getCreateUser();
+    List<LibraryCard> returnedLibraryCards = returnedUser.getLibraryCards();
+    assertEquals(user, returnedUser);
+    assertEquals(0, returnedLibraryCards.size());
   }
 
   @Test
