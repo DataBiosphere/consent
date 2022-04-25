@@ -28,8 +28,8 @@ public class DarCollection {
   //This query is specific to DAR Collections, which is why it's defined here
   public static final String DAR_FILTER_QUERY_COLUMNS =
     "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
-      "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
-      "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
+      "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, " +
+      "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
       "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, " +
       "(dar.data #>> '{}')::jsonb ->> 'projectTitle' as projectTitle ";
 

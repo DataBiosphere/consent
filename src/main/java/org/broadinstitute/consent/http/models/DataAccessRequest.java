@@ -27,6 +27,8 @@ public class DataAccessRequest {
 
   @JsonProperty public Integer collectionId;
 
+  @JsonProperty public String parentId;
+
   @JsonProperty public DataAccessRequestData data;
 
   @JsonProperty public Boolean draft;
@@ -78,6 +80,10 @@ public class DataAccessRequest {
   public Integer getCollectionId() { return collectionId; }
 
   public void setCollectionId(Integer collectionId) { this.collectionId = collectionId; }
+
+  public String getParentId() { return parentId; }
+
+  public void setParentId(String parentId) { this.parentId = parentId; }
 
   public DataAccessRequestData getData() {
     return data;
