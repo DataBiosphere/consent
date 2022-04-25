@@ -51,7 +51,7 @@ public class FreeMarkerTemplateHelper {
 
     public Writer getNewDARRequestTemplate(String serverUrl, String userName, String entityId) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("new-request.html");
-        return generateNewDARRequestTemplate(serverUrl, temp, userName, entityId);
+        return generateNewDARRequestTemplate(temp, serverUrl, userName, entityId);
     }
 
     public Writer getCancelledDarTemplate(String userType, String entityId, String serverUrl) throws IOException, TemplateException {
@@ -147,7 +147,7 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    private Writer generateNewDARRequestTemplate(String serverUrl, Template temp, String userName, String entityId) throws IOException, TemplateException {
+    private Writer generateNewDARRequestTemplate(Template temp, String serverUrl, String userName, String entityId) throws IOException, TemplateException {
         NewDarRequestModel model = new NewDarRequestModel(serverUrl, userName, entityId);
         Writer out = new StringWriter();
         temp.process(model, out);
