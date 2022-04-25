@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.io.File;
 import java.io.IOException;
@@ -90,7 +91,7 @@ public class DataAccessRequestServiceTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
+        openMocks(this);
         doNothings();
     }
 

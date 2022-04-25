@@ -7,7 +7,6 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
-import javax.ws.rs.client.Client;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
@@ -64,6 +63,8 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
+
+import javax.ws.rs.client.Client;
 
 public class ConsentModule extends AbstractModule {
 
@@ -300,6 +301,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     EmailNotifierService providesEmailNotifierService() {
         return new EmailNotifierService(
+                providesDARCollectionDAO(),
                 providesConsentDAO(),
                 providesDataAccessRequestService(),
                 providesVoteDAO(),

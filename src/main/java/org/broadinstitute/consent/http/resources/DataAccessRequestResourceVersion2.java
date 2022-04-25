@@ -102,11 +102,15 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest newDar = populateDarFromJsonString(user, dar);
       List<DataAccessRequest> results =
           dataAccessRequestService.createDataAccessRequest(user, newDar);
+      Integer collectionId = results.get(0).getCollectionId();
+      try {
+          emailNotifierService.sendNewDARCollectionMessage(collectionId);
+      } catch (Exception e) {
+          logger.error("Exception sending email for collection id: " + collectionId, e);
+      }
       URI uri = info.getRequestUriBuilder().build();
       for (DataAccessRequest r : results) {
         matchService.reprocessMatchesForPurpose(r.getReferenceId());
-        emailNotifierService.sendNewDARRequestMessage(
-            r.getData().getDarCode(), r.getData().getDatasetIds());
       }
       return Response.created(uri)
           .entity(
