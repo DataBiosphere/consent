@@ -21,7 +21,6 @@ public class FreeMarkerTemplateHelper {
 
 
     Configuration freeMarkerConfig;
-    private final String CREATE_DAR_URL = "admin_manage_access";
 
     public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) {
         freeMarkerConfig = new Configuration(Configuration.VERSION_2_3_22);
@@ -52,7 +51,7 @@ public class FreeMarkerTemplateHelper {
 
     public Writer getNewDARRequestTemplate(String serverUrl, String userName, String entityId) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("new-request.html");
-        return generateNewDARRequestTemplate(serverUrl+CREATE_DAR_URL, temp, userName, entityId);
+        return generateNewDARRequestTemplate(serverUrl, temp, userName, entityId);
     }
 
     public Writer getCancelledDarTemplate(String userType, String entityId, String serverUrl) throws IOException, TemplateException {
