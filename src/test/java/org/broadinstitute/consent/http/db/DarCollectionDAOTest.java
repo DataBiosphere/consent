@@ -153,6 +153,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     List<LibraryCard> returnedLibraryCards = returnedUser.getLibraryCards();
     assertEquals(1, returnedLibraryCards.size());
     assertEquals(libraryCard, returnedLibraryCards.get(0));
+    assertEquals(user.getDacUserId(), returnedLibraryCards.get(0).getUserId());
   }
 
   @Test
