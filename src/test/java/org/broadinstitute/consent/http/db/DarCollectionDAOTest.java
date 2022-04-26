@@ -115,6 +115,8 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     List<UserProperty> userProperties = returned.getCreateUser().getProperties();
     assertFalse(userProperties.isEmpty());
     userProperties.forEach(p -> assertEquals(collection.getCreateUserId(), p.getUserId()));
+
+    assertNull(returned.getCreateUser().getLibraryCards());
   }
 
   @Test
@@ -146,30 +148,11 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
 
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     User returnedUser = collection.getCreateUser();
-    List<LibraryCard> returnedLibraryCards = returnedUser.getLibraryCards();
     assertEquals(user, returnedUser);
+
+    List<LibraryCard> returnedLibraryCards = returnedUser.getLibraryCards();
     assertEquals(1, returnedLibraryCards.size());
     assertEquals(libraryCard, returnedLibraryCards.get(0));
-  }
-
-  @Test
-  public void testFindDARCollectionByCollectionIdNoLibraryCard() throws IOException {
-    User user = createUser();
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
-    String referenceId = UUID.randomUUID().toString();
-    String darDataString = FileUtils.readFileToString(
-            new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
-            Charset.defaultCharset());
-    DataAccessRequestData data = DataAccessRequestData.fromString(darDataString);
-    Date now = new Date();
-    dataAccessRequestDAO.insertVersion3(collectionId, referenceId, user.getDacUserId(), now, now, now, now, data);
-
-    DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
-    User returnedUser = collection.getCreateUser();
-    List<LibraryCard> returnedLibraryCards = returnedUser.getLibraryCards();
-    assertEquals(user, returnedUser);
-    assertNull(returnedLibraryCards);
   }
 
   @Test
