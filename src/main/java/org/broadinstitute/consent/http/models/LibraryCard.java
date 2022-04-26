@@ -7,9 +7,15 @@ import java.util.Date;
 public class LibraryCard {
 
   public static final String QUERY_FIELDS_WITH_LC_PREFIX =
-          "lc.id as lc_id, " +
-          "lc.user_id as lc_user_id, " +
-          "lc.institution_id AS lc_institution_id";
+          " lc.id AS lc_id, " +
+          " lc.user_id AS lc_user_id, " +
+          " lc.institution_id AS lc_institution_id, " +
+          " lc.era_commons_id AS lc_era_commons_id, " +
+          " lc.user_name AS lc_user_name, " +
+          " lc.user_email AS lc_user_email, " +
+          " lc.create_user_id AS lc_create_user_id, " +
+          " lc.create_date AS lc_create_date, " +
+          " lc.update_user_id AS lc_update_user_id ";
 
   private Integer id;
   private Integer userId;

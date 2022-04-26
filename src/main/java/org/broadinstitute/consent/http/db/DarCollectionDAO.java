@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DarCollectionReducer;
+import org.broadinstitute.consent.http.db.mapper.LibraryCardReducer;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
@@ -255,7 +256,7 @@ public interface DarCollectionDAO {
       + "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid "
       + "LEFT JOIN user_property up ON u.dacuserid = up.userid "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-      + "LEFT JOIN library_card lc ON c.create_user_id = lc.user_id "
+      + "LEFT JOIN library_card lc ON u.dacuserid = lc.user_id "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "LEFT JOIN ("
           + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
