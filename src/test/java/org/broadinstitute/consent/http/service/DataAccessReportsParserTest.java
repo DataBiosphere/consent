@@ -132,39 +132,6 @@ public class DataAccessReportsParserTest {
         assertTrue(i == 2);
     }
 
-    @Test
-    public void testDataSetApprovedUsers() throws IOException{
-        File file = File.createTempFile("DataSetApprovedUsers", ".tsv");
-        FileWriter darWriter = new FileWriter(file);
-        parser.setDataSetApprovedUsersHeader(darWriter);
-        Date approvalDate = new Date();
-        parser.addDataSetApprovedUsersLine(darWriter, EMAIL, REQUESTER, ORGANIZATION, DAR_CODE, approvalDate);
-        darWriter.flush();
-        Stream<String> stream = Files.lines(Paths.get(file.getPath()));
-        Iterator<String> iterator = stream.iterator();
-        int i = 0;
-        while (iterator.hasNext()) {
-            String line = iterator.next();
-            String[] columns = line.split("\t");
-            assertTrue(columns.length == 6);
-            if(i == 0) {
-                assertTrue(columns[0].equals(HeaderDAR.USERNAME.getValue()));
-                assertTrue(columns[1].equals(HeaderDAR.NAME.getValue()));
-                assertTrue(columns[2].equals(HeaderDAR.ORGANIZATION.getValue()));
-                assertTrue(columns[3].equals(HeaderDAR.DAR_ID.getValue()));
-                assertTrue(columns[4].equals(HeaderDAR.DATE_REQUEST_APPROVAL.getValue()));
-                assertTrue(columns[5].equals(HeaderDAR.RENEWAL_DATE.getValue()));
-            }
-            if (i == 1) {
-                assertTrue(columns[0].equals(EMAIL));
-                assertTrue(columns[1].equals(REQUESTER));
-                assertTrue(columns[2].equals(ORGANIZATION));
-                assertTrue(columns[3].equals(DAR_CODE));
-            }
-            i++;
-        }
-    }
-
     private Election createElection(Date currentDate){
         Election election = new Election();
         election.setFinalVoteDate(currentDate);

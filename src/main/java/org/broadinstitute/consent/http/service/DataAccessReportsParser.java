@@ -19,8 +19,6 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class DataAccessReportsParser {
 
@@ -56,17 +54,6 @@ public class DataAccessReportsParser {
                         HeaderDAR.CODED_VERSION_DAR.getValue() + DEFAULT_SEPARATOR +
                         HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue() + DEFAULT_SEPARATOR +
                         HeaderDAR.APPROVED_DISAPPROVED.getValue() + END_OF_LINE);
-    }
-
-
-    public void setDataSetApprovedUsersHeader(FileWriter darWriter) throws IOException {
-        darWriter.write(
-                HeaderDAR.USERNAME.getValue() + DEFAULT_SEPARATOR +
-                        HeaderDAR.NAME.getValue() + DEFAULT_SEPARATOR +
-                        HeaderDAR.ORGANIZATION.getValue() + DEFAULT_SEPARATOR +
-                        HeaderDAR.DAR_ID.getValue() + DEFAULT_SEPARATOR +
-                        HeaderDAR.DATE_REQUEST_APPROVAL.getValue() + DEFAULT_SEPARATOR +
-                        HeaderDAR.RENEWAL_DATE.getValue() + END_OF_LINE);
     }
 
   public String getDatasetApprovedUsersHeader(User user) {
@@ -113,17 +100,6 @@ public class DataAccessReportsParser {
         String content2 = formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
                           finalVote;
         addDARLine(darWriter, dar, "", content2, consentName, translatedUseRestriction);
-    }
-
-
-    public void addDataSetApprovedUsersLine(FileWriter darWriter, String email, String name, String institution, String darCode, Date approvalDate) throws IOException {
-        darWriter.write(
-                email + DEFAULT_SEPARATOR +
-                    name + DEFAULT_SEPARATOR +
-                    institution + DEFAULT_SEPARATOR +
-                    darCode + DEFAULT_SEPARATOR +
-                    formatTimeToDate(approvalDate.getTime()) + DEFAULT_SEPARATOR +
-                    " - " + END_OF_LINE);
     }
 
     public String getDataSetApprovedUsersLine(User user, String email, String name, String institution, String darCode, Date approvalDate) {
