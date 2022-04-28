@@ -459,7 +459,7 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void testCreateDataSetApprovedUsersDocumentAsNonPrivilegedUser() {
+    public void testCreateDatasetApprovedUsersContentAsNonPrivilegedUser() {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         User user = new User();
@@ -490,7 +490,7 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void testCreateDataSetApprovedUsersDocumentAsPrivilegedUser() {
+    public void testCreateDatasetApprovedUsersContentAsPrivilegedUser() {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         User user = new User();
@@ -605,10 +605,10 @@ public class DataAccessRequestServiceTest {
         return dar;
     }
 
-    private Election generateElection(Integer dataSetId) {
+    private Election generateElection(Integer datasetId) {
         String refId = UUID.randomUUID().toString();
         Election election = new Election();
-        election.setDataSetId(dataSetId);
+        election.setDataSetId(datasetId);
         election.setReferenceId(refId);
 
         return election;
