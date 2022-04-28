@@ -6,10 +6,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
-public class DataSet {
+public class Dataset {
 
     @JsonProperty
     private Integer dataSetId;
@@ -19,6 +21,10 @@ public class DataSet {
 
     @JsonProperty
     private String name;
+
+    // For backwards compatibility with DatasetDTO, this is an alias to the name property.
+    @JsonProperty
+    private String datasetName;
 
     @JsonProperty
     private Date createDate;
@@ -45,17 +51,34 @@ public class DataSet {
     private Integer alias;
 
     @JsonProperty
+    private String datasetIdentifier;
+
+    @JsonProperty
     public DataUse dataUse;
 
-    private Set<DataSetProperty> properties;
+    @JsonProperty
+    private Integer dacId;
 
-    public DataSet() {
+    @JsonProperty
+    private String consentId;
+
+    @JsonProperty
+    private String translatedUseRestriction;
+
+    @JsonProperty
+    private Boolean deletable;
+
+    @JsonProperty
+    private Set<DatasetProperty> properties;
+
+    public Dataset() {
     }
 
-    public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Integer createUserId, Date updateDate, Integer updateUserId, Boolean active, Integer alias) {
+    public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Integer createUserId, Date updateDate, Integer updateUserId, Boolean active, Integer alias) {
         this.dataSetId = dataSetId;
         this.objectId = objectId;
         this.name = name;
+        this.datasetName = name;
         this.createDate = createDate;
         this.createUserId = createUserId;
         this.updateDate = updateDate;
@@ -64,26 +87,28 @@ public class DataSet {
         this.alias = alias;
     }
 
-    public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active, Integer alias) {
+    public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Boolean active, Integer alias) {
         this.dataSetId = dataSetId;
         this.objectId = objectId;
         this.name = name;
+        this.datasetName = name;
         this.createDate = createDate;
         this.active = active;
         this.alias = alias;
     }
 
-    public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active) {
+    public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Boolean active) {
         this.dataSetId = dataSetId;
         this.objectId = objectId;
         this.name = name;
+        this.datasetName = name;
         this.createDate = createDate;
         this.active = active;
     }
 
     private static String PREFIX = "DUOS-";
 
-    public DataSet(String objectId) {
+    public Dataset(String objectId) {
         this.objectId = objectId;
     }
 
@@ -109,6 +134,14 @@ public class DataSet {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDatasetName() {
+        return datasetName;
+    }
+
+    public void setDatasetName(String datasetName) {
+        this.datasetName = datasetName;
     }
 
     public Date getCreateDate() {
@@ -143,12 +176,19 @@ public class DataSet {
         this.updateUserId = updateUserId;
     }
 
-    public Set<DataSetProperty> getProperties() {
+    public Set<DatasetProperty> getProperties() {
         return properties;
     }
 
-    public void setProperties(Set<DataSetProperty> properties) {
+    public void setProperties(Set<DatasetProperty> properties) {
         this.properties = properties;
+    }
+
+    public void addProperty(DatasetProperty property) {
+        if (Objects.isNull(this.properties)) {
+            this.properties = new HashSet<>();
+        }
+        this.properties.add(property);
     }
 
     public Boolean getActive() {
@@ -179,6 +219,10 @@ public class DataSet {
         return alias;
     }
 
+    public void setAlias(Integer alias) {
+        this.alias = alias;
+    }
+
     public DataUse getDataUse() {
         return dataUse;
     }
@@ -187,8 +231,8 @@ public class DataSet {
         this.dataUse = dataUse;
     }
 
-    public void setAlias(Integer alias) {
-        this.alias = alias;
+    public void setDatasetIdentifier() {
+        this.datasetIdentifier = parseAliasToIdentifier(this.getAlias());
     }
 
     public String getDatasetIdentifier() {
@@ -197,5 +241,50 @@ public class DataSet {
 
     public static String parseAliasToIdentifier(Integer alias) {
         return PREFIX + StringUtils.leftPad(alias.toString(), 6, "0");
+    }
+
+    public Integer getDacId() {
+        return dacId;
+    }
+
+    public void setDacId(Integer dacId) {
+        this.dacId = dacId;
+    }
+
+    public String getConsentId() {
+        return consentId;
+    }
+
+    public void setConsentId(String consentId) {
+        this.consentId = consentId;
+    }
+
+    public String getTranslatedUseRestriction() {
+        return translatedUseRestriction;
+    }
+
+    public void setTranslatedUseRestriction(String translatedUseRestriction) {
+        this.translatedUseRestriction = translatedUseRestriction;
+    }
+
+    public Boolean getDeletable() {
+        return deletable;
+    }
+
+    public void setDeletable(Boolean deletable) {
+        this.deletable = deletable;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Dataset dataset = (Dataset) o;
+        return com.google.common.base.Objects.equal(dataSetId, dataset.dataSetId);
+    }
+
+    @Override
+    public int hashCode() {
+        return com.google.common.base.Objects.hashCode(dataSetId);
     }
 }

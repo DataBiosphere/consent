@@ -15,13 +15,13 @@ public class ApprovedDarModel {
     private List<SummaryItem> typeOfResearch;
     private String diseaseArea;
     private List<String> checkedSentences;
-    private List<DataSetPIMailModel> dsl;
+    private List<DatasetPIMailModel> dsl;
     private String serverUrl;
     private String days;
 
     public ApprovedDarModel(String userName, String date, String referenceId, String requesterName, String requesterInstitute, String researchPurpose,
                             List<SummaryItem> typeOfResearch, String diseaseArea, List<String> checkedSentences, String translatedUseRestriction,
-                            List<DataSetPIMailModel> dsl, String serverUrl, String days) {
+                            List<DatasetPIMailModel> dsl, String serverUrl, String days) {
         this.userName = userName;
         this.referenceId = referenceId;
         this.date = date;
@@ -69,7 +69,7 @@ public class ApprovedDarModel {
         return checkedSentences;
     }
 
-    public List<DataSetPIMailModel> getDsl() {
+    public List<DatasetPIMailModel> getDsl() {
         return dsl;
     }
 

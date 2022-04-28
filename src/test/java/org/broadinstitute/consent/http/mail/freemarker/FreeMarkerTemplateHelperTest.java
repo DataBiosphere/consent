@@ -1,24 +1,31 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class FreeMarkerTemplateHelperTest {
 
@@ -29,7 +36,7 @@ public class FreeMarkerTemplateHelperTest {
 
     @Before
     public void setUp() throws IOException {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         when(freeMarkerConfig.getTemplateDirectory()).thenReturn("/freemarker");
         when(freeMarkerConfig.getDefaultEncoding()).thenReturn("UTF-8");
         helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
@@ -78,11 +85,14 @@ public class FreeMarkerTemplateHelperTest {
 
     @Test
     public void testGetNewDARRequestTemplate() throws Exception {
-        Writer template = helper.getNewDARRequestTemplate("localhost:1234");
+        Writer template = helper.getNewDARRequestTemplate("localhost:1234", "Admin", "Entity");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - New Data Access Request"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Admin!"));
+        assertEquals("Broad Data Use Oversight System - New Data Access Request", parsedTemplate.title());
+        Element userNameElement = parsedTemplate.getElementById("userName");
+        assertNotNull(userNameElement);
+        assertNotNull(userNameElement.text());
+        assertEquals("Hello Admin!", userNameElement.text());
     }
 
     @Test
@@ -140,9 +150,9 @@ public class FreeMarkerTemplateHelperTest {
         return Jsoup.parse(parsedHtml);
     }
 
-    private DataSet ds1 = new DataSet(1, "DS-101", "Dataset 1", new Date(), true);
-    private DataSet ds2 = new DataSet(2, "DS-102", "Dataset 2", new Date(), true);
-    private DataSet ds3 = new DataSet(3, "DS-103", "Dataset 3", new Date(), true);
+    private Dataset ds1 = new Dataset(1, "DS-101", "Dataset 1", new Date(), true);
+    private Dataset ds2 = new Dataset(2, "DS-102", "Dataset 2", new Date(), true);
+    private Dataset ds3 = new Dataset(3, "DS-103", "Dataset 3", new Date(), true);
     private User testUser = new User(1, "testuser@email.com", "Test User", new Date(), null);
     private Election e1 = new Election(1, "DataSet", "Closed", new Date(), "DAR-1", null , true, 1);
     private Election e2 = new Election(2, "DataSet", "Closed", new Date(), "DAR-1", null , false, 2);
@@ -152,16 +162,16 @@ public class FreeMarkerTemplateHelperTest {
     private SummaryItem item2 = new SummaryItem("A sample item 2", "Sample item 2");
     private SummaryItem item3 = new SummaryItem("A sample item 3", "Sample item 3");
 
-    private DataSetPIMailModel piModel1 = new DataSetPIMailModel("DS-101", "Dataset 1", "DUOS-000001");
-    private DataSetPIMailModel piModel2 = new DataSetPIMailModel("DS-102", "Dataset 2", "DUOS-000002");
-    private DataSetPIMailModel piModel3 = new DataSetPIMailModel("DS-102", "Dataset 3", "DUOS-000003");
+    private DatasetPIMailModel piModel1 = new DatasetPIMailModel("DS-101", "Dataset 1", "DUOS-000001");
+    private DatasetPIMailModel piModel2 = new DatasetPIMailModel("DS-102", "Dataset 2", "DUOS-000002");
+    private DatasetPIMailModel piModel3 = new DatasetPIMailModel("DS-102", "Dataset 3", "DUOS-000003");
 
-    private List<DataSet> sampleDatasets(){
+    private List<Dataset> sampleDatasets(){
         return Arrays.asList(ds1, ds2, ds3);
     }
 
-    private Map<User, List<DataSet>> getApprovedDarMap(){
-        Map<User, List<DataSet>> approvedDarMap = new HashMap<>();
+    private Map<User, List<Dataset>> getApprovedDarMap(){
+        Map<User, List<Dataset>> approvedDarMap = new HashMap<>();
         approvedDarMap.put(testUser, sampleDatasets());
         return approvedDarMap;
     }

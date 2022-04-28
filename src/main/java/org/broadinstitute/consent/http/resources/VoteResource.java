@@ -3,12 +3,17 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
+
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.service.ElectionService;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -20,19 +25,21 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Path("api/votes")
 public class VoteResource extends Resource {
 
     private final UserService userService;
     private final VoteService voteService;
+    private final ElectionService electionService;
     private final Gson gson = new Gson();
 
-    public VoteResource(UserService userService, VoteService voteService) {
+    public VoteResource(UserService userService, VoteService voteService, ElectionService electionService) {
         this.userService = userService;
         this.voteService = voteService;
+        this.electionService = electionService;
     }
-
 
     /**
      * This API will take a boolean vote value as a query param and apply it to the list of vote ids
@@ -62,11 +69,13 @@ public class VoteResource extends Resource {
             );
         }
 
-        if (Objects.isNull(voteUpdate.getVote())) {
-            return createExceptionResponse(new BadRequestException("Vote value is required"));
+        if (Objects.isNull(voteUpdate) || Objects.isNull(voteUpdate.getVoteIds()) || voteUpdate.getVoteIds().isEmpty()) {
+            return createExceptionResponse(
+                    new BadRequestException("Unable to update empty vote ids: " + json)
+            );
         }
-        if (Objects.isNull(voteUpdate.getVoteIds()) || voteUpdate.getVoteIds().isEmpty()) {
-            return createExceptionResponse(new BadRequestException("Vote ids are required"));
+        if (Objects.isNull(voteUpdate.getVote())) {
+            return createExceptionResponse(new BadRequestException("Unable to update without vote value"));
         }
 
         try {
@@ -80,6 +89,11 @@ public class VoteResource extends Resource {
             boolean authed = votes.stream().map(Vote::getDacUserId).allMatch(id -> id.equals(user.getDacUserId()));
             if (!authed) {
                 return createExceptionResponse(new NotFoundException());
+            }
+
+            // Validate that the researcher(s) behind the data access request(s) has a library card
+            if (voteUpdate.getVote()) {
+                voteUpdateLCCheck(votes);
             }
 
             List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, voteUpdate.getVote(), voteUpdate.getRationale());
@@ -135,6 +149,36 @@ public class VoteResource extends Resource {
             return Response.ok().entity(updatedVotes).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
+        }
+    }
+    
+    //Private helper function, checks to see if user has library card for chair votes that are getting an incoming "yes" update
+    private void voteUpdateLCCheck(List<Vote> votes) {
+        //filter for chair or final votes
+        List<Vote> targetVotes = votes.stream()
+            .filter(v -> {
+                String type = v.getType();
+                return type.equalsIgnoreCase(VoteType.CHAIRPERSON.getValue()) || type.equalsIgnoreCase(VoteType.FINAL.getValue());
+            })
+            .collect(Collectors.toList());
+        //if the filtered list is populated, get the vote ids and get the full vote records for those that have type = 'DataAccess'
+        if(!targetVotes.isEmpty()) {
+            List<Integer> voteIds = targetVotes.stream()
+                .map(Vote::getVoteId)
+                .collect(Collectors.toList());
+            List<Election> targetElections = electionService.findElectionsByVoteIdsAndType(voteIds, ElectionType.DATA_ACCESS.getValue());
+            //If DataAccess votes are present, get elections from DARs created by users with LCs
+            if(!targetElections.isEmpty()) {
+                List<Integer> targetElectionIds = targetElections.stream()
+                    .map(Election::getElectionId)
+                    .collect(Collectors.toList());
+                List<Election> electionsWithCardHoldingUsers = electionService.findElectionsWithCardHoldingUsersByElectionIds(targetElectionIds);
+                //We want to make sure that each election is associated with a card holding user
+                //Therefore, if the number of electionsWithCardHoldingUsers does not equal the number of target elections, we can assume that there exists an election where a user does not have a LC
+                if(electionsWithCardHoldingUsers.size() != targetElections.size()) {
+                    throw new BadRequestException("Some Data Access Requests have been submitted by users with no library card");
+                }
+            }
         }
     }
 }

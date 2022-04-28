@@ -4,7 +4,7 @@ import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -54,7 +54,7 @@ public class DatasetAssociationServiceTest {
 
     @Test
     public void testGetAndVerifyUsersUserNotDataOwner() {
-        when(dsDAO.findDataSetById(any())).thenReturn(ds1);
+        when(dsDAO.findDatasetById(any())).thenReturn(ds1);
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
         doNothing().when(userRoleDAO).insertSingleUserRole(any(), any());
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
@@ -71,7 +71,7 @@ public class DatasetAssociationServiceTest {
     @Test
     public void testCreateDatasetUsersAssociation() throws Exception {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
-        when(dsDAO.findDataSetById(1)).thenReturn(ds1);
+        when(dsDAO.findDatasetById(1)).thenReturn(ds1);
         when(dsAssociationDAO.getDatasetAssociation(1)).thenReturn(Arrays.asList(dsAssociation1, dsAssociation2));
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
@@ -79,7 +79,7 @@ public class DatasetAssociationServiceTest {
     @Test
     public void testCreateDatasetUsersAssociationNotFoundException() throws Exception {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
-        when(dsDAO.findDataSetById(1)).thenReturn(null);
+        when(dsDAO.findDatasetById(1)).thenReturn(null);
         thrown.expect(NotFoundException.class);
         thrown.expectMessage("Invalid DatasetId");
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
@@ -88,7 +88,7 @@ public class DatasetAssociationServiceTest {
     @Test(expected = BatchUpdateException.class)
     public void testCreateDatasetUsersAssociationBadRequestException() throws Exception {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
-        when(dsDAO.findDataSetById(1)).thenReturn(ds1);
+        when(dsDAO.findDatasetById(1)).thenReturn(ds1);
 
         doAnswer(invocationOnMock -> { throw new BatchUpdateException(); }).when(dsAssociationDAO).insertDatasetUserAssociation(any());
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
@@ -103,8 +103,8 @@ public class DatasetAssociationServiceTest {
     DatasetAssociation dsAssociation1 = new DatasetAssociation(1, 3);
     DatasetAssociation dsAssociation2 = new DatasetAssociation(1, 4);
 
-    DataSet ds1 = new DataSet(1, "DS-001", "DS-001", new Date(), true);
-    DataSet ds2 = new DataSet(2, "DS-002", "DS-002", new Date(), true);
+    Dataset ds1 = new Dataset(1, "DS-001", "DS-001", new Date(), true);
+    Dataset ds2 = new Dataset(2, "DS-002", "DS-002", new Date(), true);
 
     User chairperson = new User(1, "originalchair@broad.com", "Original Chairperson", new Date(), chairpersonList(), null);
     User member = new User(2, "originalchair@broad.com", "Original Chairperson", new Date(), memberList(), null);

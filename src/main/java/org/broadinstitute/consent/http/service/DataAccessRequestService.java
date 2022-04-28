@@ -1,28 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
-import static java.util.stream.Collectors.toList;
-
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import javax.ws.rs.NotAcceptableException;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -46,7 +25,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -55,6 +34,28 @@ import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotFoundException;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
@@ -511,7 +512,7 @@ public class DataAccessRequestService {
                 try {
                     if (Objects.nonNull(dataAccessRequest) && Objects.nonNull(dataAccessRequest.getData()) && Objects.nonNull(user)) {
                         Integer datasetId = !CollectionUtils.isEmpty(dataAccessRequest.getData().getDatasetIds()) ? dataAccessRequest.getData().getDatasetIds().get(0) : null;
-                        String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId) : null;
+                        String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
                         Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
                         String profileName = user.getDisplayName();
                         if (Objects.isNull(user.getInstitutionId())) {
@@ -544,7 +545,7 @@ public class DataAccessRequestService {
                 DataAccessRequest dar = findByReferenceId(election.getReferenceId());
                 if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
                     Integer datasetId = !CollectionUtils.isEmpty(dar.getData().getDatasetIds()) ? dar.getData().getDatasetIds().get(0) : null;
-                    String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId) : null;
+                    String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
                     Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
                     if (Objects.nonNull(consent)) {
                         dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar, consent.getName(), consent.getTranslatedUseRestriction());
@@ -583,7 +584,7 @@ public class DataAccessRequestService {
 
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(DataAccessRequest dataAccessRequest, User user, ElectionService electionService) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
-        List<DataSet> datasets = populateDatasets(dataAccessRequest);
+        List<Dataset> datasets = populateDatasets(dataAccessRequest);
         User researcher = userDAO.findUserById(dataAccessRequest.getUserId());
         Boolean hasProps = Objects.nonNull(researcher) && Objects.nonNull(researcher.getProperties());
         Optional<UserProperty> department = hasProps ? researcher.getProperties().stream().filter(
@@ -620,10 +621,10 @@ public class DataAccessRequestService {
                 .setRus(Objects.nonNull(dataAccessRequest.getData()) ? dataAccessRequest.getData().getRus() : "");
     }
 
-    private List<DataSet> populateDatasets(DataAccessRequest dar) {
+    private List<Dataset> populateDatasets(DataAccessRequest dar) {
         List<Integer> datasetIds = Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
         if (!datasetIds.isEmpty()) {
-            return dataSetDAO.findDataSetsByIdList(datasetIds);
+            return dataSetDAO.findDatasetsByIdList(datasetIds);
         }
         return Collections.emptyList();
     }
@@ -639,8 +640,8 @@ public class DataAccessRequestService {
         if (dacService.isAuthUserAdmin(authUser)) {
             return activeDars;
         }
-        List<Integer> dataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()).stream().
-                map(DataSet::getDataSetId).
+        List<Integer> dataSetIds = dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).stream().
+                map(Dataset::getDataSetId).
                 collect(Collectors.toList());
         return activeDars.stream().
                 filter(d -> d.getData().getDatasetIds().stream().anyMatch(dataSetIds::contains)).

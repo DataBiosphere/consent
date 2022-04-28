@@ -30,8 +30,7 @@ public interface DarCollectionDAO {
           Election.QUERY_FIELDS_WITH_E_PREFIX + QUERY_FIELD_SEPARATOR +
           Vote.QUERY_FIELDS_WITH_V_PREFIX + QUERY_FIELD_SEPARATOR +
           UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR +
-          //todo: can we use DarCollection.DAR_FILTER_QUERY_COLUMNS here? they are identical
-              DarCollection.DAR_FILTER_QUERY_COLUMNS +
+          DarCollection.DAR_FILTER_QUERY_COLUMNS +
       " FROM dar_collection c " +
       " INNER JOIN dacuser u ON u.dacuserid = c.create_user_id " +
       " LEFT JOIN user_property up ON u.dacuserid = up.userid AND up.propertykey in ('isThePI', 'piName', 'havePI', 'piERACommonsID') " +
@@ -155,8 +154,8 @@ public interface DarCollectionDAO {
         UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR +
         Election.QUERY_FIELDS_WITH_E_PREFIX + QUERY_FIELD_SEPARATOR +
         "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
-        "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
-        "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
+        "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, " +
+        "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
         "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
         "FROM dar_collection c " +
         "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid " +
@@ -181,8 +180,8 @@ public interface DarCollectionDAO {
       Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
       UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR
       + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
-      + "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, "
-      + "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
+      + "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, "
+      + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
       + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, "
       + "e.electionid AS e_election_id, e.referenceid AS e_reference_id, e.status AS e_status, e.createdate AS e_create_date, "
       + "e.lastupdate AS e_last_update, e.datasetid AS e_dataset_id, e.electiontype AS e_election_type, e.latest "
@@ -218,8 +217,8 @@ public interface DarCollectionDAO {
       Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
       UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR +
       "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
-      "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, " +
-      "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
+      "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, " +
+      "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
       "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
     "FROM dar_collection c " +
     "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid " +
@@ -249,8 +248,8 @@ public interface DarCollectionDAO {
       + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
       + UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR
       + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
-      + "dar.draft AS dar_draft, dar.user_id AS dar_userId, dar.create_date AS dar_create_date, "
-      + "dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
+      + "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, "
+      + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
       + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, "
       + "e.electionid AS e_election_id, e.referenceid AS e_reference_id, e.status AS e_status, e.createdate AS e_create_date, "
       + "e.lastupdate AS e_last_update, e.datasetid AS e_dataset_id, e.electiontype AS e_election_type, e.latest, "

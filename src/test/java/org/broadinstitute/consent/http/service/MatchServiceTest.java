@@ -13,7 +13,7 @@ import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.grammar.And;
@@ -307,13 +307,14 @@ public class MatchServiceTest {
         when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar2);
         when(consentDAO.findConsentById(any())).thenReturn(consent);
         when(consentDAO.checkConsentById(any())).thenReturn(consent.getConsentId());
-        List<DataSet> dataSets = getSampleDataAccessRequest(referenceId)
+        List<Dataset> dataSets = getSampleDataAccessRequest(referenceId)
                 .getData()
                 .getDatasetIds()
                 .stream()
-                .map(id -> {DataSet d = new DataSet(); d.setDataSetId(id); return d;} )
+                .map(id -> {
+                    Dataset d = new Dataset(); d.setDataSetId(id); return d;} )
                 .collect(Collectors.toList());
-        when(dataSetDAO.getDataSetsForConsent(consent.getConsentId())).thenReturn(dataSets);
+        when(dataSetDAO.getDatasetsForConsent(consent.getConsentId())).thenReturn(dataSets);
         when(rmo.isResult()).thenReturn(true);
         when(response.readEntity(any(GenericType.class))).thenReturn(rmo);
         when(response.getStatus()).thenReturn(200);

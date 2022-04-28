@@ -7,12 +7,12 @@ import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -67,24 +67,8 @@ public class DatasetResource extends Resource {
     private String dataSetSampleFileName;
     private String dataSetSampleContent;
 
-    String getDataSetSampleFileName() {
-        return dataSetSampleFileName;
-    }
-
-    void setDataSetSampleFileName(String fileName) {
-        dataSetSampleFileName = fileName;
-    }
-
     void resetDataSetSampleFileName() {
         dataSetSampleFileName = defaultDataSetSampleFileName;
-    }
-
-    String getDataSetSampleContent() {
-        return dataSetSampleContent;
-    }
-
-    void setDataSetSampleContent(String content) {
-        dataSetSampleContent = content;
     }
 
     void resetDataSetSampleContent() {
@@ -114,14 +98,14 @@ public class DatasetResource extends Resource {
         if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
             throw new BadRequestException("Dataset must contain required properties");
         }
-        List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
+        List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
         if (invalidProperties.size() > 0) {
             List<String> invalidKeys = invalidProperties.stream()
-                .map(DataSetPropertyDTO::getPropertyName)
+                .map(DatasetPropertyDTO::getPropertyName)
                 .collect(Collectors.toList());
             throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
         }
-        List<DataSetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
+        List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
         if (duplicateProperties.size() > 0) {
             throw new BadRequestException("Dataset contains multiple values for the same property.");
         }
@@ -134,7 +118,7 @@ public class DatasetResource extends Resource {
         if (Objects.isNull(name) || name.isBlank()) {
             throw new BadRequestException("Dataset name is required");
         }
-        DataSet datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
+        Dataset datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
         if (Objects.nonNull(datasetNameAlreadyUsed)) {
             throw new ClientErrorException("Dataset name: " + name + " is already in use", Status.CONFLICT);
         }
@@ -164,18 +148,18 @@ public class DatasetResource extends Resource {
             if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
                 throw new BadRequestException("Dataset must contain required properties");
             }
-            DataSet datasetExists = datasetService.findDatasetById(datasetId);
+            Dataset datasetExists = datasetService.findDatasetById(datasetId);
             if (Objects.isNull(datasetExists)) {
                 throw new NotFoundException("Could not find the dataset with id: " + datasetId);
             }
-            List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
+            List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
             if (invalidProperties.size() > 0) {
                 List<String> invalidKeys = invalidProperties.stream()
-                    .map(DataSetPropertyDTO::getPropertyName)
+                    .map(DatasetPropertyDTO::getPropertyName)
                     .collect(Collectors.toList());
                 throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
             }
-            List<DataSetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
+            List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
             if (duplicateProperties.size() > 0) {
                 throw new BadRequestException("Dataset contains multiple values for the same property.");
             }
@@ -183,7 +167,7 @@ public class DatasetResource extends Resource {
             // Validate that the admin/chairperson has edit access to this dataset
             validateDatasetDacAccess(user, datasetExists);
             Integer userId = user.getDacUserId();
-            Optional<DataSet> updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
+            Optional<Dataset> updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
             if (updatedDataset.isPresent()) {
                 URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.get().getDataSetId());
                 return Response.ok(uri).entity(updatedDataset.get()).build();
@@ -210,6 +194,21 @@ public class DatasetResource extends Resource {
     }
 
     @GET
+    @Produces("application/json")
+    @PermitAll
+    @Path("/v2")
+    public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
+            Gson gson = new Gson();
+            return Response.ok(gson.toJson(datasets)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
     @Path("/{datasetId}")
     @Produces("application/json")
     @PermitAll
@@ -229,7 +228,7 @@ public class DatasetResource extends Resource {
     @PermitAll
     public Response validateDatasetName(@QueryParam("name") String name) {
         try {
-            DataSet datasetWithName = datasetService.getDatasetByName(name);
+            Dataset datasetWithName = datasetService.getDatasetByName(name);
             return Response.ok().entity(datasetWithName.getDataSetId()).build();
         } catch (Exception e) {
             throw new NotFoundException("Could not find the dataset with name: " + name);
@@ -284,10 +283,10 @@ public class DatasetResource extends Resource {
 
             for (DatasetDTO row : rows) {
                 StringBuilder sbr = new StringBuilder();
-                DataSetPropertyDTO property = new DataSetPropertyDTO("Consent ID",row.getConsentId());
-                List<DataSetPropertyDTO> props = row.getProperties();
+                DatasetPropertyDTO property = new DatasetPropertyDTO("Consent ID",row.getConsentId());
+                List<DatasetPropertyDTO> props = row.getProperties();
                 props.add(property);
-                for (DataSetPropertyDTO prop : props) {
+                for (DatasetPropertyDTO prop : props) {
                     if (sbr.length() > 0)
                         sbr.append(TSV_DELIMITER);
                     sbr.append(prop.getPropertyValue());
@@ -311,7 +310,7 @@ public class DatasetResource extends Resource {
     public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId, @Context UriInfo info) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            DataSet dataset = datasetService.findDatasetById(datasetId);
+            Dataset dataset = datasetService.findDatasetById(datasetId);
             // Validate that the admin/chairperson has edit/delete access to this dataset
             validateDatasetDacAccess(user, dataset);
             datasetService.deleteDataset(datasetId, user.getDacUserId());
@@ -328,7 +327,7 @@ public class DatasetResource extends Resource {
     public Response disableDataSet(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId, @PathParam("active") Boolean active, @Context UriInfo info) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            DataSet dataset = datasetService.findDatasetById(datasetId);
+            Dataset dataset = datasetService.findDatasetById(datasetId);
             // Validate that the admin/chairperson has edit access to this dataset
             validateDatasetDacAccess(user, dataset);
             datasetService.disableDataset(datasetId, active);
@@ -371,7 +370,7 @@ public class DatasetResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
         try{
-            DataSet dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, needsApproval);
+            Dataset dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, needsApproval);
             return Response.ok().entity(dataSet).build();
         }catch (Exception e){
             return createExceptionResponse(e);
@@ -397,7 +396,7 @@ public class DatasetResource extends Resource {
         return LoggerFactory.getLogger(this.getClass());
     }
 
-    private void validateDatasetDacAccess(User user, DataSet dataset) {
+    private void validateDatasetDacAccess(User user, Dataset dataset) {
         if (user.hasUserRole(UserRoles.ADMIN)) {
             return;
         }

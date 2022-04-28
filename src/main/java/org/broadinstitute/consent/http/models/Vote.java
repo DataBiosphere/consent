@@ -172,7 +172,6 @@ public class Vote {
         private List<Integer> voteIds;
 
         public VoteUpdate() {
-
         }
 
         public VoteUpdate(Boolean vote, String rationale, List<Integer> voteIds) {

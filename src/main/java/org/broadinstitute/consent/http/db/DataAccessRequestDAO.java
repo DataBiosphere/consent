@@ -30,8 +30,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
-          + "  WHERE draft != true "
+      "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
+          + "  WHERE not (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
+          + "  AND draft != true "
           + "  AND (data->>'status' != 'Archived' OR data->>'status' IS NULL ) ")
   List<DataAccessRequest> findAllDataAccessRequests();
 
@@ -42,7 +43,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, draft, user_id, create_date, sort_date, submission_date, update_date, "
+      "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, "
           + "(data #>> '{}')::jsonb AS data FROM data_access_request "
           + " WHERE draft = false"
           + " AND ((data #>> '{}')::jsonb->>'datasetIds')::jsonb @> :datasetId::jsonb"
@@ -55,7 +56,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
+      "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
           + "  WHERE (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
           + "  OR draft = true "
           + "  AND (data->>'status' != 'Archived' OR data->>'status' IS NULL) "
@@ -68,7 +69,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
+      "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
           + "  WHERE ( (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
           + "          OR draft = true "
           + "  AND (data->>'status' != 'Archived' OR data->>'status' IS NULL)) "
@@ -83,7 +84,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
+      "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
           + "  WHERE draft = false "
           + "  AND user_id = :userId "
           + "  AND (data->>'status' != 'Archived' OR data->>'status' IS NULL) "
@@ -97,10 +98,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return DataAccessRequest
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
-      + "WHERE reference_id = :referenceId "
-      + "AND (data->>'status' != 'Archived' OR data->>'status' IS NULL) "
-      + "limit 1 ")
+      "SELECT id, reference_id, collection_id, parent_id,  draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
+          + "WHERE reference_id = :referenceId "
+          + "AND (data->>'status' != 'Archived' OR data->>'status' IS NULL) "
+          + "limit 1 ")
   DataAccessRequest findByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
@@ -110,9 +111,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
-      + "WHERE reference_id IN (<referenceIds>) "
-      + "AND (data->>'status' != 'Archived' OR data->>'status' IS NULL) ")
+      "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
+        + "WHERE reference_id IN (<referenceIds>) "
+        + "AND (data->>'status' != 'Archived' OR data->>'status' IS NULL) ")
   List<DataAccessRequest> findByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
   /**
@@ -244,7 +245,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-    "SELECT id, reference_id, collection_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
+    "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
         + " INNER JOIN dacuser d on d.dacuserid = user_id AND d.institution_id = :institutionId "
         + " WHERE draft != true "
         + " AND (data->>'status' != 'Archived' OR data->>'status' IS NULL) ")

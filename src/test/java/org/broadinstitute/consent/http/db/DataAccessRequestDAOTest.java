@@ -13,7 +13,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Test;
 
@@ -317,7 +317,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 //    }
 
     //todo: private method to create a DAR
-    public DataAccessRequest createDAR(User user, DataSet dataset, String darCode) {
+    public DataAccessRequest createDAR(User user, Dataset dataset, String darCode) {
         Timestamp now = new Timestamp(new Date().getTime());
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         DataAccessRequest testDar = new DataAccessRequest();
@@ -369,7 +369,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(dars.isEmpty());
 
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         User user = createUserWithInstitution();
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
@@ -384,8 +384,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
         String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
-        DataSet dataset1 = createDataset();
-        DataSet dataset2 = createDataset();
+        Dataset dataset1 = createDataset();
+        Dataset dataset2 = createDataset();
 
         DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
         DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
@@ -399,7 +399,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testFindAllByDatasetIdArchived() {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
         assertTrue(dars.isEmpty());
 
@@ -446,7 +446,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(dars.isEmpty());
 
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
 
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
@@ -459,7 +459,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testFindByReferenceIdArchived() {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         User user = createUserWithInstitution();
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
@@ -472,8 +472,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     public void testFindByReferenceIdsArchived() {
         String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
         String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
-        DataSet dataset1 = createDataset();
-        DataSet dataset2 = createDataset();
+        Dataset dataset1 = createDataset();
+        Dataset dataset2 = createDataset();
         User user = createUserWithInstitution();
         DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
         DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
@@ -494,9 +494,9 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
         String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
         String darCode3 = "DAR-" + RandomUtils.nextInt(301, 400);
-        DataSet dataset1 = createDataset();
-        DataSet dataset2 = createDataset();
-        DataSet dataset3 = createDataset();
+        Dataset dataset1 = createDataset();
+        Dataset dataset2 = createDataset();
+        Dataset dataset3 = createDataset();
         DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
         DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
         DataAccessRequest testDar3 = createDAR(user, dataset3, darCode3);
@@ -517,9 +517,9 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
         String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
         String darCode3 = "DAR-" + RandomUtils.nextInt(301, 400);
-        DataSet dataset1 = createDataset();
-        DataSet dataset2 = createDataset();
-        DataSet dataset3 = createDataset();
+        Dataset dataset1 = createDataset();
+        Dataset dataset2 = createDataset();
+        Dataset dataset3 = createDataset();
         DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
         DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
         DataAccessRequest testDar3 = createDAR(user, dataset3, darCode3);

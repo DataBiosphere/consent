@@ -33,7 +33,7 @@ import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.Summary;
@@ -237,7 +237,7 @@ public class SummaryService {
             .flatMap(List::stream)
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
-      List<Association> associations = datasetIds.isEmpty() ? Collections.emptyList() : datasetDAO.getAssociationsForDataSetIdList(datasetIds);
+      List<Association> associations = datasetIds.isEmpty() ? Collections.emptyList() : datasetDAO.getAssociationsForDatasetIdList(datasetIds);
       List<String> associatedConsentIds = associations.stream().map(Association::getConsentId).collect(Collectors.toList());
       List<Election> consentElections = associatedConsentIds.isEmpty() ? Collections.emptyList() : electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
       List<Integer> accessElectionIds = accessElections.stream().map(Election::getElectionId).collect(Collectors.toList());
@@ -281,7 +281,7 @@ public class SummaryService {
             .stream()
             .filter(ev -> ev.getElectionId().equals(election.getElectionId()))
             .collect(Collectors.toList())).orElse(Collections.emptyList());
-        Optional<Match> matchOption = matchList.stream().filter(m -> m.getPurpose().equals(accessElection.getReferenceId())).findFirst(); 
+        Optional<Match> matchOption = matchList.stream().filter(m -> m.getPurpose().equals(accessElection.getReferenceId())).findFirst();
         Optional<DataAccessRequest> darOption = dataAccessRequests.stream()
             .filter(Objects::nonNull)
             .filter(d -> d.getReferenceId().equalsIgnoreCase(accessElection.getReferenceId()))
@@ -339,7 +339,7 @@ public class SummaryService {
                 for (Election election : elections) {
                     summaryWriter.write( dar_code + SEPARATOR);
                     summaryWriter.write( dar_election_result + SEPARATOR);
-                    DataSet dataset = datasetDAO.findDataSetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
+                    Dataset dataset = datasetDAO.findDatasetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
                     summaryWriter.write( dataset.getObjectId() + SEPARATOR);
                     summaryWriter.write( dataset.getName() + SEPARATOR);
                     summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);

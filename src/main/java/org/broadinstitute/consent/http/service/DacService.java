@@ -29,7 +29,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
@@ -171,7 +171,7 @@ public class DacService {
         return Collections.emptySet();
     }
 
-    public Set<DataSet> findDatasetsByConsentId(String consentId) {
+    public Set<Dataset> findDatasetsByConsentId(String consentId) {
         return dataSetDAO.findDatasetsForConsentId(consentId);
     }
 
@@ -276,9 +276,9 @@ public class DacService {
             }
             // Chair and Member users can see data access requests that they have DAC access to
             if (user.hasUserRole(UserRoles.MEMBER) || user.hasUserRole(UserRoles.CHAIRPERSON)) {
-                List<Integer> accessibleDatasetIds = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail()).
+                List<Integer> accessibleDatasetIds = dataSetDAO.findDatasetsByAuthUserEmail(user.getEmail()).
                   stream().
-                  map(DataSet::getDataSetId).
+                  map(Dataset::getDataSetId).
                   collect(Collectors.toList());
 
                 return documents.
@@ -332,9 +332,9 @@ public class DacService {
             return elections;
         }
 
-        List<Integer> userDataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()).
+        List<Integer> userDataSetIds = dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).
                 stream().
-                map(DataSet::getDataSetId).
+                map(Dataset::getDataSetId).
                 collect(Collectors.toList());
         return elections.stream().
                 filter(e -> Objects.isNull(e.getDataSetId()) || userDataSetIds.contains(e.getDataSetId())).

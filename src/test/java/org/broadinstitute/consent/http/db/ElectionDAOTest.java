@@ -20,7 +20,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -32,9 +32,9 @@ public class ElectionDAOTest extends DAOTestHelper {
   @Test
   public void testGetOpenElectionIdByReferenceId() {
     String accessReferenceId = UUID.randomUUID().toString();
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     Election accessElection = createAccessElection(accessReferenceId, dataset.getDataSetId());
-    
+
     Integer electionId = electionDAO.getOpenElectionIdByReferenceId(accessReferenceId);
     assertEquals(accessElection.getElectionId(), electionId);
     Integer missingElectionId = electionDAO.getOpenElectionIdByReferenceId("accessReferenceId");
@@ -45,11 +45,11 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testGetElectionIdsByReferenceIds() {
     String accessReferenceId1 = UUID.randomUUID().toString();
     String accessReferenceId2 = UUID.randomUUID().toString();
-    DataSet dataset1 = createDataset();
-    DataSet dataset2 = createDataset();
+    Dataset dataset1 = createDataset();
+    Dataset dataset2 = createDataset();
     Election accessElection1 = createAccessElection(accessReferenceId1, dataset1.getDataSetId());
     Election accessElection2 = createAccessElection(accessReferenceId2, dataset2.getDataSetId());
-    
+
     List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(List.of(accessReferenceId1, accessReferenceId2));
     assertEquals(2, electionIds.size());
     assertTrue(electionIds.contains(accessElection1.getElectionId()));
@@ -62,7 +62,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testFindRpAccessElectionIdPairs() {
     String accessReferenceId = UUID.randomUUID().toString();
     String rpReferenceId = UUID.randomUUID().toString();
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     Election accessElection = createAccessElection(accessReferenceId, dataset.getDataSetId());
     Election rpElection = createRPElection(rpReferenceId, dataset.getDataSetId());
     electionDAO.insertAccessRP(accessElection.getElectionId(), rpElection.getElectionId());
@@ -82,7 +82,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testFindDacForConsentElection() {
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     createAssociation(consent.getConsentId(), dataset.getDataSetId());
     Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
@@ -95,7 +95,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testFindDacForConsentElectionWithNoAssociation() {
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
     Dac foundDac = electionDAO.findDacForElection(election.getElectionId());
@@ -106,7 +106,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   @Test
   public void testFindDacForConsentElectionNotFound() {
     Consent consent = createConsent(null);
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
     Dac foundDac = electionDAO.findDacForElection(election.getElectionId());
@@ -117,7 +117,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testFindElectionByDacId() {
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     createAssociation(consent.getConsentId(), dataset.getDataSetId());
     Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
@@ -130,7 +130,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testFindElectionByDacIdWithNoAssociation() {
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
     List<Election> foundElections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
@@ -142,7 +142,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testFindElectionByDacIdNotFound() {
     Dac dac = createDac();
     Consent consent = createConsent(null);
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     createAssociation(consent.getConsentId(), dataset.getDataSetId());
     createAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
@@ -155,7 +155,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     User u = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Dac dac = createDac();
     Consent c = createConsent(dac.getDacId());
-    DataSet d = createDataset();
+    Dataset d = createDataset();
     createAssociation(c.getConsentId(), d.getDataSetId());
     Election e = createAccessElection(c.getConsentId(), d.getDataSetId());
     Vote v = createPopulatedFinalVote(u.getDacUserId(), e.getElectionId());
@@ -171,7 +171,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     User u = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Dac dac = createDac();
     Consent c = createConsent(dac.getDacId());
-    DataSet d = createDataset();
+    Dataset d = createDataset();
     createAssociation(c.getConsentId(), d.getDataSetId());
     Election e = createRPElection(c.getConsentId(), d.getDataSetId());
     Vote v = createPopulatedChairpersonVote(u.getDacUserId(), e.getElectionId());
@@ -187,7 +187,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     User u = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
     Dac dac = createDac();
     Consent c = createConsent(dac.getDacId());
-    DataSet d = createDataset();
+    Dataset d = createDataset();
     createAssociation(c.getConsentId(), d.getDataSetId());
     Election e = createDatasetElection(c.getConsentId(), d.getDataSetId());
     Vote v = createPopulatedDataOwnerVote(u.getDacUserId(), e.getElectionId());
@@ -203,7 +203,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     User u = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Dac dac = createDac();
     Consent c = createConsent(dac.getDacId());
-    DataSet d = createDataset();
+    Dataset d = createDataset();
     createAssociation(c.getConsentId(), d.getDataSetId());
     Election e = createDULElection(c.getConsentId(), d.getDataSetId());
     Vote v = createPopulatedChairpersonVote(u.getDacUserId(), e.getElectionId());
@@ -217,7 +217,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   @Test
   public void testFindElectionsByReferenceIdCase1() {
     DataAccessRequest dar = createDataAccessRequestV3();
-    DataSet d = createDataset();
+    Dataset d = createDataset();
     createAccessElection(dar.getReferenceId(), d.getDataSetId());
     createRPElection(dar.getReferenceId(), d.getDataSetId());
 
@@ -230,7 +230,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testInsertExtendedElection() {
     Dac dac = createDac();
     Consent c = createConsent(dac.getDacId());
-    DataSet d = createDataset();
+    Dataset d = createDataset();
     createAssociation(c.getConsentId(), d.getDataSetId());
     Election e = createExtendedElection(c.getConsentId(), d.getDataSetId());
     Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
@@ -241,7 +241,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   @Test
   public void testFindLastElectionsByReferenceIdsAndType() {
     DataAccessRequest dar = createDataAccessRequestV3();
-    DataSet d = createDataset();
+    Dataset d = createDataset();
     createExtendedElection(dar.getReferenceId(), d.getDataSetId());
     List<Election> elections =
         electionDAO.findLastElectionsByReferenceIdsAndType(
@@ -255,7 +255,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testFindAllDacsForElectionIds() {
     Dac dac = createDac();
     String accessReferenceId = UUID.randomUUID().toString();
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     Integer datasetId = dataset.getDataSetId();
     Consent consent = createConsent(dac.getDacId());
     Election dulElection = createDULElection(consent.getConsentId(), datasetId);
@@ -281,7 +281,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testFindLastElectionsByReferenceIds() {
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
-    DataSet dataset = createDataset();
+    Dataset dataset = createDataset();
     DataAccessRequest dar = createDataAccessRequestV3();
 
     String darReferenceId = dar.getReferenceId();
@@ -324,5 +324,61 @@ public class ElectionDAOTest extends DAOTestHelper {
     List<Election> elections =
       electionDAO.findLastElectionsByReferenceIds(Collections.singletonList(UUID.randomUUID().toString()));
     assertTrue(elections.isEmpty());
+  }
+
+  @Test
+  public void testFindElectionsByVoteIdsAndType_DataAccess() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    Dataset dataset = createDataset();
+    String referenceId = dar.getReferenceId();
+    int datasetId = dataset.getDataSetId();
+    Election accessElection = createAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+    User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    int userId = user.getDacUserId();
+    Vote accessVote = createChairpersonVote(userId, accessElection.getElectionId());
+    Vote rpVote = createChairpersonVote(userId, rpElection.getElectionId());
+    List<Integer> voteIds = List.of(accessVote.getVoteId(), rpVote.getVoteId());
+    List<Election> elections = electionDAO.findElectionsByVoteIdsAndType(voteIds, "dataaccess");
+    
+    assertEquals(1, elections.size());
+    assertEquals(accessElection.getElectionId(), elections.get(0).getElectionId());
+  }
+
+  @Test
+  public void testFindElectionsByVoteIdsAndType_RP() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    Dataset dataset = createDataset();
+    String referenceId = dar.getReferenceId();
+    int datasetId = dataset.getDataSetId();
+    Election accessElection = createAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+    User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    int userId = user.getDacUserId();
+    Vote accessVote = createChairpersonVote(userId, accessElection.getElectionId());
+    Vote rpVote = createChairpersonVote(userId, rpElection.getElectionId());
+    List<Integer> voteIds = List.of(accessVote.getVoteId(), rpVote.getVoteId());
+    List<Election> elections = electionDAO.findElectionsByVoteIdsAndType(voteIds, "rp");
+    
+    assertEquals(1, elections.size());
+    assertEquals(rpElection.getElectionId(), elections.get(0).getElectionId());
+  }
+
+  @Test
+  public void testFindElectionsWithCardHoldingUsersByElectionIds() {
+    User lcUser = createUser();
+    User nonLCUser = createUser();
+    Dataset dataset = createDataset();
+    int datasetId = dataset.getDataSetId();
+    createLibraryCard(lcUser);
+    DataAccessRequest lcDAR = createDataAccessRequestWithUserIdV3(lcUser.getDacUserId());
+    DataAccessRequest nonLCDAR = createDataAccessRequestWithUserIdV3(nonLCUser.getDacUserId());
+    Election lcElection = createAccessElection(lcDAR.getReferenceId(), datasetId);
+    Election nonLCElection = createAccessElection(nonLCDAR.getReferenceId(), datasetId);
+    List<Integer> electionIds = List.of(lcElection.getElectionId(), nonLCElection.getElectionId());
+    List<Election> elections = electionDAO.findElectionsWithCardHoldingUsersByElectionIds(electionIds);
+
+    assertEquals(1, elections.size());
+    assertEquals(elections.get(0).getElectionId(), lcElection.getElectionId());
   }
 }

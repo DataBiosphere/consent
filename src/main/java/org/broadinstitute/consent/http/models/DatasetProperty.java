@@ -1,26 +1,28 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Date;
-import org.apache.commons.lang3.builder.EqualsBuilder;
+import com.google.common.base.Objects;
 
-public class DataSetProperty {
+import java.util.Date;
+
+public class DatasetProperty {
 
     private Integer propertyId;
     private Integer dataSetId;
     private Integer propertyKey;
+    private String propertyName;
     private String propertyValue;
     private Date createDate;
 
-    public DataSetProperty(){
+    public DatasetProperty(){
     }
 
-    public DataSetProperty(Integer propertyId, Integer  dataSetId, Integer propertyKey, String propertyValue,
+    public DatasetProperty(Integer propertyId, Integer  dataSetId, Integer propertyKey, String propertyValue,
                            Date createDate) {
         this(dataSetId, propertyKey, propertyValue, createDate);
         this.propertyId = propertyId;
     }
 
-    public DataSetProperty(Integer  dataSetId, Integer propertyKey, String propertyValue,
+    public DatasetProperty(Integer  dataSetId, Integer propertyKey, String propertyValue,
                            Date createDate){
         this.dataSetId = dataSetId;
         this.propertyKey = propertyKey;
@@ -52,6 +54,14 @@ public class DataSetProperty {
         this.propertyKey = propertyKey;
     }
 
+    public String getPropertyName() {
+        return propertyName;
+    }
+
+    public void setPropertyName(String propertyName) {
+        this.propertyName = propertyName;
+    }
+
     public String getPropertyValue() {
         return propertyValue;
     }
@@ -69,19 +79,15 @@ public class DataSetProperty {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DatasetProperty that = (DatasetProperty) o;
+        return Objects.equal(dataSetId, that.dataSetId) && Objects.equal(propertyName, that.propertyName) && Objects.equal(propertyValue, that.propertyValue);
+    }
 
-        DataSetProperty other = (DataSetProperty) obj;
-        return new EqualsBuilder()
-              .append(dataSetId, other.dataSetId)
-              .append(propertyKey, other.propertyKey)
-              .append(propertyValue, other.propertyValue)
-              .isEquals();
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(dataSetId, propertyName, propertyValue);
     }
 }

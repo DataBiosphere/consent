@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Handle;
@@ -48,17 +48,19 @@ public class DarCollectionServiceDAO {
    *
    * @param user The User initiating new elections for a collection
    * @param collection The DarCollection
+   * @return List of reference ids for which a DAR election was created
    */
-  public void createElectionsForDarCollection(User user, DarCollection collection) throws SQLException {
+  public List<String> createElectionsForDarCollection(User user, DarCollection collection) throws SQLException {
     final Date now = new Date();
     boolean isAdmin = user.hasUserRole(UserRoles.ADMIN);
+    List<String> createdElectionReferenceIds = new ArrayList<>();
     // If the user is not an admin, we need to know what datasets they have access to.
     List<Integer> dacUserDatasetIds = isAdmin ?
         List.of() :
         datasetDAO
-            .findDataSetsByAuthUserEmail(user.getEmail())
+            .findDatasetsByAuthUserEmail(user.getEmail())
             .stream()
-            .map(DataSet::getDataSetId)
+            .map(Dataset::getDataSetId)
             .collect(Collectors.toList());
     jdbi.useHandle(
         handle -> {
@@ -92,11 +94,13 @@ public class DarCollectionServiceDAO {
                     inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
                     inserts.add(createElectionInsert(handle, ElectionType.RP.getValue(), dar.getReferenceId(), now, datasetId));
                     inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.RP.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
+                    createdElectionReferenceIds.add(dar.getReferenceId());
                 }
           });
           inserts.forEach(Update::execute);
           handle.commit();
         });
+    return createdElectionReferenceIds;
   }
 
   private List<Update> createVoteInsertsForUsers(Handle handle, List<User> voteUsers, String electionType, String referenceId, Date now, Boolean isManualReview) {

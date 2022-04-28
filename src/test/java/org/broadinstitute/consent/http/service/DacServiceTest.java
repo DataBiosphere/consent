@@ -36,7 +36,7 @@ import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
@@ -324,11 +324,11 @@ public class DacServiceTest {
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_1() {
         // Member has access to DataSet 1
-        List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
-        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+        List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
+        when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
 
         // There are no additional unassociated datasets
-        when(dataSetDAO.findNonDACDataSets()).thenReturn(Collections.emptyList());
+        when(dataSetDAO.findNonDACDatasets()).thenReturn(Collections.emptyList());
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();
@@ -342,12 +342,12 @@ public class DacServiceTest {
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_2() {
         // Member has access to datasets
-        List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
-        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+        List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
+        when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
 
         // There are additional unassociated datasets
-        List<DataSet> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
-        when(dataSetDAO.findNonDACDataSets()).thenReturn(unassociatedDataSets);
+        List<Dataset> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
+        when(dataSetDAO.findNonDACDatasets()).thenReturn(unassociatedDataSets);
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();
@@ -361,12 +361,12 @@ public class DacServiceTest {
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_3() {
         // Member no direct access to datasets
-        List<DataSet> memberDataSets = Collections.emptyList();
-        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+        List<Dataset> memberDataSets = Collections.emptyList();
+        when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
 
         // There are additional unassociated datasets
-        List<DataSet> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
-        when(dataSetDAO.findNonDACDataSets()).thenReturn(unassociatedDataSets);
+        List<Dataset> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
+        when(dataSetDAO.findNonDACDatasets()).thenReturn(unassociatedDataSets);
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();
@@ -559,9 +559,9 @@ public class DacServiceTest {
 
         // Member is a member of one DAC that has a single consented dataset
         List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
-        List<DataSet> memberDatasets = Collections.singletonList(getDatasets().get(0));
+        List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(memberDacs);
-        when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
+        when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
         initService();
 
         List<Election> elections = getElections();
@@ -578,9 +578,9 @@ public class DacServiceTest {
 
         // Member is a member of one DAC that has a single consented dataset
         List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
-        List<DataSet> memberDatasets = Collections.singletonList(getDatasets().get(0));
+        List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(memberDacs);
-        when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
+        when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
         initService();
 
         // There are unassociated elections:
@@ -606,7 +606,7 @@ public class DacServiceTest {
 
         // Member has no direct access to elections via DAC or DataSet
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(Collections.emptyList());
-        when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(Collections.emptyList());
+        when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(Collections.emptyList());
         initService();
 
         // There are unassociated elections:
@@ -716,10 +716,10 @@ public class DacServiceTest {
     /**
      * @return A list of 5 datasets with ids
      */
-    private List<DataSet> getDatasets() {
+    private List<Dataset> getDatasets() {
         return IntStream.range(1, 5).
                 mapToObj(i -> {
-                    DataSet dataSet = new DataSet();
+                    Dataset dataSet = new Dataset();
                     dataSet.setDataSetId(i);
                     return dataSet;
                 }).collect(Collectors.toList());

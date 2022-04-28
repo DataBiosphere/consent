@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -22,6 +23,7 @@ import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -33,8 +35,10 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -43,6 +47,7 @@ import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class EmailNotifierService {
 
+    private final DarCollectionDAO collectionDAO;
     private final ConsentDAO consentDAO;
     private final DataAccessRequestService dataAccessRequestService;
     private final UserDAO userDAO;
@@ -88,11 +93,12 @@ public class EmailNotifierService {
     }
 
     @Inject
-    public EmailNotifierService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
+    public EmailNotifierService(DarCollectionDAO collectionDAO, ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
                                 VoteDAO voteDAO, ElectionDAO electionDAO, UserDAO userDAO,
                                 MailMessageDAO emailDAO, MailService mailService,
                                 FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive,
                                 UserPropertyDAO userPropertyDAO) {
+        this.collectionDAO = collectionDAO;
         this.consentDAO = consentDAO;
         this.dataAccessRequestService = dataAccessRequestService;
         this.userDAO = userDAO;
@@ -106,18 +112,27 @@ public class EmailNotifierService {
         this.userPropertyDAO = userPropertyDAO;
     }
 
-    public void sendNewDARRequestMessage(String dataAccessRequestId, List<Integer> datasetIds) throws MessagingException, IOException, TemplateException {
+    public void sendNewDARCollectionMessage(Integer collectionId) throws MessagingException, IOException, TemplateException {
         if (isServiceActive) {
-            List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
-            if (CollectionUtils.isEmpty(users)) return;
-            List<Integer> usersId = users.stream().map(User::getDacUserId).collect(Collectors.toList());
-            Set<User> chairs = userDAO.findUsersForDatasetsByRole(datasetIds,
-                    Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
-            for (User chair : chairs) {
-                Map<String, String> data = retrieveForNewDAR(dataAccessRequestId, chair);
-                Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL);
-                mailService.sendNewDARRequests(getEmails(users), data.get("entityId"), data.get("electionType"), template);
-                emailDAO.insertBulkEmailNoVotes(usersId, dataAccessRequestId, 4, new Date(), template.toString());
+            DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
+            List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
+            List<Integer> datasetIds = collection.getDars().values().stream()
+                    .map(DataAccessRequest::getData)
+                    .map(DataAccessRequestData::getDatasetIds)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+            // Ensure that admins/chairs are not double emailed
+            // and filter users that don't want to receive email
+            List<User> distinctUsers = Streams.concat(admins.stream(), chairPersons.stream())
+                .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
+                .distinct()
+                .collect(Collectors.toList());
+            for (User user : distinctUsers) {
+                Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL, user.getDisplayName(), collection.getDarCode());
+                Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
+                mailService.sendNewDARRequests(getEmails(List.of(user)), data.get("entityId"), data.get("electionType"), template);
+                emailDAO.insertBulkEmailNoVotes(List.of(user.getDacUserId()), collection.getDarCode(), 4, new Date(), template.toString());
             }
         }
     }
@@ -147,6 +162,17 @@ public class EmailNotifierService {
             mailService.sendReminderMessage(emails, data.get("entityName"), data.get("electionType"), template);
             emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
             voteDAO.updateVoteReminderFlag(voteId, true);
+        }
+    }
+
+    public void sendDarNewCollectionElectionMessage(List<User> users, DarCollection darCollection) throws MessagingException, IOException, TemplateException {
+        if (isServiceActive) {
+            String electionType = "Data Access Request";
+            String entityName = darCollection.getDarCode();
+            for (User user: users) {
+                Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, entityName, SERVER_URL);
+                sendNewCaseMessage(getEmails(Collections.singletonList(user)), electionType, entityName, template);
+            }
         }
     }
 
@@ -193,7 +219,7 @@ public class EmailNotifierService {
         }
     }
 
-    public void sendAdminFlaggedDarApproved(String darCode, List<User> admins, Map<User, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
+    public void sendAdminFlaggedDarApproved(String darCode, List<User> admins, Map<User, List<Dataset>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
         if(isServiceActive){
             for(User admin: admins) {
                 Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVER_URL);
@@ -236,12 +262,17 @@ public class EmailNotifierService {
 
     private Set<String> getEmails(List<User> users) {
         Set<String> emails = users.stream()
-                .map(u -> new ArrayList<String>(){{add(u.getEmail()); add(u.getAdditionalEmail());}})
+                .map(u -> {
+                    if (Objects.nonNull(u.getAdditionalEmail())) {
+                        return List.of(u.getEmail(), u.getAdditionalEmail());
+                    }
+                    return List.of(u.getEmail());
+                })
                 .flatMap(Collection::stream)
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.toSet());
         List<String> academicEmails =  getAcademicEmails(users);
-        if(CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
+        if (CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
         return emails;
     }
 

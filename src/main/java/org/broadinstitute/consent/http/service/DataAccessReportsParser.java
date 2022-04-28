@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.slf4j.Logger;
@@ -111,7 +111,7 @@ public class DataAccessReportsParser {
                 try {
                     Integer id = Integer.parseInt(detail.getDatasetId());
                     dataSetIds.add(id);
-                    dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
+                    dataSetUUIds.add(Dataset.parseAliasToIdentifier(id));
                 } catch (Exception e) {
                     logger.warn("Invalid Dataset ID: " + detail.getDatasetId());
                 }

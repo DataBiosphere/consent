@@ -10,7 +10,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -31,7 +31,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
     public void testInsertEmail() {
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac d = createDac();
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Consent c = createConsent(d.getDacId());
         createAssociation(c.getConsentId(), dataset.getDataSetId());
         Election e = createAccessElection(c.getConsentId(), dataset.getDataSetId());
@@ -53,7 +53,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
     public void testInsertBulkEmailNoVotes() {
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac d = createDac();
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Consent c = createConsent(d.getDacId());
         createAssociation(c.getConsentId(), dataset.getDataSetId());
         Election e = createAccessElection(c.getConsentId(), dataset.getDataSetId());
