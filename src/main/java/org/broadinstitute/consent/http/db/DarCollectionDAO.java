@@ -45,14 +45,13 @@ public interface DarCollectionDAO {
     " WHERE c.create_user_id = :userId " +
       " AND (" +
       DarCollection.FILTER_TERMS_QUERY +
-      " )" +
-      " AND (" +
-      "(dar.data #>> '{}')::jsonb->>'status'!='Archived'" +
       " )";
+
+  String archiveFilterQuery = " AND ((dar.data #>> '{}')::jsonb->>'status' != 'Archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL) ";
 
   String getCollectionsAndDarsViaIds =
   getCollectionAndDars
-  + filterQuery +
+  + filterQuery + archiveFilterQuery +
     "ORDER BY <sortField> <sortOrder>";
 
   String orderStatement = " ORDER BY <sortField> <sortOrder>";
@@ -84,14 +83,17 @@ public interface DarCollectionDAO {
   @SqlQuery(
       " SELECT distinct c.collection_id "
           + " FROM dar_collection c, "
-          + "     (SELECT distinct dar.collection_id, jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasetIds')::integer AS dataset_id FROM data_access_request dar) AS dar_datasets, "
+          + "     (SELECT distinct dar.collection_id, "
+          + "     jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasetIds')::integer AS dataset_id, "
+          + "     (dar.data #>> '{}')::jsonb ->> 'status' as status "
+          + "     FROM data_access_request dar) AS dar_datasets, "
           + "     consentassociations ca,"
           + "     consents consent "
           + " WHERE c.collection_id = dar_datasets.collection_id "
           + " AND dar_datasets.dataset_id = ca.datasetid "
           + " AND consent.consentid = ca.consentid "
           + " AND consent.dac_id IN (<dacIds>) "
-          + " AND (dar.data #>> '{}')::jsonb->>'status'!='Archived'" )
+          + " AND (dar_datasets.status != 'Archived' OR dar_datasets.status IS NULL) " )
   List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds);
 
   @SqlQuery(
@@ -99,8 +101,8 @@ public interface DarCollectionDAO {
           + " FROM dar_collection c"
           + " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id"
           + " INNER JOIN dacuser u ON dar.user_id = u.dacuserid"
-          + " WHERE u.institution_id = :institutionId AND "
-          + " AND (dar.data #>> '{}')::jsonb->>'status'!='Archived'" )
+          + " WHERE u.institution_id = :institutionId "
+          + " AND ((dar.data #>> '{}')::jsonb->>'status'!='Archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL)" )
   List<Integer> findDARCollectionIdsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
@@ -112,7 +114,7 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-    getCollectionAndDars + " WHERE c.collection_id in (<collectionIds>)")
+    getCollectionAndDars + " WHERE c.collection_id in (<collectionIds>)" + archiveFilterQuery)
   List<DarCollection> findDARCollectionByCollectionIds(
           @BindList("collectionIds") List<Integer> collectionIds);
 
@@ -127,6 +129,7 @@ public interface DarCollectionDAO {
   @SqlQuery(
     getCollectionAndDars
     + " WHERE c.collection_id in (<collectionIds>)"
+    + archiveFilterQuery
     +  " ORDER BY <sortField> <sortOrder>")
   List<DarCollection> findDARCollectionByCollectionIdsWithOrder(
           @BindList("collectionIds") List<Integer> collectionIds,
@@ -162,7 +165,7 @@ public interface DarCollectionDAO {
         "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
         "LEFT JOIN (SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest FROM election) AS e " +
         "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) " +
-        "WHERE data->>'status'!='Archived' "
+        "WHERE (data->>'status'!='Archived' OR data->>'status' IS NULL) "
   )
   List<DarCollection> findAllDARCollections();
 
@@ -194,7 +197,7 @@ public interface DarCollectionDAO {
       + ") AS e "
       + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
       + "WHERE c.create_user_id = :userId "
-      + " AND data->>'status'!='Archived' "
+      + " AND (data->>'status'!='Archived' OR data->>'status' IS NULL) "
   )
   List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
 
@@ -224,7 +227,7 @@ public interface DarCollectionDAO {
     "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
     "WHERE c.collection_id = (SELECT collection_id FROM data_access_request WHERE reference_id = :referenceId) " +
-    "AND data->>'status'!='Archived' ")
+    "AND (data->>'status'!='Archived' OR data->>'status' IS NULL) ")
   DarCollection findDARCollectionByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
@@ -268,7 +271,7 @@ public interface DarCollectionDAO {
       + "LEFT JOIN dacuser du "
       + "ON du.dacuserid = v.dacuserid "
       + "WHERE c.collection_id = :collectionId "
-      + "AND data->>'status'!='Archived' ;"
+      + "AND (data->>'status' != 'Archived' OR data->>'status' IS NULL );"
   )
   DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId);
 
@@ -305,7 +308,7 @@ public interface DarCollectionDAO {
       + "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
-      + " WHERE (dar.data #>> '{}')::jsonb->>'status'!='Archived' ";
+      + " WHERE ((dar.data #>> '{}')::jsonb->>'status'!='Archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL) ";
 
   //Count methods for unfiltered results listed below
   //DAC version is not included since a method that returns collectionIds for a DAC already exists
@@ -313,10 +316,10 @@ public interface DarCollectionDAO {
   Integer returnUnfilteredCollectionCount();
 
   @SqlQuery(
-    coreCountQuery + "WHERE c.create_user_id = :userId")
+    coreCountQuery + "AND c.create_user_id = :userId")
   Integer returnUnfilteredResearcherCollectionCount(@Bind("userId") Integer userId);
 
-  @SqlQuery(coreCountQuery + "WHERE u.institution_id = :institutionId")
+  @SqlQuery(coreCountQuery + "AND u.institution_id = :institutionId")
   Integer returnUnfilteredCountForInstitution(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
@@ -328,7 +331,7 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
-          + " WHERE (" + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
+          + " WHERE (" + DarCollection.FILTER_TERMS_QUERY + ") " + archiveFilterQuery + orderStatement)
   List<DarCollection> getFilteredCollectionsForAdmin(
     @Define("sortField") String sortField,
     @Define("sortOrder") String sortOrder,
@@ -345,7 +348,7 @@ public interface DarCollectionDAO {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
       + " WHERE u.institution_id = :institutionId AND ("
-      + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
+      + DarCollection.FILTER_TERMS_QUERY + ") " + archiveFilterQuery + orderStatement)
   List<DarCollection> getFilteredCollectionsForSigningOfficial(
       @Define("sortField") String sortField,
       @Define("sortOrder") String sortOrder,
@@ -362,7 +365,7 @@ public interface DarCollectionDAO {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
       + " WHERE c.create_user_id = :userId AND ("
-      + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
+      + DarCollection.FILTER_TERMS_QUERY + ") " + archiveFilterQuery + orderStatement)
   List<DarCollection> getFilteredListForResearcher(
       @Define("sortField") String sortField,
       @Define("sortOrder") String sortOrder,
@@ -379,7 +382,7 @@ public interface DarCollectionDAO {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
           + " WHERE c.collection_id IN (<collectionIds>) AND ("
-          + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
+          + DarCollection.FILTER_TERMS_QUERY + ") " + archiveFilterQuery + orderStatement)
   List<DarCollection> getFilteredCollectionsForDACByCollectionIds(
           @Define("sortField") String sortField,
           @Define("sortOrder") String sortOrder,

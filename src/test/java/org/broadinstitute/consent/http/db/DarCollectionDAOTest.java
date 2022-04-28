@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -16,6 +17,7 @@ import org.junit.Test;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -31,6 +34,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 
 
 public class DarCollectionDAOTest extends DAOTestHelper  {
@@ -654,5 +658,560 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
    // formatting should happen in the service class, but it needs to be reproduced here for DAO testing
   private String generateTestTerm(String targetString) {
     return "(?=.*" + targetString.substring(0, 4) + ")";
+  }
+
+  public DataAccessRequest createDAR(User user, DataSet dataset, Integer collectionId) {
+    Timestamp now = new Timestamp(new Date().getTime());
+    DataAccessRequest testDar = new DataAccessRequest();
+    testDar.setCollectionId(collectionId);
+    testDar.setReferenceId(UUID.randomUUID().toString());
+    testDar.setUserId(user.getDacUserId());
+    testDar.setCreateDate(now);
+    testDar.setSortDate(now);
+    testDar.setSubmissionDate(now);
+    testDar.setUpdateDate(now);
+    DataAccessRequestData contents = new DataAccessRequestData();
+    // add data datasetId
+    contents.setDatasetIds(List.of(dataset.getDataSetId()));
+    testDar.setData(contents);
+
+    dataAccessRequestDAO.insertVersion3(
+            testDar.getCollectionId(),
+            testDar.getReferenceId(),
+            testDar.getUserId(),
+            testDar.getCreateDate(),
+            testDar.getSortDate(),
+            testDar.getSubmissionDate(),
+            testDar.getUpdateDate(),
+            testDar.getData()
+    );
+    return testDar;
+  }
+
+  public Dac createDAC() {
+    Integer id = dacDAO.createDac(
+            "Test_" + RandomStringUtils.random(20, true, true),
+            "Test_" + RandomStringUtils.random(20, true, true),
+            new Date());
+    return dacDAO.findById(id);
+  }
+
+  // todo: I could shorten the code below by having a few different methods to create DARCollections - perhaps default to having two DARs, one of which is archived?
+
+  // todo: findAllDARCollectionsWithFiltersByUser
+  @Test
+  public void testFindAllDARCollectionsWithFiltersByUserArchived() {
+    // user, timestamp, darCode, dataset for 1 DAR collection
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 200);
+    DataSet dataset = createDataset();
+
+    // creating a collection
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar = createDAR(user, dataset, collectionId);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+
+    // needs: testDar,
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+
+    // DAO query being tested
+    String filterTerm = testDarCollection.getDarCode();
+    String testTerm = generateTestTerm(filterTerm);
+    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersByUser(testTerm, user.getDacUserId(), "dar_code","ASC");
+
+    // assertions
+    assertTrue(collections.isEmpty());
+    assertFalse(collections.contains(testDarCollection));
+  }
+
+  // todo: findDARCollectionIdsByDacIds
+  @Test
+  public void testFindDARCollectionIdsByDacIdsArchived() {
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 200);
+    DataSet dataset = createDataset();
+
+    // creating a collection
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar = createDAR(user, dataset, collectionId);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+
+    Dac dac = createDAC();
+    Consent consent = createConsent(dac.getDacId());
+    createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+    // DAO query being tested
+    List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(List.of(dac.getDacId()));
+
+    // assertions
+    assertTrue(collectionIds.isEmpty());
+    assertFalse(collectionIds.contains(testDarCollection));
+  }
+
+  // todo: findDARCollectionIdsByInstitutionId
+  @Test
+  public void testFindDARCollectionIdsByInsitutionIdArchived() {
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 200);
+    DataSet dataset = createDataset();
+
+    // creating a collection
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar = createDAR(user, dataset, collectionId);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+
+    // DAO query being tested
+    List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByInstitutionId(user.getInstitutionId());
+
+    // assertions
+    assertTrue(collectionIds.isEmpty());
+    assertFalse(collectionIds.contains(testDarCollection));
+  }
+
+  // todo: findDARCollectionByCollectionIds
+  @Test
+  public void testFindDARCollectionIdsByCollectionIdsArchived() {
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+    String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+    DataSet dataset1 = createDataset();
+    DataSet dataset2 = createDataset();
+
+    // creating a collection
+    Integer collectionId1 = darCollectionDAO.insertDarCollection(darCode1, user.getDacUserId(), now);
+    Integer collectionId2 = darCollectionDAO.insertDarCollection(darCode2, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar1 = createDAR(user, dataset1, collectionId1);
+    DataAccessRequest testDar2 = createDAR(user, dataset2, collectionId2);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection1 = darCollectionDAO.findDARCollectionByCollectionId(collectionId1);
+    DarCollection testDarCollection2 = darCollectionDAO.findDARCollectionByCollectionId(collectionId2);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+
+    List<Integer> collectionIds = List.of(
+            testDarCollection1.getDarCollectionId(),
+            testDarCollection2.getDarCollectionId()
+    );
+
+    // DAO query being tested
+    List<DarCollection> returnedCollections = darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
+
+    // assertions
+    assertEquals(1, returnedCollections.size());
+    assertFalse(returnedCollections.contains(testDarCollection1));
+    assertTrue(returnedCollections.contains(testDarCollection2));
+  }
+
+  // todo: findDARCollectionByCollectionIdsWithOrder
+  @Test
+  public void testFindDARCollectionIdsByCollectionIdsWithOrderArchived() {
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+    String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+    DataSet dataset1 = createDataset();
+    DataSet dataset2 = createDataset();
+
+    // creating a collection
+    Integer collectionId1 = darCollectionDAO.insertDarCollection(darCode1, user.getDacUserId(), now);
+    Integer collectionId2 = darCollectionDAO.insertDarCollection(darCode2, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar1 = createDAR(user, dataset1, collectionId1);
+    DataAccessRequest testDar2 = createDAR(user, dataset2, collectionId2);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection1 = darCollectionDAO.findDARCollectionByCollectionId(collectionId1);
+    DarCollection testDarCollection2 = darCollectionDAO.findDARCollectionByCollectionId(collectionId2);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+
+    List<Integer> collectionIds = List.of(
+            testDarCollection1.getDarCollectionId(),
+            testDarCollection2.getDarCollectionId()
+    );
+
+    // DAO query being tested
+    List<DarCollection> returnedCollections = darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(collectionIds, "dar_code","ASC");
+
+    // assertions
+    assertEquals(1, returnedCollections.size());
+    assertFalse(returnedCollections.contains(testDarCollection1));
+    assertTrue(returnedCollections.contains(testDarCollection2));
+  }
+
+
+  // todo: findAllDARCollections
+  @Test
+  public void testFindAllDARCollectionsArchived() {
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+    String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+    DataSet dataset1 = createDataset();
+    DataSet dataset2 = createDataset();
+
+    // creating a collection
+    Integer collectionId1 = darCollectionDAO.insertDarCollection(darCode1, user.getDacUserId(), now);
+    Integer collectionId2 = darCollectionDAO.insertDarCollection(darCode2, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar1 = createDAR(user, dataset1, collectionId1);
+    DataAccessRequest testDar2 = createDAR(user, dataset2, collectionId2);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection1 = darCollectionDAO.findDARCollectionByCollectionId(collectionId1);
+    DarCollection testDarCollection2 = darCollectionDAO.findDARCollectionByCollectionId(collectionId2);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+
+    // DAO query being tested
+    List<DarCollection> returnedCollections = darCollectionDAO.findAllDARCollections();
+
+    // assertions
+    assertEquals(1, returnedCollections.size());
+    assertFalse(returnedCollections.contains(testDarCollection1));
+    assertTrue(returnedCollections.contains(testDarCollection2));
+  }
+
+  // todo: findDARCollectionsCreatedByUserId
+  @Test
+  public void testFindDARCollectionsCreatedByUserIdArchived() {
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+    String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+    DataSet dataset1 = createDataset();
+    DataSet dataset2 = createDataset();
+
+    // creating a collection
+    Integer collectionId1 = darCollectionDAO.insertDarCollection(darCode1, user.getDacUserId(), now);
+    Integer collectionId2 = darCollectionDAO.insertDarCollection(darCode2, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar1 = createDAR(user, dataset1, collectionId1);
+    DataAccessRequest testDar2 = createDAR(user, dataset2, collectionId2);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection1 = darCollectionDAO.findDARCollectionByCollectionId(collectionId1);
+    DarCollection testDarCollection2 = darCollectionDAO.findDARCollectionByCollectionId(collectionId2);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+
+    // DAO query being tested
+    List<DarCollection> returnedCollections = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
+
+    // assertions
+    assertEquals(1, returnedCollections.size());
+    assertFalse(returnedCollections.contains(testDarCollection1));
+    assertTrue(returnedCollections.contains(testDarCollection2));
+  }
+
+  // todo: findDARCollectionByReferenceId
+  @Test
+  public void testFindDARCollectionByReferenceIdArchived() {
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+    String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+    DataSet dataset1 = createDataset();
+    DataSet dataset2 = createDataset();
+
+    // creating a collection
+    Integer collectionId1 = darCollectionDAO.insertDarCollection(darCode1, user.getDacUserId(), now);
+    Integer collectionId2 = darCollectionDAO.insertDarCollection(darCode2, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar1 = createDAR(user, dataset1, collectionId1);
+    DataAccessRequest testDar2 = createDAR(user, dataset2, collectionId2);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection1 = darCollectionDAO.findDARCollectionByCollectionId(collectionId1);
+    DarCollection testDarCollection2 = darCollectionDAO.findDARCollectionByCollectionId(collectionId2);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+
+    // DAO query being tested
+    DarCollection archivedCollection = darCollectionDAO.findDARCollectionByReferenceId(testDar1.getReferenceId());
+    DarCollection validCollection = darCollectionDAO.findDARCollectionByReferenceId(testDar2.getReferenceId());
+
+    // assertions
+    assertNull(archivedCollection);
+    assertTrue(validCollection.equals(testDarCollection2));
+  }
+
+  // todo: findDARCollectionByCollectionId
+  @Test
+  public void testFindDARCollectionByCollectionIdArchived() {
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 200);
+    DataSet dataset = createDataset();
+
+    // creating a collection
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar = createDAR(user, dataset, collectionId);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    assertNotNull(testDarCollection);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+
+    // DAO query being tested
+    DarCollection returnedCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+
+    // assertions
+    assertNull(returnedCollection);
+  }
+
+  // todo: returnUnfilteredCollectionCount
+  @Test
+  public void testReturnUnfilteredCollectionCountArchived() {
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+    String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+    DataSet dataset1 = createDataset();
+    DataSet dataset2 = createDataset();
+
+    // creating a collection
+    Integer collectionId1 = darCollectionDAO.insertDarCollection(darCode1, user.getDacUserId(), now);
+    Integer collectionId2 = darCollectionDAO.insertDarCollection(darCode2, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar1 = createDAR(user, dataset1, collectionId1);
+    DataAccessRequest testDar2 = createDAR(user, dataset2, collectionId2);
+
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+
+    // DAO query being tested
+    int count = darCollectionDAO.returnUnfilteredCollectionCount();
+
+    // assertions
+    assertEquals(1, count);
+  }
+
+  // todo: returnUnfilteredResearcherCollectionCount
+  @Test
+  public void testReturnUnfilteredResearcherCollectionCountArchived() {
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+    String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+    DataSet dataset1 = createDataset();
+    DataSet dataset2 = createDataset();
+
+    // creating a collection
+    Integer collectionId1 = darCollectionDAO.insertDarCollection(darCode1, user.getDacUserId(), now);
+    Integer collectionId2 = darCollectionDAO.insertDarCollection(darCode2, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar1 = createDAR(user, dataset1, collectionId1);
+    DataAccessRequest testDar2 = createDAR(user, dataset2, collectionId2);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+
+    // DAO query being tested
+    int count = darCollectionDAO.returnUnfilteredResearcherCollectionCount(user.getDacUserId());
+
+    // assertions
+    assertEquals(1, count);
+  }
+
+  // todo: returnUnfilteredCountForInstitution
+  @Test
+  public void testReturnUnfilteredCountForInstitutionArchived() {
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+    String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+    DataSet dataset1 = createDataset();
+    DataSet dataset2 = createDataset();
+
+    // creating a collection
+    Integer collectionId1 = darCollectionDAO.insertDarCollection(darCode1, user.getDacUserId(), now);
+    Integer collectionId2 = darCollectionDAO.insertDarCollection(darCode2, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar1 = createDAR(user, dataset1, collectionId1);
+    DataAccessRequest testDar2 = createDAR(user, dataset2, collectionId2);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+
+    // DAO query being tested
+    int count = darCollectionDAO.returnUnfilteredCountForInstitution(user.getInstitutionId());
+
+    // assertions
+    assertEquals(1, count);
+  }
+
+  // todo: getFilteredCollectionsForAdmin
+  @Test
+  public void testGetFilteredCollectionsForAdminArchived() {
+    // user, timestamp, darCode, dataset for 1 DAR collection
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 200);
+    DataSet dataset = createDataset();
+
+    // creating a collection
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar = createDAR(user, dataset, collectionId);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+
+    // DAO query being tested
+    String filterTerm = testDarCollection.getDarCode();
+    String testTerm = generateTestTerm(filterTerm);
+    List<DarCollection> collections = darCollectionDAO.getFilteredCollectionsForAdmin("dar_code","ASC", testTerm);
+
+    // assertions
+    assertTrue(collections.isEmpty());
+    assertFalse(collections.contains(testDarCollection));
+  }
+
+  // todo: getFilteredCollectionsForSigningOfficial
+  @Test
+  public void testGetFilteredCollectionsForSigningOfficialArchived() {
+    // user, timestamp, darCode, dataset for 1 DAR collection
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 200);
+    DataSet dataset = createDataset();
+
+    // creating a collection
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar = createDAR(user, dataset, collectionId);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+
+    // DAO query being tested
+    String filterTerm = testDarCollection.getDarCode();
+    List<DarCollection> collections = darCollectionDAO.getFilteredCollectionsForSigningOfficial("dar_code","ASC", user.getInstitutionId(), filterTerm);
+
+    // assertions
+    assertTrue(collections.isEmpty());
+    assertFalse(collections.contains(testDarCollection));
+  }
+
+  // todo: getFilteredListForResearcher
+  @Test
+  public void testGetFilteredListForResearcherArchived() {
+    // user, timestamp, darCode, dataset for 1 DAR collection
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 200);
+    DataSet dataset = createDataset();
+
+    // creating a collection
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar = createDAR(user, dataset, collectionId);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+
+    // DAO query being tested
+    String filterTerm = testDarCollection.getDarCode();
+    List<DarCollection> collections = darCollectionDAO.getFilteredListForResearcher("dar_code","ASC", user.getDacUserId(), filterTerm);
+
+    // assertions
+    assertTrue(collections.isEmpty());
+    assertFalse(collections.contains(testDarCollection));
+  }
+
+  // todo: getFilteredCollectionsForDACByCollectionIds
+  @Test
+  public void testGetFilteredCollectionsForDACByCollectionIdsArchived() {
+    // user, timestamp, darCode, dataset for 1 DAR collection
+    User user = createUserWithInstitution();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+    String darCode2 = "DAR-" + RandomUtils.nextInt(100, 200);
+    DataSet dataset1 = createDataset();
+    DataSet dataset2 = createDataset();
+
+    // creating a collection
+    Integer collectionId1 = darCollectionDAO.insertDarCollection(darCode1, user.getDacUserId(), now);
+    Integer collectionId2 = darCollectionDAO.insertDarCollection(darCode2, user.getDacUserId(), now);
+
+    // creating a test DAR
+    DataAccessRequest testDar1 = createDAR(user, dataset1, collectionId1);
+    DataAccessRequest testDar2 = createDAR(user, dataset2, collectionId2);
+
+    // the query to get collections - compared value
+    DarCollection testDarCollection1 = darCollectionDAO.findDARCollectionByCollectionId(collectionId1);
+    DarCollection testDarCollection2 = darCollectionDAO.findDARCollectionByCollectionId(collectionId2);
+
+    // archive the DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+
+    List<Integer> collectionIds = List.of(
+            testDarCollection1.getDarCollectionId(),
+            testDarCollection2.getDarCollectionId()
+    );
+
+    // DAO query being tested
+    String filterTerm = "";
+    List<DarCollection> collections = darCollectionDAO.getFilteredCollectionsForDACByCollectionIds("dar_code","ASC", collectionIds, filterTerm);
+
+    // assertions
+    assertFalse(collections.contains(testDarCollection1));
+    assertTrue(collections.contains(testDarCollection2));
   }
 }
