@@ -58,7 +58,7 @@ public class DataAccessReportsParser {
 
   public String getDatasetApprovedUsersHeader(User user) {
     StringBuilder builder = new StringBuilder();
-    if (user.doesUserHaveRole(EnumSet.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER))) {
+    if (user.doesUserHaveAnyRoleInSet(EnumSet.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER))) {
       builder
           .append(HeaderDAR.USERNAME.getValue())
           .append(DEFAULT_SEPARATOR)
@@ -104,7 +104,7 @@ public class DataAccessReportsParser {
 
     public String getDataSetApprovedUsersLine(User user, String email, String name, String institution, String darCode, Date approvalDate) {
       StringBuilder builder = new StringBuilder();
-      if (user.doesUserHaveRole(EnumSet.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER))) {
+      if (user.doesUserHaveAnyRoleInSet(EnumSet.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER))) {
         builder
             .append(email)
             .append(DEFAULT_SEPARATOR)

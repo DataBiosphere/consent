@@ -365,7 +365,7 @@ public class User {
     }
 
     @Transient
-    public boolean doesUserHaveRole(EnumSet<UserRoles> userRoles) {
+    public boolean doesUserHaveAnyRoleInSet(EnumSet<UserRoles> userRoles) {
         List<Integer> queriedRoleIds = userRoles.stream().map(UserRoles::getRoleId).collect(Collectors.toList());
         return getUserRoleIdsFromUser().stream().anyMatch(queriedRoleIds::contains);
     }
