@@ -559,11 +559,14 @@ public class DataAccessRequestService {
         return file;
     }
 
-    public File createDataSetApprovedUsersDocument(Integer dataSetId) throws IOException {
-        File file = File.createTempFile("DatasetApprovedUsers", ".tsv");
-        FileWriter darWriter = new FileWriter(file);
-        List<DataAccessRequest> darList = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(Integer.toString(dataSetId));
-        dataAccessReportsParser.setDataSetApprovedUsersHeader(darWriter);
+    public String getDatasetApprovedUsersContent(AuthUser authUser, Integer datasetId) {
+        User requestingUser = userDAO.findUserByEmail(authUser.getEmail());
+        if (Objects.isNull(requestingUser)) {
+            throw new NotFoundException("User not found: " + authUser.getEmail());
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append(dataAccessReportsParser.getDatasetApprovedUsersHeader(requestingUser));
+        List<DataAccessRequest> darList = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(Integer.toString(datasetId));
         if (CollectionUtils.isNotEmpty(darList)){
             for(DataAccessRequest dar: darList){
                 String referenceId = dar.getReferenceId();
@@ -574,12 +577,11 @@ public class DataAccessRequestService {
                     String name = researcher.getDisplayName();
                     String institution = (Objects.isNull(researcher.getInstitutionId())) ? "" : institutionDAO.findInstitutionById(researcher.getInstitutionId()).getName();
                     String darCode = dar.getData().getDarCode();
-                    dataAccessReportsParser.addDataSetApprovedUsersLine(darWriter, email, name, institution, darCode, approvalDate);
+                    builder.append(dataAccessReportsParser.getDataSetApprovedUsersLine(requestingUser, email, name, institution, darCode, approvalDate));
                 }
             }
         }
-        darWriter.flush();
-        return file;
+        return builder.toString();
     }
 
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(DataAccessRequest dataAccessRequest, User user, ElectionService electionService) {

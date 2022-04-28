@@ -381,9 +381,10 @@ public class DatasetResource extends Resource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @PermitAll
     @Path("/{datasetId}/approved/users")
-    public Response downloadDatasetApprovedUsers(@PathParam("datasetId") Integer datasetId) {
+    public Response downloadDatasetApprovedUsers(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
         try {
-            return Response.ok(darService.createDataSetApprovedUsersDocument(datasetId))
+            String content = darService.getDatasetApprovedUsersContent(authUser, datasetId);
+            return Response.ok(content)
                     .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=DatasetApprovedUsers.tsv")
                     .build();
         } catch (Exception e) {

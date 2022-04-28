@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 
 import java.beans.Transient;
+import java.util.EnumSet;
 import java.util.stream.Collectors;
 
 import java.util.ArrayList;
@@ -361,6 +362,12 @@ public class User {
           .stream()
           .map(UserRole::getRoleId)
           .collect(Collectors.toList());
+    }
+
+    @Transient
+    public boolean doesUserHaveRole(EnumSet<UserRoles> userRoles) {
+        List<Integer> queriedRoleIds = userRoles.stream().map(UserRoles::getRoleId).collect(Collectors.toList());
+        return getUserRoleIdsFromUser().stream().anyMatch(queriedRoleIds::contains);
     }
 
 }

@@ -1,0 +1,22 @@
+get:
+  summary: Download Dataset Approved Users
+  description: Download a list of approved users for a dataset
+  parameters:
+    - name: id
+      in: path
+      description: The dataset id
+      required: true
+      schema:
+        type: integer
+  tags:
+    - Datasets
+  responses:
+    200:
+      description: Download Dataset Approved Users
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    500:
+      description: Server error.
