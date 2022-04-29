@@ -77,6 +77,7 @@ public class DarCollectionServiceDAO {
           //        2c. Agreement Vote for chair if not manual review
           //    3. RP Election
           //    4. Member votes for rp election
+          //        4a. Chair Vote for chair
           collection.getDars().values().forEach(dar -> {
                 // If there is an existing open election for this DAR, we can ignore it
                 Election lastDataAccessElection = electionDAO.findLastElectionByReferenceIdAndType(dar.getReferenceId(), ElectionType.DATA_ACCESS.getValue());
@@ -107,12 +108,17 @@ public class DarCollectionServiceDAO {
     List<Update> userVotes = new ArrayList<>();
     voteUsers.forEach(
         u -> {
+          // All users get a minimum of one DAC vote type for both RP and DataAccess election types
           userVotes.add(createVoteInsert(handle, VoteType.DAC.getValue(), electionType, referenceId, now, u.getDacUserId()));
-          if (electionType.equals(ElectionType.DATA_ACCESS.getValue()) && u.hasUserRole(UserRoles.CHAIRPERSON)) {
+          // Chairpersons get a Chairperson vote for both RP and DataAccess election types
+          if (u.hasUserRole(UserRoles.CHAIRPERSON)) {
             userVotes.add(createVoteInsert(handle, VoteType.CHAIRPERSON.getValue(), electionType, referenceId, now, u.getDacUserId()));
-            userVotes.add(createVoteInsert(handle, VoteType.FINAL.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, now, u.getDacUserId()));
-            if (!isManualReview) {
-              userVotes.add(createVoteInsert(handle, VoteType.AGREEMENT.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, now, u.getDacUserId()));
+            // Chairpersons get Final and Agreement votes for DataAccess elections
+            if (ElectionType.DATA_ACCESS.getValue().equals(electionType)) {
+                userVotes.add(createVoteInsert(handle, VoteType.FINAL.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, now, u.getDacUserId()));
+                if (!isManualReview) {
+                  userVotes.add(createVoteInsert(handle, VoteType.AGREEMENT.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, now, u.getDacUserId()));
+                }
             }
           }
         });
