@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
@@ -26,6 +27,7 @@ public class DarCollectionReducer
     User user = null;
     UserProperty userProperty = null;
     Institution institution = null;
+    LibraryCard libraryCard = null;
     DarCollection collection =
         map.computeIfAbsent(
             rowView.getColumn("collection_id", Integer.class),
@@ -66,6 +68,9 @@ public class DarCollectionReducer
         if (Objects.nonNull(rowView.getColumn("v_vote_id", Integer.class))) {
           vote = rowView.getRow(Vote.class);
         }
+        if (Objects.nonNull(rowView.getColumn("lc_id", Integer.class))) {
+          libraryCard = rowView.getRow(LibraryCard.class);
+        }
       }
     } catch (MappingException e) {
       // ignore any exceptions
@@ -85,6 +90,9 @@ public class DarCollectionReducer
     if (Objects.nonNull(user)) {
       if (Objects.nonNull(institution)) {
         user.setInstitution(institution);
+      }
+      if (Objects.nonNull(libraryCard)) {
+        user.addLibraryCard(libraryCard);
       }
       if (Objects.nonNull(userProperty)) {
         user.addProperty(userProperty);
