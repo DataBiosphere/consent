@@ -60,27 +60,18 @@ public class DataAccessReportsParser {
     StringBuilder builder = new StringBuilder();
     if (user.doesUserHaveAnyRoleInSet(EnumSet.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER))) {
       builder
-          .append(HeaderDAR.USERNAME.getValue())
-          .append(DEFAULT_SEPARATOR)
-          .append(HeaderDAR.NAME.getValue())
-          .append(DEFAULT_SEPARATOR)
-          .append(HeaderDAR.ORGANIZATION.getValue())
-          .append(DEFAULT_SEPARATOR)
-          .append(HeaderDAR.DAR_ID.getValue())
-          .append(DEFAULT_SEPARATOR)
-          .append(HeaderDAR.DATE_REQUEST_APPROVAL.getValue())
-          .append(END_OF_LINE);
-    } else {
-      builder
-          .append(HeaderDAR.NAME.getValue())
-          .append(DEFAULT_SEPARATOR)
-          .append(HeaderDAR.ORGANIZATION.getValue())
-          .append(DEFAULT_SEPARATOR)
-          .append(HeaderDAR.DAR_ID.getValue())
-          .append(DEFAULT_SEPARATOR)
-          .append(HeaderDAR.DATE_REQUEST_APPROVAL.getValue())
-          .append(END_OF_LINE);
+        .append(HeaderDAR.USERNAME.getValue())
+        .append(DEFAULT_SEPARATOR);
     }
+    builder
+        .append(HeaderDAR.NAME.getValue())
+        .append(DEFAULT_SEPARATOR)
+        .append(HeaderDAR.ORGANIZATION.getValue())
+        .append(DEFAULT_SEPARATOR)
+        .append(HeaderDAR.DAR_ID.getValue())
+        .append(DEFAULT_SEPARATOR)
+        .append(HeaderDAR.DATE_REQUEST_APPROVAL.getValue())
+        .append(END_OF_LINE);
     return builder.toString();
   }
 
@@ -107,26 +98,17 @@ public class DataAccessReportsParser {
       if (user.doesUserHaveAnyRoleInSet(EnumSet.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER))) {
         builder
             .append(email)
-            .append(DEFAULT_SEPARATOR)
-            .append(name)
-            .append(DEFAULT_SEPARATOR)
-            .append(institution)
-            .append(DEFAULT_SEPARATOR)
-            .append(darCode)
-            .append(DEFAULT_SEPARATOR)
-            .append(formatTimeToDate(approvalDate.getTime()))
-            .append(END_OF_LINE);
-      } else {
-        builder
-            .append(name)
-            .append(DEFAULT_SEPARATOR)
-            .append(institution)
-            .append(DEFAULT_SEPARATOR)
-            .append(darCode)
-            .append(DEFAULT_SEPARATOR)
-            .append(formatTimeToDate(approvalDate.getTime()))
-            .append(END_OF_LINE);
+            .append(DEFAULT_SEPARATOR);
       }
+      builder
+          .append(name)
+          .append(DEFAULT_SEPARATOR)
+          .append(institution)
+          .append(DEFAULT_SEPARATOR)
+          .append(darCode)
+          .append(DEFAULT_SEPARATOR)
+          .append(formatTimeToDate(approvalDate.getTime()))
+          .append(END_OF_LINE);
       return builder.toString();
     }
 
