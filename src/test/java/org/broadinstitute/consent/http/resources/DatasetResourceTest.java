@@ -656,16 +656,16 @@ public class DatasetResourceTest {
     public void testDownloadDatasetApprovedUsersSuccess() {
         List<String> header = List.of("attachment; filename=DatasetApprovedUsers.tsv");
         initResource();
-        Response response = resource.downloadDatasetApprovedUsers(1);
+        Response response = resource.downloadDatasetApprovedUsers(new AuthUser(), 1);
         assertEquals(200, response.getStatus());
         assertEquals(header, response.getHeaders().get("Content-Disposition"));
     }
 
     @Test
-    public void testDownloadDatasetApprovedUsersError() throws Exception {
-        doThrow(new RuntimeException()).when(darService).createDataSetApprovedUsersDocument(any());
+    public void testDownloadDatasetApprovedUsersError() {
+        doThrow(new RuntimeException()).when(darService).getDatasetApprovedUsersContent(any(), any());
         initResource();
-        Response response = resource.downloadDatasetApprovedUsers(1);
+        Response response = resource.downloadDatasetApprovedUsers(new AuthUser(), 1);
         assertEquals(500, response.getStatus());
     }
 
