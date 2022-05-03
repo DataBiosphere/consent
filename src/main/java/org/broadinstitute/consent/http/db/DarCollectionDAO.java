@@ -41,9 +41,12 @@ public interface DarCollectionDAO {
       " LEFT JOIN user_property up ON u.dacuserid = up.userid AND up.propertykey in ('isThePI', 'piName', 'havePI', 'piERACommonsID') " +
       " LEFT JOIN institution i ON i.institution_id = u.institution_id " +
       " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
-      " LEFT JOIN (SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest FROM election) AS e " +
+      " LEFT JOIN (" +
+      "   SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest " +
+      "   FROM election " +
+      "   WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp'" +
+      " ) AS e " +
       "   ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) " +
-      "   WHERE LOWER(e.electiontype) = 'dataaccess' OR LOWER(e.electiontype) = 'rp' " +
       " LEFT JOIN vote v ON v.electionid = e.electionid ";
 
   String filterQuery =
@@ -77,7 +80,7 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionsAndDarsViaIds)
-  //NOTE: don't think this method is being used anymore due to switch to role based queries
+  //NOTE: don't think this method is being used anymore due to the switch to role based queries, would like to remove if possible
   List<DarCollection> findAllDARCollectionsWithFiltersByUser(
           @Bind("filterTerm") String filterTerm,
           @Bind("userId") Integer userId,
@@ -192,15 +195,19 @@ public interface DarCollectionDAO {
       + "LEFT JOIN user_property up ON u.dacuserid = up.userid "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
       + "LEFT JOIN ("
-          + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
-          + "FROM election"
+      + "  SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
+      + "   FROM election "
+      + "   WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp'"
       + ") AS e "
       + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
-      + "WHERE c.create_user_id = :userId " 
-      + "AND LOWER(e.electiontype) = 'dataaccess OR LOWER(e.electiontype) = 'rp' "
+      + "WHERE c.create_user_id = :userId "
   )
   List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId); //update tests
 
+
+  //NOTE: Do we need this DAO method anymore?
+  //DARs and Collections are now linked via collectionId
+  //This query, as well as relevant service and resource methods, haven't been updated in 8 months.
   /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given referenceId
    *
@@ -303,7 +310,6 @@ public interface DarCollectionDAO {
    */
   @SqlUpdate("DELETE FROM dar_collection WHERE collection_id = :collectionId")
   void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
-
 
   String coreCountQuery = "SELECT COUNT(DISTINCT c.collection_id) "
       + "FROM dar_collection c "

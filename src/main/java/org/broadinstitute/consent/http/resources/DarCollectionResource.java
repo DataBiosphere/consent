@@ -121,6 +121,7 @@ public class DarCollectionResource extends Resource {
     return user.hasUserRole(UserRoles.SIGNINGOFFICIAL) && institutionsMatch;
   }
 
+  //NOTE: do we need this endpoint anymore? DARs and collections are now bound by collectionID
   @GET
   @Path("dar/{referenceId}")
   @Produces("application/json")
