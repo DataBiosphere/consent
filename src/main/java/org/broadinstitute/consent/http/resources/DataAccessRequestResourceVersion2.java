@@ -93,12 +93,6 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
-        return Response
-          .status(Response.Status.FORBIDDEN)
-                .entity("Library Card required for creating Data Access Requests")
-          .build();
-      }
       DataAccessRequest newDar = populateDarFromJsonString(user, dar);
       List<DataAccessRequest> results =
           dataAccessRequestService.createDataAccessRequest(user, newDar);

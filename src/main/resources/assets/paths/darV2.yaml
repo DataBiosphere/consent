@@ -19,8 +19,6 @@ post:
             type: array
             items:
               $ref: '../schemas/DataAccessRequest.yaml'
-    403:
-      description: A user is required to have a Library Card to submit Data Access Requests
     500:
       description: Internal Server Error.
 get:
