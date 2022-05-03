@@ -43,6 +43,7 @@ public interface DarCollectionDAO {
       " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
       " LEFT JOIN (SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest FROM election) AS e " +
       "   ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) " +
+      "   WHERE LOWER(e.electiontype) = 'dataaccess' OR LOWER(e.electiontype) = 'rp' " +
       " LEFT JOIN vote v ON v.electionid = e.electionid ";
 
   String filterQuery =
@@ -76,6 +77,7 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionsAndDarsViaIds)
+  //NOTE: don't think this method is being used anymore due to switch to role based queries
   List<DarCollection> findAllDARCollectionsWithFiltersByUser(
           @Bind("filterTerm") String filterTerm,
           @Bind("userId") Integer userId,
@@ -92,7 +94,7 @@ public interface DarCollectionDAO {
           + " AND dar_datasets.dataset_id = ca.datasetid "
           + " AND consent.consentid = ca.consentid "
           + " AND consent.dac_id IN (<dacIds>) ")
-  List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds);
+  List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds); 
 
   @SqlQuery(
       " SELECT distinct c.collection_id "
@@ -113,7 +115,7 @@ public interface DarCollectionDAO {
   @SqlQuery(
     getCollectionAndDars + " WHERE c.collection_id in (<collectionIds>)")
   List<DarCollection> findDARCollectionByCollectionIds(
-          @BindList("collectionIds") List<Integer> collectionIds);
+          @BindList("collectionIds") List<Integer> collectionIds); //update tests
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
@@ -130,7 +132,7 @@ public interface DarCollectionDAO {
   List<DarCollection> findDARCollectionByCollectionIdsWithOrder(
           @BindList("collectionIds") List<Integer> collectionIds,
           @Define("sortField") String sortField,
-          @Define("sortOrder") String sortOrder);
+          @Define("sortOrder") String sortOrder); //update tests
 
   /**
    * Find all DARCollections with their DataAccessRequests
@@ -159,10 +161,13 @@ public interface DarCollectionDAO {
         "LEFT JOIN user_property up ON u.dacuserid = up.userid " +
         "INNER JOIN data_access_request dar on c.collection_id = dar.collection_id " +
         "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
-        " LEFT JOIN (SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest FROM election) AS e " +
+        "LEFT JOIN (" +
+        "   SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest FROM election " +
+        "   WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp' " +
+        ") AS e " +
         "   ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
   )
-  List<DarCollection> findAllDARCollections();
+  List<DarCollection> findAllDARCollections(); //update tests
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
@@ -191,9 +196,10 @@ public interface DarCollectionDAO {
           + "FROM election"
       + ") AS e "
       + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
-      + "WHERE c.create_user_id = :userId "
+      + "WHERE c.create_user_id = :userId " 
+      + "AND LOWER(e.electiontype) = 'dataaccess OR LOWER(e.electiontype) = 'rp' "
   )
-  List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
+  List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId); //update tests
 
   /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given referenceId
@@ -259,16 +265,17 @@ public interface DarCollectionDAO {
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "LEFT JOIN ("
           + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
-          + "FROM election"
+          + "FROM election "
+          + "WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp'"
       + ") AS e "
       + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
       + "LEFT JOIN vote v "
       + "ON v.electionid = e.electionid "
       + "LEFT JOIN dacuser du "
       + "ON du.dacuserid = v.dacuserid "
-      + "WHERE c.collection_id = :collectionId;"
+      + "WHERE c.collection_id = :collectionId "
   )
-  DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId);
+  DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId); //update tests
 
   /**
    * Create a new DAR Collection with the given dar code, create user ID, and create date
@@ -326,7 +333,7 @@ public interface DarCollectionDAO {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
           + " WHERE (" + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
-  List<DarCollection> getFilteredCollectionsForAdmin(
+  List<DarCollection> getFilteredCollectionsForAdmin( //update tests
     @Define("sortField") String sortField,
     @Define("sortOrder") String sortOrder,
     @Bind("filterTerm") String filterTerm
@@ -343,7 +350,7 @@ public interface DarCollectionDAO {
   @SqlQuery(getCollectionAndDars
       + " WHERE u.institution_id = :institutionId AND ("
       + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
-  List<DarCollection> getFilteredCollectionsForSigningOfficial(
+  List<DarCollection> getFilteredCollectionsForSigningOfficial( //update tests
       @Define("sortField") String sortField,
       @Define("sortOrder") String sortOrder,
       @Bind("institutionId") Integer institutionId,
@@ -360,7 +367,7 @@ public interface DarCollectionDAO {
   @SqlQuery(getCollectionAndDars
       + " WHERE c.create_user_id = :userId AND ("
       + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
-  List<DarCollection> getFilteredListForResearcher(
+  List<DarCollection> getFilteredListForResearcher(  //update tests
       @Define("sortField") String sortField,
       @Define("sortOrder") String sortOrder,
       @Bind("userId") Integer userId,
@@ -377,7 +384,7 @@ public interface DarCollectionDAO {
   @SqlQuery(getCollectionAndDars
           + " WHERE c.collection_id IN (<collectionIds>) AND ("
           + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
-  List<DarCollection> getFilteredCollectionsForDACByCollectionIds(
+  List<DarCollection> getFilteredCollectionsForDACByCollectionIds(  //update tests
           @Define("sortField") String sortField,
           @Define("sortOrder") String sortOrder,
           @BindList("collectionIds") List<Integer> collectionIds,

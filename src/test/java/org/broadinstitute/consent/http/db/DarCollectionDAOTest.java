@@ -42,21 +42,40 @@ import static org.junit.Assert.fail;
 
 public class DarCollectionDAOTest extends DAOTestHelper  {
 
+  private void generateDatasetElectionForCollection(DarCollection collection) {
+    DataAccessRequest dar = collection.getDars().values().stream().filter(d -> !d.getElections().isEmpty()).findFirst().orElse(null);
+    String referenceId = dar.getReferenceId();
+    Election election = dar.getElections().values().stream().findFirst().orElse(null);
+    Integer datasetId = election.getDataSetId();
+    electionDAO.insertElection("DataSet", "Open", new Date(), referenceId, datasetId);
+  } 
+
+  private List<Election> getElectionsFromCollection(DarCollection collection) {
+    return collection.getDars().values().stream()
+        .map(DataAccessRequest::getElections)
+        .map(electionMap -> electionMap.values())
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+  }
+
   @Test
   public void testFindAllDARCollections() {
     DarCollection collection = createDarCollectionMultipleUserProperties();
     List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
     assertTrue(allAfter.contains(collection));
     assertEquals(1, allAfter.size());
+    DarCollection targetCollection = allAfter.get(0);
+    generateDatasetElectionForCollection(targetCollection);
     List<UserProperty> userProperties = allAfter.get(0).getCreateUser().getProperties();
     assertFalse(userProperties.isEmpty());
-    List<Election> elections = collection.getDars().values().stream()
-      .map(DataAccessRequest::getElections)
-      .map(electionMap -> electionMap.values())
-      .flatMap(Collection::stream)
-      .collect(Collectors.toList());
+    
+    List<Election> elections = getElectionsFromCollection(targetCollection);
     assertNotNull(elections);
     assertTrue(elections.size() > 0);
+    List<Election> datasetElections = elections.stream()
+      .filter(e -> e.getElectionType().equalsIgnoreCase("dataset"))
+      .collect(Collectors.toList());
+    assertEquals(0, datasetElections.size());
     userProperties.forEach(p -> assertEquals(collection.getCreateUserId(), p.getUserId()));
   }
 
@@ -168,6 +187,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     // and DAC in such a way that all are connected via the dataset id.
     Dataset dataset = createDataset();
     DarCollection c = createDarCollection();
+    generateDatasetElectionForCollection(c);
     DataAccessRequest dar = new ArrayList<>(c.getDars().values()).get(0);
     if (Objects.isNull(dar)) {
       fail("DAR was not created in collection");
@@ -426,8 +446,10 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     List<DarCollection> collections = darCollectionDAO.findAllDARCollections();
     collections.sort((a, b) -> (a.getDarCode().compareToIgnoreCase(b.getDarCode())));
 
-    List<DarCollection> collectionsResult = darCollectionDAO.getFilteredListForResearcher("dar_code", "ASC", dar1.getUserId(), "");
+    DarCollection targetCollection = collections.get(0);
+    generateDatasetElectionForCollection(targetCollection);
 
+    List<DarCollection> collectionsResult = darCollectionDAO.getFilteredListForResearcher("dar_code", "ASC", dar1.getUserId(), "");
     assertEquals(2, collectionsResult.size());
     assertEquals(collectionsResult.get(0).getDarCode(), collections.get(0).getDarCode());
 
@@ -437,6 +459,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     DataAccessRequest expectedDarTwo = new ArrayList<>(collections.get(1).getDars().values()).get(0);
     assertEquals(expectedDarOne.getData().getDarCode(), darResultOne.getData().getDarCode());
     assertEquals(expectedDarTwo.getData().getDarCode(), darResultTwo.getData().getDarCode());
+    
   }
 
   @Test
