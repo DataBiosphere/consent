@@ -338,9 +338,6 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     }
   }
 
-
-  //NOTE: rewrite these tests to use the role based query (test as researcher since old method queried by user)
-
   @Test
   public void testGetFilteredListForResearcher_NegativeDatasetElectionTest() {
     DarCollection collection = createDarCollectionMultipleUserProperties();

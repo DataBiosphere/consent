@@ -80,7 +80,6 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionsAndDarsViaIds)
-  //NOTE: don't think this method is being used anymore due to the switch to role based queries, would like to remove if possible
   List<DarCollection> findAllDARCollectionsWithFiltersByUser(
           @Bind("filterTerm") String filterTerm,
           @Bind("userId") Integer userId,
@@ -118,7 +117,7 @@ public interface DarCollectionDAO {
   @SqlQuery(
     getCollectionAndDars + " WHERE c.collection_id in (<collectionIds>)")
   List<DarCollection> findDARCollectionByCollectionIds(
-          @BindList("collectionIds") List<Integer> collectionIds); //update tests
+          @BindList("collectionIds") List<Integer> collectionIds);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
@@ -135,7 +134,7 @@ public interface DarCollectionDAO {
   List<DarCollection> findDARCollectionByCollectionIdsWithOrder(
           @BindList("collectionIds") List<Integer> collectionIds,
           @Define("sortField") String sortField,
-          @Define("sortOrder") String sortOrder); //update tests
+          @Define("sortOrder") String sortOrder);
 
   /**
    * Find all DARCollections with their DataAccessRequests
@@ -170,7 +169,7 @@ public interface DarCollectionDAO {
         ") AS e " +
         "   ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
   )
-  List<DarCollection> findAllDARCollections(); //update tests
+  List<DarCollection> findAllDARCollections();
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
@@ -202,12 +201,8 @@ public interface DarCollectionDAO {
       + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
       + "WHERE c.create_user_id = :userId "
   )
-  List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId); //update tests
+  List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
 
-
-  //NOTE: Do we need this DAO method anymore?
-  //DARs and Collections are now linked via collectionId
-  //This query, as well as relevant service and resource methods, haven't been updated in 8 months.
   /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given referenceId
    *
@@ -282,7 +277,7 @@ public interface DarCollectionDAO {
       + "ON du.dacuserid = v.dacuserid "
       + "WHERE c.collection_id = :collectionId "
   )
-  DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId); //update tests
+  DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId);
 
   /**
    * Create a new DAR Collection with the given dar code, create user ID, and create date
@@ -339,7 +334,7 @@ public interface DarCollectionDAO {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
           + " WHERE (" + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
-  List<DarCollection> getFilteredCollectionsForAdmin( //update tests
+  List<DarCollection> getFilteredCollectionsForAdmin(
     @Define("sortField") String sortField,
     @Define("sortOrder") String sortOrder,
     @Bind("filterTerm") String filterTerm
@@ -356,7 +351,7 @@ public interface DarCollectionDAO {
   @SqlQuery(getCollectionAndDars
       + " WHERE u.institution_id = :institutionId AND ("
       + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
-  List<DarCollection> getFilteredCollectionsForSigningOfficial( //update tests
+  List<DarCollection> getFilteredCollectionsForSigningOfficial(
       @Define("sortField") String sortField,
       @Define("sortOrder") String sortOrder,
       @Bind("institutionId") Integer institutionId,
@@ -373,7 +368,7 @@ public interface DarCollectionDAO {
   @SqlQuery(getCollectionAndDars
       + " WHERE c.create_user_id = :userId AND ("
       + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
-  List<DarCollection> getFilteredListForResearcher(  //update tests
+  List<DarCollection> getFilteredListForResearcher(
       @Define("sortField") String sortField,
       @Define("sortOrder") String sortOrder,
       @Bind("userId") Integer userId,
@@ -390,7 +385,7 @@ public interface DarCollectionDAO {
   @SqlQuery(getCollectionAndDars
           + " WHERE c.collection_id IN (<collectionIds>) AND ("
           + DarCollection.FILTER_TERMS_QUERY + ") " + orderStatement)
-  List<DarCollection> getFilteredCollectionsForDACByCollectionIds(  //update tests
+  List<DarCollection> getFilteredCollectionsForDACByCollectionIds(
           @Define("sortField") String sortField,
           @Define("sortOrder") String sortOrder,
           @BindList("collectionIds") List<Integer> collectionIds,
