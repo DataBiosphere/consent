@@ -1,6 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.junit.Test;
 
@@ -110,5 +113,38 @@ public class MatchDAOTest extends DAOTestHelper {
     assertTrue(count1 >= 1);
     Integer count2 = matchDAO.countMatchesByResult(m2.getMatch());
     assertTrue(count2 >= 1);
+  }
+
+  @Test
+  public void testFindMatchesForPurposeIds() {
+    Dataset dataset = createDataset();
+    //query should pull the latest election for a given reference id
+    //creating two access elections with the same reference id and datasetid to test that condition
+    String darReferenceId = UUID.randomUUID().toString();
+    Election targetElection = createAccessElection(
+      darReferenceId, dataset.getDataSetId()
+    );
+    Election ignoredAccessElection = createAccessElection(
+      UUID.randomUUID().toString(), dataset.getDataSetId()
+    );
+
+    //Generate RP election to test that the query only references DataAccess elections
+    Election rpElection = createRPElection(UUID.randomUUID().toString(), dataset.getDataSetId());
+    Dac dac = createDac();
+    String consentId = createConsent(dac.getDacId()).getConsentId();
+
+    //This match represents the match record generated for the target election
+    matchDAO.insertMatch(consentId, darReferenceId, true, false, new Date());
+
+    // This match represents the match record generated for the ignored access election
+    matchDAO.insertMatch(consentId, ignoredAccessElection.getReferenceId(), false, false, new Date());
+
+    // This match is never created under consent's workflow (unless the cause is a bug)
+    // This is included simply to test the DataAccess conditional on the INNER JOIN statement
+    matchDAO.insertMatch(consentId, rpElection.getReferenceId(), false, false, new Date());
+
+    List<Match> matchResults = matchDAO.findMatchesForPurposeIds(List.of(darReferenceId));
+    assertEquals(1, matchResults.size());
+    assertTrue(matchResults.get(0).getId().equals(targetElection.getElectionId()));
   }
 }

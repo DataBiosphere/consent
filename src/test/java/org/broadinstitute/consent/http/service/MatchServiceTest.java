@@ -50,6 +50,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doAnswer;
@@ -298,6 +299,15 @@ public class MatchServiceTest {
         initService();
 
         service.removeMatchesForConsent(sampleConsent1.getConsentId());
+    }
+
+    @Test
+    public void testFindMatchesForPurposeIds() {
+        Match mockMatch = new Match();
+        when(matchDAO.findMatchesForPurposeIds(anyList()))
+            .thenReturn(List.of(mockMatch));
+        initService();
+        service.findMatchesForPurposeIds(List.of("test"));
     }
 
     @SuppressWarnings("unchecked")

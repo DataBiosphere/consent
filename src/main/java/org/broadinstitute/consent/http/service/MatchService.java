@@ -114,6 +114,10 @@ public class MatchService {
         return matchDAO.findMatchesByConsentId(consentId);
     }
 
+    public List<Match> findMatchesForPurposeIds(List<String> purposeIds) {
+        return matchDAO.findMatchesForPurposeIds(purposeIds);
+    }
+
     public void reprocessMatchesForConsent(String consentId) {
         removeMatchesForConsent(consentId);
         if (!consentDAO.checkManualReview(consentId)) {
