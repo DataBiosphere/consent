@@ -145,6 +145,34 @@ public class MatchDAOTest extends DAOTestHelper {
 
     List<Match> matchResults = matchDAO.findMatchesForPurposeIds(List.of(darReferenceId));
     assertEquals(1, matchResults.size());
-    assertTrue(matchResults.get(0).getId().equals(targetElection.getElectionId()));
+    Match result = matchResults.get(0);
+    assertEquals(targetElection.getReferenceId(), result.getPurpose());
+  }
+
+  @Test
+  public void testFindMatchesForPurposeIds_NegativeTest() {
+    Dataset dataset = createDataset();
+    String darReferenceId = UUID.randomUUID().toString();
+
+    //Generate access election for test
+    Election accessElection = createAccessElection(
+        UUID.randomUUID().toString(), dataset.getDataSetId());
+
+    //Generate RP election for test
+    Election rpElection = createRPElection(darReferenceId, dataset.getDataSetId());
+    Dac dac = createDac();
+    String consentId = createConsent(dac.getDacId()).getConsentId();
+
+    // This match represents the match record generated for the access election
+    matchDAO.insertMatch(consentId, accessElection.getReferenceId(), true, false, new Date());
+
+    // This match is never created under consent's workflow (unless the cause is a bug)
+    // This is included simply to test the DataAccess conditional on the INNER JOIN statement
+    matchDAO.insertMatch(consentId, rpElection.getReferenceId(), false, false, new Date());
+
+    //Negative testing means we'll feed the query a reference id that isn't tied to a DataAccess election
+    //Again, a match like this usually isn't generated in a normal workflow unless bug occurs, but having the 'DataAccess' condition is a nice safety net
+    List<Match> matchResults = matchDAO.findMatchesForPurposeIds(List.of(darReferenceId));
+    assertTrue(matchResults.isEmpty());
   }
 }
