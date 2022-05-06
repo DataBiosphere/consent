@@ -73,7 +73,7 @@ public class MatchResource extends Resource {
   }
 
   @GET
-  @Path("/purpose/bulk/{purposeIds}")
+  @Path("/purpose/batch/{purposeIds}")
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
   public Response getMatchesForPurposeIds(
     @Auth AuthUser authUser, @QueryParam("purposeIds") String purposeIds
@@ -85,6 +85,7 @@ public class MatchResource extends Resource {
         List<String> purposeIdsList = Arrays.asList(purposeIds.split(","))
           .stream()
           .filter(id -> !id.isBlank())
+          .map(id -> id.strip())
           .collect(Collectors.toList());
 
         if(purposeIdsList.isEmpty()) {
@@ -112,5 +113,4 @@ public class MatchResource extends Resource {
       return createExceptionResponse(e);
     }
   }
-
 }
