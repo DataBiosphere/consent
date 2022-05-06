@@ -2052,36 +2052,7 @@ paths:
   /api/dataset/{id}:
     $ref: './paths/datasetById.yaml'
   /api/dataset/{id}/approved/users:
-    get:
-      summary: Dataset Approved Users
-      description: Dataset Approved Users
-      parameters:
-        - name: id
-          in: path
-          description: The dataset id
-          required: true
-          schema:
-            type: integer
-      tags:
-        - Datasets
-      responses:
-        200:
-          description: Dataset Approved Users
-          content:
-            text/plain:
-              schema:
-                type: string
-          headers:
-            Content-type:
-              schema:
-                type: string
-              description: text/plain
-            Content-Disposition:
-              schema:
-                type: string
-              description: attachment; filename=DatasetApprovedUsers.tsv
-        500:
-          description: Server error.
+    $ref: './paths/datasetByIdApprovedUsers.yaml'
   /api/dataset/download:
     post:
       summary: Download datasets by id list

@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import io.dropwizard.testing.ResourceHelpers;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -10,6 +12,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
@@ -18,6 +21,9 @@ import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
 import java.sql.Timestamp;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -111,6 +117,8 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     List<UserProperty> userProperties = returned.getCreateUser().getProperties();
     assertFalse(userProperties.isEmpty());
     userProperties.forEach(p -> assertEquals(collection.getCreateUserId(), p.getUserId()));
+
+    assertNull(returned.getCreateUser().getLibraryCards());
   }
 
   @Test
@@ -123,6 +131,31 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     Integer userId = collection.getCreateUser().getDacUserId();
     assertFalse(userProperties.isEmpty());
     userProperties.forEach(p -> assertEquals(userId, p.getUserId()));
+  }
+
+  @Test
+  public void testFindDARCollectionByCollectionIdLibraryCard() throws IOException {
+    User user = createUser();
+    LibraryCard libraryCard = createLibraryCard(user);
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+
+    String referenceId = UUID.randomUUID().toString();
+    String darDataString = FileUtils.readFileToString(
+            new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
+            Charset.defaultCharset());
+    DataAccessRequestData data = DataAccessRequestData.fromString(darDataString);
+    Date now = new Date();
+    dataAccessRequestDAO.insertVersion3(collectionId, referenceId, user.getDacUserId(), now, now, now, now, data);
+
+    DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    User returnedUser = collection.getCreateUser();
+    assertEquals(user, returnedUser);
+
+    List<LibraryCard> returnedLibraryCards = returnedUser.getLibraryCards();
+    assertEquals(1, returnedLibraryCards.size());
+    assertEquals(libraryCard, returnedLibraryCards.get(0));
+    assertEquals(user.getDacUserId(), returnedLibraryCards.get(0).getUserId());
   }
 
   @Test

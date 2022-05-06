@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
@@ -241,12 +242,14 @@ public interface DarCollectionDAO {
   @RegisterBeanMapper(value = Election.class, prefix = "e")
   @RegisterBeanMapper(value = Vote.class, prefix = "v")
   @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
+  @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
     "SELECT c.*, "
       + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
       + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
       + UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR
+      + LibraryCard.QUERY_FIELDS_WITH_LC_PREFIX + QUERY_FIELD_SEPARATOR
       + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
       + "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, "
       + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
@@ -259,6 +262,7 @@ public interface DarCollectionDAO {
       + "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid "
       + "LEFT JOIN user_property up ON u.dacuserid = up.userid "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
+      + "LEFT JOIN library_card lc ON u.dacuserid = lc.user_id "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "LEFT JOIN ("
           + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "

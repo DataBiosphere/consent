@@ -59,16 +59,47 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
             createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
 
     assertTrue(referenceIds.contains(dar.getReferenceId()));
-    // Ensure that we have an access and rp election
     assertFalse(createdElections.isEmpty());
-    assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
-    assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
-    // Ensure that we have primary vote types
     assertFalse(createdVotes.isEmpty());
-    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
-    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
-    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
+
+    // Ensure that we have all primary vote types for each election type
+    // Data Access Elections have Chair, Dac, Final, and Agreement votes
+    Optional<Election> daElectionOption = createdElections.stream().filter(e -> ElectionType.DATA_ACCESS.getValue().equals(e.getElectionType())).findFirst();
+    assertTrue(daElectionOption.isPresent());
+    assertTrue(createdVotes
+      .stream()
+      .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
+      .anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue()))
+    );
+    assertTrue(createdVotes
+      .stream()
+      .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
+      .anyMatch(v -> v.getType().equals(VoteType.DAC.getValue()))
+    );
+    assertTrue(createdVotes
+      .stream()
+      .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
+      .anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue()))
+    );
+    assertTrue(createdVotes
+      .stream()
+      .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
+      .anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue()))
+    );
+
+    // RP Elections have Chair and Dac votes
+    Optional<Election> rpElectionOption = createdElections.stream().filter(e -> ElectionType.RP.getValue().equals(e.getElectionType())).findFirst();
+    assertTrue(rpElectionOption.isPresent());
+    assertTrue(createdVotes
+      .stream()
+      .filter(v -> v.getElectionId().equals(rpElectionOption.get().getElectionId()))
+      .anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue()))
+    );
+    assertTrue(createdVotes
+      .stream()
+      .filter(v -> v.getElectionId().equals(rpElectionOption.get().getElectionId()))
+      .anyMatch(v -> v.getType().equals(VoteType.DAC.getValue()))
+    );
   }
 
   /**

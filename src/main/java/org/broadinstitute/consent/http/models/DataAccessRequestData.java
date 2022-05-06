@@ -46,6 +46,7 @@ public class DataAccessRequestData {
     private String country;
     private String projectTitle;
     private Boolean checkCollaborator;
+    private Boolean checkNihDataOnly;
     private String researcher;
     private String isThePi;
     private String havePi;
@@ -247,6 +248,14 @@ public class DataAccessRequestData {
 
     public void setCheckCollaborator(Boolean checkCollaborator) {
         this.checkCollaborator = checkCollaborator;
+    }
+
+    public Boolean getCheckNihDataOnly() {
+        return checkNihDataOnly;
+    }
+
+    public void setCheckNihDataOnly(Boolean checkNihDataOnly) {
+        this.checkNihDataOnly = checkNihDataOnly;
     }
 
     public String getResearcher() {

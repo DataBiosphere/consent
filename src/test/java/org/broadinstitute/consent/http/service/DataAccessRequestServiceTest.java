@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -35,6 +36,7 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
+import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -56,7 +58,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 public class DataAccessRequestServiceTest {
 
@@ -458,7 +459,7 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void testCreateDataSetApprovedUsersDocument() {
+    public void testCreateDatasetApprovedUsersContentAsNonPrivilegedUser() {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         User user = new User();
@@ -474,15 +475,49 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(dar);
         when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
                 .thenReturn(new Date());
-
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
 
         initService();
 
         try {
-            File file = service.createDataSetApprovedUsersDocument(1);
+            String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
+            System.out.println(approvedUsers);
+            assertNotNull(approvedUsers);
+            assertFalse(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
+        } catch (Exception ioe) {
+            assert false;
+        }
+    }
 
-            assertNotNull(file);
-        } catch (IOException ioe) {
+    @Test
+    public void testCreateDatasetApprovedUsersContentAsPrivilegedUser() {
+        DataAccessRequest dar = generateDataAccessRequest();
+        dar.setUserId(1);
+        User user = new User();
+        UserRole userRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+        user.addRole(userRole);
+        user.setDacUserId(1);
+        user.setDisplayName("displayName");
+        user.setInstitutionId(1);
+        Institution institution = new Institution();
+        institution.setName("Institution");
+        when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
+        when(dataAccessRequestDAO.findAllDataAccessRequests())
+                .thenReturn(Collections.singletonList(dar));
+        when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
+                .thenReturn(dar);
+        when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
+                .thenReturn(new Date());
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+
+        initService();
+
+        try {
+            String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
+            System.out.println(approvedUsers);
+            assertNotNull(approvedUsers);
+            assertTrue(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
+        } catch (Exception ioe) {
             assert false;
         }
     }
@@ -570,10 +605,10 @@ public class DataAccessRequestServiceTest {
         return dar;
     }
 
-    private Election generateElection(Integer dataSetId) {
+    private Election generateElection(Integer datasetId) {
         String refId = UUID.randomUUID().toString();
         Election election = new Election();
-        election.setDataSetId(dataSetId);
+        election.setDataSetId(datasetId);
         election.setReferenceId(refId);
 
         return election;
