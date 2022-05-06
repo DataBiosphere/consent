@@ -316,8 +316,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 //
 //    }
 
-    //todo: private method to create a DAR
-    public DataAccessRequest createDAR(User user, Dataset dataset, String darCode) {
+    // local method to create a DAR
+    protected DataAccessRequest createDAR(User user, Dataset dataset, String darCode) {
         Timestamp now = new Timestamp(new Date().getTime());
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         DataAccessRequest testDar = new DataAccessRequest();
@@ -345,8 +345,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         return testDar;
     }
 
-    //todo: private method to create a Draft DAR
-    public DataAccessRequest createDraftDAR(User user) {
+    // local method to create a Draft DAR
+    protected DataAccessRequest createDraftDAR(User user) {
         Date now = new Date();
         DataAccessRequestData contents = new DataAccessRequestData();
         String referenceId = UUID.randomUUID().toString();
@@ -362,7 +362,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
 
-    //todo: findAllDataAccessRequests
+    // findAllDataAccessRequests should exclude archived DARs
     @Test
     public void testFindAllArchived() {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
@@ -377,7 +377,9 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(returnedDARs.isEmpty());
     }
 
-    //todo: test case unarchived + archived - make sure we get the un archived collection back
+
+    // findAllDataAccessRequests should exclude archived DARs
+    // test case with two DARs
     @Test
     public void testFindAllFilterArchived() {
         User user = createUserWithInstitution();
@@ -395,7 +397,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
 
-    //todo: findAllDataAccessRequestsByDatasetId
+    // findAllDataAccessRequestsByDatasetId should exclude archived DARs
     @Test
     public void testFindAllByDatasetIdArchived() {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
@@ -410,7 +412,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(returnedDARs.isEmpty());
     }
 
-    //todo: findAllDraftDataAccessRequests
+    // findAllDraftDataAccessRequests should exclude archived DARs
     @Test
     public void testFindAllDraftsArchived() {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
@@ -423,7 +425,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(returnedDARs.isEmpty());
     }
 
-    //todo: findAllDraftsByUserId
+    // findAllDraftsByUserId should exclude archived DARs
     @Test
     public void testFindAllDraftsByUserIdArchived() {
         User user = createUserWithInstitution();
@@ -438,7 +440,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
 
-    //todo: findAllDarsByUserId
+    // findAllDarsByUserId should exclude archived DARs
     @Test
     public void testFindAllDarsByUserIdArchived() {
         User user = createUserWithInstitution();
@@ -455,7 +457,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
 
-    //todo: findByReferenceId
+    // findByReferenceId should exclude archived DARs
     @Test
     public void testFindByReferenceIdArchived() {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
@@ -467,7 +469,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertNull(returnedDAR);
     }
 
-    //todo: findByReferenceIds
+    // findByReferenceIds should exclude archived DARs
     @Test
     public void testFindByReferenceIdsArchived() {
         String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
@@ -484,7 +486,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(returnedDAR.isEmpty());
     }
 
-    //todo: findAllDataAccessRequestDatas
+    // findAllDataAccessRequestDatas should exclude archived DARs
     @Test
     public void testFindAllDataAccessRequestDatasArchived() {
         User user = createUserWithInstitution();
@@ -507,7 +509,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertEquals(1, returnedDAR.size());
     }
 
-    //todo: findAllDataAccessRequestsForInstitution
+    // findAllDataAccessRequestsForInstitution should exclude archived DARs
     @Test
     public void testFindAllDataAccessRequestsForInstitutionArchived() {
         User user = createUserWithInstitution();
@@ -529,5 +531,4 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         List returnedDAR = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
         assertEquals(1, returnedDAR.size());
     }
-//
 }

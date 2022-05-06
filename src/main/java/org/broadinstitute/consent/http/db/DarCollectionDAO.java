@@ -46,7 +46,7 @@ public interface DarCollectionDAO {
       DarCollection.FILTER_TERMS_QUERY +
       " )";
 
-  String archiveFilterQuery = " AND ((dar.data #>> '{}')::jsonb->>'status' != 'Archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL) ";
+  String archiveFilterQuery = " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ";
 
   String getCollectionsAndDarsViaIds =
   getCollectionAndDars
@@ -92,7 +92,7 @@ public interface DarCollectionDAO {
           + " AND dar_datasets.dataset_id = ca.datasetid "
           + " AND consent.consentid = ca.consentid "
           + " AND consent.dac_id IN (<dacIds>) "
-          + " AND (dar_datasets.status != 'Archived' OR dar_datasets.status IS NULL) " )
+          + " AND (LOWER(dar_datasets.status) != 'archived' OR dar_datasets.status IS NULL) " )
   List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds);
 
   @SqlQuery(
@@ -101,7 +101,7 @@ public interface DarCollectionDAO {
           + " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id"
           + " INNER JOIN dacuser u ON dar.user_id = u.dacuserid"
           + " WHERE u.institution_id = :institutionId "
-          + " AND ((dar.data #>> '{}')::jsonb->>'status'!='Archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL)" )
+          + " AND (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL)" )
   List<Integer> findDARCollectionIdsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
@@ -164,7 +164,7 @@ public interface DarCollectionDAO {
         "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
         "LEFT JOIN (SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest FROM election) AS e " +
         "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) " +
-        "WHERE (data->>'status'!='Archived' OR data->>'status' IS NULL) "
+        "WHERE (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) "
   )
   List<DarCollection> findAllDARCollections();
 
@@ -196,7 +196,7 @@ public interface DarCollectionDAO {
       + ") AS e "
       + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
       + "WHERE c.create_user_id = :userId "
-      + " AND (data->>'status'!='Archived' OR data->>'status' IS NULL) "
+      + " AND (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) "
   )
   List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
 
@@ -226,7 +226,7 @@ public interface DarCollectionDAO {
     "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
     "WHERE c.collection_id = (SELECT collection_id FROM data_access_request WHERE reference_id = :referenceId) " +
-    "AND (data->>'status'!='Archived' OR data->>'status' IS NULL) ")
+    "AND (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) ")
   DarCollection findDARCollectionByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
@@ -270,7 +270,7 @@ public interface DarCollectionDAO {
       + "LEFT JOIN dacuser du "
       + "ON du.dacuserid = v.dacuserid "
       + "WHERE c.collection_id = :collectionId "
-      + "AND (data->>'status' != 'Archived' OR data->>'status' IS NULL );"
+      + "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL );"
   )
   DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId);
 
@@ -307,7 +307,7 @@ public interface DarCollectionDAO {
       + "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
-      + " WHERE ((dar.data #>> '{}')::jsonb->>'status'!='Archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL) ";
+      + " WHERE (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL) ";
 
   //Count methods for unfiltered results listed below
   //DAC version is not included since a method that returns collectionIds for a DAC already exists
