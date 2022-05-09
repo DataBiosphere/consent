@@ -60,6 +60,33 @@ public class MatchResource extends Resource {
   }
 
   @GET
+  @Path("/purpose/batch")
+  @PermitAll
+  public Response getMatchesForPurposeIds(
+      @Auth AuthUser authUser, @QueryParam("purposeIds") String purposeIds) {
+    try {
+      if (Objects.isNull(purposeIds) || purposeIds.isBlank()) {
+        throw new BadRequestException("No purpose ids were provided");
+      } else {
+        List<String> purposeIdsList = Arrays.asList(purposeIds.split(","))
+            .stream()
+            .filter(id -> !id.isBlank())
+            .map(id -> id.strip())
+            .collect(Collectors.toList());
+
+        if (purposeIdsList.isEmpty()) {
+          throw new BadRequestException("Invalid query params provided");
+        } else {
+          List<Match> matchList = service.findMatchesForPurposeIds(purposeIdsList);
+          return Response.ok().entity(matchList).build();
+        }
+      }
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
   @Path("/purpose/{purposeId}")
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
   public Response getMatchesForPurpose(
@@ -68,34 +95,6 @@ public class MatchResource extends Resource {
       List<Match> matches = service.findMatchesByPurposeId(purposeId);
       return Response.ok().entity(matches).build();
     } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Path("/purpose/batch/{purposeIds}")
-  @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
-  public Response getMatchesForPurposeIds(
-    @Auth AuthUser authUser, @QueryParam("purposeIds") String purposeIds
-  ) {
-    try {
-      if(Objects.isNull(purposeIds) || purposeIds.isBlank()) {
-        throw new BadRequestException("No purpose ids were provided");
-      } else {
-        List<String> purposeIdsList = Arrays.asList(purposeIds.split(","))
-          .stream()
-          .filter(id -> !id.isBlank())
-          .map(id -> id.strip())
-          .collect(Collectors.toList());
-
-        if(purposeIdsList.isEmpty()) {
-          throw new BadRequestException("Invalid query params provided");
-        } else {
-            List<Match> matchList = service.findMatchesForPurposeIds(purposeIdsList);
-            return Response.ok().entity(matchList).build();
-        }
-      }
-    } catch(Exception e) {
       return createExceptionResponse(e);
     }
   }
