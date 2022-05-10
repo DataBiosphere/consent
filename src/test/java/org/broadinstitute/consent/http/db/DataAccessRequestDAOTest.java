@@ -6,18 +6,23 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 
 import junit.framework.TestCase;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Test;
+
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.UUID;
+import java.util.List;
+import java.util.Arrays;
 
 public class DataAccessRequestDAOTest extends DAOTestHelper {
 
@@ -264,59 +269,266 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertNotNull(canceledDar.getData().getAddress1());
         assertEquals(dar.getData().getAddress1(), canceledDar.getData().getAddress1());
 
-        dataAccessRequestDAO.archiveByReferenceIds(referenceIds);
-        DataAccessRequest archivedDar = dataAccessRequestDAO.findByReferenceId(canceledDar.getReferenceId());
-
-        assertEquals(dar.getReferenceId(), archivedDar.getReferenceId());
-        assertEquals("Archived", archivedDar.getData().getStatus());
-        assertNotNull(archivedDar.getData().getHmb());
-        assertEquals(dar.getData().getHmb(), archivedDar.getData().getHmb());
-        assertNotNull(archivedDar.getData().getMethods());
-        assertEquals(dar.getData().getMethods(), archivedDar.getData().getMethods());
-        assertNotNull(archivedDar.getData().getAddress1());
-        assertEquals(dar.getData().getAddress1(), archivedDar.getData().getAddress1());
     }
 
-    @Test
-    public void testArchiveByReferenceIdsStatusCreated() {
-        DataAccessRequest dar = createDataAccessRequestV3();
-        List<String> referenceIds = List.of(dar.getReferenceId());
-        assertNull(dar.getData().getStatus());
+//    // todo: this test should be deprecated since we changed the query it's testing (dataAccessRequestDAO.findByReferenceId()_
+//    @Test
+//    public void testArchiveByReferenceIdsStatusCreated() {
+//        DataAccessRequest dar = createDataAccessRequestV3();
+//        List<String> referenceIds = List.of(dar.getReferenceId());
+//        assertNull(dar.getData().getStatus());
+//
+//        dataAccessRequestDAO.archiveByReferenceIds(referenceIds);
+//        DataAccessRequest archivedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+//
+//        assertEquals(dar.getReferenceId(), archivedDar.getReferenceId());
+//        assertNotNull(archivedDar.getData().getStatus());
+//        assertEquals("Archived", archivedDar.getData().getStatus());
+//        assertNotNull(archivedDar.getData().getHmb());
+//        assertEquals(dar.getData().getHmb(), archivedDar.getData().getHmb());
+//        assertNotNull(archivedDar.getData().getMethods());
+//        assertEquals(dar.getData().getMethods(), archivedDar.getData().getMethods());
+//        assertNotNull(archivedDar.getData().getAddress1());
+//        assertEquals(dar.getData().getAddress1(), archivedDar.getData().getAddress1());
+//    }
+//
+//    // todo: this test should be deprecated since we changed the query it's testing (dataAccessRequestDAO.findByReferenceId()_
+//    @Test
+//    public void testArchiveByReferenceIdsMultipleDars() {
+//        DataAccessRequest dar = createDataAccessRequestV3();
+//        DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
+//        List<String> referenceIds = new ArrayList<>(collection.getDars().keySet());
+//        assertTrue(referenceIds.size() > 1);
+//
+//        referenceIds.stream()
+//                .map(id -> dataAccessRequestDAO.findByReferenceId(id))
+//                .map(DataAccessRequest::getData)
+//                .map(DataAccessRequestData::getStatus)
+//                .forEach(TestCase::assertNull);
+//
+//        dataAccessRequestDAO.archiveByReferenceIds(referenceIds);
+//
+//        referenceIds.stream()
+//                .map(id -> dataAccessRequestDAO.findByReferenceId(id))
+//                .map(DataAccessRequest::getData)
+//                .map(DataAccessRequestData::getStatus)
+//                .forEach(s -> assertEquals("Archived", s));
+//
+//    }
 
-        dataAccessRequestDAO.archiveByReferenceIds(referenceIds);
-        DataAccessRequest archivedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-
-        assertEquals(dar.getReferenceId(), archivedDar.getReferenceId());
-        assertNotNull(archivedDar.getData().getStatus());
-        assertEquals("Archived", archivedDar.getData().getStatus());
-        assertNotNull(archivedDar.getData().getHmb());
-        assertEquals(dar.getData().getHmb(), archivedDar.getData().getHmb());
-        assertNotNull(archivedDar.getData().getMethods());
-        assertEquals(dar.getData().getMethods(), archivedDar.getData().getMethods());
-        assertNotNull(archivedDar.getData().getAddress1());
-        assertEquals(dar.getData().getAddress1(), archivedDar.getData().getAddress1());
+    // local method to create a DAR
+    protected DataAccessRequest createDAR(User user, Dataset dataset, String darCode) {
+        Timestamp now = new Timestamp(new Date().getTime());
+        Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        DataAccessRequest testDar = new DataAccessRequest();
+        testDar.setCollectionId(collectionId);
+        testDar.setReferenceId(UUID.randomUUID().toString());
+        testDar.setUserId(user.getDacUserId());
+        testDar.setCreateDate(now);
+        testDar.setSortDate(now);
+        testDar.setSubmissionDate(now);
+        testDar.setUpdateDate(now);
+        DataAccessRequestData contents = new DataAccessRequestData();
+        // add data datasetId
+        contents.setDatasetIds(List.of(dataset.getDataSetId()));
+        testDar.setData(contents);
+        dataAccessRequestDAO.insertVersion3(
+                testDar.getCollectionId(),
+                testDar.getReferenceId(),
+                testDar.getUserId(),
+                testDar.getCreateDate(),
+                testDar.getSortDate(),
+                testDar.getSubmissionDate(),
+                testDar.getUpdateDate(),
+                testDar.getData()
+        );
+        return testDar;
     }
 
+    // local method to create a Draft DAR
+    protected DataAccessRequest createDraftDAR(User user) {
+        Date now = new Date();
+        DataAccessRequestData contents = new DataAccessRequestData();
+        String referenceId = UUID.randomUUID().toString();
+        dataAccessRequestDAO.insertDraftDataAccessRequest(
+                referenceId,
+                user.getDacUserId(),
+                now,
+                now,
+                now,
+                now,
+                contents
+        );
+        return dataAccessRequestDAO.findByReferenceId(referenceId);
+    }
+
+    // findAllDataAccessRequests should exclude archived DARs
     @Test
-    public void testArchiveByReferenceIdsMultipleDars() {
-        DataAccessRequest dar = createDataAccessRequestV3();
-        DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
-        List<String> referenceIds = new ArrayList<>(collection.getDars().keySet());
-        assertTrue(referenceIds.size() > 1);
+    public void testFindAllArchived() {
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
+        assertTrue(dars.isEmpty());
 
-        referenceIds.stream()
-                .map(id -> dataAccessRequestDAO.findByReferenceId(id))
-                .map(DataAccessRequest::getData)
-                .map(DataAccessRequestData::getStatus)
-                .forEach(TestCase::assertNull);
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Dataset dataset = createDataset();
+        User user = createUserWithInstitution();
+        DataAccessRequest testDar = createDAR(user, dataset, darCode);
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+        List returnedDARs = dataAccessRequestDAO.findAllDataAccessRequests();
+        assertTrue(returnedDARs.isEmpty());
+    }
 
-        dataAccessRequestDAO.archiveByReferenceIds(referenceIds);
 
-        referenceIds.stream()
-                .map(id -> dataAccessRequestDAO.findByReferenceId(id))
-                .map(DataAccessRequest::getData)
-                .map(DataAccessRequestData::getStatus)
-                .forEach(s -> assertEquals("Archived", s));
+    // findAllDataAccessRequests should exclude archived DARs
+    // test case with two DARs
+    @Test
+    public void testFindAllFilterArchived() {
+        User user = createUserWithInstitution();
 
+        String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+        String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+        Dataset dataset1 = createDataset();
+        Dataset dataset2 = createDataset();
+
+        DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
+        DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+        List returnedDARs = dataAccessRequestDAO.findAllDataAccessRequests();
+        assertEquals(1, returnedDARs.size());
+    }
+
+
+    // findAllDataAccessRequestsByDatasetId should exclude archived DARs
+    @Test
+    public void testFindAllByDatasetIdArchived() {
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Dataset dataset = createDataset();
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
+        assertTrue(dars.isEmpty());
+
+        User user = createUserWithInstitution();
+        DataAccessRequest testDar = createDAR(user, dataset, darCode);
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+        List returnedDARs = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
+        assertTrue(returnedDARs.isEmpty());
+    }
+
+    // findAllDraftDataAccessRequests should exclude archived DARs
+    @Test
+    public void testFindAllDraftsArchived() {
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
+        assertTrue(dars.isEmpty());
+
+        User user = createUserWithInstitution();
+        DataAccessRequest testDar = createDraftDAR(user);
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+        List returnedDARs = dataAccessRequestDAO.findAllDraftDataAccessRequests();
+        assertTrue(returnedDARs.isEmpty());
+    }
+
+    // findAllDraftsByUserId should exclude archived DARs
+    @Test
+    public void testFindAllDraftsByUserIdArchived() {
+        User user = createUserWithInstitution();
+
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftsByUserId(user.getDacUserId());
+        assertTrue(dars.isEmpty());
+
+        DataAccessRequest testDar = createDraftDAR(user);
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+        List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDraftsByUserId(user.getDacUserId());
+        assertTrue(returnedDARs.isEmpty());
+    }
+
+
+    // findAllDarsByUserId should exclude archived DARs
+    @Test
+    public void testFindAllDarsByUserIdArchived() {
+        User user = createUserWithInstitution();
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getDacUserId());
+        assertTrue(dars.isEmpty());
+
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Dataset dataset = createDataset();
+
+        DataAccessRequest testDar = createDAR(user, dataset, darCode);
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+        List returnedDARs = dataAccessRequestDAO.findAllDarsByUserId(user.getDacUserId());
+        assertTrue(returnedDARs.isEmpty());
+    }
+
+
+    // findByReferenceId should exclude archived DARs
+    @Test
+    public void testFindByReferenceIdArchived() {
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Dataset dataset = createDataset();
+        User user = createUserWithInstitution();
+        DataAccessRequest testDar = createDAR(user, dataset, darCode);
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
+        DataAccessRequest returnedDAR = dataAccessRequestDAO.findByReferenceId(testDar.getReferenceId());
+        assertNull(returnedDAR);
+    }
+
+    // findByReferenceIds should exclude archived DARs
+    @Test
+    public void testFindByReferenceIdsArchived() {
+        String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+        String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+        Dataset dataset1 = createDataset();
+        Dataset dataset2 = createDataset();
+        User user = createUserWithInstitution();
+        DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
+        DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
+
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar2.getReferenceId()));
+        List returnedDAR = dataAccessRequestDAO.findByReferenceIds(List.of(testDar1.getReferenceId(), testDar2.getReferenceId()));
+        assertTrue(returnedDAR.isEmpty());
+    }
+
+    // findAllDataAccessRequestDatas should exclude archived DARs
+    @Test
+    public void testFindAllDataAccessRequestDatasArchived() {
+        User user = createUserWithInstitution();
+        List<DataAccessRequestData> dars = dataAccessRequestDAO.findAllDataAccessRequestDatas();
+        assertTrue(dars.isEmpty());
+
+        String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+        String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+        String darCode3 = "DAR-" + RandomUtils.nextInt(301, 400);
+        Dataset dataset1 = createDataset();
+        Dataset dataset2 = createDataset();
+        Dataset dataset3 = createDataset();
+        DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
+        DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
+        DataAccessRequest testDar3 = createDAR(user, dataset3, darCode3);
+
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar2.getReferenceId()));
+        List returnedDAR = dataAccessRequestDAO.findByReferenceIds(List.of(testDar1.getReferenceId(), testDar2.getReferenceId(), testDar3.getReferenceId()));
+        assertEquals(1, returnedDAR.size());
+    }
+
+    // findAllDataAccessRequestsForInstitution should exclude archived DARs
+    @Test
+    public void testFindAllDataAccessRequestsForInstitutionArchived() {
+        User user = createUserWithInstitution();
+        List<DataAccessRequestData> dars = dataAccessRequestDAO.findAllDataAccessRequestDatas();
+        assertTrue(dars.isEmpty());
+
+        String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+        String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
+        String darCode3 = "DAR-" + RandomUtils.nextInt(301, 400);
+        Dataset dataset1 = createDataset();
+        Dataset dataset2 = createDataset();
+        Dataset dataset3 = createDataset();
+        DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
+        DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
+        DataAccessRequest testDar3 = createDAR(user, dataset3, darCode3);
+
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
+        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar2.getReferenceId()));
+        List returnedDAR = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
+        assertEquals(1, returnedDAR.size());
     }
 }
