@@ -37,7 +37,11 @@ public interface DarCollectionDAO {
       " LEFT JOIN user_property up ON u.dacuserid = up.userid AND up.propertykey in ('isThePI', 'piName', 'havePI', 'piERACommonsID') " +
       " LEFT JOIN institution i ON i.institution_id = u.institution_id " +
       " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
-      " LEFT JOIN (SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest FROM election) AS e " +
+      " LEFT JOIN (" +
+      "   SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest " +
+      "   FROM election " +
+      "   WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp'" +
+      " ) AS e " +
       "   ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) " +
       " LEFT JOIN vote v ON v.electionid = e.electionid ";
 
@@ -163,8 +167,11 @@ public interface DarCollectionDAO {
         "LEFT JOIN user_property up ON u.dacuserid = up.userid " +
         "INNER JOIN data_access_request dar on c.collection_id = dar.collection_id " +
         "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
-        "LEFT JOIN (SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest FROM election) AS e " +
-        "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) " +
+        "LEFT JOIN (" +
+        "   SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest FROM election " +
+        "   WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp' " +
+        ") AS e " +
+        "   ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) " +
         "WHERE (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) "
   )
   List<DarCollection> findAllDARCollections();
@@ -192,8 +199,9 @@ public interface DarCollectionDAO {
       + "LEFT JOIN user_property up ON u.dacuserid = up.userid "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
       + "LEFT JOIN ("
-          + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
-          + "FROM election"
+      + "  SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
+      + "   FROM election "
+      + "   WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp'"
       + ") AS e "
       + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
       + "WHERE c.create_user_id = :userId "
@@ -266,7 +274,8 @@ public interface DarCollectionDAO {
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "LEFT JOIN ("
           + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
-          + "FROM election"
+          + "FROM election "
+          + "WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp'"
       + ") AS e "
       + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
       + "LEFT JOIN vote v "
@@ -304,7 +313,6 @@ public interface DarCollectionDAO {
    */
   @SqlUpdate("DELETE FROM dar_collection WHERE collection_id = :collectionId")
   void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
-
 
   String coreCountQuery = "SELECT COUNT(DISTINCT c.collection_id) "
       + "FROM dar_collection c "
