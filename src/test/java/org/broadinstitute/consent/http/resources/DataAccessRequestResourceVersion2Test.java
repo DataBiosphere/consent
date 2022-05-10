@@ -7,11 +7,9 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -84,9 +82,8 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testCreateDataAccessRequestWithLibraryCard() {
+  public void testCreateDataAccessRequest() {
     try {
-      user.addLibraryCard(new LibraryCard());
       when(userService.findUserByEmail(any())).thenReturn(user);
       DataAccessRequest dar = new DataAccessRequest();
       dar.setReferenceId(UUID.randomUUID().toString());
@@ -104,18 +101,6 @@ public class DataAccessRequestResourceVersion2Test {
     initResource();
     Response response = resource.createDataAccessRequest(authUser, info, "");
     assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
-  }
-
-  @Test
-  public void testCreateDataAccessRequestNoLibraryCard() {
-    try {
-      when(userService.findUserByEmail(any())).thenReturn(user);
-    } catch (Exception e) {
-      fail("Initialization Exception: " + e.getMessage());
-    }
-    initResource();
-    Response response = resource.createDataAccessRequest(authUser, info, "");
-    assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
   }
 
   @Test
