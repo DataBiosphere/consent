@@ -143,7 +143,7 @@ public class MatchDAOTest extends DAOTestHelper {
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
     matchDAO.insertMatch(consentId, rpElection.getReferenceId(), false, false, new Date());
 
-    List<Match> matchResults = matchDAO.findMatchesForPurposeIds(List.of(darReferenceId));
+    List<Match> matchResults = matchDAO.findMatchesForBatchPurposeIds(List.of(darReferenceId));
     assertEquals(1, matchResults.size());
     Match result = matchResults.get(0);
     assertEquals(targetElection.getReferenceId(), result.getPurpose());
@@ -172,7 +172,7 @@ public class MatchDAOTest extends DAOTestHelper {
 
     //Negative testing means we'll feed the query a reference id that isn't tied to a DataAccess election
     //Again, a match like this usually isn't generated in a normal workflow unless bug occurs, but having the 'DataAccess' condition is a nice safety net
-    List<Match> matchResults = matchDAO.findMatchesForPurposeIds(List.of(darReferenceId));
+    List<Match> matchResults = matchDAO.findMatchesForBatchPurposeIds(List.of(darReferenceId));
     assertTrue(matchResults.isEmpty());
   }
 }

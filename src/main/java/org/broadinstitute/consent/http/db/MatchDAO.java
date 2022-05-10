@@ -40,7 +40,10 @@ public interface MatchDAO extends Transactional<MatchDAO> {
         "ON e.referenceid = match_entity.purpose " +
         "WHERE match_entity.purpose IN (<purposeIds>) AND e.electionid = latest"
     )
-    List<Match> findMatchesForPurposeIds(@BindList("purposeIds") List<String> purposeIds);
+    List<Match> findMatchesForBatchPurposeIds(@BindList("purposeIds") List<String> purposeIds);
+
+    @SqlQuery("SELECT * FROM match_entity WHERE purpose IN (<purposeId>)")
+    List<Match> findMatchesForPurposeIds(@BindList("purposeId") List<String> purposeId);
 
     @SqlUpdate(
             " INSERT INTO match_entity " +
