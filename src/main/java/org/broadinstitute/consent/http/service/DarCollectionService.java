@@ -413,7 +413,7 @@ public class DarCollectionService {
 
   // Private helper method to mark Elections as 'Canceled'
   private void cancelElectionsForReferenceIds(List<String> referenceIds) {
-    List<Election> elections = electionDAO.findLastElectionsByReferenceIds(referenceIds);
+    List<Election> elections = electionDAO.findOpenElectionsByReferenceIds(referenceIds);
     elections.forEach(election -> {
       if (!election.getStatus().equals(ElectionStatus.CANCELED.getValue())) {
         electionDAO.updateElectionById(election.getElectionId(), ElectionStatus.CANCELED.getValue(), new Date());

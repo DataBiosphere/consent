@@ -171,9 +171,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
 
     @UseRowMapper(SimpleElectionMapper.class)
-    @SqlQuery("SELECT * FROM election e " + 
+    @SqlQuery("SELECT * FROM election e " +
         "INNER JOIN vote v ON v.electionid = e.electionid " +
-        "WHERE LOWER(e.electiontype) = :electionType " + 
+        "WHERE LOWER(e.electiontype) = :electionType " +
         "AND v.voteid IN (<voteIds>)")
 	List<Election> findElectionsByVoteIdsAndType(
 	    @BindList("voteIds") List<Integer> voteIds,
@@ -209,6 +209,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(ElectionMapper.class)
     List<Election> findLastElectionsByReferenceIds(
       @BindList("referenceIds") List<String> referenceIds);
+
+    @SqlQuery(" SELECT distinct e.* " +
+        " FROM election e " +
+        " WHERE LOWER(e.status) = 'open' " +
+        " AND e.referenceid IN (<referenceIds>) ")
+    @UseRowMapper(ElectionMapper.class)
+    List<Election> findOpenElectionsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
     @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, " +
             "v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e " +
