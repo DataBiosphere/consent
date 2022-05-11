@@ -810,8 +810,8 @@ public class DataAccessRequestServiceTest {
     @Test(expected = NotAcceptableException.class)
     public void testDeleteByReferenceIdResearcher() {
         String referenceId = UUID.randomUUID().toString();
-        User adminUser = new User();
-        adminUser.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+        User user = new User();
+        user.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
         Election election = new Election();
         election.setElectionId(1);
         election.setReferenceId(referenceId);
@@ -823,7 +823,7 @@ public class DataAccessRequestServiceTest {
         doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
         initService();
 
-        service.deleteByReferenceId(adminUser, referenceId);
+        service.deleteByReferenceId(user, referenceId);
     }
 
     private class LongerThanTwo implements ArgumentMatcher<String> {
