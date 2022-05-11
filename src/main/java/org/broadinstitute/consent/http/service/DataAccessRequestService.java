@@ -202,7 +202,7 @@ public class DataAccessRequestService {
                 voteDAO.deleteVotes(referenceId);
                 List<Integer> electionIds = elections.stream().map(Election::getElectionId).collect(toList());
                 electionIds.forEach(id -> {
-                    electionDAO.deleteAccessRP(id);
+                    electionDAO.deleteElectionFromAccessRP(id);
                     electionDAO.deleteElectionById(id);
                 });
             } else {
