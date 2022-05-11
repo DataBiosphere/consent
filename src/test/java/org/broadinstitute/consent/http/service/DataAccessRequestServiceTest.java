@@ -807,8 +807,24 @@ public class DataAccessRequestServiceTest {
         }
     }
 
+    @Test
+    public void testDeleteByReferenceIdResearcherSuccess() {
+        String referenceId = UUID.randomUUID().toString();
+        User user = new User();
+        user.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+        when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of());
+        doNothing().when(voteDAO).deleteVotes(any());
+        doNothing().when(electionDAO).deleteAccessRP(any());
+        doNothing().when(electionDAO).deleteElectionById(any());
+        doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
+        doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        initService();
+
+        service.deleteByReferenceId(user, referenceId);
+    }
+
     @Test(expected = NotAcceptableException.class)
-    public void testDeleteByReferenceIdResearcher() {
+    public void testDeleteByReferenceIdResearcherFailure() {
         String referenceId = UUID.randomUUID().toString();
         User user = new User();
         user.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
