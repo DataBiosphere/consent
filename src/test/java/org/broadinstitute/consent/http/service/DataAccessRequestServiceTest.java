@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -784,7 +785,7 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void testDeleteByReferenceId() {
+    public void testDeleteByReferenceIdAdmin() {
         String referenceId = UUID.randomUUID().toString();
         User adminUser = new User();
         adminUser.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
@@ -804,6 +805,25 @@ public class DataAccessRequestServiceTest {
         } catch (Exception e) {
             fail(e.getMessage());
         }
+    }
+
+    @Test(expected = NotAcceptableException.class)
+    public void testDeleteByReferenceIdResearcher() {
+        String referenceId = UUID.randomUUID().toString();
+        User adminUser = new User();
+        adminUser.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+        Election election = new Election();
+        election.setElectionId(1);
+        election.setReferenceId(referenceId);
+        when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of(election));
+        doNothing().when(voteDAO).deleteVotes(any());
+        doNothing().when(electionDAO).deleteAccessRP(any());
+        doNothing().when(electionDAO).deleteElectionById(any());
+        doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
+        doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        initService();
+
+        service.deleteByReferenceId(adminUser, referenceId);
     }
 
     private class LongerThanTwo implements ArgumentMatcher<String> {
