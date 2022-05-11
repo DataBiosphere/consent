@@ -171,9 +171,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
 
     @UseRowMapper(SimpleElectionMapper.class)
-    @SqlQuery("SELECT * FROM election e " + 
+    @SqlQuery("SELECT * FROM election e " +
         "INNER JOIN vote v ON v.electionid = e.electionid " +
-        "WHERE LOWER(e.electiontype) = :electionType " + 
+        "WHERE LOWER(e.electiontype) = :electionType " +
         "AND v.voteid IN (<voteIds>)")
 	List<Election> findElectionsByVoteIdsAndType(
 	    @BindList("voteIds") List<Integer> voteIds,
@@ -274,6 +274,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlUpdate("delete  from access_rp where electionAccessId = :electionAccessId")
     void deleteAccessRP(@Bind("electionAccessId") Integer electionAccessId);
+
+    @SqlUpdate("DELETE FROM access_rp WHERE electionrpid = :electionId OR electionaccessid = :electionId")
+    void deleteElectionFromAccessRP(@Bind("electionId") Integer electionId);
 
     @SqlQuery("select electionAccessId from access_rp arp where arp.electionRPId = :electionRPId ")
     Integer findAccessElectionByElectionRPId(@Bind("electionRPId") Integer electionRPId);

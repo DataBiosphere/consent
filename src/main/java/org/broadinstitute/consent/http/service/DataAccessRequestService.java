@@ -194,16 +194,25 @@ public class DataAccessRequestService {
         return dataAccessRequestDAO.findByReferenceIds(referenceIds);
     }
 
-    public void deleteByReferenceId(String referenceId) throws NotAcceptableException {
+    public void deleteByReferenceId(User user, String referenceId) throws NotAcceptableException {
         List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
-        if (Objects.isNull(elections) || elections.isEmpty()) {
-            matchDAO.deleteMatchesByPurposeId(referenceId);
-            dataAccessRequestDAO.deleteByReferenceId(referenceId);
-        } else {
-            String message = String.format("Unable to delete DAR: '%s', there are existing elections that reference it.", referenceId);
-            logger.warn(message);
-            throw new NotAcceptableException(message);
+        if (!elections.isEmpty()) {
+            // If the user is an admin, delete all votes and elections
+            if (user.hasUserRole(UserRoles.ADMIN)) {
+                voteDAO.deleteVotes(referenceId);
+                List<Integer> electionIds = elections.stream().map(Election::getElectionId).collect(toList());
+                electionIds.forEach(id -> {
+                    electionDAO.deleteElectionFromAccessRP(id);
+                    electionDAO.deleteElectionById(id);
+                });
+            } else {
+                String message = String.format("Unable to delete DAR: '%s', there are existing elections that reference it.", referenceId);
+                logger.warn(message);
+                throw new NotAcceptableException(message);
+            }
         }
+        matchDAO.deleteMatchesByPurposeId(referenceId);
+        dataAccessRequestDAO.deleteByReferenceId(referenceId);
     }
 
     public DataAccessRequest findByReferenceId(String referencedId) {

@@ -1,0 +1,82 @@
+get:
+  summary: Get a Data Access Request by Reference Id
+  description: Returns the created Data Access Request.
+  parameters:
+    - name: referenceId
+      in: path
+      description: The referenceId of the Data Access Request
+      required: true
+      schema:
+        type: string
+  tags:
+    - Data Access Request
+  responses:
+    200:
+      description: Returns a Data Access Request
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DataAccessRequest.yaml'
+    400:
+      description: The provided Reference Id is not a valid DAR identifier
+    404:
+      description: No DAR can be found with the provided identifier
+    500:
+      description: Server Error
+put:
+  summary: Update a Data Access Request by Reference Id
+  description: Returns the updated Data Access Request.
+  parameters:
+    - name: referenceId
+      in: path
+      description: The referenceId of the Data Access Request
+      required: true
+      schema:
+        type: string
+    - name: dar
+      in: body
+      description: The fields that represent a DAR in json format.
+      required: true
+      schema:
+        $ref: '../schemas/DataAccessRequest.yaml'
+  tags:
+    - Data Access Request
+  responses:
+    200:
+      description: Returns a Data Access Request
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DataAccessRequest.yaml'
+    403:
+      description: Updates are restricted to the create user.
+    500:
+      description: Internal Server Error.
+delete:
+  summary: Delete DAR by Reference Id
+  description: | 
+    Deletes the DAR by reference id. If the user is the owner, and a researcher, the DAR
+    will only be deleted if there are no elections created for it. If the user is an Admin,
+    all votes and elections associated to the DAR will also be deleted.
+  parameters:
+    - name: referenceId
+      in: path
+      description: The id of the DAR
+      required: true
+      schema:
+        type: string
+  tags:
+    - Data Access Request
+  responses:
+    200:
+      description: Data Access Request was deleted
+      content:
+        application/json:
+          schema:
+            type: string
+    403:
+      description: Forbidden
+    404:
+      description: The requested DAR couldn't be found.
+    406:
+      description: There are existing resources that reference this Data Access Request
