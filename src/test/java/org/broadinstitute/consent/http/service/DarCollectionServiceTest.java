@@ -349,14 +349,14 @@ public class DarCollectionServiceTest {
     election.setReferenceId(dar.getReferenceId());
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
-    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
+    when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
     spy(electionDAO);
     spy(dataAccessRequestDAO);
     spy(darCollectionDAO);
     initService();
 
     service.cancelDarCollectionElectionsAsAdmin(collection);
-    verify(electionDAO, times(1)).findLastElectionsByReferenceIds(anyList());
+    verify(electionDAO, times(1)).findOpenElectionsByReferenceIds(anyList());
     verify(electionDAO, times(1)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(anyInt());
@@ -380,7 +380,7 @@ public class DarCollectionServiceTest {
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
     when(datasetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(List.of(dataset));
-    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
+    when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
     spy(datasetDAO);
     spy(electionDAO);
     spy(dataAccessRequestDAO);
@@ -389,7 +389,7 @@ public class DarCollectionServiceTest {
 
     service.cancelDarCollectionElectionsAsChair(collection, user);
     verify(datasetDAO, times(1)).findDatasetsByAuthUserEmail(anyString());
-    verify(electionDAO, times(1)).findLastElectionsByReferenceIds(anyList());
+    verify(electionDAO, times(1)).findOpenElectionsByReferenceIds(anyList());
     verify(electionDAO, times(1)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(anyInt());

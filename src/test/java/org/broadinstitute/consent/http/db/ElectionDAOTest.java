@@ -340,7 +340,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     Vote rpVote = createChairpersonVote(userId, rpElection.getElectionId());
     List<Integer> voteIds = List.of(accessVote.getVoteId(), rpVote.getVoteId());
     List<Election> elections = electionDAO.findElectionsByVoteIdsAndType(voteIds, "dataaccess");
-    
+
     assertEquals(1, elections.size());
     assertEquals(accessElection.getElectionId(), elections.get(0).getElectionId());
   }
@@ -359,7 +359,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     Vote rpVote = createChairpersonVote(userId, rpElection.getElectionId());
     List<Integer> voteIds = List.of(accessVote.getVoteId(), rpVote.getVoteId());
     List<Election> elections = electionDAO.findElectionsByVoteIdsAndType(voteIds, "rp");
-    
+
     assertEquals(1, elections.size());
     assertEquals(rpElection.getElectionId(), elections.get(0).getElectionId());
   }
@@ -380,5 +380,22 @@ public class ElectionDAOTest extends DAOTestHelper {
 
     assertEquals(1, elections.size());
     assertEquals(elections.get(0).getElectionId(), lcElection.getElectionId());
+  }
+
+  @Test
+  public void testFindOpenElectionsByReferenceIds() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    Dataset dataset = createDataset();
+    String referenceId = dar.getReferenceId();
+    int datasetId = dataset.getDataSetId();
+    Election accessElection = createAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+
+    List<Election> elections = electionDAO.findOpenElectionsByReferenceIds(List.of(dar.referenceId));
+    assertEquals(2, elections.size());
+
+    electionDAO.updateElectionStatus(List.of(accessElection.getElectionId(), rpElection.getElectionId()), ElectionStatus.CANCELED.getValue());
+    List<Election> electionsV2 = electionDAO.findOpenElectionsByReferenceIds(List.of(dar.referenceId));
+    assertEquals(0, electionsV2.size());
   }
 }
