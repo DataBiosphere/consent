@@ -302,12 +302,14 @@ public class MatchServiceTest {
     }
 
     @Test
-    public void testFindMatchesForPurposeIds() {
-        Match mockMatch = new Match();
-        when(matchDAO.findMatchesForPurposeIds(anyList()))
+    public void testFindMatchesForLatestDataAccessElectionsByPurposeIds() {
+        Match mockMatch = new Match(1, "test", "purpose", true, true, null);
+        when(matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList()))
             .thenReturn(List.of(mockMatch));
         initService();
-        service.findMatchesForPurposeIds(List.of("test"));
+        List<Match> matches = service.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of("test"));
+        assertEquals(1, matches.size());
+        assertEquals(mockMatch.getId(), matches.get(0).getId());
     }
 
     @SuppressWarnings("unchecked")

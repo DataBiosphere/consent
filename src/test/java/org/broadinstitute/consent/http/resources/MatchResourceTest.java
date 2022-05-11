@@ -90,7 +90,7 @@ public class MatchResourceTest {
     when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
     initResource();
 
-    Response response = resource.getMatchesForPurposeIds(authUser,
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser,
       UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
@@ -98,14 +98,14 @@ public class MatchResourceTest {
   @Test
   public void testGetMatchesForPurpose_EmptyParam() {
     initResource();
-    Response response = resource.getMatchesForPurposeIds(authUser, "");
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, "");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
   public void testGetMatchesForPurpose_CommaSeparatedBlanks() {
     initResource();
-    Response response = resource.getMatchesForPurposeIds(authUser, " , , ,");
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, " , , ,");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
@@ -113,10 +113,10 @@ public class MatchResourceTest {
   public void testGetMatchesForPurpose_PartialValidIds() {
     Match match = new Match();
     match.setId(2);
-    when(service.findMatchesForPurposeIds(anyList())).thenReturn(List.of(match));
+    when(service.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList())).thenReturn(List.of(match));
     initResource();
 
-    Response response = resource.getMatchesForPurposeIds(authUser, "3, , 5, ");
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, "3, , 5, ");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 

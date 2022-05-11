@@ -62,7 +62,7 @@ public class MatchResource extends Resource {
   @GET
   @Path("/purpose/batch")
   @PermitAll
-  public Response getMatchesForPurposeIds(
+  public Response getMatchesForLatestDataAccessElectionsByPurposeIds(
       @Auth AuthUser authUser, @QueryParam("purposeIds") String purposeIds) {
     try {
       if (Objects.isNull(purposeIds) || purposeIds.isBlank()) {
@@ -77,7 +77,7 @@ public class MatchResource extends Resource {
         if (purposeIdsList.isEmpty()) {
           throw new BadRequestException("Invalid query params provided");
         } else {
-          List<Match> matchList = service.findMatchesForPurposeIds(purposeIdsList);
+          List<Match> matchList = service.findMatchesForLatestDataAccessElectionsByPurposeIds(purposeIdsList);
           return Response.ok().entity(matchList).build();
         }
       }

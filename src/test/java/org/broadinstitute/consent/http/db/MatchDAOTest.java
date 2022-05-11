@@ -116,7 +116,7 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindMatchesForPurposeIds() {
+  public void testFindMatchesForLatestDataAccessElectionsByPurposeIds() {
     Dataset dataset = createDataset();
     //query should pull the latest election for a given reference id
     //creating two access elections with the same reference id and datasetid to test that condition
@@ -143,14 +143,14 @@ public class MatchDAOTest extends DAOTestHelper {
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
     matchDAO.insertMatch(consentId, rpElection.getReferenceId(), false, false, new Date());
 
-    List<Match> matchResults = matchDAO.findMatchesForBatchPurposeIds(List.of(darReferenceId));
+    List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertEquals(1, matchResults.size());
     Match result = matchResults.get(0);
     assertEquals(targetElection.getReferenceId(), result.getPurpose());
   }
 
   @Test
-  public void testFindMatchesForPurposeIds_NegativeTest() {
+  public void testFindMatchesForLatestDataAccessElectionsByPurposeIds_NegativeTest() {
     Dataset dataset = createDataset();
     String darReferenceId = UUID.randomUUID().toString();
 
@@ -172,7 +172,7 @@ public class MatchDAOTest extends DAOTestHelper {
 
     //Negative testing means we'll feed the query a reference id that isn't tied to a DataAccess election
     //Again, a match like this usually isn't generated in a normal workflow unless bug occurs, but having the 'DataAccess' condition is a nice safety net
-    List<Match> matchResults = matchDAO.findMatchesForBatchPurposeIds(List.of(darReferenceId));
+    List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertTrue(matchResults.isEmpty());
   }
 }
