@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -33,6 +34,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
@@ -87,6 +89,8 @@ public class DataAccessRequestServiceTest {
     private InstitutionDAO institutionDAO;
     @Mock
     private ElectionService electionService;
+    @Mock
+    private MatchDAO matchDAO;
 
     private DataAccessRequestService service;
 
@@ -111,6 +115,7 @@ public class DataAccessRequestServiceTest {
         container.setDatasetDAO(dataSetDAO);
         container.setElectionDAO(electionDAO);
         container.setVoteDAO(voteDAO);
+        container.setMatchDAO(matchDAO);
         service = new DataAccessRequestService(counterService, container, dacService);
     }
 
@@ -778,6 +783,28 @@ public class DataAccessRequestServiceTest {
         service.createDraftDarFromCanceledCollection(user, sourceCollection);
     }
 
+    @Test
+    public void testDeleteByReferenceId() {
+        String referenceId = UUID.randomUUID().toString();
+        User adminUser = new User();
+        adminUser.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+        Election election = new Election();
+        election.setElectionId(1);
+        election.setReferenceId(referenceId);
+        when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of(election));
+        doNothing().when(voteDAO).deleteVotes(any());
+        doNothing().when(electionDAO).deleteAccessRP(any());
+        doNothing().when(electionDAO).deleteElectionById(any());
+        doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
+        doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        initService();
+
+        try {
+            service.deleteByReferenceId(adminUser, referenceId);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
 
     private class LongerThanTwo implements ArgumentMatcher<String> {
 
