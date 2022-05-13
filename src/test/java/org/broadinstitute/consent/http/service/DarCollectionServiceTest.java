@@ -307,6 +307,7 @@ public class DarCollectionServiceTest {
     DarCollection collection = createMockCollections(1).get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of());
+    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     spy(electionDAO);
     spy(dataAccessRequestDAO);
     spy(darCollectionDAO);
