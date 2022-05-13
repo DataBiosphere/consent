@@ -1,6 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.junit.Test;
 
@@ -110,5 +113,66 @@ public class MatchDAOTest extends DAOTestHelper {
     assertTrue(count1 >= 1);
     Integer count2 = matchDAO.countMatchesByResult(m2.getMatch());
     assertTrue(count2 >= 1);
+  }
+
+  @Test
+  public void testFindMatchesForLatestDataAccessElectionsByPurposeIds() {
+    Dataset dataset = createDataset();
+    //query should pull the latest election for a given reference id
+    //creating two access elections with the same reference id and datasetid to test that condition
+    String darReferenceId = UUID.randomUUID().toString();
+    Election targetElection = createAccessElection(
+      darReferenceId, dataset.getDataSetId()
+    );
+    Election ignoredAccessElection = createAccessElection(
+      UUID.randomUUID().toString(), dataset.getDataSetId()
+    );
+
+    //Generate RP election to test that the query only references DataAccess elections
+    Election rpElection = createRPElection(UUID.randomUUID().toString(), dataset.getDataSetId());
+    Dac dac = createDac();
+    String consentId = createConsent(dac.getDacId()).getConsentId();
+
+    //This match represents the match record generated for the target election
+    matchDAO.insertMatch(consentId, darReferenceId, true, false, new Date());
+
+    // This match represents the match record generated for the ignored access election
+    matchDAO.insertMatch(consentId, ignoredAccessElection.getReferenceId(), false, false, new Date());
+
+    // This match is never created under consent's workflow (unless the cause is a bug)
+    // This is included simply to test the DataAccess conditional on the INNER JOIN statement
+    matchDAO.insertMatch(consentId, rpElection.getReferenceId(), false, false, new Date());
+
+    List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
+    assertEquals(1, matchResults.size());
+    Match result = matchResults.get(0);
+    assertEquals(targetElection.getReferenceId(), result.getPurpose());
+  }
+
+  @Test
+  public void testFindMatchesForLatestDataAccessElectionsByPurposeIds_NegativeTest() {
+    Dataset dataset = createDataset();
+    String darReferenceId = UUID.randomUUID().toString();
+
+    //Generate access election for test
+    Election accessElection = createAccessElection(
+        UUID.randomUUID().toString(), dataset.getDataSetId());
+
+    //Generate RP election for test
+    Election rpElection = createRPElection(darReferenceId, dataset.getDataSetId());
+    Dac dac = createDac();
+    String consentId = createConsent(dac.getDacId()).getConsentId();
+
+    // This match represents the match record generated for the access election
+    matchDAO.insertMatch(consentId, accessElection.getReferenceId(), true, false, new Date());
+
+    // This match is never created under consent's workflow (unless the cause is a bug)
+    // This is included simply to test the DataAccess conditional on the INNER JOIN statement
+    matchDAO.insertMatch(consentId, rpElection.getReferenceId(), false, false, new Date());
+
+    //Negative testing means we'll feed the query a reference id that isn't tied to a DataAccess election
+    //Again, a match like this usually isn't generated in a normal workflow unless bug occurs, but having the 'DataAccess' condition is a nice safety net
+    List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
+    assertTrue(matchResults.isEmpty());
   }
 }

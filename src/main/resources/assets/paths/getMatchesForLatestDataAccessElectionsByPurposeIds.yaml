@@ -1,0 +1,26 @@
+get:
+      summary: Get all matches for the listed research purpose (DAR) ids 
+      description: Get all matches for the listed research purpose (DAR) ids
+      tags:
+        - Data Access Request
+        - Match
+      parameters:
+        - name: purposeIds
+          in: query
+          description: Data Access Request (or research purpose) IDs (comma separated)
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Returns a list of match results of the listed Data Access Requests. If no results are found, no data is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../schemas/MatchResult.yaml'
+        500:
+          description: Server error.
+        404:
+          description: Bad request

@@ -2707,7 +2707,8 @@ paths:
                   $ref: '#/components/schemas/MatchResult'
         500:
           description: Server error.
-
+  /api/match/purpose/batch/:
+    $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
   /api/user:
     post:
       summary: Create User
@@ -3296,27 +3297,7 @@ components:
     Vote:
       $ref: './schemas/Vote.yaml'
     MatchResult:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: The id of the stored match result
-        consent:
-          type: string
-          description: The Consent ID
-        purpose:
-          type: string
-          description: The Data Access Request ID
-        match:
-          type: boolean
-          description: The match condition between the Consent and Data Access Request
-        failed:
-          type: boolean
-          description: Indicates a system failure or not. If true, the system was not able to
-            perform a logic match between the two objects due to a server error.
-        createDate:
-          type: string
-          description: A string representation of the date that this match result was created.
+      $ref: './schemas/MatchResult.yaml'
     Match:
       type: object
       properties:
