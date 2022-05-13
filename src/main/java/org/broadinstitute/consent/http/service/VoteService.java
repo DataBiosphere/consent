@@ -309,11 +309,18 @@ public class VoteService {
      */
     public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) throws IllegalArgumentException {
         validateVotesCanUpdate(votes);
-        if (voteValue) {
-            notifyResearchers(votes);
-        }
         try {
-            return voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
+            List<Vote> updatedVotes = voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
+            if (voteValue) {
+                try {
+                    notifyResearchersOfDarApproval(updatedVotes);
+                } catch (Exception e) {
+                    // We can recover from an email error.
+                    // Log it and don't fail the overall process.
+                    logger.error(e.getMessage());
+                }
+            }
+            return updatedVotes;
         } catch (SQLException e) {
             throw new IllegalArgumentException("Unable to update election votes.");
         }
@@ -326,7 +333,7 @@ public class VoteService {
      * @param votes List of Vote objects. In practice, this will be a batch of votes for a group of elections for
      *              datasets that all have the same data use restriction.
      */
-    public void notifyResearchers(List<Vote> votes) {
+    public void notifyResearchersOfDarApproval(List<Vote> votes) {
 
         List<Integer> finalElectionIds = votes
             .stream()
