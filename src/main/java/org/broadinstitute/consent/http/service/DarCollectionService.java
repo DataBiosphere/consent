@@ -89,7 +89,11 @@ public class DarCollectionService {
     } else {
       collections.addAll(getCollectionsForUser(user));
     }
-    return collections;
+    return collections.stream().filter(collection -> !containsCanceledDars(collection)).collect(Collectors.toList());
+  }
+
+  private boolean containsCanceledDars(DarCollection collection) {
+    return collection.getDars().values().stream().anyMatch(DataAccessRequest::isCanceled);
   }
 
   /**
@@ -199,8 +203,8 @@ public class DarCollectionService {
 
   private List<Integer> getDacIdsFromUser (User user) {
     return user.getRoles().stream()
-            .filter(role -> Objects.nonNull(role.getDacId()))
             .map(UserRole::getDacId)
+            .filter(Objects::nonNull)
             .distinct()
             .collect(Collectors.toList());
   }
