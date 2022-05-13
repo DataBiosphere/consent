@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -340,51 +341,58 @@ public class VoteService {
      */
     public void notifyResearchersOfDarApproval(List<Vote> votes) {
 
-        List<Integer> finalElectionIds = votes
-            .stream()
+        List<Integer> finalElectionIds = votes.stream()
             .filter(v -> VoteType.FINAL.getValue().equalsIgnoreCase(v.getType()))
             .map(Vote::getElectionId)
             .distinct()
             .collect(Collectors.toList());
 
-        List<Election> finalElections = electionDAO.findElectionsByIds(finalElectionIds);
+        List<Election> finalElections = finalElectionIds.isEmpty() ? List.of() : electionDAO.findElectionsByIds(finalElectionIds);
 
-        List<String> finalElectionReferenceIds = finalElections
-            .stream()
+        List<String> finalElectionReferenceIds = finalElections.stream()
             .map(Election::getReferenceId)
             .distinct()
             .collect(Collectors.toList());
 
-        List<Integer> collectionIds = (finalElectionReferenceIds.isEmpty()) ? List.of() : dataAccessRequestDAO
-            .findByReferenceIds(finalElectionReferenceIds)
-            .stream()
-            .map(DataAccessRequest::getCollectionId).collect(Collectors.toList());
+        List<Integer> collectionIds = finalElectionReferenceIds.isEmpty() ? List.of() : dataAccessRequestDAO
+            .findByReferenceIds(finalElectionReferenceIds).stream()
+            .map(DataAccessRequest::getCollectionId)
+            .collect(Collectors.toList());
 
         List<DarCollection> collections = darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
 
-        List<Integer> datasetIds = finalElections.stream().map(Election::getDataSetId).collect(Collectors.toList());
-        List<Dataset> datasets = (datasetIds.isEmpty()) ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
+        List<Integer> datasetIds = finalElections.stream()
+            .map(Election::getDataSetId)
+            .collect(Collectors.toList());
+        List<Dataset> datasets = datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
         // For each dar collection, email the researcher summarizing the approved datasets
         collections.forEach(c -> {
             // Get the datasets in this collection that have been approved
-            Set<Dataset> datasetIntersection = new HashSet<>(datasets);
-            datasetIntersection.retainAll(c.getDatasets());
+            List<Integer> collectionDatasetIds = c.getDars().values().stream()
+                .map(DataAccessRequest::getData)
+                .map(DataAccessRequestData::getDatasetIds)
+                .flatMap(List::stream)
+                .distinct()
+                .collect(Collectors.toList());
+            List<Dataset> collectionDatasets = datasets.stream()
+                .filter(d -> collectionDatasetIds.contains(d.getDataSetId()))
+                .collect(Collectors.toList());
 
-            if (!datasetIntersection.isEmpty()) {
+            if (!collectionDatasets.isEmpty()) {
                 String darCode = c.getDarCode();
                 Integer researcherId = c.getCreateUserId();
-                List<DatasetMailDTO> datasetMailDTOs = datasetIntersection
-                    .stream()
+                List<DatasetMailDTO> datasetMailDTOs = collectionDatasets.stream()
                     .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
                     .collect(Collectors.toList());
 
                 // Legacy behavior was to choose the first dataset and get the DataUse translation from that one only.
                 // A more accurate way is to get all of them, distinctly in the case that there are several with the
                 // same data use, and then conjoin them.
-                List<DataUse> dataUses = datasetIntersection.stream().map(Dataset::getDataUse).collect(Collectors.toList());
-                List<String> dataUseTranslations = dataUses
-                    .stream()
+                List<DataUse> dataUses = collectionDatasets.stream()
+                    .map(Dataset::getDataUse)
+                    .collect(Collectors.toList());
+                List<String> dataUseTranslations = dataUses.stream()
                     .map(d -> useRestrictionConverter.translateDataUse(d, DataUseTranslationType.DATASET))
                     .distinct()
                     .collect(Collectors.toList());
