@@ -3,27 +3,11 @@ package org.broadinstitute.consent.http.service;
 import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -45,11 +29,29 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
+import javax.mail.MessagingException;
+import javax.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public class EmailNotifierService {
 
     private final DarCollectionDAO collectionDAO;
     private final ConsentDAO consentDAO;
-    private final DataAccessRequestService dataAccessRequestService;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final UserDAO userDAO;
     private final ElectionDAO electionDAO;
     private final MailMessageDAO emailDAO;
@@ -93,14 +95,14 @@ public class EmailNotifierService {
     }
 
     @Inject
-    public EmailNotifierService(DarCollectionDAO collectionDAO, ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
-                                VoteDAO voteDAO, ElectionDAO electionDAO, UserDAO userDAO,
-                                MailMessageDAO emailDAO, MailService mailService,
+    public EmailNotifierService(DarCollectionDAO collectionDAO, ConsentDAO consentDAO,
+                                DataAccessRequestDAO dataAccessRequestDAO, VoteDAO voteDAO, ElectionDAO electionDAO,
+                                UserDAO userDAO, MailMessageDAO emailDAO, MailService mailService,
                                 FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive,
                                 UserPropertyDAO userPropertyDAO) {
         this.collectionDAO = collectionDAO;
         this.consentDAO = consentDAO;
-        this.dataAccessRequestService = dataAccessRequestService;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.userDAO = userDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
@@ -206,7 +208,7 @@ public class EmailNotifierService {
             Map<String, List<Election>> reviewedDatasets = new HashMap<>();
             for(Election election: elections) {
                 List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
-                DataAccessRequest dar = dataAccessRequestService.findByReferenceId(election.getReferenceId());
+                DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(election.getReferenceId());
                 String dar_code = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDarCode() : "";
                 reviewedDatasets.put(dar_code, dsElections);
             }
@@ -391,7 +393,7 @@ public class EmailNotifierService {
             Consent consent = consentDAO.findConsentById(referenceId);
             return Objects.nonNull(consent) ? consent.getName() : " ";
         } else {
-            DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+            DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
             return (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) ? dar.getData().getDarCode() : " ";
         }
     }

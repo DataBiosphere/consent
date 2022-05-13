@@ -303,7 +303,7 @@ public class ConsentModule extends AbstractModule {
         return new EmailNotifierService(
                 providesDARCollectionDAO(),
                 providesConsentDAO(),
-                providesDataAccessRequestService(),
+                providesDataAccessRequestDAO(),
                 providesVoteDAO(),
                 providesElectionDAO(),
                 providesUserDAO(),
