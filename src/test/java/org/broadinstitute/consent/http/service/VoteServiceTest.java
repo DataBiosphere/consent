@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -47,11 +48,17 @@ public class VoteServiceTest {
     @Mock
     private UserDAO userDAO;
     @Mock
+    private DarCollectionDAO darCollectionDAO;
+    @Mock
     private DatasetAssociationDAO dataSetAssociationDAO;
     @Mock
     private DatasetDAO datasetDAO;
     @Mock
     private ElectionDAO electionDAO;
+    @Mock
+    private EmailNotifierService emailNotifierService;
+    @Mock
+    private UseRestrictionConverter useRestrictionConverter;
     @Mock
     private VoteDAO voteDAO;
     @Mock
@@ -70,7 +77,7 @@ public class VoteServiceTest {
     }
 
     private void initService() {
-        service = new VoteService(userDAO, dataSetAssociationDAO, electionDAO, voteDAO, voteServiceDAO);
+        service = new VoteService(userDAO, darCollectionDAO, dataSetAssociationDAO, datasetDAO, electionDAO, emailNotifierService, useRestrictionConverter, voteDAO, voteServiceDAO);
     }
 
     @Test
