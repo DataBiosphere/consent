@@ -324,7 +324,7 @@ public class DarCollectionService {
       dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
     }
 
-    return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+    return getByCollectionId(collection.getDarCollectionId());
   }
 
   /**
