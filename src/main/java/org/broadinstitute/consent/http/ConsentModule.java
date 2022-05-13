@@ -375,6 +375,7 @@ public class ConsentModule extends AbstractModule {
         return new VoteService(
                 providesUserDAO(),
                 providesDARCollectionDAO(),
+                providesDataAccessRequestDAO(),
                 providesDatasetAssociationDAO(),
                 providesDatasetDAO(),
                 providesElectionDAO(),

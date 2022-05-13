@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -17,6 +18,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -43,7 +45,8 @@ public class VoteService {
 
     private final UserDAO userDAO;
     private final DarCollectionDAO darCollectionDAO;
-    private final DatasetAssociationDAO dataSetAssociationDAO;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
+    private final DatasetAssociationDAO datasetAssociationDAO;
     private final DatasetDAO datasetDAO;
     private final ElectionDAO electionDAO;
     private final EmailNotifierService emailNotifierService;
@@ -53,12 +56,14 @@ public class VoteService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     @Inject
-    public VoteService(UserDAO userDAO, DarCollectionDAO darCollectionDAO, DatasetAssociationDAO dataSetAssociationDAO,
-                       DatasetDAO datasetDAO, ElectionDAO electionDAO, EmailNotifierService emailNotifierService,
-                       UseRestrictionConverter useRestrictionConverter, VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
+    public VoteService(UserDAO userDAO, DarCollectionDAO darCollectionDAO, DataAccessRequestDAO dataAccessRequestDAO,
+                       DatasetAssociationDAO datasetAssociationDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
+                       EmailNotifierService emailNotifierService, UseRestrictionConverter useRestrictionConverter,
+                       VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
         this.userDAO = userDAO;
         this.darCollectionDAO = darCollectionDAO;
-        this.dataSetAssociationDAO = dataSetAssociationDAO;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
+        this.datasetAssociationDAO = datasetAssociationDAO;
         this.datasetDAO = datasetDAO;
         this.electionDAO = electionDAO;
         this.emailNotifierService = emailNotifierService;
@@ -218,7 +223,7 @@ public class VoteService {
      */
     @SuppressWarnings("UnusedReturnValue")
     public List<Vote> createDataOwnersReviewVotes(Election election) {
-        List<Integer> dataOwners = dataSetAssociationDAO.getDataOwnersOfDataSet(election.getDataSetId());
+        List<Integer> dataOwners = datasetAssociationDAO.getDataOwnersOfDataSet(election.getDataSetId());
         voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
         return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
     }
@@ -350,28 +355,26 @@ public class VoteService {
             .distinct()
             .collect(Collectors.toList());
 
-        // TODO: This can be optimized
-        List<DarCollection> collections = new ArrayList<>();
-        finalElectionReferenceIds.forEach(id -> {
-            DarCollection darCollection = darCollectionDAO.findDARCollectionByReferenceId(id);
-            if (Objects.nonNull(darCollection)) {
-                collections.add(darCollection);
-            }
-        });
+        List<Integer> collectionIds = (finalElectionReferenceIds.isEmpty()) ? List.of() : dataAccessRequestDAO
+            .findByReferenceIds(finalElectionReferenceIds)
+            .stream()
+            .map(DataAccessRequest::getCollectionId).collect(Collectors.toList());
+
+        List<DarCollection> collections = darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
 
         List<Integer> datasetIds = finalElections.stream().map(Election::getDataSetId).collect(Collectors.toList());
         List<Dataset> datasets = (datasetIds.isEmpty()) ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
         // For each dar collection, email the researcher summarizing the approved datasets
         collections.forEach(c -> {
-            // Get the datasets in this collection that have been approved for access
+            // Get the datasets in this collection that have been approved
             Set<Dataset> datasetIntersection = new HashSet<>(datasets);
             datasetIntersection.retainAll(c.getDatasets());
 
             if (!datasetIntersection.isEmpty()) {
                 String darCode = c.getDarCode();
                 Integer researcherId = c.getCreateUserId();
-                List<DatasetMailDTO> datasetMailDTOS = datasetIntersection
+                List<DatasetMailDTO> datasetMailDTOs = datasetIntersection
                     .stream()
                     .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
                     .collect(Collectors.toList());
@@ -388,7 +391,7 @@ public class VoteService {
                 String translation = String.join(";", dataUseTranslations);
 
                 try {
-                    emailNotifierService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOS, translation);
+                    emailNotifierService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs, translation);
                 } catch (Exception e) {
                     logger.error("Error sending researcher dar approved email: " + e.getMessage());
                 }

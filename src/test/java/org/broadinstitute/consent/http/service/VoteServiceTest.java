@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -50,7 +51,9 @@ public class VoteServiceTest {
     @Mock
     private DarCollectionDAO darCollectionDAO;
     @Mock
-    private DatasetAssociationDAO dataSetAssociationDAO;
+    private DataAccessRequestDAO dataAccessRequestDAO;
+    @Mock
+    private DatasetAssociationDAO datasetAssociationDAO;
     @Mock
     private DatasetDAO datasetDAO;
     @Mock
@@ -77,7 +80,7 @@ public class VoteServiceTest {
     }
 
     private void initService() {
-        service = new VoteService(userDAO, darCollectionDAO, dataSetAssociationDAO, datasetDAO, electionDAO, emailNotifierService, useRestrictionConverter, voteDAO, voteServiceDAO);
+        service = new VoteService(userDAO, darCollectionDAO, dataAccessRequestDAO, datasetAssociationDAO, datasetDAO, electionDAO, emailNotifierService, useRestrictionConverter, voteDAO, voteServiceDAO);
     }
 
     @Test
@@ -273,7 +276,7 @@ public class VoteServiceTest {
         Election e = new Election();
         e.setElectionId(1);
         e.setDataSetId(1);
-        when(dataSetAssociationDAO.getDataOwnersOfDataSet(anyInt())).thenReturn(Collections.singletonList(1));
+        when(datasetAssociationDAO.getDataOwnersOfDataSet(anyInt())).thenReturn(Collections.singletonList(1));
         Vote v = new Vote();
         v.setVoteId(1);
         when(voteDAO.insertVote(anyInt(), anyInt(), any())).thenReturn(v.getVoteId());
