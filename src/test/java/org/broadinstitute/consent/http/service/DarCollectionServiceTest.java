@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -132,6 +133,23 @@ public class DarCollectionServiceTest {
 
     List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, null);
     assertEquals(1, collections.size());
+  }
+
+  @Test
+  public void testGetCollectionsForUserByRoleName_NoCanceledCollections() {
+    User user = new User();
+    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    DataAccessRequestData canceledDarData = new DataAccessRequestData();
+    canceledDarData.setStatus(DarStatus.CANCELED.getValue());
+    DataAccessRequest canceledDar = new DataAccessRequest();
+    canceledDar.setData(canceledDarData);
+    DarCollection canceledCollection = new DarCollection();
+    canceledCollection.addDar(canceledDar);
+    when(darCollectionDAO.findAllDARCollections()).thenReturn(List.of(canceledCollection));
+    initService();
+
+    List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.ADMIN.getRoleName());
+    assertEquals(0, collections.size());
   }
 
   @Test
