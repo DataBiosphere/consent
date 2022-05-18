@@ -283,7 +283,7 @@ public class DataAccessRequestService {
                 .map(DataAccessRequest::getData)
                 .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getStatus()))
                 .map(DataAccessRequestData::getReferenceId)
-                .collect(Collectors.toUnmodifiableList());
+                .collect(Collectors.toList());
         List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(canceledReferenceIds);
         if (!electionIds.isEmpty()) {
             String errorMessage = "Found 'Open' elections for canceled DARs in collection id: " + sourceCollection.getDarCollectionId();
