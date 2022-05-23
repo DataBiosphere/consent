@@ -158,7 +158,9 @@ public class DarDecisionMetrics implements DecisionMetrics {
    * @param election The election
    */
   private void setDateApproved(Election election) {
-    if (Objects.nonNull(election) && election.getFinalAccessVote()) {
+    if (Objects.nonNull(election)
+      && Objects.nonNull(election.getFinalAccessVote())
+      && election.getFinalAccessVote()) {
       if (Objects.nonNull(election.getFinalVoteDate())) {
         this.dateApproved = election.getFinalVoteDate();
       } else {
@@ -179,7 +181,9 @@ public class DarDecisionMetrics implements DecisionMetrics {
    * @param election The election
    */
   private void setDateDenied(Election election) {
-    if (Objects.nonNull(election) && !election.getFinalAccessVote()) {
+    if (Objects.nonNull(election)
+      && Objects.nonNull(election.getFinalAccessVote())
+      && !election.getFinalAccessVote()) {
       if (Objects.nonNull(election.getFinalVoteDate())) {
         this.dateDenied = election.getFinalVoteDate();
       } else {
