@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -13,6 +14,11 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -26,6 +32,7 @@ import org.mockito.Mock;
 import javax.ws.rs.NotFoundException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,8 +44,12 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -594,6 +605,50 @@ public class VoteServiceTest {
         initService();
 
         service.updateRationaleByVoteIds(List.of(1), "rationale");
+    }
+
+    @Test
+    public void testNotifyResearchersOfDarApproval() throws Exception {
+        String referenceId = UUID.randomUUID().toString();
+        Vote v = new Vote();
+        v.setVote(true);
+        v.setType(VoteType.FINAL.getValue());
+        v.setElectionId(1);
+        v.setDacUserId(1);
+
+        Dataset d = new Dataset();
+        d.setDataSetId(1);
+        d.setName(RandomStringUtils.random(50, true, false));
+        d.setAlias(1);
+        d.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+
+        Election e = new Election();
+        e.setElectionId(1);
+        e.setReferenceId(referenceId);
+        e.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        e.setDataSetId(1);
+
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setDatasetIds(List.of(d.getDataSetId()));
+        dar.setCollectionId(1);
+        dar.setData(data);
+        dar.setReferenceId(referenceId);
+
+        DarCollection c = new DarCollection();
+        c.setDarCollectionId(1);
+        c.setDars(Collections.singletonMap(dar.getReferenceId(), dar));
+        c.setDarCode("DAR-CODE");
+
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e));
+        when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar));
+        when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c));
+        when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
+        spy(emailNotifierService);
+
+        initService();
+        service.notifyResearchersOfDarApproval(List.of(v));
+        verify(emailNotifierService, times(1)).sendResearcherDarApproved(any(), any(), anyList(), any());
     }
 
     private void setUpUserAndElectionVotes(UserRoles userRoles) {
