@@ -274,7 +274,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.28.0</version>
+        <version>3.29.0</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -345,7 +345,7 @@
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>sendgrid-java</artifactId>
-      <version>4.9.1</version>
+      <version>4.9.2</version>
       <exclusions>
           <exclusion>
               <groupId>com.fasterxml.jackson.core</groupId>
@@ -376,7 +376,7 @@
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>java-http-client</artifactId>
-      <version>4.5.0</version>
+      <version>4.5.1</version>
       <exclusions>
         <exclusion>
           <artifactId>org.apache.httpcomponents</artifactId>
@@ -541,7 +541,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.17.1</version>
+      <version>1.17.2</version>
       <scope>test</scope>
     </dependency>
 
@@ -549,7 +549,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>mockserver</artifactId>
-      <version>1.17.1</version>
+      <version>1.17.2</version>
       <scope>test</scope>
     </dependency>
 
