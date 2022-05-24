@@ -321,9 +321,10 @@ public class VoteService {
                 try {
                     notifyResearchersOfDarApproval(updatedVotes);
                 } catch (Exception e) {
-                    // We can recover from an email error.
-                    // Log it and don't fail the overall process.
-                    logger.error(e.getMessage());
+                    // We can recover from an email error, log it and don't fail the overall process.
+                    String voteIds = votes.stream().map(Vote::getVoteId).map(Object::toString).collect(Collectors.joining(","));
+                    String message = "Error notifying researchers for votes: [" + voteIds + "], " + e.getMessage();
+                    logger.error(message);
                 }
             }
             return updatedVotes;
@@ -387,8 +388,8 @@ public class VoteService {
                     .collect(Collectors.toList());
 
                 // Legacy behavior was to choose the first dataset and get the DataUse translation from that one only.
-                // A more accurate way is to get all of them, distinctly in the case that there are several with the
-                // same data use, and then conjoin them.
+                // Correct way is to get all of them, distinctly in the case that there are several with the same data
+                // use, and then conjoin them for display
                 List<DataUse> dataUses = collectionDatasets.stream()
                     .map(Dataset::getDataUse)
                     .collect(Collectors.toList());
