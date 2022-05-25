@@ -657,7 +657,7 @@ public class VoteServiceTest {
 
         DataAccessRequest dar2 = new DataAccessRequest();
         DataAccessRequestData data2 = new DataAccessRequestData();
-        data2.setDatasetIds(List.of(d1.getDataSetId()));
+        data2.setDatasetIds(List.of(d2.getDataSetId()));
         dar2.setCollectionId(1);
         dar2.setData(data2);
         dar2.setReferenceId(referenceId2);
@@ -730,7 +730,7 @@ public class VoteServiceTest {
 
         DataAccessRequest dar2 = new DataAccessRequest();
         DataAccessRequestData data2 = new DataAccessRequestData();
-        data2.setDatasetIds(List.of(d1.getDataSetId()));
+        data2.setDatasetIds(List.of(d2.getDataSetId()));
         dar2.setCollectionId(2);
         dar2.setData(data2);
         dar2.setReferenceId(referenceId2);
