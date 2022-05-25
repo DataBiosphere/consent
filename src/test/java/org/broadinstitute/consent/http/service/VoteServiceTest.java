@@ -609,41 +609,63 @@ public class VoteServiceTest {
 
     @Test
     public void testNotifyResearchersOfDarApproval() throws Exception {
-        String referenceId = UUID.randomUUID().toString();
+        String referenceId1 = UUID.randomUUID().toString();
+        String referenceId2 = UUID.randomUUID().toString();
+
         Vote v = new Vote();
         v.setVote(true);
         v.setType(VoteType.FINAL.getValue());
         v.setElectionId(1);
         v.setDacUserId(1);
 
-        Dataset d = new Dataset();
-        d.setDataSetId(1);
-        d.setName(RandomStringUtils.random(50, true, false));
-        d.setAlias(1);
-        d.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+        d1.setName(RandomStringUtils.random(50, true, false));
+        d1.setAlias(1);
+        d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
 
-        Election e = new Election();
-        e.setElectionId(1);
-        e.setReferenceId(referenceId);
-        e.setElectionType(ElectionType.DATA_ACCESS.getValue());
-        e.setDataSetId(1);
+        Dataset d2 = new Dataset();
+        d2.setDataSetId(2);
+        d2.setName(RandomStringUtils.random(50, true, false));
+        d2.setAlias(2);
+        d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
 
-        DataAccessRequest dar = new DataAccessRequest();
-        DataAccessRequestData data = new DataAccessRequestData();
-        data.setDatasetIds(List.of(d.getDataSetId()));
-        dar.setCollectionId(1);
-        dar.setData(data);
-        dar.setReferenceId(referenceId);
+        Election e1 = new Election();
+        e1.setElectionId(1);
+        e1.setReferenceId(referenceId1);
+        e1.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        e1.setDataSetId(1);
+
+        Election e2 = new Election();
+        e2.setElectionId(2);
+        e2.setReferenceId(referenceId2);
+        e2.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        e2.setDataSetId(2);
+
+        DataAccessRequest dar1 = new DataAccessRequest();
+        DataAccessRequestData data1 = new DataAccessRequestData();
+        data1.setDatasetIds(List.of(d1.getDataSetId()));
+        dar1.setCollectionId(1);
+        dar1.setData(data1);
+        dar1.setReferenceId(referenceId1);
+
+        DataAccessRequest dar2 = new DataAccessRequest();
+        DataAccessRequestData data2 = new DataAccessRequestData();
+        data2.setDatasetIds(List.of(d1.getDataSetId()));
+        dar2.setCollectionId(2);
+        dar2.setData(data2);
+        dar2.setReferenceId(referenceId2);
 
         DarCollection c = new DarCollection();
         c.setDarCollectionId(1);
-        c.setDars(Collections.singletonMap(dar.getReferenceId(), dar));
+        c.addDar(dar1);
+        c.addDar(dar2);
         c.setDarCode("DAR-CODE");
 
-        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e));
-        when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar));
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1, e2));
+        when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1, dar2));
         when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c));
-        when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
+        when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
         spy(emailNotifierService);
 
         initService();
