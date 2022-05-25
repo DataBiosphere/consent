@@ -362,7 +362,8 @@ public class VoteService {
             .map(DataAccessRequest::getCollectionId)
             .collect(Collectors.toList());
 
-        List<DarCollection> collections = darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
+        List<DarCollection> collections = collectionIds.isEmpty() ? List.of() :
+            darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
 
         List<Integer> datasetIds = finalElections.stream()
             .map(Election::getDataSetId)
