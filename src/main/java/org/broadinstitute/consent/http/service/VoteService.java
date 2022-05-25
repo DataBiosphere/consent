@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -334,15 +333,18 @@ public class VoteService {
     }
 
     /**
-     * Review all votes and send a notification to the researcher describing the approved access to datasets
-     * on their Data Access Request.
+     * Review all positive, FINAL votes and send a notification to the researcher describing the approved access to
+     * datasets on their Data Access Request.
      *
      * @param votes List of Vote objects. In practice, this will be a batch of votes for a group of elections for
-     *              datasets that all have the same data use restriction.
+     *              datasets that all have the same data use restriction in a single DarCollection
+     *              This method is flexible enough to send email for any number of unrelated elections in various
+     *              DarCollections.
      */
     public void notifyResearchersOfDarApproval(List<Vote> votes) {
 
         List<Integer> finalElectionIds = votes.stream()
+            .filter(Vote::getVote) // Safety check to ensure we're only emailing for approved election
             .filter(v -> VoteType.FINAL.getValue().equalsIgnoreCase(v.getType()))
             .map(Vote::getElectionId)
             .distinct()
@@ -367,7 +369,7 @@ public class VoteService {
             .collect(Collectors.toList());
         List<Dataset> datasets = datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
-        // For each dar collection, email the researcher summarizing the approved datasets
+        // For each dar collection, email the researcher summarizing the approved datasets in that collection
         collections.forEach(c -> {
             // Get the datasets in this collection that have been approved
             List<Integer> collectionDatasetIds = c.getDars().values().stream()
@@ -376,21 +378,20 @@ public class VoteService {
                 .flatMap(List::stream)
                 .distinct()
                 .collect(Collectors.toList());
-            List<Dataset> collectionDatasets = datasets.stream()
+            List<Dataset> approvedDatasetsInCollection = datasets.stream()
                 .filter(d -> collectionDatasetIds.contains(d.getDataSetId()))
                 .collect(Collectors.toList());
 
-            if (!collectionDatasets.isEmpty()) {
+            if (!approvedDatasetsInCollection.isEmpty()) {
                 String darCode = c.getDarCode();
                 Integer researcherId = c.getCreateUserId();
-                List<DatasetMailDTO> datasetMailDTOs = collectionDatasets.stream()
+                List<DatasetMailDTO> datasetMailDTOs = approvedDatasetsInCollection.stream()
                     .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
                     .collect(Collectors.toList());
 
-                // Legacy behavior was to choose the first dataset and get the DataUse translation from that one only.
-                // Correct way is to get all of them, distinctly in the case that there are several with the same data
-                // use, and then conjoin them for display
-                List<DataUse> dataUses = collectionDatasets.stream()
+                // Get all Data Use translations, distinctly in the case that there are several with the same
+                // data use, and then conjoin them for email display.
+                List<DataUse> dataUses = approvedDatasetsInCollection.stream()
                     .map(Dataset::getDataUse)
                     .collect(Collectors.toList());
                 List<String> dataUseTranslations = dataUses.stream()
