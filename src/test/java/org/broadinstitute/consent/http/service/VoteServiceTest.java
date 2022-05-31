@@ -1,6 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -11,6 +14,11 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -24,6 +32,7 @@ import org.mockito.Mock;
 import javax.ws.rs.NotFoundException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,8 +44,12 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -47,11 +60,19 @@ public class VoteServiceTest {
     @Mock
     private UserDAO userDAO;
     @Mock
-    private DatasetAssociationDAO dataSetAssociationDAO;
+    private DarCollectionDAO darCollectionDAO;
+    @Mock
+    private DataAccessRequestDAO dataAccessRequestDAO;
+    @Mock
+    private DatasetAssociationDAO datasetAssociationDAO;
     @Mock
     private DatasetDAO datasetDAO;
     @Mock
     private ElectionDAO electionDAO;
+    @Mock
+    private EmailNotifierService emailNotifierService;
+    @Mock
+    private UseRestrictionConverter useRestrictionConverter;
     @Mock
     private VoteDAO voteDAO;
     @Mock
@@ -70,7 +91,7 @@ public class VoteServiceTest {
     }
 
     private void initService() {
-        service = new VoteService(userDAO, dataSetAssociationDAO, electionDAO, voteDAO, voteServiceDAO);
+        service = new VoteService(userDAO, darCollectionDAO, dataAccessRequestDAO, datasetAssociationDAO, datasetDAO, electionDAO, emailNotifierService, useRestrictionConverter, voteDAO, voteServiceDAO);
     }
 
     @Test
@@ -266,7 +287,7 @@ public class VoteServiceTest {
         Election e = new Election();
         e.setElectionId(1);
         e.setDataSetId(1);
-        when(dataSetAssociationDAO.getDataOwnersOfDataSet(anyInt())).thenReturn(Collections.singletonList(1));
+        when(datasetAssociationDAO.getDataOwnersOfDataSet(anyInt())).thenReturn(Collections.singletonList(1));
         Vote v = new Vote();
         v.setVoteId(1);
         when(voteDAO.insertVote(anyInt(), anyInt(), any())).thenReturn(v.getVoteId());
@@ -584,6 +605,258 @@ public class VoteServiceTest {
         initService();
 
         service.updateRationaleByVoteIds(List.of(1), "rationale");
+    }
+
+    @Test
+    public void testNotifyResearchersOfDarApproval_2Dars_1Collection() throws Exception {
+        String referenceId1 = UUID.randomUUID().toString();
+        String referenceId2 = UUID.randomUUID().toString();
+
+        Vote v1 = new Vote();
+        v1.setVote(true);
+        v1.setType(VoteType.FINAL.getValue());
+        v1.setElectionId(1);
+        v1.setDacUserId(1);
+
+        Vote v2 = new Vote();
+        v2.setVote(true);
+        v2.setType(VoteType.FINAL.getValue());
+        v2.setElectionId(2);
+        v2.setDacUserId(1);
+
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+        d1.setName(RandomStringUtils.random(50, true, false));
+        d1.setAlias(1);
+        d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+
+        Dataset d2 = new Dataset();
+        d2.setDataSetId(2);
+        d2.setName(RandomStringUtils.random(50, true, false));
+        d2.setAlias(2);
+        d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
+
+        Election e1 = new Election();
+        e1.setElectionId(1);
+        e1.setReferenceId(referenceId1);
+        e1.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        e1.setDataSetId(1);
+
+        Election e2 = new Election();
+        e2.setElectionId(2);
+        e2.setReferenceId(referenceId2);
+        e2.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        e2.setDataSetId(2);
+
+        DataAccessRequest dar1 = new DataAccessRequest();
+        DataAccessRequestData data1 = new DataAccessRequestData();
+        data1.setDatasetIds(List.of(d1.getDataSetId()));
+        dar1.setCollectionId(1);
+        dar1.setData(data1);
+        dar1.setReferenceId(referenceId1);
+
+        DataAccessRequest dar2 = new DataAccessRequest();
+        DataAccessRequestData data2 = new DataAccessRequestData();
+        data2.setDatasetIds(List.of(d2.getDataSetId()));
+        dar2.setCollectionId(1);
+        dar2.setData(data2);
+        dar2.setReferenceId(referenceId2);
+
+        DarCollection c = new DarCollection();
+        c.setDarCollectionId(1);
+        c.addDar(dar1);
+        c.addDar(dar2);
+        c.setDarCode("DAR-CODE");
+
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1, e2));
+        when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1, dar2));
+        when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c));
+        when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
+        spy(emailNotifierService);
+
+        initService();
+        service.notifyResearchersOfDarApproval(List.of(v1, v2));
+        // Since we have 1 collection with different DAR/Datasets, we should be sending 1 email
+        verify(emailNotifierService, times(1)).sendResearcherDarApproved(any(), any(), anyList(), any());
+    }
+
+    @Test
+    public void testNotifyResearchersOfDarApproval_2Dars_2Collections() throws Exception {
+        String referenceId1 = UUID.randomUUID().toString();
+        String referenceId2 = UUID.randomUUID().toString();
+
+        Vote v1 = new Vote();
+        v1.setVote(true);
+        v1.setType(VoteType.FINAL.getValue());
+        v1.setElectionId(1);
+        v1.setDacUserId(1);
+
+        Vote v2 = new Vote();
+        v2.setVote(true);
+        v2.setType(VoteType.FINAL.getValue());
+        v2.setElectionId(2);
+        v2.setDacUserId(1);
+
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+        d1.setName(RandomStringUtils.random(50, true, false));
+        d1.setAlias(1);
+        d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+
+        Dataset d2 = new Dataset();
+        d2.setDataSetId(2);
+        d2.setName(RandomStringUtils.random(50, true, false));
+        d2.setAlias(2);
+        d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
+
+        Election e1 = new Election();
+        e1.setElectionId(1);
+        e1.setReferenceId(referenceId1);
+        e1.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        e1.setDataSetId(1);
+
+        Election e2 = new Election();
+        e2.setElectionId(2);
+        e2.setReferenceId(referenceId2);
+        e2.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        e2.setDataSetId(2);
+
+        DataAccessRequest dar1 = new DataAccessRequest();
+        DataAccessRequestData data1 = new DataAccessRequestData();
+        data1.setDatasetIds(List.of(d1.getDataSetId()));
+        dar1.setCollectionId(1);
+        dar1.setData(data1);
+        dar1.setReferenceId(referenceId1);
+
+        DataAccessRequest dar2 = new DataAccessRequest();
+        DataAccessRequestData data2 = new DataAccessRequestData();
+        data2.setDatasetIds(List.of(d2.getDataSetId()));
+        dar2.setCollectionId(2);
+        dar2.setData(data2);
+        dar2.setReferenceId(referenceId2);
+
+        DarCollection c1 = new DarCollection();
+        c1.setDarCollectionId(1);
+        c1.addDar(dar1);
+        c1.setDarCode("DAR-CODE-1");
+
+        DarCollection c2 = new DarCollection();
+        c2.setDarCollectionId(2);
+        c2.addDar(dar2);
+        c2.setDarCode("DAR-CODE-2");
+
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1, e2));
+        when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1, dar2));
+        when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1, c2));
+        when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
+        spy(emailNotifierService);
+
+        initService();
+        service.notifyResearchersOfDarApproval(List.of(v1, v2));
+        // Since we have 2 collections with different DAR/Datasets, we should be sending 2 emails
+        verify(emailNotifierService, times(2)).sendResearcherDarApproved(any(), any(), anyList(), any());
+    }
+
+    @Test
+    public void testNotifyResearchersOfDarApproval_FalseVote() throws Exception {
+        String referenceId1 = UUID.randomUUID().toString();
+
+        Vote v1 = new Vote();
+        v1.setVote(false);
+        v1.setType(VoteType.FINAL.getValue());
+        v1.setElectionId(1);
+        v1.setDacUserId(1);
+
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+        d1.setName(RandomStringUtils.random(50, true, false));
+        d1.setAlias(1);
+        d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+
+        Election e1 = new Election();
+        e1.setElectionId(1);
+        e1.setReferenceId(referenceId1);
+        e1.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        e1.setDataSetId(1);
+
+        DataAccessRequest dar1 = new DataAccessRequest();
+        DataAccessRequestData data1 = new DataAccessRequestData();
+        data1.setDatasetIds(List.of(d1.getDataSetId()));
+        dar1.setCollectionId(1);
+        dar1.setData(data1);
+        dar1.setReferenceId(referenceId1);
+
+        DarCollection c1 = new DarCollection();
+        c1.setDarCollectionId(1);
+        c1.addDar(dar1);
+        c1.setDarCode("DAR-CODE-1");
+
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1));
+        when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1));
+        when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1));
+        when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1));
+        spy(emailNotifierService);
+
+        initService();
+        service.notifyResearchersOfDarApproval(List.of(v1));
+        // Since we have a false vote, we should not be sending any email
+        verify(emailNotifierService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
+        // Similar check for all DAO calls
+        verify(electionDAO, times(0)).findElectionsByIds(any());
+        verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());
+        verify(darCollectionDAO, times(0)).findDARCollectionByCollectionIds(any());
+        verify(datasetDAO, times(0)).findDatasetsByIdList(any());
+    }
+
+    @Test
+    public void testNotifyResearchersOfDarApproval_NonFinalVote() throws Exception {
+        String referenceId1 = UUID.randomUUID().toString();
+
+        Vote v1 = new Vote();
+        v1.setVote(true);
+        v1.setType(VoteType.DAC.getValue());
+        v1.setElectionId(1);
+        v1.setDacUserId(1);
+
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+        d1.setName(RandomStringUtils.random(50, true, false));
+        d1.setAlias(1);
+        d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+
+        Election e1 = new Election();
+        e1.setElectionId(1);
+        e1.setReferenceId(referenceId1);
+        e1.setElectionType(ElectionType.DATA_ACCESS.getValue());
+        e1.setDataSetId(1);
+
+        DataAccessRequest dar1 = new DataAccessRequest();
+        DataAccessRequestData data1 = new DataAccessRequestData();
+        data1.setDatasetIds(List.of(d1.getDataSetId()));
+        dar1.setCollectionId(1);
+        dar1.setData(data1);
+        dar1.setReferenceId(referenceId1);
+
+        DarCollection c1 = new DarCollection();
+        c1.setDarCollectionId(1);
+        c1.addDar(dar1);
+        c1.setDarCode("DAR-CODE-1");
+
+        when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1));
+        when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1));
+        when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1));
+        when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1));
+        spy(emailNotifierService);
+
+        initService();
+        service.notifyResearchersOfDarApproval(List.of(v1));
+        // Since we have a non-final vote, we should not be sending any email
+        verify(emailNotifierService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
+        // Similar check for all DAO calls
+        verify(electionDAO, times(0)).findElectionsByIds(any());
+        verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());
+        verify(darCollectionDAO, times(0)).findDARCollectionByCollectionIds(any());
+        verify(datasetDAO, times(0)).findDatasetsByIdList(any());
     }
 
     private void setUpUserAndElectionVotes(UserRoles userRoles) {
