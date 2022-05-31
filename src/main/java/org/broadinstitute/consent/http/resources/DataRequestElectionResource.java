@@ -112,6 +112,7 @@ public class DataRequestElectionResource extends Resource {
         }
     }
 
+    @Deprecated
     @GET
     @Produces("text/plain")
     @Path("/dataSetVotes")
