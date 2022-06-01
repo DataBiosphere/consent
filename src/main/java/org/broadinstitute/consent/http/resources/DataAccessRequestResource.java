@@ -51,6 +51,7 @@ public class DataAccessRequestResource extends Resource {
         this.userService = userService;
     }
 
+    @Deprecated
     @GET
     @Produces("application/json")
     @Path("/modalSummary/{id}")

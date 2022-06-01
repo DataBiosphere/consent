@@ -43,6 +43,7 @@ public class DataRequestCasesResource extends Resource {
         return Response.ok().entity(pendingCases).build();
     }
 
+    @Deprecated
     @GET
     @Path("/pending/dataOwner/{dataOwnerId}")
     @RolesAllowed({CHAIRPERSON, DATAOWNER})

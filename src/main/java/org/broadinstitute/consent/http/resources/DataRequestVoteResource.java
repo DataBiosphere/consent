@@ -149,7 +149,7 @@ public class DataRequestVoteResource extends Resource {
         }
     }
 
-
+    @Deprecated
     @GET
     @Produces("application/json")
     @Path("/{id}")

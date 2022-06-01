@@ -1244,6 +1244,7 @@ paths:
           description: Internal error
   /api/dar/modalSummary/{id}:
     get:
+      deprecated: true
       summary: getDataAcessRequestModalSummary
       description: Retrieves a DARModalDetails.
       parameters:
@@ -1732,6 +1733,7 @@ paths:
           description: The Election doesn't exist.
   /api/dataRequest/{requestId}/vote/{id}:
     get:
+      deprecated: true
       summary: Find the vote for the Data Access Request and Vote ID
       description: Returns the Vote with the specified Id.
       parameters:
