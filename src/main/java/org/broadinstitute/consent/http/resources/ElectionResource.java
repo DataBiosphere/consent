@@ -105,6 +105,7 @@ public class ElectionResource extends Resource {
         }
     }
 
+    @Deprecated
     @GET
     @Consumes("application/json")
     @Produces("application/json")

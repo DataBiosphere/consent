@@ -27,6 +27,7 @@ security:
 paths:
   /api/approvalExpirationTime:
     get:
+      deprecated: true
       summary: Get the approval expiration time
       description: |
         Get the approval expiration time. If no existing time exists, a
@@ -41,6 +42,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApprovalExpirationTime'
     post:
+      deprecated: true
       summary: Create approval expiration time
       description: Create approval expiration time
       tags:
@@ -59,6 +61,7 @@ paths:
           description: Bad Request
   /api/approvalExpirationTime/{id}:
     get:
+      deprecated: true
       summary: Get the approval expiration time
       description: Get the approval expiration time
       tags:
@@ -80,6 +83,7 @@ paths:
         400:
           description: ApprovalExpirationTime not found
     put:
+      deprecated: true
       summary: Update approval expiration time
       description: Update approval expiration time
       tags:
@@ -104,6 +108,7 @@ paths:
         400:
           description: Bad Request
     delete:
+      deprecated: true
       summary: Delete approval expiration time
       description: Delete approval expiration time
       tags:
