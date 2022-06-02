@@ -57,15 +57,15 @@ const Log = {
   hidden: "\x1b[8m",
   // Foreground (text) colors
   fg: {
-    black: "\x1b[30m",
-    red: "\x1b[31m",
-    green: "\x1b[32m",
-    yellow: "\x1b[33m",
-    blue: "\x1b[34m",
-    magenta: "\x1b[35m",
-    cyan: "\x1b[36m",
-    white: "\x1b[37m",
-    crimson: "\x1b[38m"
+    black: "\x1b[30;1m",
+    red: "\x1b[31;1m",
+    green: "\x1b[32;1m",
+    yellow: "\x1b[33;1m",
+    blue: "\x1b[34;1m",
+    magenta: "\x1b[35;1m",
+    cyan: "\x1b[36;1m",
+    white: "\x1b[37;1m",
+    crimson: "\x1b[38;1m"
   },
   // Background colors
   bg: {
