@@ -27,7 +27,7 @@ const host = process.argv.pop()
 const token = process.argv.pop()
 const file = process.argv.pop()
 
-var rl = readline.createInterface({
+const rl = readline.createInterface({
     input : fs.createReadStream(file),
     output : process.stdout,
     terminal : false
@@ -42,5 +42,5 @@ console.log(JSON.stringify([host, token, file]))
 axios.get('https://postman-echo.com/get').then(res => {
     console.log(JSON.stringify(res.status))
     console.log(JSON.stringify(res.statusText))
-    console.error("Example error")
+    console.error('Example error')
 })

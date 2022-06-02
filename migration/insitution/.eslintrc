@@ -1,0 +1,27 @@
+{
+  "env": {
+    "node": true,
+    "es6": true,
+    "browser": false
+  },
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-trailing-spaces": "warn",
+    "no-unreachable": "warn",
+    "no-console": "warn",
+    "array-bracket-spacing": "warn",
+    "no-unused-vars": "warn",
+    "no-extra-semi": "warn",
+    "quotes": ["warn", "single", {"avoidEscape": true, "allowTemplateLiterals": true}], // Checks for single quote usage where possible
+    "indent": [
+      "warn",
+      2,
+      {
+        "SwitchCase": 1
+      }
+    ]
+  }
+}
