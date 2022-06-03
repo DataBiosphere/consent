@@ -20,8 +20,8 @@
 
 const readline = require('readline');
 const fs = require('fs');
-const axios = require('axios');
 const log = require('./logging')
+const consentAPI = require('./consentAPI')
 
 // Program args in process.argv are last in the array. Pop them in reverse order:
 const host = process.argv.pop()
@@ -29,19 +29,14 @@ const token = process.argv.pop()
 const file = process.argv.pop()
 
 const rl = readline.createInterface({
-    input : fs.createReadStream(file),
-    output : process.stdout,
-    terminal : false
+    input: fs.createReadStream(file),
+    output: process.stdout,
+    terminal: false
 })
 
-rl.on('line', function(text) {
-    log.log(text)
-})
-
-console.log(JSON.stringify([host, token, file]))
-
-axios.get('https://postman-echo.com/get').then(res => {
-    log.json(res.status)
-    log.json(res.statusText)
-    log.error('Example error')
+rl.on('line', function (line) {
+    if (line.length > 0) {
+        log.log("Posting: " + line)
+        consentAPI.postInstitution(host, token, line)
+    }
 })
