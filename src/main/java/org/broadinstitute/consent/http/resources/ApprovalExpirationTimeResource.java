@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
 import org.broadinstitute.consent.http.service.UserService;
 
+@Deprecated
 @Path("api/approvalExpirationTime")
 public class ApprovalExpirationTimeResource extends Resource {
 
@@ -36,6 +37,7 @@ public class ApprovalExpirationTimeResource extends Resource {
     this.userService = userService;
   }
 
+  @Deprecated
   @POST
   @Consumes("application/json")
   @Produces("application/json")
@@ -56,6 +58,7 @@ public class ApprovalExpirationTimeResource extends Resource {
     }
   }
 
+  @Deprecated
   @GET
   @Produces("application/json")
   @RolesAllowed(ADMIN)
@@ -67,6 +70,7 @@ public class ApprovalExpirationTimeResource extends Resource {
     }
   }
 
+  @Deprecated
   @GET
   @Path("/{id}")
   @Produces("application/json")
@@ -81,6 +85,7 @@ public class ApprovalExpirationTimeResource extends Resource {
     }
   }
 
+  @Deprecated
   @PUT
   @Path("/{id}")
   @Consumes("application/json")
@@ -102,6 +107,7 @@ public class ApprovalExpirationTimeResource extends Resource {
     }
   }
 
+  @Deprecated
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{id}")
