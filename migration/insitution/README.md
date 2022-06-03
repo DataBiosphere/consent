@@ -1,7 +1,7 @@
-# Uploading Institutions
+# Upload Institutions
 
 To run, add a file with a list of institutions
-to this directory. Run npm install, then run
+to this directory. Run `npm install`, then run
 from the command line:
 
 ```shell
