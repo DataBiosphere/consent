@@ -13,10 +13,10 @@ module.exports = {
         }
         const data = {name: name}
         return axios.post(url, data, config).then(response => {
-            log.log(response.status + ": " + name);
+            log.info(response.status + ': ' + name)
             return response.status;
         }).catch(err => {
-            log.error(err.message + ": " + name);
+            log.error(err.message + ': ' + name)
             return err.response.status;
         });
     }
