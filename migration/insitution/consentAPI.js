@@ -16,8 +16,6 @@ module.exports = {
             log.log(response.status + ": " + name);
             return response.status;
         }).catch(err => {
-            // For some reason, there is a status field on `err` that is not accessible.
-            // Instead, pull it out of the error message which is accessible.
             log.error(err.message + ": " + name);
             return err.response.status
         });
