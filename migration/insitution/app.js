@@ -3,6 +3,7 @@ const fs = require('fs');
 const consentAPI = require('./consentAPI');
 const limiter = require('limiter');
 const log = require('./logging');
+const winston = require('winston');
 
 /**
  * Simple script to post new Institutions given a file of institution names
@@ -29,22 +30,29 @@ const host = process.argv.pop();
 const token = process.argv.pop();
 const file = process.argv.pop();
 // These settings reflect practical values for hitting a local consent instance.
-const rateConfig = {tokensPerInterval: 30, interval: "minute"}
+const rateConfig = {tokensPerInterval: 2, interval: "second"};
 const rateLimiter = new limiter.RateLimiter(rateConfig);
 const rl = readline.createInterface({
     input: fs.createReadStream(file),
     output: process.stdout,
     terminal: false
 });
+const retryLog = winston.createLogger({
+    format: winston.format.simple(),
+    transports: [
+        new winston.transports.File({filename: './retry.log'})
+    ]
+});
 
-let retries = [];
 rl.on('line', async function (line) {
     if (line.length > 0) {
         await rateLimiter.removeTokens(1);
         const status = await consentAPI.postInstitution(host, token, line);
-        log.log("Status: " + status)
         if (status !== 200 && status !== 409) {
-            retries.push(line);
+            retryLog.log({
+                level: 'info',
+                message: line
+            });
         }
         // Break out of the loop if our auth token is not valid
         if (status === 401) {

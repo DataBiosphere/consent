@@ -17,7 +17,7 @@ module.exports = {
             return response.status;
         }).catch(err => {
             log.error(err.message + ": " + name);
-            return err.response.status
+            return err.response.status;
         });
     }
 };
