@@ -1,3 +1,9 @@
+const readline = require('readline');
+const fs = require('fs');
+const consentAPI = require('./consentAPI');
+const limiter = require('limiter');
+const log = require('./logging');
+
 /**
  * Simple script to post new Institutions given a file of institution names
  *
@@ -18,26 +24,32 @@
  *  POST $host/api/institutions -d {"name": "Polytechnique Fédérale de Lausanne"}
  */
 
-const readline = require('readline');
-const fs = require('fs');
-const consentAPI = require('./consentAPI');
-const limiter = require('limiter');
-
 // Program args in process.argv are last in the array. Pop them in reverse order:
 const host = process.argv.pop();
 const token = process.argv.pop();
 const file = process.argv.pop();
-const rateLimiter = new limiter.RateLimiter({tokensPerInterval: 15, interval: "minute" });
-
+// These settings reflect practical values for hitting a local consent instance.
+const rateConfig = {tokensPerInterval: 30, interval: "minute"}
+const rateLimiter = new limiter.RateLimiter(rateConfig);
 const rl = readline.createInterface({
     input: fs.createReadStream(file),
     output: process.stdout,
     terminal: false
 });
 
+let retries = [];
 rl.on('line', async function (line) {
     if (line.length > 0) {
-        const remainingRequests = await rateLimiter.removeTokens(1);
-        await consentAPI.postInstitution(host, token, line)
+        await rateLimiter.removeTokens(1);
+        const status = await consentAPI.postInstitution(host, token, line);
+        log.log("Status: " + status)
+        if (status !== 200 && status !== 409) {
+            retries.push(line);
+        }
+        // Break out of the loop if our auth token is not valid
+        if (status === 401) {
+            log.error("Authentication is not valid");
+            return false;
+        }
     }
 });

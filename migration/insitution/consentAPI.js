@@ -12,10 +12,14 @@ module.exports = {
             }
         }
         const data = {name: name}
-        axios.post(url, data, config).then(response => {
-            log.log(response.status + ": " + name)
+        return axios.post(url, data, config).then(response => {
+            log.log(response.status + ": " + name);
+            return response.status;
         }).catch(err => {
-            log.error(err.message + ": " + name)
-        })
+            // For some reason, there is a status field on `err` that is not accessible.
+            // Instead, pull it out of the error message which is accessible.
+            log.error(err.message + ": " + name);
+            return err.response.status
+        });
     }
 };
