@@ -8,7 +8,7 @@ module.exports = {
     error: (text) => {
         console.error(Log.fg.red, text)
     }
-}
+};
 
 const Log = {
     reset: "\x1b[0m",

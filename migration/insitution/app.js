@@ -20,22 +20,22 @@
 
 const readline = require('readline');
 const fs = require('fs');
-const log = require('./logging')
-const consentAPI = require('./consentAPI')
+const log = require('./logging');
+const consentAPI = require('./consentAPI');
 
 // Program args in process.argv are last in the array. Pop them in reverse order:
-const host = process.argv.pop()
-const token = process.argv.pop()
-const file = process.argv.pop()
+const host = process.argv.pop();
+const token = process.argv.pop();
+const file = process.argv.pop();
 
 const rl = readline.createInterface({
     input: fs.createReadStream(file),
     output: process.stdout,
     terminal: false
-})
+});
 
 rl.on('line', async function (line) {
     if (line.length > 0) {
         await consentAPI.postInstitution(host, token, line)
     }
-})
+});

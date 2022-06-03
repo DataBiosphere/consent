@@ -1,5 +1,5 @@
 const axios = require('axios');
-const log = require('./logging')
+const log = require('./logging');
 
 module.exports = {
 
@@ -18,4 +18,4 @@ module.exports = {
             log.error(err.message + ": " + name)
         })
     }
-}
+};
