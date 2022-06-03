@@ -1,9 +1,9 @@
 module.exports = {
     json: (text) => {
-        console.log(JSON.stringify(text, null, 4))
+        console.log(Log.reset, JSON.stringify(text, null, 4))
     },
     log: (text) => {
-        console.log(text)
+        console.log(Log.reset, text)
     },
     error: (text) => {
         console.error(Log.fg.red, text)

@@ -20,13 +20,14 @@
 
 const readline = require('readline');
 const fs = require('fs');
-const log = require('./logging');
 const consentAPI = require('./consentAPI');
+const limiter = require('limiter');
 
 // Program args in process.argv are last in the array. Pop them in reverse order:
 const host = process.argv.pop();
 const token = process.argv.pop();
 const file = process.argv.pop();
+const rateLimiter = new limiter.RateLimiter({tokensPerInterval: 15, interval: "minute" });
 
 const rl = readline.createInterface({
     input: fs.createReadStream(file),
@@ -36,6 +37,7 @@ const rl = readline.createInterface({
 
 rl.on('line', async function (line) {
     if (line.length > 0) {
+        const remainingRequests = await rateLimiter.removeTokens(1);
         await consentAPI.postInstitution(host, token, line)
     }
 });
