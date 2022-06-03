@@ -34,9 +34,8 @@ const rl = readline.createInterface({
     terminal: false
 })
 
-rl.on('line', function (line) {
+rl.on('line', async function (line) {
     if (line.length > 0) {
-        log.log("Posting: " + line)
-        consentAPI.postInstitution(host, token, line)
+        await consentAPI.postInstitution(host, token, line)
     }
 })

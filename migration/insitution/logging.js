@@ -1,6 +1,6 @@
 module.exports = {
     json: (text) => {
-        console.log(JSON.stringify(text))
+        console.log(JSON.stringify(text, null, 4))
     },
     log: (text) => {
         console.log(text)
