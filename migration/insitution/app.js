@@ -1,7 +1,7 @@
-const readline = require('readline');
 const fs = require('fs');
-const consentAPI = require('./consentAPI');
 const limiter = require('limiter');
+const readline = require('readline');
+const consentAPI = require('./consentAPI');
 const log = require('./logging');
 
 /**
@@ -29,7 +29,7 @@ const host = process.argv.pop();
 const token = process.argv.pop();
 const file = process.argv.pop();
 // These settings reflect practical values for hitting a local consent instance.
-const rateConfig = {tokensPerInterval: 2, interval: "second"};
+const rateConfig = {tokensPerInterval: 3, interval: "second"};
 const rateLimiter = new limiter.RateLimiter(rateConfig);
 const rl = readline.createInterface({
     input: fs.createReadStream(file),
