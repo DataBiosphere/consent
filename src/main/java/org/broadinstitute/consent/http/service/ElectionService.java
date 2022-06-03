@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DatasetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -388,30 +387,6 @@ public class ElectionService {
         return !electionIds.isEmpty() ? electionDAO.findElectionsWithCardHoldingUsersByElectionIds(electionIds) : Collections.emptyList();
     }
 
-    public String darDatasetElectionStatus(String darReferenceId){
-        DataAccessRequest dar = describeDataAccessRequestById(darReferenceId);
-        List<Integer> dataSets =  Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
-        List<Dataset> dsForApproval =  dataSetDAO.findNeedsApprovalDatasetByDatasetId(dataSets);
-        if(CollectionUtils.isEmpty(dsForApproval)) {
-            return DatasetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
-        } else {
-            Election darElection = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(darReferenceId, ElectionType.DATA_ACCESS.getValue());
-            List<Election> dsElectionsToVoteOn = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(Arrays.asList(darReferenceId), ElectionType.DATA_SET.getValue());
-            if((!(Objects.isNull(darElection)) && darElection.getStatus().equals(ElectionStatus.OPEN.getValue())) || CollectionUtils.isEmpty(dsElectionsToVoteOn)){
-                return DatasetElectionStatus.DS_PENDING.getValue();
-            } else {
-                for(Election e: dsElectionsToVoteOn){
-                    if(e.getStatus().equals(ElectionStatus.OPEN.getValue())){
-                        return DatasetElectionStatus.DS_PENDING.getValue();
-                    } else if(!e.getFinalAccessVote()){
-                        return DatasetElectionStatus.DS_DENIED.getValue();
-                    }
-                }
-            }
-            return DatasetElectionStatus.DS_APPROVED.getValue();
-        }
-    }
-
     public Election getConsentElectionByDARElectionId(Integer darElectionId){
         Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(darElectionId);
         return electionId != null ? electionDAO.findElectionById(electionId) : null;
@@ -432,11 +407,6 @@ public class ElectionService {
 
     public List<Election> findElectionsByVoteIdsAndType(List<Integer> voteIds, String electionType) {
         return !voteIds.isEmpty() ? electionDAO.findElectionsByVoteIdsAndType(voteIds, electionType) : Collections.emptyList();
-    }
-
-    public boolean isDataSetElectionOpen() {
-        List<Election> elections = electionDAO.getElectionByTypeAndStatus(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue());
-        return CollectionUtils.isNotEmpty(elections) ? true : false;
     }
 
     private boolean validateAllDatasetElectionsAreClosed(List<Election> elections){

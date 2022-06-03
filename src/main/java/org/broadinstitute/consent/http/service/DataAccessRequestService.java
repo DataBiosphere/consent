@@ -16,7 +16,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -28,10 +27,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.util.DarUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +45,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -591,53 +586,6 @@ public class DataAccessRequestService {
             }
         }
         return builder.toString();
-    }
-
-    public DARModalDetailsDTO DARModalDetailsDTOBuilder(DataAccessRequest dataAccessRequest, User user, ElectionService electionService) {
-        DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
-        List<Dataset> datasets = populateDatasets(dataAccessRequest);
-        User researcher = userDAO.findUserById(dataAccessRequest.getUserId());
-        Boolean hasProps = Objects.nonNull(researcher) && Objects.nonNull(researcher.getProperties());
-        Optional<UserProperty> department = hasProps ? researcher.getProperties().stream().filter(
-            (UserProperty prop) -> prop.getPropertyKey() == UserFields.DEPARTMENT.getValue())
-            .findFirst()
-          : Optional.empty();
-        Optional<UserProperty> city = hasProps ? researcher.getProperties().stream().filter(
-            (UserProperty prop) -> prop.getPropertyKey() == UserFields.CITY.getValue())
-            .findFirst()
-          : Optional.empty();
-        Optional<UserProperty> country = hasProps ? researcher.getProperties().stream().filter(
-            (UserProperty prop) -> prop.getPropertyKey() == UserFields.COUNTRY.getValue())
-            .findFirst()
-          : Optional.empty();
-        return darModalDetailsDTO
-                .setNeedDOApproval(electionService.darDatasetElectionStatus(dataAccessRequest.getReferenceId()))
-                .setResearcherName(researcher.getDisplayName())
-                .setUserId(dataAccessRequest.getUserId())
-                .setDarCode(Objects.nonNull(dataAccessRequest.getData()) ? dataAccessRequest.getData().getDarCode() : "")
-                .setPrincipalInvestigator(DarUtil.findPI(researcher))
-                .setInstitutionName((researcher == null || researcher.getInstitutionId() == null) ?
-                   ""
-                   : institutionDAO.findInstitutionById(researcher.getInstitutionId()).getName())
-                .setProjectTitle(dataAccessRequest.getData().getProjectTitle())
-                .setDepartment((department.isPresent()) ? department.get().getPropertyValue() : "")
-                .setCity((city.isPresent()) ? city.get().getPropertyValue() : "")
-                .setCountry((country.isPresent()) ? country.get().getPropertyValue() : "")
-                .setIsThereDiseases(false)
-                .setIsTherePurposeStatements(false)
-                .setResearchType(dataAccessRequest)
-                .setDiseases(dataAccessRequest)
-                .setPurposeStatements(dataAccessRequest)
-                .setDatasets(datasets)
-                .setRus(Objects.nonNull(dataAccessRequest.getData()) ? dataAccessRequest.getData().getRus() : "");
-    }
-
-    private List<Dataset> populateDatasets(DataAccessRequest dar) {
-        List<Integer> datasetIds = Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
-        if (!datasetIds.isEmpty()) {
-            return dataSetDAO.findDatasetsByIdList(datasetIds);
-        }
-        return Collections.emptyList();
     }
 
     /**

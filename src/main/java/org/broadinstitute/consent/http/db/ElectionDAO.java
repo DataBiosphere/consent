@@ -307,10 +307,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select datasetId from election where electionId = :electionId ")
     Integer getDatasetIdByElectionId(@Bind("electionId") Integer electionId);
 
-    @UseRowMapper(SimpleElectionMapper.class)
-    @SqlQuery("select distinct * from election where lower(status) = lower(:status) and lower(electionType) = lower(:electionType)")
-    List<Election> getElectionByTypeAndStatus(@Bind("electionType") String electionType, @Bind("status") String status);
-
     @SqlUpdate("update election set status = :status, lastUpdate = :lastUpdate, finalAccessVote = :finalAccessVote where electionId = :electionId ")
     void updateElectionById(@Bind("electionId") Integer electionId,
                             @Bind("status") String status,
