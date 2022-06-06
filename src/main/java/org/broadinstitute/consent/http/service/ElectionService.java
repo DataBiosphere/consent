@@ -255,13 +255,6 @@ public class ElectionService {
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
-    public List<Election> findElectionsByIds(List<Integer> electionIds) {
-        if (electionIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return electionDAO.findElectionsByIds(electionIds);
-    }
-
     public Election describeElectionByVoteId(Integer voteId) {
         Election election = electionDAO.findElectionByVoteId(voteId);
         if (election == null) {
