@@ -77,6 +77,15 @@ public class DarCollectionService {
           collections.addAll(getAllCollections());
           break;
         case CHAIRPERSON:
+          List<Dataset> userDatasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
+          List<DarCollection> userCollections = getCollectionsByUserDacs(user);
+          userCollections.forEach(c -> {
+            Set<Dataset> relevantDatasets = c.getDatasets();
+            relevantDatasets.retainAll(userDatasets);
+            c.setDatasets(relevantDatasets);
+          });
+          collections.addAll(userCollections);
+          break;
         case MEMBER:
           collections.addAll(getCollectionsByUserDacs(user));
           break;
