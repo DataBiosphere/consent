@@ -75,7 +75,6 @@ import org.broadinstitute.consent.http.resources.TosResource;
 import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.VoteResource;
-import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
@@ -171,7 +170,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final GCSStore googleStore = injector.getProvider(GCSStore.class).get();
 
         // Services
-        final ApprovalExpirationTimeService approvalExpirationTimeService = injector.getProvider(ApprovalExpirationTimeService.class).get();
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
         final DarCollectionService darCollectionService= injector.getProvider(DarCollectionService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
