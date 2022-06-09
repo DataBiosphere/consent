@@ -1,9 +1,9 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-    <changeSet id="61.0" author="phendriksen">
+    <changeSet id="82.0" author="phendriksen">
         <createTable tableName="dar_dataset">
-            <column name="datasetid" type="bigint">
+            <column name="dataset_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
             <column name="reference_id" type="varchar(255)">
@@ -11,10 +11,10 @@
             </column>
         </createTable>
         <addPrimaryKey
-                columnNames="datasetid, reference_id"
+                columnNames="dataset_id, reference_id"
                 constraintName="join_table_key"
                 tableName="dar_dataset"/>
-        <addForeignKeyConstraint baseColumnNames="datasetid" baseTableName="dar_dataset" constraintName="fkDatasetId"
+        <addForeignKeyConstraint baseColumnNames="dataset_id" baseTableName="dar_dataset" constraintName="fkDatasetId"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="datasetid" referencedTableName="dataset"
                                  referencesUniqueColumn="true"/>
