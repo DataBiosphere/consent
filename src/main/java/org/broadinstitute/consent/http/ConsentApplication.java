@@ -310,7 +310,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         if (Objects.isNull(changeLogFile) || changeLogFile.trim().isEmpty()) {
             changeLogFile = "changelog-master.xml";
         }
-        LOGGER.info("Initializing db with newer version: " + changeLogFile);
+        LOGGER.info("Initializing db with: " + changeLogFile);
         return changeLogFile;
     }
 
