@@ -112,18 +112,6 @@ public class FreeMarkerTemplateHelperTest {
         assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello AdminApproved User!"));
     }
 
-//    @Test
-//    public void testGetApprovedDarTemplate() throws Exception {
-//        Writer template = helper.getApprovedDarTemplate("ApprovedDar User", new Date().toString(), "DAR-1", "SomeInvestigator", "SomeInstitution",
-//                "SomePurpose", Arrays.asList(item1, item2, item3), "SomeDiseaseArea",
-//                checkedSentences(), "SomeTranslatedUseRestriction", Arrays.asList(piModel1, piModel2, piModel3),
-//                "4", "localhost:1234");
-//        String templateString = template.toString();
-//        final Document parsedTemplate = getAsHtmlDoc(templateString);
-//        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Dataset Owner - DAR Approved Notification"));
-//        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello ApprovedDar User!"));
-//    }
-
     @Test
     public void testGetClosedDatasetElectionsTemplate() throws Exception {
         Writer template = helper.getClosedDatasetElectionsTemplate(getClosedDsElections(), "DarCode",  "SomeType", "localhost:1234");
@@ -157,14 +145,6 @@ public class FreeMarkerTemplateHelperTest {
     private Election e2 = new Election(2, "DataSet", "Closed", new Date(), "DAR-1", null , false, 2);
     private Election e3 = new Election(3, "DataSet", "Closed", new Date(), "DAR-2", null , true, 1);
 
-//    private SummaryItem item1 = new SummaryItem("A sample item 1", "Sample item 1");
-//    private SummaryItem item2 = new SummaryItem("A sample item 2", "Sample item 2");
-//    private SummaryItem item3 = new SummaryItem("A sample item 3", "Sample item 3");
-//
-//    private DatasetPIMailModel piModel1 = new DatasetPIMailModel("DS-101", "Dataset 1", "DUOS-000001");
-//    private DatasetPIMailModel piModel2 = new DatasetPIMailModel("DS-102", "Dataset 2", "DUOS-000002");
-//    private DatasetPIMailModel piModel3 = new DatasetPIMailModel("DS-102", "Dataset 3", "DUOS-000003");
-
     private List<Dataset> sampleDatasets(){
         return Arrays.asList(ds1, ds2, ds3);
     }
@@ -180,9 +160,5 @@ public class FreeMarkerTemplateHelperTest {
         closedDatasetElections.put("DAR-1", Arrays.asList(e1, e2));
         closedDatasetElections.put("DAR-2", Arrays.asList(e3));
         return closedDatasetElections;
-    }
-
-    private List<String> checkedSentences(){
-        return Arrays.asList("I checked this sentence", "Also this other", "And another one");
     }
 }
