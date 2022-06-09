@@ -1,8 +1,10 @@
+const consentAPI = require('./consentAPI');
 const fs = require('fs');
 const limiter = require('limiter');
-const readline = require('readline');
-const consentAPI = require('./consentAPI');
 const log = require('./logging');
+const readline = require('readline');
+const yargs = require('yargs/yargs');
+const { hideBin } = require('yargs/helpers')
 
 /**
  * Simple script to post new Institutions given a file of institution names
@@ -11,9 +13,9 @@ const log = require('./logging');
  *
  * Sample Usage:
  *   node app.js \
- *     ./institutions.txt
- *     `gcloud auth print-access-token` \
- *     https://local.broadinstitute.org:27443 \
+ *     --file=./institutions.txt
+ *     --token=`gcloud auth print-access-token` \
+ *     --host=https://local.broadinstitute.org:27443 \
  *
  *
  * EXAMPLE LINE IN FILE:
@@ -24,24 +26,25 @@ const log = require('./logging');
  *  POST $host/api/institutions -d {"name": "Polytechnique Fédérale de Lausanne"}
  */
 
-// Program args in process.argv are last in the array. Pop them in reverse order:
-const host = process.argv.pop();
-const token = process.argv.pop();
-const file = process.argv.pop();
+// Parse program arguments
+const argv = yargs(hideBin(process.argv)).argv
+
 // These settings reflect practical values for hitting a local consent instance.
 const rateConfig = {tokensPerInterval: 3, interval: "second"};
 const rateLimiter = new limiter.RateLimiter(rateConfig);
+
 const rl = readline.createInterface({
-    input: fs.createReadStream(file),
+    input: fs.createReadStream(argv.file),
     output: process.stdout,
     terminal: false
 });
 
+// Primary logic of the app: process each institution, log retries, fail on auth error.
 const processLines = async () => {
     for await (const line of rl) {
         if (line.length > 0) {
             await rateLimiter.removeTokens(1);
-            const status = await consentAPI.postInstitution(host, token, line);
+            const status = await consentAPI.postInstitution(argv.host, argv.token, line);
             if (status !== 200 && status !== 409) {
                 log.retry(line);
             }
@@ -54,4 +57,5 @@ const processLines = async () => {
     }
 }
 
+// Call our main app function
 processLines().then(() => log.info('Completed'));

@@ -6,9 +6,9 @@ from the command line:
 
 ```shell
 node app.js \
-    ./institutions.txt
-    `gcloud auth print-access-token` \
-    https://consent.dsde-dev.broadinstitute.org/
+    --file=./institutions.txt
+    --token=`gcloud auth print-access-token` \
+    --host=https://local.broadinstitute.org:27443 \
 ```
 
 * Ensure that you have an admin role in the consent environment you are pointing to.
