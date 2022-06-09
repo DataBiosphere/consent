@@ -20,7 +20,7 @@ const consoleLogger = winston.createLogger({
 module.exports = {
     retry: (text) => {
         retryLogger.log({
-            level: 'info',
+            level: 'warn',
             message: text
         });
     },

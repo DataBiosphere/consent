@@ -37,17 +37,21 @@ const rl = readline.createInterface({
     terminal: false
 });
 
-rl.on('line', async function (line) {
-    if (line.length > 0) {
-        await rateLimiter.removeTokens(1);
-        const status = await consentAPI.postInstitution(host, token, line);
-        if (status !== 200 && status !== 409) {
-            log.retry(line);
-        }
-        // Break out of the loop if our auth token is not valid
-        if (status === 401) {
-            log.error('Authentication is not valid')
-            return false;
+const processLines = async () => {
+    for await (const line of rl) {
+        if (line.length > 0) {
+            await rateLimiter.removeTokens(1);
+            const status = await consentAPI.postInstitution(host, token, line);
+            if (status !== 200 && status !== 409) {
+                log.retry(line);
+            }
+            // Break out of the loop if our auth token is not valid
+            if (status === 401) {
+                log.error('Authentication is not valid')
+                return false;
+            }
         }
     }
-});
+}
+
+processLines().then(() => log.info('Completed'));
