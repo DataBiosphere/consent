@@ -2345,37 +2345,7 @@ paths:
           description: Server error.
 
   /api/institutions:
-    get:
-      summary: Institution INDEX resource
-      description: Fetches all institutions
-      tags:
-        - Institutions
-      responses:
-        200:
-          description: Returns all institutions, along with their create user, update user, and signing official users if there are any.
-            If no results are found, an empty array is returned.
-            Admin will see all details while non-Admins will only see a subset.
-        500:
-          description: Internal Server Error
-    post:
-      summary: Institution CREATE resource
-      description: Creates new institution record based on json payload
-      tags:
-        - Institutions
-      requestBody:
-        description: Required JSON payload representing updated Institution
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Institution'
-      responses:
-        201:
-          description: Creates and returns newly created record.
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
+    $ref: './paths/institutions.yaml'
   /api/institutions/{id}:
     get:
       summary: Institution GET
