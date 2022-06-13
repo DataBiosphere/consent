@@ -531,4 +531,26 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         List returnedDAR = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
         assertEquals(1, returnedDAR.size());
     }
+
+    @Test
+    public void testFindDARDatasetRelations() {
+        DataAccessRequest dar = createDataAccessRequestV3();
+        List<Integer> dataSetIds = dataAccessRequestDAO.findDARDatasetRelations(dar.getReferenceId());
+
+        assertNotNull(dataSetIds);
+        assertFalse(dataSetIds.isEmpty());
+        assertEquals(dataSetIds, dar.getData().getDatasetIds());
+    }
+
+    @Test
+    public void testDeleteDARDatasetRelation() {
+        DataAccessRequest dar = createDataAccessRequestV3();
+        List<Integer> returned = dataAccessRequestDAO.findDARDatasetRelations(dar.getReferenceId());
+        assertNotNull(returned);
+        assertEquals(dar.getData().getDatasetIds(), returned);
+        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(dar.getReferenceId());
+        List<Integer> returnedAfter = dataAccessRequestDAO.findDARDatasetRelations(dar.getReferenceId());
+        assertNull(returnedAfter);
+    }
+
 }

@@ -10,10 +10,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey
-                columnNames="dataset_id, reference_id"
-                constraintName="join_table_key"
-                tableName="dar_dataset"/>
         <addForeignKeyConstraint baseColumnNames="dataset_id" baseTableName="dar_dataset" constraintName="fkDatasetId"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="datasetid" referencedTableName="dataset"
