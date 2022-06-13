@@ -11,7 +11,6 @@ import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.ConsentAuditDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
@@ -32,7 +31,6 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
-import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
@@ -86,7 +84,6 @@ public class ConsentModule extends AbstractModule {
     private final UserRoleDAO userRoleDAO;
     private final MatchDAO matchDAO;
     private final MailMessageDAO mailMessageDAO;
-    private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     private final UserPropertyDAO userPropertyDAO;
     private final ConsentAuditDAO consentAuditDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -119,7 +116,6 @@ public class ConsentModule extends AbstractModule {
         this.userRoleDAO = this.jdbi.onDemand(UserRoleDAO.class);
         this.matchDAO = this.jdbi.onDemand(MatchDAO.class);
         this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
-        this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
         this.consentAuditDAO = this.jdbi.onDemand(ConsentAuditDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
@@ -137,7 +133,6 @@ public class ConsentModule extends AbstractModule {
     @Provides
     public DAOContainer providesDAOContainer() {
         DAOContainer container = new DAOContainer();
-        container.setApprovalExpirationTimeDAO(providesApprovalExpirationTimeDAO());
         container.setConsentAuditDAO(providesConsentAuditDAO());
         container.setConsentDAO(providesConsentDAO());
         container.setCounterDAO(providesCounterDAO());
@@ -180,13 +175,6 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UseRestrictionValidator providesUseRestrictionValidator() {
         return new UseRestrictionValidator(providesClient(), config.getServicesConfiguration());
-    }
-
-    @Provides
-    ApprovalExpirationTimeService providesApprovalExpirationTimeService() {
-        return new ApprovalExpirationTimeService(
-            providesApprovalExpirationTimeDAO(),
-            providesUserDAO());
     }
 
     @Provides
@@ -326,7 +314,6 @@ public class ConsentModule extends AbstractModule {
         return new PendingCaseService(
                 providesConsentDAO(),
                 providesDataAccessRequestService(),
-                providesDatasetDAO(),
                 providesElectionDAO(),
                 providesVoteDAO(),
                 providesDacService(),
@@ -453,11 +440,6 @@ public class ConsentModule extends AbstractModule {
                 providesMatchDAO(),
                 providesElectionDAO()
         );
-    }
-
-    @Provides
-    ApprovalExpirationTimeDAO providesApprovalExpirationTimeDAO() {
-        return approvalExpirationTimeDAO;
     }
 
     @Provides

@@ -1,18 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 import com.google.api.client.http.HttpStatusCodes;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.UUID;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -23,30 +12,33 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessRequestResourceTest {
 
     @Mock
     private DataAccessRequestService dataAccessRequestService;
     @Mock
-    private ElectionService electionService;
-    @Mock
-    private EmailNotifierService emailNotifierService;
-    @Mock
     private ConsentService consentService;
     @Mock
     private UserService userService;
-    @Mock
-    private MatchService matchService;
     @Mock
     private AuthUser authUser;
     @Mock
@@ -56,7 +48,7 @@ public class DataAccessRequestResourceTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     //TODO: Test getDataAccessRequestModalSummary using WithLogHandler interface
@@ -71,7 +63,7 @@ public class DataAccessRequestResourceTest {
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(user.getDacUserId()).thenReturn(dar.getUserId());
         when(userService.findUserByEmail(any())).thenReturn(user);
-        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService, electionService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService);
         Consent consent = resource.describeConsentForDAR(authUser, dar.getReferenceId());
         assertNotNull(consent);
     }
@@ -88,7 +80,7 @@ public class DataAccessRequestResourceTest {
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(user.getDacUserId()).thenReturn(dar.getUserId());
         when(userService.findUserByEmail(any())).thenReturn(user);
-        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService, electionService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService);
         Consent consent = resource.describeConsentForDAR(authUser, dar.getReferenceId());
         assertNotNull(consent);
     }
@@ -101,7 +93,7 @@ public class DataAccessRequestResourceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(null);
-        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService, electionService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService);
         resource.describeConsentForDAR(authUser, dar.getReferenceId());
     }
 
@@ -113,7 +105,7 @@ public class DataAccessRequestResourceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.getData().setDatasetIds(null);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService, electionService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService);
         resource.describeConsentForDAR(authUser, dar.getReferenceId());
     }
 
@@ -129,7 +121,7 @@ public class DataAccessRequestResourceTest {
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(user.getDacUserId()).thenReturn(dar.getUserId() + 1);
         when(userService.findUserByEmail(any())).thenReturn(user);
-        resource = new DataAccessRequestResource(dataAccessRequestService,userService, consentService, electionService);
+        resource = new DataAccessRequestResource(dataAccessRequestService,userService, consentService);
         resource.describeConsentForDAR(authUser, dar.getReferenceId());
     }
 
@@ -146,7 +138,7 @@ public class DataAccessRequestResourceTest {
         resource = new DataAccessRequestResource(
             dataAccessRequestService,
             userService,
-            consentService, electionService);
+            consentService);
         Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -165,7 +157,7 @@ public class DataAccessRequestResourceTest {
         resource = new DataAccessRequestResource(
             dataAccessRequestService,
             userService,
-            consentService, electionService);
+            consentService);
         Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of("Researcher"));
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -176,7 +168,7 @@ public class DataAccessRequestResourceTest {
         resource = new DataAccessRequestResource(
           dataAccessRequestService,
           userService,
-          consentService, electionService);
+          consentService);
         Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());
         assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
@@ -187,7 +179,7 @@ public class DataAccessRequestResourceTest {
         resource = new DataAccessRequestResource(
           dataAccessRequestService,
           userService,
-          consentService, electionService);
+          consentService);
         Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of("SigningOfficial"));
         assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
@@ -198,7 +190,7 @@ public class DataAccessRequestResourceTest {
         resource = new DataAccessRequestResource(
           dataAccessRequestService,
           userService,
-          consentService, electionService);
+          consentService);
         Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of("Member"));
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -209,7 +201,7 @@ public class DataAccessRequestResourceTest {
         resource = new DataAccessRequestResource(
           dataAccessRequestService,
           userService,
-          consentService, electionService);
+          consentService);
         Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of("BadRequest"));
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }

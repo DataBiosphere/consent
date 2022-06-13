@@ -7,7 +7,6 @@ package org.broadinstitute.consent.http.db;
 @SuppressWarnings("unused")
 public class DAOContainer {
 
-  private ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
   private ConsentDAO consentDAO;
   private CounterDAO counterDAO;
   private DacDAO dacDAO;
@@ -24,15 +23,6 @@ public class DAOContainer {
   private VoteDAO voteDAO;
   private ConsentAuditDAO consentAuditDAO;
   private InstitutionDAO institutionDAO;
-
-  public ApprovalExpirationTimeDAO getApprovalExpirationTimeDAO() {
-    return approvalExpirationTimeDAO;
-  }
-
-  public void setApprovalExpirationTimeDAO(
-      ApprovalExpirationTimeDAO approvalExpirationTimeDAO) {
-    this.approvalExpirationTimeDAO = approvalExpirationTimeDAO;
-  }
 
   public ConsentDAO getConsentDAO() {
     return consentDAO;
