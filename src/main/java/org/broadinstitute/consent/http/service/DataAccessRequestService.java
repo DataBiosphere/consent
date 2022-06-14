@@ -238,10 +238,6 @@ public class DataAccessRequestService {
             now,
             dar.getData()
         );
-
-        // TODO: Add inserts for the dar-dataset join table
-        // Pull out the dataset ids
-        // Insert them into the join table
         DataAccessRequest draft = findByReferenceId(dar.getReferenceId());
         List<Integer> datasetIds = draft.getData().getDatasetIds();
         syncDataAccessRequestDatasets(datasetIds, draft.getReferenceId());
@@ -250,7 +246,7 @@ public class DataAccessRequestService {
     }
 
     /**
-     * First delete any rows with the current reference id. This will allow us to keep (referenceId, dataset_id) unique and the PK
+     * First delete any rows with the current reference id. This will allow us to keep (referenceId, dataset_id) unique
      * Takes in a list of datasetIds and a referenceId and adds them to the dar_dataset collection
      *
      * @param datasetIds List of Integers that represent the datasetIds
@@ -335,6 +331,10 @@ public class DataAccessRequestService {
             now,
             newData
         );
+        // Update the Joins table *dar_dataset
+        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceIds(canceledReferenceIds);
+        syncDataAccessRequestDatasets(datasetIds, referenceId);
+
         return findByReferenceId(referenceId);
     }
 
@@ -470,18 +470,22 @@ public class DataAccessRequestService {
                                 now,
                                 darData);
                         newDARList.add(findByReferenceId(dataAccessRequest.getReferenceId()));
+                        syncDataAccessRequestDatasets(List.of(datasets.get(idx)), dataAccessRequest.getReferenceId());
                     } else {
                         String referenceId = UUID.randomUUID().toString();
                         DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
                         newDARList.add(createdDar);
+                        syncDataAccessRequestDatasets(List.of(datasets.get(idx)), referenceId);
                     }
                 } else {
                     String referenceId = UUID.randomUUID().toString();
                     DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
                     newDARList.add(createdDar);
+                    syncDataAccessRequestDatasets(List.of(datasets.get(idx)), referenceId);
                 }
             }
-            syncDataAccessRequestDatasets(datasets, dataAccessRequest.getReferenceId());
+            // This is the end goal!
+            // syncDataAccessRequestDatasets(datasets, dataAccessRequest.getReferenceId());
         }
 
         return newDARList;
@@ -519,6 +523,7 @@ public class DataAccessRequestService {
             darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getDacUserId(), now);
         }
         // Update the dar_dataset collection
+        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(dar.getReferenceId());
         syncDataAccessRequestDatasets(dar.getData().getDatasetIds(), dar.getReferenceId());
 
         return findByReferenceId(dar.getReferenceId());

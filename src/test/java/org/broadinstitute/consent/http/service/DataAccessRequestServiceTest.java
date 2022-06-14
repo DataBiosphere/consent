@@ -216,27 +216,6 @@ public class DataAccessRequestServiceTest {
         }
     }
 
-    public void testCreateDataAccessRequest_DarDataset() {
-        DataAccessRequest dar = generateDataAccessRequest();
-        dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
-        dar.setCreateDate(new Timestamp(1000));
-        dar.setSortDate(new Timestamp(1000));
-        dar.setReferenceId("id");
-        User user = new User(1, "email@test.org", "Display Name", new Date());
-        when(counterService.getNextDarSequence()).thenReturn(1);
-        when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
-        when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
-        when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class))).thenReturn(RandomUtils.nextInt(1,100));
-        doNothing().when(dataAccessRequestDAO).insertVersion3(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
-        initService();
-        List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
-        assertEquals(3, newDars.size());
-        Integer collectionId = newDars.get(0).getCollectionId();
-        for(DataAccessRequest darElement: newDars) {
-            assertEquals(collectionId, darElement.getCollectionId());
-        }
-    }
-
     @Test
     public void testUpdateByReferenceIdVersion2() {
         DataAccessRequest dar = generateDataAccessRequest();
@@ -839,6 +818,7 @@ public class DataAccessRequestServiceTest {
         doNothing().when(electionDAO).deleteElectionById(any());
         doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
         doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
         initService();
 
         service.deleteByReferenceId(user, referenceId);
@@ -858,6 +838,7 @@ public class DataAccessRequestServiceTest {
         doNothing().when(electionDAO).deleteElectionById(any());
         doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
         doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
         initService();
 
         service.deleteByReferenceId(user, referenceId);

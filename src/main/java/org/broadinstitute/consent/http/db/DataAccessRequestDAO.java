@@ -258,8 +258,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   void archiveByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
 
-  @SqlUpdate(
-  "INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId) ")
+  @SqlUpdate("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId)")
   void insertDARDatasetRelation(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId);
 
   /**
@@ -269,6 +268,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @SqlUpdate("DELETE FROM dar_dataset WHERE reference_id = :referenceId")
   void deleteDARDatasetRelationByReferenceId(@Bind("referenceId") String referenceId);
+
+  @SqlUpdate("DELETE FROM dar_dataset WHERE reference_id in :referenceIds")
+  void deleteDARDatasetRelationByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
   @SqlQuery(
   "SELECT distinct dataset_id FROM dar_dataset WHERE reference_id = :referenceId ")
