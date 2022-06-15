@@ -1,13 +1,5 @@
 package org.broadinstitute.consent.http.models.darsummary;
 
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Date;
-
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -15,11 +7,14 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.OntologyEntry;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.util.DarUtil;
 import org.junit.Before;
-import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 public class DARModalDetailsDTOTest {
 
@@ -66,45 +61,6 @@ public class DARModalDetailsDTOTest {
         data.setNotHealth(true);
         data.setDatasetDetail(getDatasetDetail());
         dar.setData(data);
-    }
-
-    @Test
-    public void generateModalDetailsDTO(){
-        DARModalDetailsDTO modalDetailsDTO = new DARModalDetailsDTO()
-            .setDarCode(dar.getData().getDarCode())
-            .setPrincipalInvestigator(DarUtil.findPI(user))
-            .setInstitutionName((user.getInstitutionId() == null) ?
-            "" 
-            : institutionDAO.findInstitutionById(user.getInstitutionId()).getName())
-            .setProjectTitle(dar.getData().getProjectTitle())
-            .setDepartment(dar.getData().getDepartment())
-            .setCity(dar.getData().getCity())
-            .setCountry(dar.getData().getCountry())
-            .setNihUsername(dar.getData().getNihUsername())
-            .setIsThereDiseases(false)
-            .setIsTherePurposeStatements(false)
-            .setResearchType(dar)
-            .setDiseases(dar)
-            .setPurposeStatements(dar)
-            .setDatasets(Collections.emptyList());
-        modalDetailsDTO.getDarCode();
-        assertTrue(modalDetailsDTO.getDarCode().equals(DAR_CODE));
-        assertTrue(modalDetailsDTO.getInstitutionName().equals(""));
-        assertTrue(modalDetailsDTO.getPrincipalInvestigator().equals("- -"));
-        assertTrue(modalDetailsDTO.getProjectTitle().equals(TITLE));
-        assertTrue(modalDetailsDTO.isTherePurposeStatements());
-        assertTrue(modalDetailsDTO.isRequiresManualReview());
-        assertTrue(modalDetailsDTO.isSensitivePopulation());
-        assertTrue(modalDetailsDTO.isThereDiseases());
-
-        assertTrue(modalDetailsDTO.getDiseases().size() == 3);
-        assertTrue(modalDetailsDTO.getDiseases().get(0).equals("OD-1: Ontology One"));
-        assertTrue(modalDetailsDTO.getDiseases().get(1).equals("OD-2: Ontology Two"));
-        assertTrue(modalDetailsDTO.getDiseases().get(2).equals("OD-3: Ontology Three"));
-
-        assertTrue(modalDetailsDTO.getPurposeStatements().size() == 10);
-
-        assertTrue(modalDetailsDTO.getResearchType().size() == 5);
     }
 
     private List<OntologyEntry> ontologies(){

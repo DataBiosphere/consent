@@ -1,15 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.when;
-
-import java.util.Collections;
-import java.util.List;
-import javax.ws.rs.ServerErrorException;
-import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
@@ -19,6 +9,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import javax.ws.rs.core.Response;
+import java.util.Collections;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 public class DataRequestCasesResourceTest {
 
@@ -36,24 +33,6 @@ public class DataRequestCasesResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-    }
-
-    @Test
-    public void testGetDataOwnerPendingCases() {
-        when(pendingCaseService.describeDataOwnerPendingCases(anyInt(), notNull())).thenReturn(Collections.emptyList());
-        initResource();
-        Response response = resource.getDataOwnerPendingCases(null, null);
-        Assert.assertEquals(200, response.getStatus());
-        List cases = ((List) response.getEntity());
-        Assert.assertTrue(cases.isEmpty());
-    }
-
-    @Test
-    public void testGetDataOwnerPendingCasesError() {
-        when(pendingCaseService.describeDataOwnerPendingCases(isNull(), isNull())).thenThrow(new ServerErrorException(500));
-        initResource();
-        Response response = resource.getDataOwnerPendingCases(null, null);
-        Assert.assertEquals(500, response.getStatus());
     }
 
     @Test

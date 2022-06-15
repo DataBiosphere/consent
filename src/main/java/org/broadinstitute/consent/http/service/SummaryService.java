@@ -1,21 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
-
 import com.google.inject.Inject;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -25,7 +10,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.HeaderSummary;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Consent;
@@ -33,7 +17,6 @@ import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.Summary;
@@ -41,6 +24,17 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 
 public class SummaryService {
 
@@ -51,8 +45,6 @@ public class SummaryService {
     private final DatasetDAO datasetDAO;
     private final MatchDAO matchDAO;
     private final DataAccessRequestService dataAccessRequestService;
-    private static final String SEPARATOR = "\t";
-    private static final String END_OF_LINE = System.lineSeparator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
@@ -311,99 +303,5 @@ public class SummaryService {
     }
     return details;
   }
-
-    public File describeDataSetElectionsVotesForDar(String referenceId) {
-        File file = null;
-        try {
-            file = File.createTempFile("dar" + referenceId + "DatasetElectionsDetail", ".txt");
-            try (FileWriter summaryWriter = new FileWriter(file)) {
-                List<Election> elections = electionDAO.findLastElectionsByReferenceIdAndType(referenceId, ElectionType.DATA_SET.getValue());
-                Map<Integer, List<Vote>> electionsData = new HashMap<>();
-                int maxNumberOfVotes = 0;
-                for(Election e: elections){
-                    List<Vote> votes = voteDAO.findVoteByTypeAndElectionId(e.getElectionId(), VoteType.DATA_OWNER.getValue());
-                    electionsData.put(e.getElectionId(), votes);
-                    if(votes.size() > maxNumberOfVotes){
-                        maxNumberOfVotes = votes.size();
-                    }
-                }
-                setDatasetElectionsHeader(summaryWriter, maxNumberOfVotes);
-
-                String dar_code = dataAccessRequestService.findByReferenceId(referenceId).getData().getDarCode();
-                String dar_election_result;
-                try{
-                    dar_election_result = (electionDAO.findLastElectionByReferenceIdAndType(referenceId, ElectionType.DATA_ACCESS.getValue())).getFinalAccessVote() ? "Approved" : "Denied";
-                } catch (NullPointerException e){
-                    dar_election_result = "Pending";
-                }
-                for (Election election : elections) {
-                    summaryWriter.write( dar_code + SEPARATOR);
-                    summaryWriter.write( dar_election_result + SEPARATOR);
-                    Dataset dataset = datasetDAO.findDatasetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
-                    summaryWriter.write( dataset.getObjectId() + SEPARATOR);
-                    summaryWriter.write( dataset.getName() + SEPARATOR);
-                    summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);
-                    List<Vote> votes = electionsData.get(election.getElectionId());
-                    for(Vote datasetVote : votes){
-                        User user = userDAO.findUserById(datasetVote.getDacUserId());
-                        summaryWriter.write(user.getDisplayName() + SEPARATOR);
-                        summaryWriter.write(user.getEmail() + SEPARATOR);
-                        summaryWriter.write(datasetVoteResult(datasetVote) + SEPARATOR);
-                        summaryWriter.write(datasetVote.getRationale() == null ? "None" : datasetVote.getRationale());
-                        summaryWriter.write(SEPARATOR);
-                    }
-                   summaryWriter.write(END_OF_LINE);
-                }
-            }
-            return file;
-        } catch (Exception e) {
-            logger.error("There is an error trying to create resume of dataset votes file, error: "+ e.getMessage());
-        }
-        return file;
-    }
-
-    private String electionResult(Boolean result){
-        try{
-            if(result){
-                return "Approved";
-            } else {
-                return "Denied";
-            }
-        } catch( NullPointerException e) {
-            return "Pending";
-        }
-    }
-
-    private String datasetVoteResult(Vote vote){
-        try{
-            if(vote.getVote()){
-                return "Approved";
-            } else {
-                return "Denied";
-            }
-        } catch( NullPointerException e) {
-            if(vote.getHasConcerns()){
-                return "Denied";
-            }
-            return "Pending";
-        }
-    }
-
-    private void setDatasetElectionsHeader(FileWriter summaryWriter , Integer maxNumberOfVotes) throws IOException {
-        summaryWriter.write(
-                HeaderSummary.DATA_REQUEST_ID.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_DECISION_DAR.getValue() + SEPARATOR +
-                        HeaderSummary.DATASET_ID.getValue() + SEPARATOR +
-                        HeaderSummary.DATASET_NAME.getValue() + SEPARATOR +
-                        HeaderSummary.DATASET_FINAL_STATUS.getValue() + SEPARATOR);
-        for (int i = 0; i < maxNumberOfVotes; i++) {
-            summaryWriter.write(
-                    HeaderSummary.DATA_OWNER_NAME.getValue() + SEPARATOR +
-                            HeaderSummary.DATA_OWNER_EMAIL.getValue() + SEPARATOR +
-                            HeaderSummary.DATA_OWNER_VOTE.getValue() + SEPARATOR +
-                            HeaderSummary.DATA_OWNER_COMMENT.getValue() + SEPARATOR);
-        }
-        summaryWriter.write(END_OF_LINE);
-    }
 
 }

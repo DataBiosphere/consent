@@ -64,8 +64,8 @@ public class DAOTestHelper {
 
     protected static Jdbi jdbi;
 
-    protected static ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     protected static ConsentAuditDAO consentAuditDAO;
+
     protected static ConsentDAO consentDAO;
     protected static CounterDAO counterDAO;
     protected static DacDAO dacDAO;
@@ -119,7 +119,6 @@ public class DAOTestHelper {
         jdbi.installPlugin(new SqlObjectPlugin());
         jdbi.installPlugin(new Gson2Plugin());
         jdbi.installPlugin(new GuavaPlugin());
-        approvalExpirationTimeDAO = jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         consentAuditDAO = jdbi.onDemand(ConsentAuditDAO.class);
         consentDAO = jdbi.onDemand(ConsentDAO.class);
         counterDAO = jdbi.onDemand(CounterDAO.class);

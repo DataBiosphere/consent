@@ -3,13 +3,16 @@ package org.broadinstitute.consent.http.resources;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.ConsentService;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.UserService;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -22,17 +25,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.service.ConsentService;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.UserService;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
@@ -40,37 +39,13 @@ public class DataAccessRequestResource extends Resource {
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
     private final DataAccessRequestService dataAccessRequestService;
     private final ConsentService consentService;
-    private final ElectionService electionService;
     private final UserService userService;
 
     @Inject
-    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, UserService userService, ConsentService consentService, ElectionService electionService) {
+    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, UserService userService, ConsentService consentService) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.consentService = consentService;
-        this.electionService = electionService;
         this.userService = userService;
-    }
-
-    @Deprecated
-    @GET
-    @Produces("application/json")
-    @Path("/modalSummary/{id}")
-    @PermitAll
-    public Response getDataAccessRequestModalSummary(@Auth AuthUser authUser, @PathParam("id") String id) {
-        validateAuthedRoleUser(
-            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-                .collect(Collectors.toList()),
-            authUser, id);
-        DataAccessRequest dar = findDataAccessRequestById(id);
-        Integer userId = dar.getUserId();
-        User user = null;
-        try {
-            user = userService.findUserById(userId);
-        } catch (NotFoundException e) {
-            logger.severe("Unable to find userId: " + userId + " for data access request id: " + id);
-        }
-        DARModalDetailsDTO detailsDTO = dataAccessRequestService.DARModalDetailsDTOBuilder(dar, user, electionService);
-        return Response.ok().entity(detailsDTO).build();
     }
 
     /**

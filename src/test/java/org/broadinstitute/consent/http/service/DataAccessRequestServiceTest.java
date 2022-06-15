@@ -1,31 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import javax.ws.rs.NotAcceptableException;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -55,12 +29,38 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotFoundException;
+import java.io.File;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessRequestServiceTest {
 
@@ -88,8 +88,6 @@ public class DataAccessRequestServiceTest {
     private VoteDAO voteDAO;
     @Mock
     private InstitutionDAO institutionDAO;
-    @Mock
-    private ElectionService electionService;
     @Mock
     private MatchDAO matchDAO;
 
@@ -526,40 +524,6 @@ public class DataAccessRequestServiceTest {
         } catch (Exception ioe) {
             assert false;
         }
-    }
-
-    @Test
-    public void testDARModalDetailsDTOBuilder() {
-        DataAccessRequest dar = generateDataAccessRequest();
-        dar.setUserId(1);
-        User researcher = new User();
-        researcher.setDacUserId(1);
-        researcher.setDisplayName("displayName");
-        researcher.setInstitutionId(1);
-        Institution institution = new Institution();
-        institution.setId(1);
-        institution.setName("Institution");
-        Dataset ds = new Dataset();
-        ds.setDataSetId(1);
-        ds.setName("DS-1");
-        ds.setConsentName(dar.getReferenceId());
-
-        when(userDAO.findUserById(any())).thenReturn(researcher);
-        when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
-        when(dataAccessRequestDAO.findByReferenceId(any()))
-                .thenReturn(dar);
-        when(dataSetDAO.findDatasetsByIdList(dar.data.getDatasetIds()))
-                .thenReturn(Collections.singletonList(ds));
-
-        User user = new User();
-        user.setDacUserId(1);
-        user.setEmail("test@test.com");
-        user.setDisplayName("Test User");
-        initService();
-
-        DARModalDetailsDTO darModalDetailsDTO = service.DARModalDetailsDTOBuilder(dar, user, electionService);
-        assertNotNull(darModalDetailsDTO);
-        assertEquals("Institution", darModalDetailsDTO.getInstitutionName());
     }
 
     private DataAccessRequest generateDataAccessRequest() {
