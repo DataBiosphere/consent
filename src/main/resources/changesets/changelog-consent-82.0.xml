@@ -26,12 +26,4 @@
             <dropForeignKeyConstraint baseTableName="dar_dataset" constraintName="fkReferenceId"/>
         </rollback>
     </changeSet>
-
-    <!--Now back populate the dar_dataset table-->
-    <changeSet author="phendriksen" id="test-back-populate-dataset">
-        <sql>
-            INSERT INTO dar_dataset (dataset_id, reference_id)
-            SELECT DISTINCT jsonb_array_elements(((data #>> '{}')::jsonb->>'datasetIds')::jsonb)::INTEGER AS dataset_id, reference_id FROM data_access_request
-        </sql>
-    </changeSet>
 </databaseChangeLog>
