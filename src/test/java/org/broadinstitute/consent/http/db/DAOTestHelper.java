@@ -146,6 +146,7 @@ public class DAOTestHelper {
     @After
     public void tearDown() {
         // Order is important for FK constraints
+        testingDAO.deleteAllDARDataset();
         testingDAO.deleteAllApprovalTimes();
         testingDAO.deleteAllVotes();
         testingDAO.deleteAllConsentAudits();
@@ -166,7 +167,6 @@ public class DAOTestHelper {
         testingDAO.deleteAllDARs();
         testingDAO.deleteAllDARCollections();
         testingDAO.deleteAllCounters();
-        testingDAO.deleteAllDARDataset();
     }
 
     protected void createAssociation(String consentId, Integer datasetId) {
