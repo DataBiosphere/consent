@@ -269,7 +269,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate("DELETE FROM dar_dataset WHERE reference_id = :referenceId")
   void deleteDARDatasetRelationByReferenceId(@Bind("referenceId") String referenceId);
 
-  @SqlUpdate("DELETE FROM dar_dataset WHERE reference_id in :referenceIds")
+  @SqlUpdate("DELETE FROM dar_dataset WHERE reference_id in (<referenceIds>)")
   void deleteDARDatasetRelationByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
   @SqlQuery(

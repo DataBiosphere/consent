@@ -15,14 +15,11 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.junit.Test;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.UUID;
-import java.util.List;
-import java.util.Arrays;
+import java.util.*;
 
 public class DataAccessRequestDAOTest extends DAOTestHelper {
 
@@ -342,6 +339,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
                 testDar.getUpdateDate(),
                 testDar.getData()
         );
+        dataAccessRequestDAO.insertDARDatasetRelation(testDar.getReferenceId(), dataset.getDataSetId());
+
         return testDar;
     }
 
@@ -534,48 +533,60 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindDARDatasetRelations() {
-        DataAccessRequest dar = createDataAccessRequestV3();
-        List<Integer> dataSetIds = dataAccessRequestDAO.findDARDatasetRelations(dar.getReferenceId());
+        String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+        Dataset dataset1 = createDataset();
+        User user = createUserWithInstitution();
+        DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
+        List<Integer> dataSetIds = dataAccessRequestDAO.findDARDatasetRelations(testDar1.getReferenceId());
 
         assertNotNull(dataSetIds);
         assertFalse(dataSetIds.isEmpty());
-        assertEquals(dataSetIds, dar.getData().getDatasetIds());
+        assertEquals(dataSetIds, testDar1.getData().getDatasetIds());
     }
 
     @Test
     public void testDeleteDARDatasetRelation() {
-        DataAccessRequest dar = createDataAccessRequestV3();
-        List<Integer> returned = dataAccessRequestDAO.findDARDatasetRelations(dar.getReferenceId());
+        String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
+        Dataset dataset1 = createDataset();
+        User user = createUserWithInstitution();
+        DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
+        List<Integer> returned = dataAccessRequestDAO.findDARDatasetRelations(testDar1.getReferenceId());
 
         assertNotNull(returned);
-        assertEquals(dar.getData().getDatasetIds(), returned);
+        assertEquals(testDar1.getData().getDatasetIds(), returned);
 
-        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(dar.getReferenceId());
-        List<Integer> returnedAfter = dataAccessRequestDAO.findDARDatasetRelations(dar.getReferenceId());
-        assertNull(returnedAfter);
+        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(testDar1.getReferenceId());
+        List<Integer> returnedAfter = dataAccessRequestDAO.findDARDatasetRelations(testDar1.getReferenceId());
+        assertEquals(returnedAfter, List.of());
     }
 
     @Test
     public void testMultiDeleteDARDatasetRelation() {
-        DataAccessRequest dar1 = createDataAccessRequestV3();
-        DataAccessRequest dar2 = createDataAccessRequestV3();
+        String darCode1 = "DAR1-" + RandomUtils.nextInt(100, 200);
+        String darCode2 = "DAR2-" + RandomUtils.nextInt(100, 200);
+        Dataset dataset1 = createDataset();
+        Dataset dataset2 = createDataset();
+        User user = createUserWithInstitution();
 
-        List<Integer> returnedDar1 = dataAccessRequestDAO.findDARDatasetRelations(dar1.getReferenceId());
-        List<Integer> returnedDar2 = dataAccessRequestDAO.findDARDatasetRelations(dar2.getReferenceId());
+        DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
+        DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
 
-        assertNotNull(returnedDar1);
-        assertNotNull(returnedDar2);
+        List<Integer> returnedDarDatasets1 = dataAccessRequestDAO.findDARDatasetRelations(testDar1.getReferenceId());
+        List<Integer> returnedDarDatasets2 = dataAccessRequestDAO.findDARDatasetRelations(testDar2.getReferenceId());
 
-        assertEquals(dar1.getData().getDatasetIds(), returnedDar1);
-        assertEquals(dar2.getData().getDatasetIds(), returnedDar2);
+        assertNotNull(returnedDarDatasets1);
+        assertNotNull(returnedDarDatasets2);
 
-        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceIds(List.of(dar1.getReferenceId(), dar2.getReferenceId()));
+        assertEquals(testDar1.getData().getDatasetIds(), returnedDarDatasets1);
+        assertEquals(testDar2.getData().getDatasetIds(), returnedDarDatasets2);
 
-        List<Integer> returnedAfter1 = dataAccessRequestDAO.findDARDatasetRelations(dar1.getReferenceId());
-        List<Integer> returnedAfter2 = dataAccessRequestDAO.findDARDatasetRelations(dar2.getReferenceId());
+        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceIds(List.of(testDar1.getReferenceId(), testDar2.getReferenceId()));
 
-        assertNull(returnedAfter1);
-        assertNull(returnedAfter2);
+        List<Integer> returnedAfter1 = dataAccessRequestDAO.findDARDatasetRelations(testDar1.getReferenceId());
+        List<Integer> returnedAfter2 = dataAccessRequestDAO.findDARDatasetRelations(testDar2.getReferenceId());
+
+        assertEquals(returnedAfter1, List.of());
+        assertEquals(returnedAfter2, List.of());
     }
 
 }

@@ -550,6 +550,7 @@ public class DAOTestHelper {
             } else {
                 dataAccessRequestDAO.insertVersion3(collectionId, referenceId, userId, now, now, now, now, data);
             }
+
             return dataAccessRequestDAO.findByReferenceId(referenceId);
         } catch (IOException e) {
             logger.error("Exception parsing dar data: " + e.getMessage());
