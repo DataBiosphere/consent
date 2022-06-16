@@ -223,7 +223,6 @@ public class DataAccessRequestService {
         darData.setSortDate(new Date().getTime());
         dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData);
         syncDataAccessRequestDatasets(darData.getDatasetIds(), referencedId);
-
         return findByReferenceId(referencedId);
     }
 

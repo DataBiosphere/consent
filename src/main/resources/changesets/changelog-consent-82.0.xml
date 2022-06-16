@@ -2,7 +2,6 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
-    <!--Create the dar_dataset table-->
     <changeSet id="82.0" author="phendriksen">
         <createTable tableName="dar_dataset">
             <column name="dataset_id" type="bigint">
