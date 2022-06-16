@@ -2,7 +2,11 @@ package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.User;
 import org.junit.Test;
 
 import java.sql.Timestamp;
