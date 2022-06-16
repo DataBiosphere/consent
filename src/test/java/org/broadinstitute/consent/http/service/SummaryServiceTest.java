@@ -255,7 +255,7 @@ public class SummaryServiceTest {
                 v.setDacUserId(userId);
                 return v;
             }
-        ).collect(Collectors.toUnmodifiableList());
+        ).collect(Collectors.toList());
     }
 
 }

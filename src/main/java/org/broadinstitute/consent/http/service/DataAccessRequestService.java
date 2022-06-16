@@ -248,7 +248,7 @@ public class DataAccessRequestService {
     private void syncDataAccessRequestDatasets(List<Integer> datasetIds, String referenceId) {
         List<DarDataset> darDatasets = datasetIds.stream()
                 .map(datasetId -> new DarDataset(referenceId, datasetId))
-                .collect(Collectors.toUnmodifiableList());
+                .collect(Collectors.toList());
         dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(referenceId);
 
         if (!darDatasets.isEmpty()) {
@@ -280,7 +280,7 @@ public class DataAccessRequestService {
                 .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getStatus()))
                 .map(DataAccessRequestData::getDatasetIds)
                 .flatMap(Collection::stream)
-                .collect(Collectors.toUnmodifiableList());
+                .collect(Collectors.toList());
         if (datasetIds.isEmpty()) {
             throw new IllegalArgumentException("Source Collection must contain references to at least a single canceled DAR's dataset");
         }
