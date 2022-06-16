@@ -222,6 +222,8 @@ public class DataAccessRequestService {
     public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
         darData.setSortDate(new Date().getTime());
         dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData);
+        syncDataAccessRequestDatasets(darData.getDatasetIds(), referencedId);
+
         return findByReferenceId(referencedId);
     }
 
@@ -523,7 +525,6 @@ public class DataAccessRequestService {
             darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getDacUserId(), now);
         }
         // Update the dar_dataset collection
-        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(dar.getReferenceId());
         syncDataAccessRequestDatasets(dar.getData().getDatasetIds(), dar.getReferenceId());
 
         return findByReferenceId(dar.getReferenceId());
