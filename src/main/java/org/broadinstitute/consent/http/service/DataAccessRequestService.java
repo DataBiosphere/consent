@@ -299,7 +299,7 @@ public class DataAccessRequestService {
         newData.setDarCode(null);
         newData.setStatus(null);
         newData.setReferenceId(referenceId);
-        newData.setDatasetIds(datasetIds);
+        // newData.setDatasetIds(datasetIds);
         newData.setCreateDate(now.getTime());
         newData.setSortDate(now.getTime());
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -434,7 +434,7 @@ public class DataAccessRequestService {
             Integer collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getDacUserId(), now);
             for (int idx = 0; idx < datasets.size(); idx++) {
                 String darCode = (datasets.size() == 1) ? darCodeSequence: darCodeSequence + SUFFIX + idx ;
-                darData.setDatasetIds(Collections.singletonList(datasets.get(idx)));
+                // darData.setDatasetIds(Collections.singletonList(datasets.get(idx)));
                 darData.setDarCode(darCode);
                 if (idx == 0) {
                     DataAccessRequest alreadyExists = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());

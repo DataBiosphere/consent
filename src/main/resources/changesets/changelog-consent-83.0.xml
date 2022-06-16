@@ -1,0 +1,16 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="83.0" author="phendriksen">
+        <!--Now back populate the dar_dataset table-->
+        <sql>
+            INSERT INTO dar_dataset (dataset_id, reference_id)
+            SELECT DISTINCT jsonb_array_elements(((data #>> '{}')::jsonb->>'datasetIds')::jsonb)::INTEGER AS dataset_id, reference_id FROM data_access_request
+        </sql>
+        <rollback>
+            <sql>
+                DELETE FROM dar_dataset
+            </sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
