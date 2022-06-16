@@ -4,14 +4,17 @@ import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.json.internal.JsonArgumentFactory;
 import org.jdbi.v3.sqlobject.config.RegisterArgumentFactory;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Date;
@@ -266,6 +269,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @SqlUpdate("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId)")
   void insertDARDatasetRelation(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId);
+
+  @SqlBatch("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId)")
+  void insertAllDarDatasets(@BindBean List<DarDataset> darDatasets);
 
   /**
    * Delete rows which have the given reference id

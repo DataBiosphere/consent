@@ -17,17 +17,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -256,12 +246,13 @@ public class DataAccessRequestService {
      * @param referenceId ReferenceId of the corresponding DAR
      */
     private void syncDataAccessRequestDatasets(List<Integer> datasetIds, String referenceId) {
+        List<DarDataset> darDatasets = datasetIds.stream()
+                .map(datasetId -> new DarDataset(referenceId, datasetId))
+                .collect(Collectors.toUnmodifiableList());
         dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(referenceId);
 
-        if (!datasetIds.isEmpty()) {
-            datasetIds.forEach(id -> {
-                dataAccessRequestDAO.insertDARDatasetRelation(referenceId, id);
-            });
+        if (!darDatasets.isEmpty()) {
+            dataAccessRequestDAO.insertAllDarDatasets(darDatasets);
         }
     }
 
