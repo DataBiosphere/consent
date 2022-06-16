@@ -325,9 +325,6 @@ public class DataAccessRequestService {
             now,
             newData
         );
-
-        // Update the Joins table *dar_dataset
-        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceIds(canceledReferenceIds);
         syncDataAccessRequestDatasets(datasetIds, referenceId);
 
         return findByReferenceId(referenceId);
