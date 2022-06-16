@@ -150,13 +150,13 @@ public class DataAccessRequestResource extends Resource {
      * @return Optional value of the referenced dataset id.
      */
     private Optional<Integer> getDatasetIdForDarId(String id) {
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-        List<Integer> datasetIdList = (Objects.nonNull(dar.getData())) ?
-                dar.getData().getDatasetIds() :
-                Collections.emptyList();
+        List<Integer> datasetIdList = dataAccessRequestService.findDatasetIdsByReferenceId(id);
+
         if (datasetIdList == null || datasetIdList.isEmpty()) {
             return Optional.empty();
         }
+
+        // This will need to change because we loose the assumption that this is one to one *remove the .get(0)
         return Optional.of(datasetIdList.get(0));
     }
 

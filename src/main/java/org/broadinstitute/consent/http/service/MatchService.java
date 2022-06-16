@@ -163,7 +163,7 @@ public class MatchService {
         Match match = null;
         DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
         if (Objects.nonNull(dar)) {
-            List<Integer> dataSetIdList = dar.getData().getDatasetIds();
+            List<Integer> dataSetIdList = dataAccessRequestDAO.findDARDatasetRelations(dar.getReferenceId());
             Consent consent = findRelatedConsent(dataSetIdList);
             if (Objects.nonNull(consent)) {
                 try {
@@ -270,7 +270,7 @@ public class MatchService {
 
     private List<DataAccessRequest> findRelatedDars(List<Integer> dataSetIds) {
         return dataAccessRequestDAO.findAllDataAccessRequests().stream()
-                .filter(d -> !Collections.disjoint(dataSetIds, d.getData().getDatasetIds()))
+                .filter(d -> !Collections.disjoint(dataSetIds, dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId())))
                 .collect(Collectors.toList());
     }
 

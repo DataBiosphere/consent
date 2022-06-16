@@ -218,6 +218,15 @@ public class DataAccessRequestService {
         return dar;
     }
 
+    public List<Integer> findDatasetIdsByReferenceId(String referencedId) {
+        List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(referencedId);
+
+        if (Objects.isNull(datasetIds)) {
+            throw new NotFoundException("There does not exist a DAR with the given reference Id");
+        }
+        return datasetIds;
+    }
+
     @Deprecated // Use updateByReferenceIdVersion2
     public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
         darData.setSortDate(new Date().getTime());
@@ -266,7 +275,7 @@ public class DataAccessRequestService {
                 .getDars().values().stream()
                 .map(DataAccessRequest::getData)
                 .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getStatus()))
-                .map(DataAccessRequestData::getDatasetIds)
+                .map(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()))
                 .flatMap(Collection::stream)
                 .collect(Collectors.toUnmodifiableList());
         if (datasetIds.isEmpty()) {
@@ -372,8 +381,7 @@ public class DataAccessRequestService {
                     .collect(toList())
             ));
         List<Integer> datasetIds = dataAccessRequests.stream()
-            .map(DataAccessRequest::getData).collect(toList()).stream()
-            .map(DataAccessRequestData::getDatasetIds).flatMap(List::stream).collect(toList());
+            .map(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId())).flatMap(List::stream).collect(toList());
         // Batch call 3
         Set<Dac> dacs = datasetIds.isEmpty() ? Collections.emptySet() : dacDAO.findDacsForDatasetIds(datasetIds);
         // Batch call 4
@@ -390,7 +398,7 @@ public class DataAccessRequestService {
                 darManage.setDar(dar);
                 darManage.setElection(referenceIdToElectionMap.get(dar.getReferenceId()));
                 darManage.setVotes(referenceIdToVoteMap.get(dar.getReferenceId()));
-                dar.getData().getDatasetIds().stream()
+                dataAccessRequestDAO.findDARDatasetRelations(dar.getReferenceId()).stream()
                     .findFirst()
                     .flatMap(id -> dacs.stream()
                         .filter(dataset -> dataset.getDatasetIds().contains(id))
@@ -428,7 +436,7 @@ public class DataAccessRequestService {
             darData.setCreateDate(nowTime);
         }
         darData.setSortDate(nowTime);
-        List<Integer> datasets = dataAccessRequest.getData().getDatasetIds();
+        List<Integer> datasets = dataAccessRequestDAO.findDARDatasetRelations(dataAccessRequest.getReferenceId());
         if (CollectionUtils.isNotEmpty(datasets)) {
             String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
             Integer collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getDacUserId(), now);
@@ -515,7 +523,8 @@ public class DataAccessRequestService {
                 User user = userDAO.findUserById(dataAccessRequest.getUserId());
                 try {
                     if (Objects.nonNull(dataAccessRequest) && Objects.nonNull(dataAccessRequest.getData()) && Objects.nonNull(user)) {
-                        Integer datasetId = !CollectionUtils.isEmpty(dataAccessRequest.getData().getDatasetIds()) ? dataAccessRequest.getData().getDatasetIds().get(0) : null;
+                        List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(dataAccessRequest.getReferenceId());
+                        Integer datasetId = !CollectionUtils.isEmpty(datasetIds) ? datasetIds.get(0) : null;
                         String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
                         Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
                         String profileName = user.getDisplayName();
@@ -548,7 +557,8 @@ public class DataAccessRequestService {
             for (Election election : elections) {
                 DataAccessRequest dar = findByReferenceId(election.getReferenceId());
                 if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
-                    Integer datasetId = !CollectionUtils.isEmpty(dar.getData().getDatasetIds()) ? dar.getData().getDatasetIds().get(0) : null;
+                    List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(dar.getReferenceId());
+                    Integer datasetId = !CollectionUtils.isEmpty(datasetIds) ? datasetIds.get(0) : null;
                     String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
                     Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
                     if (Objects.nonNull(consent)) {
@@ -603,7 +613,7 @@ public class DataAccessRequestService {
                 map(Dataset::getDataSetId).
                 collect(Collectors.toList());
         return activeDars.stream().
-                filter(d -> d.getData().getDatasetIds().stream().anyMatch(dataSetIds::contains)).
+                filter(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()).stream().anyMatch(dataSetIds::contains)).
                 collect(Collectors.toList());
     }
 

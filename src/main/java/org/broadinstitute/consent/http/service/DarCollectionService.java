@@ -259,7 +259,7 @@ public class DarCollectionService {
     List<Integer> datasetIds = collections.stream()
       .map(d-> d.getDars().values())
       .flatMap(Collection::stream)
-      .map(d -> d.getData().getDatasetIds())
+      .map(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()))
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
 
@@ -270,8 +270,7 @@ public class DarCollectionService {
 
       return collections.stream().map(c -> {
         Set<Dataset> collectionDatasets = c.getDars().values().stream()
-          .map(DataAccessRequest::getData)
-          .map(DataAccessRequestData::getDatasetIds)
+          .map(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()))
           .flatMap(Collection::stream)
           .map(datasetMap::get)
           .collect(Collectors.toSet());
@@ -373,7 +372,7 @@ public class DarCollectionService {
 
     // Filter the list of DARs we can operate on by the datasets accessible to this chairperson
     List<DataAccessRequest> dars = collection.getDars().values().stream()
-      .filter(d -> datasetIds.containsAll(d.getData().getDatasetIds()))
+      .filter(d -> datasetIds.containsAll(dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId())))
       .collect(Collectors.toList());
 
     List<String> referenceIds = dars.stream()

@@ -88,8 +88,7 @@ public class MetricsService {
       dars.stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
     List<Integer> datasetIds =
       dars.stream()
-        .map(DataAccessRequest::getData)
-        .map(DataAccessRequestData::getDatasetIds)
+        .map(d -> darDAO.findDARDatasetRelations(d.getReferenceId()))
         .flatMap(List::stream)
         .collect(Collectors.toList());
     List<Dataset> datasets = dataSetDAO.findDatasetsByIdList(datasetIds);
@@ -117,8 +116,7 @@ public class MetricsService {
     return dars.stream()
       .map(
         dataAccessRequest -> {
-          Integer datasetId =
-            dataAccessRequest.getData().getDatasetIds().stream().findFirst().orElse(0);
+          Integer datasetId = darDAO.findDARDatasetRelations(dataAccessRequest.getReferenceId()).stream().findFirst().orElse(0);
 
           Dataset dataset =
             datasets.stream()

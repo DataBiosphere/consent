@@ -256,4 +256,14 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + " SET data = jsonb_set ((data #>> '{}')::jsonb, '{status}', '\"Archived\"', true) "
           + " WHERE reference_id IN (<referenceIds>)")
   void archiveByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
+  /**
+   * Returns all dataset_ids that match the given referenceId
+   *
+   * @param referenceId List<String>
+   */
+  @SqlQuery(
+          "SELECT distinct dataset_id FROM dar_dataset WHERE reference_id = :referenceId ")
+  List<Integer> findDARDatasetRelations(@Bind("referenceId") String referenceId);
+
 }

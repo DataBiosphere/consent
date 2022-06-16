@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -29,13 +30,15 @@ public class DarCollectionServiceDAO {
   private final ElectionDAO electionDAO;
   private final Jdbi jdbi;
   private final UserDAO userDAO;
+  private final DataAccessRequestDAO DarDAO;
 
   @Inject
-  public DarCollectionServiceDAO(DatasetDAO datasetDAO, ElectionDAO electionDAO, Jdbi jdbi, UserDAO userDAO) {
+  public DarCollectionServiceDAO(DatasetDAO datasetDAO, ElectionDAO electionDAO, Jdbi jdbi, UserDAO userDAO, DataAccessRequestDAO DarDAO) {
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
     this.jdbi = jdbi;
     this.userDAO = userDAO;
+    this.DarDAO = DarDAO;
   }
 
   /**
@@ -85,7 +88,7 @@ public class DarCollectionServiceDAO {
 
                 // If the user is not an admin, then the dataset must be in the list of the user's DAC Datasets
                 // Otherwise, we need to skip election creation for this DAR as well.
-                Integer datasetId = dar.getData().getDatasetIds().get(0);
+                Integer datasetId = DarDAO.findDARDatasetRelations(dar.getReferenceId()).get(0);
                 if (!isAdmin && !dacUserDatasetIds.contains(datasetId)) {
                     ignore = true;
                 }

@@ -319,9 +319,7 @@ public class MatchServiceTest {
         when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar2);
         when(consentDAO.findConsentById(any())).thenReturn(consent);
         when(consentDAO.checkConsentById(any())).thenReturn(consent.getConsentId());
-        List<Dataset> dataSets = getSampleDataAccessRequest(referenceId)
-                .getData()
-                .getDatasetIds()
+        List<Dataset> dataSets = dataAccessRequestDAO.findDARDatasetRelations(referenceId)
                 .stream()
                 .map(id -> {
                     Dataset d = new Dataset(); d.setDataSetId(id); return d;} )

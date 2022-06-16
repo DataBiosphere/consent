@@ -119,8 +119,7 @@ public class EmailNotifierService {
             DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
             List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
             List<Integer> datasetIds = collection.getDars().values().stream()
-                    .map(DataAccessRequest::getData)
-                    .map(DataAccessRequestData::getDatasetIds)
+                    .map(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()))
                     .flatMap(List::stream)
                     .collect(Collectors.toList());
             Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));

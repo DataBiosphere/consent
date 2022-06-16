@@ -334,10 +334,11 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DarCollectionServiceDAO providesDarCollectionServiceDAO() {
         return new DarCollectionServiceDAO(
-            providesDatasetDAO(),
-            providesElectionDAO(),
-            providesJdbi(),
-            providesUserDAO());
+                providesDatasetDAO(),
+                providesElectionDAO(),
+                providesJdbi(),
+                providesUserDAO(),
+                providesDataAccessRequestDAO());
     }
 
     @Provides

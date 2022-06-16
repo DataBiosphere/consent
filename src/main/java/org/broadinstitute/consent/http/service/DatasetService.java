@@ -371,7 +371,7 @@ public class DatasetService {
         List<DataAccessRequestData> darDatas = dataAccessRequestDAO.findAllDataAccessRequestDatas();
         List<Integer> datasetIdsInUse = darDatas
                 .stream()
-                .map(DataAccessRequestData::getDatasetIds)
+                .map(dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()))
                 .filter(Objects::nonNull)
                 .filter(l -> !l.isEmpty())
                 .flatMap(List::stream)
