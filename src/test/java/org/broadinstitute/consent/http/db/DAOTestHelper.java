@@ -454,36 +454,6 @@ public class DAOTestHelper {
         return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
 
-    /*
-     * This method should be replaced as it creates a DAR from a json file which
-     * does not have accurate FK relationships.
-     */
-    @Deprecated
-    private DataAccessRequest insertDAR(Integer userId, Integer collectionId, String darCode) {
-        DataAccessRequestData data;
-        Date now = new Date();
-        try {
-            String darDataString = FileUtils.readFileToString(
-              new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
-              Charset.defaultCharset());
-            data = DataAccessRequestData.fromString(darDataString);
-            data.setDarCode(darCode);
-            String referenceId = UUID.randomUUID().toString();
-            if (collectionId == 0) {
-                dataAccessRequestDAO.insertDraftDataAccessRequest(referenceId, userId, now, now, now, now, data);
-                dataAccessRequestDAO.updateDraftByReferenceId(referenceId, false);
-            } else {
-                dataAccessRequestDAO.insertVersion3(collectionId, referenceId, userId, now, now, now, now, data);
-            }
-            return dataAccessRequestDAO.findByReferenceId(referenceId);
-        } catch (IOException e) {
-            logger.error("Exception parsing dar data: " + e.getMessage());
-            fail("Unable to create a Data Access Request from sample data: " + e.getMessage());
-        }
-        return null;
-    }
-
-
     /**
      * Creates a new user, dataset, data access request, and dar collection
      *
