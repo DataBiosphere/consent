@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -359,7 +360,17 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    * Helper method to generate a DarCollection with a Dac, a Dataset, and a create User
    */
   private DarCollection setUpDarCollectionWithDacDataset() {
-    DarCollection collection = createDarCollectionWithSingleDataAccessRequest();
+    User user = createUser();
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    Dac dac = createDac();
+    createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
+    Consent consent = createConsent(dac.getDacId());
+    Dataset dataset = createDataset();
+    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+    createDarForCollection(user, collectionId, dataset);
+    DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
     assertNotNull(dar.getData());
