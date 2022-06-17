@@ -289,7 +289,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<User> users = userDAO.findUsersForDatasetsByRole(
                 Collections.singletonList(dataset.getDataSetId()),
@@ -307,7 +307,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<User> users = userDAO.findUsersForDatasetsByRole(
                 Collections.singletonList(dataset.getDataSetId()),

@@ -86,7 +86,7 @@ public class DAOTestHelper {
     // of all records between test runs.
     private static TestingDAO testingDAO;
 
-    String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
+    public String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
 
     @BeforeClass
     public static void startUp() throws Exception {
@@ -166,10 +166,6 @@ public class DAOTestHelper {
         testingDAO.deleteAllDARs();
         testingDAO.deleteAllDARCollections();
         testingDAO.deleteAllCounters();
-    }
-
-    protected void createAssociation(String consentId, Integer datasetId) {
-        consentDAO.insertConsentAssociation(consentId, ASSOCIATION_TYPE_TEST, datasetId);
     }
 
     protected Election createAccessElection(String referenceId, Integer datasetId) {
@@ -261,12 +257,6 @@ public class DAOTestHelper {
         return voteDAO.findVoteById(voteId);
     }
 
-    protected Vote createPopulatedFinalVote(Integer userId, Integer electionId) {
-        Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
-        voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
-        return voteDAO.findVoteById(voteId);
-    }
-
     protected Vote createChairpersonVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
         return voteDAO.findVoteById(voteId);
@@ -274,12 +264,6 @@ public class DAOTestHelper {
 
     protected Vote createPopulatedChairpersonVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
-        voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
-        return voteDAO.findVoteById(voteId);
-    }
-
-    protected Vote createPopulatedDataOwnerVote(Integer userId, Integer electionId) {
-        Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DATA_OWNER.getValue());
         voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
         return voteDAO.findVoteById(voteId);
     }
@@ -329,15 +313,6 @@ public class DAOTestHelper {
         Integer userId = userDAO.insertUser(email, "display name", new Date());
         createUserProperty(userId, UserFields.ORCID.getValue());
         addUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
-        return userDAO.findUserById(userId);
-    }
-
-    protected User createUserMultipleProperties() {
-        User user = createUser();
-        Integer userId = user.getDacUserId();
-        createUserProperty(userId, UserFields.PI_NAME.getValue());
-        createUserProperty(userId, UserFields.PI_EMAIL.getValue());
-        createUserProperty(userId, UserFields.DEPARTMENT.getValue());
         return userDAO.findUserById(userId);
     }
 
@@ -464,13 +439,6 @@ public class DAOTestHelper {
         return libraryCardDAO.findLibraryCardById(id);
     }
 
-    protected LibraryCard createLibraryCardForInstitution(User user, Integer institutionId) {
-        String stringValue = "value";
-        Integer id = libraryCardDAO.insertLibraryCard(user.getDacUserId(), institutionId, stringValue,
-                user.getDisplayName(), user.getEmail(), user.getDacUserId(), new Date());
-        return libraryCardDAO.findLibraryCardById(id);
-    }
-
     //overloaded method, helper for INDEX SQL call
     //createInstitution called outside of helper for institution reference/data checks
     protected LibraryCard createLibraryCardForIndex(Integer institutionId) {
@@ -479,12 +447,6 @@ public class DAOTestHelper {
         Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue,
                 userId, new Date());
         return libraryCardDAO.findLibraryCardById(id);
-    }
-
-    protected Date yesterday() {
-        final Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -1);
-        return cal.getTime();
     }
 
     /**
@@ -601,7 +563,7 @@ public class DAOTestHelper {
 
     protected void createConsentAndAssociationWithDatasetIdAndDACId(int datasetId, int dacId ) {
         Consent consent = createConsent(dacId);
-        createAssociation(consent.getConsentId(), datasetId);
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, datasetId);
     }
 
     protected DarCollection createDarCollectionWithDatasetsAndConsentAssociation(int dacId, User user, List<Dataset> datasets) {
@@ -620,7 +582,11 @@ public class DAOTestHelper {
     }
 
     protected DarCollection createDarCollectionMultipleUserProperties() {
-        User user = createUserMultipleProperties();
+        User user = createUser();
+        Integer userId = user.getDacUserId();
+        createUserProperty(userId, UserFields.PI_NAME.getValue());
+        createUserProperty(userId, UserFields.PI_EMAIL.getValue());
+        createUserProperty(userId, UserFields.DEPARTMENT.getValue());
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         Dataset dataset = createDataset();
@@ -643,7 +609,7 @@ public class DAOTestHelper {
         createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
         Dataset dataset = createDataset();
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         createDarForCollection(user, collectionId, dataset);
         return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
