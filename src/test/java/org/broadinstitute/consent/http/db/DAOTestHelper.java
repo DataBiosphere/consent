@@ -313,6 +313,11 @@ public class DAOTestHelper {
         return matchDAO.findMatchById(matchId);
     }
 
+    /**
+     * Creates a user with default role of Researcher and random user properties
+     *
+     * @return Created User
+     */
     protected User createUser() {
         int i1 = RandomUtils.nextInt(5, 10);
         int i2 = RandomUtils.nextInt(5, 10);
@@ -328,7 +333,7 @@ public class DAOTestHelper {
         return userDAO.findUserById(userId);
     }
 
-    protected void createUserProperty(Integer userId, String field) {
+    private void createUserProperty(Integer userId, String field) {
         UserProperty property = new UserProperty();
         property.setPropertyKey(field);
         property.setPropertyValue(UUID.randomUUID().toString());
@@ -344,13 +349,6 @@ public class DAOTestHelper {
         Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphanumeric(10), "itdirectorName", "itDirectorEmail", userId, new Date());
         userDAO.updateUser(name, userId, email, institutionId);
         addUserRole(7, userId);
-        return userDAO.findUserById(userId);
-    }
-
-    protected User createUserForInstitution(Integer institutionId) {
-        String email = RandomStringUtils.randomAlphabetic(11);
-        Integer userId = userDAO.insertUser(email, "displayName", new Date());
-        userDAO.updateUser(email, userId, "additionalEmail", institutionId);
         return userDAO.findUserById(userId);
     }
 
@@ -431,7 +429,9 @@ public class DAOTestHelper {
 
     protected LibraryCard createLibraryCard() {
         Integer institutionId = createInstitution().getId();
-        Integer userId = createUserForInstitution(institutionId).getDacUserId();
+        String email = RandomStringUtils.randomAlphabetic(11);
+        Integer userId = userDAO.insertUser(email, "displayName", new Date());
+        userDAO.updateUser(email, userId, "additionalEmail", institutionId);
         String stringValue = "value";
         Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue, userId, new Date());
         return libraryCardDAO.findLibraryCardById(id);
