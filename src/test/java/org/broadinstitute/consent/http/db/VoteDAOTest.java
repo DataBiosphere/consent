@@ -36,7 +36,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         List<Vote> votes = voteDAO.findVotesByReferenceId(election.getReferenceId());
@@ -49,7 +49,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getDacUserId(), election.getElectionId());
 
         List<ElectionReviewVote> votes = voteDAO.findElectionReviewVotesByElectionId(election.getElectionId());
@@ -62,7 +62,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         List<ElectionReviewVote> votes = voteDAO.findElectionReviewVotesByElectionId(election.getElectionId(), vote.getType());
@@ -83,7 +83,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         Vote foundVote = voteDAO.findVoteById(vote.getVoteId());
@@ -98,7 +98,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user4 = createUserWithRole(UserRoles.MEMBER.getRoleId());
         Consent consent = createConsent(null);
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
         Vote vote2 = createDacVote(user2.getDacUserId(), election.getElectionId());
         Vote vote3 = createDacVote(user3.getDacUserId(), election.getElectionId());
@@ -117,7 +117,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         List<Vote> foundVotes = voteDAO.findDACVotesByElectionId(election.getElectionId());
@@ -132,12 +132,12 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getDacUserId(), election.getElectionId());
 
         Consent consent2 = createConsent(null);
         Dataset dataset2 = createDataset();
-        Election election2 = createAccessElection(consent2.getConsentId(), dataset2.getDataSetId());
+        Election election2 = createDataAccessElection(consent2.getConsentId(), dataset2.getDataSetId());
         createDacVote(user.getDacUserId(), election2.getElectionId());
         List<Integer> electionIds = Arrays.asList(election.getElectionId(), election2.getElectionId());
 
@@ -152,12 +152,12 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         Consent consent2 = createConsent(null);
         Dataset dataset2 = createDataset();
-        Election election2 = createAccessElection(consent2.getConsentId(), dataset2.getDataSetId());
+        Election election2 = createDataAccessElection(consent2.getConsentId(), dataset2.getDataSetId());
         createDacVote(user.getDacUserId(), election2.getElectionId());
         List<Integer> electionIds = Arrays.asList(election.getElectionId(), election2.getElectionId());
 
@@ -182,7 +182,7 @@ public class VoteDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Consent consent = createConsent(null);
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         List<Vote> foundVotes = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), vote.getType());
@@ -207,7 +207,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         List<Vote> foundVotes = voteDAO.findPendingVotesByElectionId(election.getElectionId());
@@ -223,7 +223,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         Vote foundVote = voteDAO.findVoteByElectionIdAndDACUserId(election.getElectionId(), user.getDacUserId());
@@ -237,7 +237,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         List<Vote> foundVotes = voteDAO.findVotesByElectionIdAndDACUserIds(election.getElectionId(), Collections.singletonList(user.getDacUserId()));
@@ -274,7 +274,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createFinalVote(user.getDacUserId(), election.getElectionId());
 
         Vote foundVote = voteDAO.findChairPersonVoteByElectionIdAndDACUserId(election.getElectionId(), user.getDacUserId());
@@ -288,7 +288,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         Integer voteId = voteDAO.checkVoteById(election.getReferenceId(), vote.getVoteId());
@@ -307,7 +307,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         Dataset dataset = createDataset();
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         voteDAO.deleteVoteById(vote.getVoteId());
@@ -321,7 +321,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote v = createDacVote(user.getDacUserId(), election.getElectionId());
 
         Vote vote = voteDAO.findVoteById(v.getVoteId());
@@ -335,7 +335,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote v = createDacVote(user.getDacUserId(), election.getElectionId());
 
         String rationale = "rationale";
@@ -363,7 +363,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote v = createDacVote(user.getDacUserId(), election.getElectionId());
 
         voteDAO.updateVoteReminderFlag(v.getVoteId(), true);
@@ -381,7 +381,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote v = createDacVote(user.getDacUserId(), election.getElectionId());
 
         Vote vote = voteDAO.findVotesByReferenceIdTypeAndUser(election.getReferenceId(), user.getDacUserId(), v.getType());
@@ -403,7 +403,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote v = createDacVote(user.getDacUserId(), election.getElectionId());
 
         List<Vote> votes = voteDAO.findVoteByTypeAndElectionId(election.getElectionId(), v.getType());
@@ -428,7 +428,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         closeElection(election);
         Vote v = createFinalVote(user.getDacUserId(), election.getElectionId());
         boolean voteValue = true;
@@ -459,7 +459,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         closeElection(election);
         Vote v = createDacVote(user.getDacUserId(), election.getElectionId());
         boolean voteValue = true;
@@ -486,7 +486,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         List<Integer> userIds = Arrays.asList(user1.getDacUserId(), user2.getDacUserId(), user3.getDacUserId());
 
         voteDAO.insertVotes(userIds, election.getElectionId(), VoteType.DAC.getValue());
@@ -502,7 +502,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         List<Vote> votes = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(), vote.getType());
@@ -531,7 +531,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         List<Vote> votes = voteDAO.findVotesOnOpenElections(user.getDacUserId());
@@ -547,7 +547,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         voteDAO.removeVotesByIds(Collections.singletonList(vote.getVoteId()));
@@ -561,7 +561,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
 
         List<Vote> votes = voteDAO.findVotesByElectionIdsAndUser(
@@ -580,7 +580,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createChairpersonVote(user.getDacUserId(), election.getElectionId());
 
         List<Vote> userVotes = voteDAO.findVotesByUserId(user.getDacUserId());
@@ -594,7 +594,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createChairpersonVote(user.getDacUserId(), election.getElectionId());
         voteDAO.updateVote(
                 true,
@@ -617,7 +617,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         DataAccessRequest dar = createDataAccessRequestV3();
-        Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         Vote dacVote = createDacVote(user.getDacUserId(), election.getElectionId());
         assertNull(dacVote.getRationale());
 

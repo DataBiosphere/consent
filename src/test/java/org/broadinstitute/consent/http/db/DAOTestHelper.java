@@ -44,7 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -168,7 +167,20 @@ public class DAOTestHelper {
         testingDAO.deleteAllCounters();
     }
 
-    protected Election createAccessElection(String referenceId, Integer datasetId) {
+    /*
+       Utility methods in this class need to be complete from the perspective of the
+       entity. When testing, if you need a specific modification to an object, call
+       dao methods directly to do any manipulation.
+     */
+
+    /**
+     * Create a DataAccess Election with "Open" status.
+     *
+     * @param referenceId A DAR's reference id
+     * @param datasetId A dataset id
+     * @return DataAccess Election
+     */
+    protected Election createDataAccessElection(String referenceId, Integer datasetId) {
         Integer electionId = electionDAO.insertElection(
                 ElectionType.DATA_ACCESS.getValue(),
                 ElectionStatus.OPEN.getValue(),
@@ -553,7 +565,7 @@ public class DAOTestHelper {
         Dataset dataset = createDataset();
         DataAccessRequest dar = insertDAR(user.getDacUserId(), collection_id, darCode);
         Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-        Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         createFinalVote(user.getDacUserId(), cancelled.getElectionId());
         createFinalVote(user.getDacUserId(), access.getElectionId());
         insertDAR(user.getDacUserId(), collection_id, darCode);
@@ -573,7 +585,7 @@ public class DAOTestHelper {
                 .forEach(dataset-> {
                     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDataSetId(), user.getDacUserId(), darCode);
                     Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-                    Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+                    Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
                     createFinalVote(user.getDacUserId(), cancelled.getElectionId());
                     createFinalVote(user.getDacUserId(), access.getElectionId());
                     createConsentAndAssociationWithDatasetIdAndDACId(dataset.getDataSetId(), dacId);
@@ -592,7 +604,7 @@ public class DAOTestHelper {
         Dataset dataset = createDataset();
         DataAccessRequest dar = insertDAR(user.getDacUserId(), collection_id, darCode);
         Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-        Election access = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         createFinalVote(user.getDacUserId(), cancelled.getElectionId());
         createFinalVote(user.getDacUserId(), access.getElectionId());
         insertDAR(user.getDacUserId(), collection_id, darCode);

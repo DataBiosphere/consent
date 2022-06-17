@@ -310,7 +310,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent = createConsent(null);
         Dataset dataset = createDataset();
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
         List<ConsentManage> consentManages = consentDAO.findConsentManageByStatus(election.getStatus());
         List<String> consentIds = consentManages.stream().map(ConsentManage::getConsentId).collect(Collectors.toList());
