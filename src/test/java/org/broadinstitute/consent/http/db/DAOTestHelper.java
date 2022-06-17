@@ -318,7 +318,7 @@ public class DAOTestHelper {
                 RandomStringUtils.randomAlphabetic(i3);
         Integer userId = userDAO.insertUser(email, "display name", new Date());
         createUserProperty(userId, UserFields.ORCID.getValue());
-        addUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
+        userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
         return userDAO.findUserById(userId);
     }
 
@@ -337,7 +337,7 @@ public class DAOTestHelper {
         Integer userId = userDAO.insertUser(email, name, new Date());
         Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphanumeric(10), "itdirectorName", "itDirectorEmail", userId, new Date());
         userDAO.updateUser(name, userId, email, institutionId);
-        addUserRole(7, userId);
+        userRoleDAO.insertSingleUserRole(7, userId);
         return userDAO.findUserById(userId);
     }
 
@@ -351,12 +351,8 @@ public class DAOTestHelper {
                 "." +
                 RandomStringUtils.randomAlphabetic(i3);
         Integer userId = userDAO.insertUser(email, "display name", new Date());
-        addUserRole(roleId, userId);
-        return userDAO.findUserById(userId);
-    }
-
-    protected void addUserRole(int roleId, int userId) {
         userRoleDAO.insertSingleUserRole(roleId, userId);
+        return userDAO.findUserById(userId);
     }
 
     protected User createUserWithRoleInDac(Integer roleId, Integer dacId) {
