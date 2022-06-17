@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -120,7 +121,11 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     Election rpElection1 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
     Election rpElection2 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
     Election accessElection = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    changeElectionStatus(rpElection1, ElectionStatus.CLOSED);
+    electionDAO.updateElectionById(
+        rpElection1.getElectionId(),
+        ElectionStatus.CLOSED.getValue(),
+        new Date());
+
     Vote vote1 = createDacVote(user.getDacUserId(), rpElection1.getElectionId());
     Vote vote2 = createDacVote(user.getDacUserId(), rpElection2.getElectionId());
     Vote vote3 = createDacVote(user.getDacUserId(), accessElection.getElectionId());

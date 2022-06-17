@@ -248,17 +248,6 @@ public class DAOTestHelper {
         return electionDAO.findElectionById(electionId);
     }
 
-    protected void closeElection(Election election) {
-        changeElectionStatus(election, ElectionStatus.CLOSED);
-    }
-
-    protected void changeElectionStatus(Election election, ElectionStatus status) {
-        electionDAO.updateElectionById(
-                election.getElectionId(),
-                status.getValue(),
-                new Date());
-    }
-
     protected Vote createDacVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
         return voteDAO.findVoteById(voteId);
