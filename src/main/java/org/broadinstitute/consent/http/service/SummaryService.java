@@ -153,7 +153,7 @@ public class SummaryService {
             Stream.of(ElectionStatus.CLOSED.getValue(), ElectionStatus.CANCELED.getValue())
                 .map(String::toLowerCase)
                 .collect(Collectors.toList());
-        List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), statuses).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toUnmodifiableList());
+        List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), statuses).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(reviewedElections)) {
           List<String> consentIds =
               reviewedElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
@@ -215,8 +215,8 @@ public class SummaryService {
    */
   public List<DataAccessRequestSummaryDetail> listDataAccessRequestSummaryDetails() {
     List<DataAccessRequestSummaryDetail> details = new ArrayList<>();
-    List<Election> accessElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue()).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toUnmodifiableList());
-    List<Election> rpElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue()).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toUnmodifiableList());
+    List<Election> accessElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue()).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toList());
+    List<Election> rpElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue()).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toList());
     if (!accessElections.isEmpty()) {
       List<String> referenceIds = accessElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
       List<DataAccessRequest> dataAccessRequests = referenceIds.isEmpty() ? Collections.emptyList() : dataAccessRequestService.getDataAccessRequestsByReferenceIds(referenceIds);
@@ -253,7 +253,7 @@ public class SummaryService {
             .filter(ev -> ev.getElectionId().equals(accessElection.getElectionId()))
             .collect(Collectors.toList()) :
             Collections.emptyList();
-        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toUnmodifiableList());
+        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toList());
         maxNumberOfDACMembers = Math.max(maxNumberOfDACMembers, dacUserIds.size());
       }
 
@@ -278,8 +278,8 @@ public class SummaryService {
             .filter(d -> d.getReferenceId().equalsIgnoreCase(accessElection.getReferenceId()))
             .findFirst();
         DataAccessRequest dar = darOption.orElse(null);
-        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toUnmodifiableList());
-        List<User> dacMembers = voteUsers.stream().filter(v -> dacUserIds.contains(v.getDacUserId())).collect(Collectors.toUnmodifiableList());
+        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toList());
+        List<User> dacMembers = voteUsers.stream().filter(v -> dacUserIds.contains(v.getDacUserId())).collect(Collectors.toList());
 
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
           List<Integer> datasetId = dataAccessRequestService.findDatasetIdsByReferenceId(dar.getReferenceId());
