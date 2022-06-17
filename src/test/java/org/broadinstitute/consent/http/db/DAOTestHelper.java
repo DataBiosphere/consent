@@ -543,7 +543,7 @@ public class DAOTestHelper {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         Dataset dataset = createDataset();
-        DataAccessRequest dar = insertDAR(user.getDacUserId(), collection_id, darCode);
+        DataAccessRequest dar = createDataAccessRequest(user.getDacUserId(), collection_id, darCode);
         Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         createFinalVote(user.getDacUserId(), cancelled.getElectionId());
