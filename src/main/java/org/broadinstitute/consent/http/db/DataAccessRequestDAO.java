@@ -266,4 +266,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           "SELECT distinct dataset_id FROM dar_dataset WHERE reference_id = :referenceId ")
   List<Integer> findDARDatasetRelations(@Bind("referenceId") String referenceId);
 
+  @SqlQuery("SELECT FROM dar_dataset WHERE reference_id in (<referenceIds>)")
+  List<Integer> findAllDARDatasetRelations(@BindList("referenceIds") List<String> referenceIds);
+
+
 }

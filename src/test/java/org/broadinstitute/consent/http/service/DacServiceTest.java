@@ -699,7 +699,8 @@ public class DacServiceTest {
      * @return A list of 5 DataAccessRequest with DataSet ids and Reference ids
      */
     private List<DataAccessRequest> getDataAccessRequests() {
-        return IntStream.range(1, 5).
+        // List<DarDataset> darDatasets = new ArrayList<>();
+        List<DataAccessRequest> accessRequests = IntStream.range(1, 5).
                 mapToObj(i -> {
                     String referenceId = UUID.randomUUID().toString();
                     List<Integer> dataSetIds = Collections.singletonList(i);
@@ -709,8 +710,12 @@ public class DacServiceTest {
                     data.setDatasetIds(dataSetIds);
                     data.setReferenceId(referenceId);
                     doc.setData(data);
+                    // darDatasets.add(new DarDataset(referenceId, dataSetIds.get(0)));
                     return doc;
                 }).collect(Collectors.toList());
+        // dataAccessRequestDAO.insertAllDarDatasets(darDatasets);
+
+        return accessRequests;
     }
 
     /**

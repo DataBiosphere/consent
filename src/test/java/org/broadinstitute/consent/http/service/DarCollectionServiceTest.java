@@ -273,6 +273,7 @@ public class DarCollectionServiceTest {
     initService();
 
     collections = service.addDatasetsToCollections(collections);
+    dataAccessRequestDAO.in
     assertEquals(1, collections.size());
 
     DarCollection collection = collections.get(0);

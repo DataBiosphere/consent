@@ -86,11 +86,7 @@ public class MetricsService {
     List<DataAccessRequest> dars = darDAO.findAllDataAccessRequests();
     List<String> referenceIds =
       dars.stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
-    List<Integer> datasetIds =
-      dars.stream()
-        .map(d -> darDAO.findDARDatasetRelations(d.getReferenceId()))
-        .flatMap(List::stream)
-        .collect(Collectors.toList());
+    List<Integer> datasetIds = darDAO.findAllDARDatasetRelations(referenceIds);
     List<Dataset> datasets = dataSetDAO.findDatasetsByIdList(datasetIds);
     List<Election> elections = electionDAO.findLastElectionsByReferenceIds(referenceIds);
     List<Match> matches = matchDAO.findMatchesForPurposeIds(referenceIds);

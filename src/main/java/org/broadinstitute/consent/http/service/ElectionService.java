@@ -461,7 +461,6 @@ public class ElectionService {
             entry.setObjectId(dataSet.getObjectId());
             activeDatasetDetailEntries.add(entry);
         });
-        dar.getData().setDatasetIds(activeDatasetIds);
         dar.getData().setDatasetDetail(activeDatasetDetailEntries);
         dataAccessRequestService.updateByReferenceId(referenceId, dar.getData());
     }
