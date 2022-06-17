@@ -431,9 +431,9 @@ public class DAOTestHelper {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, userId, new Date());
         for(int i = 0; i < 4; i++) {
-            insertDAR(userId, collection_id, darCode);
+            createDataAccessRequest(userId, collection_id, darCode);
         }
-        return insertDAR(userId, collection_id, darCode);
+        return createDataAccessRequest(userId, collection_id, darCode);
     }
 
     protected Integer createDataAccessRequestUserWithInstitute() {
