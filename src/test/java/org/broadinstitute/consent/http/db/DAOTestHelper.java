@@ -429,16 +429,18 @@ public class DAOTestHelper {
 
     protected DataAccessRequest createDataAccessRequestWithUserIdV3(Integer userId) {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-        Integer collection_id = darCollectionDAO.insertDarCollection(darCode, userId, new Date());
+        Integer collectionId = darCollectionDAO.insertDarCollection(darCode, userId, new Date());
         for(int i = 0; i < 4; i++) {
-            createDataAccessRequest(userId, collection_id, darCode);
+            createDataAccessRequest(userId, collectionId, darCode);
         }
-        return createDataAccessRequest(userId, collection_id, darCode);
+        return createDataAccessRequest(userId, collectionId, darCode);
     }
 
     protected Integer createDataAccessRequestUserWithInstitute() {
         User user = createUserWithInstitution();
-        insertDAR(user.getDacUserId(), 0, "");
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        createDataAccessRequest(user.getDacUserId(), collectionId, darCode);
         return user.getInstitutionId();
     }
 
