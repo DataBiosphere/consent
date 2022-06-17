@@ -201,45 +201,10 @@ public class DAOTestHelper {
         );
         return electionDAO.findElectionById(electionId);
     }
-    protected Election createExtendedElection(String referenceId, Integer datasetId) {
-        Integer electionId = electionDAO.insertElection(
-                ElectionType.DATA_ACCESS.getValue(),
-                ElectionStatus.OPEN.getValue(),
-                new Date(),
-                referenceId,
-                Boolean.TRUE,
-                "dataUseLetter",
-                "dulName",
-                datasetId
-        );
-        return electionDAO.findElectionById(electionId);
-    }
 
     protected Election createRPElection(String referenceId, Integer datasetId) {
         Integer electionId = electionDAO.insertElection(
                 ElectionType.RP.getValue(),
-                ElectionStatus.OPEN.getValue(),
-                new Date(),
-                referenceId,
-                datasetId
-        );
-        return electionDAO.findElectionById(electionId);
-    }
-
-    protected Election createDULElection(String referenceId, Integer datasetId) {
-        Integer electionId = electionDAO.insertElection(
-                ElectionType.TRANSLATE_DUL.getValue(),
-                ElectionStatus.OPEN.getValue(),
-                new Date(),
-                referenceId,
-                datasetId
-        );
-        return electionDAO.findElectionById(electionId);
-    }
-
-    protected Election createDatasetElection(String referenceId, Integer datasetId) {
-        Integer electionId = electionDAO.insertElection(
-                ElectionType.DATA_SET.getValue(),
                 ElectionStatus.OPEN.getValue(),
                 new Date(),
                 referenceId,
@@ -286,7 +251,6 @@ public class DAOTestHelper {
                 dacId);
         return consentDAO.findConsentById(consentId);
     }
-
 
     protected Match createMatch() {
         DataAccessRequest dar = createDataAccessRequestV3();
