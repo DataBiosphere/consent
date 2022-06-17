@@ -399,7 +399,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
   }
 
   @Test
-  public void testGEtFilteredListForReasearcher_DatasetTerm() {
+  public void testGEtFilteredListForResearcher_DatasetTerm() {
 
     DataAccessRequest dar = createDataAccessRequestV3();
     DataAccessRequestData data = dar.getData();

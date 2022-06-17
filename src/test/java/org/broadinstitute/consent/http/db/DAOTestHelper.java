@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
@@ -421,9 +422,9 @@ public class DAOTestHelper {
         String darCode = "DAR-" + RandomUtils.nextInt(1, 999999999);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
         for(int i = 0; i < 4; i++) {
-            insertDAR(user.getDacUserId(), collection_id, darCode);
+            createDataAccessRequest(user.getDacUserId(), collection_id, darCode);
         }
-        return insertDAR(user.getDacUserId(), collection_id, darCode);
+        return createDataAccessRequest(user.getDacUserId(), collection_id, darCode);
     }
 
     protected DataAccessRequest createDataAccessRequestWithUserIdV3(Integer userId) {
@@ -478,6 +479,34 @@ public class DAOTestHelper {
             fail("Unable to create a Data Access Request from sample data: " + e.getMessage());
         }
         return null;
+    }
+
+
+    /**
+     * Creates a new user, dataset, data access request, and dar collection
+     *
+     * @return Populated DataAccessRequest
+     */
+    protected DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId, String darCode) {
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+        data.setDarCode(darCode);
+        DatasetEntry entry = new DatasetEntry();
+        entry.setKey("key");
+        entry.setValue("value");
+        entry.setLabel("label");
+        data.setDatasets(List.of(entry));
+        data.setHmb(true);
+        data.setMethods(false);
+        String referenceId = UUID.randomUUID().toString();
+        Date now = new Date();
+        dataAccessRequestDAO.insertVersion3(
+            collectionId,
+            referenceId,
+            userId,
+            now, now, now, now,
+            data);
+        return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
 
     protected DataAccessRequest createDraftDataAccessRequest() {
