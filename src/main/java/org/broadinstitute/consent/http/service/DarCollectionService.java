@@ -65,7 +65,7 @@ public class DarCollectionService {
   }
 
   public List<DarCollection> getAllCollections() {
-    return addDatasetsToCollections(darCollectionDAO.findAllDARCollections());
+    return addDatasetsToCollections(darCollectionDAO.findAllDARCollections(), null);
   }
 
   public List<DarCollection> getCollectionsForUserByRoleName(User user, String roleName) {
@@ -77,17 +77,14 @@ public class DarCollectionService {
           collections.addAll(getAllCollections());
           break;
         case CHAIRPERSON:
-          List<Dataset> userDatasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
-          List<DarCollection> userCollections = getCollectionsByUserDacs(user);
-          userCollections.forEach(c -> {
-            Set<Dataset> relevantDatasets = c.getDatasets();
-            relevantDatasets.retainAll(userDatasets);
-            c.setDatasets(relevantDatasets);
-          });
-          collections.addAll(userCollections);
-          break;
         case MEMBER:
-          collections.addAll(getCollectionsByUserDacs(user));
+//          List<Dataset> userDatasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
+//          List<DarCollection> userCollections = getCollectionsByUserDacs(user);
+//          userCollections.forEach(c -> {
+//            c.getDatasets().retainAll(userDatasets);
+//          });
+//          collections.addAll(userCollections);
+          collections.addAll(getCollectionsByUserDacs(user, true));
           break;
         case SIGNINGOFFICIAL:
           collections.addAll(getCollectionsByUserInstitution(user));
@@ -109,9 +106,10 @@ public class DarCollectionService {
    * Find all DAR Collections by the user's associated DACs
    *
    * @param user The User
+   * @param filterByUserDacDatasets Specifies whether to filter on user-DAC-datasets
    * @return List<DarCollection>
    */
-  public List<DarCollection> getCollectionsByUserDacs(User user) {
+  public List<DarCollection> getCollectionsByUserDacs(User user, Boolean filterByUserDacDatasets) {
     List<Integer> dacIds = user.getRoles().stream()
         .map(UserRole::getDacId)
         .filter(Objects::nonNull)
@@ -120,8 +118,11 @@ public class DarCollectionService {
     List<Integer> collectionIds = dacIds.isEmpty() ?
         Collections.emptyList() :
         darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
+    List<Dataset> userDatasets = filterByUserDacDatasets ?
+        datasetDAO.findDatasetsByAuthUserEmail(user.getEmail()) :
+        Collections.emptyList();
     if (!collectionIds.isEmpty()) {
-      return addDatasetsToCollections(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds));
+      return addDatasetsToCollections(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds), userDatasets);
     }
     return Collections.emptyList();
   }
@@ -140,14 +141,14 @@ public class DarCollectionService {
     }
     List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByInstitutionId(user.getInstitutionId());
     if (!collectionIds.isEmpty()) {
-      return addDatasetsToCollections(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds));
+      return addDatasetsToCollections(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds), null);
     }
     return Collections.emptyList();
   }
 
   public List<DarCollection> getCollectionsForUser(User user) {
     List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
-    return addDatasetsToCollections(collections);
+    return addDatasetsToCollections(collections, null);
   }
 
   /*
@@ -207,7 +208,7 @@ public class DarCollectionService {
         collections = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
     }
 
-    return addDatasetsToCollections(collections);
+    return addDatasetsToCollections(collections, null);
   }
 
   private List<Integer> getDacIdsFromUser (User user) {
@@ -250,7 +251,7 @@ public class DarCollectionService {
     if (Objects.isNull(collection)) {
       throw new NotFoundException("Collection with the reference id of " + referenceId + " was not found");
     }
-    List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
+    List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection), null);
     return populatedCollections.stream().findFirst().orElse(null);
   }
 
@@ -259,21 +260,26 @@ public class DarCollectionService {
     if (Objects.isNull(collection)) {
       throw new NotFoundException("Collection with the collection id of " + collectionId + " was not found");
     }
-    List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
+    List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection), null);
     return populatedCollections.stream().findFirst().orElse(null);
   }
 
-  public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections) {
-
+  public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections, List<Dataset> userDatasets) {
+    // get datasetIds from each DAR from each collection
     List<Integer> datasetIds = collections.stream()
       .map(d-> d.getDars().values())
       .flatMap(Collection::stream)
       .map(d -> d.getData().getDatasetIds())
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
-
     if(!datasetIds.isEmpty()) {
-      Set<Dataset> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
+      // gets all datasets that should belong to the collection
+      Set<Dataset> datasets = (Objects.nonNull(userDatasets)) ?
+          userDatasets.stream()
+              .filter(d -> datasetIds
+              .contains(d.getDataSetId()))
+              .collect(Collectors.toSet()) :
+              datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
       Map<Integer, Dataset> datasetMap = datasets.stream()
           .collect(Collectors.toMap(Dataset::getDataSetId, Function.identity()));
 
