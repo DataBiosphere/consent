@@ -1,11 +1,17 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
-import java.io.File;
-import java.net.URI;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.VoteService;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -20,17 +26,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.SummaryService;
-import org.broadinstitute.consent.http.service.VoteService;
+import java.net.URI;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Path("api/dataRequest/{requestId}/election")
 public class DataRequestElectionResource extends Resource {
@@ -38,16 +37,14 @@ public class DataRequestElectionResource extends Resource {
     private final DataAccessRequestService darService;
     private final ElectionService electionService;
     private final EmailNotifierService emailNotifierService;
-    private final SummaryService summaryService;
     private final VoteService voteService;
 
     @Inject
     public DataRequestElectionResource(DataAccessRequestService darService,
-                                       EmailNotifierService emailNotifierService, SummaryService summaryService,
+                                       EmailNotifierService emailNotifierService,
                                        VoteService voteService, ElectionService electionService) {
         this.darService = darService;
         this.emailNotifierService = emailNotifierService;
-        this.summaryService = summaryService;
         this.voteService = voteService;
         this.electionService = electionService;
     }
@@ -107,24 +104,6 @@ public class DataRequestElectionResource extends Resource {
         try {
             electionService.deleteElection(id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
-    @Deprecated
-    @GET
-    @Produces("text/plain")
-    @Path("/dataSetVotes")
-    @PermitAll
-    public Response describeDataSetVotes(@PathParam("requestId") String id) {
-        Response.ResponseBuilder response;
-        try {
-            File fileToSend = summaryService.describeDataSetElectionsVotesForDar(id);
-            if ((fileToSend != null)) {
-                response = Response.ok(fileToSend);
-            } else response = Response.ok();
-            return response.build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

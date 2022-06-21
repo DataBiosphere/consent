@@ -21,7 +21,7 @@ public class InstitutionService {
   }
 
   public Institution createInstitution(Institution institution, Integer userId) {
-      checkForEmptyName(institution); 
+      checkForEmptyName(institution);
       checkUserId(userId);
       Date createTimestamp = new Date();
       Integer id = institutionDAO.insertInstitution(
@@ -41,11 +41,11 @@ public class InstitutionService {
     checkForEmptyName(institutionPayload);
     Date updateDate = new Date();
     institutionDAO.updateInstitutionById(
-      id, 
-      institutionPayload.getName(), 
-      institutionPayload.getItDirectorEmail(), 
-      institutionPayload.getItDirectorName(), 
-      userId, 
+      id,
+      institutionPayload.getName(),
+      institutionPayload.getItDirectorEmail(),
+      institutionPayload.getItDirectorName(),
+      userId,
       updateDate
     );
     return institutionDAO.findInstitutionById(id);
@@ -65,6 +65,10 @@ public class InstitutionService {
 
   public List<Institution> findAllInstitutions() {
     return institutionDAO.findAllInstitutions();
+  }
+
+  public List<Institution> findAllInstitutionsByName(String name) {
+    return institutionDAO.findInstitutionsByName(name);
   }
 
   private void checkForEmptyName(Institution institution) {

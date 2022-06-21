@@ -25,104 +25,6 @@ security:
       - profile
 
 paths:
-  /api/approvalExpirationTime:
-    get:
-      deprecated: true
-      summary: Get the approval expiration time
-      description: |
-        Get the approval expiration time. If no existing time exists, a
-        default time of 7 days is returned.
-      tags:
-        - Election
-      responses:
-        200:
-          description: The approval expiration time
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApprovalExpirationTime'
-    post:
-      deprecated: true
-      summary: Create approval expiration time
-      description: Create approval expiration time
-      tags:
-        - Election
-      requestBody:
-        description: Approval Expiration Time
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApprovalExpirationTime'
-      responses:
-        201:
-          description: Successfully created
-        400:
-          description: Bad Request
-  /api/approvalExpirationTime/{id}:
-    get:
-      deprecated: true
-      summary: Get the approval expiration time
-      description: Get the approval expiration time
-      tags:
-        - Election
-      parameters:
-        - name: id
-          in: path
-          description: Approval Expiration Time id
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: The approval expiration time
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApprovalExpirationTime'
-        400:
-          description: ApprovalExpirationTime not found
-    put:
-      deprecated: true
-      summary: Update approval expiration time
-      description: Update approval expiration time
-      tags:
-        - Election
-      parameters:
-        - name: id
-          in: path
-          description: Approval Expiration Time id
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        description: Approval Expiration Time
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApprovalExpirationTime'
-      responses:
-        200:
-          description: Successfully updated
-        400:
-          description: Bad Request
-    delete:
-      deprecated: true
-      summary: Delete approval expiration time
-      description: Delete approval expiration time
-      tags:
-        - Election
-      parameters:
-        - name: id
-          in: path
-          description: Approval Expiration Time id
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Successfully deleted
   /api/collections:
     $ref: './paths/collections.yaml'
   /api/collections/{collectionId}:
@@ -1247,23 +1149,6 @@ paths:
           description: Unable to find the Data Access Request with the provided id
         500:
           description: Internal error
-  /api/dar/modalSummary/{id}:
-    get:
-      deprecated: true
-      summary: getDataAcessRequestModalSummary
-      description: Retrieves a DARModalDetails.
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: 'Returns a DARModalDetails initialized with the DAR associated with the provided Id.'
   /api/dar/find/{id}/consent:
     get:
       summary: describeConsentForDAR
@@ -1737,35 +1622,6 @@ paths:
         404:
           description: The Election doesn't exist.
   /api/dataRequest/{requestId}/vote/{id}:
-    get:
-      deprecated: true
-      summary: Find the vote for the Data Access Request and Vote ID
-      description: Returns the Vote with the specified Id.
-      parameters:
-        - name: requestId
-          in: path
-          description: Reference Id of the Election of the requested Vote (this value is not used in the search, its only to complete the path)
-          required: true
-          schema:
-            type: string
-        - name: id
-          in: path
-          description: Vote ID
-          required: true
-          schema:
-            type: integer
-      tags:
-        - Vote
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the requested Vote.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Vote'
-        404:
-          description: The Vote doesn't exist.
     post:
       summary: Create a Data Access Request Vote
       description: update a Vote specified by VoteId of a DataRequest Election.
@@ -2345,37 +2201,7 @@ paths:
           description: Server error.
 
   /api/institutions:
-    get:
-      summary: Institution INDEX resource
-      description: Fetches all institutions
-      tags:
-        - Institutions
-      responses:
-        200:
-          description: Returns all institutions, along with their create user, update user, and signing official users if there are any.
-            If no results are found, an empty array is returned.
-            Admin will see all details while non-Admins will only see a subset.
-        500:
-          description: Internal Server Error
-    post:
-      summary: Institution CREATE resource
-      description: Creates new institution record based on json payload
-      tags:
-        - Institutions
-      requestBody:
-        description: Required JSON payload representing updated Institution
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Institution'
-      responses:
-        201:
-          description: Creates and returns newly created record.
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
+    $ref: './paths/institutions.yaml'
   /api/institutions/{id}:
     get:
       summary: Institution GET

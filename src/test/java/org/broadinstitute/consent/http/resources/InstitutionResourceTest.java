@@ -1,39 +1,31 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.InstitutionService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.InstitutionService;
-
-import org.broadinstitute.consent.http.util.InstitutionUtil;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
-import org.junit.Before;
-import org.junit.Test;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class InstitutionResourceTest {
   private final AuthUser authUser = new AuthUser("test@test.com");
@@ -44,10 +36,6 @@ public class InstitutionResourceTest {
 
   @Mock private InstitutionService institutionService;
   @Mock private UserService userService;
-  @Mock private UriInfo info;
-  @Mock private UriBuilder builder;
-  @Mock private User mockUser;
-  @Spy private InstitutionUtil institutionUtil = new InstitutionUtil();
 
   private InstitutionResource resource;
 
@@ -64,7 +52,7 @@ public class InstitutionResourceTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    openMocks(this);
   }
 
   private void initResource() {
@@ -163,6 +151,16 @@ public class InstitutionResourceTest {
     initResource();
     Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
     assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void testCreateInstitutionDuplicate() {
+    Institution mockInstitution = mockInstitutionSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.findAllInstitutionsByName(any())).thenReturn(List.of(mockInstitution));
+    initResource();
+    Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
+    assertEquals(409, response.getStatus());
   }
 
   @Test

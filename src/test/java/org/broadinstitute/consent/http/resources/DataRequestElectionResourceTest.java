@@ -1,23 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.OK;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.net.URI;
-import java.util.Collections;
-import java.util.UUID;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
@@ -33,6 +15,24 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.Collections;
+import java.util.UUID;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.OK;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+
 public class DataRequestElectionResourceTest {
 
     @Mock
@@ -41,8 +41,6 @@ public class DataRequestElectionResourceTest {
     private ElectionService electionService;
     @Mock
     private EmailNotifierService emailNotifierService;
-    @Mock
-    private SummaryService summaryService;
     @Mock
     private UriInfo uriInfo;
     @Mock
@@ -63,7 +61,7 @@ public class DataRequestElectionResourceTest {
     }
 
     private void initResource() {
-        resource = new DataRequestElectionResource(darService, emailNotifierService, summaryService, voteService, electionService);
+        resource = new DataRequestElectionResource(darService, emailNotifierService, voteService, electionService);
     }
 
     @Test
@@ -171,23 +169,6 @@ public class DataRequestElectionResourceTest {
                 uriInfo
         );
         Assert.assertEquals(BAD_REQUEST.getStatusCode(), response.getStatus());
-    }
-
-    @Test
-    public void testDescribeDataSetVotes() throws Exception {
-        File file = File.createTempFile("test", "txt");
-        when(summaryService.describeDataSetElectionsVotesForDar(any())).thenReturn(file);
-        initResource();
-        Response response = resource.describeDataSetVotes(UUID.randomUUID().toString());
-        Assert.assertEquals(OK.getStatusCode(), response.getStatus());
-    }
-
-    @Test
-    public void testDescribeDataSetVotesNoFile() {
-        when(summaryService.describeDataSetElectionsVotesForDar(any())).thenReturn(null);
-        initResource();
-        Response response = resource.describeDataSetVotes(UUID.randomUUID().toString());
-        Assert.assertEquals(OK.getStatusCode(), response.getStatus());
     }
 
 }

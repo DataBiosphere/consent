@@ -15,6 +15,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
@@ -79,6 +81,10 @@ public class InstitutionResource extends Resource {
     try{
       User user = userService.findUserByEmail(authUser.getEmail());
       Institution payload = new Gson().fromJson(institution, Institution.class);
+      List<Institution> conflicts = institutionService.findAllInstitutionsByName(payload.getName());
+      if (!conflicts.isEmpty()) {
+        throw new ConsentConflictException("An institution exists with the name of '" + payload.getName() + "'");
+      }
       Institution newInstitution = institutionService.createInstitution(payload, user.getDacUserId());
       return Response.ok().entity(newInstitution).build();
     } catch(Exception e) {

@@ -51,6 +51,9 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   @SqlQuery("SELECT * FROM institution WHERE institution_id = :institutionId")
   Institution findInstitutionById(@Bind("institutionId") Integer institutionId);
 
+  @SqlQuery("SELECT * FROM institution WHERE LOWER(institution_name) = LOWER(:name) ")
+  List<Institution> findInstitutionsByName(@Bind("name") String name);
+
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = SimplifiedUser.class, prefix = "so")
   @UseRowReducer(InstitutionWithUsersReducer.class)
