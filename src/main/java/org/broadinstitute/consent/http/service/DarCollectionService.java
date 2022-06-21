@@ -78,12 +78,6 @@ public class DarCollectionService {
           break;
         case CHAIRPERSON:
         case MEMBER:
-//          List<Dataset> userDatasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
-//          List<DarCollection> userCollections = getCollectionsByUserDacs(user);
-//          userCollections.forEach(c -> {
-//            c.getDatasets().retainAll(userDatasets);
-//          });
-//          collections.addAll(userCollections);
           collections.addAll(getCollectionsByUserDacs(user, true));
           break;
         case SIGNINGOFFICIAL:
@@ -276,8 +270,7 @@ public class DarCollectionService {
       // gets all datasets that should belong to the collection
       Set<Dataset> datasets = (Objects.nonNull(userDatasets)) ?
           userDatasets.stream()
-              .filter(d -> datasetIds
-              .contains(d.getDataSetId()))
+              .filter(d -> datasetIds.contains(d.getDataSetId()))
               .collect(Collectors.toSet()) :
               datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
       Map<Integer, Dataset> datasetMap = datasets.stream()
@@ -289,6 +282,7 @@ public class DarCollectionService {
           .map(DataAccessRequestData::getDatasetIds)
           .flatMap(Collection::stream)
           .map(datasetMap::get)
+          .filter(d -> Objects.nonNull(d)) // filtering out nulls which were getting captured by map
           .collect(Collectors.toSet());
         DarCollection copy = c.deepCopy();
         copy.setDatasets(collectionDatasets);
