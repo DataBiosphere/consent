@@ -1,15 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -20,6 +10,16 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
 public class DacDAOTest extends DAOTestHelper {
 
     @Test
@@ -29,7 +29,7 @@ public class DacDAOTest extends DAOTestHelper {
             Dac d = createDac();
             Dataset ds = createDataset();
             Consent c = createConsent(d.getDacId());
-            createAssociation(c.getConsentId(), ds.getDataSetId());
+            consentDAO.insertConsentAssociation(c.getConsentId(), ASSOCIATION_TYPE_TEST, ds.getDataSetId());
         };
         List<Dac> dacList = dacDAO.findAll();
         Assert.assertEquals(count, dacList.size());
@@ -189,13 +189,13 @@ public class DacDAOTest extends DAOTestHelper {
     public void testFindDacsForDatasetIds() {
         Dac dac = createDac();
         Consent consent1 = createConsent(dac.getDacId());
-        Dataset dataSet1 = createDataset();
-        createAssociation(consent1.getConsentId(), dataSet1.getDataSetId());
+        Dataset dataset1 = createDataset();
+        consentDAO.insertConsentAssociation(consent1.getConsentId(), ASSOCIATION_TYPE_TEST, dataset1.getDataSetId());
 
         Consent consent2 = createConsent(dac.getDacId());
-        Dataset dataSet2 = createDataset();
-        createAssociation(consent2.getConsentId(), dataSet2.getDataSetId());
-        Set<Dac> dacs = dacDAO.findDacsForDatasetIds(Arrays.asList(dataSet1.getDataSetId(), dataSet2.getDataSetId()));
+        Dataset dataset2 = createDataset();
+        consentDAO.insertConsentAssociation(consent2.getConsentId(), ASSOCIATION_TYPE_TEST, dataset2.getDataSetId());
+        Set<Dac> dacs = dacDAO.findDacsForDatasetIds(Arrays.asList(dataset1.getDataSetId(), dataset2.getDataSetId()));
         assertFalse(dacs.isEmpty());
         assertEquals(1, dacs.size());
     }
