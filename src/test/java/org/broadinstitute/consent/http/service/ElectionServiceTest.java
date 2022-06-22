@@ -147,7 +147,6 @@ public class ElectionServiceTest {
         sampleDataAccessRequest1.setUserId(2);
         DataAccessRequestData data = new DataAccessRequestData();
         data.setReferenceId(sampleElection1.getReferenceId());
-        data.setDatasetIds(Arrays.asList(sampleDataset1.getDataSetId()));
         DatasetEntry entry = new DatasetEntry();
         entry.setKey(sampleDataset1.getConsentName());
         entry.setValue(sampleDataset1.getName());

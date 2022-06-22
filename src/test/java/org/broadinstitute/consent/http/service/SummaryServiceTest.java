@@ -214,7 +214,6 @@ public class SummaryServiceTest {
 
     private DataAccessRequest createDAR(String referenceId, Integer userId) {
         DataAccessRequestData data = new DataAccessRequestData();
-        data.setDatasetIds(List.of(1));
         data.setReferenceId(referenceId);
         data.setDarCode("DAR-" + RandomUtils.nextInt(100, 200));
         data.setProjectTitle("Project-TEST");

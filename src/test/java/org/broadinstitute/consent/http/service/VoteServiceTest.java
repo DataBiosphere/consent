@@ -832,7 +832,6 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);

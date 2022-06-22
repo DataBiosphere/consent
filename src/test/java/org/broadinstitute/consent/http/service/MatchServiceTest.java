@@ -343,7 +343,6 @@ public class MatchServiceTest {
         DataAccessRequestData data = new DataAccessRequestData();
         data.setReferenceId(referenceId);
         data.setHmb(true);
-        data.setDatasetIds(Collections.singletonList(1));
         dar.setData(data);
         return dar;
     }
