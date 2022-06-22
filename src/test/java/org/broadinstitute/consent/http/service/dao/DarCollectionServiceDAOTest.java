@@ -363,10 +363,11 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
     assertNotNull(dar.getData());
-    dar.getData().setDatasetIds(dataAccessRequestDAO.findDARDatasetRelations(dar.getReferenceId()));
+    Dataset dataset = createDataset();
     Date now = new Date();
     dataAccessRequestDAO.updateDataByReferenceIdVersion2(
         dar.getReferenceId(), dar.getUserId(), now, now, now, dar.getData());
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
     return darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
   }
 
@@ -382,6 +383,8 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     Consent consent = createConsent(dac.getDacId());
     Dataset dataset = createDataset();
     createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+    // dataAccessRequestDAO.insertDARDatasetRelation(dac.);
 
     // Create new DAR with Dataset and add it to the collection
     User user = createUser();

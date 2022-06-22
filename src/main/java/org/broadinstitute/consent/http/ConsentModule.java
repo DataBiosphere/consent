@@ -278,7 +278,8 @@ public class ConsentModule extends AbstractModule {
                 providesDacService(),
                 providesEmailNotifierService(),
                 providesDataAccessRequestService(),
-                providesUseRestrictionConverter());
+                providesUseRestrictionConverter(),
+                providesDataAccessRequestDAO());
     }
 
     @Provides

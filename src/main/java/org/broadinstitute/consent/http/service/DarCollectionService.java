@@ -269,11 +269,20 @@ public class DarCollectionService {
           .collect(Collectors.toMap(Dataset::getDataSetId, Function.identity()));
 
       return collections.stream().map(c -> {
-        Set<Dataset> collectionDatasets = c.getDars().values().stream()
-          .map(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()))
-          .flatMap(Collection::stream)
-          .map(datasetMap::get)
-          .collect(Collectors.toSet());
+        // new
+        List<String> referenceIds = c.getDars().values().stream()
+                .map(DataAccessRequest::getReferenceId)
+                .collect(Collectors.toList());
+        Set<Dataset> collectionDatasets = dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds).stream()
+                .map(datasetMap::get)
+                .collect(Collectors.toSet());
+
+        // old
+//        Set<Dataset> collectionDatasets = c.getDars().values().stream()
+//          .map(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()))
+//          .flatMap(Collection::stream)
+//          .map(datasetMap::get)
+//          .collect(Collectors.toSet());
         DarCollection copy = c.deepCopy();
         copy.setDatasets(collectionDatasets);
         return copy;

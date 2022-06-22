@@ -27,6 +27,7 @@ import org.mockito.Mock;
 
 import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -262,7 +263,7 @@ public class DarCollectionServiceTest {
   @Test
   public void testAddDatasetsToCollection() {
     List<DarCollection> collections = new ArrayList<>();
-    Set<Dataset> datasets = new HashSet<>();
+    Set<Dataset> datasets = new HashSet<Dataset>();
     collections.add(generateMockDarCollection(datasets));
     List<Integer> datasetIds = datasets.stream()
       .map(Dataset::getDataSetId)
@@ -273,7 +274,6 @@ public class DarCollectionServiceTest {
     initService();
 
     collections = service.addDatasetsToCollections(collections);
-    dataAccessRequestDAO.in
     assertEquals(1, collections.size());
 
     DarCollection collection = collections.get(0);
@@ -424,7 +424,6 @@ public class DarCollectionServiceTest {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setDatasetIds(List.of(dataset.getDataSetId()));
     dar.setData(data);
     DarCollection collection = createMockCollections(1).get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
@@ -432,6 +431,7 @@ public class DarCollectionServiceTest {
     election.setReferenceId(dar.getReferenceId());
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
+    when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(List.of(1));
     when(datasetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(List.of());
     spy(datasetDAO);
     spy(electionDAO);
@@ -606,6 +606,7 @@ public class DarCollectionServiceTest {
     Map<String, DataAccessRequest> dars = new HashMap<>();
     DataAccessRequest darOne = generateMockDarWithDatasetId(datasets);
     DataAccessRequest darTwo = generateMockDarWithDatasetId(datasets);
+    collection.setDatasets(datasets);
     dars.put(darOne.getReferenceId(), darOne);
     dars.put(darTwo.getReferenceId(), darTwo);
     collection.setDars(dars);
@@ -618,9 +619,10 @@ public class DarCollectionServiceTest {
 
     Integer datasetId = RandomUtils.nextInt(1, 100);
     datasets.add(generateMockDatasetWithDataUse(datasetId));
-    data.setDatasetIds(Collections.singletonList(datasetId));
     dar.setData(data);
     dar.setReferenceId(UUID.randomUUID().toString());
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), datasetId);
+
     return dar;
   }
 

@@ -297,7 +297,7 @@ public class ElectionServiceTest {
     }
 
     private void initService() {
-        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, mailMessageDAO, dacService, emailNotifierService, dataAccessRequestService, useRestrictionConverter);
+        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, mailMessageDAO, dacService, emailNotifierService, dataAccessRequestService, useRestrictionConverter, dataAccessRequestDAO);
     }
 
     @Test
@@ -324,6 +324,7 @@ public class ElectionServiceTest {
     public void testCreateElection() throws Exception {
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any())).thenReturn(null);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(sampleDataAccessRequest1);
+        when(dataAccessRequestService.findDatasetIdsByReferenceId(any())).thenReturn(List.of(1));
         initService();
         Election election = service.createElection(sampleElection1, sampleElection1.getReferenceId(), ElectionType.DATA_ACCESS);
         assertNotNull(election);

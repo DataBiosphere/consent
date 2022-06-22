@@ -22,6 +22,7 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -59,6 +60,7 @@ public class DataAccessRequestResourceTest {
     @Test
     public void testDescribeConsentForDarCase1() {
         DataAccessRequest dar = generateDataAccessRequest();
+        when(dataAccessRequestService.findDatasetIdsByReferenceId(any())).thenReturn(List.of(1));
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(user.getDacUserId()).thenReturn(dar.getUserId());
@@ -74,6 +76,7 @@ public class DataAccessRequestResourceTest {
     @Test
     public void testDescribeConsentForDarCase2() {
         DataAccessRequest dar = generateDataAccessRequest();
+        when(dataAccessRequestService.findDatasetIdsByReferenceId(any())).thenReturn(List.of(1));
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
@@ -212,7 +215,7 @@ public class DataAccessRequestResourceTest {
         DataAccessRequestData data = new DataAccessRequestData();
         dar.setReferenceId(UUID.randomUUID().toString());
         data.setReferenceId(dar.getReferenceId());
-        data.setDatasetIds(Arrays.asList(1, 2));
+        dataAccessRequestService.insertDARDatasetRelation(dar.getReferenceId(), 1);
         dar.setData(data);
         dar.setUserId(1);
         return dar;

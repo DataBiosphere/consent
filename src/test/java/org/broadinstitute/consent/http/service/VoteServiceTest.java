@@ -650,14 +650,12 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);
 
         DataAccessRequest dar2 = new DataAccessRequest();
         DataAccessRequestData data2 = new DataAccessRequestData();
-        data2.setDatasetIds(List.of(d2.getDataSetId()));
         dar2.setCollectionId(1);
         dar2.setData(data2);
         dar2.setReferenceId(referenceId2);
@@ -669,6 +667,8 @@ public class VoteServiceTest {
         c.setDarCode("DAR-CODE");
 
         when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1, e2));
+        when(dataAccessRequestDAO.findDARDatasetRelations(dar1.getReferenceId())).thenReturn(List.of(d1.getDataSetId()));
+        when(dataAccessRequestDAO.findDARDatasetRelations(dar2.getReferenceId())).thenReturn(List.of(d2.getDataSetId()));
         when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1, dar2));
         when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c));
         when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
@@ -723,14 +723,12 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);
 
         DataAccessRequest dar2 = new DataAccessRequest();
         DataAccessRequestData data2 = new DataAccessRequestData();
-        data2.setDatasetIds(List.of(d2.getDataSetId()));
         dar2.setCollectionId(2);
         dar2.setData(data2);
         dar2.setReferenceId(referenceId2);
@@ -747,6 +745,8 @@ public class VoteServiceTest {
 
         when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1, e2));
         when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1, dar2));
+        when(dataAccessRequestDAO.findDARDatasetRelations(dar1.getReferenceId())).thenReturn(List.of(d1.getDataSetId()));
+        when(dataAccessRequestDAO.findDARDatasetRelations(dar2.getReferenceId())).thenReturn(List.of(d2.getDataSetId()));
         when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1, c2));
         when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
         spy(emailNotifierService);
@@ -781,7 +781,6 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);
@@ -801,6 +800,7 @@ public class VoteServiceTest {
         service.notifyResearchersOfDarApproval(List.of(v1));
         // Since we have a false vote, we should not be sending any email
         verify(emailNotifierService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
+        when(dataAccessRequestDAO.findDARDatasetRelations(dar1.getReferenceId())).thenReturn(List.of(d1.getDataSetId()));
         // Similar check for all DAO calls
         verify(electionDAO, times(0)).findElectionsByIds(any());
         verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());

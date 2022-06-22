@@ -280,15 +280,26 @@ public class DacService {
                   stream().
                   map(Dataset::getDataSetId).
                   collect(Collectors.toList());
-                List<String> referenceIds = documents.
-                    stream().
-                    map(DataAccessRequest::getReferenceId).
-                    collect(Collectors.toList());
-                List<Integer> datasetIds = dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds);
+//                List<String> referenceIds = documents.
+//                    stream().
+//                    map(DataAccessRequest::getReferenceId).
+//                    collect(Collectors.toList());
+//                List<Integer> datasetIds = dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds);
+
+                List<DataAccessRequest> temp = documents.
+                        stream().
+                        filter(d -> {
+                            List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId());
+                            return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
+                        }).
+                        collect(Collectors.toList());
 
                 return documents.
                         stream().
-                        filter(d -> accessibleDatasetIds.stream().anyMatch(datasetIds::contains)).
+                        filter(d -> {
+                            List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId());
+                            return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
+                        }).
                         collect(Collectors.toList());
             }
         }

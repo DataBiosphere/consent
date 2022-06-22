@@ -5,6 +5,7 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -20,6 +21,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
@@ -59,6 +61,7 @@ public class ElectionService {
     private final DatasetDAO dataSetDAO;
     private final LibraryCardDAO libraryCardDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DacService dacService;
     private final DataAccessRequestService dataAccessRequestService;
     private final EmailNotifierService emailNotifierService;
@@ -70,7 +73,7 @@ public class ElectionService {
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
                            DatasetDAO dataSetDAO, LibraryCardDAO libraryCardDAO, DatasetAssociationDAO datasetAssociationDAO, MailMessageDAO mailMessageDAO,
                            DacService dacService, EmailNotifierService emailNotifierService,
-                           DataAccessRequestService dataAccessRequestService, UseRestrictionConverter useRestrictionConverter) {
+                           DataAccessRequestService dataAccessRequestService, UseRestrictionConverter useRestrictionConverter, DataAccessRequestDAO dataAccessRequestDAO) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
@@ -83,6 +86,7 @@ public class ElectionService {
         this.dacService = dacService;
         this.dataAccessRequestService = dataAccessRequestService;
         this.useRestrictionConverter = useRestrictionConverter;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
     }
 
     public List<Election> describeClosedElectionsByType(String type, AuthUser authUser) {
@@ -461,6 +465,11 @@ public class ElectionService {
             entry.setObjectId(dataSet.getObjectId());
             activeDatasetDetailEntries.add(entry);
         });
+        List<DarDataset> darDatasets = activeDatasetIds.stream()
+            .map(datasetId -> new DarDataset(referenceId, datasetId))
+            .collect(Collectors.toList());
+
+        dataAccessRequestDAO.insertAllDarDatasets(darDatasets);
         dar.getData().setDatasetDetail(activeDatasetDetailEntries);
         dataAccessRequestService.updateByReferenceId(referenceId, dar.getData());
     }

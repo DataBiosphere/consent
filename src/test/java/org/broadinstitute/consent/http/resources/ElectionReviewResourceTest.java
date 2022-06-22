@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertNotNull;
@@ -82,7 +83,7 @@ public class ElectionReviewResourceTest {
         when(electionService.getConsentElectionByDARElectionId(e.getElectionId())).thenReturn(consentElection);
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
-        data.setDatasetIds(Collections.singletonList(1));
+        when(darService.findDatasetIdsByReferenceId(any())).thenReturn(List.of(1));
         dar.setData(data);
         when(darService.findByReferenceId(any())).thenReturn(dar);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());

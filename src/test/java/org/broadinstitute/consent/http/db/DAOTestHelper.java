@@ -656,11 +656,11 @@ public class DAOTestHelper {
         DataAccessRequest dar = new DataAccessRequest();
         dar.setReferenceId(UUID.randomUUID().toString());
         DataAccessRequestData data = new DataAccessRequestData();
-        data.setDatasetIds(List.of(dataset.getDataSetId()));
         dar.setData(data);
         dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getDacUserId(), now, now, now, now, data);
         dataAccessRequestDAO.updateDraftForCollection(collectionId, dar.getReferenceId());
         dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
+        dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
         return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     }
 }

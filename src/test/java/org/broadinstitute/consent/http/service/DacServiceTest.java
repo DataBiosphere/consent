@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -37,6 +38,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
@@ -331,12 +333,21 @@ public class DacServiceTest {
         when(dataSetDAO.findNonDACDatasets()).thenReturn(Collections.emptyList());
         initService();
 
+
         List<DataAccessRequest> dars = getDataAccessRequests();
+        mockDataAccessRequestDAO(dars);
 
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should only contain the ones the user has direct access to:
         Assert.assertEquals(memberDataSets.size(), filtered.size());
+    }
+
+    private void mockDataAccessRequestDAO(List<DataAccessRequest> dars) {
+        // old school for loop!
+        for (int i = 0; i < dars.size(); i++) {
+            when(dataAccessRequestDAO.findDARDatasetRelations(dars.get(i).getReferenceId())).thenReturn(List.of(i + 1));
+        }
     }
 
     @Test
@@ -351,7 +362,7 @@ public class DacServiceTest {
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();
-
+        mockDataAccessRequestDAO(dars);
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should only contain the ones the user has direct access to
@@ -699,7 +710,7 @@ public class DacServiceTest {
      * @return A list of 5 DataAccessRequest with DataSet ids and Reference ids
      */
     private List<DataAccessRequest> getDataAccessRequests() {
-        // List<DarDataset> darDatasets = new ArrayList<>();
+        List<DarDataset> darDatasets = new ArrayList<>();
         List<DataAccessRequest> accessRequests = IntStream.range(1, 5).
                 mapToObj(i -> {
                     String referenceId = UUID.randomUUID().toString();
@@ -707,13 +718,12 @@ public class DacServiceTest {
                     DataAccessRequest doc = new DataAccessRequest();
                     doc.setReferenceId(referenceId);
                     DataAccessRequestData data = new DataAccessRequestData();
-                    data.setDatasetIds(dataSetIds);
                     data.setReferenceId(referenceId);
                     doc.setData(data);
-                    // darDatasets.add(new DarDataset(referenceId, dataSetIds.get(0)));
+                    darDatasets.add(new DarDataset(referenceId, dataSetIds.get(0)));
                     return doc;
                 }).collect(Collectors.toList());
-        // dataAccessRequestDAO.insertAllDarDatasets(darDatasets);
+        dataAccessRequestDAO.insertAllDarDatasets(darDatasets);
 
         return accessRequests;
     }
