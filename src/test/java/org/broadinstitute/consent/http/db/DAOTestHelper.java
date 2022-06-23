@@ -48,7 +48,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
-import static org.junit.Assert.fail;
 
 public class DAOTestHelper {
 
