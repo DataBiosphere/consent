@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.db;
 
 import java.sql.Timestamp;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
@@ -39,7 +38,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     @SqlUpdate("INSERT INTO dataset (name, createdate, create_user_id, update_date, update_user_id, objectId, active, alias) (SELECT :name, :createDate, :createUserId, :createDate, :createUserId, :objectId, :active, MAX(alias)+1 FROM dataset)")
     @GetGeneratedKeys
-    Integer insertDatasetV2(@Bind("name") String name, @Bind("createDate") Timestamp createDate, @Bind("createUserId") Integer createUserId, @Bind("objectId") String objectId, @Bind("active") Boolean active);
+    Integer insertDataset(@Bind("name") String name, @Bind("createDate") Timestamp createDate, @Bind("createUserId") Integer createUserId, @Bind("objectId") String objectId, @Bind("active") Boolean active);
 
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +

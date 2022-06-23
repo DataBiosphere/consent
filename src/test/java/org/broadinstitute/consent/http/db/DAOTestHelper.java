@@ -5,7 +5,6 @@ import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
@@ -41,9 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -371,7 +367,7 @@ public class DAOTestHelper {
         String name = "Name_" + RandomStringUtils.random(20, true, true);
         Timestamp now = new Timestamp(new Date().getTime());
         String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
-        Integer id = datasetDAO.insertDatasetV2(name, now, user.getDacUserId(), objectId, true);
+        Integer id = datasetDAO.insertDataset(name, now, user.getDacUserId(), objectId, true);
         createDatasetProperties(id);
         return datasetDAO.findDatasetById(id);
     }
