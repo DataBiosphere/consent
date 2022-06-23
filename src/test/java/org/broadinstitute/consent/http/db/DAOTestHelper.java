@@ -445,7 +445,7 @@ public class DAOTestHelper {
         data.setDatasetIds(datasetIds);
         data.setProjectTitle(RandomStringUtils.random(10));
         String referenceId = RandomStringUtils.randomAlphanumeric(20);
-        dataAccessRequestDAO.insertVersion3(collectionId, referenceId, userId, new Date(), new Date(), new Date(), new Date(), data);
+        dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(), new Date(), new Date(), new Date(), data);
         return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
 
@@ -467,7 +467,7 @@ public class DAOTestHelper {
         data.setMethods(false);
         String referenceId = UUID.randomUUID().toString();
         Date now = new Date();
-        dataAccessRequestDAO.insertVersion3(
+        dataAccessRequestDAO.insertDataAccessRequest(
             collectionId,
             referenceId,
             userId,

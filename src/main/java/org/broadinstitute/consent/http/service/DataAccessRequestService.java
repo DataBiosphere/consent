@@ -464,7 +464,7 @@ public class DataAccessRequestService {
     }
 
     public DataAccessRequest insertSubmittedDataAccessRequest(User user, String referencedId, DataAccessRequestData darData, Integer collectionId, Date now) {
-        dataAccessRequestDAO.insertVersion3(
+        dataAccessRequestDAO.insertDataAccessRequest(
             collectionId,
             referencedId,
             user.getDacUserId(),

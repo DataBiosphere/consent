@@ -277,7 +277,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         // add data datasetId
         contents.setDatasetIds(List.of(dataset.getDataSetId()));
         testDar.setData(contents);
-        dataAccessRequestDAO.insertVersion3(
+        dataAccessRequestDAO.insertDataAccessRequest(
                 testDar.getCollectionId(),
                 testDar.getReferenceId(),
                 testDar.getUserId(),
