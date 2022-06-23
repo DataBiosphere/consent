@@ -44,6 +44,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -366,13 +367,11 @@ public class DAOTestHelper {
     }
 
     protected Dataset createDataset() {
-        Dataset ds = new Dataset();
-        ds.setName("Name_" + RandomStringUtils.random(20, true, true));
-        ds.setCreateDate(new Date());
-        ds.setObjectId("Object ID_" + RandomStringUtils.random(20, true, true));
-        ds.setActive(true);
-        ds.setAlias(RandomUtils.nextInt(1, 1000));
-        Integer id = datasetDAO.insertDataset(ds.getName(), ds.getCreateDate(), ds.getObjectId(), ds.getActive(), ds.getAlias());
+        User user = createUser();
+        String name = "Name_" + RandomStringUtils.random(20, true, true);
+        Timestamp now = new Timestamp(new Date().getTime());
+        String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+        Integer id = datasetDAO.insertDatasetV2(name, now, user.getDacUserId(), objectId, true);
         createDatasetProperties(id);
         return datasetDAO.findDatasetById(id);
     }
@@ -483,29 +482,22 @@ public class DAOTestHelper {
 
     protected DataAccessRequest createDraftDataAccessRequest() {
         User user = createUser();
-        DataAccessRequestData data;
-        try {
-            String darDataString = FileUtils.readFileToString(
-                    new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
-                    Charset.defaultCharset());
-            data = DataAccessRequestData.fromString(darDataString);
-            String referenceId = UUID.randomUUID().toString();
-            Date now = new Date();
-            dataAccessRequestDAO.insertDraftDataAccessRequest(
-                referenceId,
-                user.getDacUserId(),
-                now,
-                now,
-                now,
-                now,
-                data
-            );
-            return dataAccessRequestDAO.findByReferenceId(referenceId);
-        } catch (IOException e) {
-            logger.error("Exception parsing dar data: " + e.getMessage());
-            fail("Unable to create a Data Access Request from sample data: " + e.getMessage());
-        }
-        return null;
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+        data.setDarCode(darCode);
+        String referenceId = UUID.randomUUID().toString();
+        Date now = new Date();
+        dataAccessRequestDAO.insertDraftDataAccessRequest(
+            referenceId,
+            user.getDacUserId(),
+            now,
+            now,
+            now,
+            now,
+            data
+        );
+        return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
 
     protected DarCollection createDarCollection() {
