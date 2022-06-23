@@ -160,21 +160,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertNotNull(dar);
     }
 
-//    @Test
-//    public void testEscapedCharacters() {
-//        DataAccessRequest dar = createDataAccessRequestV3();
-//        DataAccessRequest foundDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-//        assertNotNull(foundDar);
-//        assertNotNull(foundDar.getData());
-//
-//        // Tests that "\\\\u0026" in sample dar's projectTitle is converted to "&"
-//        assertTrue(foundDar.getData().getProjectTitle().contains("&"));
-//        // Tests that "\\\\u003c" in sample dar's translatedUseRestriction is converted to "<"
-//        assertTrue(foundDar.getData().getTranslatedUseRestriction().contains("<"));
-//        // Tests that "\\\\u003e" in sample dar's translatedUseRestriction is converted to ">"
-//        assertTrue(foundDar.getData().getTranslatedUseRestriction().contains(">"));
-//    }
-
     @Test
     public void  testFindAllDataAccessRequestsForInstitution() {
         //should be included in result
