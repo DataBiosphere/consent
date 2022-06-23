@@ -166,9 +166,9 @@ public class MetricsServiceTest {
         .mapToObj(
             i -> {
               String referenceId = UUID.randomUUID().toString();
-              List<Integer> dataSetIds = Collections.singletonList(i);
               DataAccessRequest dar = new DataAccessRequest();
               dar.setId(count);
+              dar.addDatasetId(i);
               dar.setReferenceId(referenceId);
               DataAccessRequestData data = new DataAccessRequestData();
               data.setReferenceId(referenceId);

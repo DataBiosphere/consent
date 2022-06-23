@@ -316,7 +316,7 @@ public class DataAccessRequestService {
                 .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getStatus()))
                 .map(DataAccessRequestData::getReferenceId)
                 .collect(Collectors.toUnmodifiableList());
-        List<Integer> datasetIds = dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds);
+        List<Integer> datasetIds = findAllDatasetIdByReferenceId(referenceIds);
         if (datasetIds.isEmpty()) {
             throw new IllegalArgumentException("Source Collection must contain references to at least a single canceled DAR's dataset");
         }
