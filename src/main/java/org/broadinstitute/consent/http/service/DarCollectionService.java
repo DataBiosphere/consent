@@ -260,9 +260,6 @@ public class DarCollectionService {
     return populatedCollections.stream().findFirst().orElse(null);
   }
 
-  // This method could be a lot simpler if we passed a list of IDs to filter instead of full datasets.
-  // If there are any ids, then this method will filter the Collection Datasets by those ids.
-  // What that lets you do is stop checking for null and also to not explicitly pass nulls as arguments to this method.
   /**
    * Iterate through a set of collections and add relevant datasets.
    *

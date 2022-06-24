@@ -273,7 +273,7 @@ public class DarCollectionServiceTest {
     when(datasetDAO.findDatasetWithDataUseByIdList(anyList())).thenReturn(datasets);
     initService();
 
-    collections = service.addDatasetsToCollections(collections, null);
+    collections = service.addDatasetsToCollections(collections, List.of());
     assertEquals(1, collections.size());
 
     DarCollection collection = collections.get(0);
@@ -298,22 +298,20 @@ public class DarCollectionServiceTest {
             .sorted()
             .collect(Collectors.toList());
 
-    // need a list of datasets (userDatasets)
     Dataset dataset = new Dataset();
     dataset.setDataSetId(datasetIds.get(0));
 
     // mocking out findDatasetsByAuthUserEmail to only return one of the datasets
-    when(datasetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(List.of(dataset));
-    when(datasetDAO.findDatasetWithDataUseByIdList(anyList())).thenReturn(datasets);
+    when(datasetDAO.findDatasetWithDataUseByIdList(List.of(dataset.getDataSetId()))).thenReturn(new HashSet<>(List.of(dataset)));
 
     initService();
 
-    collections = service.addDatasetsToCollections(collections, datasetIds);
+    collections = service.addDatasetsToCollections(collections, List.of(dataset.getDataSetId()));
     assertEquals(1, collections.size());
 
     DarCollection collection = collections.get(0);
     Set<Dataset> datasetsFromCollection = collection.getDatasets();
-    assertEquals(2, datasetsFromCollection.size());
+    assertEquals(1, datasetsFromCollection.size());
 
     List<Integer> collectionDatasetIds = datasetsFromCollection.stream()
             .map(Dataset::getDataSetId)
