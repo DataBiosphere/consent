@@ -30,7 +30,7 @@ public interface RowMapperHelper {
       rowView.getColumn(columnName, clazz);
       return true;
     } catch (Exception e) {
-      log.warn("RowView does not contain column " + columnName);
+      log.debug("RowView does not contain column " + columnName);
       return false;
     }
   }
