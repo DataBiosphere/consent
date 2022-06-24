@@ -97,7 +97,7 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
     List<String> dataSetUUIds =
         getDar().getData().getDatasetIds().stream()
             .map(Dataset::parseAliasToIdentifier)
-            .collect(Collectors.toUnmodifiableList());
+            .collect(Collectors.toList());
     Optional<Vote> chairPersonRPVote =
         getRpVotes().stream()
             .filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue()))

@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -222,6 +223,7 @@ public class DataAccessRequestService {
     public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
         darData.setSortDate(new Date().getTime());
         dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData);
+        syncDataAccessRequestDatasets(darData.getDatasetIds(), referencedId);
         return findByReferenceId(referencedId);
     }
 
@@ -241,7 +243,28 @@ public class DataAccessRequestService {
             now,
             dar.getData()
         );
+
+        syncDataAccessRequestDatasets(dar.getData().getDatasetIds(), dar.getReferenceId());
+
         return findByReferenceId(dar.getReferenceId());
+    }
+
+    /**
+     * First delete any rows with the current reference id. This will allow us to keep (referenceId, dataset_id) unique
+     * Takes in a list of datasetIds and a referenceId and adds them to the dar_dataset collection
+     *
+     * @param datasetIds List of Integers that represent the datasetIds
+     * @param referenceId ReferenceId of the corresponding DAR
+     */
+    private void syncDataAccessRequestDatasets(List<Integer> datasetIds, String referenceId) {
+        List<DarDataset> darDatasets = datasetIds.stream()
+                .map(datasetId -> new DarDataset(referenceId, datasetId))
+                .collect(Collectors.toList());
+        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(referenceId);
+
+        if (!darDatasets.isEmpty()) {
+            dataAccessRequestDAO.insertAllDarDatasets(darDatasets);
+        }
     }
 
     /**
@@ -268,7 +291,7 @@ public class DataAccessRequestService {
                 .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getStatus()))
                 .map(DataAccessRequestData::getDatasetIds)
                 .flatMap(Collection::stream)
-                .collect(Collectors.toUnmodifiableList());
+                .collect(Collectors.toList());
         if (datasetIds.isEmpty()) {
             throw new IllegalArgumentException("Source Collection must contain references to at least a single canceled DAR's dataset");
         }
@@ -313,6 +336,8 @@ public class DataAccessRequestService {
             now,
             newData
         );
+        syncDataAccessRequestDatasets(datasetIds, referenceId);
+
         return findByReferenceId(referenceId);
     }
 
@@ -448,15 +473,18 @@ public class DataAccessRequestService {
                             now,
                             darData);
                         newDARList.add(findByReferenceId(dataAccessRequest.getReferenceId()));
+                        syncDataAccessRequestDatasets(List.of(datasets.get(idx)), dataAccessRequest.getReferenceId());
                     } else {
                         String referenceId = UUID.randomUUID().toString();
                         DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
                         newDARList.add(createdDar);
+                        syncDataAccessRequestDatasets(List.of(datasets.get(idx)), referenceId);
                     }
                 } else {
                     String referenceId = UUID.randomUUID().toString();
                     DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
                     newDARList.add(createdDar);
+                    syncDataAccessRequestDatasets(List.of(datasets.get(idx)), referenceId);
                 }
             }
         }
@@ -494,6 +522,9 @@ public class DataAccessRequestService {
         if (Objects.nonNull(dar.getCollectionId())) {
             darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getDacUserId(), now);
         }
+        // Update the dar_dataset collection
+        syncDataAccessRequestDatasets(dar.getData().getDatasetIds(), dar.getReferenceId());
+
         return findByReferenceId(dar.getReferenceId());
     }
 

@@ -782,6 +782,7 @@ public class DataAccessRequestServiceTest {
         doNothing().when(electionDAO).deleteElectionById(any());
         doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
         doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
         initService();
 
         service.deleteByReferenceId(user, referenceId);
@@ -801,6 +802,7 @@ public class DataAccessRequestServiceTest {
         doNothing().when(electionDAO).deleteElectionById(any());
         doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
         doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
         initService();
 
         service.deleteByReferenceId(user, referenceId);
