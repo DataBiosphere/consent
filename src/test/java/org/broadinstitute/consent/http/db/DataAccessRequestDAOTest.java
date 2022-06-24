@@ -523,13 +523,11 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
     private Dataset createDatasetLocal() {
-        Dataset ds = new Dataset();
-        ds.setName("Name_" + RandomStringUtils.random(20, true, true));
-        ds.setCreateDate(new Date());
-        ds.setObjectId("Object ID_" + RandomStringUtils.random(20, true, true));
-        ds.setActive(true);
-        ds.setAlias(RandomUtils.nextInt(1, 1000));
-        Integer id = datasetDAO.insertDataset(ds.getName(), ds.getCreateDate(), ds.getObjectId(), ds.getActive(), ds.getAlias());
+        User user = createUser();
+        String name = "Name_" + RandomStringUtils.random(20, true, true);
+        Timestamp now = new Timestamp(new Date().getTime());
+        String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+        Integer id = datasetDAO.insertDataset(name, now, user.getDacUserId(), objectId, true);
         createDatasetPropertiesLocal(id);
         return datasetDAO.findDatasetById(id);
     }
