@@ -25,7 +25,7 @@ public interface DarCollectionDAO {
   String QUERY_FIELD_SEPARATOR = ", ";
 
   String getCollectionAndDars =
-      " SELECT c.*, i.institution_name, u.displayname AS researcher, " +
+      " SELECT c.*, i.institution_name, u.display_name AS researcher, " +
           User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
           Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
           Election.QUERY_FIELDS_WITH_E_PREFIX + QUERY_FIELD_SEPARATOR +
@@ -265,7 +265,7 @@ public interface DarCollectionDAO {
       + "e.electionid AS e_election_id, e.referenceid AS e_reference_id, e.status AS e_status, e.createdate AS e_create_date, "
       + "e.lastupdate AS e_last_update, e.datasetid AS e_dataset_id, e.electiontype AS e_election_type, e.latest, "
       + "v.voteid as v_vote_id, v.vote as v_vote, v.dacuserid as v_dac_user_id, v.rationale as v_rationale, v.electionid as v_election_id, "
-      + "v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.displayname as v_display_name "
+      + "v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.display_name as v_display_name "
       + "FROM dar_collection c "
       + "INNER JOIN users u ON c.create_user_id = u.user_id "
       + "LEFT JOIN user_property up ON u.user_id = up.userid "

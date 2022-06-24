@@ -25,8 +25,8 @@ public class User {
   public static final String QUERY_FIELDS_WITH_U_PREFIX =
           " u.user_id as u_user_id, " +
           " u.email as u_email, " +
-          " u.displayname as u_displayname, " +
-          " u.createdate as u_createdate, " +
+          " u.display_name as u_display_name, " +
+          " u.create_date as u_create_date, " +
           " u.additional_email as u_additional_email, " +
           " u.email_preference as u_email_preference, " +
           " u.institution_id as u_institution_id," +

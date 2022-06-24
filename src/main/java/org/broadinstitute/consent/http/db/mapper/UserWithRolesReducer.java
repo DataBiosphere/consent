@@ -19,6 +19,7 @@ import java.util.Objects;
 public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, User>, RowMapperHelper {
   @Override
   public void accumulate(Map<Integer, User> map, RowView rowView) {
+    // Some queries look for `user_id` while those that use a prefix look for `u_user_id`
     Integer userId = 0;
     if (hasColumn(rowView, "user_id", Integer.class)) {
       userId = rowView.getColumn("user_id", Integer.class);
@@ -31,6 +32,7 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
             id -> rowView.getRow(User.class));
 
     try {
+      // Some queries look for `user_role_id` while those that use a prefix look for `u_user_role_id`
       Integer userRoleId = null;
       if (hasColumn(rowView, "user_role_id", Integer.class)) {
         userRoleId = rowView.getColumn("user_role_id", Integer.class);

@@ -4,5 +4,7 @@
     <changeSet id="83.0" author="grushton">
         <renameTable oldTableName="dacuser" newTableName="users"/>
         <renameColumn tableName="users" oldColumnName="dacuserid" newColumnName="user_id"/>
+        <renameColumn tableName="users" oldColumnName="displayname" newColumnName="display_name"/>
+        <renameColumn tableName="users" oldColumnName="createdate" newColumnName="create_date"/>
     </changeSet>
 </databaseChangeLog>

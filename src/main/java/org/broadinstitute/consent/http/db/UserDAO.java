@@ -107,13 +107,13 @@ public interface UserDAO extends Transactional<UserDAO> {
         + " WHERE LOWER(u.email) = LOWER(:email)")
     User findUserByEmail(@Bind("email") String email);
 
-    @SqlUpdate("INSERT INTO users (email, displayname, createdate) values (:email, :displayName, :createDate)")
+    @SqlUpdate("INSERT INTO users (email, display_name, create_date) values (:email, :displayName, :createDate)")
     @GetGeneratedKeys
     Integer insertUser(@Bind("email") String email,
                           @Bind("displayName") String displayName,
                           @Bind("createDate") Date createDate);
 
-    @SqlUpdate("UPDATE users SET displayname=:displayName, additional_email=:additionalEmail, institution_id=:institutionId WHERE user_id=:id")
+    @SqlUpdate("UPDATE users SET display_name=:displayName, additional_email=:additionalEmail, institution_id=:institutionId WHERE user_id=:id")
     void updateUser(@Bind("displayName") String displayName,
                        @Bind("id") Integer id,
                        @Bind("additionalEmail") String additionalEmail,
@@ -134,7 +134,7 @@ public interface UserDAO extends Transactional<UserDAO> {
         + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
         + " LEFT JOIN roles r ON r.roleid = ur.role_id "
         + " LEFT JOIN user_property p ON p.userid = u.user_id "
-        + " ORDER BY u.createdate DESC ")
+        + " ORDER BY u.create_date DESC ")
     Set<User> findUsers();
 
     @SqlQuery("select count(*) from user_role dr inner join roles r on r.roleId = dr.role_id where r.name = 'Admin'")
@@ -248,7 +248,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     List<User> getUsersWithNoInstitution();
 
     @RegisterBeanMapper(value = User.class)
-    @SqlQuery("SELECT u.user_id, u.displayname, u.email FROM users u "
+    @SqlQuery("SELECT u.user_id, u.display_name, u.email FROM users u "
       + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
       + " LEFT JOIN roles r ON r.roleid = ur.role_id "
       + " WHERE LOWER(r.name) = 'signingofficial' "
