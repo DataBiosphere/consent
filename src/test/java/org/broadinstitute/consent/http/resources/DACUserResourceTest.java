@@ -89,7 +89,7 @@ public class DACUserResourceTest {
         doNothing().when(userService).updateEmailPreference(anyBoolean(), anyInt());
         initResource();
 
-        Response response = resource.update(authUser, uriInfo, json.toString(), researcher.getDacUserId());
+        Response response = resource.update(authUser, uriInfo, json.toString(), researcher.getUserId());
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
@@ -104,7 +104,7 @@ public class DACUserResourceTest {
         doNothing().when(userService).updateEmailPreference(anyBoolean(), anyInt());
         initResource();
 
-        Response response = resource.update(authUser, uriInfo, json.toString(), researcher.getDacUserId() + 1);
+        Response response = resource.update(authUser, uriInfo, json.toString(), researcher.getUserId() + 1);
         assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
 
@@ -119,7 +119,7 @@ public class DACUserResourceTest {
         doNothing().when(userService).updateEmailPreference(anyBoolean(), anyInt());
         initResource();
 
-        Response response = resource.update(authUser, uriInfo, json.toString(), admin.getDacUserId() + 1);
+        Response response = resource.update(authUser, uriInfo, json.toString(), admin.getUserId() + 1);
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
@@ -127,7 +127,7 @@ public class DACUserResourceTest {
     public void testSetSOInstitutionOK() {
         User user = createDacUser(UserRoles.SIGNINGOFFICIAL);
         user.setInstitutionId(null);
-        user.setDacUserId(RandomUtils.nextInt(1, 10));
+        user.setUserId(RandomUtils.nextInt(1, 10));
         when(userService.findUserById(any())).thenReturn(user);
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(userService.updateDACUserById(any(), anyInt())).thenReturn(user);
@@ -140,14 +140,14 @@ public class DACUserResourceTest {
 
         JsonObject json = makeUserMapJsonObject(updateUser);
 
-        Response response = resource.update(authUser, uriInfo, json.toString(), updateUser.getDacUserId());
+        Response response = resource.update(authUser, uriInfo, json.toString(), updateUser.getUserId());
         assertEquals(200, response.getStatus());
     }
 
     @Test
     public void testUpdateSOInstitutionBadRequest() {
         User user = createDacUser(UserRoles.SIGNINGOFFICIAL);
-        user.setDacUserId(RandomUtils.nextInt(1, 10));
+        user.setUserId(RandomUtils.nextInt(1, 10));
         when(userService.findUserById(any())).thenReturn(user);
         initResource();
 
@@ -158,7 +158,7 @@ public class DACUserResourceTest {
 
         JsonObject json = makeUserMapJsonObject(updateUser);
 
-        Response response = resource.update(authUser, uriInfo, json.toString(), updateUser.getDacUserId());
+        Response response = resource.update(authUser, uriInfo, json.toString(), updateUser.getUserId());
         assertEquals(400, response.getStatus());
     }
 
@@ -176,7 +176,7 @@ public class DACUserResourceTest {
         User user = new User(json);
         Assert.assertNotNull(user);
         Assert.assertNull(user.getCreateDate());
-        Assert.assertEquals(user.getDacUserId().intValue(), 1);
+        Assert.assertEquals(user.getUserId().intValue(), 1);
         Assert.assertEquals(user.getEmail(), "email");
         Assert.assertEquals(user.getAdditionalEmail(), "additionalEmail");
         Assert.assertEquals(user.getEmailPreference(), false);
@@ -191,7 +191,7 @@ public class DACUserResourceTest {
         User user = new User(json);
         Assert.assertNotNull(user);
         Assert.assertNull(user.getCreateDate());
-        Assert.assertEquals(user.getDacUserId().intValue(), 1);
+        Assert.assertEquals(user.getUserId().intValue(), 1);
         Assert.assertEquals(user.getEmail(), "email");
         Assert.assertEquals(user.getAdditionalEmail(), "additionalEmail");
         Assert.assertEquals(user.getEmailPreference(), false);
@@ -201,7 +201,7 @@ public class DACUserResourceTest {
 
     private User createDacUser(UserRoles roles) {
         User user = new User();
-        user.setDacUserId(RandomUtils.nextInt(1, 100));
+        user.setUserId(RandomUtils.nextInt(1, 100));
         user.setDisplayName("name");
         user.setEmail("email");
         user.setAdditionalEmail("additional email");

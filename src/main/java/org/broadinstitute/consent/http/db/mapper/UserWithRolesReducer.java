@@ -16,16 +16,28 @@ import java.util.Objects;
 /**
  * This class works well for individual Users as well as collections.
  */
-public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, User> {
+public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, User>, RowMapperHelper {
   @Override
   public void accumulate(Map<Integer, User> map, RowView rowView) {
+    Integer userId = 0;
+    if (hasColumn(rowView, "user_id", Integer.class)) {
+      userId = rowView.getColumn("user_id", Integer.class);
+    } else if (hasColumn(rowView, "u_user_id", Integer.class)) {
+      userId = rowView.getColumn("u_user_id", Integer.class);
+    }
     User user =
         map.computeIfAbsent(
-            rowView.getColumn("dacuserid", Integer.class),
+            userId,
             id -> rowView.getRow(User.class));
 
     try {
-      if (Objects.nonNull(rowView.getColumn("user_role_id", Integer.class))) {
+      Integer userRoleId = null;
+      if (hasColumn(rowView, "user_role_id", Integer.class)) {
+        userRoleId = rowView.getColumn("user_role_id", Integer.class);
+      } else if (hasColumn(rowView, "ur_user_role_id", Integer.class)) {
+        userRoleId = rowView.getColumn("ur_user_role_id", Integer.class);
+      }
+      if (Objects.nonNull(userRoleId)) {
         UserRole ur = rowView.getRow(UserRole.class);
         user.addRole(ur);
       }

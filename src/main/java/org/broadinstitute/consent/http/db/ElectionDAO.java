@@ -140,8 +140,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery(
         "SELECT e.* FROM election e " +
         "INNER JOIN data_access_request dar ON dar.reference_id = e.referenceid " +
-        "INNER JOIN dacuser du ON du.dacuserid = dar.user_id " +
-        "INNER JOIN library_card lc ON lc.user_id = du.dacuserid " +
+        "INNER JOIN users u ON u.user_id = dar.user_id " +
+        "INNER JOIN library_card lc ON lc.user_id = u.user_id " +
         "WHERE e.electionid IN (<electionIds>) ")
     List<Election> findElectionsWithCardHoldingUsersByElectionIds(@BindList("electionIds") List <Integer> electionIds);
 

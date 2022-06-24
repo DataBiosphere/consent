@@ -113,7 +113,7 @@ public class ConsentSummaryDetail implements SummaryDetail {
             v -> {
               Optional<User> user =
                   getElectionUsers().stream()
-                      .filter(u -> v.getDacUserId().equals(u.getDacUserId()))
+                      .filter(u -> v.getDacUserId().equals(u.getUserId()))
                       .findFirst();
               user.ifPresent(value -> builder.append(value.getDisplayName()));
               builder.append(TAB);

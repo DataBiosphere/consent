@@ -247,11 +247,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    *
    * @return List<DataAccessRequest>
    */
-  @SqlQuery(
-    "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
-        + " INNER JOIN dacuser d on d.dacuserid = user_id AND d.institution_id = :institutionId "
-        + " WHERE draft != true "
-        + " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ")
+  @SqlQuery(" SELECT dar.id, dar.reference_id,dar. collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, (dar.data #>> '{}')::jsonb AS data "
+      + " FROM data_access_request dar "
+      + " INNER JOIN users u ON u.user_id = dar.user_id AND u.institution_id = :institutionId "
+      + " WHERE dar.draft != true "
+      + " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ")
   List<DataAccessRequest> findAllDataAccessRequestsForInstitution(@Bind("institutionId") Integer institutionId);
 
   @SqlUpdate(
@@ -292,7 +292,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   /**
    * Returns all dataset_ids that match the given referenceId
    *
-   * @param referenceIds List<String>
+   * @param referenceId String
    */
   @SqlQuery(
   "SELECT distinct dataset_id FROM dar_dataset WHERE reference_id = :referenceId ")

@@ -174,7 +174,7 @@ public class LibraryCardService {
                 //If a user is found, update the card to have the correct userId associated
                 User user = userDAO.findUserByEmail(card.getUserEmail());
                 if(!Objects.isNull(user)) {
-                    Integer userId = user.getDacUserId();
+                    Integer userId = user.getUserId();
                     card.setUserId(userId);
                 }
             }

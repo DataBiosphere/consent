@@ -54,7 +54,7 @@ public interface TestingDAO extends Transactional<TestingDAO> {
   @SqlUpdate("DELETE FROM user_role")
   void deleteAllUserRoles();
 
-  @SqlUpdate("DELETE FROM dacuser")
+  @SqlUpdate("DELETE FROM users")
   void deleteAllUsers();
 
   @SqlUpdate("DELETE FROM data_access_request")

@@ -143,7 +143,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Consent consent = createConsent(dac.getDacId());
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
         User user = createUser();
-        createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), dac.getDacId());
+        createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(), dac.getDacId());
 
         List<Dataset> datasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
         assertFalse(datasets.isEmpty());
@@ -250,9 +250,9 @@ public class DatasetDAOTest extends DAOTestHelper {
         Consent consent = createConsent(dac.getDacId());
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
         User user = createUser();
-        createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), dac.getDacId());
+        createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(), dac.getDacId());
 
-        Set<DatasetDTO> datasets = datasetDAO.findDatasetsByUserId(user.getDacUserId());
+        Set<DatasetDTO> datasets = datasetDAO.findDatasetsByUserId(user.getUserId());
         assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
@@ -287,11 +287,11 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     private DarCollection createDarCollectionWithDatasets(int dacId, User user, List<Dataset> datasets) {
         String darCode = "DAR-" + RandomUtils.nextInt(1, 999999);
-        Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
         IntStream.range(0, datasets.size()).forEach(index -> {
             String darSubCode = darCode + "-A-" + index;
             Dataset dataset = datasets.get(index);
-            createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDataSetId(), user.getDacUserId(), darSubCode);
+            createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDataSetId(), user.getUserId(), darSubCode);
             createConsentAndAssociationWithDatasetIdAndDACId(dataset.getDataSetId(), dacId);
         });
         return darCollectionDAO.findDARCollectionByCollectionId(collectionId);

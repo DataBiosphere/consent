@@ -50,7 +50,7 @@ public class ConsentAuditDAOTest extends DAOTestHelper {
         consent.getConsentId(),
         AuditTable.CONSENT.getValue(),
         AuditActions.CREATE.getValue(),
-        user.getDacUserId(),
+        user.getUserId(),
         new Date());
   }
 }

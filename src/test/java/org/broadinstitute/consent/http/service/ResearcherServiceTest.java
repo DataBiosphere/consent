@@ -55,7 +55,7 @@ public class ResearcherServiceTest {
         authUser = new AuthUser(googleUser);
         user = new User();
         user.setEmail(authUser.getEmail());
-        user.setDacUserId(RandomUtils.nextInt(1, 10));
+        user.setUserId(RandomUtils.nextInt(1, 10));
         user.setDisplayName(RandomStringUtils.random(10));
 
         MockitoAnnotations.initMocks(this);
@@ -68,7 +68,7 @@ public class ResearcherServiceTest {
     @Test
     public void testSetProperties() {
         UserProperty prop = new UserProperty(
-                user.getDacUserId(),
+                user.getUserId(),
                 UserFields.DEPARTMENT.getValue(),
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
@@ -98,7 +98,7 @@ public class ResearcherServiceTest {
         for (UserFields researcherField : UserFields.values()) {
             if (researcherField.getRequired()) {
                 String val = RandomStringUtils.random(10, true, false);
-                props.add(new UserProperty(user.getDacUserId(), researcherField.getValue(), val));
+                props.add(new UserProperty(user.getUserId(), researcherField.getValue(), val));
                 propMap.put(researcherField.getValue(), val);
             }
         }
@@ -115,7 +115,7 @@ public class ResearcherServiceTest {
     @Test
     public void testUpdatePropertiesNoValidation() {
         UserProperty prop = new UserProperty(
-                user.getDacUserId(),
+                user.getUserId(),
                 UserFields.DEPARTMENT.getValue(),
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
@@ -133,7 +133,7 @@ public class ResearcherServiceTest {
     @Test(expected = IllegalArgumentException.class)
     public void testUpdatePropertiesMissingFields() {
         UserProperty prop = new UserProperty(
-                user.getDacUserId(),
+                user.getUserId(),
                 UserFields.DEPARTMENT.getValue(),
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
@@ -148,7 +148,7 @@ public class ResearcherServiceTest {
     @Test(expected = IllegalArgumentException.class)
     public void testUpdatePropertiesInvalidFields() {
         UserProperty prop = new UserProperty(
-                user.getDacUserId(),
+                user.getUserId(),
                 RandomStringUtils.random(10, true, false),
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
@@ -168,11 +168,11 @@ public class ResearcherServiceTest {
             if (researcherField.getRequired()) {
                 String val1 = RandomStringUtils.random(10, true, false);
                 String val2 = RandomStringUtils.random(10, true, false);
-                props.add(new UserProperty(user.getDacUserId(), researcherField.getValue(), val1));
+                props.add(new UserProperty(user.getUserId(), researcherField.getValue(), val1));
                 propMap.put(researcherField.getValue(), val2);
             }
         }
-        props.add(new UserProperty(user.getDacUserId(), UserFields.COMPLETED.getValue(), Boolean.FALSE.toString()));
+        props.add(new UserProperty(user.getUserId(), UserFields.COMPLETED.getValue(), Boolean.FALSE.toString()));
         propMap.put(UserFields.COMPLETED.getValue(), Boolean.FALSE.toString());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
@@ -197,10 +197,10 @@ public class ResearcherServiceTest {
         for (UserFields researcherField : UserFields.values()) {
             String val1 = RandomStringUtils.random(10, true, false);
             String val2 = RandomStringUtils.random(10, true, false);
-            props.add(new UserProperty(user.getDacUserId(), researcherField.getValue(), val1));
+            props.add(new UserProperty(user.getUserId(), researcherField.getValue(), val1));
             propMap.put(researcherField.getValue(), val2);
         }
-        props.add(new UserProperty(user.getDacUserId(), UserFields.COMPLETED.getValue(), Boolean.TRUE.toString()));
+        props.add(new UserProperty(user.getUserId(), UserFields.COMPLETED.getValue(), Boolean.TRUE.toString()));
         propMap.put(UserFields.COMPLETED.getValue(), Boolean.TRUE.toString());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);

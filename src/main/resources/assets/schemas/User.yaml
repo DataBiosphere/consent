@@ -1,6 +1,10 @@
 type: object
 properties:
+  userId:
+    type: integer
+    description: ID of the user
   dacUserId:
+    deprecated: true
     type: integer
     description: ID of the user
   email:

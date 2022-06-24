@@ -322,7 +322,7 @@ public class ElectionService {
         Set<User> electionChairs = userDAO.findUsersForElectionsByRoles(
                 Arrays.asList(darElectionId, rpElectionId),
                 Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
-        List<Integer> chairIds = electionChairs.stream().map(User::getDacUserId).collect(Collectors.toList());
+        List<Integer> chairIds = electionChairs.stream().map(User::getUserId).collect(Collectors.toList());
         Integer exists = mailMessageDAO.existsCollectDAREmail(darReferenceId, rpReferenceId);
         if ((exists == null)) {
             if (((darVotes.size() == 0) && (rpElectionVotes.size() == 0) && (!chairIds.contains(vote.getDacUserId())))) {

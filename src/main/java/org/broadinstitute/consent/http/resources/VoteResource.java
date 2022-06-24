@@ -86,7 +86,7 @@ public class VoteResource extends Resource {
 
             // Validate that the user is only updating their own votes:
             User user = userService.findUserByEmail(authUser.getEmail());
-            boolean authed = votes.stream().map(Vote::getDacUserId).allMatch(id -> id.equals(user.getDacUserId()));
+            boolean authed = votes.stream().map(Vote::getDacUserId).allMatch(id -> id.equals(user.getUserId()));
             if (!authed) {
                 return createExceptionResponse(new NotFoundException());
             }
@@ -139,7 +139,7 @@ public class VoteResource extends Resource {
         }
 
         // Ensure the user is only updating their votes
-        boolean permitted = votes.stream().allMatch(vote -> vote.getDacUserId().equals(user.getDacUserId()));
+        boolean permitted = votes.stream().allMatch(vote -> vote.getDacUserId().equals(user.getUserId()));
         if (!permitted) {
             return createExceptionResponse(new NotFoundException());
         }
@@ -151,7 +151,7 @@ public class VoteResource extends Resource {
             return createExceptionResponse(e);
         }
     }
-    
+
     //Private helper function, checks to see if user has library card for chair votes that are getting an incoming "yes" update
     private void voteUpdateLCCheck(List<Vote> votes) {
         //filter for chair or final votes

@@ -23,7 +23,7 @@ import java.util.Objects;
 public class User {
 
   public static final String QUERY_FIELDS_WITH_U_PREFIX =
-          " u.dacuserid as u_dacuserid, " +
+          " u.user_id as u_user_id, " +
           " u.email as u_email, " +
           " u.displayname as u_displayname, " +
           " u.createdate as u_createdate, " +
@@ -33,6 +33,12 @@ public class User {
           " u.era_commons_id as u_era_commons_id ";
 
     @JsonProperty
+    private Integer userId;
+
+    // This will be removed in a future release.
+    // It is maintained here for backwards compatibility with the UI.
+    @JsonProperty
+    @Deprecated
     private Integer dacUserId;
 
     @JsonProperty
@@ -72,24 +78,35 @@ public class User {
     public User() {
     }
 
-    public User(Integer dacUserId, String email, String displayName, Date createDate) {
-        this.dacUserId = dacUserId;
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public User(Integer userId, String email, String displayName, Date createDate) {
+        this.userId = userId;
+        this.dacUserId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
     }
 
-    public User(Integer dacUserId, String email, String displayName, Date createDate, String additionalEmail) {
-        this.dacUserId = dacUserId;
+    public User(Integer UserId, String email, String displayName, Date createDate, String additionalEmail) {
+        this.userId = UserId;
+        this.dacUserId = UserId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
         this.additionalEmail = additionalEmail;
     }
 
-    public User(Integer dacUserId, String email, String displayName, Date createDate,
+    public User(Integer userId, String email, String displayName, Date createDate,
                 List<UserRole> roles, String additionalEmail) {
-        this.dacUserId = dacUserId;
+        this.userId = userId;
+        this.dacUserId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
@@ -146,8 +163,9 @@ public class User {
     }
 
     private void setUserId(User u) {
-        if (Objects.nonNull(u.getDacUserId())) {
-            this.setDacUserId(u.getDacUserId());
+        if (Objects.nonNull(u.getUserId())) {
+            this.setUserId(u.getUserId());
+            this.setDacUserId(u.getUserId());
         }
     }
 
@@ -187,12 +205,14 @@ public class User {
         }
     }
 
+    @Deprecated
     public Integer getDacUserId() {
         return dacUserId;
     }
 
-    public void setDacUserId(Integer dacUserId) {
-        this.dacUserId = dacUserId;
+    @Deprecated
+    public void setDacUserId(Integer userId) {
+        this.dacUserId = userId;
     }
 
     public String getEmail() {
@@ -324,7 +344,7 @@ public class User {
 
     @Override
     public int hashCode(){
-        return  dacUserId;
+        return  this.getUserId();
     }
 
     @Override
@@ -337,7 +357,7 @@ public class User {
             return false;
 
         User other = (User) obj;
-        return new EqualsBuilder().append(dacUserId, other.dacUserId).isEquals();
+        return new EqualsBuilder().append(getUserId(), other.getUserId()).isEquals();
     }
 
     @Override

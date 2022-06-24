@@ -29,6 +29,8 @@ import java.util.Set;
 @RegisterRowMapper(DacMapper.class)
 public interface DacDAO extends Transactional<DacDAO> {
 
+    String QUERY_FIELD_SEPARATOR = ", ";
+
     /**
      * @return A Dac with Datasets
      */
@@ -48,23 +50,25 @@ public interface DacDAO extends Transactional<DacDAO> {
 
     @SqlQuery("select distinct d.* from dac d " +
             " inner join user_role ur on ur.dac_id = d.dac_id " +
-            " inner join dacuser du on ur.user_id = du.dacUserId " +
-            " where du.email = :email ")
+            " inner join users u on ur.user_id = u.user_id " +
+            " where u.email = :email ")
     List<Dac> findDacsForEmail(@Bind("email") String email);
 
-    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
-    @SqlQuery(" SELECT du.*, r.name, " +
+    @SqlQuery(" SELECT " +
+      User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
+      " r.name, " +
       " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +
-      " FROM dacuser du " +
-      " INNER JOIN user_role ur ON ur.user_id = du.dacUserId AND ur.dac_id IS NOT NULL " +
+      " FROM users u " +
+      " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id IS NOT NULL " +
       " INNER JOIN roles r ON r.roleId = ur.role_id")
     List<User> findAllDACUserMemberships();
 
     @UseRowMapper(UserWithRolesMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du " +
-              " inner join user_role ur on ur.user_id = du.dacUserId " +
+    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du " +
+              " inner join user_role ur on ur.user_id = du.user_id " +
               " inner join roles r on r.roleId = ur.role_id " +
               " where lower(du.displayName) like concat('%', lower(:term), '%') " +
               " or lower(du.email) like concat('%', lower(:term), '%') " +
@@ -91,28 +95,26 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlUpdate("delete from dac where dac_id = :dacId")
     void deleteDac(@Bind("dacId") Integer dacId);
 
-    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
-        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.era_commons_id, "
+        + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
-        + " FROM dacuser u "
-        + " INNER JOIN user_role ur ON ur.user_id = u.dacuserid "
+        + " FROM users u "
+        + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
         + " INNER JOIN roles r ON r.roleid = ur.role_id "
         + " WHERE ur.dac_id = :dacId ")
     List<User> findMembersByDacId(@Bind("dacId") Integer dacId);
 
-    @RegisterBeanMapper(value = User.class)
+    @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
-        + "     u.dacuserid, u.email, u.displayname, u.createdate, u.additional_email, "
-        + "     u.email_preference, u.era_commons_id, "
+        + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
         + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
-        + " FROM dacuser u "
-        + " INNER JOIN user_role ur ON ur.user_id = u.dacuserid "
+        + " FROM users u "
+        + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
         + " INNER JOIN roles r ON r.roleid = ur.role_id "
         + " WHERE ur.dac_id = :dacId "
         + " AND ur.role_id = :roleId ")

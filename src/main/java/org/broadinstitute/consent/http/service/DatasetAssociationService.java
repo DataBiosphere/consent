@@ -126,7 +126,7 @@ public class DatasetAssociationService {
         if (userList.size() == userIds.size()) {
             for (User user : userList) {
                 if (user.getRoles().stream().noneMatch(role -> role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getRoleName()))) {
-                    userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user.getDacUserId());
+                    userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user.getUserId());
                 }
             }
         } else {

@@ -35,7 +35,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    Vote vote = createFinalVote(user.getDacUserId(), election.getElectionId());
+    Vote vote = createFinalVote(user.getUserId(), election.getElectionId());
     String rationale = "rationale";
     initService();
 
@@ -55,7 +55,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    Vote vote = createFinalVote(user.getDacUserId(), election.getElectionId());
+    Vote vote = createFinalVote(user.getUserId(), election.getElectionId());
     initService();
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, null);
@@ -72,7 +72,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+    Vote vote = createDacVote(user.getUserId(), election.getElectionId());
     String rationale = "rationale";
     initService();
 
@@ -92,9 +92,9 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    Vote vote1 = createDacVote(user.getDacUserId(), election.getElectionId());
-    Vote vote2 = createDacVote(user.getDacUserId(), election.getElectionId());
-    Vote vote3 = createDacVote(user.getDacUserId(), election.getElectionId());
+    Vote vote1 = createDacVote(user.getUserId(), election.getElectionId());
+    Vote vote2 = createDacVote(user.getUserId(), election.getElectionId());
+    Vote vote3 = createDacVote(user.getUserId(), election.getElectionId());
     String rationale = "rationale";
     initService();
 
@@ -126,9 +126,9 @@ public class VoteServiceDAOTest extends DAOTestHelper {
         ElectionStatus.CLOSED.getValue(),
         new Date());
 
-    Vote vote1 = createDacVote(user.getDacUserId(), rpElection1.getElectionId());
-    Vote vote2 = createDacVote(user.getDacUserId(), rpElection2.getElectionId());
-    Vote vote3 = createDacVote(user.getDacUserId(), accessElection.getElectionId());
+    Vote vote1 = createDacVote(user.getUserId(), rpElection1.getElectionId());
+    Vote vote2 = createDacVote(user.getUserId(), rpElection2.getElectionId());
+    Vote vote3 = createDacVote(user.getUserId(), accessElection.getElectionId());
     String rationale = "rationale";
     initService();
 

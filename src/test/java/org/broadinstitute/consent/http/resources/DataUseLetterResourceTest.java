@@ -53,7 +53,7 @@ public class DataUseLetterResourceTest {
     private void initResource() {
         User user = new User();
         user.setEmail(this.user.getEmail());
-        user.setDacUserId(1);
+        user.setUserId(1);
         when(userService.findUserByEmail(any())).thenReturn(user);
         resource = new DataUseLetterResource(auditService, store, userService, consentService);
     }

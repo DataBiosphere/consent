@@ -82,8 +82,8 @@ public class DarCollectionServiceTest {
   @Test
   public void testGetCollectionsForUserByRoleName_CHAIR_MEMBER() {
     User user = new User();
-    UserRole chair = new UserRole(1, user.getDacUserId(), UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName(), 2);
-    UserRole member = new UserRole(2, user.getDacUserId(), UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName(), 3);
+    UserRole chair = new UserRole(1, user.getUserId(), UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName(), 2);
+    UserRole member = new UserRole(2, user.getUserId(), UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName(), 3);
     user.addRole(chair);
     user.addRole(member);
     user.getRoles().get(0).setDacId(1);
@@ -114,10 +114,10 @@ public class DarCollectionServiceTest {
   @Test
   public void testGetCollectionsForUserByRoleName_DEFAULT() {
     User user = new User();
-    user.setDacUserId(1);
+    user.setUserId(1);
     user.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
     DarCollection collection = new DarCollection();
-    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId())).thenReturn(List.of(collection));
+    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getUserId())).thenReturn(List.of(collection));
     initService();
 
     List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.RESEARCHER.getRoleName());
@@ -127,8 +127,8 @@ public class DarCollectionServiceTest {
   @Test
   public void testGetCollectionsForUserByRoleName_NULL() {
     User user = new User();
-    user.setDacUserId(1);
-    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId())).thenReturn(List.of(new DarCollection()));
+    user.setUserId(1);
+    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getUserId())).thenReturn(List.of(new DarCollection()));
     initService();
 
     List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, null);
@@ -155,7 +155,7 @@ public class DarCollectionServiceTest {
   @Test
   public void testGetCollectionsByUserDacs() {
     User user = new User();
-    user.setDacUserId(1);
+    user.setUserId(1);
     UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
     chair.setDacId(1);
     user.setRoles(List.of(chair));
@@ -567,7 +567,7 @@ public class DarCollectionServiceTest {
   @Test
   public void testQueryCollectionsByFiltersAndUserRolesForResearcher() {
     User user = new User();
-    user.setDacUserId(1);
+    user.setUserId(1);
     String dacRoleName = UserRoles.RESEARCHER.getRoleName();
     Integer dacRoleId = UserRoles.RESEARCHER.getRoleId();
     UserRole memberRole = new UserRole(dacRoleId, dacRoleName);

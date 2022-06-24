@@ -42,10 +42,10 @@ public class ResearcherService {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
-        List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getDacUserId());
+        List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getUserId());
         saveProperties(properties);
-        notifyAdmins(user.getDacUserId());
-        return describeResearcherProperties(user.getDacUserId());
+        notifyAdmins(user.getUserId());
+        return describeResearcherProperties(user.getUserId());
     }
 
     public List<UserProperty> updateProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser, Boolean validate) throws NotFoundException, IllegalArgumentException {
@@ -54,16 +54,16 @@ public class ResearcherService {
         if (validate) validateRequiredFields(researcherPropertiesMap);
         Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
         boolean isUpdatedProfileCompleted = Boolean.parseBoolean(validatedProperties.get(UserFields.COMPLETED.getValue()));
-        String completed = userPropertyDAO.isProfileCompleted(user.getDacUserId());
+        String completed = userPropertyDAO.isProfileCompleted(user.getUserId());
         boolean isProfileCompleted = Boolean.parseBoolean(completed);
-        List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getDacUserId());
+        List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getUserId());
         if (!isProfileCompleted && isUpdatedProfileCompleted) {
             saveProperties(properties);
-            notifyAdmins(user.getDacUserId());
+            notifyAdmins(user.getUserId());
         } else {
             saveProperties(properties);
         }
-        return describeResearcherProperties(user.getDacUserId());
+        return describeResearcherProperties(user.getUserId());
     }
 
     private void saveProperties(List<UserProperty> properties) {

@@ -33,8 +33,8 @@ public interface DarCollectionDAO {
           UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR +
           DarCollection.DAR_FILTER_QUERY_COLUMNS +
       " FROM dar_collection c " +
-      " INNER JOIN dacuser u ON u.dacuserid = c.create_user_id " +
-      " LEFT JOIN user_property up ON u.dacuserid = up.userid AND up.propertykey in ('isThePI', 'piName', 'havePI', 'piERACommonsID') " +
+      " INNER JOIN users u ON u.user_id = c.create_user_id " +
+      " LEFT JOIN user_property up ON u.user_id = up.userid AND up.propertykey in ('isThePI', 'piName', 'havePI', 'piERACommonsID') " +
       " LEFT JOIN institution i ON i.institution_id = u.institution_id " +
       " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
       " LEFT JOIN (" +
@@ -104,7 +104,7 @@ public interface DarCollectionDAO {
       " SELECT distinct c.collection_id "
           + " FROM dar_collection c"
           + " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id"
-          + " INNER JOIN dacuser u ON dar.user_id = u.dacuserid"
+          + " INNER JOIN users u ON dar.user_id = u.user_id"
           + " WHERE u.institution_id = :institutionId "
           + " AND (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL)" )
   List<Integer> findDARCollectionIdsByInstitutionId(@Bind("institutionId") Integer institutionId);
@@ -163,8 +163,8 @@ public interface DarCollectionDAO {
         "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
         "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
         "FROM dar_collection c " +
-        "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid " +
-        "LEFT JOIN user_property up ON u.dacuserid = up.userid " +
+        "INNER JOIN users u ON c.create_user_id = u.user_id " +
+        "LEFT JOIN user_property up ON u.user_id = up.userid " +
         "INNER JOIN data_access_request dar on c.collection_id = dar.collection_id " +
         "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
         "LEFT JOIN (" +
@@ -195,8 +195,8 @@ public interface DarCollectionDAO {
       + "e.lastupdate AS e_last_update, e.datasetid AS e_dataset_id, e.electiontype AS e_election_type, e.latest "
       + "FROM dar_collection c "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
-      + "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid "
-      + "LEFT JOIN user_property up ON u.dacuserid = up.userid "
+      + "INNER JOIN users u ON c.create_user_id = u.user_id "
+      + "LEFT JOIN user_property up ON u.user_id = up.userid "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
       + "LEFT JOIN ("
       + "  SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
@@ -230,8 +230,8 @@ public interface DarCollectionDAO {
       "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
       "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
     "FROM dar_collection c " +
-    "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid " +
-    "LEFT JOIN user_property up ON u.dacuserid = up.userid " +
+    "INNER JOIN users u ON c.create_user_id = u.user_id " +
+    "LEFT JOIN user_property up ON u.user_id = up.userid " +
     "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
     "WHERE c.collection_id = (SELECT collection_id FROM data_access_request WHERE reference_id = :referenceId) " +
@@ -267,10 +267,10 @@ public interface DarCollectionDAO {
       + "v.voteid as v_vote_id, v.vote as v_vote, v.dacuserid as v_dac_user_id, v.rationale as v_rationale, v.electionid as v_election_id, "
       + "v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.displayname as v_display_name "
       + "FROM dar_collection c "
-      + "INNER JOIN dacuser u ON c.create_user_id = u.dacuserid "
-      + "LEFT JOIN user_property up ON u.dacuserid = up.userid "
+      + "INNER JOIN users u ON c.create_user_id = u.user_id "
+      + "LEFT JOIN user_property up ON u.user_id = up.userid "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-      + "LEFT JOIN library_card lc ON u.dacuserid = lc.user_id "
+      + "LEFT JOIN library_card lc ON u.user_id = lc.user_id "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "LEFT JOIN ("
           + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
@@ -280,8 +280,8 @@ public interface DarCollectionDAO {
       + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
       + "LEFT JOIN vote v "
       + "ON v.electionid = e.electionid "
-      + "LEFT JOIN dacuser du "
-      + "ON du.dacuserid = v.dacuserid "
+      + "LEFT JOIN users du "
+      + "ON du.user_id = v.dacuserid "
       + "WHERE c.collection_id = :collectionId "
       + "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL );"
   )
@@ -316,7 +316,7 @@ public interface DarCollectionDAO {
 
   String coreCountQuery = "SELECT COUNT(DISTINCT c.collection_id) "
       + "FROM dar_collection c "
-      + "INNER JOIN dacuser u ON u.dacuserid = c.create_user_id "
+      + "INNER JOIN users u ON u.user_id = c.create_user_id "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + " WHERE (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL) ";

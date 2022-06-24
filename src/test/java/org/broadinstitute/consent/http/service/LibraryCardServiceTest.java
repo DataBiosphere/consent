@@ -63,7 +63,7 @@ public class LibraryCardServiceTest {
         when(libraryCardDAO.insertLibraryCard(anyInt(), anyInt(), any(), any(), any(), anyInt(), any())).thenReturn(1);
         when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
-        LibraryCard payload = testLibraryCard(institution.getId(), user.getDacUserId());
+        LibraryCard payload = testLibraryCard(institution.getId(), user.getUserId());
         payload.setUserEmail(user.getEmail());
         service.createLibraryCard(payload, adminUser);
     }
@@ -75,7 +75,7 @@ public class LibraryCardServiceTest {
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
         User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-        user.setDacUserId(null);
+        user.setUserId(null);
         user.setEmail("testemail");
 
         when(userDAO.findUserById(anyInt())).thenReturn(user);
@@ -87,7 +87,7 @@ public class LibraryCardServiceTest {
                         .thenReturn(1);
         when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
-        LibraryCard payload = testLibraryCard(institution.getId(), user.getDacUserId());
+        LibraryCard payload = testLibraryCard(institution.getId(), user.getUserId());
         payload.setUserEmail(user.getEmail());
         service.createLibraryCard(payload, adminUser);
     }
@@ -110,7 +110,7 @@ public class LibraryCardServiceTest {
                         .thenReturn(1);
         when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
-        LibraryCard payload = testLibraryCard(institution.getId(), user.getDacUserId());
+        LibraryCard payload = testLibraryCard(institution.getId(), user.getUserId());
         service.createLibraryCard(payload, adminUser);
     }
 
@@ -130,7 +130,7 @@ public class LibraryCardServiceTest {
                 .thenReturn(1);
         when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
-        LibraryCard payload = testLibraryCard(institution.getId(), soUser.getDacUserId());
+        LibraryCard payload = testLibraryCard(institution.getId(), soUser.getUserId());
         payload.setUserEmail("testemail");
         service.createLibraryCard(payload, soUser);
     }
@@ -142,7 +142,7 @@ public class LibraryCardServiceTest {
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
         User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-        user.setDacUserId(1);
+        user.setUserId(1);
         user.setEmail("testemail");
 
         when(userDAO.findUserById(anyInt())).thenReturn(user);
@@ -153,7 +153,7 @@ public class LibraryCardServiceTest {
                         .thenReturn(1);
         when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
-        LibraryCard payload = testLibraryCard(institution.getId(), user.getDacUserId());
+        LibraryCard payload = testLibraryCard(institution.getId(), user.getUserId());
         payload.setUserEmail("differentemail");
         service.createLibraryCard(payload, adminUser);
     }
@@ -165,7 +165,7 @@ public class LibraryCardServiceTest {
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
         User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-        LibraryCard savedCard = testLibraryCard(institution.getId(), user.getDacUserId());
+        LibraryCard savedCard = testLibraryCard(institution.getId(), user.getUserId());
         LibraryCard payload = savedCard;
 
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
@@ -208,13 +208,13 @@ public class LibraryCardServiceTest {
     public void testCreateLibraryCard_InvalidInstitution() {
         User user = testUser(1);
         User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-        LibraryCard libraryCard = testLibraryCard(1, user.getDacUserId());
+        LibraryCard libraryCard = testLibraryCard(1, user.getUserId());
 
         when(libraryCardDAO.findLibraryCardById(libraryCard.getId()))
                 .thenReturn(libraryCard);
         when(institutionDAO.findInstitutionById(libraryCard.getInstitutionId()))
                 .thenReturn(null);
-        when(userDAO.findUserById(user.getDacUserId()))
+        when(userDAO.findUserById(user.getUserId()))
                 .thenReturn(user);
 
         initService();
@@ -243,12 +243,12 @@ public class LibraryCardServiceTest {
     public void testUpdateLibraryCard() {
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
-        LibraryCard libraryCard = testLibraryCard(institution.getId(), user.getDacUserId());
+        LibraryCard libraryCard = testLibraryCard(institution.getId(), user.getUserId());
         when(institutionDAO.findInstitutionById(libraryCard.getInstitutionId()))
                 .thenReturn(institution);
         when(libraryCardDAO.findLibraryCardById(libraryCard.getId()))
                 .thenReturn(libraryCard);
-        when(userDAO.findUserById(user.getDacUserId()))
+        when(userDAO.findUserById(user.getUserId()))
                 .thenReturn(user);
         doNothing().when(libraryCardDAO).updateLibraryCardById(any(), any(), any(), any(), any(), any(), any(), any());
 
@@ -262,10 +262,10 @@ public class LibraryCardServiceTest {
     public void testUpdateLibraryCard_NotFound() {
         Institution institution = testInstitution();
         User user = testUser(institution.getId());
-        LibraryCard libraryCard = testLibraryCard(institution.getId(), user.getDacUserId());
+        LibraryCard libraryCard = testLibraryCard(institution.getId(), user.getUserId());
         when(institutionDAO.findInstitutionById(libraryCard.getInstitutionId()))
                 .thenReturn(institution);
-        when(userDAO.findUserById(user.getDacUserId()))
+        when(userDAO.findUserById(user.getUserId()))
                 .thenReturn(user);
         when(libraryCardDAO.findLibraryCardById(libraryCard.getId()))
                 .thenReturn(null);
@@ -277,10 +277,10 @@ public class LibraryCardServiceTest {
     @Test(expected = IllegalArgumentException.class)
     public void testUpdateLibraryCard_InvalidInstitution() {
         User user = testUser(1);
-        LibraryCard libraryCard = testLibraryCard(1, user.getDacUserId());
+        LibraryCard libraryCard = testLibraryCard(1, user.getUserId());
         when(institutionDAO.findInstitutionById(libraryCard.getInstitutionId()))
                 .thenReturn(null);
-        when(userDAO.findUserById(user.getDacUserId()))
+        when(userDAO.findUserById(user.getUserId()))
                 .thenReturn(user);
         when(libraryCardDAO.findLibraryCardById(libraryCard.getId()))
                 .thenReturn(libraryCard);
@@ -295,7 +295,7 @@ public class LibraryCardServiceTest {
         User user = testUser(institution.getId());
         UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         user.addRole(admin);
-        LibraryCard libraryCard = testLibraryCard(institution.getId(), user.getDacUserId());
+        LibraryCard libraryCard = testLibraryCard(institution.getId(), user.getUserId());
         when(libraryCardDAO.findLibraryCardById(libraryCard.getId()))
                 .thenReturn(null);
         doNothing().when(libraryCardDAO).deleteLibraryCardById(any());
@@ -325,7 +325,7 @@ public class LibraryCardServiceTest {
 
     private User testUser(Integer institutionId) {
         User user = new User();
-        user.setDacUserId(RandomUtils.nextInt(1, 10));
+        user.setUserId(RandomUtils.nextInt(1, 10));
         user.setInstitutionId(institutionId);
         return user;
     }

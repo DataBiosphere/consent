@@ -245,7 +245,7 @@ public class DataAccessRequestServiceTest {
     @Test
     public void testInsertDraftDataAccessRequest() {
         User user = new User();
-        user.setDacUserId(1);
+        user.setUserId(1);
         DataAccessRequest draft = generateDataAccessRequest();
         doNothing()
             .when(dataAccessRequestDAO)
@@ -408,7 +408,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         User user = new User();
-        user.setDacUserId(1);
+        user.setUserId(1);
         user.setDisplayName("displayName");
         user.setInstitutionId(1);
         Institution institution = new Institution();
@@ -467,7 +467,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         User user = new User();
-        user.setDacUserId(1);
+        user.setUserId(1);
         user.setDisplayName("displayName");
         user.setInstitutionId(1);
         Institution institution = new Institution();
@@ -500,7 +500,7 @@ public class DataAccessRequestServiceTest {
         User user = new User();
         UserRole userRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         user.addRole(userRole);
-        user.setDacUserId(1);
+        user.setUserId(1);
         user.setDisplayName("displayName");
         user.setInstitutionId(1);
         Institution institution = new Institution();

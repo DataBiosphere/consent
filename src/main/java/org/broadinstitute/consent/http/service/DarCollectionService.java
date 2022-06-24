@@ -137,7 +137,7 @@ public class DarCollectionService {
   }
 
   public List<DarCollection> getCollectionsForUser(User user) {
-    List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
+    List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getUserId());
     return addDatasetsToCollections(collections);
   }
 
@@ -195,7 +195,7 @@ public class DarCollectionService {
         collections = darCollectionDAO.getFilteredCollectionsForDACByCollectionIds(sortField, sortOrder, collectionIds, filterTerm);
         break;
       default:
-        collections = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
+        collections = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getUserId(), filterTerm);
     }
 
     return addDatasetsToCollections(collections);
@@ -231,7 +231,7 @@ public class DarCollectionService {
         size = (Integer) darCollectionDAO.findDARCollectionIdsByDacIds(dacIds).size();
         break;
       default:
-        size = darCollectionDAO.returnUnfilteredResearcherCollectionCount(user.getDacUserId());
+        size = darCollectionDAO.returnUnfilteredResearcherCollectionCount(user.getUserId());
     }
     return size;
   }

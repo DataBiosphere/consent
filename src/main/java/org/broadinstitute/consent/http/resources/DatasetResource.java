@@ -123,7 +123,7 @@ public class DatasetResource extends Resource {
             throw new ClientErrorException("Dataset name: " + name + " is already in use", Status.CONFLICT);
         }
         User dacUser = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
-        Integer userId = dacUser.getDacUserId();
+        Integer userId = dacUser.getUserId();
         try {
             DatasetDTO createdDatasetWithConsent = datasetService.createDatasetWithConsent(inputDataset, name, userId);
             URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDatasetWithConsent.getDataSetId());
@@ -166,7 +166,7 @@ public class DatasetResource extends Resource {
             User user = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
             // Validate that the admin/chairperson has edit access to this dataset
             validateDatasetDacAccess(user, datasetExists);
-            Integer userId = user.getDacUserId();
+            Integer userId = user.getUserId();
             Optional<Dataset> updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
             if (updatedDataset.isPresent()) {
                 URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.get().getDataSetId());
@@ -186,7 +186,7 @@ public class DatasetResource extends Resource {
     public Response describeDataSets(@Auth AuthUser authUser) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            Collection<DatasetDTO> dataSetList = datasetService.describeDatasets(user.getDacUserId());
+            Collection<DatasetDTO> dataSetList = datasetService.describeDatasets(user.getUserId());
             return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -313,7 +313,7 @@ public class DatasetResource extends Resource {
             Dataset dataset = datasetService.findDatasetById(datasetId);
             // Validate that the admin/chairperson has edit/delete access to this dataset
             validateDatasetDacAccess(user, dataset);
-            datasetService.deleteDataset(datasetId, user.getDacUserId());
+            datasetService.deleteDataset(datasetId, user.getUserId());
             return Response.ok().build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -357,7 +357,7 @@ public class DatasetResource extends Resource {
     public Response datasetAutocomplete(@Auth AuthUser authUser, @PathParam("partial") String partial){
         try {
             User dacUser = userService.findUserByEmail(authUser.getEmail());
-            Integer dacUserId = dacUser.getDacUserId();
+            Integer dacUserId = dacUser.getUserId();
             List<Map<String, String>> datasets = datasetService.autoCompleteDatasets(partial, dacUserId);
             return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
         } catch (Exception e) {

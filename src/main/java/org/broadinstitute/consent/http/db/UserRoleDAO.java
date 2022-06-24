@@ -25,7 +25,7 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     @SqlQuery("SELECT DISTINCT name " +
             "  FROM roles r " +
             "  INNER JOIN user_role ur ON ur.role_id = r.roleid " +
-            "  INNER JOIN dacuser u ON u.dacuserid = ur.user_id " +
+            "  INNER JOIN users u ON u.user_id = ur.user_id " +
             "  WHERE LOWER(u.email) = LOWER(:email)")
     List<String> findRoleNamesByUserEmail(@Bind("email") String email);
 
@@ -37,22 +37,22 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     Integer findRoleIdByName(@Bind("roleName") String roleName);
 
     @SqlBatch("insert into user_role (role_id, user_id) values (:roleId, :userId)")
-    void insertUserRoles(@BindBean List<UserRole> roles, @Bind("userId") Integer dacUserId);
+    void insertUserRoles(@BindBean List<UserRole> roles, @Bind("userId") Integer userId);
 
-    @SqlUpdate("update user_role set role_id = :newRoleId where user_id = :dacUserId and role_id = :existentRoleId")
+    @SqlUpdate("update user_role set role_id = :newRoleId where user_id = :userId and role_id = :existentRoleId")
     void updateUserRoles(@Bind("newRoleId") Integer newRoleId,
-                         @Bind("dacUserId") Integer dacUserId,
+                         @Bind("userId") Integer userId,
                          @Bind("existentRoleId") Integer existentRoleId);
 
-    @SqlUpdate("delete from user_role where user_id = :dacUserId and role_id IN (<existentRoles>)")
-    void removeUserRoles(@Bind("dacUserId") Integer dacUserId,
+    @SqlUpdate("delete from user_role where user_id = :userId and role_id IN (<existentRoles>)")
+    void removeUserRoles(@Bind("userId") Integer userId,
                          @BindList("existentRoles") List<Integer> existentRoles);
 
     @SqlUpdate("insert into user_role (role_id, user_id) values (:roleId, :userId)")
     void insertSingleUserRole(@Bind("roleId") Integer roleId, @Bind("userId") Integer userId);
 
-    @SqlUpdate("delete from user_role where user_id = :dacUserId and role_id = :roleId")
-    void removeSingleUserRole(@Bind("dacUserId") Integer dacUserId, @Bind("roleId") Integer roleId);
+    @SqlUpdate("delete from user_role where user_id = :userId and role_id = :roleId")
+    void removeSingleUserRole(@Bind("userId") Integer userId, @Bind("roleId") Integer roleId);
 
     @SqlQuery("select r.roleId from roles r inner join user_role ur on ur.role_id = r.roleId  where ur.user_id = :userId and r.name = :name")
     Integer findRoleByNameAndUser(@Bind("name") String name, @Bind("userId") Integer id);
