@@ -137,9 +137,6 @@ public interface UserDAO extends Transactional<UserDAO> {
         + " ORDER BY u.create_date DESC ")
     Set<User> findUsers();
 
-    @SqlQuery("select count(*) from user_role dr inner join roles r on r.roleId = dr.role_id where r.name = 'Admin'")
-    Integer verifyAdminUsers();
-
     @UseRowMapper(UserWithRolesMapper.class)
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.roleId = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
     List<User> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);

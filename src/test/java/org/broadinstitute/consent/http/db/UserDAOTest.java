@@ -216,14 +216,6 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testVerifyAdminUsers() {
-        createUserWithRole(UserRoles.ADMIN.getRoleId());
-        Integer count = userDAO.verifyAdminUsers();
-        assertNotNull(count);
-        assertTrue(count > 0);
-    }
-
-    @Test
     public void testDescribeUsersByRoleAndEmailPreference() {
         User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
         userDAO.updateEmailPreference(true, researcher.getUserId());
