@@ -37,7 +37,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
           + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
           + "  WHERE not (dar.data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
-          + "  AND draft != true "
+          + "  AND dar.draft != true "
           + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL ) ")
   List<DataAccessRequest> findAllDataAccessRequests();
 
