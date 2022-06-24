@@ -208,8 +208,9 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
     assertTrue(dar.isPresent());
-    assertFalse(dataAccessRequestDAO.findDARDatasetRelations(dar.get().getReferenceId()).isEmpty());
-    Integer datasetId = dataAccessRequestDAO.findDARDatasetRelations(dar.get().getReferenceId()).get(0);
+    List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(dar.get().getReferenceId());
+    assertFalse(datasetIds.isEmpty());
+    Integer datasetId = datasetIds.get(0);
     assertNotNull(datasetId);
 
     // Find the dac chairperson for the current DAR/Dataset combination
@@ -310,8 +311,9 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
     assertTrue(dar.isPresent());
-    assertFalse(dataAccessRequestDAO.findDARDatasetRelations(dar.get().getReferenceId()).isEmpty());
-    Integer datasetId = dataAccessRequestDAO.findDARDatasetRelations(dar.get().getReferenceId()).get(0);
+    List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(dar.get().getReferenceId());
+    assertFalse(datasetIds.isEmpty());
+    Integer datasetId = datasetIds.get(0);
     assertNotNull(datasetId);
 
     // Find the dac chairperson for the current DAR/Dataset combination
@@ -383,8 +385,6 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     Consent consent = createConsent(dac.getDacId());
     Dataset dataset = createDataset();
     createAssociation(consent.getConsentId(), dataset.getDataSetId());
-
-    // dataAccessRequestDAO.insertDARDatasetRelation(dac.);
 
     // Create new DAR with Dataset and add it to the collection
     User user = createUser();

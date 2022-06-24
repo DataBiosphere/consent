@@ -33,7 +33,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+      "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
+          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
           + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
           + "  WHERE not (dar.data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
           + "  AND draft != true "
@@ -47,11 +48,12 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, "
-          + "(data #>> '{}')::jsonb AS data FROM data_access_request "
-          + " WHERE draft = false"
-          + " AND ((data #>> '{}')::jsonb->>'datasetIds')::jsonb @> :datasetId::jsonb"
-          + " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ")
+      "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
+          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+          + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
+          + "  WHERE dar.draft = false"
+          + "  AND ((dar.data #>> '{}')::jsonb->>'datasetIds')::jsonb @> :datasetId::jsonb"
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) ")
   List<DataAccessRequest> findAllDataAccessRequestsByDatasetId(@Bind("datasetId") String datasetId);
 
   /**
@@ -60,11 +62,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
-          + "  WHERE (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
-          + "  OR draft = true "
-          + "  AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) "
-          + "  ORDER BY update_date DESC")
+      "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
+          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+          + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
+          + "  WHERE (dar.data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
+          + "  OR dar.draft = true "
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) "
+          + "  ORDER BY dar.update_date DESC")
   List<DataAccessRequest> findAllDraftDataAccessRequests();
 
   /**
@@ -73,12 +77,14 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
-          + "  WHERE ( (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
-          + "          OR draft = true "
-          + "  AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)) "
-          + "  AND user_id = :userId "
-          + "  ORDER BY sort_date DESC")
+      "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
+          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+          + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
+          + "  WHERE ( (dar.data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
+          + "          OR dar.draft = true "
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)) "
+          + "  AND dar.user_id = :userId "
+          + "  ORDER BY dar.sort_date DESC")
   List<DataAccessRequest> findAllDraftsByUserId(@Bind("userId") Integer userId);
 
 
@@ -88,11 +94,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
-          + "  WHERE draft = false "
-          + "  AND user_id = :userId "
-          + "  AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) "
-          + "  ORDER BY sort_date DESC")
+      "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
+          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+          + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
+          + "  WHERE dar.draft = false "
+          + "  AND dar.user_id = :userId "
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) "
+          + "  ORDER BY dar.sort_date DESC")
   List<DataAccessRequest> findAllDarsByUserId(@Bind("userId") Integer userId);
 
   /**
@@ -102,10 +110,12 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return DataAccessRequest
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, parent_id,  draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
-          + "WHERE reference_id = :referenceId "
-          + "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) "
-          + "limit 1 ")
+      "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
+          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+          + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
+          + "  WHERE dar.reference_id = :referenceId "
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) "
+          + "  limit 1 ")
   DataAccessRequest findByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
@@ -115,9 +125,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT id, reference_id, collection_id, parent_id, draft, user_id, create_date, sort_date, submission_date, update_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
-        + "WHERE reference_id IN (<referenceIds>) "
-        + "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ")
+      "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
+        + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+        + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
+        + "  WHERE dar.reference_id IN (<referenceIds>) "
+        + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) ")
   List<DataAccessRequest> findByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
   /**

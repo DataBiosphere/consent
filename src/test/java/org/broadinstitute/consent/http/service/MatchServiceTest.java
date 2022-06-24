@@ -320,11 +320,9 @@ public class MatchServiceTest {
         when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar2);
         when(consentDAO.findConsentById(any())).thenReturn(consent);
         when(consentDAO.checkConsentById(any())).thenReturn(consent.getConsentId());
-        List<Dataset> dataSets = dataAccessRequestDAO.findDARDatasetRelations(referenceId)
-                .stream()
-                .map(id -> {
-                    Dataset d = new Dataset(); d.setDataSetId(id); return d;} )
-                .collect(Collectors.toList());
+        Dataset dataSet = new Dataset();
+        dataSet.setDataSetId(1);
+        List<Dataset> dataSets = List.of(dataSet);
         when(dataSetDAO.getDatasetsForConsent(consent.getConsentId())).thenReturn(dataSets);
         when(rmo.isResult()).thenReturn(true);
         when(response.readEntity(any(GenericType.class))).thenReturn(rmo);
