@@ -142,6 +142,7 @@ public class DAOTestHelper {
     @After
     public void tearDown() {
         // Order is important for FK constraints
+        testingDAO.deleteAllDARDataset();
         testingDAO.deleteAllApprovalTimes();
         testingDAO.deleteAllVotes();
         testingDAO.deleteAllConsentAudits();

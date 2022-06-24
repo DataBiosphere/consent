@@ -63,6 +63,9 @@ public interface TestingDAO extends Transactional<TestingDAO> {
   @SqlUpdate("DELETE FROM dar_collection")
   void deleteAllDARCollections();
 
+  @SqlUpdate("DELETE FROM dar_dataset")
+  void deleteAllDARDataset();
+
   @SqlUpdate("DELETE FROM counter")
   void deleteAllCounters();
 }

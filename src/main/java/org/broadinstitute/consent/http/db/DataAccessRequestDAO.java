@@ -4,14 +4,17 @@ import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.json.internal.JsonArgumentFactory;
 import org.jdbi.v3.sqlobject.config.RegisterArgumentFactory;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Date;
@@ -256,4 +259,43 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + " SET data = jsonb_set ((data #>> '{}')::jsonb, '{status}', '\"Archived\"', true) "
           + " WHERE reference_id IN (<referenceIds>)")
   void archiveByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
+
+  /**
+   * Inserts into dar_dataset collection
+   *
+   * @param referenceId String
+   * @param datasetId Integer
+   */
+  @SqlUpdate("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId)")
+  void insertDARDatasetRelation(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId);
+
+  @SqlBatch("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId)")
+  void insertAllDarDatasets(@BindBean List<DarDataset> darDatasets);
+
+  /**
+   * Delete rows which have the given reference id
+   *
+   * @param referenceId String
+   */
+  @SqlUpdate("DELETE FROM dar_dataset WHERE reference_id = :referenceId")
+  void deleteDARDatasetRelationByReferenceId(@Bind("referenceId") String referenceId);
+
+  /**
+   * Delete rows which have a referenceId that is in the list referenceIds
+   *
+   * @param referenceIds List<String>
+   */
+  @SqlUpdate("DELETE FROM dar_dataset WHERE reference_id in (<referenceIds>)")
+  void deleteDARDatasetRelationByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
+  /**
+   * Returns all dataset_ids that match the given referenceId
+   *
+   * @param referenceIds List<String>
+   */
+  @SqlQuery(
+  "SELECT distinct dataset_id FROM dar_dataset WHERE reference_id = :referenceId ")
+  List<Integer> findDARDatasetRelations(@Bind("referenceId") String referenceId);
+
 }
