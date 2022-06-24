@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,7 +34,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
-    Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote = createFinalVote(user.getDacUserId(), election.getElectionId());
     String rationale = "rationale";
     initService();
@@ -53,7 +54,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
-    Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote = createFinalVote(user.getDacUserId(), election.getElectionId());
     initService();
 
@@ -70,7 +71,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
-    Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
     String rationale = "rationale";
     initService();
@@ -90,7 +91,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
-    Election election = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote1 = createDacVote(user.getDacUserId(), election.getElectionId());
     Vote vote2 = createDacVote(user.getDacUserId(), election.getElectionId());
     Vote vote3 = createDacVote(user.getDacUserId(), election.getElectionId());
@@ -119,8 +120,12 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     Election rpElection1 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
     Election rpElection2 = createRPElection(dar.getReferenceId(), dataset.getDataSetId());
-    Election accessElection = createAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    changeElectionStatus(rpElection1, ElectionStatus.CLOSED);
+    Election accessElection = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    electionDAO.updateElectionById(
+        rpElection1.getElectionId(),
+        ElectionStatus.CLOSED.getValue(),
+        new Date());
+
     Vote vote1 = createDacVote(user.getDacUserId(), rpElection1.getElectionId());
     Vote vote2 = createDacVote(user.getDacUserId(), rpElection2.getElectionId());
     Vote vote3 = createDacVote(user.getDacUserId(), accessElection.getElectionId());

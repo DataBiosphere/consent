@@ -35,9 +35,9 @@ public class UserDAOTest extends DAOTestHelper {
         assertNotNull(user);
         assertFalse(user.getRoles().isEmpty());
 
-        addUserRole(UserRoles.ADMIN.getRoleId(), user.getDacUserId());
-        addUserRole(UserRoles.RESEARCHER.getRoleId(), user.getDacUserId());
-        addUserRole(UserRoles.DATAOWNER.getRoleId(), user.getDacUserId());
+        userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), user.getDacUserId());
+        userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), user.getDacUserId());
+        userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user.getDacUserId());
 
         User user2 = userDAO.findUserById(user.getDacUserId());
         assertNotNull(user2);
@@ -130,7 +130,7 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testFindUsersWithRoles() {
         User chair = createUserWithRole(UserRoles.ADMIN.getRoleId());
-        addUserRole(UserRoles.DATAOWNER.getRoleId(), chair.getDacUserId());
+        userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), chair.getDacUserId());
         Collection<Integer> userIds = Collections.singletonList(chair.getDacUserId());
         Collection<User> users = userDAO.findUsersWithRoles(userIds);
         users.forEach(u -> assertFalse("User: " + u.getDacUserId() + " has no roles", u.getRoles().isEmpty()));
@@ -143,10 +143,10 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testFindDACUserByEmail() {
         User user = createUser();
-        addUserRole(UserRoles.ALUMNI.getRoleId(), user.getDacUserId());
-        addUserRole(UserRoles.ADMIN.getRoleId(), user.getDacUserId());
-        addUserRole(UserRoles.RESEARCHER.getRoleId(), user.getDacUserId());
-        addUserRole(UserRoles.DATAOWNER.getRoleId(), user.getDacUserId());
+        userRoleDAO.insertSingleUserRole(UserRoles.ALUMNI.getRoleId(), user.getDacUserId());
+        userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), user.getDacUserId());
+        userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), user.getDacUserId());
+        userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user.getDacUserId());
         User user1 = userDAO.findUserByEmail(user.getEmail());
         assertNotNull(user1);
 
@@ -256,7 +256,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getDacUserId(), election.getElectionId());
 
         Set<User> users = userDAO.findUsersForElectionsByRoles(
@@ -273,7 +273,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        Election election = createAccessElection(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getDacUserId(), election.getElectionId());
 
         Set<User> users = userDAO.findUsersForElectionsByRoles(
@@ -289,7 +289,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<User> users = userDAO.findUsersForDatasetsByRole(
                 Collections.singletonList(dataset.getDataSetId()),
@@ -307,7 +307,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<User> users = userDAO.findUsersForDatasetsByRole(
                 Collections.singletonList(dataset.getDataSetId()),
