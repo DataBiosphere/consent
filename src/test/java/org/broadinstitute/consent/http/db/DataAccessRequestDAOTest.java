@@ -161,21 +161,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testEscapedCharacters() {
-        DataAccessRequest dar = createDataAccessRequestV3();
-        DataAccessRequest foundDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-        assertNotNull(foundDar);
-        assertNotNull(foundDar.getData());
-
-        // Tests that "\\\\u0026" in sample dar's projectTitle is converted to "&"
-        assertTrue(foundDar.getData().getProjectTitle().contains("&"));
-        // Tests that "\\\\u003c" in sample dar's translatedUseRestriction is converted to "<"
-        assertTrue(foundDar.getData().getTranslatedUseRestriction().contains("<"));
-        // Tests that "\\\\u003e" in sample dar's translatedUseRestriction is converted to ">"
-        assertTrue(foundDar.getData().getTranslatedUseRestriction().contains(">"));
-    }
-
-    @Test
     public void  testFindAllDataAccessRequestsForInstitution() {
         //should be included in result
         Integer institutionId = createDataAccessRequestUserWithInstitute();
@@ -232,11 +217,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertNotNull(updatedDar2.getData().getMethods());
         assertEquals(dar1.getData().getMethods(), updatedDar1.getData().getMethods());
         assertEquals(dar2.getData().getMethods(), updatedDar2.getData().getMethods());
-
-        assertNotNull(updatedDar1.getData().getAddress1());
-        assertNotNull(updatedDar2.getData().getAddress1());
-        assertEquals(dar1.getData().getAddress1(), updatedDar1.getData().getAddress1());
-        assertEquals(dar2.getData().getAddress1(), updatedDar2.getData().getAddress1());
     }
 
     @Test
@@ -264,55 +244,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertEquals(dar.getData().getHmb(), canceledDar.getData().getHmb());
         assertNotNull(canceledDar.getData().getMethods());
         assertEquals(dar.getData().getMethods(), canceledDar.getData().getMethods());
-        assertNotNull(canceledDar.getData().getAddress1());
-        assertEquals(dar.getData().getAddress1(), canceledDar.getData().getAddress1());
-
     }
-
-//    // todo: this test should be deprecated since we changed the query it's testing (dataAccessRequestDAO.findByReferenceId()_
-//    @Test
-//    public void testArchiveByReferenceIdsStatusCreated() {
-//        DataAccessRequest dar = createDataAccessRequestV3();
-//        List<String> referenceIds = List.of(dar.getReferenceId());
-//        assertNull(dar.getData().getStatus());
-//
-//        dataAccessRequestDAO.archiveByReferenceIds(referenceIds);
-//        DataAccessRequest archivedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-//
-//        assertEquals(dar.getReferenceId(), archivedDar.getReferenceId());
-//        assertNotNull(archivedDar.getData().getStatus());
-//        assertEquals("Archived", archivedDar.getData().getStatus());
-//        assertNotNull(archivedDar.getData().getHmb());
-//        assertEquals(dar.getData().getHmb(), archivedDar.getData().getHmb());
-//        assertNotNull(archivedDar.getData().getMethods());
-//        assertEquals(dar.getData().getMethods(), archivedDar.getData().getMethods());
-//        assertNotNull(archivedDar.getData().getAddress1());
-//        assertEquals(dar.getData().getAddress1(), archivedDar.getData().getAddress1());
-//    }
-//
-//    // todo: this test should be deprecated since we changed the query it's testing (dataAccessRequestDAO.findByReferenceId()_
-//    @Test
-//    public void testArchiveByReferenceIdsMultipleDars() {
-//        DataAccessRequest dar = createDataAccessRequestV3();
-//        DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
-//        List<String> referenceIds = new ArrayList<>(collection.getDars().keySet());
-//        assertTrue(referenceIds.size() > 1);
-//
-//        referenceIds.stream()
-//                .map(id -> dataAccessRequestDAO.findByReferenceId(id))
-//                .map(DataAccessRequest::getData)
-//                .map(DataAccessRequestData::getStatus)
-//                .forEach(TestCase::assertNull);
-//
-//        dataAccessRequestDAO.archiveByReferenceIds(referenceIds);
-//
-//        referenceIds.stream()
-//                .map(id -> dataAccessRequestDAO.findByReferenceId(id))
-//                .map(DataAccessRequest::getData)
-//                .map(DataAccessRequestData::getStatus)
-//                .forEach(s -> assertEquals("Archived", s));
-//
-//    }
 
     // local method to create a DAR
     protected DataAccessRequest createDAR(User user, Dataset dataset, String darCode) {
@@ -330,7 +262,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         // add data datasetId
         contents.setDatasetIds(List.of(dataset.getDataSetId()));
         testDar.setData(contents);
-        dataAccessRequestDAO.insertVersion3(
+        dataAccessRequestDAO.insertDataAccessRequest(
                 testDar.getCollectionId(),
                 testDar.getReferenceId(),
                 testDar.getUserId(),

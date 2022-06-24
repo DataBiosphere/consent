@@ -523,7 +523,7 @@ public class VoteDAOTest extends DAOTestHelper {
         assertNotNull(votes);
         assertFalse(votes.isEmpty());
         assertEquals(1, votes.size());
-        assertEquals(vote.getVoteId(), votes.get(0).getDacUserId());
+        assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
     }
 
     @Test
