@@ -16,7 +16,7 @@ object MemberChains {
             Requests.PendingCases.getPendingDataRequests(OK.code, additionalHeaders)
         )
         .exec(
-            Requests.PendingCases.getPendingCasesByUserId(OK.code, "${dacUserId}", additionalHeaders)
+            Requests.PendingCases.getPendingCasesByUserId(OK.code, "${userId}", additionalHeaders)
         )
     }
 }

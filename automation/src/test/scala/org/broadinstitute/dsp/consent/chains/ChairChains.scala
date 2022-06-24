@@ -17,7 +17,7 @@ object ChairChains {
         )
         .pause(TestConfig.defaultPause)
         .exec(
-            Requests.PendingCases.chairConsole(OK.code, "${dacUserId}", additionalHeaders)
+            Requests.PendingCases.chairConsole(OK.code, "${userId}", additionalHeaders)
         )
     }
 
@@ -43,7 +43,7 @@ object ChairChains {
                 implicit val matchFormat: JsonProtocols.matchFormat.type = JsonProtocols.matchFormat
                 try {
                     val matchStr: String = session(Requests.Match.findMatchResponse).as[String]
-                    val matchObj: Match = matchStr.parseJson.convertTo[Match] 
+                    val matchObj: Match = matchStr.parseJson.convertTo[Match]
                     session.set("isMatch", matchObj.`match`)
                 } catch {
                     case _: Throwable => session.set("isMatch", false)
@@ -56,7 +56,7 @@ object ChairChains {
                 implicit val electionFormat: JsonProtocols.electionFormat.type = JsonProtocols.electionFormat
 
                 val accessElection: Election = session(AccessReviewChains.accessElection).as[Election]
-                
+
                 val newElection: Election = Election(
                     electionId = accessElection.electionId,
                     electionType = accessElection.electionType,
