@@ -10,7 +10,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.sql.Timestamp;
@@ -36,7 +35,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
         assertNotNull(foundDataset);
@@ -75,7 +74,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         datasetDAO.updateDatasetNeedsApproval(dataset.getDataSetId(), true);
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         List<Dataset> datasets = datasetDAO.findNeedsApprovalDatasetByDatasetId(List.of(dataset.getDataSetId()));
         assertFalse(datasets.isEmpty());
@@ -91,7 +90,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         List<Dataset> datasets = datasetDAO.getDatasetsForObjectIdList(List.of(dataset.getObjectId()));
         assertFalse(datasets.isEmpty());
@@ -107,7 +106,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         List<Dataset> datasets = datasetDAO.findDatasetsByIdList(List.of(dataset.getDataSetId()));
         assertFalse(datasets.isEmpty());
@@ -123,7 +122,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<Dataset> datasets = datasetDAO.findDatasetsForConsentId(consent.getConsentId());
         assertFalse(datasets.isEmpty());
@@ -142,7 +141,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
         User user = createUser();
         createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), dac.getDacId());
 
@@ -156,7 +155,7 @@ public class DatasetDAOTest extends DAOTestHelper {
     public void testFindNonDACDataSets() {
         Dataset dataset = createDataset();
         Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         List<Dataset> datasets = datasetDAO.findNonDACDatasets();
         assertFalse(datasets.isEmpty());
@@ -169,7 +168,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         List<Pair<Integer, Integer>> pairs = datasetDAO.findDatasetAndDacIds();
         assertFalse(pairs.isEmpty());
@@ -224,7 +223,7 @@ public class DatasetDAOTest extends DAOTestHelper {
     public void testFindAllDatasets() {
         Dataset dataset = createDataset();
         Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<DatasetDTO> datasets = datasetDAO.findAllDatasets();
         assertFalse(datasets.isEmpty());
@@ -236,7 +235,7 @@ public class DatasetDAOTest extends DAOTestHelper {
     public void testFindActiveDatasets() {
         Dataset dataset = createDataset();
         Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<DatasetDTO> datasets = datasetDAO.findActiveDatasets();
         assertFalse(datasets.isEmpty());
@@ -249,7 +248,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
         User user = createUser();
         createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), dac.getDacId());
 
@@ -278,7 +277,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<Dataset> datasets = datasetDAO.findDatasetWithDataUseByIdList(Collections.singletonList(dataset.getDataSetId()));
         assertFalse(datasets.isEmpty());

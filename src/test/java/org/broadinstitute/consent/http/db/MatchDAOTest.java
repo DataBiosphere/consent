@@ -121,10 +121,10 @@ public class MatchDAOTest extends DAOTestHelper {
     //query should pull the latest election for a given reference id
     //creating two access elections with the same reference id and datasetid to test that condition
     String darReferenceId = UUID.randomUUID().toString();
-    Election targetElection = createAccessElection(
+    Election targetElection = createDataAccessElection(
       darReferenceId, dataset.getDataSetId()
     );
-    Election ignoredAccessElection = createAccessElection(
+    Election ignoredAccessElection = createDataAccessElection(
       UUID.randomUUID().toString(), dataset.getDataSetId()
     );
 
@@ -155,7 +155,7 @@ public class MatchDAOTest extends DAOTestHelper {
     String darReferenceId = UUID.randomUUID().toString();
 
     //Generate access election for test
-    Election accessElection = createAccessElection(
+    Election accessElection = createDataAccessElection(
         UUID.randomUUID().toString(), dataset.getDataSetId());
 
     //Generate RP election for test
