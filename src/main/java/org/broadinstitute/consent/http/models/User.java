@@ -94,9 +94,9 @@ public class User {
         this.createDate = createDate;
     }
 
-    public User(Integer UserId, String email, String displayName, Date createDate, String additionalEmail) {
-        this.userId = UserId;
-        this.dacUserId = UserId;
+    public User(Integer userId, String email, String displayName, Date createDate, String additionalEmail) {
+        this.userId = userId;
+        this.dacUserId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
@@ -165,7 +165,6 @@ public class User {
     private void setUserId(User u) {
         if (Objects.nonNull(u.getUserId())) {
             this.setUserId(u.getUserId());
-            this.setDacUserId(u.getUserId());
         }
     }
 
@@ -205,14 +204,9 @@ public class User {
         }
     }
 
-    @Deprecated
+    @Deprecated // Use getUserId(). This is maintained for backward compatibility with existing UI functionality.
     public Integer getDacUserId() {
-        return dacUserId;
-    }
-
-    @Deprecated
-    public void setDacUserId(Integer userId) {
-        this.dacUserId = userId;
+        return userId;
     }
 
     public String getEmail() {
