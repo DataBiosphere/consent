@@ -288,7 +288,7 @@ public class DarCollectionServiceTest {
   }
 
   @Test
-  public void testAddDatasetsToCollectionsWithUserDatasets() {
+  public void testAddDatasetsToCollectionsWithFilterDatasetIds() {
     List<DarCollection> collections = new ArrayList<>();
     Set<Dataset> datasets = new HashSet<>();
     // need a minimal version of a collection with an array of datasetIds
@@ -301,16 +301,19 @@ public class DarCollectionServiceTest {
     // need a list of datasets (userDatasets)
     Dataset dataset = new Dataset();
     dataset.setDataSetId(datasetIds.get(0));
-    List<Dataset> userDatasets = List.of(dataset);
+
+    // mocking out findDatasetsByAuthUserEmail to only return one of the datasets
+    when(datasetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(List.of(dataset));
+    when(datasetDAO.findDatasetWithDataUseByIdList(anyList())).thenReturn(datasets);
 
     initService();
 
-    collections = service.addDatasetsToCollections(collections, userDatasets);
+    collections = service.addDatasetsToCollections(collections, datasetIds);
     assertEquals(1, collections.size());
 
     DarCollection collection = collections.get(0);
     Set<Dataset> datasetsFromCollection = collection.getDatasets();
-    assertEquals(1, datasetsFromCollection.size());
+    assertEquals(2, datasetsFromCollection.size());
 
     List<Integer> collectionDatasetIds = datasetsFromCollection.stream()
             .map(Dataset::getDataSetId)

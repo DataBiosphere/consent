@@ -279,7 +279,7 @@ public class DarCollectionService {
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
     if(!datasetIds.isEmpty()) {
-      // if userDatasetIds has values, get the intersection between that and datasetIds
+      // if filterDatasetIds has values, get the intersection between that and datasetIds
       if (!filterDatasetIds.isEmpty()) {
         datasetIds.retainAll(filterDatasetIds);
       }
