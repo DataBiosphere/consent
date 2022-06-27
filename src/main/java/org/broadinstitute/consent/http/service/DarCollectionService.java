@@ -65,7 +65,7 @@ public class DarCollectionService {
   }
 
   public List<DarCollection> getAllCollections() {
-    return addDatasetsToCollections(darCollectionDAO.findAllDARCollections());
+    return addDatasetsToCollections(darCollectionDAO.findAllDARCollections(), List.of());
   }
 
   public List<DarCollection> getCollectionsForUserByRoleName(User user, String roleName) {
@@ -78,7 +78,7 @@ public class DarCollectionService {
           break;
         case CHAIRPERSON:
         case MEMBER:
-          collections.addAll(getCollectionsByUserDacs(user));
+          collections.addAll(getCollectionsByUserDacs(user, true));
           break;
         case SIGNINGOFFICIAL:
           collections.addAll(getCollectionsByUserInstitution(user));
@@ -100,9 +100,10 @@ public class DarCollectionService {
    * Find all DAR Collections by the user's associated DACs
    *
    * @param user The User
+   * @param filterByUserDacDatasets Specifies whether to filter on user-DAC-datasets
    * @return List<DarCollection>
    */
-  public List<DarCollection> getCollectionsByUserDacs(User user) {
+  public List<DarCollection> getCollectionsByUserDacs(User user, Boolean filterByUserDacDatasets) {
     List<Integer> dacIds = user.getRoles().stream()
         .map(UserRole::getDacId)
         .filter(Objects::nonNull)
@@ -111,8 +112,13 @@ public class DarCollectionService {
     List<Integer> collectionIds = dacIds.isEmpty() ?
         Collections.emptyList() :
         darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
+    List<Integer> userDatasetsIds = filterByUserDacDatasets ?
+        datasetDAO.findDatasetsByAuthUserEmail(user.getEmail()).stream()
+                .map(d -> d.getDataSetId())
+                .collect(Collectors.toList()) :
+        Collections.emptyList();
     if (!collectionIds.isEmpty()) {
-      return addDatasetsToCollections(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds));
+      return addDatasetsToCollections(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds), userDatasetsIds);
     }
     return Collections.emptyList();
   }
@@ -131,14 +137,14 @@ public class DarCollectionService {
     }
     List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByInstitutionId(user.getInstitutionId());
     if (!collectionIds.isEmpty()) {
-      return addDatasetsToCollections(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds));
+      return addDatasetsToCollections(darCollectionDAO.findDARCollectionByCollectionIds(collectionIds), List.of());
     }
     return Collections.emptyList();
   }
 
   public List<DarCollection> getCollectionsForUser(User user) {
     List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
-    return addDatasetsToCollections(collections);
+    return addDatasetsToCollections(collections, List.of());
   }
 
   /*
@@ -198,7 +204,7 @@ public class DarCollectionService {
         collections = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
     }
 
-    return addDatasetsToCollections(collections);
+    return addDatasetsToCollections(collections, List.of());
   }
 
   private List<Integer> getDacIdsFromUser (User user) {
@@ -241,7 +247,7 @@ public class DarCollectionService {
     if (Objects.isNull(collection)) {
       throw new NotFoundException("Collection with the reference id of " + referenceId + " was not found");
     }
-    List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
+    List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection), List.of());
     return populatedCollections.stream().findFirst().orElse(null);
   }
 
@@ -250,20 +256,30 @@ public class DarCollectionService {
     if (Objects.isNull(collection)) {
       throw new NotFoundException("Collection with the collection id of " + collectionId + " was not found");
     }
-    List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection));
+    List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection), List.of());
     return populatedCollections.stream().findFirst().orElse(null);
   }
 
-  public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections) {
-
+  /**
+   * Iterate through a set of collections and add relevant datasets.
+   *
+   * @param collections  The list of DarCollections to iterate over.
+   * @param filterDatasetIds An optional list of Dataset Ids used to filter down the datasets for the collections
+   * @return List<DarCollection>
+   */
+  public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections, List<Integer> filterDatasetIds) {
+    // get datasetIds from each DAR from each collection
     List<Integer> datasetIds = collections.stream()
       .map(d-> d.getDars().values())
       .flatMap(Collection::stream)
       .map(d -> d.getData().getDatasetIds())
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
-
     if(!datasetIds.isEmpty()) {
+      // if filterDatasetIds has values, get the intersection between that and datasetIds
+      if (!filterDatasetIds.isEmpty()) {
+        datasetIds.retainAll(filterDatasetIds);
+      }
       Set<Dataset> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
       Map<Integer, Dataset> datasetMap = datasets.stream()
           .collect(Collectors.toMap(Dataset::getDataSetId, Function.identity()));
@@ -274,6 +290,7 @@ public class DarCollectionService {
           .map(DataAccessRequestData::getDatasetIds)
           .flatMap(Collection::stream)
           .map(datasetMap::get)
+          .filter(d -> Objects.nonNull(d)) // filtering out nulls which were getting captured by map
           .collect(Collectors.toSet());
         DarCollection copy = c.deepCopy();
         copy.setDatasets(collectionDatasets);
