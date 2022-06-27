@@ -209,6 +209,11 @@ public class User {
         return userId;
     }
 
+    @Deprecated // This is maintained for backward compatibility with existing UI functionality.
+    public void setDacUserId() {
+        this.dacUserId = this.getUserId();
+    }
+
     public String getEmail() {
         return email;
     }

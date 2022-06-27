@@ -30,6 +30,8 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
         map.computeIfAbsent(
             userId,
             id -> rowView.getRow(User.class));
+    // Populate for backwards compatibility.
+    user.setDacUserId();
 
     try {
       // Some queries look for `user_role_id` while those that use a prefix look for `u_user_role_id`
