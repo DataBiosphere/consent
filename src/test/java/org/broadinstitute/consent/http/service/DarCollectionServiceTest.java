@@ -169,7 +169,7 @@ public class DarCollectionServiceTest {
     when(darCollectionDAO.findDARCollectionByCollectionIds(List.of(1))).thenReturn(List.of(new DarCollection()));
     initService();
 
-    List<DarCollection> collections = service.getCollectionsByUserDacs(user);
+    List<DarCollection> collections = service.getCollectionsByUserDacs(user, false);
     assertEquals(1, collections.size());
   }
 
@@ -280,7 +280,7 @@ public class DarCollectionServiceTest {
     when(dataAccessRequestDAO.findAllDARDatasets(any())).thenReturn(darDatasets);
     initService();
 
-    collections = service.addDatasetsToCollections(collections);
+    collections = service.addDatasetsToCollections(collections, List.of());
     assertEquals(1, collections.size());
 
     DarCollection collection = collections.get(0);
@@ -292,6 +292,39 @@ public class DarCollectionServiceTest {
       .sorted()
       .collect(Collectors.toList());
     assertEquals(datasetIds, collectionDatasetIds);
+  }
+
+  @Test
+  public void testAddDatasetsToCollectionsWithFilterDatasetIds() {
+    List<DarCollection> collections = new ArrayList<>();
+    Set<Dataset> datasets = new HashSet<>();
+    // need a minimal version of a collection with an array of datasetIds
+    collections.add(generateMockDarCollection(datasets));
+    List<Integer> datasetIds = datasets.stream()
+            .map(Dataset::getDataSetId)
+            .sorted()
+            .collect(Collectors.toList());
+
+    Dataset dataset = new Dataset();
+    dataset.setDataSetId(datasetIds.get(0));
+
+    // mocking out findDatasetWithDataUseByIdList to only return one of the datasets
+    when(datasetDAO.findDatasetWithDataUseByIdList(List.of(dataset.getDataSetId()))).thenReturn(new HashSet<>(List.of(dataset)));
+
+    initService();
+
+    collections = service.addDatasetsToCollections(collections, List.of(dataset.getDataSetId()));
+    assertEquals(1, collections.size());
+
+    DarCollection collection = collections.get(0);
+    Set<Dataset> datasetsFromCollection = collection.getDatasets();
+    assertEquals(1, datasetsFromCollection.size());
+
+    List<Integer> collectionDatasetIds = datasetsFromCollection.stream()
+            .map(Dataset::getDataSetId)
+            .sorted()
+            .collect(Collectors.toList());
+    assertEquals(dataset.getDataSetId(), collectionDatasetIds.get(0));
   }
 
   @Test

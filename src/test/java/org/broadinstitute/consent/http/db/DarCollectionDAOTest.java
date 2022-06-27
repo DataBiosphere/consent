@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import io.dropwizard.testing.ResourceHelpers;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -21,9 +19,6 @@ import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
 import java.sql.Timestamp;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +45,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     Election election = dar.getElections().values().stream().findFirst().orElse(null);
     Integer datasetId = election.getDataSetId();
     electionDAO.insertElection("DataSet", "Open", new Date(), referenceId, datasetId);
-  } 
+  }
 
   private List<Election> getElectionsFromCollection(DarCollection collection) {
     return collection.getDars().values().stream()
@@ -76,7 +71,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     generateDatasetElectionForCollection(targetCollection);
     List<UserProperty> userProperties = allAfter.get(0).getCreateUser().getProperties();
     assertFalse(userProperties.isEmpty());
-    
+
     List<Election> elections = getElectionsFromCollection(targetCollection);
     assertNotNull(elections);
     assertTrue(elections.size() > 0);
@@ -154,19 +149,12 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   }
 
   @Test
-  public void testFindDARCollectionByCollectionIdLibraryCard() throws IOException {
+  public void testFindDARCollectionByCollectionIdLibraryCard() {
     User user = createUser();
     LibraryCard libraryCard = createLibraryCard(user);
     String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
-
-    String referenceId = UUID.randomUUID().toString();
-    String darDataString = FileUtils.readFileToString(
-            new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
-            Charset.defaultCharset());
-    DataAccessRequestData data = DataAccessRequestData.fromString(darDataString);
-    Date now = new Date();
-    dataAccessRequestDAO.insertVersion3(collectionId, referenceId, user.getDacUserId(), now, now, now, now, data);
+    createDataAccessRequest(user.getDacUserId(), collectionId, darCode);
 
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     User returnedUser = collection.getCreateUser();
@@ -199,7 +187,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), dar.getUserId(), new Date(), new Date(), new Date(), dar.getData());
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
-    createAssociation(consent.getConsentId(), dataset.getDataSetId());
+    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
     List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(List.of(dac.getDacId()));
     assertFalse(collectionIds.isEmpty());
@@ -399,7 +387,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
   }
 
   @Test
-  public void testGEtFilteredListForReasearcher_DatasetTerm() {
+  public void testGEtFilteredListForResearcher_DatasetTerm() {
 
     DataAccessRequest dar = createDataAccessRequestV3();
     DataAccessRequestData data = dar.getData();
@@ -482,7 +470,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     DataAccessRequest expectedDarTwo = new ArrayList<>(collections.get(1).getDars().values()).get(0);
     assertEquals(expectedDarOne.getData().getDarCode(), darResultOne.getData().getDarCode());
     assertEquals(expectedDarTwo.getData().getDarCode(), darResultTwo.getData().getDarCode());
-    
+
   }
 
   @Test
@@ -803,7 +791,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     contents.setDatasetIds(List.of(dataset.getDataSetId()));
     testDar.setData(contents);
 
-    dataAccessRequestDAO.insertVersion3(
+    dataAccessRequestDAO.insertDataAccessRequest(
             testDar.getCollectionId(),
             testDar.getReferenceId(),
             testDar.getUserId(),
@@ -840,7 +828,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     // create a DAC
     Dac dac = createDAC();
     Consent consent = createConsent(dac.getDacId());
-    createAssociation(consent.getConsentId(), dataset.getDataSetId());
+    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
     DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
 

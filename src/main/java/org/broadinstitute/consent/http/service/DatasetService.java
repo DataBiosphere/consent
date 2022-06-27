@@ -179,7 +179,7 @@ public class DatasetService {
         Timestamp now = new Timestamp(new Date().getTime());
         Integer createdDatasetId = datasetDAO.inTransaction(h -> {
             try {
-                Integer id = h.insertDatasetV2(name, now, userId, dataset.getObjectId(), dataset.getActive());
+                Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(), dataset.getActive());
                 List<DatasetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
                 h.insertDatasetProperties(propertyList);
                 h.updateDatasetNeedsApproval(id, dataset.getNeedsApproval());
