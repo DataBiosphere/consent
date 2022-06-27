@@ -105,6 +105,7 @@ public class SummaryServiceTest {
         List<Vote> consentVotes = createVotes(consentElections.get(0).getElectionId(), voteUser.getDacUserId());
         List<Match> matchList = List.of(createMatch(associatedConsentIds.get(0), dars.get(0).getReferenceId()));
         List<String> referenceIds = List.of(accessElections.get(0).getReferenceId());
+        dars.get(0).addDatasetId(1);
 
         when(dataAccessRequestService.findDatasetIdsByReferenceId(any())).thenReturn(List.of(1));
         when(electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue())).thenReturn(accessElections);

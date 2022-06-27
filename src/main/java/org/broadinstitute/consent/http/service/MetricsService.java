@@ -116,7 +116,8 @@ public class MetricsService {
     return dars.stream()
       .map(
         dataAccessRequest -> {
-          Integer datasetId = darDAO.findDARDatasetRelations(dataAccessRequest.getReferenceId()).stream().findFirst().orElse(0);
+          Integer datasetId =
+                  dataAccessRequest.getDatasetIds().stream().findFirst().orElse(0);
 
           Dataset dataset =
             datasets.stream()

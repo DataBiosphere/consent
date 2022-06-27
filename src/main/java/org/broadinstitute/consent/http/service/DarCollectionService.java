@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -255,12 +257,19 @@ public class DarCollectionService {
   }
 
   public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections) {
-
+    List<String> reference_ids = collections.stream()
+      .map(d-> d.getDars().values())
+      .flatMap(Collection::stream)
+      .map(d -> d.getReferenceId())
+      .collect(Collectors.toList());
+    Map<String, List<DarDataset>> referenceIdToDatasetId = dataAccessRequestDAO.findAllDARDatasets(reference_ids)
+      .stream().collect(Collectors.groupingBy(DarDataset::getReferenceId));
     List<Integer> datasetIds = collections.stream()
       .map(d-> d.getDars().values())
       .flatMap(Collection::stream)
-      .map(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()))
+      .map(d -> referenceIdToDatasetId.get(d.getReferenceId()))
       .flatMap(Collection::stream)
+      .map(DarDataset::getDatasetId)
       .collect(Collectors.toList());
 
     if(!datasetIds.isEmpty()) {
@@ -269,20 +278,13 @@ public class DarCollectionService {
           .collect(Collectors.toMap(Dataset::getDataSetId, Function.identity()));
 
       return collections.stream().map(c -> {
-        // new
-        List<String> referenceIds = c.getDars().values().stream()
-                .map(DataAccessRequest::getReferenceId)
-                .collect(Collectors.toList());
-        Set<Dataset> collectionDatasets = dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds).stream()
-                .map(datasetMap::get)
+        // new need to think about this
+        Set<Dataset> collectionDatasets = c.getDars().values().stream()
+          .map(d -> referenceIdToDatasetId.get(d.getReferenceId()))
+          .flatMap(Collection::stream)
+          .map(DarDataset::getDatasetId)
+          .map(datasetMap::get)
                 .collect(Collectors.toSet());
-
-        // old
-//        Set<Dataset> collectionDatasets = c.getDars().values().stream()
-//          .map(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()))
-//          .flatMap(Collection::stream)
-//          .map(datasetMap::get)
-//          .collect(Collectors.toSet());
         DarCollection copy = c.deepCopy();
         copy.setDatasets(collectionDatasets);
         return copy;

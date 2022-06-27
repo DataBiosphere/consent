@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
+import org.broadinstitute.consent.http.db.mapper.DarDatasetMapper;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DarDataset;
@@ -273,7 +274,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + " WHERE reference_id IN (<referenceIds>)")
   void archiveByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
-
   /**
    * Inserts into dar_dataset collection
    *
@@ -283,6 +283,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId)")
   void insertDARDatasetRelation(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId);
 
+  /**
+   * Takes a list of DarDatasets and inserts them into the dar_dataset collection
+   *
+   * @param darDatasets List<DarDataset>
+   */
   @SqlBatch("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId)")
   void insertAllDarDatasets(@BindBean List<DarDataset> darDatasets);
 
@@ -305,12 +310,26 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   /**
    * Returns all dataset_ids that match the given referenceId
    *
-   * @param referenceId List<String>
+   * @param referenceId String
    */
   @SqlQuery(
     "SELECT distinct dataset_id FROM dar_dataset WHERE reference_id = :referenceId ")
   List<Integer> findDARDatasetRelations(@Bind("referenceId") String referenceId);
 
+  /**
+   * Returns all dataset_ids that match any of the referenceIds inside of the "referenceIds" list
+   *
+   * @param referenceIds List<String>
+   */
   @SqlQuery("SELECT distinct dataset_id FROM dar_dataset WHERE reference_id IN (<referenceIds>)")
   List<Integer> findAllDARDatasetRelations(@BindList("referenceIds") List<String> referenceIds);
+
+  /**
+   * Returns all dataset_ids that match any of the referenceIds inside of the "referenceIds" list
+   *
+   * @param referenceIds List<String>
+   */
+  @RegisterRowMapper(DarDatasetMapper.class)
+  @SqlQuery("SELECT distinct reference_id, dataset_id FROM dar_dataset WHERE reference_id IN (<referenceIds>)")
+  List<DarDataset> findAllDARDatasets(@BindList("referenceIds") List<String> referenceIds);
 }

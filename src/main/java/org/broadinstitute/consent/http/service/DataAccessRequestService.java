@@ -422,7 +422,7 @@ public class DataAccessRequestService {
                     .collect(toList())
             ));
         List<Integer> datasetIds = dataAccessRequests.stream()
-                .map(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId())).flatMap(List::stream).collect(toList());
+                .map(DataAccessRequest::getDatasetIds).flatMap(List::stream).collect(toList());
         // Batch call 3
         Set<Dac> dacs = datasetIds.isEmpty() ? Collections.emptySet() : dacDAO.findDacsForDatasetIds(datasetIds);
         // Batch call 4
@@ -439,7 +439,7 @@ public class DataAccessRequestService {
                 darManage.setDar(dar);
                 darManage.setElection(referenceIdToElectionMap.get(dar.getReferenceId()));
                 darManage.setVotes(referenceIdToVoteMap.get(dar.getReferenceId()));
-                dataAccessRequestDAO.findDARDatasetRelations(dar.getReferenceId()).stream()
+                dar.getDatasetIds().stream()
                     .findFirst()
                     .flatMap(id -> dacs.stream()
                         .filter(dataset -> dataset.getDatasetIds().contains(id))
@@ -483,7 +483,7 @@ public class DataAccessRequestService {
             Integer collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getDacUserId(), now);
             for (int idx = 0; idx < datasets.size(); idx++) {
                 String darCode = (datasets.size() == 1) ? darCodeSequence: darCodeSequence + SUFFIX + idx ;
-                // darData.setDatasetIds(Collections.singletonList(datasets.get(idx)));
+
                 darData.setDarCode(darCode);
                 if (idx == 0) {
                     DataAccessRequest alreadyExists = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());
@@ -660,7 +660,7 @@ public class DataAccessRequestService {
                 map(Dataset::getDataSetId).
                 collect(Collectors.toList());
         return activeDars.stream().
-                filter(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()).stream().anyMatch(dataSetIds::contains)).
+                filter(d -> d.getDatasetIds().stream().anyMatch(dataSetIds::contains)).
                 collect(Collectors.toList());
     }
 

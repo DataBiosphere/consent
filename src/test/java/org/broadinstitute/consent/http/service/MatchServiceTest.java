@@ -315,6 +315,7 @@ public class MatchServiceTest {
     @SuppressWarnings("unchecked")
     private void initSingleMatchMocks(String referenceId, Consent consent) throws Exception {
         DataAccessRequest dar2 = getSampleDataAccessRequest("DAR-2");
+        dar2.addDatasetId(1);
         when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(List.of(1));
         when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar2));
         when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar2);

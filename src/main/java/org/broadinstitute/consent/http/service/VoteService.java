@@ -374,6 +374,7 @@ public class VoteService {
         collections.forEach(c -> {
             // Get the datasets in this collection that have been approved
             List<Integer> collectionDatasetIds = c.getDars().values().stream()
+                    // would we want to join on the dar_dataset collection in the dar collection dao?
                 .map(d -> dataAccessRequestDAO.findDARDatasetRelations(d.getReferenceId()))
                 .flatMap(List::stream)
                 .distinct()

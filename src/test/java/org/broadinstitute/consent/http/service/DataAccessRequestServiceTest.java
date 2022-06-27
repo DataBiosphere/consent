@@ -125,7 +125,7 @@ public class DataAccessRequestServiceTest {
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setData(new DataAccessRequestData());
-        when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(Collections.singletonList(genericId));
+        dar.addDatasetId(genericId);
         when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar));
         Election e = new Election();
         e.setReferenceId(dar.getReferenceId());
@@ -274,7 +274,7 @@ public class DataAccessRequestServiceTest {
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setData(new DataAccessRequestData());
-        when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(Collections.singletonList(genericId));
+        dar.addDatasetId(genericId);
         when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar));
         when(dacService.filterDataAccessRequestsByDac(any(), any())).thenReturn(Collections.singletonList(dar));
 
@@ -314,7 +314,7 @@ public class DataAccessRequestServiceTest {
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setData(new DataAccessRequestData());
-        when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(Collections.singletonList(genericId));
+        dar.addDatasetId(genericId);
 
         when(dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(any())).thenReturn(Collections.singletonList(dar));
 
@@ -361,7 +361,7 @@ public class DataAccessRequestServiceTest {
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setData(new DataAccessRequestData());
-        when(dataAccessRequestDAO.findAllDARDatasetRelations(any())).thenReturn(Collections.singletonList(genericId));
+        dar.addDatasetId(genericId);
         when(dataAccessRequestDAO.findAllDarsByUserId(any())).thenReturn(Collections.singletonList(dar));
 
         Election e = new Election();
@@ -621,6 +621,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequestData data = new DataAccessRequestData();
         when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(Arrays.asList(361));
         dar.setData(data);
+        dar.addDatasetId(361);
         when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(Arrays.asList(dar));
         initService();
         List<DataAccessRequestManage> darManages = service.getDraftDataAccessRequestManage(null);
@@ -634,6 +635,7 @@ public class DataAccessRequestServiceTest {
         dar.setUserId(1);
         DataAccessRequestData data = new DataAccessRequestData();
         when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(Arrays.asList(361));
+        dar.addDatasetId(361);
         dar.setData(data);
         when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(Arrays.asList(dar));
         initService();

@@ -4,6 +4,10 @@ public class DarDataset {
     private String referenceId;
     private Integer datasetId;
 
+    public DarDataset() {
+
+    }
+
     public DarDataset(String referenceId, Integer datasetId) {
         this.referenceId = referenceId;
         this.datasetId = datasetId;
@@ -13,7 +17,7 @@ public class DarDataset {
         return this.datasetId;
     }
 
-    public void setId(Integer datasetId) {
+    public void setDatasetId(Integer datasetId) {
         this.datasetId = datasetId;
     }
 
@@ -21,7 +25,7 @@ public class DarDataset {
         return this.referenceId;
     }
 
-    public void setName(String referenceId) {
+    public void setReferenceId(String referenceId) {
         this.referenceId = referenceId;
     }
 }

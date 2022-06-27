@@ -94,8 +94,8 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
 
   @Override
   public String toString() {
-    List<String> dataSetUUIds =
-        getDar().getData().getDatasetIds().stream()
+    // Not too sure if this is valid. Could the dar value come from dacDAO
+    List<String> dataSetUUIds = getDar().getDatasetIds().stream()
             .map(Dataset::parseAliasToIdentifier)
             .collect(Collectors.toList());
     Optional<Vote> chairPersonRPVote =

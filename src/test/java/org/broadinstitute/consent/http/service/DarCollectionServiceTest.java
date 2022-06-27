@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -28,6 +29,7 @@ import org.mockito.Mock;
 import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -143,10 +145,13 @@ public class DarCollectionServiceTest {
     DataAccessRequestData canceledDarData = new DataAccessRequestData();
     canceledDarData.setStatus(DarStatus.CANCELED.getValue());
     DataAccessRequest canceledDar = new DataAccessRequest();
+    canceledDar.setReferenceId(UUID.randomUUID().toString());
     canceledDar.setData(canceledDarData);
     DarCollection canceledCollection = new DarCollection();
     canceledCollection.addDar(canceledDar);
+
     when(darCollectionDAO.findAllDARCollections()).thenReturn(List.of(canceledCollection));
+    when(dataAccessRequestDAO.findAllDARDatasets(any())).thenReturn(List.of(new DarDataset(canceledDar.getReferenceId(), 1)));
     initService();
 
     List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.ADMIN.getRoleName());
@@ -269,8 +274,10 @@ public class DarCollectionServiceTest {
       .map(Dataset::getDataSetId)
       .sorted()
       .collect(Collectors.toList());
+    List<DarDataset> darDatasets = getDarDatasets(collections);
 
     when(datasetDAO.findDatasetWithDataUseByIdList(anyList())).thenReturn(datasets);
+    when(dataAccessRequestDAO.findAllDARDatasets(any())).thenReturn(darDatasets);
     initService();
 
     collections = service.addDatasetsToCollections(collections);
@@ -293,6 +300,9 @@ public class DarCollectionServiceTest {
     DarCollection collection = generateMockDarCollection(datasets);
     collection.getDars().values().forEach(d -> d.getData().setStatus("Canceled"));
     List<Election> elections = new ArrayList<>();
+    List<DarDataset> darDatasets = getDarDatasets(List.of(collection));
+
+    when(dataAccessRequestDAO.findAllDARDatasets(any())).thenReturn(darDatasets);
     when(electionDAO.findLastElectionsByReferenceIdsAndType(anyList(), anyString())).thenReturn(elections);
     doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
@@ -325,6 +335,8 @@ public class DarCollectionServiceTest {
     dar.setData(data);
     DarCollection collection = createMockCollections(1).get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
+
+    when(dataAccessRequestDAO.findAllDARDatasets(any())).thenReturn(List.of(new DarDataset(dar.getReferenceId(), 1)));
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     spy(electionDAO);
@@ -337,6 +349,19 @@ public class DarCollectionServiceTest {
     verify(electionDAO, times(0)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(1)).cancelByReferenceIds(anyList());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(anyInt());
+  }
+
+  private List<DarDataset> getDarDatasets(List<DarCollection> collections) {
+    return collections.stream()
+      .map(d-> d.getDars().values())
+      .flatMap(Collection::stream)
+      .map(d -> {
+        return d.getDatasetIds().stream()
+          .map(id -> new DarDataset(d.getReferenceId(), id))
+          .collect(Collectors.toList());
+      })
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
   }
 
   @Test(expected = BadRequestException.class)
@@ -620,6 +645,7 @@ public class DarCollectionServiceTest {
     datasets.add(generateMockDatasetWithDataUse(datasetId));
     dar.setData(data);
     dar.setReferenceId(UUID.randomUUID().toString());
+    dar.addDatasetId(datasetId);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), datasetId);
 
     return dar;
