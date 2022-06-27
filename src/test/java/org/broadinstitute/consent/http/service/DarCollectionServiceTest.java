@@ -27,7 +27,6 @@ import org.mockito.Mock;
 
 import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;

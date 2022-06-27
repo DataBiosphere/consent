@@ -114,7 +114,7 @@ public class DarCollectionService {
         darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
     List<Integer> userDatasetsIds = filterByUserDacDatasets ?
         datasetDAO.findDatasetsByAuthUserEmail(user.getEmail()).stream()
-                .map(d -> d.getDataSetId())
+                .map(Dataset::getDataSetId)
                 .collect(Collectors.toList()) :
         Collections.emptyList();
     if (!collectionIds.isEmpty()) {
@@ -290,7 +290,7 @@ public class DarCollectionService {
           .map(DataAccessRequestData::getDatasetIds)
           .flatMap(Collection::stream)
           .map(datasetMap::get)
-          .filter(d -> Objects.nonNull(d)) // filtering out nulls which were getting captured by map
+          .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
           .collect(Collectors.toSet());
         DarCollection copy = c.deepCopy();
         copy.setDatasets(collectionDatasets);
