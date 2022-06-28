@@ -265,8 +265,6 @@ public class DatasetService {
         }
 
         updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
-        datasetDAO.updateDatasetNeedsApproval(datasetId, dataset.getNeedsApproval());
-
         datasetDAO.updateDataset(datasetId, dataset.getDatasetName(), now, userId, dataset.getNeedsApproval());
         Dataset updatedDataset = getDatasetWithPropertiesById(datasetId);
         return Optional.of(updatedDataset);
