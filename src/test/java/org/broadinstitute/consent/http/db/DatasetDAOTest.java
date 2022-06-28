@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -182,6 +183,22 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset d = createDataset();
         Set<DatasetProperty> properties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
         assertEquals(properties.size(), 1);
+    }
+
+    @Test
+    public void testUpdateDataset() {
+        Dataset d = createDataset();
+        String name = RandomStringUtils.random(20, true, true);
+        Timestamp now = new Timestamp(new Date().getTime());
+        Integer userId = RandomUtils.nextInt(1, 1000);
+        Boolean needsApproval = true;
+        datasetDAO.updateDataset(d.getDataSetId(), name, now, userId, needsApproval);
+        Dataset updated = datasetDAO.findDatasetById(d.getDataSetId());
+
+        assertEquals(updated.getName(), name);
+        assertEquals(updated.getUpdateDate(), now);
+        assertEquals(updated.getUpdateUserId(), userId);
+        assertEquals(updated.getNeedsApproval(), needsApproval);
     }
 
     @Test
