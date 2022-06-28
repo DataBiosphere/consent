@@ -111,9 +111,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlUpdate("update dataset set needs_approval = :needsApproval where dataSetId = :dataSetId")
     void updateDatasetNeedsApproval(@Bind("dataSetId") Integer dataSetId, @Bind("needsApproval") Boolean needsApproval);
 
-    @SqlUpdate("UPDATE dataset SET update_date = :updateDate, update_user_id = :updateUserId WHERE datasetid = :datasetId")
-    void updateDatasetUpdateUserAndDate(@Bind("datasetId") Integer datasetId, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId);
-
     @SqlUpdate("UPDATE dataset " +
             " SET name =:datasetName," +
             " update_date = :updateDate, " +
