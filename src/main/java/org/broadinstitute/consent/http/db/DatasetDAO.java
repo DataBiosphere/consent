@@ -108,11 +108,19 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlUpdate("update dataset set active = :active where dataSetId = :dataSetId")
     void updateDatasetActive(@Bind("dataSetId") Integer dataSetId, @Bind("active") Boolean active);
 
-    @SqlUpdate("update dataset set needs_approval = :needs_approval where dataSetId = :dataSetId")
-    void updateDatasetNeedsApproval(@Bind("dataSetId") Integer dataSetId, @Bind("needs_approval") Boolean needs_approval);
+    @SqlUpdate("update dataset set needs_approval = :needsApproval where dataSetId = :dataSetId")
+    void updateDatasetNeedsApproval(@Bind("dataSetId") Integer dataSetId, @Bind("needsApproval") Boolean needsApproval);
 
     @SqlUpdate("UPDATE dataset SET update_date = :updateDate, update_user_id = :updateUserId WHERE datasetid = :datasetId")
     void updateDatasetUpdateUserAndDate(@Bind("datasetId") Integer datasetId, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId);
+
+    @SqlUpdate("UPDATE dataset " +
+            " SET name =:datasetName," +
+            " update_date = :updateDate, " +
+            " update_user_id = :updateUserId, " +
+            " needs_approval = :needsApproval, " +
+            " WHERE datasetid = :datasetId")
+    void updateDataset(@Bind("datasetId") Integer datasetId, @Bind("datasetName") String datasetName, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId, @Bind("needsApproval") Boolean needsApproval);
 
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +
@@ -348,5 +356,4 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         " WHERE c.consentid = :consentId " +
         " AND d.active = true ")
     Set<Dataset> findDatasetsForConsentId(@Bind("consentId") String consentId);
-
 }
