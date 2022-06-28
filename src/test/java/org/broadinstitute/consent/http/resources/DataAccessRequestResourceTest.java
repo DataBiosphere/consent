@@ -106,7 +106,6 @@ public class DataAccessRequestResourceTest {
     @Test(expected = NotFoundException.class)
     public void testDescribeConsentForDarCase4() {
         DataAccessRequest dar = generateDataAccessRequest();
-        dar.getData().setDatasetIds(null);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService);
         resource.describeConsentForDAR(authUser, dar.getReferenceId());

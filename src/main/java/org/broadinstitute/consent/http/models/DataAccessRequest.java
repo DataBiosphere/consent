@@ -175,6 +175,14 @@ public class DataAccessRequest {
     datasetIds.add(id);
   }
 
+  public void addDatasetIds(List<Integer> ids) {
+    if (Objects.nonNull(ids)) {
+      datasetIds = ids;
+    } else {
+      datasetIds = new ArrayList<>();
+    }
+  }
+
   /**
    * Merges the DAR and the DAR Data into a single Map Ignores a series of deprecated keys Null
    * values are ignored by default

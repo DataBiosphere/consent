@@ -374,8 +374,8 @@ public class DataAccessRequestResourceVersion2Test {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setReferenceId(UUID.randomUUID().toString());
+    dar.addDatasetIds(List.of(1, 2));
     data.setReferenceId(dar.getReferenceId());
-    data.setDatasetIds(Arrays.asList(1, 2));
     dar.setData(data);
     dar.setUserId(user.getDacUserId());
     dar.setCreateDate(now);

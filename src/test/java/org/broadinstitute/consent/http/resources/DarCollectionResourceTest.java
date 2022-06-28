@@ -67,7 +67,7 @@ public class DarCollectionResourceTest {
   private DataAccessRequest mockDataAccessRequestWithDatasetIds() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setDatasetIds(List.of(RandomUtils.nextInt(1, 100)));
+    dar.addDatasetIds(List.of(RandomUtils.nextInt(1, 100)));
     dar.setData(data);
     return dar;
   }

@@ -180,10 +180,14 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     DarCollection c = createDarCollection();
     generateDatasetElectionForCollection(c);
     DataAccessRequest dar = new ArrayList<>(c.getDars().values()).get(0);
+    dar.addDatasetId(dataset.getDataSetId());
     if (Objects.isNull(dar)) {
       fail("DAR was not created in collection");
     }
-    dar.getData().setDatasetIds(List.of(dataset.getDataSetId()));
+
+    // TODO: This brings up a good point about DARCollectionDAO. Will we need to change all queries that use DAR json
+    dar.getData().setDatasetIds(List.of(1));
+    //dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
     dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), dar.getUserId(), new Date(), new Date(), new Date(), dar.getData());
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
@@ -787,8 +791,6 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     testDar.setSubmissionDate(now);
     testDar.setUpdateDate(now);
     DataAccessRequestData contents = new DataAccessRequestData();
-    // add data datasetId
-    contents.setDatasetIds(List.of(dataset.getDataSetId()));
     testDar.setData(contents);
 
     dataAccessRequestDAO.insertDataAccessRequest(
@@ -801,6 +803,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
             testDar.getUpdateDate(),
             testDar.getData()
     );
+    dataAccessRequestDAO.insertDARDatasetRelation(testDar.getReferenceId(), dataset.getDataSetId());
     return testDar;
   }
 
@@ -824,6 +827,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     // creating a collection and DAR
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), now);
     DataAccessRequest testDar = createDAR(user, dataset, collectionId);
+    // dataAccessRequestDAO.insertDARDatasetRelation(testDar.getReferenceId(), dataset.getDataSetId());
 
     // create a DAC
     Dac dac = createDAC();

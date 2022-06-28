@@ -307,6 +307,9 @@ public class DarCollectionServiceTest {
 
     Dataset dataset = new Dataset();
     dataset.setDataSetId(datasetIds.get(0));
+    List<DarDataset> darDatasets = getDarDatasets(collections);
+
+    when(dataAccessRequestDAO.findAllDARDatasets(any())).thenReturn(darDatasets);
 
     // mocking out findDatasetWithDataUseByIdList to only return one of the datasets
     when(datasetDAO.findDatasetWithDataUseByIdList(List.of(dataset.getDataSetId()))).thenReturn(new HashSet<>(List.of(dataset)));

@@ -442,11 +442,15 @@ public class DAOTestHelper {
     protected DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId, int datasetId, int userId, String darCode) {
         DataAccessRequestData data = new DataAccessRequestData();
         List<Integer> datasetIds = Collections.singletonList(datasetId);
-        data.setDatasetIds(datasetIds);
         data.setProjectTitle(RandomStringUtils.random(10));
         String referenceId = RandomStringUtils.randomAlphanumeric(20);
+        // TODO Will need to change how we get datasetIds on the datasetDAO
+        data.setDatasetIds(List.of(datasetId));
         dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(), new Date(), new Date(), new Date(), data);
-        return dataAccessRequestDAO.findByReferenceId(referenceId);
+        dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+        DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+        dar.addDatasetIds(datasetIds);
+        return dar;
     }
 
     /**

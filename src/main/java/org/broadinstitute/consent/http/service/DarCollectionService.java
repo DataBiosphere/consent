@@ -277,8 +277,6 @@ public class DarCollectionService {
       .collect(Collectors.toList());
     Map<String, List<DarDataset>> referenceIdToDatasetId = dataAccessRequestDAO.findAllDARDatasets(reference_ids)
       .stream().collect(Collectors.groupingBy(DarDataset::getReferenceId));
-
-    // get datasetIds from each DAR from each collection
     List<Integer> datasetIds = collections.stream()
       .map(d-> d.getDars().values())
       .flatMap(Collection::stream)
@@ -286,6 +284,7 @@ public class DarCollectionService {
       .flatMap(Collection::stream)
       .map(DarDataset::getDatasetId)
       .collect(Collectors.toList());
+
     if(!datasetIds.isEmpty()) {
       // if filterDatasetIds has values, get the intersection between that and datasetIds
       if (!filterDatasetIds.isEmpty()) {
