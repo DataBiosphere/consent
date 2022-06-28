@@ -576,6 +576,7 @@ public class DataAccessRequestData {
         this.sortDate = sortDate;
     }
 
+    @Deprecated
     public List<Integer> getDatasetIds() {
         if (Objects.isNull(datasetIds)) {
             return Collections.emptyList();
@@ -583,6 +584,7 @@ public class DataAccessRequestData {
         return datasetIds;
     }
 
+    @Deprecated
     public void setDatasetIds(List<Integer> datasetIds) {
         this.datasetIds = datasetIds;
     }
