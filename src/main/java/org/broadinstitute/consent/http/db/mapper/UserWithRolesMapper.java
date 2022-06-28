@@ -21,12 +21,12 @@ public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
 
   public User map(ResultSet r, StatementContext ctx) throws SQLException {
     User user;
-    if (!users.containsKey(r.getInt("dacUserId"))) {
+    if (!users.containsKey(r.getInt("user_id"))) {
       user = new User();
-      user.setDacUserId(r.getInt("dacUserId"));
+      user.setUserId(r.getInt("user_id"));
       user.setEmail(r.getString("email"));
-      user.setDisplayName(r.getString("displayName"));
-      user.setCreateDate(r.getDate("createDate"));
+      user.setDisplayName(r.getString("display_name"));
+      user.setCreateDate(r.getDate("create_date"));
       user.setAdditionalEmail(r.getString("additional_email"));
       user.setEmailPreference(r.getBoolean("email_preference"));
       user.setRoles(new ArrayList<>());
@@ -37,10 +37,12 @@ public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
         user.setEraCommonsId(r.getString("era_commons_id"));
       }
     } else {
-      user = users.get(r.getInt("dacUserId"));
+      user = users.get(r.getInt("user_id"));
     }
     addRole(r, user);
-    users.put(user.getDacUserId(), user);
+    // Populate for backwards compatibility.
+    user.setDacUserId();
+    users.put(user.getUserId(), user);
     return user;
   }
 

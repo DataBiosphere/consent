@@ -15,6 +15,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
@@ -79,7 +81,11 @@ public class InstitutionResource extends Resource {
     try{
       User user = userService.findUserByEmail(authUser.getEmail());
       Institution payload = new Gson().fromJson(institution, Institution.class);
-      Institution newInstitution = institutionService.createInstitution(payload, user.getDacUserId());
+      List<Institution> conflicts = institutionService.findAllInstitutionsByName(payload.getName());
+      if (!conflicts.isEmpty()) {
+        throw new ConsentConflictException("An institution exists with the name of '" + payload.getName() + "'");
+      }
+      Institution newInstitution = institutionService.createInstitution(payload, user.getUserId());
       return Response.ok().entity(newInstitution).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
@@ -95,7 +101,7 @@ public class InstitutionResource extends Resource {
     try{
       User user = userService.findUserByEmail(authUser.getEmail());
       Institution payload = new Gson().fromJson(institution, Institution.class);
-      Institution updatedInstitution = institutionService.updateInstitutionById(payload, id, user.getDacUserId());
+      Institution updatedInstitution = institutionService.updateInstitutionById(payload, id, user.getUserId());
       return Response.ok().entity(updatedInstitution).build();
     } catch(Exception e) {
       return createExceptionResponse(e);

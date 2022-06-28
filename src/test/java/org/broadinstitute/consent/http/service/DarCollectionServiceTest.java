@@ -82,8 +82,8 @@ public class DarCollectionServiceTest {
   @Test
   public void testGetCollectionsForUserByRoleName_CHAIR_MEMBER() {
     User user = new User();
-    UserRole chair = new UserRole(1, user.getDacUserId(), UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName(), 2);
-    UserRole member = new UserRole(2, user.getDacUserId(), UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName(), 3);
+    UserRole chair = new UserRole(1, user.getUserId(), UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName(), 2);
+    UserRole member = new UserRole(2, user.getUserId(), UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName(), 3);
     user.addRole(chair);
     user.addRole(member);
     user.getRoles().get(0).setDacId(1);
@@ -114,10 +114,10 @@ public class DarCollectionServiceTest {
   @Test
   public void testGetCollectionsForUserByRoleName_DEFAULT() {
     User user = new User();
-    user.setDacUserId(1);
+    user.setUserId(1);
     user.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
     DarCollection collection = new DarCollection();
-    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId())).thenReturn(List.of(collection));
+    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getUserId())).thenReturn(List.of(collection));
     initService();
 
     List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.RESEARCHER.getRoleName());
@@ -127,8 +127,8 @@ public class DarCollectionServiceTest {
   @Test
   public void testGetCollectionsForUserByRoleName_NULL() {
     User user = new User();
-    user.setDacUserId(1);
-    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId())).thenReturn(List.of(new DarCollection()));
+    user.setUserId(1);
+    when(darCollectionDAO.findDARCollectionsCreatedByUserId(user.getUserId())).thenReturn(List.of(new DarCollection()));
     initService();
 
     List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, null);
@@ -155,7 +155,7 @@ public class DarCollectionServiceTest {
   @Test
   public void testGetCollectionsByUserDacs() {
     User user = new User();
-    user.setDacUserId(1);
+    user.setUserId(1);
     UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
     chair.setDacId(1);
     user.setRoles(List.of(chair));
@@ -163,7 +163,7 @@ public class DarCollectionServiceTest {
     when(darCollectionDAO.findDARCollectionByCollectionIds(List.of(1))).thenReturn(List.of(new DarCollection()));
     initService();
 
-    List<DarCollection> collections = service.getCollectionsByUserDacs(user);
+    List<DarCollection> collections = service.getCollectionsByUserDacs(user, false);
     assertEquals(1, collections.size());
   }
 
@@ -272,7 +272,7 @@ public class DarCollectionServiceTest {
     when(datasetDAO.findDatasetWithDataUseByIdList(anyList())).thenReturn(datasets);
     initService();
 
-    collections = service.addDatasetsToCollections(collections);
+    collections = service.addDatasetsToCollections(collections, List.of());
     assertEquals(1, collections.size());
 
     DarCollection collection = collections.get(0);
@@ -284,6 +284,39 @@ public class DarCollectionServiceTest {
       .sorted()
       .collect(Collectors.toList());
     assertEquals(datasetIds, collectionDatasetIds);
+  }
+
+  @Test
+  public void testAddDatasetsToCollectionsWithFilterDatasetIds() {
+    List<DarCollection> collections = new ArrayList<>();
+    Set<Dataset> datasets = new HashSet<>();
+    // need a minimal version of a collection with an array of datasetIds
+    collections.add(generateMockDarCollection(datasets));
+    List<Integer> datasetIds = datasets.stream()
+            .map(Dataset::getDataSetId)
+            .sorted()
+            .collect(Collectors.toList());
+
+    Dataset dataset = new Dataset();
+    dataset.setDataSetId(datasetIds.get(0));
+
+    // mocking out findDatasetWithDataUseByIdList to only return one of the datasets
+    when(datasetDAO.findDatasetWithDataUseByIdList(List.of(dataset.getDataSetId()))).thenReturn(new HashSet<>(List.of(dataset)));
+
+    initService();
+
+    collections = service.addDatasetsToCollections(collections, List.of(dataset.getDataSetId()));
+    assertEquals(1, collections.size());
+
+    DarCollection collection = collections.get(0);
+    Set<Dataset> datasetsFromCollection = collection.getDatasets();
+    assertEquals(1, datasetsFromCollection.size());
+
+    List<Integer> collectionDatasetIds = datasetsFromCollection.stream()
+            .map(Dataset::getDataSetId)
+            .sorted()
+            .collect(Collectors.toList());
+    assertEquals(dataset.getDataSetId(), collectionDatasetIds.get(0));
   }
 
   @Test
@@ -567,7 +600,7 @@ public class DarCollectionServiceTest {
   @Test
   public void testQueryCollectionsByFiltersAndUserRolesForResearcher() {
     User user = new User();
-    user.setDacUserId(1);
+    user.setUserId(1);
     String dacRoleName = UserRoles.RESEARCHER.getRoleName();
     Integer dacRoleId = UserRoles.RESEARCHER.getRoleId();
     UserRole memberRole = new UserRole(dacRoleId, dacRoleName);

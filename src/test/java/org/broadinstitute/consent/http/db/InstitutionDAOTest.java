@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.db;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Institution;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 
@@ -43,7 +45,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
 
   @Test
   public void testUpdateInstitutionById() {
-    Integer userId = createUser().getDacUserId();
+    Integer userId = createUser().getUserId();
     String newValue = "New Value";
     Institution institution = createInstitution();
     institutionDAO.updateInstitutionById(institution.getId(), newValue, newValue, newValue, userId, new Date());
@@ -110,6 +112,21 @@ public class InstitutionDAOTest extends DAOTestHelper {
     assertEquals(1, institution.getSigningOfficials().size());
     assertEquals(user.getInstitutionId(), institution.getId());
     assertEquals(user.getDisplayName(), institution.getSigningOfficials().get(0).displayName);
-    
+  }
+
+  @Test
+  public void testFindInstitutionsByName() {
+    Institution institution = createInstitution();
+
+    List<Institution> found = institutionDAO.findInstitutionsByName(institution.getName());
+    assertFalse(found.isEmpty());
+    assertEquals(1, found.size());
+    assertEquals(institution.getId(), found.get(0).getId());
+  }
+
+  @Test
+  public void testFindInstitutionsByName_Missing() {
+    List<Institution> found = institutionDAO.findInstitutionsByName(RandomStringUtils.random(10));
+    assertTrue(found.isEmpty());
   }
 }

@@ -204,7 +204,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
         when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
         when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class))).thenReturn(RandomUtils.nextInt(1,100));
-        doNothing().when(dataAccessRequestDAO).insertVersion3(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
+        doNothing().when(dataAccessRequestDAO).insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
         initService();
         List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
         assertEquals(3, newDars.size());
@@ -245,7 +245,7 @@ public class DataAccessRequestServiceTest {
     @Test
     public void testInsertDraftDataAccessRequest() {
         User user = new User();
-        user.setDacUserId(1);
+        user.setUserId(1);
         DataAccessRequest draft = generateDataAccessRequest();
         doNothing()
             .when(dataAccessRequestDAO)
@@ -408,7 +408,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         User user = new User();
-        user.setDacUserId(1);
+        user.setUserId(1);
         user.setDisplayName("displayName");
         user.setInstitutionId(1);
         Institution institution = new Institution();
@@ -467,7 +467,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         User user = new User();
-        user.setDacUserId(1);
+        user.setUserId(1);
         user.setDisplayName("displayName");
         user.setInstitutionId(1);
         Institution institution = new Institution();
@@ -500,7 +500,7 @@ public class DataAccessRequestServiceTest {
         User user = new User();
         UserRole userRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         user.addRole(userRole);
-        user.setDacUserId(1);
+        user.setUserId(1);
         user.setDisplayName("displayName");
         user.setInstitutionId(1);
         Institution institution = new Institution();
@@ -782,6 +782,7 @@ public class DataAccessRequestServiceTest {
         doNothing().when(electionDAO).deleteElectionById(any());
         doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
         doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
         initService();
 
         service.deleteByReferenceId(user, referenceId);
@@ -801,6 +802,7 @@ public class DataAccessRequestServiceTest {
         doNothing().when(electionDAO).deleteElectionById(any());
         doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
         doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
         initService();
 
         service.deleteByReferenceId(user, referenceId);

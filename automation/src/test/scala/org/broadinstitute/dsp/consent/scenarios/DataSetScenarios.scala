@@ -11,7 +11,7 @@ class DataSetScenarios extends Simulation with TestRunner {
         List(
             GroupedScenario("DataSet By DAC User Id Scenario") {
                 exec(Requests.User.me(OK.code, TestConfig.researcherHeader))
-                  .exec(Requests.DataSet.byUserId(OK.code, "${dacUserId}", TestConfig.researcherHeader))
+                  .exec(Requests.DataSet.byUserId(OK.code, "${userId}", TestConfig.researcherHeader))
             }
         )
     )

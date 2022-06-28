@@ -126,14 +126,14 @@ public class MetricsServiceTest {
     dac.setDescription("description");
     dac.setName("dac1");
     User chairUser = new User();
-    chairUser.setDacUserId(1);
+    chairUser.setUserId(1);
     chairUser.setEmail("chair@test.org");
     chairUser.setDisplayName("Chair");
     UserRole chairRole =
         new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
     chairUser.setRoles(Collections.singletonList(chairRole));
     User memberUser = new User();
-    memberUser.setDacUserId(2);
+    memberUser.setUserId(2);
     memberUser.setEmail("member@test.org");
     memberUser.setDisplayName("Member");
     UserRole memberRole =

@@ -84,10 +84,10 @@ public class SummaryServiceTest {
     @Test
     public void testListDataAccessRequestSummaryDetails_case2() {
         User voteUser = new User();
-        voteUser.setDacUserId(5);
+        voteUser.setUserId(5);
         voteUser.setDisplayName("Vote User Name");
         User darUser = new User();
-        darUser.setDacUserId(10);
+        darUser.setUserId(10);
         darUser.setDisplayName("DAR User Name");
         List<Election> accessElections = List.of(createElection(ElectionType.DATA_ACCESS.getValue()));
         List<Election> rpElections = List.of(createElectionWithReferenceId(ElectionType.RP.getValue(), accessElections.get(0).getReferenceId()));
@@ -95,12 +95,12 @@ public class SummaryServiceTest {
         List<Integer> accessElectionIds = accessElections.stream().map(Election::getElectionId).collect(Collectors.toList());
         List<Integer> rpElectionIds = rpElections.stream().map(Election::getElectionId).collect(Collectors.toList());
         List<Integer> consentElectionIds = consentElections.stream().map(Election::getElectionId).collect(Collectors.toList());
-        List<DataAccessRequest> dars = List.of(createDAR(accessElections.get(0).getReferenceId(), darUser.getDacUserId()));
+        List<DataAccessRequest> dars = List.of(createDAR(accessElections.get(0).getReferenceId(), darUser.getUserId()));
         List<Association> associations = List.of(createAssociation(dars.get(0).getData().getDatasetIds().get(0), consentElections.get(0).getReferenceId()));
         List<String> associatedConsentIds = List.of(consentElections.get(0).getReferenceId());
-        List<Vote> accessVotes = createVotes(accessElections.get(0).getElectionId(), voteUser.getDacUserId());
-        List<Vote> rpVotes = createVotes(rpElections.get(0).getElectionId(), voteUser.getDacUserId());
-        List<Vote> consentVotes = createVotes(consentElections.get(0).getElectionId(), voteUser.getDacUserId());
+        List<Vote> accessVotes = createVotes(accessElections.get(0).getElectionId(), voteUser.getUserId());
+        List<Vote> rpVotes = createVotes(rpElections.get(0).getElectionId(), voteUser.getUserId());
+        List<Vote> consentVotes = createVotes(consentElections.get(0).getElectionId(), voteUser.getUserId());
         List<Match> matchList = List.of(createMatch(associatedConsentIds.get(0), dars.get(0).getReferenceId()));
         List<String> referenceIds = List.of(accessElections.get(0).getReferenceId());
         List<Integer> datasetIds = dars.get(0).getData().getDatasetIds();
@@ -114,8 +114,8 @@ public class SummaryServiceTest {
         when(voteDAO.findVotesByElectionIds(rpElectionIds)).thenReturn(rpVotes);
         when(voteDAO.findVotesByElectionIds(consentElectionIds)).thenReturn(consentVotes);
         when(matchDAO.findMatchesForPurposeIds(referenceIds)).thenReturn(matchList);
-        when(userDAO.findUsers(List.of(voteUser.getDacUserId()))).thenReturn(List.of(voteUser));
-        when(userDAO.findUsers(List.of(darUser.getDacUserId()))).thenReturn(List.of(darUser));
+        when(userDAO.findUsers(List.of(voteUser.getUserId()))).thenReturn(List.of(voteUser));
+        when(userDAO.findUsers(List.of(darUser.getUserId()))).thenReturn(List.of(darUser));
 
         initService();
         List<DataAccessRequestSummaryDetail> details = summaryService.listDataAccessRequestSummaryDetails();

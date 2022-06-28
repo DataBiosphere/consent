@@ -39,7 +39,7 @@ public class DarCollectionReducer
       if (Objects.nonNull(rowView.getColumn("up_property_id", Integer.class))) {
         userProperty = rowView.getRow(UserProperty.class);
       }
-      if (Objects.isNull(user) && Objects.nonNull(rowView.getColumn("u_dacuserid", Integer.class))) {
+      if (Objects.isNull(user) && Objects.nonNull(rowView.getColumn("u_user_id", Integer.class))) {
         user = rowView.getRow(User.class);
       }
       if (Objects.nonNull(rowView.getColumn("i_id", Integer.class))) {

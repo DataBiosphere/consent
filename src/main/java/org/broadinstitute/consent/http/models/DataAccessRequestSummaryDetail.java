@@ -97,7 +97,7 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
     List<String> dataSetUUIds =
         getDar().getData().getDatasetIds().stream()
             .map(Dataset::parseAliasToIdentifier)
-            .collect(Collectors.toUnmodifiableList());
+            .collect(Collectors.toList());
     Optional<Vote> chairPersonRPVote =
         getRpVotes().stream()
             .filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue()))
@@ -122,7 +122,7 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
         finalVote.flatMap(
             vote ->
                 getDacMembers().stream()
-                    .filter(u -> u.getDacUserId().equals(vote.getDacUserId()))
+                    .filter(u -> u.getUserId().equals(vote.getDacUserId()))
                     .findFirst());
     Boolean agreement =
         (finalVote.isPresent() && Objects.nonNull(getMatchObject()))

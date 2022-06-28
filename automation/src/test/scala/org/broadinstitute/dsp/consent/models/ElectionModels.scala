@@ -73,7 +73,7 @@ object ElectionModels {
     case class Vote(
         voteId: Option[Int] = None,
         vote: Option[Boolean] = None,
-        dacUserId: Option[Int] = None,
+        userId: Option[Int] = None,
         createDate: Option[Long] = None,
         updateDate: Option[Long] = None,
         electionId: Option[Int] = None,
@@ -85,7 +85,7 @@ object ElectionModels {
 
     case class VotePostObject(
         vote: Option[Boolean] = None,
-        dacUserId: Option[Int] = None,
+        userId: Option[Int] = None,
         rationale: Option[String] = None,
         hasConcerns: Option[Boolean] = None
     )

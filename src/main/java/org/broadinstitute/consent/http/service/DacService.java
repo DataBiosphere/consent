@@ -103,7 +103,7 @@ public class DacService {
      */
     private Map<Dac, List<User>> groupUsersByDacs(List<Dac> dacs, List<User> allDacMembers) {
         Map<Integer, Dac> dacMap = dacs.stream().collect(Collectors.toMap(Dac::getDacId, d -> d));
-        Map<Integer, User> userMap = allDacMembers.stream().collect(Collectors.toMap(User::getDacUserId, u -> u));
+        Map<Integer, User> userMap = allDacMembers.stream().collect(Collectors.toMap(User::getUserId, u -> u));
         Map<Dac, List<User>> dacToUserMap = new HashMap<>();
         dacs.forEach(d -> dacToUserMap.put(d, new ArrayList<>()));
         allDacMembers.stream().
@@ -179,7 +179,7 @@ public class DacService {
         List<User> users = dacDAO.findMembersByDacId(dacId);
         List<Integer> allUserIds = users.
                 stream().
-                map(User::getDacUserId).
+                map(User::getUserId).
                 distinct().
                 collect(Collectors.toList());
         Map<Integer, List<UserRole>> userRoleMap = new HashMap<>();
@@ -189,16 +189,16 @@ public class DacService {
                     collect(groupingBy(UserRole::getUserId)));
         }
         users.forEach(u -> {
-            if (userRoleMap.containsKey(u.getDacUserId())) {
-                u.setRoles(userRoleMap.get(u.getDacUserId()));
+            if (userRoleMap.containsKey(u.getUserId())) {
+                u.setRoles(userRoleMap.get(u.getUserId()));
             }
         });
         return users;
     }
 
     public User addDacMember(Role role, User user, Dac dac) throws IllegalArgumentException {
-        dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
-        User updatedUser = userDAO.findUserById(user.getDacUserId());
+        dacDAO.addDacMember(role.getRoleId(), user.getUserId(), dac.getDacId());
+        User updatedUser = userDAO.findUserById(user.getUserId());
         List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         for (Election e : elections) {
             IllegalArgumentException noTypeException = new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
@@ -213,7 +213,7 @@ public class DacService {
             boolean isManualReview = type.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
             voteService.createVotesForUser(updatedUser, e, type.get(), isManualReview);
         }
-        return userDAO.findUserById(updatedUser.getDacUserId());
+        return userDAO.findUserById(updatedUser.getUserId());
     }
 
     public void removeDacMember(Role role, User user, Dac dac) throws BadRequestException {

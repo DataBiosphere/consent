@@ -167,28 +167,28 @@ public class ElectionServiceTest {
 
         sampleVoteChairpersonApproval = new Vote();
         sampleVoteChairpersonApproval.setElectionId(sampleElection1.getElectionId());
-        sampleVoteChairpersonApproval.setDacUserId(sampleUserChairperson.getDacUserId());
+        sampleVoteChairpersonApproval.setDacUserId(sampleUserChairperson.getUserId());
         sampleVoteChairpersonApproval.setVote(true);
         sampleVoteChairpersonApproval.setVoteId(1);
         sampleVoteChairpersonApproval.setRationale("Go for it");
 
         sampleVoteChairpersonReject = new Vote();
         sampleVoteChairpersonReject.setElectionId(sampleElection1.getElectionId());
-        sampleVoteChairpersonReject.setDacUserId(sampleUserChairperson.getDacUserId());
+        sampleVoteChairpersonReject.setDacUserId(sampleUserChairperson.getUserId());
         sampleVoteChairpersonReject.setVote(false);
         sampleVoteChairpersonReject.setVoteId(1);
         sampleVoteChairpersonReject.setRationale("Rejection vote");
 
         sampleVoteMember = new Vote();
         sampleVoteMember.setElectionId(sampleElection1.getElectionId());
-        sampleVoteMember.setDacUserId(sampleUserMember.getDacUserId());
+        sampleVoteMember.setDacUserId(sampleUserMember.getUserId());
         sampleVoteMember.setVote(true);
         sampleVoteMember.setVoteId(2);
         sampleVoteMember.setRationale("Go for it");
 
         sampleVoteRP = new Vote();
         sampleVoteRP.setElectionId(sampleElectionRP.getElectionId());
-        sampleVoteRP.setDacUserId(sampleUserMember.getDacUserId());
+        sampleVoteRP.setDacUserId(sampleUserMember.getUserId());
         sampleVoteRP.setVote(true);
         sampleVoteRP.setVoteId(3);
         sampleVoteRP.setRationale("Yep");
@@ -248,7 +248,7 @@ public class ElectionServiceTest {
         when(userDAO.findUsersWithRoles(any())).thenReturn(Set.of(sampleUserChairperson, sampleUserMember));
         when(userDAO.findUsersEnabledToVoteByDAC(any())).thenReturn(Set.of(sampleUserChairperson, sampleUserMember));
         when(userDAO.findNonDacUsersEnabledToVote()).thenReturn(Set.of(sampleUserChairperson, sampleUserMember));
-        when(userDAO.findUserById(sampleUserChairperson.getDacUserId())).thenReturn(sampleUserChairperson);
+        when(userDAO.findUserById(sampleUserChairperson.getUserId())).thenReturn(sampleUserChairperson);
         when(userDAO.findUserByEmailAndRoleId("test@test.com", UserRoles.CHAIRPERSON.getRoleId()))
                 .thenReturn(sampleUserChairperson);
         when(userDAO.findUserByEmailAndRoleId("test@test.com", UserRoles.MEMBER.getRoleId()))
@@ -444,9 +444,9 @@ public class ElectionServiceTest {
                 .thenReturn(Set.of());
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(), Arrays.asList(sampleUserChairperson.getDacUserId())))
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
                 .thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(), Arrays.asList(sampleUserChairperson.getDacUserId())))
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
                 .thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(Arrays.asList());
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId())).thenReturn(Arrays.asList());
@@ -464,11 +464,11 @@ public class ElectionServiceTest {
                 .thenReturn(Set.of(sampleUserChairperson));
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(), Arrays.asList(sampleUserChairperson.getDacUserId())))
-                .thenReturn(Arrays.asList(new Vote(4, true, sampleUserChairperson.getDacUserId(), null, null,
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
+                .thenReturn(Arrays.asList(new Vote(4, true, sampleUserChairperson.getUserId(), null, null,
                         sampleElectionRP.getElectionId(), "", VoteType.AGREEMENT.getValue(),
                         false, false)));
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(), Arrays.asList(sampleUserChairperson.getDacUserId())))
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
                 .thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(Arrays.asList());
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId()))
@@ -487,9 +487,9 @@ public class ElectionServiceTest {
                 .thenReturn(Set.of(sampleUserChairperson));
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(), Arrays.asList(sampleUserChairperson.getDacUserId())))
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
                 .thenReturn(Arrays.asList());
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(), Arrays.asList(sampleUserChairperson.getDacUserId())))
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
                 .thenReturn(Arrays.asList());
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(Arrays.asList(sampleVoteRP));
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId()))

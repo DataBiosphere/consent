@@ -197,17 +197,17 @@ public class VoteService {
     public List<Vote> createVotesForUser(User user, Election election, ElectionType electionType, Boolean isManualReview) {
         Dac dac = electionDAO.findDacForElection(election.getElectionId());
         List<Vote> votes = new ArrayList<>();
-        Integer dacVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.DAC.getValue());
+        Integer dacVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(), VoteType.DAC.getValue());
         votes.add(voteDAO.findVoteById(dacVoteId));
         if (isDacChairPerson(dac, user)) {
-            Integer chairVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.CHAIRPERSON.getValue());
+            Integer chairVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(), VoteType.CHAIRPERSON.getValue());
             votes.add(voteDAO.findVoteById(chairVoteId));
             // Requires Chairperson role to create a final and agreement vote in the Data Access case
             if (electionType.equals(ElectionType.DATA_ACCESS)) {
-                Integer finalVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.FINAL.getValue());
+                Integer finalVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(), VoteType.FINAL.getValue());
                 votes.add(voteDAO.findVoteById(finalVoteId));
                 if (!isManualReview) {
-                    Integer agreementVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.AGREEMENT.getValue());
+                    Integer agreementVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(), VoteType.AGREEMENT.getValue());
                     votes.add(voteDAO.findVoteById(agreementVoteId));
                 }
             }
@@ -263,7 +263,7 @@ public class VoteService {
                 collect(Collectors.toList());
         if (!openElectionIds.isEmpty()) {
             List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
-                    filter(v -> v.getDacUserId().equals(user.getDacUserId())).
+                    filter(v -> v.getDacUserId().equals(user.getUserId())).
                     map(Vote::getVoteId).
                     collect(Collectors.toList());
             if (!openUserVoteIds.isEmpty()) {

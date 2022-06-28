@@ -15,7 +15,7 @@ object DataSetChains {
     def dataSetCatalogPickTwo(additionalHeaders: Map[String, String]): ChainBuilder = {
         exitBlockOnFail {
             exec(
-                Requests.User.dataSetCatalog(OK.code, "${dacUserId}", additionalHeaders)
+                Requests.User.dataSetCatalog(OK.code, "${userId}", additionalHeaders)
             )
             .exec { session =>
                 implicit val dataSetFormatJson: JsonProtocols.dataSetFormat.type = JsonProtocols.dataSetFormat
@@ -24,7 +24,7 @@ object DataSetChains {
 
                 val dataSetStr: String = session(Requests.DataSet.dataSetResponse).as[String]
                 val dataSets: Seq[DataSet] = dataSetStr.parseJson.convertTo[Seq[DataSet]]
-                
+
                 val chosenSets: Seq[DataSet] = dataSets
                     .filter(ds => ds.active && !ds.dataUse.collaboratorRequired.getOrElse(false))
                     .groupBy(_.dacId)
@@ -34,11 +34,11 @@ object DataSetChains {
 
                 val setIds: Seq[Int] = chosenSets.map(s => s.dataSetId).toSeq
                 val entrySets: Seq[DataSetEntry] = chosenSets.map(s => DataSetEntryBuilder.fromDataSet(s)).toSeq
-                
-                val dacUserId: Int = session("dacUserId").as[Int]
+
+                val userId: Int = session("userId").as[Int]
                 val dar: DataAccessRequestDraft = DataAccessRequestDraft(
-                    userId = dacUserId, 
-                    datasets = entrySets, 
+                    userId = userId,
+                    datasets = entrySets,
                     datasetId = setIds
                 )
                 val newSession: Session = session.set("darRequestBody", dar.toJson.compactPrint)

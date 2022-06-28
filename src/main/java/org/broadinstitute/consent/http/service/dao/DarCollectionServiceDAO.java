@@ -109,15 +109,15 @@ public class DarCollectionServiceDAO {
     voteUsers.forEach(
         u -> {
           // All users get a minimum of one DAC vote type for both RP and DataAccess election types
-          userVotes.add(createVoteInsert(handle, VoteType.DAC.getValue(), electionType, referenceId, now, u.getDacUserId()));
+          userVotes.add(createVoteInsert(handle, VoteType.DAC.getValue(), electionType, referenceId, now, u.getUserId()));
           // Chairpersons get a Chairperson vote for both RP and DataAccess election types
           if (u.hasUserRole(UserRoles.CHAIRPERSON)) {
-            userVotes.add(createVoteInsert(handle, VoteType.CHAIRPERSON.getValue(), electionType, referenceId, now, u.getDacUserId()));
+            userVotes.add(createVoteInsert(handle, VoteType.CHAIRPERSON.getValue(), electionType, referenceId, now, u.getUserId()));
             // Chairpersons get Final and Agreement votes for DataAccess elections
             if (ElectionType.DATA_ACCESS.getValue().equals(electionType)) {
-                userVotes.add(createVoteInsert(handle, VoteType.FINAL.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, now, u.getDacUserId()));
+                userVotes.add(createVoteInsert(handle, VoteType.FINAL.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, now, u.getUserId()));
                 if (!isManualReview) {
-                  userVotes.add(createVoteInsert(handle, VoteType.AGREEMENT.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, now, u.getDacUserId()));
+                  userVotes.add(createVoteInsert(handle, VoteType.AGREEMENT.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, now, u.getUserId()));
                 }
             }
           }

@@ -24,6 +24,6 @@ public class ElectionReviewVoteMapper implements RowMapper<ElectionReviewVote> {
             (r.getString("reminderSent") == null) ? null : r.getBoolean("reminderSent"),
             (r.getString("has_concerns") == null) ? null : r.getBoolean("has_concerns"));
 
-    return new ElectionReviewVote(vote, r.getString("displayName"), r.getString("email"));
+    return new ElectionReviewVote(vote, r.getString("display_name"), r.getString("email"));
   }
 }

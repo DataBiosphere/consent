@@ -861,9 +861,9 @@ public class VoteServiceTest {
 
     private void setUpUserAndElectionVotes(UserRoles userRoles) {
         User user = new User();
-        user.setDacUserId(RandomUtils.nextInt(1, 10));
+        user.setUserId(RandomUtils.nextInt(1, 10));
         UserRole chairRole = new UserRole();
-        chairRole.setUserId(user.getDacUserId());
+        chairRole.setUserId(user.getUserId());
         chairRole.setRoleId(userRoles.getRoleId());
         chairRole.setName(userRoles.getRoleName());
         user.setRoles(Collections.singletonList(chairRole));

@@ -760,21 +760,21 @@ public class DacServiceTest {
 
     private User getChair() {
         User chair = new User();
-        chair.setDacUserId(1);
+        chair.setUserId(1);
         chair.setDisplayName("Chair");
         chair.setEmail("chair@duos.org");
         chair.setRoles(new ArrayList<>());
-        chair.getRoles().add(new UserRole(1, chair.getDacUserId(), UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName(), 1));
+        chair.getRoles().add(new UserRole(1, chair.getUserId(), UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName(), 1));
         return chair;
     }
 
     private User getMember() {
         User member = new User();
-        member.setDacUserId(2);
+        member.setUserId(2);
         member.setDisplayName("Member");
         member.setEmail("member@duos.org");
         member.setRoles(new ArrayList<>());
-        member.getRoles().add(new UserRole(2, member.getDacUserId(), UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName(), 1));
+        member.getRoles().add(new UserRole(2, member.getUserId(), UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName(), 1));
         return member;
     }
 

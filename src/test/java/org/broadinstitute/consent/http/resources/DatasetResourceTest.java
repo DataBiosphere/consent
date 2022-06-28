@@ -120,7 +120,7 @@ public class DatasetResourceTest {
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(user.getDacUserId()).thenReturn(1);
+        when(user.getUserId()).thenReturn(1);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("/api/dataset/1"));
@@ -214,7 +214,7 @@ public class DatasetResourceTest {
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(user.getDacUserId()).thenReturn(1);
+        when(user.getUserId()).thenReturn(1);
         initResource();
         Response response = resource.createDataset(authUser, uriInfo, json);
 
@@ -230,7 +230,7 @@ public class DatasetResourceTest {
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(user.getDacUserId()).thenReturn(1);
+        when(user.getUserId()).thenReturn(1);
         when(user.hasUserRole(any())).thenReturn(true);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
@@ -304,7 +304,7 @@ public class DatasetResourceTest {
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(user.getDacUserId()).thenReturn(1);
+        when(user.getUserId()).thenReturn(1);
         when(user.hasUserRole(any())).thenReturn(true);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
@@ -613,7 +613,7 @@ public class DatasetResourceTest {
         List<Map<String, String>> autocompleteMap = List.of(Collections.EMPTY_MAP);
         when(authUser.getEmail()).thenReturn("testauthuser@test.com");
         when(userService.findUserByEmail(anyString())).thenReturn(user);
-        when(user.getDacUserId()).thenReturn(0);
+        when(user.getUserId()).thenReturn(0);
         when(datasetService.autoCompleteDatasets(anyString(), anyInt())).thenReturn(autocompleteMap);
 
         initResource();
@@ -625,7 +625,7 @@ public class DatasetResourceTest {
     public void testDatasetAutocompleteError() {
         when(authUser.getEmail()).thenReturn("testauthuser@test.com");
         when(userService.findUserByEmail(anyString())).thenReturn(user);
-        when(user.getDacUserId()).thenReturn(0);
+        when(user.getUserId()).thenReturn(0);
         doThrow(new RuntimeException()).when(datasetService).autoCompleteDatasets(anyString(), anyInt());
 
         initResource();
