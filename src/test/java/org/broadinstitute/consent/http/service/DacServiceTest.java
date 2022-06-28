@@ -342,13 +342,6 @@ public class DacServiceTest {
         Assert.assertEquals(memberDataSets.size(), filtered.size());
     }
 
-    private void mockDataAccessRequestDAO(List<DataAccessRequest> dars) {
-        // old school for loop!
-        for (int i = 0; i < dars.size(); i++) {
-            when(dataAccessRequestDAO.findDARDatasetRelations(dars.get(i).getReferenceId())).thenReturn(List.of(i + 1));
-        }
-    }
-
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_2() {
         // Member has access to datasets
@@ -361,7 +354,6 @@ public class DacServiceTest {
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();
-        mockDataAccessRequestDAO(dars);
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should only contain the ones the user has direct access to
@@ -709,7 +701,7 @@ public class DacServiceTest {
      * @return A list of 5 DataAccessRequest with DataSet ids and Reference ids
      */
     private List<DataAccessRequest> getDataAccessRequests() {
-        List<DataAccessRequest> accessRequests = IntStream.range(1, 5).
+        return IntStream.range(1, 5).
                 mapToObj(i -> {
                     String referenceId = UUID.randomUUID().toString();
                     List<Integer> dataSetIds = Collections.singletonList(i);
@@ -721,8 +713,6 @@ public class DacServiceTest {
                     doc.setData(data);
                     return doc;
                 }).collect(Collectors.toList());
-
-        return accessRequests;
     }
 
     /**

@@ -387,9 +387,15 @@ public class DarCollectionServiceTest {
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(anyInt());
   }
 
+  /**
+   * Loops through each collection and creates a new list of DarDatasets.
+   *
+   * @param collections List of collections
+   * @return
+   */
   private List<DarDataset> getDarDatasets(List<DarCollection> collections) {
     return collections.stream()
-      .map(d-> d.getDars().values())
+      .map(c-> c.getDars().values())
       .flatMap(Collection::stream)
       .map(d -> {
         return d.getDatasetIds().stream()
