@@ -105,6 +105,7 @@ public class DataAccessRequestData {
     private String translatedUseRestriction;
     private Long createDate;
     private Long sortDate;
+    @Deprecated
     @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
     private List<Integer> datasetIds;
     private List<DatasetDetailEntry> datasetDetail;
