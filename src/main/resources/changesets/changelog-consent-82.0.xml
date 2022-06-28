@@ -1,7 +1,6 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-
     <changeSet id="82.0" author="phendriksen">
         <createTable tableName="dar_dataset">
             <column name="dataset_id" type="bigint">
@@ -11,14 +10,18 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+        <addPrimaryKey
+                columnNames="dataset_id, reference_id"
+                constraintName="join_table_key"
+                tableName="dar_dataset"/>
         <addForeignKeyConstraint baseColumnNames="dataset_id" baseTableName="dar_dataset" constraintName="fkDatasetId"
-                                 deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="datasetid" referencedTableName="dataset"
-                                 referencesUniqueColumn="false"/>
+                                 referencesUniqueColumn="true"/>
         <addForeignKeyConstraint baseColumnNames="reference_id" baseTableName="dar_dataset" constraintName="fkReferenceId"
-                                 deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="reference_id" referencedTableName="data_access_request"
-                                 referencesUniqueColumn="false"/>
+                                 referencesUniqueColumn="true"/>
         <rollback>
             <dropTable tableName="dar_dataset"/>
             <dropForeignKeyConstraint baseTableName="dar_dataset" constraintName="fkDatasetId"/>
