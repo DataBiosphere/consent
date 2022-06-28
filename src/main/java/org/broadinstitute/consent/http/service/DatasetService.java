@@ -230,6 +230,13 @@ public class DatasetService {
     public Optional<Dataset> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
 
+        if (Objects.isNull(dataset.getDatasetName())) {
+            throw new IllegalArgumentException("Dataset 'Name' cannot be null");
+        }
+        if (Objects.isNull(dataset.getNeedsApproval())) {
+            throw new IllegalArgumentException("Dataset 'Needs Approval' field cannot be null");
+        }
+
         if (Objects.nonNull(dataset.getDacId())) {
             Consent consent = consentDAO.findConsentFromDatasetID(datasetId);
             if (Objects.nonNull(consent)) {
