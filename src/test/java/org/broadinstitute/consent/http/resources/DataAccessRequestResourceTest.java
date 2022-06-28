@@ -61,7 +61,7 @@ public class DataAccessRequestResourceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
-        when(user.getDacUserId()).thenReturn(dar.getUserId());
+        when(user.getUserId()).thenReturn(dar.getUserId());
         when(userService.findUserByEmail(any())).thenReturn(user);
         resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService);
         Consent consent = resource.describeConsentForDAR(authUser, dar.getReferenceId());
@@ -78,7 +78,7 @@ public class DataAccessRequestResourceTest {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
-        when(user.getDacUserId()).thenReturn(dar.getUserId());
+        when(user.getUserId()).thenReturn(dar.getUserId());
         when(userService.findUserByEmail(any())).thenReturn(user);
         resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService);
         Consent consent = resource.describeConsentForDAR(authUser, dar.getReferenceId());
@@ -119,7 +119,7 @@ public class DataAccessRequestResourceTest {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(new Consent());
-        when(user.getDacUserId()).thenReturn(dar.getUserId() + 1);
+        when(user.getUserId()).thenReturn(dar.getUserId() + 1);
         when(userService.findUserByEmail(any())).thenReturn(user);
         resource = new DataAccessRequestResource(dataAccessRequestService,userService, consentService);
         resource.describeConsentForDAR(authUser, dar.getReferenceId());
@@ -146,7 +146,7 @@ public class DataAccessRequestResourceTest {
     @Test
     public void testDescribeManageDataAccessRequestsV2_WithRole() {
         User researcher = new User();
-        researcher.setDacUserId(1);
+        researcher.setUserId(1);
         researcher.setRoles(Arrays.asList(new UserRole(5, UserRoles.RESEARCHER.getRoleName())));
         when(userService.findUserByEmail(any())).thenReturn(researcher);
         DataAccessRequest dar = generateDataAccessRequest();

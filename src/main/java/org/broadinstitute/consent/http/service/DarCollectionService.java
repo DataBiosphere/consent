@@ -114,7 +114,7 @@ public class DarCollectionService {
         darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
     List<Integer> userDatasetsIds = filterByUserDacDatasets ?
         datasetDAO.findDatasetsByAuthUserEmail(user.getEmail()).stream()
-                .map(d -> d.getDataSetId())
+                .map(Dataset::getDataSetId)
                 .collect(Collectors.toList()) :
         Collections.emptyList();
     if (!collectionIds.isEmpty()) {
@@ -143,7 +143,7 @@ public class DarCollectionService {
   }
 
   public List<DarCollection> getCollectionsForUser(User user) {
-    List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getDacUserId());
+    List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(user.getUserId());
     return addDatasetsToCollections(collections, List.of());
   }
 
@@ -201,7 +201,7 @@ public class DarCollectionService {
         collections = darCollectionDAO.getFilteredCollectionsForDACByCollectionIds(sortField, sortOrder, collectionIds, filterTerm);
         break;
       default:
-        collections = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getDacUserId(), filterTerm);
+        collections = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getUserId(), filterTerm);
     }
 
     return addDatasetsToCollections(collections, List.of());
@@ -237,7 +237,7 @@ public class DarCollectionService {
         size = (Integer) darCollectionDAO.findDARCollectionIdsByDacIds(dacIds).size();
         break;
       default:
-        size = darCollectionDAO.returnUnfilteredResearcherCollectionCount(user.getDacUserId());
+        size = darCollectionDAO.returnUnfilteredResearcherCollectionCount(user.getUserId());
     }
     return size;
   }
@@ -290,7 +290,7 @@ public class DarCollectionService {
           .map(DataAccessRequestData::getDatasetIds)
           .flatMap(Collection::stream)
           .map(datasetMap::get)
-          .filter(d -> Objects.nonNull(d)) // filtering out nulls which were getting captured by map
+          .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
           .collect(Collectors.toSet());
         DarCollection copy = c.deepCopy();
         copy.setDatasets(collectionDatasets);

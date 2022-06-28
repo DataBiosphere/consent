@@ -110,7 +110,7 @@ public class UserServiceTest {
         }
 
         assertEquals(institutionId, u.getInstitutionId());
-        assertEquals(u.getDacUserId(), libraryCard.getUserId());
+        assertEquals(u.getUserId(), libraryCard.getUserId());
     }
 
     @Test(expected = BadRequestException.class)
@@ -180,7 +180,7 @@ public class UserServiceTest {
         when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(cards);
         initService();
 
-        User user = service.findUserById(u.getDacUserId());
+        User user = service.findUserById(u.getUserId());
         assertNotNull(user);
         assertNotNull(user.getLibraryCards());
         assertEquals(user.getLibraryCards().size(), 2);
@@ -195,7 +195,7 @@ public class UserServiceTest {
         when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
         initService();
 
-        User user = service.findUserById(u.getDacUserId());
+        User user = service.findUserById(u.getUserId());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
         assertNull(u.getRoles());
@@ -212,7 +212,7 @@ public class UserServiceTest {
         when(userDAO.findUserById(any())).thenReturn(u);
         initService();
 
-        User user = service.findUserById(u.getDacUserId());
+        User user = service.findUserById(u.getUserId());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
         assertFalse(u.getRoles().isEmpty());
@@ -225,7 +225,7 @@ public class UserServiceTest {
         when(userDAO.findUserById(any())).thenReturn(null);
         initService();
 
-        service.findUserById(u.getDacUserId());
+        service.findUserById(u.getUserId());
     }
 
     @Test
@@ -293,27 +293,27 @@ public class UserServiceTest {
     @Test
     public void testUpdateDACUserById() {
         User u = generateUser();
-        when(userDAO.findUserById(u.getDacUserId()))
+        when(userDAO.findUserById(u.getUserId()))
                 .thenReturn(u);
         when(institutionDAO.checkForExistingInstitution(any()))
                 .thenReturn(u.getInstitutionId());
         doNothing().when(userDAO).updateUser(any(), any(), any(), any());
         initService();
         Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
-        User user = service.updateDACUserById(dacUsers, u.getDacUserId());
+        User user = service.updateDACUserById(dacUsers, u.getUserId());
         assertNotNull(user);
-        assertEquals(u.getDacUserId(), user.getDacUserId());
+        assertEquals(u.getUserId(), user.getUserId());
     }
 
     @Test(expected = NotFoundException.class)
     public void testUpdateDACUserById_NonExisting() {
         User u = generateUser();
-        when(userDAO.findUserById(u.getDacUserId()))
+        when(userDAO.findUserById(u.getUserId()))
                 .thenReturn(null);
         doNothing().when(userDAO).updateUser(any(), any(), any(), any());
         initService();
         Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
-        service.updateDACUserById(dacUsers, u.getDacUserId());
+        service.updateDACUserById(dacUsers, u.getUserId());
     }
 
     @Test
@@ -416,7 +416,7 @@ public class UserServiceTest {
         List<User> users = service.findUsersWithNoInstitution();
         assertNotNull(users);
         assertEquals(1, users.size());
-        assertEquals(user.getDacUserId(), users.get(0).getDacUserId());
+        assertEquals(user.getUserId(), users.get(0).getUserId());
     }
 
     @Test
@@ -435,7 +435,7 @@ public class UserServiceTest {
         when(userPropertyDAO.findResearcherPropertiesByUser(anyInt())).thenReturn(List.of(new UserProperty()));
 
         initService();
-        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
+        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
         assertNotNull(userJson);
         assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
         assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
@@ -458,7 +458,7 @@ public class UserServiceTest {
         when(userPropertyDAO.findResearcherPropertiesByUser(anyInt())).thenReturn(List.of(new UserProperty()));
 
         initService();
-        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
+        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
         assertNotNull(userJson);
         assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
         assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
@@ -480,7 +480,7 @@ public class UserServiceTest {
                 RandomStringUtils.randomAlphabetic(i2);
         u.setEmail(email);
         u.setDisplayName(displayName);
-        u.setDacUserId(RandomUtils.nextInt(1, 100));
+        u.setUserId(RandomUtils.nextInt(1, 100));
         u.setInstitutionId(RandomUtils.nextInt(1, 100));
         return u;
     }
@@ -497,7 +497,7 @@ public class UserServiceTest {
     private LibraryCard generateLibraryCard(User user) {
         LibraryCard libraryCard = new LibraryCard();
         libraryCard.setId(RandomUtils.nextInt(1, 10));
-        libraryCard.setUserId(user.getDacUserId());
+        libraryCard.setUserId(user.getUserId());
         libraryCard.setInstitutionId(RandomUtils.nextInt(1,10));
         return libraryCard;
     }

@@ -143,7 +143,7 @@ public class DataAccessRequestService {
                             + "is not associated with an Institution.");
                 }
             case RESEARCHER:
-                List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getDacUserId());
+                List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
                 return createAccessRequestManageV2(dars);
             default:
                 //case for Admin, Chairperson, and Member
@@ -236,7 +236,7 @@ public class DataAccessRequestService {
         dar.getData().setPartialDarCode(DataAccessRequestData.partialDarCodePrefix + sdf.format(now));
         dataAccessRequestDAO.insertDraftDataAccessRequest(
             dar.getReferenceId(),
-            user.getDacUserId(),
+            user.getUserId(),
             now,
             now,
             null,
@@ -329,7 +329,7 @@ public class DataAccessRequestService {
         newData.setPartialDarCode(DataAccessRequestData.partialDarCodePrefix + sdf.format(now));
         dataAccessRequestDAO.insertDraftDataAccessRequest(
             referenceId,
-            user.getDacUserId(),
+            user.getUserId(),
             now,
             now,
             null,
@@ -405,7 +405,7 @@ public class DataAccessRequestService {
         List<Integer> userIds = dataAccessRequests.stream().map(DataAccessRequest::getUserId).collect(toList());
         Collection<User> researchers = userIds.isEmpty() ? Collections.emptyList() : userDAO.findUsers(userIds);
         Map<Integer, User> researcherMap = researchers.stream()
-                .collect(Collectors.toMap(User::getDacUserId, Function.identity()));
+                .collect(Collectors.toMap(User::getUserId, Function.identity()));
 
         return dataAccessRequests.stream()
             .filter(Objects::nonNull)
@@ -456,7 +456,7 @@ public class DataAccessRequestService {
         List<Integer> datasets = dataAccessRequest.getData().getDatasetIds();
         if (CollectionUtils.isNotEmpty(datasets)) {
             String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
-            Integer collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getDacUserId(), now);
+            Integer collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getUserId(), now);
             for (int idx = 0; idx < datasets.size(); idx++) {
                 String darCode = (datasets.size() == 1) ? darCodeSequence: darCodeSequence + SUFFIX + idx ;
                 darData.setDatasetIds(Collections.singletonList(datasets.get(idx)));
@@ -467,7 +467,7 @@ public class DataAccessRequestService {
                         dataAccessRequestDAO.updateDraftForCollection(collectionId, dataAccessRequest.getReferenceId());
                         dataAccessRequestDAO.updateDataByReferenceIdVersion2(
                             dataAccessRequest.getReferenceId(),
-                            user.getDacUserId(),
+                            user.getUserId(),
                             new Date(darData.getSortDate()),
                             now,
                             now,
@@ -495,7 +495,7 @@ public class DataAccessRequestService {
         dataAccessRequestDAO.insertDataAccessRequest(
             collectionId,
             referencedId,
-            user.getDacUserId(),
+            user.getUserId(),
             new Date(darData.getCreateDate()),
             new Date(darData.getSortDate()),
             now,
@@ -514,13 +514,13 @@ public class DataAccessRequestService {
     public DataAccessRequest updateByReferenceIdVersion2(User user, DataAccessRequest dar) {
         Date now = new Date();
         dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(),
-            user.getDacUserId(),
+            user.getUserId(),
             now,
             dar.getSubmissionDate(),
             now,
             dar.getData());
         if (Objects.nonNull(dar.getCollectionId())) {
-            darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getDacUserId(), now);
+            darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getUserId(), now);
         }
         // Update the dar_dataset collection
         syncDataAccessRequestDatasets(dar.getData().getDatasetIds(), dar.getReferenceId());
@@ -551,7 +551,7 @@ public class DataAccessRequestService {
                         Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
                         String profileName = user.getDisplayName();
                         if (Objects.isNull(user.getInstitutionId())) {
-                            logger.warn("No institution found for creator (user: " + user.getDisplayName() + ", " + user.getDacUserId() + ") "
+                            logger.warn("No institution found for creator (user: " + user.getDisplayName() + ", " + user.getUserId() + ") "
                               + "of this Data Access Request (DAR: " + dataAccessRequest.getReferenceId() + ")");
                         }
                         String institution = Objects.isNull(user.getInstitutionId()) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();

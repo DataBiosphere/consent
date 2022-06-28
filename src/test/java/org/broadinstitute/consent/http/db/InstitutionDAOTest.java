@@ -45,7 +45,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
 
   @Test
   public void testUpdateInstitutionById() {
-    Integer userId = createUser().getDacUserId();
+    Integer userId = createUser().getUserId();
     String newValue = "New Value";
     Institution institution = createInstitution();
     institutionDAO.updateInstitutionById(institution.getId(), newValue, newValue, newValue, userId, new Date());

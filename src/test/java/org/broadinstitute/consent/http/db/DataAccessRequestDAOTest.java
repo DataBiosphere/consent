@@ -143,7 +143,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         String rus = RandomStringUtils.random(10, true, false);
         dar.getData().setRus(rus);
         dar.getData().setValidRestriction(false);
-        dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), user.getDacUserId(), now, now, now, dar.getData());
+        dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), user.getUserId(), now, now, now, dar.getData());
         DataAccessRequest updatedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
         assertEquals(rus, updatedDar.getData().getRus());
         assertFalse(updatedDar.getData().getValidRestriction());
@@ -250,11 +250,11 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     // local method to create a DAR
     protected DataAccessRequest createDAR(User user, Dataset dataset, String darCode) {
         Timestamp now = new Timestamp(new Date().getTime());
-        Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getDacUserId(), new Date());
+        Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
         DataAccessRequest testDar = new DataAccessRequest();
         testDar.setCollectionId(collectionId);
         testDar.setReferenceId(UUID.randomUUID().toString());
-        testDar.setUserId(user.getDacUserId());
+        testDar.setUserId(user.getUserId());
         testDar.setCreateDate(now);
         testDar.setSortDate(now);
         testDar.setSubmissionDate(now);
@@ -284,7 +284,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         String referenceId = UUID.randomUUID().toString();
         dataAccessRequestDAO.insertDraftDataAccessRequest(
                 referenceId,
-                user.getDacUserId(),
+                user.getUserId(),
                 now,
                 now,
                 now,
@@ -362,12 +362,12 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     public void testFindAllDraftsByUserIdArchived() {
         User user = createUserWithInstitution();
 
-        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftsByUserId(user.getDacUserId());
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftsByUserId(user.getUserId());
         assertTrue(dars.isEmpty());
 
         DataAccessRequest testDar = createDraftDAR(user);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-        List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDraftsByUserId(user.getDacUserId());
+        List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDraftsByUserId(user.getUserId());
         assertTrue(returnedDARs.isEmpty());
     }
 
@@ -376,7 +376,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testFindAllDarsByUserIdArchived() {
         User user = createUserWithInstitution();
-        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getDacUserId());
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
         assertTrue(dars.isEmpty());
 
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
@@ -384,7 +384,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-        List returnedDARs = dataAccessRequestDAO.findAllDarsByUserId(user.getDacUserId());
+        List returnedDARs = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
         assertTrue(returnedDARs.isEmpty());
     }
 
@@ -527,7 +527,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         String name = "Name_" + RandomStringUtils.random(20, true, true);
         Timestamp now = new Timestamp(new Date().getTime());
         String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
-        Integer id = datasetDAO.insertDataset(name, now, user.getDacUserId(), objectId, true);
+        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true);
         createDatasetPropertiesLocal(id);
         return datasetDAO.findDatasetById(id);
     }

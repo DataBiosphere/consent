@@ -27,20 +27,20 @@ public class LibraryCardDAOTest extends DAOTestHelper {
 
   @Test
   public void testInsertLibraryCardNegative() {
-    Integer userId = createUser().getDacUserId();
+    Integer userId = createUser().getUserId();
     Integer institutionId = createInstitution().getId();
     String stringValue = "value";
-    try { 
+    try {
         libraryCardDAO.insertLibraryCard(0, institutionId, stringValue, stringValue, stringValue, userId, new Date());
     } catch (Exception e) {
         assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException)e.getCause()).getSQLState());
     }
-    try { 
+    try {
         libraryCardDAO.insertLibraryCard(userId, 0, stringValue, stringValue, stringValue, userId, new Date());
     } catch (Exception e) {
         assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException)e.getCause()).getSQLState());
     }
-    try { 
+    try {
         libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue, 0, new Date());
     } catch (Exception e) {
         assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException)e.getCause()).getSQLState());
@@ -49,7 +49,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
 
   @Test
   public void testUpdateLibraryCardById() {
-    Integer userId = createUser().getDacUserId();
+    Integer userId = createUser().getUserId();
     String newValue = "New Value";
     LibraryCard card = createLibraryCard();
     Integer id = card.getId();
@@ -65,7 +65,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
 
   @Test
   public void testUpdateLibraryCardByIdNegative() {
-    Integer userId = createUser().getDacUserId();
+    Integer userId = createUser().getUserId();
     Integer institutionId = createInstitution().getId();
     String newValue = "New Value";
     try {
@@ -150,7 +150,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     User user = createUser();
     LibraryCard one = createLibraryCard(user);
     LibraryCard two = createLibraryCard(user);
-    List<LibraryCard> libraryCards = libraryCardDAO.findLibraryCardsByUserId(user.getDacUserId());
+    List<LibraryCard> libraryCards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
     assertNotNull(libraryCards);
     assertEquals(2, libraryCards.size());
     assertEquals(one.getId(), libraryCards.get(0).getId());
@@ -162,7 +162,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     User user = createUser();
     LibraryCard card = createLibraryCard(user);
     assertEquals("value", card.getEraCommonsId());
-    libraryCardDAO.updateEraCommonsForUser(user.getDacUserId(), "newEraCommonsId");
+    libraryCardDAO.updateEraCommonsForUser(user.getUserId(), "newEraCommonsId");
     assertEquals("newEraCommonsId", libraryCardDAO.findLibraryCardById(card.getId()).getEraCommonsId());
   }
 }

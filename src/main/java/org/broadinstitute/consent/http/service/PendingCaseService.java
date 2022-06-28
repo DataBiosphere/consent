@@ -61,7 +61,7 @@ public class PendingCaseService {
         List<Integer> roleIds = user.getRoles().stream().
                 map(UserRole::getRoleId).
                 collect(Collectors.toList());
-        Integer dacUserId = user.getDacUserId();
+        Integer dacUserId = user.getUserId();
         List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = dacService.filterElectionsByDAC(elections, authUser).
                 stream().
@@ -92,7 +92,7 @@ public class PendingCaseService {
 
     public List<PendingCase> describeDataRequestPendingCases(AuthUser authUser) throws NotFoundException {
         User user = userService.findUserByEmail(authUser.getEmail());
-        Integer dacUserId = user.getDacUserId();
+        Integer dacUserId = user.getUserId();
         boolean isChair = dacService.isAuthUserChair(authUser);
         List<Election> unfilteredElections = isChair ?
                 electionDAO.findOpenLastElectionsByTypeAndFinalAccessVoteForChairPerson(ElectionType.DATA_ACCESS.getValue(), false) :
@@ -237,7 +237,7 @@ public class PendingCaseService {
         }
         logger.info(String.format(
                 "Creating missing votes for user id '%s', election id '%s', reference id '%s' ",
-                user.getDacUserId(),
+                user.getUserId(),
                 e.getElectionId(),
                 e.getReferenceId()
         ));

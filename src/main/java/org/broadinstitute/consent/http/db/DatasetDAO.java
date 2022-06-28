@@ -259,7 +259,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         " LEFT JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
         " LEFT JOIN consents c ON c.consentid = ca.consentid " +
         " INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
-        " INNER JOIN dacuser u ON ur.user_id = u.dacUserId and u.email = :email ")
+        " INNER JOIN users u ON ur.user_id = u.user_id and u.email = :email ")
     List<Dataset> findDatasetsByAuthUserEmail(@Bind("email") String email);
 
     /**

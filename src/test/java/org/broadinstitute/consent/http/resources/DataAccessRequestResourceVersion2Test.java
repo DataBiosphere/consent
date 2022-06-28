@@ -114,7 +114,7 @@ public class DataAccessRequestResourceVersion2Test {
 
   @Test(expected = ForbiddenException.class)
   public void testGetByReferenceIdForbidden() {
-    when(mockUser.getDacUserId()).thenReturn(user.getDacUserId() + 1);
+    when(mockUser.getUserId()).thenReturn(user.getUserId() + 1);
     when(userService.findUserByEmail(any())).thenReturn(mockUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
     initResource();
@@ -377,7 +377,7 @@ public class DataAccessRequestResourceVersion2Test {
     data.setReferenceId(dar.getReferenceId());
     data.setDatasetIds(Arrays.asList(1, 2));
     dar.setData(data);
-    dar.setUserId(user.getDacUserId());
+    dar.setUserId(user.getUserId());
     dar.setCreateDate(now);
     dar.setUpdateDate(now);
     dar.setSortDate(now);
@@ -399,7 +399,7 @@ public class DataAccessRequestResourceVersion2Test {
     initResource();
     List<DataAccessRequest> list = Collections.emptyList();
     User user = new User();
-    user.setDacUserId(1);
+    user.setUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findAllDraftDataAccessRequestsByUser(any())).thenReturn(list);
     Response res = resource.getDraftDataAccessRequests(authUser);
@@ -420,7 +420,7 @@ public class DataAccessRequestResourceVersion2Test {
   public void getDraftDar() {
     initResource();
     User user = new User();
-    user.setDacUserId(10);
+    user.setUserId(10);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setUserId(10);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -442,7 +442,7 @@ public class DataAccessRequestResourceVersion2Test {
   public void getDraftDar_DarNotFound() {
     initResource();
     User user = new User();
-    user.setDacUserId(10);
+    user.setUserId(10);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenThrow(new NotFoundException());
     Response res = resource.getDraftDar(authUser, "id");
@@ -453,7 +453,7 @@ public class DataAccessRequestResourceVersion2Test {
   public void getDraftDar_UserNotAllowed() {
     initResource();
     User user = new User();
-    user.setDacUserId(10);
+    user.setUserId(10);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setUserId(11);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -467,7 +467,7 @@ public class DataAccessRequestResourceVersion2Test {
     initResource();
     List<DataAccessRequestManage> list = Collections.emptyList();
     User user = new User();
-    user.setDacUserId(10);
+    user.setUserId(10);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.getDraftDataAccessRequestManage(any())).thenReturn(list);
     Response res = resource.getDraftManageDataAccessRequests(authUser);

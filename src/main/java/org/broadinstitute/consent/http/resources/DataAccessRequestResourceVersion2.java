@@ -174,7 +174,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   public Response getDraftDataAccessRequests(@Auth AuthUser authUser) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      List<DataAccessRequest> draftDars = dataAccessRequestService.findAllDraftDataAccessRequestsByUser(user.getDacUserId());
+      List<DataAccessRequest> draftDars = dataAccessRequestService.findAllDraftDataAccessRequestsByUser(user.getUserId());
       return Response.ok().entity(draftDars).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -189,7 +189,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     try {
       User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-      if (dar.getUserId().equals(user.getDacUserId())) {
+      if (dar.getUserId().equals(user.getUserId())) {
         return Response.ok().entity(dar).build();
       }
       throw new ForbiddenException("User does not have permission");
@@ -224,7 +224,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   public Response getDraftManageDataAccessRequests(@Auth AuthUser authUser) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      List<DataAccessRequestManage> partials = dataAccessRequestService.getDraftDataAccessRequestManage(user.getDacUserId());
+      List<DataAccessRequestManage> partials = dataAccessRequestService.getDraftDataAccessRequestManage(user.getUserId());
       return Response.ok().entity(partials).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -389,7 +389,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest existingDar =
           dataAccessRequestService.findByReferenceId(data.getReferenceId());
       if (Objects.nonNull(existingDar)
-          && existingDar.getUserId().equals(user.getDacUserId())
+          && existingDar.getUserId().equals(user.getUserId())
           && existingDar.getDraft()) {
         newDar.setReferenceId(data.getReferenceId());
       } else {
@@ -407,7 +407,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   }
 
   private void checkAuthorizedUpdateUser(User user, DataAccessRequest dar) {
-    if (!user.getDacUserId().equals(dar.getUserId())) {
+    if (!user.getUserId().equals(dar.getUserId())) {
       throw new ForbiddenException("User not authorized to update this Data Access Request");
     }
   }

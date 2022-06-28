@@ -47,7 +47,7 @@ public class MailMessage {
         this.electionId = electionId;
     }
 
-    public Integer getDacUserId() {
+    public Integer getUserId() {
         return dacUserId;
     }
 

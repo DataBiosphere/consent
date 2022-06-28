@@ -48,17 +48,17 @@ object AccessReviewChains {
 
                 val voteListStr: String = session(Requests.Votes.getDarVoteListResponse).as[String]
                 val voteList: Seq[Vote] = voteListStr.parseJson.convertTo[Seq[Vote]]
-                val dacUserId: Int = session(Requests.User.dacUserId).as[String].toInt
+                val userId: Int = session(Requests.User.userId).as[String].toInt
                 val electionId: Int = session(Requests.Votes.darElectionId).as[String].toInt
 
                 val electionReviewStr: String = session(Requests.Election.getDataAccessElectionReviewResponse).as[String]
                 val electionReview: ElectionReview = electionReviewStr.parseJson.convertTo[ElectionReview]
                 val election: Election = electionReview.election.getOrElse(ElectionBuilder.empty())
 
-                val session1 = session.set(electionDacVotes, ElectionService.getElectionVotesByTypeAndUser(voteList, VoteType.DAC, dacUserId, electionId))
-                val session2 = session1.set(electionFinalVotes, ElectionService.getElectionVotesByTypeAndUser(voteList, VoteType.FINAL, dacUserId, electionId))
-                val session3 = session2.set(electionAgreementVotes, ElectionService.getElectionVotesByTypeAndUser(voteList, VoteType.AGREEMENT, dacUserId, electionId))
-                val session4 = session3.set(electionChairpersonVotes, ElectionService.getElectionVotesByTypeAndUser(voteList, VoteType.CHAIRPERSON, dacUserId, electionId))
+                val session1 = session.set(electionDacVotes, ElectionService.getElectionVotesByTypeAndUser(voteList, VoteType.DAC, userId, electionId))
+                val session2 = session1.set(electionFinalVotes, ElectionService.getElectionVotesByTypeAndUser(voteList, VoteType.FINAL, userId, electionId))
+                val session3 = session2.set(electionAgreementVotes, ElectionService.getElectionVotesByTypeAndUser(voteList, VoteType.AGREEMENT, userId, electionId))
+                val session4 = session3.set(electionChairpersonVotes, ElectionService.getElectionVotesByTypeAndUser(voteList, VoteType.CHAIRPERSON, userId, electionId))
                 session4.set(accessElection, election)
             }
         }
@@ -66,7 +66,7 @@ object AccessReviewChains {
 
     def voteOnPendingDars(additionalHeaders: Map[String, String], chain: ChainBuilder, limit: Int = 2): ChainBuilder = {
         exitBlockOnFail {
-            exec { session => 
+            exec { session =>
                 implicit val pendingCaseFormat: JsonProtocols.pendingCaseFormat.type = JsonProtocols.pendingCaseFormat
                 implicit val dacFormat: JsonProtocols.dacFormat.type = JsonProtocols.dacFormat
                 implicit val userRoleFormat: JsonProtocols.userRoleFormat.type = JsonProtocols.userRoleFormat
@@ -108,17 +108,17 @@ object AccessReviewChains {
 
     def submitVote(votesString: String, additionalHeaders: Map[String, String], result: String = "true"): ChainBuilder = {
         exitBlockOnFail {
-            exec { session => 
+            exec { session =>
                 implicit val votePostFormat: JsonProtocols.votePostFormat.type = JsonProtocols.votePostFormat
-                
+
                 try {
                     val votes: Seq[Vote] = session(votesString).as[Seq[Vote]]
                     val vote = votes.head
-                    val dacUserId: Int = session(Requests.User.dacUserId).as[String].toInt
+                    val userId: Int = session(Requests.User.userId).as[String].toInt
 
                     val votePostObject: VotePostObject = VotePostObject(
                         vote = Some(result == "true"),
-                        dacUserId = Some(dacUserId),
+                        userId = Some(userId),
                         rationale = Some(if (vote != null) vote.rationale.getOrElse("") else ""),
                         hasConcerns = Some(if (vote != null) vote.hasConcerns.getOrElse(false) else false)
                     )

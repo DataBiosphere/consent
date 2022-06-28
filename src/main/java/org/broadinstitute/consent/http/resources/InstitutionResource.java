@@ -85,7 +85,7 @@ public class InstitutionResource extends Resource {
       if (!conflicts.isEmpty()) {
         throw new ConsentConflictException("An institution exists with the name of '" + payload.getName() + "'");
       }
-      Institution newInstitution = institutionService.createInstitution(payload, user.getDacUserId());
+      Institution newInstitution = institutionService.createInstitution(payload, user.getUserId());
       return Response.ok().entity(newInstitution).build();
     } catch(Exception e) {
       return createExceptionResponse(e);
@@ -101,7 +101,7 @@ public class InstitutionResource extends Resource {
     try{
       User user = userService.findUserByEmail(authUser.getEmail());
       Institution payload = new Gson().fromJson(institution, Institution.class);
-      Institution updatedInstitution = institutionService.updateInstitutionById(payload, id, user.getDacUserId());
+      Institution updatedInstitution = institutionService.updateInstitutionById(payload, id, user.getUserId());
       return Response.ok().entity(updatedInstitution).build();
     } catch(Exception e) {
       return createExceptionResponse(e);

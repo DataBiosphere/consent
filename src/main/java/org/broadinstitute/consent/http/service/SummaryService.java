@@ -178,7 +178,7 @@ public class SummaryService {
                 electionVotes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
             Collection<User> electionUsers =
                 users.stream()
-                    .filter(du -> electionVotesUserIds.contains(du.getDacUserId()))
+                    .filter(du -> electionVotesUserIds.contains(du.getUserId()))
                     .collect(Collectors.toSet());
             Optional<Vote> chairPersonVote =
                 electionVotes.stream()
@@ -186,7 +186,7 @@ public class SummaryService {
                     .findFirst();
             Optional<User> chairPerson = chairPersonVote
                 .flatMap(vote -> users.stream()
-                .filter(du -> du.getDacUserId().equals(vote.getDacUserId()))
+                .filter(du -> du.getUserId().equals(vote.getDacUserId()))
                 .findFirst());
             ConsentSummaryDetail detail = new ConsentSummaryDetail(
                     election,
@@ -280,12 +280,12 @@ public class SummaryService {
             .findFirst();
         DataAccessRequest dar = darOption.orElse(null);
         List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toList());
-        List<User> dacMembers = voteUsers.stream().filter(v -> dacUserIds.contains(v.getDacUserId())).collect(Collectors.toList());
+        List<User> dacMembers = voteUsers.stream().filter(v -> dacUserIds.contains(v.getUserId())).collect(Collectors.toList());
 
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
           List<Integer> datasetId = dar.getData().getDatasetIds();
           if (CollectionUtils.isNotEmpty(datasetId)) {
-            Optional<User> darUser = darUsers.stream().filter(u -> u.getDacUserId().equals(dar.getUserId())).findFirst();
+            Optional<User> darUser = darUsers.stream().filter(u -> u.getUserId().equals(dar.getUserId())).findFirst();
             details.add(new DataAccessRequestSummaryDetail(
                 dar,
                 accessElection,

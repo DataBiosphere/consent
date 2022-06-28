@@ -1,0 +1,10 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="83.0" author="grushton">
+        <renameTable oldTableName="dacuser" newTableName="users"/>
+        <renameColumn tableName="users" oldColumnName="dacuserid" newColumnName="user_id"/>
+        <renameColumn tableName="users" oldColumnName="displayname" newColumnName="display_name"/>
+        <renameColumn tableName="users" oldColumnName="createdate" newColumnName="create_date"/>
+    </changeSet>
+</databaseChangeLog>

@@ -21,7 +21,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
     public void testFindRolesByUserId() {
         User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
-        List<UserRole> roles = userRoleDAO.findRolesByUserId(user.getDacUserId());
+        List<UserRole> roles = userRoleDAO.findRolesByUserId(user.getUserId());
         Assert.assertEquals(1, roles.size());
     }
 
@@ -71,8 +71,8 @@ public class UserRoleDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
         UserRole r = new UserRole();
         r.setRoleId(UserRoles.MEMBER.getRoleId());
-        userRoleDAO.insertUserRoles(Collections.singletonList(r), user.getDacUserId());
-        Optional<User> updatedUser = userDAO.findUsersWithRoles(Collections.singletonList(user.getDacUserId())).stream().findFirst();
+        userRoleDAO.insertUserRoles(Collections.singletonList(r), user.getUserId());
+        Optional<User> updatedUser = userDAO.findUsersWithRoles(Collections.singletonList(user.getUserId())).stream().findFirst();
         Assert.assertTrue(updatedUser.isPresent());
         Assert.assertEquals(2, updatedUser.get().getRoles().size());
     }
@@ -80,20 +80,20 @@ public class UserRoleDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateUserRoles() {
         User user = createUserWithRole(UserRoles.MEMBER.getRoleId());
-        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
-        userRoleDAO.updateUserRoles(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), UserRoles.MEMBER.getRoleId());
-        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
+        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getUserId());
+        userRoleDAO.updateUserRoles(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(), UserRoles.MEMBER.getRoleId());
+        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(user.getUserId());
         Assert.assertFalse(currentRoles.get(0).getRoleId().equals(newRoles.get(0).getRoleId()));
     }
 
     @Test
     public void testRemoveUserRoles() {
         User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
-        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
+        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getUserId());
         Assert.assertFalse(currentRoles.isEmpty());
         List<Integer> roleIds = userRoleDAO.findRoles().stream().map(Role::getRoleId).collect(Collectors.toList());
-        userRoleDAO.removeUserRoles(user.getDacUserId(), roleIds);
-        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
+        userRoleDAO.removeUserRoles(user.getUserId(), roleIds);
+        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(user.getUserId());
         Assert.assertTrue(newRoles.isEmpty());
     }
 
@@ -105,31 +105,31 @@ public class UserRoleDAOTest extends DAOTestHelper {
     @Test
     public void testRemoveSingleUserRole() {
         User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
-        List<UserRole> userRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
+        List<UserRole> userRoles = userRoleDAO.findRolesByUserId(user.getUserId());
         Assert.assertFalse(userRoles.isEmpty());
         List<Role> roles = userRoleDAO.findRoles();
         roles.forEach(r ->
-                userRoleDAO.removeSingleUserRole(user.getDacUserId(), r.getRoleId())
+                userRoleDAO.removeSingleUserRole(user.getUserId(), r.getRoleId())
         );
 
-        List<UserRole> newUserRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
+        List<UserRole> newUserRoles = userRoleDAO.findRolesByUserId(user.getUserId());
         Assert.assertTrue(newUserRoles.isEmpty());
     }
 
     @Test
     public void testFindRoleByNameAndUser() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        Integer roleId = userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), user.getDacUserId());
+        Integer roleId = userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), user.getUserId());
         Assert.assertNotNull(roleId);
 
-        Integer invalidRoleId = userRoleDAO.findRoleByNameAndUser(UserRoles.MEMBER.getRoleName(), user.getDacUserId());
+        Integer invalidRoleId = userRoleDAO.findRoleByNameAndUser(UserRoles.MEMBER.getRoleName(), user.getUserId());
         Assert.assertNull(invalidRoleId);
     }
 
     @Test
     public void testFindRoleByUserIdAndRoleId() {
         User user = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
-        UserRole userRole = userRoleDAO.findRoleByUserIdAndRoleId(user.getDacUserId(), UserRoles.DATAOWNER.getRoleId());
+        UserRole userRole = userRoleDAO.findRoleByUserIdAndRoleId(user.getUserId(), UserRoles.DATAOWNER.getRoleId());
         Assert.assertNotNull(userRole);
     }
 

@@ -108,7 +108,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVotes_invalidUser() {
-    user.setDacUserId(1);
+    user.setUserId(1);
     vote.setDacUserId(2);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
@@ -121,7 +121,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVotes_closedElection() {
-    user.setDacUserId(1);
+    user.setUserId(1);
     vote.setDacUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new IllegalArgumentException()).when(voteService).findVotesByIds(any());
@@ -134,7 +134,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVotes_allMemberVotes() {
-      user.setDacUserId(1);
+      user.setUserId(1);
       vote.setDacUserId(1);
       vote.setType("DAC");
       vote.setVote(true);
@@ -155,7 +155,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVotes_allYes_allRP() {
-      user.setDacUserId(1);
+      user.setUserId(1);
       vote.setDacUserId(1);
       vote.setType("Chairperson");
       vote.setVote(true);
@@ -181,7 +181,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVotes_allNo_allRP() {
-      user.setDacUserId(1);
+      user.setUserId(1);
       vote.setDacUserId(1);
       vote.setType("Chairperson");
       vote.setVote(false);
@@ -202,7 +202,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVotes_allYes_allDataAccess_AllCards() {
-      user.setDacUserId(1);
+      user.setUserId(1);
       vote.setDacUserId(1);
       vote.setVoteId(1);
       vote.setType("Chairperson");
@@ -232,7 +232,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVotes_allNo_allDataAccess_AllCards() {
-      user.setDacUserId(1);
+      user.setUserId(1);
       vote.setDacUserId(1);
       vote.setVoteId(1);
       vote.setType("Chairperson");
@@ -262,7 +262,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVotes_allYes_allDataAccess_NotAllCards() {
-      user.setDacUserId(1);
+      user.setUserId(1);
       vote.setDacUserId(1);
       vote.setVoteId(1);
       vote.setType("Chairperson");
@@ -293,7 +293,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVotes_noRationale() {
-    user.setDacUserId(1);
+    user.setUserId(1);
     vote.setDacUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
@@ -328,7 +328,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVoteRationale_NoVotesFound() {
-    user.setDacUserId(1);
+    user.setUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(List.of());
     Vote.RationaleUpdate update = new Vote.RationaleUpdate();
@@ -342,7 +342,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVoteRationale_UserNotOwnerOfVotes() {
-    user.setDacUserId(1);
+    user.setUserId(1);
     vote.setDacUserId(2);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
@@ -357,7 +357,7 @@ public class VoteResourceTest {
 
   @Test
   public void testUpdateVoteRationale_Success() {
-    user.setDacUserId(1);
+    user.setUserId(1);
     vote.setDacUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));

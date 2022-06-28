@@ -82,7 +82,7 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
     private User createMockUser(UserRole role, Integer dacUserId) {
         User user = new User();
         user.setRoles(List.of(role));
-        user.setDacUserId(dacUserId);
+        user.setUserId(dacUserId);
         return user;
     }
 

@@ -13,7 +13,7 @@ object UserModels {
     )
 
     case class User(
-        dacUserId: Option[Int] = None, 
+        userId: Option[Int] = None,
         email: Option[String] = None,
         displayName: Option[String] = None,
         roles: Option[Seq[UserRole]] = None,

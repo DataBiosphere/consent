@@ -233,7 +233,7 @@ public class DacResource extends Resource {
         List<User> currentMembers = dacService.findMembersByDacId(dacId);
         Optional<User> isMember = currentMembers.
                 stream().
-                filter(u -> u.getDacUserId().equals(userId)).
+                filter(u -> u.getUserId().equals(userId)).
                 findFirst();
         if (isMember.isPresent()) {
             // This is handled as a 409 Conflict
@@ -262,7 +262,7 @@ public class DacResource extends Resource {
         }
 
         Optional<User> chair = dac.getChairpersons().stream()
-            .filter(u -> u.getDacUserId().equals(user.getDacUserId()))
+            .filter(u -> u.getUserId().equals(user.getUserId()))
             .findFirst();
         if (chair.isEmpty()) {
             throw e;

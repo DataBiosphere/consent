@@ -36,7 +36,7 @@ public class DarCollection {
   public static final String FILTER_TERMS_QUERY =
     "COALESCE(i.institution_name, '') ~* :filterTerm " +
         " OR (dar.data #>> '{}')::jsonb ->> 'projectTitle' ~* :filterTerm " +
-        " OR u.displayname ~* :filterTerm " +
+        " OR u.display_name ~* :filterTerm " +
         " OR c.dar_code ~* :filterTerm " +
         " OR EXISTS " +
         " (SELECT FROM jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasets') dataset " +

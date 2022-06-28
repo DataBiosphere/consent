@@ -59,7 +59,7 @@ public class UserResourceTest {
   @Mock private ResearcherService researcherService;
 
   @Mock private SamService samService;
-  
+
   @Mock private DatasetService datasetService;
 
   private UserResource userResource;
@@ -379,7 +379,7 @@ public class UserResourceTest {
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(userJson.getAsJsonObject());
     initResource();
-    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.RESEARCHER.getRoleId());
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), UserRoles.RESEARCHER.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     User returnedUser = new User((String)response.getEntity());
     assertEquals(user.getEmail(), returnedUser.getEmail());
@@ -390,7 +390,7 @@ public class UserResourceTest {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
     initResource();
-    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), 8);
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), 8);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
@@ -402,7 +402,7 @@ public class UserResourceTest {
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(userJson.getAsJsonObject());
     initResource();
-    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.ADMIN.getRoleId());
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), UserRoles.ADMIN.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     User returnedUser = new User((String)response.getEntity());
     assertEquals(user.getEmail(), returnedUser.getEmail());
@@ -458,7 +458,7 @@ public class UserResourceTest {
 
   private User createUserWithRole() {
     User user = new User();
-    user.setDacUserId(1);
+    user.setUserId(1);
     user.setDisplayName("Test");
     user.setEmail("Test");
     UserRole researcher = new UserRole();
@@ -472,7 +472,7 @@ public class UserResourceTest {
 
   private User createUserWithInstitution() {
     User user = new User();
-    user.setDacUserId(1);
+    user.setUserId(1);
     user.setDisplayName("Test Name");
     user.setEmail("Test Email");
     user.setInstitutionId(1);
