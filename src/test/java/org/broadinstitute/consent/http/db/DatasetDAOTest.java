@@ -195,10 +195,10 @@ public class DatasetDAOTest extends DAOTestHelper {
         datasetDAO.updateDataset(d.getDataSetId(), name, now, userId, needsApproval);
         Dataset updated = datasetDAO.findDatasetById(d.getDataSetId());
 
-        assertEquals(updated.getName(), name);
-        assertEquals(updated.getUpdateDate(), now);
-        assertEquals(updated.getUpdateUserId(), userId);
-        assertEquals(updated.getNeedsApproval(), needsApproval);
+        assertEquals(name, updated.getName());
+        assertEquals(now, updated.getUpdateDate());
+        assertEquals(userId, updated.getUpdateUserId());
+        assertEquals(needsApproval, updated.getNeedsApproval());
     }
 
     @Test
