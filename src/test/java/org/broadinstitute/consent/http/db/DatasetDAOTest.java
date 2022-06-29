@@ -191,14 +191,12 @@ public class DatasetDAOTest extends DAOTestHelper {
         String name = RandomStringUtils.random(20, true, true);
         Timestamp now = new Timestamp(new Date().getTime());
         Integer userId = RandomUtils.nextInt(1, 1000);
-        Boolean needsApproval = true;
-        datasetDAO.updateDataset(d.getDataSetId(), name, now, userId, needsApproval);
+        datasetDAO.updateDataset(d.getDataSetId(), name, now, userId, true);
         Dataset updated = datasetDAO.findDatasetById(d.getDataSetId());
 
         assertEquals(name, updated.getName());
         assertEquals(now, updated.getUpdateDate());
         assertEquals(userId, updated.getUpdateUserId());
-        assertEquals(needsApproval, updated.getNeedsApproval());
     }
 
     @Test
