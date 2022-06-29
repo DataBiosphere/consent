@@ -25,6 +25,7 @@ import org.mockito.MockitoAnnotations;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +47,8 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -319,6 +322,7 @@ public class DatasetServiceTest {
         int datasetId = 1;
         DatasetDTO dataSetDTO = getDatasetDTO();
         Dataset dataset = getDatasets().get(0);
+        dataSetDTO.setDatasetName(dataset.getName());
         Set<DatasetProperty> datasetProps = getDatasetProperties();
         List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
             new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue())
@@ -340,6 +344,7 @@ public class DatasetServiceTest {
         DatasetDTO dataSetDTO = getDatasetDTO();
         Dataset dataset = getDatasets().get(0);
         dataset.setProperties(getDatasetProperties());
+        dataSetDTO.setDatasetName(dataset.getName());
 
         List<DatasetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
         updatedProperties.get(2).setPropertyValue("updated value");
@@ -361,6 +366,7 @@ public class DatasetServiceTest {
         int datasetId = 1;
         DatasetDTO dataSetDTO = getDatasetDTO();
         Dataset dataset = getDatasets().get(0);
+        dataSetDTO.setDatasetName(dataset.getName());
         List<DatasetProperty> properties = new ArrayList<>(getDatasetProperties());
         properties.remove(2);
         properties.remove(2);
@@ -387,6 +393,7 @@ public class DatasetServiceTest {
         DatasetDTO dataSetDTO = getDatasetDTO();
         Dataset dataset = getDatasets().get(0);
         dataset.setProperties(getDatasetProperties());
+        dataSetDTO.setDatasetName(dataset.getName());
 
         List<DatasetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
         updatedProperties.remove(2);
@@ -401,6 +408,34 @@ public class DatasetServiceTest {
         Optional<Dataset> updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
         assertNotNull(updated);
         assertTrue(updated.isPresent());
+    }
+
+    @Test
+    public void testUpdateDatasetNameModified() {
+        int datasetId = 1;
+        DatasetDTO datasetDTO = getDatasetDTO();
+        Dataset dataset = getDatasets().get(0);
+
+        Set<DatasetProperty> datasetProps = getDatasetProperties();
+        List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
+                new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue())
+        ).collect(Collectors.toList());
+        datasetDTO.setProperties(dtoProps);
+        dataset.setProperties(datasetProps);
+
+        String name = RandomStringUtils.randomAlphabetic(10);
+        datasetDTO.setDatasetName(name);
+
+        when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
+        when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(datasetProps);
+        when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
+        spy(datasetDAO);
+        initService();
+
+        Optional<Dataset> updated = datasetService.updateDataset(datasetDTO, datasetId, 1);
+        assertNotNull(updated);
+        assertTrue(updated.isPresent());
+        verify(datasetDAO, times(1)).updateDataset(eq(datasetId), eq(name), any(), any(), any());
     }
 
     @Test
@@ -590,6 +625,7 @@ public class DatasetServiceTest {
         datasetDTO.setDataSetId(1);
         datasetDTO.setObjectId("Test ObjectId");
         datasetDTO.setActive(true);
+        datasetDTO.setNeedsApproval(false);
         datasetDTO.setProperties(getDatasetPropertiesDTO());
         DataUse dataUse = new DataUse();
         dataUse.setGeneralUse(true);
