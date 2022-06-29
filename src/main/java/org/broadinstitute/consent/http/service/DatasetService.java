@@ -267,7 +267,7 @@ public class DatasetService {
               ).collect(Collectors.toList());
 
         if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() && propertiesToDelete
-              .isEmpty() && dataset.getDatasetName().equals(old.getDatasetName())) {
+              .isEmpty() && dataset.getDatasetName().equals(old.getName())) {
             return Optional.empty();
         }
 
