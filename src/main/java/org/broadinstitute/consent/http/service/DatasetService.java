@@ -111,15 +111,15 @@ public class DatasetService {
      * @param dataset The DataSetDTO
      * @return The created Consent
      */
-    public Consent createConsentForDataset(Dataset dataset) {
+    public Consent createConsentForDataset(DatasetDTO dataset) {
         String consentId = UUID.randomUUID().toString();
-        Optional<DatasetProperty> nameProp = dataset.getProperties()
+        Optional<DatasetPropertyDTO> nameProp = dataset.getProperties()
               .stream()
               .filter(p -> p.getPropertyName().equalsIgnoreCase(DATASET_NAME_KEY))
               .findFirst();
         // Typically, this is a construct from ORSP consisting of dataset name and some form of investigator code.
         // In our world, we'll use that dataset name if provided, or the alias.
-        String groupName = nameProp.isPresent() ? nameProp.get().getPropertyValue() : dataset.getAlias().toString();
+        String groupName = nameProp.isPresent() ? nameProp.get().getPropertyValue() : dataset.getAlias();
         String name = CONSENT_NAME_PREFIX + dataset.getDataSetId();
         Date createDate = new Date();
         if (Objects.nonNull(dataset.getDataUse())) {
@@ -172,7 +172,7 @@ public class DatasetService {
                     .getVulnerablePopulations());
     }
 
-    public Dataset createDatasetWithConsent(Dataset dataset, String name, Integer userId) throws Exception {
+    public DatasetDTO createDatasetWithConsent(DatasetDTO dataset, String name, Integer userId) throws Exception {
         if (Objects.nonNull(getDatasetByName(name))) {
             throw new IllegalArgumentException("Dataset name: " + name + " is already in use");
         }
@@ -180,7 +180,7 @@ public class DatasetService {
         Integer createdDatasetId = datasetDAO.inTransaction(h -> {
             try {
                 Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(), dataset.getActive());
-                List<DatasetProperty> propertyList = new ArrayList<>(dataset.getProperties());
+                List<DatasetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
                 h.insertDatasetProperties(propertyList);
                 h.updateDatasetNeedsApproval(id, dataset.getNeedsApproval());
                 return id;
@@ -200,7 +200,7 @@ public class DatasetService {
             deleteDataset(createdDatasetId, userId);
             throw e;
         }
-        return getDatasetWithPropertiesById(createdDatasetId);
+        return getDatasetDTO(createdDatasetId);
     }
 
     public Dataset getDatasetByName(String name) {
@@ -227,7 +227,7 @@ public class DatasetService {
         return dataset;
     }
 
-    public Optional<Dataset> updateDataset(Dataset dataset, Integer datasetId, Integer userId) {
+    public Optional<Dataset> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
 
         if (Objects.isNull(dataset.getDatasetName())) {
@@ -247,7 +247,9 @@ public class DatasetService {
         Dataset old = getDatasetWithPropertiesById(datasetId);
         Set<DatasetProperty> oldProperties = old.getProperties();
 
-        List<DatasetProperty> updateDatasetProperties = new ArrayList<>(dataset.getProperties());
+        List<DatasetPropertyDTO> updateDatasetPropertyDTOs = dataset.getProperties();
+        List<DatasetProperty> updateDatasetProperties = processDatasetProperties(datasetId,
+              updateDatasetPropertyDTOs);
 
         List<DatasetProperty> propertiesToAdd = updateDatasetProperties.stream()
               .filter(p -> oldProperties.stream()
@@ -314,7 +316,7 @@ public class DatasetService {
               .collect(Collectors.toList());
     }
 
-    public List<DatasetProperty> findInvalidProperties(List<DatasetProperty> properties) {
+    public List<DatasetPropertyDTO> findInvalidProperties(List<DatasetPropertyDTO> properties) {
         List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
         List<String> keys = dictionaries.stream().map(Dictionary::getKey)
               .collect(Collectors.toList());
@@ -324,14 +326,14 @@ public class DatasetService {
               .collect(Collectors.toList());
     }
 
-    public List<DatasetProperty> findDuplicateProperties(List<DatasetProperty> properties) {
+    public List<DatasetPropertyDTO> findDuplicateProperties(List<DatasetPropertyDTO> properties) {
         Set<String> uniqueKeys = properties.stream()
-              .map(DatasetProperty::getPropertyName)
+              .map(DatasetPropertyDTO::getPropertyName)
               .collect(Collectors.toSet());
         if (uniqueKeys.size() != properties.size()) {
-            List<DatasetProperty> allDuplicateProperties = new ArrayList<>();
+            List<DatasetPropertyDTO> allDuplicateProperties = new ArrayList<>();
             uniqueKeys.forEach(key -> {
-                List<DatasetProperty> propertiesPerKey = properties.stream()
+                List<DatasetPropertyDTO> propertiesPerKey = properties.stream()
                       .filter(property -> property.getPropertyName().equals(key))
                       .collect(Collectors.toList());
                 if (propertiesPerKey.size() > 1) {
