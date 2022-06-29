@@ -118,11 +118,10 @@ public class EmailNotifierService {
         if (isServiceActive) {
             DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
             List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
-            List<Integer> datasetIds = collection.getDars().values().stream()
-                    .map(DataAccessRequest::getData)
-                    .map(DataAccessRequestData::getDatasetIds)
-                    .flatMap(List::stream)
+            List<String> referenceIds = collection.getDars().values().stream()
+                    .map(DataAccessRequest::getReferenceId)
                     .collect(Collectors.toList());
+            List<Integer> datasetIds = dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds);
             Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
             // Ensure that admins/chairs are not double emailed
             // and filter users that don't want to receive email

@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
@@ -268,13 +269,21 @@ public class DarCollectionService {
    * @return List<DarCollection>
    */
   public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections, List<Integer> filterDatasetIds) {
-    // get datasetIds from each DAR from each collection
+    List<String> reference_ids = collections.stream()
+      .map(d-> d.getDars().values())
+      .flatMap(Collection::stream)
+      .map(d -> d.getReferenceId())
+      .collect(Collectors.toList());
+    Map<String, List<DarDataset>> referenceIdToDatasetId = dataAccessRequestDAO.findAllDARDatasets(reference_ids)
+      .stream().collect(Collectors.groupingBy(DarDataset::getReferenceId));
     List<Integer> datasetIds = collections.stream()
       .map(d-> d.getDars().values())
       .flatMap(Collection::stream)
-      .map(d -> d.getData().getDatasetIds())
+      .map(d -> referenceIdToDatasetId.get(d.getReferenceId()))
       .flatMap(Collection::stream)
+      .map(DarDataset::getDatasetId)
       .collect(Collectors.toList());
+
     if(!datasetIds.isEmpty()) {
       // if filterDatasetIds has values, get the intersection between that and datasetIds
       if (!filterDatasetIds.isEmpty()) {
@@ -286,9 +295,9 @@ public class DarCollectionService {
 
       return collections.stream().map(c -> {
         Set<Dataset> collectionDatasets = c.getDars().values().stream()
-          .map(DataAccessRequest::getData)
-          .map(DataAccessRequestData::getDatasetIds)
+          .map(d -> referenceIdToDatasetId.get(d.getReferenceId()))
           .flatMap(Collection::stream)
+          .map(DarDataset::getDatasetId)
           .map(datasetMap::get)
           .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
           .collect(Collectors.toSet());

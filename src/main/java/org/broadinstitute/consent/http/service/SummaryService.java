@@ -223,9 +223,7 @@ public class SummaryService {
       List<Integer> datasetIds =
           dataAccessRequests.stream()
             .filter(Objects::nonNull)
-            .map(DataAccessRequest::getData)
-            .filter(Objects::nonNull)
-            .map(DataAccessRequestData::getDatasetIds)
+            .map(DataAccessRequest::getDatasetIds)
             .flatMap(List::stream)
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
@@ -283,7 +281,7 @@ public class SummaryService {
         List<User> dacMembers = voteUsers.stream().filter(v -> dacUserIds.contains(v.getUserId())).collect(Collectors.toList());
 
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
-          List<Integer> datasetId = dar.getData().getDatasetIds();
+          List<Integer> datasetId = dar.getDatasetIds();
           if (CollectionUtils.isNotEmpty(datasetId)) {
             Optional<User> darUser = darUsers.stream().filter(u -> u.getUserId().equals(dar.getUserId())).findFirst();
             details.add(new DataAccessRequestSummaryDetail(

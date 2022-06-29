@@ -190,6 +190,32 @@ public class DataAccessRequestService {
         return dataAccessRequestDAO.findByReferenceIds(referenceIds);
     }
 
+    public List<Integer> findDatasetIdByReferenceId(String referenceId) {
+        List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(referenceId);
+
+        if (Objects.isNull(datasetIds)) {
+            throw new NotFoundException("There does not exist any datasetIds for the given referenceId");
+        }
+        return datasetIds;
+    }
+
+    public List<Integer> findAllDatasetIdByReferenceId(List<String> referenceIds) {
+        List<Integer> datasetIds = dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds);
+
+        if (Objects.isNull(datasetIds)) {
+            throw new NotFoundException("There does not exist any datasetIds for the given referenceIds");
+        }
+        return datasetIds;
+    }
+
+    public void insertDARDatasetRelation(String referenceId, Integer datasetId) {
+        dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    }
+
+    public void insertAllDARDatasetRelation(List<DarDataset> darDatasets) {
+        dataAccessRequestDAO.insertAllDarDatasets(darDatasets);
+    }
+
     public void deleteByReferenceId(User user, String referenceId) throws NotAcceptableException {
         List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
         if (!elections.isEmpty()) {
