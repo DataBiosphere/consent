@@ -12,11 +12,13 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequest {
@@ -46,6 +48,8 @@ public class DataAccessRequest {
   @JsonProperty public Timestamp submissionDate;
 
   @JsonProperty public Timestamp updateDate;
+
+  @JsonProperty public List<Integer> datasetIds;
 
   @JsonProperty private Map<Integer, Election> elections;
 
@@ -161,6 +165,24 @@ public class DataAccessRequest {
       }
     }
   }
+
+  public List<Integer> getDatasetIds() { return datasetIds; }
+
+  public void addDatasetId(Integer id) {
+    if (Objects.isNull(datasetIds)) {
+      datasetIds = new ArrayList<>();
+    }
+    datasetIds.add(id);
+  }
+
+  public void addDatasetIds(List<Integer> ids) {
+    if (Objects.nonNull(ids)) {
+      datasetIds = ids;
+    } else {
+      datasetIds = new ArrayList<>();
+    }
+  }
+
 
   /**
    * Merges the DAR and the DAR Data into a single Map Ignores a series of deprecated keys Null
