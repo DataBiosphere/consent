@@ -347,4 +347,5 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         " WHERE c.consentid = :consentId " +
         " AND d.active = true ")
     Set<Dataset> findDatasetsForConsentId(@Bind("consentId") String consentId);
+
 }

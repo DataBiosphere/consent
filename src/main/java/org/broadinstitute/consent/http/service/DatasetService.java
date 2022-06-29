@@ -307,7 +307,8 @@ public class DatasetService {
               .collect(Collectors.toList());
 
         return properties.stream()
-              .filter(p -> keys.contains(p.getPropertyName()))
+              .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName()
+                      .equals(DATASET_NAME_KEY))
               .map(p ->
                     new DatasetProperty(datasetId,
                           dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
