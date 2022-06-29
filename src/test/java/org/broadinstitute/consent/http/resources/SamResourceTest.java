@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.api.client.http.HttpStatusCodes;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ActionPattern;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
@@ -11,17 +12,23 @@ import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -29,7 +36,9 @@ public class SamResourceTest {
 
   @Mock private AuthUser authUser;
 
-  @Mock private SamService service;
+  @Mock private SamService samService;
+
+  @Mock private UserService userService;
 
   @Mock private UriInfo uriInfo;
 
@@ -41,7 +50,7 @@ public class SamResourceTest {
   }
 
   private void initResource() {
-    resource = new SamResource(service);
+    resource = new SamResource(samService, userService);
   }
 
   @Test
@@ -62,7 +71,7 @@ public class SamResourceTest {
             .setOwnerRoleName("ownerRoleName")
             .setActionPatterns(Collections.singletonList(pattern))
             .setRoles(Collections.singletonList(role));
-    when(service.getResourceTypes(any())).thenReturn(Collections.singletonList(type));
+    when(samService.getResourceTypes(any())).thenReturn(Collections.singletonList(type));
     initResource();
     Response response = resource.getResourceTypes(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -73,7 +82,7 @@ public class SamResourceTest {
     UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
     UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true).setLdap(true);
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-    when(service.postRegistrationInfo(any())).thenReturn(status);
+    when(samService.postRegistrationInfo(any())).thenReturn(status);
     initResource();
     Response response = resource.postRegistrationInfo(authUser, uriInfo);
     assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
@@ -87,7 +96,7 @@ public class SamResourceTest {
             .setInAllUsersGroup(RandomUtils.nextBoolean())
             .setInGoogleProxyGroup(RandomUtils.nextBoolean())
             .setTosAccepted(RandomUtils.nextBoolean());
-    when(service.getSelfDiagnostics(any())).thenReturn(diagnostics);
+    when(samService.getSelfDiagnostics(any())).thenReturn(diagnostics);
     initResource();
     Response response = resource.getSelfDiagnostics(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -100,7 +109,7 @@ public class SamResourceTest {
             .setUserEmail("test@test.org")
             .setUserSubjectId(RandomStringUtils.random(10, false, true))
             .setEnabled(RandomUtils.nextBoolean());
-    when(service.getRegistrationInfo(any())).thenReturn(userInfo);
+    when(samService.getRegistrationInfo(any())).thenReturn(userInfo);
     initResource();
     Response response = resource.getRegistrationInfo(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -112,9 +121,55 @@ public class SamResourceTest {
       .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true).setLdap(true);
     UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
     TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
-    when(service.postTosAcceptedStatus(any())).thenReturn(tosResponse);
+    when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
     Response response = resource.postSelfTos(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testPostSelfTos_NoConsentUser() throws Exception {
+    TosResponse.Enabled enabled = new TosResponse.Enabled()
+      .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true).setLdap(true);
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+    spy(userService);
+    doThrow(new NotFoundException()).when(userService).findUserByEmail(any());
+    when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
+    initResource();
+
+    Response response = resource.postSelfTos(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    verify(userService, times(1)).createUser(any());
+  }
+
+  @Test
+  public void testPostSelfTos_ExistingSamUser() throws Exception {
+    TosResponse.Enabled enabled = new TosResponse.Enabled()
+      .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true).setLdap(true);
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+    spy(samService);
+    doThrow(new ConsentConflictException()).when(samService).postRegistrationInfo(any());
+    when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
+    initResource();
+
+    Response response = resource.postSelfTos(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testPostSelfTos_NoSamUser() throws Exception {
+    TosResponse.Enabled enabled = new TosResponse.Enabled()
+      .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true).setLdap(true);
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+    spy(samService);
+    when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
+    initResource();
+
+    Response response = resource.postSelfTos(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    verify(samService, times(1)).postRegistrationInfo(any());
   }
 }
