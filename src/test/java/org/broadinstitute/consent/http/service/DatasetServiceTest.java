@@ -414,6 +414,7 @@ public class DatasetServiceTest {
         DatasetDTO datasetDTO = getDatasetDTO();
         Dataset dataset = getDatasets().get(0);
 
+        //dataset properties are the same between the existing dataset and the update datasetDTO - no modification
         Set<DatasetProperty> datasetProps = getDatasetProperties();
         List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
                 new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue())
@@ -421,6 +422,7 @@ public class DatasetServiceTest {
         datasetDTO.setProperties(dtoProps);
         dataset.setProperties(datasetProps);
 
+        //datasetDTO given the updated name - existing dataset requires name to be modified
         String name = RandomStringUtils.randomAlphabetic(10);
         datasetDTO.setDatasetName(name);
 
