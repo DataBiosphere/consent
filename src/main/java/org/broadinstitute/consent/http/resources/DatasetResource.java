@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -44,9 +45,11 @@ import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -91,29 +94,33 @@ public class DatasetResource extends Resource {
     @Path("/v2")
     @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response createDataset(@Auth AuthUser authUser, @Context UriInfo info, String json) {
-        DatasetDTO inputDataset = new Gson().fromJson(json, DatasetDTO.class);
+        Dataset inputDataset = new Gson().fromJson(json, Dataset.class);
         if (Objects.isNull(inputDataset)) {
             throw new BadRequestException("Dataset is required");
         }
         if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
             throw new BadRequestException("Dataset must contain required properties");
         }
-        List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
+        List<DatasetProperty> datasetProperties = new ArrayList<>(inputDataset.getProperties());
+        List<DatasetProperty> invalidProperties = datasetService.findInvalidProperties(datasetProperties);
         if (invalidProperties.size() > 0) {
             List<String> invalidKeys = invalidProperties.stream()
-                .map(DatasetPropertyDTO::getPropertyName)
+                .map(DatasetProperty::getPropertyName)
                 .collect(Collectors.toList());
             throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
         }
-        List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
+        List<DatasetProperty> duplicateProperties = datasetService.findDuplicateProperties(datasetProperties);
         if (duplicateProperties.size() > 0) {
             throw new BadRequestException("Dataset contains multiple values for the same property.");
         }
         String name = "";
-        try {
-            name = inputDataset.getPropertyValue("Dataset Name");
-        } catch (IndexOutOfBoundsException e) {
-            throw new BadRequestException("Dataset name is required");
+        Optional<DatasetProperty> nameProperty = inputDataset.getProperties()
+                    .stream()
+                    .filter(p -> p.getPropertyName().equalsIgnoreCase(DatasetService.DATASET_NAME_KEY))
+                    .findFirst();
+
+        if (nameProperty.isPresent()) {
+            name = nameProperty.get().getPropertyValue();
         }
         if (Objects.isNull(name) || name.isBlank()) {
             throw new BadRequestException("Dataset name is required");
@@ -125,7 +132,7 @@ public class DatasetResource extends Resource {
         User dacUser = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
         Integer userId = dacUser.getUserId();
         try {
-            DatasetDTO createdDatasetWithConsent = datasetService.createDatasetWithConsent(inputDataset, name, userId);
+            Dataset createdDatasetWithConsent = datasetService.createDatasetWithConsent(inputDataset, name, userId);
             URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDatasetWithConsent.getDataSetId());
             return Response.created(uri).entity(createdDatasetWithConsent).build();
         }
@@ -141,7 +148,7 @@ public class DatasetResource extends Resource {
     @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response updateDataset(@Auth AuthUser authUser, @Context UriInfo info, @PathParam("datasetId") Integer datasetId, String json) {
         try {
-            DatasetDTO inputDataset = new Gson().fromJson(json, DatasetDTO.class);
+            Dataset inputDataset = new Gson().fromJson(json, Dataset.class);
             if (Objects.isNull(inputDataset)) {
                 throw new BadRequestException("Dataset is required");
             }
@@ -152,14 +159,16 @@ public class DatasetResource extends Resource {
             if (Objects.isNull(datasetExists)) {
                 throw new NotFoundException("Could not find the dataset with id: " + datasetId);
             }
-            List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
+
+            List<DatasetProperty> datasetProperties = new ArrayList<>(inputDataset.getProperties());
+            List<DatasetProperty> invalidProperties = datasetService.findInvalidProperties(datasetProperties);
             if (invalidProperties.size() > 0) {
                 List<String> invalidKeys = invalidProperties.stream()
-                    .map(DatasetPropertyDTO::getPropertyName)
+                    .map(DatasetProperty::getPropertyName)
                     .collect(Collectors.toList());
                 throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
             }
-            List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
+            List<DatasetProperty> duplicateProperties = datasetService.findDuplicateProperties(datasetProperties);
             if (duplicateProperties.size() > 0) {
                 throw new BadRequestException("Dataset contains multiple values for the same property.");
             }
