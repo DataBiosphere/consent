@@ -327,7 +327,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
     String darReferenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();
-    dar.getData().setDatasetIds(Collections.singletonList(datasetId));
+    dar.addDatasetIds(Collections.singletonList(datasetId));
     dataAccessRequestDAO.updateDataByReferenceId(darReferenceId, dar.getData());
     consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
