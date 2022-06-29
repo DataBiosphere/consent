@@ -109,7 +109,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " SET name = :datasetName," +
             " update_date = :updateDate, " +
             " update_user_id = :updateUserId, " +
-            " needs_approval = :needsApproval, " +
+            " needs_approval = :needsApproval " +
             " WHERE dataSetId = :datasetId")
     void updateDataset(@Bind("datasetId") Integer datasetId, @Bind("datasetName") String datasetName, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId, @Bind("needsApproval") Boolean needsApproval);
 
