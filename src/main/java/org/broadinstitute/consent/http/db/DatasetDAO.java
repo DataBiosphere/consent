@@ -99,10 +99,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlUpdate("DELETE FROM dataset WHERE datasetid = :datasetId")
     void deleteDatasetById(@Bind("datasetId") Integer datasetId);
 
-    @SqlUpdate("update dataset set active = :active where dataSetId = :datasetId")
+    @SqlUpdate("UPDATE dataset SET active = :active WHERE dataSetId = :datasetId")
     void updateDatasetActive(@Bind("datasetId") Integer datasetId, @Bind("active") Boolean active);
 
-    @SqlUpdate("update dataset set needs_approval = :needsApproval where dataSetId = :datasetId")
+    @SqlUpdate("UPDATE dataset SET needs_approval = :needsApproval WHERE dataSetId = :datasetId")
     void updateDatasetNeedsApproval(@Bind("datasetId") Integer datasetId, @Bind("needsApproval") Boolean needsApproval);
 
     @SqlUpdate("UPDATE dataset " +
