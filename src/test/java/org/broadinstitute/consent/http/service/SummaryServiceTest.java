@@ -96,7 +96,7 @@ public class SummaryServiceTest {
         List<Integer> rpElectionIds = rpElections.stream().map(Election::getElectionId).collect(Collectors.toList());
         List<Integer> consentElectionIds = consentElections.stream().map(Election::getElectionId).collect(Collectors.toList());
         List<DataAccessRequest> dars = List.of(createDAR(accessElections.get(0).getReferenceId(), darUser.getUserId()));
-        List<Association> associations = List.of(createAssociation(dars.get(0).getData().getDatasetIds().get(0), consentElections.get(0).getReferenceId()));
+        List<Association> associations = List.of(createAssociation(dars.get(0).getDatasetIds().get(0), consentElections.get(0).getReferenceId()));
         List<String> associatedConsentIds = List.of(consentElections.get(0).getReferenceId());
         List<Vote> accessVotes = createVotes(accessElections.get(0).getElectionId(), voteUser.getUserId());
         List<Vote> rpVotes = createVotes(rpElections.get(0).getElectionId(), voteUser.getUserId());
@@ -212,11 +212,11 @@ public class SummaryServiceTest {
 
     private DataAccessRequest createDAR(String referenceId, Integer userId) {
         DataAccessRequestData data = new DataAccessRequestData();
-        data.setDatasetIds(List.of(1));
         data.setReferenceId(referenceId);
         data.setDarCode("DAR-" + RandomUtils.nextInt(100, 200));
         data.setProjectTitle("Project-TEST");
         DataAccessRequest dar = new DataAccessRequest();
+        dar.addDatasetId(1);
         dar.setReferenceId(referenceId);
         dar.setUserId(userId);
         dar.setData(data);

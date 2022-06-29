@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
@@ -27,6 +28,7 @@ import org.mockito.Mock;
 
 import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -142,10 +144,12 @@ public class DarCollectionServiceTest {
     DataAccessRequestData canceledDarData = new DataAccessRequestData();
     canceledDarData.setStatus(DarStatus.CANCELED.getValue());
     DataAccessRequest canceledDar = new DataAccessRequest();
+    canceledDar.setReferenceId(UUID.randomUUID().toString());
     canceledDar.setData(canceledDarData);
     DarCollection canceledCollection = new DarCollection();
     canceledCollection.addDar(canceledDar);
     when(darCollectionDAO.findAllDARCollections()).thenReturn(List.of(canceledCollection));
+    when(dataAccessRequestDAO.findAllDARDatasets(any())).thenReturn(List.of(new DarDataset(canceledDar.getReferenceId(), 1)));
     initService();
 
     List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.ADMIN.getRoleName());
@@ -270,6 +274,7 @@ public class DarCollectionServiceTest {
       .collect(Collectors.toList());
 
     when(datasetDAO.findDatasetWithDataUseByIdList(anyList())).thenReturn(datasets);
+    when(dataAccessRequestDAO.findAllDARDatasets(any())).thenReturn(getDarDatasets(collections));
     initService();
 
     collections = service.addDatasetsToCollections(collections, List.of());
@@ -300,6 +305,7 @@ public class DarCollectionServiceTest {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(datasetIds.get(0));
 
+    when(dataAccessRequestDAO.findAllDARDatasets(any())).thenReturn(getDarDatasets(collections));
     // mocking out findDatasetWithDataUseByIdList to only return one of the datasets
     when(datasetDAO.findDatasetWithDataUseByIdList(List.of(dataset.getDataSetId()))).thenReturn(new HashSet<>(List.of(dataset)));
 
@@ -325,6 +331,7 @@ public class DarCollectionServiceTest {
     DarCollection collection = generateMockDarCollection(datasets);
     collection.getDars().values().forEach(d -> d.getData().setStatus("Canceled"));
     List<Election> elections = new ArrayList<>();
+    when(dataAccessRequestDAO.findAllDARDatasets(any())).thenReturn(getDarDatasets(List.of(collection)));
     when(electionDAO.findLastElectionsByReferenceIdsAndType(anyList(), anyString())).thenReturn(elections);
     doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
@@ -357,6 +364,7 @@ public class DarCollectionServiceTest {
     dar.setData(data);
     DarCollection collection = createMockCollections(1).get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
+    when(dataAccessRequestDAO.findAllDARDatasets(any())).thenReturn(List.of(new DarDataset(dar.getReferenceId(), 1)));
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     spy(electionDAO);
@@ -423,7 +431,7 @@ public class DarCollectionServiceTest {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setDatasetIds(List.of(dataset.getDataSetId()));
+    dar.addDatasetIds(List.of(dataset.getDataSetId()));
     dar.setData(data);
     DarCollection collection = createMockCollections(1).get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
@@ -650,7 +658,7 @@ public class DarCollectionServiceTest {
 
     Integer datasetId = RandomUtils.nextInt(1, 100);
     datasets.add(generateMockDatasetWithDataUse(datasetId));
-    data.setDatasetIds(Collections.singletonList(datasetId));
+    dar.addDatasetId(datasetId);
     dar.setData(data);
     dar.setReferenceId(UUID.randomUUID().toString());
     return dar;
@@ -712,5 +720,24 @@ public class DarCollectionServiceTest {
     );
     user.addRole(admin);
     return user;
+  }
+
+  /**
+   * Loops through each collection and creates a new list of DarDatasets.
+   *
+   * @param collections List of collections
+   * @return
+   */
+  private List<DarDataset> getDarDatasets(List<DarCollection> collections) {
+    return collections.stream()
+      .map(c-> c.getDars().values())
+      .flatMap(Collection::stream)
+      .map(d -> {
+        return d.getDatasetIds().stream()
+                .map(id -> new DarDataset(d.getReferenceId(), id))
+                .collect(Collectors.toList());
+      })
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
   }
 }

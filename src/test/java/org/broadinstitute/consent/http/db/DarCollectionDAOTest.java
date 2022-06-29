@@ -788,7 +788,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     testDar.setUpdateDate(now);
     DataAccessRequestData contents = new DataAccessRequestData();
     // add data datasetId
-    contents.setDatasetIds(List.of(dataset.getDataSetId()));
+    testDar.addDatasetIds(List.of(dataset.getDataSetId()));
     testDar.setData(contents);
 
     dataAccessRequestDAO.insertDataAccessRequest(

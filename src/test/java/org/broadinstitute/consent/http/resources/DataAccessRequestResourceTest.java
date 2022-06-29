@@ -211,8 +211,8 @@ public class DataAccessRequestResourceTest {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
         dar.setReferenceId(UUID.randomUUID().toString());
+        dar.addDatasetIds(Arrays.asList(1, 2));
         data.setReferenceId(dar.getReferenceId());
-        data.setDatasetIds(Arrays.asList(1, 2));
         dar.setData(data);
         dar.setUserId(1);
         return dar;

@@ -170,8 +170,8 @@ public class MetricsServiceTest {
               DataAccessRequest dar = new DataAccessRequest();
               dar.setId(count);
               dar.setReferenceId(referenceId);
+              dar.addDatasetIds(dataSetIds);
               DataAccessRequestData data = new DataAccessRequestData();
-              data.setDatasetIds(dataSetIds);
               data.setReferenceId(referenceId);
               data.setProjectTitle(UUID.randomUUID().toString());
               dar.setData(data);
