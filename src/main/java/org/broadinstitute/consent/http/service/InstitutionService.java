@@ -65,10 +65,13 @@ public class InstitutionService {
   public Institution findInstitutionById(Integer id) {
     Institution institution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(institution);
+
     List<SimplifiedUser> signingOfficials = userDAO.getSOsByInstitution(id).stream()
             .map(SimplifiedUser::new)
             .collect(Collectors.toList());
-    return institutionDAO.findInstitutionById(id);
+    institution.setSigningOfficials(signingOfficials);
+
+    return institution;
   }
 
   public List<Institution> findAllInstitutions() {
