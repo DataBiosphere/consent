@@ -110,9 +110,17 @@ public class SamService {
   }
 
   public TosResponse postTosAcceptedStatus(AuthUser authUser) throws Exception {
-    GenericUrl genericUrl = new GenericUrl(configuration.postTosAcceptedUrl());
+    GenericUrl genericUrl = new GenericUrl(configuration.tosRegistrationUrl());
     JsonHttpContent content = new JsonHttpContent(new GsonFactory(), "app.terra.bio/#terms-of-service");
     HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
+    HttpResponse response = clientUtil.handleHttpRequest(request);
+    String body = response.parseAsString();
+    return new Gson().fromJson(body, TosResponse.class);
+  }
+
+  public TosResponse removeTosAcceptedStatus(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(configuration.tosRegistrationUrl());
+    HttpRequest request = clientUtil.buildDeleteRequest(genericUrl, authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     String body = response.parseAsString();
     return new Gson().fromJson(body, TosResponse.class);

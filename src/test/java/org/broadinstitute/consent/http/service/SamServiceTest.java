@@ -209,4 +209,19 @@ public class SamServiceTest implements WithMockServer {
       fail(e.getMessage());
     }
   }
+
+  @Test
+  public void testRemoveTosAcceptedStatus() {
+    TosResponse.Enabled enabled = new TosResponse.Enabled()
+            .setAdminEnabled(true).setTosAccepted(false).setGoogle(true).setAllUsersGroup(true).setLdap(true);
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(tosResponse.toString()));
+
+    try {
+      service.removeTosAcceptedStatus(authUser);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
+  }
 }
