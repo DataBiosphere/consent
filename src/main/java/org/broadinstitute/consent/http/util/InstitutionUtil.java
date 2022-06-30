@@ -38,7 +38,7 @@ public class InstitutionUtil {
       @Override
       public boolean shouldSkipField(FieldAttributes field) {
         String fieldName = field.getName();
-        return !isAdmin && (!fieldName.equals("id") && !fieldName.equals("name") && !fieldName.equals("signingOfficials"));
+        return !isAdmin && !(fieldName.equals("id") || fieldName.equals("name") || fieldName.equals("signingOfficials"));
       }
 
       // NOTE: shouldSkipClass is mandatory when creating an ExclusionStrategy
