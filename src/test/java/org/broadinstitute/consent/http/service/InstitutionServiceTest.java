@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
 import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
@@ -30,13 +31,16 @@ public class InstitutionServiceTest {
   @Mock
   private InstitutionDAO institutionDAO;
 
+  @Mock
+  private UserDAO userDAO;
+
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
   }
 
   private void initService() {
-    service = new InstitutionService(institutionDAO);
+    service = new InstitutionService(institutionDAO, userDAO);
   }
 
   private Institution initMockModel() {
@@ -123,7 +127,7 @@ public class InstitutionServiceTest {
   public void testDeleteInstitutionByIdFail() {
     initService();
     when(institutionDAO.findInstitutionById(anyInt())).thenThrow(new NotFoundException());
-    service.deleteInstitutionById(1);  
+    service.deleteInstitutionById(1);
   }
 
   @Test
