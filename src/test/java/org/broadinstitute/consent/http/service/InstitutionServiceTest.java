@@ -6,6 +6,8 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+
 import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -158,7 +160,7 @@ public class InstitutionServiceTest {
     initService();
 
     Institution institution = service.findInstitutionById(anyInt());
-    List<UserService.SimplifiedUser> signingOfficials = institution.getSigningOfficials();
+    List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
     assertEquals(getInstitutions().get(0), institution);
     assertEquals(1, signingOfficials.size());
     assertEquals(u.getDisplayName(), signingOfficials.get(0).displayName);
