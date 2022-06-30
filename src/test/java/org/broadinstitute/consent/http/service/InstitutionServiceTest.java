@@ -1,8 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.User;
 import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -131,10 +134,36 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testFindInstitutionById() {
-    initService();
+  public void testFindInstitutionByIdNoSigningOfficials() {
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(getInstitutions().get(0));
-    assertEquals(getInstitutions().get(0), service.findInstitutionById(anyInt()));
+    when(userDAO.getSOsByInstitution(anyInt())).thenReturn(Collections.emptyList());
+    initService();
+
+    Institution institution = service.findInstitutionById(anyInt());
+    assertEquals(getInstitutions().get(0), institution);
+    assertEquals(Collections.emptyList(), institution.getSigningOfficials());
+  }
+
+  @Test
+  public void testFindInstitutionByIdWithSigningOfficials() {
+    User u = new User();
+    String email = RandomStringUtils.randomAlphabetic(RandomUtils.nextInt(10, 50));
+    String displayName = RandomStringUtils.randomAlphabetic(RandomUtils.nextInt(10, 50));
+    u.setEmail(email);
+    u.setDisplayName(displayName);
+    u.setUserId(RandomUtils.nextInt(1, 100));
+
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(getInstitutions().get(0));
+    when(userDAO.getSOsByInstitution(anyInt())).thenReturn(List.of(u));
+    initService();
+
+    Institution institution = service.findInstitutionById(anyInt());
+    List<UserService.SimplifiedUser> signingOfficials = institution.getSigningOfficials();
+    assertEquals(getInstitutions().get(0), institution);
+    assertEquals(1, signingOfficials.size());
+    assertEquals(u.getDisplayName(), signingOfficials.get(0).displayName);
+    assertEquals(u.getEmail(), signingOfficials.get(0).email);
+    assertEquals(u.getUserId(), signingOfficials.get(0).userId);
   }
 
   @Test(expected = NotFoundException.class)
