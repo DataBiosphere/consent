@@ -41,6 +41,10 @@ public class ServicesConfiguration {
     return getOntologyURL() + "schemas/data-use/dar/translate";
   }
 
+  public String getConsentTranslateUrl() {
+    return getOntologyURL() + "schemas/data-use/consent/translate";
+  }
+
   public String getSamUrl() {
     return samUrl;
   }
