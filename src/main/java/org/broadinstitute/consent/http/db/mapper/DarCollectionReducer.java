@@ -56,6 +56,9 @@ public class DarCollectionReducer
           } else {
             dar = savedDar;
           }
+          if (Objects.nonNull(rowView.getColumn("dataset_id", Integer.class))) {
+            dar.addDatasetId(rowView.getColumn("dataset_id", Integer.class));
+          }
         }
         if (Objects.nonNull(rowView.getColumn("e_election_id", Integer.class))) {
           election = rowView.getRow(Election.class);

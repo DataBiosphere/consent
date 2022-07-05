@@ -230,12 +230,13 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, " +
       "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, " +
       "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
-      "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
+      "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, dd.dataset_id " +
     "FROM dar_collection c " +
     "INNER JOIN users u ON c.create_user_id = u.user_id " +
     "LEFT JOIN user_property up ON u.user_id = up.userid " +
     "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
+    "LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id " +
     "WHERE c.collection_id = (SELECT collection_id FROM data_access_request WHERE reference_id = :referenceId) " +
     "AND (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) ")
   DarCollection findDARCollectionByReferenceId(@Bind("referenceId") String referenceId);
