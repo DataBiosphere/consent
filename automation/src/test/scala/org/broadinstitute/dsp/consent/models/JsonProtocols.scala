@@ -3,7 +3,7 @@ package org.broadinstitute.dsp.consent.models
 import org.broadinstitute.dsp.consent.models.ConsentModels._
 import org.broadinstitute.dsp.consent.models.DacModels._
 import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
-import org.broadinstitute.dsp.consent.models.DataSetModels._
+import org.broadinstitute.dsp.consent.models.DatasetModels._
 import org.broadinstitute.dsp.consent.models.DataUseModels._
 import org.broadinstitute.dsp.consent.models.ElectionModels._
 import org.broadinstitute.dsp.consent.models.MatchModels._
@@ -27,7 +27,7 @@ object JsonProtocols extends DefaultJsonProtocol {
     implicit val dataSetDetailFormat: JsonFormat[DataSetDetailEntry] = jsonFormat3(DataSetDetailEntry)
     implicit val ontologyEntryFormat: JsonFormat[OntologyEntry] = jsonFormat4(OntologyEntry)
     implicit val userFormat: JsonFormat[User] = jsonFormat10(User)
-    implicit val dataSetFormat: JsonFormat[DataSet] = jsonFormat16(DataSet)
+    implicit val dataSetFormat: JsonFormat[Dataset] = jsonFormat16(Dataset)
     implicit val dataAccessRequestDraftFormat: JsonFormat[DataAccessRequestDraft] = jsonFormat3(DataAccessRequestDraft)
     implicit val fireCloudProfileFormat: JsonFormat[FireCloudProfile] = jsonFormat11(FireCloudProfile)
     implicit val nihUserFormat: JsonFormat[NihUserAccount] = jsonFormat4(NihUserAccount)

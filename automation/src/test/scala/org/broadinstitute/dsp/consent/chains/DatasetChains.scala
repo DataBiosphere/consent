@@ -6,16 +6,16 @@ import org.broadinstitute.dsp.consent.requests.Requests
 import spray.json._
 import DefaultJsonProtocol._
 import org.broadinstitute.dsp.consent.models.JsonProtocols
-import org.broadinstitute.dsp.consent.models.DataSetModels._
+import org.broadinstitute.dsp.consent.models.DatasetModels._
 import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
 import org.broadinstitute.dsp.consent.services._
 import io.netty.handler.codec.http.HttpResponseStatus._
 
-object DataSetChains {
+object DatasetChains {
     def dataSetCatalogPickTwo(additionalHeaders: Map[String, String]): ChainBuilder = {
         exitBlockOnFail {
             exec(
-                Requests.User.dataSetCatalog(OK.code, "${userId}", additionalHeaders)
+                Requests.User.datasetCatalog(OK.code, additionalHeaders)
             )
             .exec { session =>
                 implicit val dataSetFormatJson: JsonProtocols.dataSetFormat.type = JsonProtocols.dataSetFormat
@@ -23,9 +23,9 @@ object DataSetChains {
                 implicit val dataAccessRequestJson: JsonProtocols.dataAccessRequestDraftFormat.type = JsonProtocols.dataAccessRequestDraftFormat
 
                 val dataSetStr: String = session(Requests.Dataset.dataSetResponse).as[String]
-                val dataSets: Seq[DataSet] = dataSetStr.parseJson.convertTo[Seq[DataSet]]
+                val dataSets: Seq[Dataset] = dataSetStr.parseJson.convertTo[Seq[Dataset]]
 
-                val chosenSets: Seq[DataSet] = dataSets
+                val chosenSets: Seq[Dataset] = dataSets
                     .filter(ds => ds.active && !ds.dataUse.collaboratorRequired.getOrElse(false))
                     .groupBy(_.dacId)
                     .map(_._2.head)

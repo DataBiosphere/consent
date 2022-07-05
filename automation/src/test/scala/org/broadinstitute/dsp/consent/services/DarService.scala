@@ -1,7 +1,7 @@
 package org.broadinstitute.dsp.consent.services
 
 import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
-import org.broadinstitute.dsp.consent.models.DataSetModels._
+import org.broadinstitute.dsp.consent.models.DatasetModels._
 import org.broadinstitute.dsp.consent.models.JsonProtocols
 import org.broadinstitute.dsp.consent.models.ResearcherModels._
 import spray.json.DefaultJsonProtocol._
@@ -15,7 +15,7 @@ object DarService {
                   userId: Int,
                   referenceId: String,
                   dataSetIds: Seq[Int],
-                  datasets: Seq[DataSet],
+                  datasets: Seq[Dataset],
                   finalSubmit: Boolean = false): DataAccessRequest = {
         implicit val dataAccessRequestDataFormat: JsonProtocols.DataAccessRequestDataFormat.type = JsonProtocols.DataAccessRequestDataFormat
         implicit val dataSetEntryFormat: JsonProtocols.dataSetEntryFormat.type = JsonProtocols.dataSetEntryFormat

@@ -1,7 +1,7 @@
 package org.broadinstitute.dsp.consent.models
 
 import org.broadinstitute.dsp.consent.models.UserModels._
-import org.broadinstitute.dsp.consent.models.DataSetModels._
+import org.broadinstitute.dsp.consent.models.DatasetModels._
 import org.broadinstitute.dsp.consent.models.ElectionModels.Vote
 
 object DataAccessRequestModels {

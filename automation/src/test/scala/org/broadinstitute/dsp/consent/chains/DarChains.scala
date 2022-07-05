@@ -6,7 +6,7 @@ import org.broadinstitute.dsp.consent.requests.Requests
 import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
 import org.broadinstitute.dsp.consent.models.JsonProtocols
 import org.broadinstitute.dsp.consent.models.ResearcherModels._
-import org.broadinstitute.dsp.consent.models.DataSetModels._
+import org.broadinstitute.dsp.consent.models.DatasetModels._
 import org.broadinstitute.dsp.consent.models.DataUseModels._
 import org.broadinstitute.dsp.consent.models.ConsentModels._
 import spray.json._
@@ -43,9 +43,9 @@ object DarChains {
                 val referenceId: String = session("darReferenceId").as[String]
 
                 val indices: Seq[Int] = Seq(0, 1)
-                val dataSets: Seq[DataSet] = indices.map(idx => {
+                val dataSets: Seq[Dataset] = indices.map(idx => {
                     val dataSetStr: String = session(Requests.Dataset.dataSetsByDataSetId + idx).as[String]
-                    val dataSet: DataSet = dataSetStr.parseJson.convertTo[DataSet]
+                    val dataSet: Dataset = dataSetStr.parseJson.convertTo[Dataset]
                     dataSet
                 }).toSeq
                 val dsIds:Seq[Int] = dataSets.map(_.dataSetId).toSeq

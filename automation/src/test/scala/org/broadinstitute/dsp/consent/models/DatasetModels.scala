@@ -2,13 +2,13 @@ package org.broadinstitute.dsp.consent.models
 
 import org.broadinstitute.dsp.consent.models.DataUseModels._
 
-object DataSetModels {
+object DatasetModels {
     case class DataSetProperty(
         propertyName: String,
         propertyValue: String
     )
 
-    case class DataSet(
+    case class Dataset(
         dacId: Option[Int] = None,
         dataSetId: Int,
         consentId: String,
@@ -35,7 +35,7 @@ object DataSetModels {
         concatenation: String
     )
     object DataSetEntryBuilder {
-        def fromDataSet(set: DataSet): DataSetEntry = {
+        def fromDataSet(set: Dataset): DataSetEntry = {
             val prop = set.properties.filter(_.propertyName == "Dataset Name").head.propertyValue
             DataSetEntry(
                 set.dataSetId.toString,

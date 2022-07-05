@@ -9,7 +9,7 @@ import org.broadinstitute.dsp.consent.scenarios.GroupedScenarios._
 class DataSetScenarios extends Simulation with TestRunner {
     runScenarios(
         List(
-            GroupedScenario("DataSet By DAC User Id Scenario") {
+            GroupedScenario("Dataset By DAC User Id Scenario") {
                 exec(Requests.User.me(OK.code, TestConfig.researcherHeader))
                   .exec(Requests.Dataset.byUserId(OK.code, TestConfig.researcherHeader))
             }

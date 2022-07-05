@@ -94,13 +94,13 @@ object Requests {
       responseContent
     }
 
-    def dataSetCatalog(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
-      http("DataSet Catalog Requests")
+    def datasetCatalog(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Dataset Catalog Requests")
         .get("/")
         .headers(TestConfig.jsonHeader)
         .headers(additionalHeaders)
         .resources(
-          Dataset.byUserId(expectedStatus, userId, additionalHeaders),
+          Dataset.byUserId(expectedStatus, additionalHeaders),
           Dac.list(expectedStatus, additionalHeaders)
         )
     }
