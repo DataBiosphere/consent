@@ -230,6 +230,13 @@ public class DatasetService {
     public Optional<Dataset> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
 
+        if (Objects.isNull(dataset.getDatasetName())) {
+            throw new IllegalArgumentException("Dataset 'Name' cannot be null");
+        }
+        if (Objects.isNull(dataset.getNeedsApproval())) {
+            throw new IllegalArgumentException("Dataset 'Needs Approval' field cannot be null");
+        }
+
         if (Objects.nonNull(dataset.getDacId())) {
             Consent consent = consentDAO.findConsentFromDatasetID(datasetId);
             if (Objects.nonNull(consent)) {
@@ -260,13 +267,12 @@ public class DatasetService {
               ).collect(Collectors.toList());
 
         if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() && propertiesToDelete
-              .isEmpty()) {
+              .isEmpty() && dataset.getDatasetName().equals(old.getName())) {
             return Optional.empty();
         }
 
         updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
-        datasetDAO.updateDatasetNeedsApproval(datasetId, dataset.getNeedsApproval());
-        datasetDAO.updateDatasetUpdateUserAndDate(datasetId, now, userId);
+        datasetDAO.updateDataset(datasetId, dataset.getDatasetName(), now, userId, dataset.getNeedsApproval());
         Dataset updatedDataset = getDatasetWithPropertiesById(datasetId);
         return Optional.of(updatedDataset);
     }
@@ -301,8 +307,7 @@ public class DatasetService {
               .collect(Collectors.toList());
 
         return properties.stream()
-              .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName()
-                    .equals(DATASET_NAME_KEY))
+              .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals(DATASET_NAME_KEY))
               .map(p ->
                     new DatasetProperty(datasetId,
                           dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
