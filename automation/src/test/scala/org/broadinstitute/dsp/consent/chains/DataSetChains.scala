@@ -22,7 +22,7 @@ object DataSetChains {
                 implicit val dataSetEntryJson: JsonProtocols.dataSetEntryFormat.type = JsonProtocols.dataSetEntryFormat
                 implicit val dataAccessRequestJson: JsonProtocols.dataAccessRequestDraftFormat.type = JsonProtocols.dataAccessRequestDraftFormat
 
-                val dataSetStr: String = session(Requests.DataSet.dataSetResponse).as[String]
+                val dataSetStr: String = session(Requests.Dataset.dataSetResponse).as[String]
                 val dataSets: Seq[DataSet] = dataSetStr.parseJson.convertTo[Seq[DataSet]]
 
                 val chosenSets: Seq[DataSet] = dataSets

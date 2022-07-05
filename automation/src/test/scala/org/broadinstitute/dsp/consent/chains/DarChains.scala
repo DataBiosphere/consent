@@ -19,11 +19,11 @@ object DarChains {
         Requests.Dar.getPartial(OK.code, "${darReferenceId}", additionalHeaders)
     )
     .exec(
-        Requests.DataSet.getDataSetsByDataSetIds(
-            200, 
+        Requests.Dataset.getDataSetsByDataSetIds(
+            200,
             additionalHeaders,
-            Requests.DataSet.getDataSetsByDataSetId(OK.code, "${dataSetIds(0)}", additionalHeaders, 0),
-            Requests.DataSet.getDataSetsByDataSetId(OK.code, "${dataSetIds(1)}", additionalHeaders, 1))
+            Requests.Dataset.getDataSetsByDataSetId(OK.code, "${dataSetIds(0)}", additionalHeaders, 0),
+            Requests.Dataset.getDataSetsByDataSetId(OK.code, "${dataSetIds(1)}", additionalHeaders, 1))
     )
 
     def finalDarSubmit(additionalHeaders: Map[String, String]): ChainBuilder = {
@@ -44,7 +44,7 @@ object DarChains {
 
                 val indices: Seq[Int] = Seq(0, 1)
                 val dataSets: Seq[DataSet] = indices.map(idx => {
-                    val dataSetStr: String = session(Requests.DataSet.dataSetsByDataSetId + idx).as[String]
+                    val dataSetStr: String = session(Requests.Dataset.dataSetsByDataSetId + idx).as[String]
                     val dataSet: DataSet = dataSetStr.parseJson.convertTo[DataSet]
                     dataSet
                 }).toSeq
@@ -95,7 +95,7 @@ object DarChains {
                 implicit val dataUseFormat: JsonProtocols.dataUseFormat.type = JsonProtocols.dataUseFormat
                 val consentStr: String = session(Requests.Dar.darConsentResponse).as[String]
                 val consent: Consent = consentStr.parseJson.convertTo[Consent]
-                
+
                 val session1 = session.set("consentDataUse", consent.dataUse.getOrElse(DataUseBuilder.empty()).toJson.compactPrint)
                 session1.set("consentId", consent.consentId)
             }
