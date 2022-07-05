@@ -650,17 +650,17 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);
+        dar1.addDatasetId(d1.getDataSetId());
 
         DataAccessRequest dar2 = new DataAccessRequest();
         DataAccessRequestData data2 = new DataAccessRequestData();
-        data2.setDatasetIds(List.of(d2.getDataSetId()));
         dar2.setCollectionId(1);
         dar2.setData(data2);
         dar2.setReferenceId(referenceId2);
+        dar2.addDatasetId(d2.getDataSetId());
 
         DarCollection c = new DarCollection();
         c.setDarCollectionId(1);
@@ -723,17 +723,17 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);
+        dar1.addDatasetId(d1.getDataSetId());
 
         DataAccessRequest dar2 = new DataAccessRequest();
         DataAccessRequestData data2 = new DataAccessRequestData();
-        data2.setDatasetIds(List.of(d2.getDataSetId()));
         dar2.setCollectionId(2);
         dar2.setData(data2);
         dar2.setReferenceId(referenceId2);
+        dar2.addDatasetId(d2.getDataSetId());
 
         DarCollection c1 = new DarCollection();
         c1.setDarCollectionId(1);
@@ -781,10 +781,10 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);
+        dar1.addDatasetId(d1.getDataSetId());
 
         DarCollection c1 = new DarCollection();
         c1.setDarCollectionId(1);
@@ -832,10 +832,10 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);
+        dar1.addDatasetId(d1.getDataSetId());
 
         DarCollection c1 = new DarCollection();
         c1.setDarCollectionId(1);

@@ -337,7 +337,8 @@ public class ConsentModule extends AbstractModule {
             providesDatasetDAO(),
             providesElectionDAO(),
             providesJdbi(),
-            providesUserDAO());
+            providesUserDAO(),
+            providesDataAccessRequestDAO());
     }
 
     @Provides

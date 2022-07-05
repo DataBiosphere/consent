@@ -440,6 +440,7 @@ public class DarCollectionServiceTest {
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
     when(datasetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(List.of(dataset));
+    when(dataAccessRequestDAO.findReferenceIdsForDatasetIdsWithCollectionId(any(), any())).thenReturn(new ArrayList<>(collection.getDars().keySet()));
     when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
     spy(datasetDAO);
     spy(electionDAO);

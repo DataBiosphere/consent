@@ -369,13 +369,11 @@ public class DatasetService {
     @Deprecated
     public Set<DatasetDTO> describeDatasets(Integer userId) {
         List<DataAccessRequestData> darDatas = dataAccessRequestDAO.findAllDataAccessRequestDatas();
-        List<Integer> datasetIdsInUse = darDatas
-                .stream()
-                .map(DataAccessRequestData::getDatasetIds)
-                .filter(Objects::nonNull)
-                .filter(l -> !l.isEmpty())
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
+        List<String> referenceIds = darDatas.stream().map(d -> d.getReferenceId()).collect(Collectors.toList());
+        List<Integer> datasetIdsInUse = dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds)
+            .stream()
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
         HashSet<DatasetDTO> datasets = new HashSet<>();
         if (userHasRole(UserRoles.ADMIN.getRoleName(), userId)) {
             datasets.addAll(datasetDAO.findAllDatasets());

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -10,6 +11,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Handle;
@@ -20,6 +22,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -30,12 +33,15 @@ public class DarCollectionServiceDAO {
   private final Jdbi jdbi;
   private final UserDAO userDAO;
 
+  private final DataAccessRequestDAO dataAccessRequestDAO;
+
   @Inject
-  public DarCollectionServiceDAO(DatasetDAO datasetDAO, ElectionDAO electionDAO, Jdbi jdbi, UserDAO userDAO) {
+  public DarCollectionServiceDAO(DatasetDAO datasetDAO, ElectionDAO electionDAO, Jdbi jdbi, UserDAO userDAO, DataAccessRequestDAO dataAccessRequestDAO) {
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
     this.jdbi = jdbi;
     this.userDAO = userDAO;
+    this.dataAccessRequestDAO = dataAccessRequestDAO;
   }
 
   /**
@@ -69,6 +75,11 @@ public class DarCollectionServiceDAO {
           // only applies to the current one in this handle.
           handle.getConnection().setAutoCommit(false);
           List<Update> inserts = new ArrayList<>();
+          List<String> reference_ids = collection.getDars().values().stream()
+              .map(d -> d.getReferenceId())
+              .collect(Collectors.toList());
+          Map<String, List<DarDataset>> referenceIdToDatasetId = dataAccessRequestDAO.findAllDARDatasets(reference_ids)
+              .stream().collect(Collectors.groupingBy(DarDataset::getReferenceId));
           // For each DAR, create:
           //    1. Access Election
           //    2. Member votes for access election
@@ -85,7 +96,7 @@ public class DarCollectionServiceDAO {
 
                 // If the user is not an admin, then the dataset must be in the list of the user's DAC Datasets
                 // Otherwise, we need to skip election creation for this DAR as well.
-                Integer datasetId = dar.getData().getDatasetIds().get(0);
+                Integer datasetId = referenceIdToDatasetId.get(dar.getReferenceId()).get(0).getDatasetId();
                 if (!isAdmin && !dacUserDatasetIds.contains(datasetId)) {
                     ignore = true;
                 }

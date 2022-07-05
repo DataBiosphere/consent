@@ -41,7 +41,6 @@ public class DarCollection {
         " OR EXISTS " +
         " (SELECT FROM jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasets') dataset " +
         " WHERE dataset ->> 'label' ~* :filterTerm) ";
-
   @JsonProperty
   private Integer darCollectionId;
 

@@ -148,11 +148,11 @@ public class DataAccessReportsParserTest {
         List<DatasetDetailEntry> detailsList = new ArrayList<>();
         detailsList.add(datasetDetail);
         data.setDatasetDetail(detailsList);
-        data.setDatasetIds(new ArrayList<>());
         data.setDarCode(DAR_CODE);
         data.setTranslatedUseRestriction(TRANSLATED_USE_RESTRICTION);
         data.setNonTechRus(RUS_SUMMARY);
         dar.setData(data);
+        dar.addDatasetIds(new ArrayList<>());
         dar.setSortDate(new Timestamp(currentDate.getTime()));
         return dar;
     }

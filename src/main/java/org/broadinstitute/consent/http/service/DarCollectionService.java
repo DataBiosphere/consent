@@ -396,23 +396,16 @@ public class DarCollectionService {
       .stream()
       .map(Dataset::getDataSetId)
       .collect(Collectors.toList());
+    List<String> cancelableReferenceIds = dataAccessRequestDAO
+      .findReferenceIdsForDatasetIdsWithCollectionId(datasetIds, collection.getDarCollectionId());
 
-    // Filter the list of DARs we can operate on by the datasets accessible to this chairperson
-    List<DataAccessRequest> dars = collection.getDars().values().stream()
-      .filter(d -> datasetIds.containsAll(d.getData().getDatasetIds()))
-      .collect(Collectors.toList());
-
-    List<String> referenceIds = dars.stream()
-      .map(DataAccessRequest::getReferenceId)
-      .collect(Collectors.toList());
-
-    if (referenceIds.isEmpty()) {
+    if (cancelableReferenceIds.isEmpty()) {
       logger.warn("DAR Collection does not have any associated DARs that this chairperson can access");
       return collection;
     }
 
     // Cancel filtered DAR elections
-    cancelElectionsForReferenceIds(referenceIds);
+    cancelElectionsForReferenceIds(cancelableReferenceIds);
 
     return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }

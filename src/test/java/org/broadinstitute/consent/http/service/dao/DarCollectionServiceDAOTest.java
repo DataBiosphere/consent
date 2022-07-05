@@ -32,7 +32,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
   private DarCollectionServiceDAO serviceDAO;
 
   private void initService() {
-    serviceDAO = new DarCollectionServiceDAO(datasetDAO, electionDAO, jdbi, userDAO);
+    serviceDAO = new DarCollectionServiceDAO(datasetDAO, electionDAO, jdbi, userDAO, dataAccessRequestDAO);
   }
 
   /**
@@ -374,7 +374,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
     assertNotNull(dar.getData());
-    dar.getData().setDatasetIds(List.of(dar.getData().getDatasetIds().get(0)));
+    dar.getData().setDatasetIds(List.of(dataset.getDataSetId()));
     Date now = new Date();
     dataAccessRequestDAO.updateDataByReferenceIdVersion2(
         dar.getReferenceId(), dar.getUserId(), now, now, now, dar.getData());

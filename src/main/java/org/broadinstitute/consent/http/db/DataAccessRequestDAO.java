@@ -327,4 +327,12 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @RegisterRowMapper(DarDatasetMapper.class)
   @SqlQuery("SELECT distinct reference_id, dataset_id FROM dar_dataset WHERE reference_id IN (<referenceIds>)")
   List<DarDataset> findAllDARDatasets(@BindList("referenceIds") List<String> referenceIds);
+
+  @SqlQuery(
+      " SELECT distinct d.reference_id "
+          + " FROM dar_dataset d "
+          + " INNER JOIN data_access_request dar ON dar.reference_id = d.reference_id AND dar.collection_id = :collectionId "
+          + " WHERE d.dataset_id IN <datasetIds> ")
+  List<String> findReferenceIdsForDatasetIdsWithCollectionId(
+      @BindList("datasetIds") List<Integer> datasetIds, @Bind("collectionId") Integer collectionId);
 }
