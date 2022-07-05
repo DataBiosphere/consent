@@ -465,7 +465,7 @@ public class DarCollectionServiceTest {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setDatasetIds(List.of(dataset.getDataSetId()));
+    dar.addDatasetId(dataset.getDataSetId());
     dar.setData(data);
     DarCollection collection = createMockCollections(1).get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
