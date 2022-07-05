@@ -19,8 +19,9 @@ import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
 
-public interface DarCollectionDAO {
+public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
 
   String QUERY_FIELD_SEPARATOR = ", ";
 
