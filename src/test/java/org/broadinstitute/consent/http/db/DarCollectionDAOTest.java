@@ -185,6 +185,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     }
     dar.addDatasetId(dataset.getDataSetId());
     dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), dar.getUserId(), new Date(), new Date(), new Date(), dar.getData());
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
     consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
@@ -818,7 +819,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
   // this method returns a list that includes: user, now, dataset, collectionId, testDar, dac, testDarCollection
   public List<Object> createDarCollectionWithDataset(User user) {
     Timestamp now = new Timestamp(new Date().getTime());
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
     Dataset dataset = createDataset();
 
     // creating a collection and DAR
