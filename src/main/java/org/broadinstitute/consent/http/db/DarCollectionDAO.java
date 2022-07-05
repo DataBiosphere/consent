@@ -89,6 +89,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       " SELECT distinct c.collection_id "
           + " FROM dar_collection c, "
           + "     (SELECT distinct dar.collection_id, "
+          // TODO: This subquery needs to be updated to look at dataset ids in dar_dataset instead of dar.data
           + "     jsonb_array_elements((dar.data #>> '{}')::jsonb -> 'datasetIds')::integer AS dataset_id, "
           + "     (dar.data #>> '{}')::jsonb ->> 'status' as status "
           + "     FROM data_access_request dar) AS dar_datasets, "
