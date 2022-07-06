@@ -49,11 +49,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @SqlQuery(
-      "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
-          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
-          + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
+      " SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
+          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar "
+          + "  LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId::int  "
           + "  WHERE dar.draft = false"
-          + "  AND ((dar.data #>> '{}')::jsonb->>'datasetIds')::jsonb @> :datasetId::jsonb"
           + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) ")
   List<DataAccessRequest> findAllDataAccessRequestsByDatasetId(@Bind("datasetId") String datasetId);
 
