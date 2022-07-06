@@ -281,10 +281,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @param referenceId String
    * @param datasetId Integer
    */
-  @SqlUpdate("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId)")
+  @SqlUpdate("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId) ON CONFLICT DO NOTHING ")
   void insertDARDatasetRelation(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId);
 
-  @SqlBatch("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId)")
+  @SqlBatch("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId) ON CONFLICT DO NOTHING ")
   void insertAllDarDatasets(@BindBean List<DarDataset> darDatasets);
 
   /**
@@ -318,6 +318,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @SqlQuery("SELECT distinct dataset_id FROM dar_dataset WHERE reference_id IN (<referenceIds>)")
   List<Integer> findAllDARDatasetRelations(@BindList("referenceIds") List<String> referenceIds);
+
+  @SqlQuery("SELECT distinct dataset_id FROM dar_dataset ")
+  List<Integer> findAllDARDatasetRelationDatasetIds();
 
   /**
    * Returns all dataset_ids that match any of the referenceIds inside of the "referenceIds" list

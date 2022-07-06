@@ -167,6 +167,9 @@ public class DataAccessRequest {
   }
 
   public List<Integer> getDatasetIds() {
+    if (Objects.isNull(datasetIds)) {
+      return List.of();
+    }
     return datasetIds;
   }
 
@@ -183,6 +186,10 @@ public class DataAccessRequest {
     } else {
       datasetIds = new ArrayList<>();
     }
+  }
+
+  public void setDatasetIds(List<Integer> datasetIds) {
+    this.datasetIds = datasetIds;
   }
 
   /**

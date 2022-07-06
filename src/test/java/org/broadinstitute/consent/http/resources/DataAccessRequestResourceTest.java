@@ -103,7 +103,7 @@ public class DataAccessRequestResourceTest {
     @Test(expected = NotFoundException.class)
     public void testDescribeConsentForDarCase4() {
         DataAccessRequest dar = generateDataAccessRequest();
-        dar.getData().setDatasetIds(null);
+        dar.setDatasetIds(null);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         resource = new DataAccessRequestResource(dataAccessRequestService, userService, consentService);
         resource.describeConsentForDAR(authUser, dar.getReferenceId());
@@ -212,7 +212,7 @@ public class DataAccessRequestResourceTest {
         DataAccessRequestData data = new DataAccessRequestData();
         dar.setReferenceId(UUID.randomUUID().toString());
         data.setReferenceId(dar.getReferenceId());
-        data.setDatasetIds(Arrays.asList(1, 2));
+        dar.setDatasetIds(Arrays.asList(1, 2));
         dar.setData(data);
         dar.setUserId(1);
         return dar;

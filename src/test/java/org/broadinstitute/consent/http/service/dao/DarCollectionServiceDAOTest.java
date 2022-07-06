@@ -165,7 +165,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
     assertTrue(dar.isPresent());
-    Integer datasetId = dar.get().getData().getDatasetIds().get(0);
+    Integer datasetId = dar.get().getDatasetIds().get(0);
     assertNotNull(datasetId);
     Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
     assertTrue(dac.isPresent());
@@ -209,8 +209,8 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
     assertTrue(dar.isPresent());
-    assertFalse(dar.get().getData().getDatasetIds().isEmpty());
-    Integer datasetId = dar.get().getData().getDatasetIds().get(0);
+    assertFalse(dar.get().getDatasetIds().isEmpty());
+    Integer datasetId = dar.get().getDatasetIds().get(0);
     assertNotNull(datasetId);
 
     // Find the dac chairperson for the current DAR/Dataset combination
@@ -311,8 +311,8 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
     assertTrue(dar.isPresent());
-    assertFalse(dar.get().getData().getDatasetIds().isEmpty());
-    Integer datasetId = dar.get().getData().getDatasetIds().get(0);
+    assertFalse(dar.get().getDatasetIds().isEmpty());
+    Integer datasetId = dar.get().getDatasetIds().get(0);
     assertNotNull(datasetId);
 
     // Find the dac chairperson for the current DAR/Dataset combination

@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
@@ -373,14 +374,7 @@ public class DatasetService {
 
     @Deprecated
     public Set<DatasetDTO> describeDatasets(Integer userId) {
-        List<DataAccessRequestData> darDatas = dataAccessRequestDAO.findAllDataAccessRequestDatas();
-        List<Integer> datasetIdsInUse = darDatas
-                .stream()
-                .map(DataAccessRequestData::getDatasetIds)
-                .filter(Objects::nonNull)
-                .filter(l -> !l.isEmpty())
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
+        List<Integer> datasetIdsInUse = dataAccessRequestDAO.findAllDARDatasetRelationDatasetIds();
         HashSet<DatasetDTO> datasets = new HashSet<>();
         if (userHasRole(UserRoles.ADMIN.getRoleName(), userId)) {
             datasets.addAll(datasetDAO.findAllDatasets());
