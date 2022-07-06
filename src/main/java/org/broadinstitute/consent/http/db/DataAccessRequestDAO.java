@@ -267,10 +267,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @param referenceId String
    * @param datasetId Integer
    */
-  @SqlUpdate("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId)")
+  @SqlUpdate("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId) ON CONFLICT DO NOTHING ")
   void insertDARDatasetRelation(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId);
 
-  @SqlBatch("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId)")
+  @SqlBatch("INSERT INTO dar_dataset (reference_id, dataset_id) VALUES (:referenceId, :datasetId) ON CONFLICT DO NOTHING ")
   void insertAllDarDatasets(@BindBean List<DarDataset> darDatasets);
 
   /**
