@@ -2,11 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.DarCollectionDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -60,6 +56,7 @@ public class DarCollectionServiceTest {
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private EmailNotifierService emailNotifierService;
   @Mock private VoteDAO voteDAO;
+  @Mock private MatchDAO matchDAO;
   @Mock private User user;
 
   @Before
@@ -663,7 +660,7 @@ public class DarCollectionServiceTest {
   }
 
   private void initService() {
-    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailNotifierService, voteDAO);
+    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailNotifierService, voteDAO, matchDAO);
   }
 
   //NOTE: init method does not work well with role based queries due to fetches by role rather by user (unless researcher)
@@ -681,7 +678,7 @@ public class DarCollectionServiceTest {
     when(darCollectionDAO.findDARCollectionsCreatedByUserId(any())).thenReturn(unfilteredDars);
     when(darCollectionDAO.findAllDARCollectionsWithFiltersByUser(any(), any(), any(), any())).thenReturn(filteredDars);
     when(darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(any(), any(), any())).thenReturn(collectionIdDars);
-    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailNotifierService, voteDAO);
+    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailNotifierService, voteDAO, matchDAO);
   }
 
   private List<DarCollection> createMockCollections(int count) {

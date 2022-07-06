@@ -18,17 +18,7 @@ import org.broadinstitute.consent.http.service.UserService;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -96,6 +86,24 @@ public class DarCollectionResource extends Resource {
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
 
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @DELETE
+  @Path("{collectionId}")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, RESEARCHER})
+  public Response deleteDar(@Auth AuthUser authUser, @PathParam("collectionId") Integer collectionId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      DarCollection collection = darCollectionService.getByCollectionId(collectionId);
+      validateUserIsCreator(user, collection);
+
+      darCollectionService.deleteByCollectionId(user, collectionId);
+
+      return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

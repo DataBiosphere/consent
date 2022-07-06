@@ -19,3 +19,31 @@ get:
             $ref: '../schemas/DarCollection.yaml'
     404:
       description: Not Found
+delete:
+  summary: Delete DAR Collection by Id
+  description: |
+    Deletes the DAR collection by collection id. If the user is the owner, and a researcher, the DAR
+    will only be deleted if there are no elections created for it. If the user is an Admin,
+    all votes and elections associated to the DAR will also be deleted.
+  parameters:
+    - name: collectionId
+      in: path
+      description: The id of the DAR collection
+      required: true
+      schema:
+        type: string
+  tags:
+    - Data Access Request
+  responses:
+    200:
+      description: DAR Collection was deleted
+      content:
+        application/json:
+          schema:
+            type: string
+    403:
+      description: Forbidden, returned if there are existing Elections and the user is not an admin.
+    404:
+      description: The requested DAR couldn't be found.
+    406:
+      description: There are existing resources that reference this Data Access Request

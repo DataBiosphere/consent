@@ -287,6 +287,41 @@ public interface DarCollectionDAO {
   )
   DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId);
 
+  @SqlQuery(
+          "SELECT dar.reference_id, "
+                  + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+                  + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
+                  + UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR
+                  + LibraryCard.QUERY_FIELDS_WITH_LC_PREFIX + QUERY_FIELD_SEPARATOR
+                  + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
+                  + "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, "
+                  + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
+                  + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, "
+                  + "e.electionid AS e_election_id, e.referenceid AS e_reference_id, e.status AS e_status, e.createdate AS e_create_date, "
+                  + "e.lastupdate AS e_last_update, e.datasetid AS e_dataset_id, e.electiontype AS e_election_type, e.latest, "
+                  + "v.voteid as v_vote_id, v.vote as v_vote, v.dacuserid as v_dac_user_id, v.rationale as v_rationale, v.electionid as v_election_id, "
+                  + "v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.display_name as v_display_name "
+                  + "FROM dar_collection c "
+                  + "INNER JOIN users u ON c.create_user_id = u.user_id "
+                  + "LEFT JOIN user_property up ON u.user_id = up.userid "
+                  + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
+                  + "LEFT JOIN library_card lc ON u.user_id = lc.user_id "
+                  + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
+                  + "LEFT JOIN ("
+                  + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest "
+                  + "FROM election "
+                  + "WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp'"
+                  + ") AS e "
+                  + "ON dar.reference_id = e.referenceid AND (e.latest = e.electionid OR e.latest IS NULL) "
+                  + "LEFT JOIN vote v "
+                  + "ON v.electionid = e.electionid "
+                  + "LEFT JOIN users du "
+                  + "ON du.user_id = v.dacuserid "
+                  + "WHERE c.collection_id = :collectionId "
+                  + "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL );"
+  )
+  List<String> findAllReferenceIdsByCollectionId(@Bind("collectionId") Integer collectionId);
+
   /**
    * Create a new DAR Collection with the given dar code, create user ID, and create date
    *
