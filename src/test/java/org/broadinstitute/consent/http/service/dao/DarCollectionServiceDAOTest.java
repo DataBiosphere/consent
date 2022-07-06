@@ -374,7 +374,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
     assertNotNull(dar.getData());
-    dar.getData().setDatasetIds(List.of(dar.getData().getDatasetIds().get(0)));
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
     Date now = new Date();
     dataAccessRequestDAO.updateDataByReferenceIdVersion2(
         dar.getReferenceId(), dar.getUserId(), now, now, now, dar.getData());
