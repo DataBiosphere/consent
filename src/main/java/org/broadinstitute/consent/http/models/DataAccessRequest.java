@@ -13,8 +13,10 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -48,6 +50,8 @@ public class DataAccessRequest {
   @JsonProperty public Timestamp updateDate;
 
   @JsonProperty private Map<Integer, Election> elections;
+
+  @JsonProperty public List<Integer> datasetIds;
 
   public DataAccessRequest() {
     this.elections = new HashMap<>();
@@ -159,6 +163,25 @@ public class DataAccessRequest {
       if (Objects.isNull(savedRecord)) {
         elections.put(electionId, election);
       }
+    }
+  }
+
+  public List<Integer> getDatasetIds() {
+    return datasetIds;
+  }
+
+  public void addDatasetId(Integer id) {
+    if (Objects.isNull(datasetIds)) {
+      datasetIds = new ArrayList<>();
+    }
+    datasetIds.add(id);
+  }
+
+  public void addDatasetIds(List<Integer> ids) {
+    if (Objects.nonNull(ids)) {
+      datasetIds = ids;
+    } else {
+      datasetIds = new ArrayList<>();
     }
   }
 
