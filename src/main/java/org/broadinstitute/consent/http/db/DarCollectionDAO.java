@@ -186,7 +186,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @RegisterBeanMapper(value = Election.class, prefix = "e")
   @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
   @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery("SELECT c.*, " +
+  @SqlQuery("SELECT c.*, dd.dataset_id, " +
       User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
       Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
       UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR
@@ -198,6 +198,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       + "e.lastupdate AS e_last_update, e.datasetid AS e_dataset_id, e.electiontype AS e_election_type, e.latest "
       + "FROM dar_collection c "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
+      + "LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id "
       + "INNER JOIN users u ON c.create_user_id = u.user_id "
       + "LEFT JOIN user_property up ON u.user_id = up.userid "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
