@@ -497,7 +497,7 @@ public class DAOTestHelper {
 
     protected DarCollection createDarCollection() {
         User user = createUserWithInstitution();
-        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
         Dataset dataset = createDataset();
         DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
