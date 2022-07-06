@@ -26,7 +26,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   String QUERY_FIELD_SEPARATOR = ", ";
 
   String getCollectionAndDars =
-      " SELECT c.*, i.institution_name, u.display_name AS researcher, " +
+      " SELECT c.*, i.institution_name, u.display_name AS researcher, dd.dataset_id, " +
           User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
           Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
           Election.QUERY_FIELDS_WITH_E_PREFIX + QUERY_FIELD_SEPARATOR +
@@ -38,6 +38,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       " LEFT JOIN user_property up ON u.user_id = up.userid AND up.propertykey in ('isThePI', 'piName', 'havePI', 'piERACommonsID') " +
       " LEFT JOIN institution i ON i.institution_id = u.institution_id " +
       " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
+      " LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id " +
       " LEFT JOIN (" +
       "   SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype) AS latest " +
       "   FROM election " +

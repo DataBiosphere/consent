@@ -269,12 +269,12 @@ public class DarCollectionService {
    */
   public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections, List<Integer> filterDatasetIds) {
     // get datasetIds from each DAR from each collection
-    List<Integer> datasetIds = collections.stream()
-      .map(d-> d.getDars().values())
-      .flatMap(Collection::stream)
-      .map(d -> d.getDatasetIds())
-      .flatMap(Collection::stream)
+    List<String> referenceIds = collections.stream()
+      .map(DarCollection::getDars)
+      .map(Map::keySet)
+      .flatMap(Set::stream)
       .collect(Collectors.toList());
+    List<Integer> datasetIds = referenceIds.isEmpty() ? List.of() : dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds);
     if(!datasetIds.isEmpty()) {
       // if filterDatasetIds has values, get the intersection between that and datasetIds
       if (!filterDatasetIds.isEmpty()) {
