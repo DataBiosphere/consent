@@ -3439,18 +3439,7 @@ components:
           items:
             $ref: '#/components/schemas/User'
     SimplifiedUser:
-      type: object
-      properties:
-        userId:
-          type: integer
-          description: ID of the user
-        dacUserId:
-          deprecated: true
-          type: integer
-          description: ID of the user
-        displayName:
-          type: string
-          description: Name of the user
+      $ref: './schemas/SimplifiedUser.yaml'
     SamSelfDiagnostics:
       $ref: './schemas/SamSelfDiagnostics.yaml'
     SamUserInfo:

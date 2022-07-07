@@ -14,13 +14,17 @@ get:
     200:
       description: Returns target institution and its signing officials.
         Admin will see all details while non-Admins will only see a subset.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Institution.yaml'
     404:
       description: Institution not found
     500:
       description: Internal Server Error
 put:
   summary: Institution UPDATE
-  description: Updates institution based on id and json payload
+  description: Updates institution based on id and json payload. Does not update signing officials of an institution
   tags:
     - Institutions
   parameters:
