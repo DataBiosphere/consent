@@ -136,7 +136,6 @@ public class DarCollectionService {
    * @param user The User
    * @return List<DarCollection>
    * @throws IllegalArgumentException If the user does not have a valid institution
-   * @throws IllegalArgumentException If the user does not have a valid institution
    */
   public List<DarCollection> getCollectionsByUserInstitution(User user) throws IllegalArgumentException {
     if (Objects.isNull(user.getInstitutionId())) {
