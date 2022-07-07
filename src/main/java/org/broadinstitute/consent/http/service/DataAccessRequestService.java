@@ -219,7 +219,7 @@ public class DataAccessRequestService {
         return dar;
     }
 
-    // TODO This needs to go away with this PR.
+    // TODO This needs be removed in a follow-on PR that refactors all usages to a non-deprecated update method.
     @Deprecated // Use updateByReferenceIdVersion2
     public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
         darData.setSortDate(new Date().getTime());
