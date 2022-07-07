@@ -33,14 +33,10 @@ delete:
       schema:
         type: string
   tags:
-    - Data Access Request
+    - DAR Collection
   responses:
     200:
       description: DAR Collection was deleted
-      content:
-        application/json:
-          schema:
-            type: string
     403:
       description: Forbidden
     404:

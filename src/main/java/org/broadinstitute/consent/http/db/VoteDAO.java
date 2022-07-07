@@ -102,7 +102,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("delete from vote v where electionId in (select electionId from election where referenceId = :referenceId) ")
     void deleteVotesByReferenceId(@Bind("referenceId") String referenceId);
 
-    @SqlUpdate("delete from vote v where electionId in (select electionId from election where referenceId in (<referenceIds>) ")
+    @SqlUpdate("delete from vote v where electionId in (select electionId from election where referenceId in (<referenceIds>)) ")
     void deleteVotesByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
 

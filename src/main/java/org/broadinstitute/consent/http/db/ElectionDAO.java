@@ -292,7 +292,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlUpdate("DELETE FROM access_rp WHERE electionrpid = :electionId OR electionaccessid = :electionId")
     void deleteElectionFromAccessRP(@Bind("electionId") Integer electionId);
 
-    @SqlUpdate("DELETE FROM access_rp WHERE electionrpid IN (<electionIds>) OR electionaccessid IN :electionId")
+    @SqlUpdate("DELETE FROM access_rp WHERE electionrpid IN (<electionIds>) OR electionaccessid IN (<electionIds>)")
     void deleteElectionsFromAccessRPs(@BindList("electionIds") List<Integer> electionIds);
 
     @SqlQuery("select electionAccessId from access_rp arp where arp.electionRPId = :electionRPId ")

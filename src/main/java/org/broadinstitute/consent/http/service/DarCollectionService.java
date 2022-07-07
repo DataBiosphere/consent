@@ -230,8 +230,8 @@ public class DarCollectionService {
     }
 
     // ensure the user is capable of deleting the collection
-    if (!user.hasUserRole(UserRoles.ADMIN) || !coll.getCreateUserId().equals(user.getUserId())) {
-        throw new NotAuthorizedException("Not authorized to delete DAR Collection.");
+    if (!user.hasUserRole(UserRoles.ADMIN) && !coll.getCreateUserId().equals(user.getUserId())) {
+      throw new NotAuthorizedException("Not authorized to delete DAR Collection.");
     }
 
     // get the reference ids of the dars in the collection
@@ -245,6 +245,7 @@ public class DarCollectionService {
 
     // delete DARs
     matchDAO.deleteMatchesByPurposeIds(referenceIds);
+    dataAccessRequestDAO.deleteDARDatasetRelationByReferenceIds(referenceIds);
     dataAccessRequestDAO.deleteByReferenceIds(referenceIds);
 
     // delete collection

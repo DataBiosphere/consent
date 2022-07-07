@@ -30,6 +30,9 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,6 +44,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -629,127 +633,150 @@ public class DarCollectionServiceTest {
     assertEquals(1, (int) response.getFilteredPageCount());
   }
 
-//TODO: complete tests
-//
-//  @Test
-//  public void testDeleteAsResearcherNoElections() {
-//    User user = new User();
-//    user.setUserId(1);
-//    String dacRoleName = UserRoles.RESEARCHER.getRoleName();
-//    Integer dacRoleId = UserRoles.RESEARCHER.getRoleId();
-//    UserRole memberRole = new UserRole(dacRoleId, dacRoleName);
-//    user.addRole(memberRole);
-//
-//    Set<Dataset> datasets = new HashSet<>();
-//    DarCollection collection = generateMockDarCollection(datasets);
-//    collection.setDarCollectionId(10);
-//    collection.setCreateUser(user);
-//    System.out.println(collection.getDars());
-//
-//    when(electionDAO.findElectionsByReferenceId(any())).thenReturn(new ArrayList<>());
-//    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
-//    List<String> referenceIds = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
-//
-//    Integer collectionId = collection.getDarCollectionId();
-//
-//    spy(electionDAO);
-//    spy(dataAccessRequestDAO);
-//    spy(darCollectionDAO);
-//
-//    initService();
-//    System.out.println(collectionId);
-//    service.deleteByCollectionId(user, collectionId);
-//
-//    // verify each DAR was deleted
-//    verify(dataAccessRequestDAO, times(collection.getDars().size())).deleteByReferenceId(any());
-//    verify(matchDAO, times(collection.getDars().size())).deleteMatchesByPurposeId(any());
-//    for (DataAccessRequest dar : collection.getDars().values()) {
-//      verify(dataAccessRequestDAO, times(1)).deleteByReferenceId(dar.referenceId);
-//      verify(matchDAO, times(1)).deleteMatchesByPurposeId(dar.referenceId);
-//    }
-//
-//    // verify overarching collection was deleted
-//    verify(darCollectionDAO, times(1)).deleteByCollectionId(collectionId);
-//  }
-//
-//  @Test
-//  public void testDeleteAsResearcherWithElections() {
-//    User user = new User();
-//    user.setUserId(1);
-//    String dacRoleName = UserRoles.RESEARCHER.getRoleName();
-//    Integer dacRoleId = UserRoles.RESEARCHER.getRoleId();
-//    UserRole memberRole = new UserRole(dacRoleId, dacRoleName);
-//    user.addRole(memberRole);
-//
-//    DarCollection collection = createMockCollections(1).get(0);
-//    collection.setCreateUser(user);
-//
-//    when(electionDAO.findElectionsByReferenceId(any())).thenReturn(new ArrayList<>());
-//    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
-//    List<String> referenceIds = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
-//
-//    Integer collectionId = collection.getDarCollectionId();
-//
-//    initService();
-//
-//    service.deleteByCollectionId(user, collectionId);
-//
-//    // verify each DAR was deleted
-//    verify(dataAccessRequestDAO, times(collection.getDars().size())).deleteByReferenceId(any());
-//    verify(matchDAO, times(collection.getDars().size())).deleteMatchesByPurposeId(any());
-//    for (DataAccessRequest dar : collection.getDars().values()) {
-//      verify(dataAccessRequestDAO, times(1)).deleteByReferenceId(dar.referenceId);
-//      verify(matchDAO, times(1)).deleteMatchesByPurposeId(dar.referenceId);
-//    }
-//
-//    // verify overarching collection was deleted
-//    verify(darCollectionDAO, times(1)).deleteByCollectionId(collectionId);
-//
-//  }
-//
-//  @Test
-//  public void testDeleteAsAdminNoElections() {
-//    User user = new User();
-//    user.setUserId(1);
-//    String dacRoleName = UserRoles.RESEARCHER.getRoleName();
-//    Integer dacRoleId = UserRoles.RESEARCHER.getRoleId();
-//    UserRole memberRole = new UserRole(dacRoleId, dacRoleName);
-//    user.addRole(memberRole);
-//
-//    DarCollection collection = createMockCollections(1).get(0);
-//    collection.setCreateUser(user);
-//
-//    Election e = createMockElection();
-//
-//    when(electionDAO.findElectionsByReferenceId(any())).thenReturn(new ArrayList<>(){{add(e);}});
-//    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
-//    List<String> referenceIds = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
-//
-//    Integer collectionId = collection.getDarCollectionId();
-//
-//    initService();
-//
-//    service.deleteByCollectionId(user, collectionId);
-//
-//    // verify each DAR was deleted
-//    verify(dataAccessRequestDAO, times(0)).deleteByReferenceId(any());
-//    verify(matchDAO, times(0)).deleteMatchesByPurposeId(any());
-//
-//    // verify overarching collection was deleted
-//    verify(darCollectionDAO, times(0)).deleteByCollectionId(collectionId);
-//    verify(electionDAO, times(0)).deleteElectionById(any());
-//
-//  }
-//
-//  @Test
-//  public void testDeleteAsAdminWithElections() {
-//
-//  }
-//
-//  @Test
-//  public void testDeleteAsUser() {
-//
-//  }
+  @Test
+  public void testDeleteAsResearcherNoElections() {
+    User user = new User();
+    user.setUserId(1);
+    String dacRoleName = UserRoles.RESEARCHER.getRoleName();
+    Integer dacRoleId = UserRoles.RESEARCHER.getRoleId();
+    UserRole memberRole = new UserRole(dacRoleId, dacRoleName);
+    user.addRole(memberRole);
+
+    Set<Dataset> datasets = new HashSet<>();
+    DarCollection collection = generateMockDarCollection(datasets);
+    collection.setDarCollectionId(10);
+    collection.setCreateUserId(user.getUserId());
+
+    when(electionDAO.findElectionsByReferenceIds(any())).thenReturn(new ArrayList<>());
+    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
+    List<String> referenceIds = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
+
+    Integer collectionId = collection.getDarCollectionId();
+
+    spy(electionDAO);
+    spy(dataAccessRequestDAO);
+    spy(darCollectionDAO);
+
+    initService();
+    System.out.println(collectionId);
+    service.deleteByCollectionId(user, collectionId);
+
+    // verify each DAR was deleted
+    verify(dataAccessRequestDAO, times(1)).deleteByReferenceIds(any());
+    verify(dataAccessRequestDAO, times(1)).deleteDARDatasetRelationByReferenceIds(any());
+    verify(matchDAO, times(1)).deleteMatchesByPurposeIds(any());
+    // verify overarching collection was deleted
+    verify(darCollectionDAO, times(1)).deleteByCollectionId(collectionId);
+    verify(electionDAO, times(0)).deleteElectionsFromAccessRPs(any());
+    verify(electionDAO, times(0)).deleteElectionsByIds(any());
+    verify(voteDAO, times(0)).deleteVotesByReferenceIds(any());
+
+  }
+
+  @Test
+  public void testDeleteAsResearcherWithElections() {
+    User user = new User();
+    user.setUserId(1);
+    String dacRoleName = UserRoles.RESEARCHER.getRoleName();
+    Integer dacRoleId = UserRoles.RESEARCHER.getRoleId();
+    UserRole memberRole = new UserRole(dacRoleId, dacRoleName);
+    user.addRole(memberRole);
+
+    Set<Dataset> datasets = new HashSet<>();
+    DarCollection collection = generateMockDarCollection(datasets);
+    collection.setDarCollectionId(10);
+    collection.setCreateUserId(user.getUserId());
+
+    Election e = createMockElection();
+    when(electionDAO.findElectionsByReferenceIds(any())).thenReturn(new ArrayList<>(){{add(e);}});
+    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
+    List<String> referenceIds = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
+
+    Integer collectionId = collection.getDarCollectionId();
+
+    // should not work since elections exist
+    thrown.expect(NotAcceptableException.class);
+    thrown.expectMessage("Cannot delete DAR with elections.");
+
+    initService();
+    service.deleteByCollectionId(user, collectionId);}
+
+  @Test
+  public void testDeleteAsAdminWithElections() {
+    User user = new User();
+    user.setUserId(1);
+    String dacRoleName = UserRoles.ADMIN.getRoleName();
+    Integer dacRoleId = UserRoles.ADMIN.getRoleId();
+    UserRole memberRole = new UserRole(dacRoleId, dacRoleName);
+    user.addRole(memberRole);
+
+    Set<Dataset> datasets = new HashSet<>();
+    DarCollection collection = generateMockDarCollection(datasets);
+    collection.setDarCollectionId(10);
+
+    Election e = createMockElection();
+    when(electionDAO.findElectionsByReferenceIds(any())).thenReturn(new ArrayList<>(){{add(e);}});
+    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
+
+    Integer collectionId = collection.getDarCollectionId();
+
+    spy(electionDAO);
+    spy(dataAccessRequestDAO);
+    spy(darCollectionDAO);
+    spy(voteDAO);
+
+    initService();
+    service.deleteByCollectionId(user, collectionId);
+
+    verify(dataAccessRequestDAO, times(1)).deleteByReferenceIds(any());
+    verify(dataAccessRequestDAO, times(1)).deleteDARDatasetRelationByReferenceIds(any());
+    verify(matchDAO, times(1)).deleteMatchesByPurposeIds(any());
+    verify(darCollectionDAO, times(1)).deleteByCollectionId(collectionId);
+    verify(electionDAO, times(1)).deleteElectionsFromAccessRPs(any());
+    verify(electionDAO, times(1)).deleteElectionsByIds(any());
+    verify(voteDAO, times(1)).deleteVotesByReferenceIds(any());
+  }
+
+
+  @Test
+  public void testDeleteAsUser() {
+    User user = new User();
+    user.setUserId(1);
+
+    Set<Dataset> datasets = new HashSet<>();
+    DarCollection collection = generateMockDarCollection(datasets);
+    collection.setDarCollectionId(10);
+    collection.setCreateUserId(2); // not same as user id
+
+    Integer collectionId = collection.getDarCollectionId();
+
+    thrown.expect(NotAuthorizedException.class);
+    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
+    when(electionDAO.findElectionsByReferenceIds(any())).thenReturn(new ArrayList<>());
+
+    initService();
+    service.deleteByCollectionId(user, collectionId);
+  }
+
+  @Test
+  public void testDeleteButNoCollection() {
+    User user = new User();
+    user.setUserId(1);
+
+    Set<Dataset> datasets = new HashSet<>();
+    DarCollection collection = generateMockDarCollection(datasets);
+    collection.setDarCollectionId(10);
+    collection.setCreateUserId(1);
+
+    Integer collectionId = collection.getDarCollectionId();
+
+    thrown.expect(NotFoundException.class);
+    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(null);
+    when(electionDAO.findElectionsByReferenceIds(any())).thenReturn(new ArrayList<>());
+
+    initService();
+    service.deleteByCollectionId(user, collectionId);
+  }
 
   private void queryCollectionsAssertions(PaginationResponse<DarCollection> response, int expectedUnfilteredCount, int expectedFilteredCount) {
     assertEquals(expectedUnfilteredCount, (int)response.getUnfilteredCount());
