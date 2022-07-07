@@ -42,8 +42,10 @@ delete:
           schema:
             type: string
     403:
-      description: Forbidden, returned if there are existing Elections and the user is not an admin.
+      description: Forbidden
     404:
-      description: The requested DAR couldn't be found.
+      description: The requested DAR Collection couldn't be found.
     406:
-      description: There are existing resources that reference this Data Access Request
+      description: There are existing resources that reference this DAR Collection
+    500:
+      description: Internal server error.

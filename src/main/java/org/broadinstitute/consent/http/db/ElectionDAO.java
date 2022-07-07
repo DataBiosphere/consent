@@ -57,6 +57,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlUpdate("delete  from election where electionId = :electionId")
     void deleteElectionById(@Bind("electionId") Integer electionId);
 
+    @SqlUpdate("delete  from election where electionId in (<electionIds>)")
+    void deleteElectionsByIds(@BindList("electionIds") List<Integer> electionIds);
+
     @SqlUpdate("update election set status = :status, lastUpdate = :lastUpdate where electionId = :electionId ")
     void updateElectionById(@Bind("electionId") Integer electionId,
                             @Bind("status") String status,
@@ -169,6 +172,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("SELECT * FROM election WHERE referenceid = :referenceId")
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
+
+    @UseRowMapper(SimpleElectionMapper.class)
+    @SqlQuery("SELECT * FROM election WHERE referenceid in (<referenceIds>)")
+    List<Election> findElectionsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
     @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("SELECT * FROM election e " +
@@ -284,6 +291,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlUpdate("DELETE FROM access_rp WHERE electionrpid = :electionId OR electionaccessid = :electionId")
     void deleteElectionFromAccessRP(@Bind("electionId") Integer electionId);
+
+    @SqlUpdate("DELETE FROM access_rp WHERE electionrpid IN (<electionIds>) OR electionaccessid IN :electionId")
+    void deleteElectionsFromAccessRPs(@BindList("electionIds") List<Integer> electionIds);
 
     @SqlQuery("select electionAccessId from access_rp arp where arp.electionRPId = :electionRPId ")
     Integer findAccessElectionByElectionRPId(@Bind("electionRPId") Integer electionRPId);

@@ -511,17 +511,6 @@ public class DAOTestHelper {
         return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
     }
 
-    protected DarCollection createDarCollectionNoElections() {
-        User user = createUserWithInstitution();
-        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-        Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
-        Dataset dataset = createDataset();
-        DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
-        createDataAccessRequest(user.getUserId(), collection_id, darCode);
-        createDataAccessRequest(user.getUserId(), collection_id, darCode);
-        return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
-    }
-
     protected void createConsentAndAssociationWithDatasetIdAndDACId(int datasetId, int dacId ) {
         Consent consent = createConsent(dacId);
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, datasetId);

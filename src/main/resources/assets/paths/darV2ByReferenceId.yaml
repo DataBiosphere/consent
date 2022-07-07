@@ -80,3 +80,5 @@ delete:
       description: The requested DAR couldn't be found.
     406:
       description: There are existing resources that reference this Data Access Request
+    500:
+      description: Internal server error.

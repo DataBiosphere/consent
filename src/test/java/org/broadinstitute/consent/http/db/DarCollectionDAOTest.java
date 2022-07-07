@@ -102,28 +102,6 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   }
 
   @Test
-  public void testFindAllReferenceIdsByCollectionId() {
-    DarCollection collection = createDarCollectionNoElections();
-
-    // use DAO query to get reference ids
-    List<String> actualReferenceIds = darCollectionDAO.findAllReferenceIdsByCollectionId(collection.getDarCollectionId());
-
-    // manually extract reference ids
-    Map<String, DataAccessRequest> dars = collection.getDars();
-    List<String> expectedReferenceIds = new ArrayList<String>();
-    for (DataAccessRequest dar : dars.values()) {
-      expectedReferenceIds.add(dar.getReferenceId());
-    }
-
-    // assert actual and expected contain the same reference ids,
-    // but they don't have to be in the same order.
-    assertEquals(expectedReferenceIds.size(), actualReferenceIds.size());
-    for (String actualReferenceId : actualReferenceIds) {
-      assertTrue(expectedReferenceIds.contains(actualReferenceId));
-    }
-  }
-
-  @Test
   public void testFindDARCollectionByReferenceIdNegative() {
     //dar without a collection ID
     DataAccessRequest dar = createDraftDataAccessRequest();

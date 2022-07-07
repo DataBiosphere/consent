@@ -757,7 +757,7 @@ public class DataAccessRequestServiceTest {
         election.setElectionId(1);
         election.setReferenceId(referenceId);
         when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of(election));
-        doNothing().when(voteDAO).deleteVotes(any());
+        doNothing().when(voteDAO).deleteVotesByReferenceId(any());
         doNothing().when(electionDAO).deleteElectionFromAccessRP(any());
         doNothing().when(electionDAO).deleteElectionById(any());
         doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
@@ -777,7 +777,7 @@ public class DataAccessRequestServiceTest {
         User user = new User();
         user.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
         when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of());
-        doNothing().when(voteDAO).deleteVotes(any());
+        doNothing().when(voteDAO).deleteVotesByReferenceId(any());
         doNothing().when(electionDAO).deleteElectionFromAccessRP(any());
         doNothing().when(electionDAO).deleteElectionById(any());
         doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
@@ -797,7 +797,7 @@ public class DataAccessRequestServiceTest {
         election.setElectionId(1);
         election.setReferenceId(referenceId);
         when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of(election));
-        doNothing().when(voteDAO).deleteVotes(any());
+        doNothing().when(voteDAO).deleteVotesByReferenceId(any());
         doNothing().when(electionDAO).deleteElectionFromAccessRP(any());
         doNothing().when(electionDAO).deleteElectionById(any());
         doNothing().when(matchDAO).deleteMatchesByPurposeId(any());

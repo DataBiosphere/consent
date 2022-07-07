@@ -163,6 +163,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate("DELETE FROM data_access_request WHERE reference_id = :referenceId")
   void deleteByReferenceId(@Bind("referenceId") String referenceId);
 
+
+  @SqlUpdate("DELETE FROM data_access_request WHERE reference_id IN (<referenceIds>)")
+
+  void deleteByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
   @SqlUpdate(
       "UPDATE data_access_request dar SET data=jsonb_set((dar.data #>> '{}')::jsonb, '{status}', '\"Canceled\"')" +
       "WHERE reference_id IN (<referenceIds>)"

@@ -195,12 +195,10 @@ public class DataAccessRequestService {
         if (!elections.isEmpty()) {
             // If the user is an admin, delete all votes and elections
             if (user.hasUserRole(UserRoles.ADMIN)) {
-                voteDAO.deleteVotes(referenceId);
+                voteDAO.deleteVotesByReferenceId(referenceId);
                 List<Integer> electionIds = elections.stream().map(Election::getElectionId).collect(toList());
-                electionIds.forEach(id -> {
-                    electionDAO.deleteElectionFromAccessRP(id);
-                    electionDAO.deleteElectionById(id);
-                });
+                electionDAO.deleteElectionsFromAccessRPs(electionIds);
+                electionDAO.deleteElectionsByIds(electionIds);
             } else {
                 String message = String.format("Unable to delete DAR: '%s', there are existing elections that reference it.", referenceId);
                 logger.warn(message);
