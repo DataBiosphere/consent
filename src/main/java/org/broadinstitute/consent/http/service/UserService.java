@@ -19,10 +19,13 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
@@ -35,8 +38,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UserService {
 
@@ -60,6 +61,40 @@ public class UserService {
         this.voteDAO = voteDAO;
         this.institutionDAO = institutionDAO;
         this.libraryCardDAO = libraryCardDAO;
+    }
+
+    /**
+     * Update a select group of user fields for a user id.
+     *
+     * @param userUpdateFields A UserUpdateFields object for all update information
+     * @param userId The User's ID
+     * @return The updated User
+     */
+    public User updateUserFieldsById(UserUpdateFields userUpdateFields, Integer userId) {
+        if (Objects.nonNull(userUpdateFields)) {
+            // Update Primary User Fields
+            if (Objects.nonNull(userUpdateFields.getDisplayName())) {
+                userDAO.updateDisplayName(userId, userUpdateFields.getDisplayName());
+            }
+            if (Objects.nonNull(userUpdateFields.getInstitutionId())) {
+                userDAO.updateInstitutionId(userId, userUpdateFields.getInstitutionId());
+            }
+            if (Objects.nonNull(userUpdateFields.getEmailPreference())) {
+                userDAO.updateEmailPreference(userId, userUpdateFields.getEmailPreference());
+            }
+            if (Objects.nonNull(userUpdateFields.getEraCommonsId())) {
+                userDAO.updateEraCommonsId(userId, userUpdateFields.getEraCommonsId());
+            }
+            // Update User Properties
+            List<UserProperty> userProps = userUpdateFields.buildUserProperties(userId);
+            if (!userProps.isEmpty()) {
+                userPropertyDAO.insertAll(userProps);
+            }
+            // TODO: Handle Roles. We can only update non-DAC roles here.
+            List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(userId);
+
+        }
+        return findUserById(userId);
     }
 
     public static class SimplifiedUser {
@@ -230,7 +265,7 @@ public class UserService {
     }
 
     public void updateEmailPreference(boolean preference, Integer userId) {
-        userDAO.updateEmailPreference(preference, userId);
+        userDAO.updateEmailPreference(userId, preference);
     }
 
     public List<SimplifiedUser> findSOsByInstitutionId(Integer institutionId) {

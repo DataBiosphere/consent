@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -160,6 +161,26 @@ public class UserResource extends Resource {
         try {
             List<User> users = userService.findUsersByInstitutionId(institutionId);
             return Response.ok().entity(users).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
+    @Path("/{id}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN})
+    public Response update(@Auth AuthUser authUser, @Context UriInfo info, @PathParam("id") Integer userId, String json) {
+        try {
+            UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
+            // Ensure that we have a real user with this ID, fail if we do not.
+            userService.findUserById(userId);
+            URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
+            User user = userService.updateUserFieldsById(userUpdateFields, userId);
+            Gson gson = new Gson();
+            JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
+            return Response.ok(uri).entity(gson.toJson(jsonUser)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
