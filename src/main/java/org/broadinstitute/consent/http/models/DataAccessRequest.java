@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequest {
@@ -177,14 +179,20 @@ public class DataAccessRequest {
     if (Objects.isNull(datasetIds)) {
       datasetIds = new ArrayList<>();
     }
-    datasetIds.add(id);
+    if (!datasetIds.contains(id)) {
+      datasetIds.add(id);
+    }
   }
 
   public void addDatasetIds(List<Integer> ids) {
-    if (Objects.nonNull(ids)) {
-      datasetIds = ids;
-    } else {
+    if (Objects.isNull(datasetIds)) {
       datasetIds = new ArrayList<>();
+    }
+    if (Objects.nonNull(ids) && !ids.isEmpty()) {
+      datasetIds = Stream.of(datasetIds, ids)
+        .flatMap(List::stream)
+        .distinct()
+        .collect(Collectors.toList());
     }
   }
 
