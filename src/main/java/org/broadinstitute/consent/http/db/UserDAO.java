@@ -249,7 +249,7 @@ public interface UserDAO extends Transactional<UserDAO> {
       + " AND u.institution_id = :institutionId")
     List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
-    @SqlUpdate("update users set email_preference = :emailPreference where user_id = :userId")
+    @SqlUpdate("update users set email_preference = :emailPreference WHERE user_id = :userId")
     void updateEmailPreference(@Bind("userId") Integer userId, @Bind("emailPreference") Boolean emailPreference);
 
     @SqlUpdate("UPDATE users SET era_commons_id = :eraCommonsId WHERE user_id = :userId")

@@ -90,8 +90,33 @@ public class UserService {
             if (!userProps.isEmpty()) {
                 userPropertyDAO.insertAll(userProps);
             }
-            // TODO: Handle Roles. We can only update non-DAC roles here.
-            List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(userId);
+            // Handle Roles.
+            if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
+                // We can only update non-DAC-related roles here
+                // so always filter those out for addition or removal
+                List<Integer> roleIdsToIgnore = List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId());
+                List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream().map(UserRole::getRoleId).collect(Collectors.toList());
+                List<Integer> roleIdsToAdd = userUpdateFields.getUserRoleIds().stream()
+                    .filter(currentRoleIds::contains)
+                    .filter(roleIdsToIgnore::contains)
+                    .collect(Collectors.toList());
+                List<Integer> roleIdsToRemove = currentRoleIds.stream()
+                    // If the user has a role that's NOT in the updated role id list, we should remove it.
+                    .filter(currentRoleId -> !userUpdateFields.getUserRoleIds().contains(currentRoleId))
+                    .filter(roleIdsToIgnore::contains)
+                    .collect(Collectors.toList());
+                // Add the new role ids to the user
+                if (!roleIdsToAdd.isEmpty()) {
+                    List<UserRole> newRoles = roleIdsToAdd.stream()
+                        .map(id -> new UserRole(id, Objects.requireNonNull(UserRoles.getUserRoleFromId(id)).getRoleName()))
+                        .collect(Collectors.toList());
+                    userRoleDAO.insertUserRoles(newRoles, userId);
+                }
+                // Remove the old role ids from the user
+                if (!roleIdsToRemove.isEmpty()) {
+                    userRoleDAO.removeUserRoles(userId, roleIdsToRemove);
+                }
+            }
 
         }
         return findUserById(userId);
