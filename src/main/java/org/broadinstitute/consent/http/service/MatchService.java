@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Consent;
@@ -276,7 +277,7 @@ public class MatchService {
 
     private RequestMatchingObject createRequestObject(Consent consent, DataAccessRequest dar) {
         DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
-        UseRestriction darUseRestriction = useRestrictionConverter.parseUseRestriction(dataUse);
+        UseRestriction darUseRestriction = useRestrictionConverter.parseUseRestriction(dataUse, DataUseTranslationType.PURPOSE);
         return new RequestMatchingObject(consent.getUseRestriction(), darUseRestriction);
     }
 

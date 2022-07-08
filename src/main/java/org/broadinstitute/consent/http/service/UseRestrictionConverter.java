@@ -135,7 +135,7 @@ public class UseRestrictionConverter {
             //
             //    Diseases related entries
             //
-        
+
             List<String> ontologies = dar.getData().getOntologies()
                 .stream().map(OntologyEntry::getId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(ontologies)) {
@@ -181,8 +181,11 @@ public class UseRestrictionConverter {
         return dataUse;
     }
 
-    public UseRestriction parseUseRestriction(DataUse dataUse) {
-        WebTarget target = client.target(servicesConfiguration.getDARTranslateUrl());
+    public UseRestriction parseUseRestriction(DataUse dataUse, DataUseTranslationType type) {
+        String translateUrl = type.equals(DataUseTranslationType.PURPOSE) ?
+            servicesConfiguration.getDARTranslateUrl() :
+            servicesConfiguration.getConsentTranslateUrl();
+        WebTarget target = client.target(translateUrl);
         Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(dataUse.toString()));
         if (response.getStatus() == 200) {
             try {
