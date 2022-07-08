@@ -52,10 +52,6 @@ public class User {
     private Date createDate;
 
     @JsonProperty
-    @Deprecated
-    private String additionalEmail;
-
-    @JsonProperty
     private List<UserRole> roles;
 
     @JsonProperty
@@ -171,13 +167,6 @@ public class User {
         }
     }
 
-    @Deprecated
-    private void setAdditionalEmail(User u) {
-        if (!StringUtils.isEmpty(u.getAdditionalEmail())) {
-            this.setAdditionalEmail(u.getAdditionalEmail());
-        }
-    }
-
     private void setEmailPreference(User u) {
         if (Objects.nonNull(u.getEmailPreference())) {
             this.setEmailPreference(u.getEmailPreference());
@@ -244,16 +233,6 @@ public class User {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
-    }
-
-    @Deprecated
-    public String getAdditionalEmail() {
-        return additionalEmail;
-    }
-
-    @Deprecated
-    public void setAdditionalEmail(String additionalEmail) {
-        this.additionalEmail = additionalEmail;
     }
 
     public Boolean getEmailPreference() {
