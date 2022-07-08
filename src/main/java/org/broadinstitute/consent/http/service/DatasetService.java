@@ -130,7 +130,7 @@ public class DatasetService {
              * data user letter
              * data user letter name
              */
-            UseRestriction useRestriction = converter.parseUseRestriction(dataset.getDataUse());
+            UseRestriction useRestriction = converter.parseUseRestriction(dataset.getDataUse(), DataUseTranslationType.DATASET);
             String translatedUseRestriction = converter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET);
             consentDAO.useTransaction(h -> {
                 try {

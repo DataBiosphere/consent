@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - uses: actions/setup-java@v2
+        uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: 11
@@ -18,7 +18,7 @@ jobs:
           mvn -v
           mvn dependency-check:check --no-transfer-progress
       - name: Archive Report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: owasp-report
           path: target/dependency-check-report.html

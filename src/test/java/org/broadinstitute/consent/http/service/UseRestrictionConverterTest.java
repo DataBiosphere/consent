@@ -117,7 +117,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = converter.parseDataUsePurpose("{  }");
-        UseRestriction restriction = converter.parseUseRestriction(dataUse);
+        UseRestriction restriction = converter.parseUseRestriction(dataUse, DataUseTranslationType.PURPOSE);
         assertNotNull(restriction);
         assertEquals(restriction, new Everything());
     }
@@ -132,7 +132,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = converter.parseDataUsePurpose("{  }");
-        UseRestriction restriction = converter.parseUseRestriction(dataUse);
+        UseRestriction restriction = converter.parseUseRestriction(dataUse, DataUseTranslationType.PURPOSE);
         assertNull(restriction);
     }
 

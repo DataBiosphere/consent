@@ -51,6 +51,14 @@ public class HttpClientUtil {
     return request;
   }
 
+  public HttpRequest buildDeleteRequest(GenericUrl genericUrl, AuthUser authUser)
+      throws Exception {
+    HttpTransport transport = new NetHttpTransport();
+    HttpRequest request = transport.createRequestFactory().buildDeleteRequest(genericUrl);
+    request.setHeaders(buildHeaders(authUser));
+    return request;
+  }
+
   public HttpResponse handleHttpRequest(HttpRequest request) {
     try {
       request.setThrowExceptionOnExecuteError(false);
