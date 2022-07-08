@@ -73,7 +73,7 @@ public class ServicesConfiguration {
     return getSamUrl() + "tos/text";
   }
 
-  public String postTosAcceptedUrl() {
+  public String tosRegistrationUrl() {
     return getSamUrl() + "register/user/v1/termsofservice";
   }
 }
