@@ -5,17 +5,21 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.SupportRequestTicket;
+import org.broadinstitute.consent.http.models.supportticket.CustomRequestField;
+import org.broadinstitute.consent.http.models.supportticket.SupportRequestComment;
+import org.broadinstitute.consent.http.models.supportticket.SupportRequester;
 import org.broadinstitute.consent.http.models.supportticket.SupportTicket;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 import javax.ws.rs.ServerErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SupportRequestService {
 
@@ -29,30 +33,19 @@ public class SupportRequestService {
         this.configuration = configuration;
     }
 
-    /*
-    createTicket: (name, type, email, subject, description, attachmentToken, url) => {
-    const ticket = {};
-    ticket.request = {
-      requester: { name: name, email: email },
-      subject: subject,
-      // BEWARE changing the following ids or values! If you change them then you must thoroughly test.
-      custom_fields: [
-        { id: 360012744452, value: type},
-        { id: 360007369412, value: description},
-        { id: 360012744292, value: name},
-        { id: 360012782111, value: email },
-        { id: 360018545031, value: email }
-      ],
-      comment: {
-        body: description + '\n\n------------------\nSubmitted from: ' + url,
-        uploads: attachmentToken
-      },
-      ticket_form_id: 360000669472
-    };
-    return ticket;
-  }
-     */
 
+    public SupportTicket createSupportTicket(String name, String type, String email, String subject, String description, String url) {
+        SupportRequester requester = new SupportRequester(name, email);
+        List<CustomRequestField> customFields = new ArrayList<>();
+        customFields.add(new CustomRequestField("360012744452", type));
+        customFields.add(new CustomRequestField("360007369412", description));
+        customFields.add(new CustomRequestField("360012744292", name));
+        customFields.add(new CustomRequestField("360012782111", email));
+        customFields.add(new CustomRequestField("360018545031", email));
+        SupportRequestComment comment = new SupportRequestComment(description, url);
+
+        return new SupportTicket(requester, subject, customFields, comment);
+    }
 
     public void postTicketToSupport(SupportTicket ticket, AuthUser authUser) throws Exception {
         GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());

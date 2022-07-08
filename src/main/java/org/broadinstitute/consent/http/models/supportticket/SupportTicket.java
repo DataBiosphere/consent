@@ -6,8 +6,8 @@ public class SupportTicket {
 
     private SupportRequest request;
 
-    public SupportTicket(SupportRequest request) {
-        this.request = request;
+    public SupportTicket(SupportRequester requester, String subject, List<CustomRequestField> customFields, SupportRequestComment comment) {
+        this.request = new SupportRequest(requester, subject, customFields, comment);
     }
 
     public SupportRequest getRequest() {
