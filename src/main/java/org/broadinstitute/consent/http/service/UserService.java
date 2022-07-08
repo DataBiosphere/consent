@@ -222,7 +222,7 @@ public class UserService {
         }
 
         try {
-            userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail(), updatedUser.getInstitutionId());
+            userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getInstitutionId());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
@@ -338,7 +338,7 @@ public class UserService {
                             new Date());
                 });
 
-        userDAO.updateUser(user.getDisplayName(), user.getUserId(), user.getAdditionalEmail(), user.getInstitutionId());
+        userDAO.updateUser(user.getDisplayName(), user.getUserId(), user.getInstitutionId());
     }
 
     private Boolean checkForValidInstitution(Integer institutionId) {

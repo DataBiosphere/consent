@@ -68,6 +68,10 @@ public class EmailNotifierService {
     private static final String COLLECT_VOTE_DUL_URL = "dul_review_results";
     private static final String REVIEW_RESEARCHER_URL = "researcher_review";
 
+    private static List<String> apply(User u) {
+        return List.of(u.getEmail());
+    }
+
     public enum ElectionTypeString {
 
         DATA_ACCESS("Data Access Request"),
@@ -264,17 +268,10 @@ public class EmailNotifierService {
 
     private Set<String> getEmails(List<User> users) {
         Set<String> emails = users.stream()
-                .map(u -> {
-                    if (Objects.nonNull(u.getAdditionalEmail())) {
-                        return List.of(u.getEmail(), u.getAdditionalEmail());
-                    }
-                    return List.of(u.getEmail());
-                })
+                .map(EmailNotifierService::apply)
                 .flatMap(Collection::stream)
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.toSet());
-        List<String> academicEmails =  getAcademicEmails(users);
-        if (CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
         return emails;
     }
 
@@ -329,7 +326,6 @@ public class EmailNotifierService {
         dataMap.put("electionId",  election.getElectionId().toString());
         dataMap.put("dacUserId", user.getUserId().toString());
         dataMap.put("email",  user.getEmail());
-        dataMap.put("additionalEmail",  user.getAdditionalEmail());
         if(dataMap.get("electionType").equals(ElectionTypeString.DATA_ACCESS.getValue())){
             dataMap.put("rpVoteId", findRpVoteId(election.getElectionId(), user.getUserId()));
         } else if(dataMap.get("electionType").equals(ElectionTypeString.RP.getValue())){
@@ -361,11 +357,10 @@ public class EmailNotifierService {
                 election.getReferenceId(),
                 election.getElectionId().toString(),
                 user.getUserId().toString(),
-                user.getEmail(),
-                user.getAdditionalEmail());
+                user.getEmail());
     }
 
-    private Map<String, String> createDataMap(String displayName, String electionType, String referenceId, String electionId, String dacUserId, String email, String additionalEmail){
+    private Map<String, String> createDataMap(String displayName, String electionType, String referenceId, String electionId, String dacUserId, String email){
         Map<String, String> dataMap = new HashMap<>();
         dataMap.put("userName", displayName);
         dataMap.put("electionType", retrieveElectionTypeStringCollect(electionType));
@@ -374,7 +369,6 @@ public class EmailNotifierService {
         dataMap.put("electionId", electionId);
         dataMap.put("dacUserId", dacUserId);
         dataMap.put("email", email);
-        dataMap.put("additionalEmail", additionalEmail);
         return dataMap;
     }
 
@@ -412,27 +406,5 @@ public class EmailNotifierService {
             return ElectionTypeString.TRANSLATE_DUL.getValue();
         }
         return ElectionTypeString.DATA_ACCESS.getValue();
-    }
-
-    private List<String> getAcademicEmails(List<User> users) {
-        List<String> academicEmails = new ArrayList<>();
-        if(CollectionUtils.isNotEmpty(users)) {
-            List<Integer> userIds = users.stream().map(User::getUserId).collect(Collectors.toList());
-            List<UserProperty> researcherProperties = userPropertyDAO.findResearcherPropertiesByUserIds(userIds);
-            Map<Integer, List<UserProperty>> researcherPropertiesMap = researcherProperties.stream().collect(Collectors.groupingBy(
-                UserProperty::getUserId));
-            researcherPropertiesMap.forEach((userId, properties) -> {
-                Optional<UserProperty> checkNotification = properties.stream().filter(rp -> rp.getPropertyKey().equals(
-                    UserFields.CHECK_NOTIFICATIONS.getValue())).findFirst();
-                if (checkNotification.isPresent() && checkNotification.get().getPropertyValue().equals("true")) {
-                    Optional<UserProperty> academicEmailRP = properties.stream().
-                            filter(rp -> rp.getPropertyKey().equals(UserFields.ACADEMIC_BUSINESS_EMAIL.getValue())).
-                            findFirst();
-                    academicEmailRP.ifPresent(rp -> academicEmails.add(rp.getPropertyValue()));
-
-                }
-            });
-        }
-        return academicEmails;
     }
 }

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import liquibase.pro.packaged.D;
 import net.gcardone.junidecode.Junidecode;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,6 +52,7 @@ public class User {
     private Date createDate;
 
     @JsonProperty
+    @Deprecated
     private String additionalEmail;
 
     @JsonProperty
@@ -140,7 +142,6 @@ public class User {
         setUserId(u);
         setEmail(u);
         setDisplayName(u);
-        setAdditionalEmail(u);
         setEmailPreference(u);
         setRoles(u);
         setInstitutionId(u);
@@ -180,6 +181,7 @@ public class User {
         }
     }
 
+    @Deprecated
     private void setAdditionalEmail(User u) {
         if (!StringUtils.isEmpty(u.getAdditionalEmail())) {
             this.setAdditionalEmail(u.getAdditionalEmail());
@@ -254,10 +256,12 @@ public class User {
         this.createDate = createDate;
     }
 
+    @Deprecated
     public String getAdditionalEmail() {
         return additionalEmail;
     }
 
+    @Deprecated
     public void setAdditionalEmail(String additionalEmail) {
         this.additionalEmail = additionalEmail;
     }

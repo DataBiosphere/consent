@@ -29,15 +29,11 @@ properties:
     type: string
   nihUsername:
     type: string
-  academicEmail:
-    type: string
   state:
     type: string
   isThePI:
     type: string
   department:
-    type: string
-  checkNotifications:
     type: string
   eraAuthorized:
     type: string
