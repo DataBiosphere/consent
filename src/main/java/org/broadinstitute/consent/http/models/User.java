@@ -96,24 +96,14 @@ public class User {
         this.createDate = createDate;
     }
 
-    public User(Integer userId, String email, String displayName, Date createDate, String additionalEmail) {
-        this.userId = userId;
-        this.dacUserId = userId;
-        this.email = email;
-        this.displayName = displayName;
-        this.createDate = createDate;
-        this.additionalEmail = additionalEmail;
-    }
-
     public User(Integer userId, String email, String displayName, Date createDate,
-                List<UserRole> roles, String additionalEmail) {
+                List<UserRole> roles) {
         this.userId = userId;
         this.dacUserId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
         this.roles = roles;
-        this.additionalEmail = additionalEmail;
     }
 
     public User(GoogleUser googleUser) {
