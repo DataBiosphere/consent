@@ -76,9 +76,6 @@ public class DarCollectionServiceTest {
     openMocks(this);
   }
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
-
   @Test
   public void testGetCollectionsForUserByRoleName_ADMIN() {
     User user = new User();
@@ -673,7 +670,7 @@ public class DarCollectionServiceTest {
 
   }
 
-  @Test
+  @Test(expected = NotAcceptableException.class)
   public void testDeleteAsResearcherWithElections() {
     User user = new User();
     user.setUserId(1);
@@ -693,10 +690,6 @@ public class DarCollectionServiceTest {
     List<String> referenceIds = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
 
     Integer collectionId = collection.getDarCollectionId();
-
-    // should not work since elections exist
-    thrown.expect(NotAcceptableException.class);
-    thrown.expectMessage("Cannot delete DAR with elections.");
 
     initService();
     service.deleteByCollectionId(user, collectionId);}
@@ -738,7 +731,7 @@ public class DarCollectionServiceTest {
   }
 
 
-  @Test
+  @Test(expected = NotAuthorizedException.class)
   public void testDeleteAsUser() {
     User user = new User();
     user.setUserId(1);
@@ -750,7 +743,6 @@ public class DarCollectionServiceTest {
 
     Integer collectionId = collection.getDarCollectionId();
 
-    thrown.expect(NotAuthorizedException.class);
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     when(electionDAO.findElectionsByReferenceIds(any())).thenReturn(new ArrayList<>());
 
@@ -758,7 +750,7 @@ public class DarCollectionServiceTest {
     service.deleteByCollectionId(user, collectionId);
   }
 
-  @Test
+  @Test(expected = NotFoundException.class)
   public void testDeleteButNoCollection() {
     User user = new User();
     user.setUserId(1);
@@ -770,7 +762,6 @@ public class DarCollectionServiceTest {
 
     Integer collectionId = collection.getDarCollectionId();
 
-    thrown.expect(NotFoundException.class);
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(null);
     when(electionDAO.findElectionsByReferenceIds(any())).thenReturn(new ArrayList<>());
 

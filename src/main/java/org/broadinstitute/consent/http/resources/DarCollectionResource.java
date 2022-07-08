@@ -106,12 +106,10 @@ public class DarCollectionResource extends Resource {
   @Path("{collectionId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, RESEARCHER})
-  public Response deleteDarCollrection(@Auth AuthUser authUser, @PathParam("collectionId") Integer collectionId) {
+  public Response deleteDarCollection(@Auth AuthUser authUser, @PathParam("collectionId") Integer collectionId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-
       darCollectionService.deleteByCollectionId(user, collectionId);
-
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
