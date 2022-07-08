@@ -206,6 +206,7 @@ public class DataAccessRequestService {
             }
         }
         matchDAO.deleteMatchesByPurposeId(referenceId);
+        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(referenceId);
         dataAccessRequestDAO.deleteByReferenceId(referenceId);
     }
 

@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 
 import javax.annotation.security.PermitAll;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -113,6 +114,20 @@ public class SamResource extends Resource {
         return createExceptionResponse(e);
       }
       TosResponse tosResponse = samService.postTosAcceptedStatus(authUser);
+      return Response.ok().entity(tosResponse).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+
+  @Path("register/self/tos")
+  @DELETE
+  @Produces("application/json")
+  @PermitAll
+  public Response removeTos(@Auth AuthUser authUser) {
+    try {
+      TosResponse tosResponse = samService.removeTosAcceptedStatus(authUser);
       return Response.ok().entity(tosResponse).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
