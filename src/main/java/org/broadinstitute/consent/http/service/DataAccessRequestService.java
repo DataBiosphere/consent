@@ -452,7 +452,7 @@ public class DataAccessRequestService {
             darData.setCreateDate(nowTime);
         }
         darData.setSortDate(nowTime);
-        List<Integer> datasets = dataAccessRequest.getDatasetIds();
+        List<Integer> datasets = dataAccessRequestDAO.findDARDatasetRelations(dataAccessRequest.getReferenceId());
         if (CollectionUtils.isNotEmpty(datasets)) {
             String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
             Integer collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getUserId(), now);
