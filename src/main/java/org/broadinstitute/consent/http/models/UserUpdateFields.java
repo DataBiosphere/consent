@@ -1,16 +1,21 @@
 package org.broadinstitute.consent.http.models;
 
 import org.broadinstitute.consent.http.enumeration.UserFields;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
- * This class represents the limited amount of information that is available for update from
- * an admin-only interface.
+ * This class represents the limited amount of information that is available for update from an
+ * admin-only interface.
  */
 public class UserUpdateFields {
+
+  // We can only update non-DAC-related roles so always filter those out for addition or removal
+  private final List<Integer> roleIdsToIgnore = List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId());
   private String displayName;
   private Integer institutionId;
   private Boolean emailPreference;
@@ -99,16 +104,37 @@ public class UserUpdateFields {
       UserProperty prop = new UserProperty();
       prop.setUserId(userId);
       prop.setPropertyKey(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
-      prop.setPropertyValue(this.getSuggestedSigningOfficial().toString());
+      prop.setPropertyValue(this.getSuggestedSigningOfficial());
       userProps.add(prop);
     }
     if (Objects.nonNull(this.getSuggestedInstitution())) {
       UserProperty prop = new UserProperty();
       prop.setUserId(userId);
       prop.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
-      prop.setPropertyValue(this.getSuggestedInstitution().toString());
+      prop.setPropertyValue(this.getSuggestedInstitution());
       userProps.add(prop);
     }
     return userProps;
+  }
+
+  public List<Integer> getRoleIdsToAdd(List<Integer> currentUserRoleIds) {
+    return this.getUserRoleIds().stream()
+        .filter(
+            id -> {
+              return !currentUserRoleIds.contains(id) && // Don't add any that already exist
+                     !roleIdsToIgnore.contains(id);      // Never add ignorable roles
+            })
+        .collect(Collectors.toList());
+  }
+
+  public List<Integer> getRoleIdsToRemove(List<Integer> currentUserRoleIds) {
+    return currentUserRoleIds.stream()
+        .filter(
+            id -> {
+              return !getUserRoleIds().contains(id) &&                        // Remove roles that are NOT in the new role id list
+                     !Objects.equals(id, UserRoles.RESEARCHER.getRoleId()) && // Never remove the researcher role
+                     !roleIdsToIgnore.contains(id);                           // Never remove ignorable roles
+            })
+        .collect(Collectors.toList());
   }
 }

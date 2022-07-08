@@ -92,23 +92,9 @@ public class UserService {
             }
             // Handle Roles.
             if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
-                // We can only update non-DAC-related roles here
-                // so always filter those out for addition or removal
-                List<Integer> roleIdsToIgnore = List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId());
                 List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream().map(UserRole::getRoleId).collect(Collectors.toList());
-                List<Integer> roleIdsToAdd = userUpdateFields.getUserRoleIds().stream()
-                    .filter(id -> {
-                        return !currentRoleIds.contains(id) && // Don't add any that already exist
-                               !roleIdsToIgnore.contains(id);  // Never add ignorable roles
-                    })
-                    .collect(Collectors.toList());
-                List<Integer> roleIdsToRemove = currentRoleIds.stream()
-                    .filter(id -> {
-                        return !userUpdateFields.getUserRoleIds().contains(id) &&       // Remove roles that are NOT in the new role id list
-                               !Objects.equals(id, UserRoles.RESEARCHER.getRoleId()) && // Never remove the researcher role
-                               !roleIdsToIgnore.contains(id);                           // Never remove ignorable roles
-                    })
-                    .collect(Collectors.toList());
+                List<Integer> roleIdsToAdd = userUpdateFields.getRoleIdsToAdd(currentRoleIds);
+                List<Integer> roleIdsToRemove = userUpdateFields.getRoleIdsToRemove(currentRoleIds);
                 // Add the new role ids to the user
                 if (!roleIdsToAdd.isEmpty()) {
                     List<UserRole> newRoles = roleIdsToAdd.stream()
