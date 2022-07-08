@@ -29,8 +29,6 @@ put:
               properties:
                 displayName:
                   type: string
-                additionalEmail:
-                  type: string
                 institutionId:
                   type: number
                 emailPreference:

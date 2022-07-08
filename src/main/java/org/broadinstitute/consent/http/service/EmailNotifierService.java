@@ -68,10 +68,6 @@ public class EmailNotifierService {
     private static final String COLLECT_VOTE_DUL_URL = "dul_review_results";
     private static final String REVIEW_RESEARCHER_URL = "researcher_review";
 
-    private static List<String> apply(User u) {
-        return List.of(u.getEmail());
-    }
-
     public enum ElectionTypeString {
 
         DATA_ACCESS("Data Access Request"),
@@ -267,12 +263,11 @@ public class EmailNotifierService {
     }
 
     private Set<String> getEmails(List<User> users) {
-        Set<String> emails = users.stream()
-                .map(EmailNotifierService::apply)
+        return users.stream()
+                .map(u -> List.of(u.getEmail()))
                 .flatMap(Collection::stream)
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.toSet());
-        return emails;
     }
 
     private User describeDACUserById(Integer id) throws IllegalArgumentException {
