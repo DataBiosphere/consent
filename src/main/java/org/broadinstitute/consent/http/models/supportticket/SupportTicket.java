@@ -67,5 +67,8 @@ public class SupportTicket {
             this.comment = comment;
         }
 
+        public String getTicketFormId() {
+            return ticketFormId;
+        }
     }
 }

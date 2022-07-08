@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.inject.Inject;
@@ -15,6 +16,8 @@ import org.broadinstitute.consent.http.models.supportticket.SupportTicket;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.Response;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +55,9 @@ public class SupportRequestService {
         JsonHttpContent content = new JsonHttpContent(new GsonFactory(), ticket);
         HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
         HttpResponse response = clientUtil.handleHttpRequest(request);
-        if (response.getStatusCode() != 200) {
-            throw new ServerErrorException(response.getStatusMessage(), 500);
+
+        if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+            throw new ServerErrorException(response.getStatusMessage(), HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
         }
     }
 
