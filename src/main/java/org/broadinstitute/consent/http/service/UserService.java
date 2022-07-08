@@ -97,14 +97,17 @@ public class UserService {
                 List<Integer> roleIdsToIgnore = List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId());
                 List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream().map(UserRole::getRoleId).collect(Collectors.toList());
                 List<Integer> roleIdsToAdd = userUpdateFields.getUserRoleIds().stream()
-                    .filter(id -> !currentRoleIds.contains(id))  // Don't add any that already exist
-                    .filter(id -> !roleIdsToIgnore.contains(id)) // Never add ignorable roles
+                    .filter(id -> {
+                        return !currentRoleIds.contains(id) && // Don't add any that already exist
+                               !roleIdsToIgnore.contains(id);  // Never add ignorable roles
+                    })
                     .collect(Collectors.toList());
                 List<Integer> roleIdsToRemove = currentRoleIds.stream()
-                    // If the user has a role that's NOT in the updated role id list, we should remove it.
-                    .filter(currentRoleId -> !userUpdateFields.getUserRoleIds().contains(currentRoleId))
-                    .filter(id -> !Objects.equals(id, UserRoles.RESEARCHER.getRoleId())) // Never remove the researcher role
-                    .filter(id -> !roleIdsToIgnore.contains(id)) // Never remove ignorable roles
+                    .filter(id -> {
+                        return !userUpdateFields.getUserRoleIds().contains(id) &&       // Remove roles that are NOT in the new role id list
+                               !Objects.equals(id, UserRoles.RESEARCHER.getRoleId()) && // Never remove the researcher role
+                               !roleIdsToIgnore.contains(id);                           // Never remove ignorable roles
+                    })
                     .collect(Collectors.toList());
                 // Add the new role ids to the user
                 if (!roleIdsToAdd.isEmpty()) {
