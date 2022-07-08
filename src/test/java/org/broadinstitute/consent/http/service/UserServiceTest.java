@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
@@ -41,6 +42,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -53,7 +57,7 @@ public class UserServiceTest {
     private UserPropertyDAO userPropertyDAO;
 
     @Mock
-    private UserRoleDAO roleDAO;
+    private UserRoleDAO userRoleDAO;
 
     @Mock
     private VoteDAO voteDAO;
@@ -72,7 +76,54 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, userPropertyDAO, roleDAO, voteDAO, institutionDAO, libraryCardDAO);
+        service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO);
+    }
+
+    @Test
+    public void testUpdateUserFieldsById() {
+        UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+        UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+
+        User user = new User();
+        user.setUserId(1);
+        // Note that we're starting out with 1 modifiable role (Admin) and 1 that is not (Chairperson)
+        // and one role that should never be removed, but can be added (Researcher)
+        // When we update this user, we'll ensure that the new roles are added, old roles are deleted,
+        // and the researcher & chairperson roles remain.
+        when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(List.of(admin, researcher, chair));
+        when(userDAO.findUserById(any())).thenReturn(user);
+        spy(userDAO);
+        spy(userPropertyDAO);
+        spy(userRoleDAO);
+        initService();
+        try {
+            UserUpdateFields fields = new UserUpdateFields();
+            // We're modifying this user to have an SO role. This should leave in place
+            // both the Researcher and Chairperson roles, but remove the Admin role.
+            fields.setUserRoleIds(List.of(so.getRoleId()));
+            fields.setDisplayName(RandomStringUtils.random(10, true, false));
+            fields.setInstitutionId(1);
+            fields.setEmailPreference(true);
+            fields.setEraCommonsId(RandomStringUtils.random(10, true, false));
+            fields.setSelectedSigningOfficialId(1);
+            fields.setSuggestedSigningOfficial(RandomStringUtils.random(10, true, false));
+            fields.setSuggestedInstitution(RandomStringUtils.random(10, true, false));
+            assertEquals(3, fields.buildUserProperties(user.getUserId()).size());
+            service.updateUserFieldsById(fields, user.getUserId());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        // We added 3 user property values, we should have props for them:
+        verify(userDAO, times(1)).updateDisplayName(any(), any());
+        verify(userDAO, times(1)).updateInstitutionId(any(), any());
+        verify(userDAO, times(1)).updateEmailPreference(any(), any());
+        verify(userDAO, times(1)).updateEraCommonsId(any(), any());
+        verify(userPropertyDAO, times(1)).insertAll(any());
+        // Verify role additions/deletions.
+        verify(userRoleDAO, times(1)).insertUserRoles(List.of(so), 1);
+        verify(userRoleDAO, times(1)).removeUserRoles( 1, List.of(admin.getRoleId()));
     }
 
     @Test
@@ -81,7 +132,7 @@ public class UserServiceTest {
         List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
         when(userDAO.findUserById(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(roles);
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(roles);
         when(libraryCardDAO.findAllLibraryCardsByUserEmail(any())).thenReturn(Collections.emptyList());
         initService();
         try {
@@ -99,7 +150,7 @@ public class UserServiceTest {
         List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
         when(userDAO.findUserById(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(roles);
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(roles);
         when(libraryCardDAO.findAllLibraryCardsByUserEmail(u.getEmail())).thenReturn(List.of(libraryCard));
         initService();
 
@@ -137,7 +188,7 @@ public class UserServiceTest {
     public void testCreateUserNoRoles() {
         User u = generateUser();
         when(userDAO.findUserById(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
         initService();
         User user = service.createUser(u);
         assertFalse(user.getRoles().isEmpty());
@@ -192,7 +243,7 @@ public class UserServiceTest {
     public void testFindUserByIdNoRoles() {
         User u = generateUser();
         when(userDAO.findUserById(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
         initService();
 
         User user = service.findUserById(u.getUserId());
@@ -232,7 +283,7 @@ public class UserServiceTest {
     public void testFindUserByEmailNoRoles() {
         User u = generateUser();
         when(userDAO.findUserByEmail(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
         initService();
 
         User user = service.findUserByEmail(u.getEmail());
