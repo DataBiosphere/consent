@@ -2203,73 +2203,7 @@ paths:
   /api/institutions:
     $ref: './paths/institutions.yaml'
   /api/institutions/{id}:
-    get:
-      summary: Institution GET
-      description: Fetches Institution based on id param
-      tags:
-        - Institutions
-      parameters:
-        - name: id
-          in: path
-          description: Institution ID
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Returns target institution.
-            Admin will see all details while non-Admins will only see a subset.
-        404:
-          description: Institution not found
-        500:
-          description: Internal Server Error
-    put:
-      summary: Institution UPDATE
-      description: Updates institution based on id and json payload
-      tags:
-        - Institutions
-      parameters:
-        - name: id
-          in: path
-          description: Institution ID
-          required: true
-          schema:
-            type: string
-      requestBody:
-        description: Required JSON payload representing updated Institution
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Institution'
-      responses:
-        200:
-          description: Updates and returns target institution
-        400:
-          description: Bad Request
-        404:
-          description: Institution not found
-        500:
-          description: Internal Server Error
-    delete:
-      summary: Institution DELETE
-      description: Deletes institution based on id
-      tags:
-        - Institutions
-      parameters:
-        - name: id
-          in: path
-          description: Institution ID
-          required: True
-          schema:
-            type: string
-      responses:
-        204:
-          description: Deletes target institution (no return entity)
-        404:
-          description: Institution not found
-        500:
-          description: Internal Server Error
+    $ref: './paths/institutionById.yaml'
   /api/libraryCards:
     get:
       summary: Library Card INDEX resource
@@ -3483,18 +3417,7 @@ components:
           items:
             $ref: '#/components/schemas/User'
     SimplifiedUser:
-      type: object
-      properties:
-        userId:
-          type: integer
-          description: ID of the user
-        dacUserId:
-          deprecated: true
-          type: integer
-          description: ID of the user
-        displayName:
-          type: string
-          description: Name of the user
+      $ref: './schemas/SimplifiedUser.yaml'
     SamSelfDiagnostics:
       $ref: './schemas/SamSelfDiagnostics.yaml'
     SamUserInfo:
