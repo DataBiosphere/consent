@@ -180,10 +180,11 @@ public class DataAccessRequestServiceTest {
     @Test
     public void testCreateDataAccessRequest_Update() {
         DataAccessRequest dar = generateDataAccessRequest();
-        dar.addDatasetIds(Arrays.asList(1, 2, 3));
+        dar.addDatasetIds(List.of(1, 2, 3));
         User user = new User(1, "email@test.org", "Display Name", new Date());
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(List.of(1, 2, 3));
         doNothing().when(dataAccessRequestDAO).updateDraftByReferenceId(any(), any());
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(), any(), any(), any());
         doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
@@ -195,7 +196,7 @@ public class DataAccessRequestServiceTest {
     @Test
     public void testCreateDataAccessRequest_Create() {
         DataAccessRequest dar = generateDataAccessRequest();
-        dar.addDatasetIds(Arrays.asList(1, 2, 3));
+        dar.addDatasetIds(List.of(1, 2, 3));
         dar.setCreateDate(new Timestamp(1000));
         dar.setSortDate(new Timestamp(1000));
         dar.setReferenceId("id");
@@ -203,6 +204,7 @@ public class DataAccessRequestServiceTest {
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
         when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
+        when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(List.of(1, 2, 3));
         when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class))).thenReturn(RandomUtils.nextInt(1,100));
         doNothing().when(dataAccessRequestDAO).insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
         initService();
