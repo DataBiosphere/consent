@@ -76,4 +76,9 @@ public class ServicesConfiguration {
   public String postTosAcceptedUrl() {
     return getSamUrl() + "register/user/v1/termsofservice";
   }
+
+  public String postSupportRequestUrl() {
+    return "https://broadinstitute.zendesk.com/api/v2/requests.json";
+  }
+
 }
