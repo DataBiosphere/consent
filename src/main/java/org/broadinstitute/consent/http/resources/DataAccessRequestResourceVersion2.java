@@ -247,7 +247,6 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       // it in dar data.
       data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
-      // TODO: Update the UI to pass in dataset ids on the DAR object itself.
       originalDar.addDatasetIds(data.getDatasetIds());
       DataAccessRequest updatedDar =
           dataAccessRequestService.updateByReferenceId(user, originalDar);
@@ -405,7 +404,6 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       data.setReferenceId(referenceId);
     }
     newDar.setData(data);
-    // TODO: Update the UI to pass in dataset ids on the DAR object itself.
     newDar.addDatasetIds(data.getDatasetIds());
     return newDar;
   }
