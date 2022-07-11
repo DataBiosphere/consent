@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.models.supportticket.CustomRequestField;
 import org.broadinstitute.consent.http.models.supportticket.SupportRequestComment;
 import org.broadinstitute.consent.http.models.supportticket.SupportRequester;
 import org.broadinstitute.consent.http.models.supportticket.SupportTicket;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,9 +24,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.broadinstitute.consent.http.WithMockServer.IMAGE;
+import static org.eclipse.jetty.util.component.LifeCycle.stop;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -37,6 +40,9 @@ public class SupportRequestServiceTest {
     private MockServerClient mockServerClient;
 
     @Mock
+    private ServicesConfiguration config;
+
+    @Mock
     private AuthUser authUser;
 
     @Rule
@@ -46,18 +52,23 @@ public class SupportRequestServiceTest {
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
         mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-        ServicesConfiguration config = new ServicesConfiguration();
+        when(config.postSupportRequestUrl()).thenReturn("http://" + container.getHost() + ":" + container.getServerPort() + "/");
         service = new SupportRequestService(config);
+    }
+
+    @After
+    public void tearDown() {
+        stop(container);
     }
 
     @Test
     public void testCreateSupportTicket() {
-        String name = RandomStringUtils.random(10);
-        String type = RandomStringUtils.random(10);
-        String email = RandomStringUtils.random(10);
-        String subject = RandomStringUtils.random(10);
-        String description = RandomStringUtils.random(10);
-        String url = RandomStringUtils.random(10);
+        String name = RandomStringUtils.randomAlphabetic(10);
+        String type = RandomStringUtils.randomAlphabetic(10);
+        String email = RandomStringUtils.randomAlphabetic(10);
+        String subject = RandomStringUtils.randomAlphabetic(10);
+        String description = RandomStringUtils.randomAlphabetic(10);
+        String url = RandomStringUtils.randomAlphabetic(10);
         SupportTicket ticket = service.createSupportTicket(name, type, email, subject, description, url);
 
         assertNotNull(ticket);
@@ -101,14 +112,19 @@ public class SupportRequestServiceTest {
 
     //creates support ticket with random values for testing postTicketToSupport
     private SupportTicket generateTicket() {
-        SupportRequester requester = new SupportRequester(RandomStringUtils.random(10), RandomStringUtils.random(10));
-        String subject = RandomStringUtils.random(10);
+        SupportRequester requester = new SupportRequester(
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10)
+        );
+        String subject = RandomStringUtils.randomAlphabetic(10);
         List<CustomRequestField> customFields = new ArrayList<>();
         customFields.add(new CustomRequestField(
                 RandomStringUtils.random(10, false, true),
-                RandomStringUtils.random(10)
+                RandomStringUtils.randomAlphabetic(10)
         ));
-        SupportRequestComment comment = new SupportRequestComment(RandomStringUtils.random(10), RandomStringUtils.random(10));
+        SupportRequestComment comment = new SupportRequestComment(
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10));
 
         return new SupportTicket(requester, subject, customFields, comment);
     }
