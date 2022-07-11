@@ -4,6 +4,7 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -15,7 +16,8 @@ import java.util.stream.Collectors;
 public class UserUpdateFields {
 
   // We can only update non-DAC-related roles so always filter those out for addition or removal
-  private final List<Integer> roleIdsToIgnore = List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId());
+  protected static final List<Integer> IGNORE_ROLE_IDS = List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId());
+  private static final List<Integer> VALID_ROLE_IDS = Arrays.stream(UserRoles.values()).map(UserRoles::getRoleId).collect(Collectors.toList());
   private String displayName;
   private Integer institutionId;
   private Boolean emailPreference;
@@ -117,24 +119,42 @@ public class UserUpdateFields {
     return userProps;
   }
 
+  /**
+   * Takes a list of current user roles and compares with roles that are being
+   * requested to be added to the user. The result is a list of user roles that
+   * should be added to the user based on allowable conditions.
+   *
+   * @param currentUserRoleIds List of current user role ids.
+   * @return List of role ids that need to be added to the user.
+   */
   public List<Integer> getRoleIdsToAdd(List<Integer> currentUserRoleIds) {
     return this.getUserRoleIds().stream()
         .filter(
             id -> {
               return !currentUserRoleIds.contains(id) && // Don't add any that already exist
-                     !roleIdsToIgnore.contains(id);      // Never add ignorable roles
+                     !IGNORE_ROLE_IDS.contains(id) &&    // Never add ignorable roles
+                     VALID_ROLE_IDS.contains(id);        // Only add roles we know about
             })
         .collect(Collectors.toList());
   }
 
-  public List<Integer> getRoleIdsToRemove(List<Integer> currentUserRoleIds) {
+  /**
+   * Takes a list of current user roles and compares with roles that are being
+   * requested to be removed from the user. The result is a list of user roles that
+   * should be removed from the user based on allowable conditions.
+   *
+   * @param currentUserRoleIds List of current user role ids.
+   * @return List of role ids that need to be removed from the user.
+   */
+public List<Integer> getRoleIdsToRemove(List<Integer> currentUserRoleIds) {
     return currentUserRoleIds.stream()
         .filter(
             id -> {
               return !getUserRoleIds().contains(id) &&                        // Remove roles that are NOT in the new role id list
                      !Objects.equals(id, UserRoles.RESEARCHER.getRoleId()) && // Never remove the researcher role
-                     !roleIdsToIgnore.contains(id);                           // Never remove ignorable roles
-            })
+                     !IGNORE_ROLE_IDS.contains(id) &&                         // Never remove ignorable roles
+                      VALID_ROLE_IDS.contains(id);                            // Only remove roles we know about
+                  })
         .collect(Collectors.toList());
   }
 }
