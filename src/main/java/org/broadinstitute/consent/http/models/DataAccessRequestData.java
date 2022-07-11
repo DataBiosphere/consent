@@ -54,7 +54,6 @@ public class DataAccessRequestData {
     private String pubmedId;
     private String scientificUrl;
     private Boolean eraExpiration;
-    private String academicEmail;
     private Boolean eraAuthorized;
     private String nihUsername;
     private String linkedIn;
@@ -314,15 +313,6 @@ public class DataAccessRequestData {
     public void setEraExpiration(Boolean eraExpiration) {
         this.eraExpiration = eraExpiration;
     }
-
-    public String getAcademicEmail() {
-        return academicEmail;
-    }
-
-    public void setAcademicEmail(String academicEmail) {
-        this.academicEmail = academicEmail;
-    }
-
     public Boolean getEraAuthorized() {
         return eraAuthorized;
     }

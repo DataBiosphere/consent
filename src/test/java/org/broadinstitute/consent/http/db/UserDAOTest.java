@@ -170,6 +170,19 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testUpdateDACUser_case1() {
+        User user = createUser();
+        Institution firstInstitute = createInstitution();
+        userDAO.updateUser(
+                "Dac User Test",
+                user.getUserId(),
+                firstInstitute.getId()
+        );
+        User user2 = userDAO.findUserById(user.getUserId());
+        assertEquals(user2.getInstitution().getId(), firstInstitute.getId());
+    }
+
+    @Test
     public void testDeleteDACUserById() {
         // No-op ... tested in `tearDown()`
     }

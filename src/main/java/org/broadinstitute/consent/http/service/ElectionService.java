@@ -654,16 +654,15 @@ public class ElectionService {
                         map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier())).
                         collect(Collectors.toList());
                 try {
-                    String researcherEmail = Objects.nonNull(researcher) ?
-                            researcher.getEmail() :
-                            Objects.nonNull(dar.getData().getAcademicEmail()) ?
-                                    dar.getData().getAcademicEmail() :
-                                    dar.getData().getResearcher();
+                    String researcherEmail = Objects.nonNull(researcher) ? researcher.getEmail() : null;
                     String darCode = Objects.nonNull(dar.getData().getDarCode()) ?
                             dar.getData().getDarCode() :
                             dar.getReferenceId();
-                    emailNotifierService.sendDataCustodianApprovalMessage(custodian.getEmail(), darCode, mailDTOS,
-                            custodian.getDisplayName(), researcherEmail);
+
+                    if (researcherEmail != null) {
+                        emailNotifierService.sendDataCustodianApprovalMessage(custodian.getEmail(), darCode, mailDTOS,
+                                custodian.getDisplayName(), researcherEmail);
+                    }
                 } catch (Exception e) {
                     logger.error("Unable to send data custodian approval message: " + e);
                 }
