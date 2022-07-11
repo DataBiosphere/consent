@@ -205,7 +205,6 @@ public class ElectionServiceTest {
 
     private void bunchOfDoNothings() throws Exception {
         doNothing().when(emailNotifierService).sendDisabledDatasetsMessage(any(), any(), any());
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
         doNothing().when(consentDAO).updateConsentSortDate(any(), any());
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(), any(), any(), any());
         doNothing().when(electionDAO).insertAccessAndConsentElection(any(), any());
@@ -297,7 +296,7 @@ public class ElectionServiceTest {
     }
 
     private void initService() {
-        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, mailMessageDAO, dacService, emailNotifierService, dataAccessRequestService, useRestrictionConverter);
+        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, dataAccessRequestDAO, mailMessageDAO, dacService, emailNotifierService, dataAccessRequestService, useRestrictionConverter);
     }
 
     @Test

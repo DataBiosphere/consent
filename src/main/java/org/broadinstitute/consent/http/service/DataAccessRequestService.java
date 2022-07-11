@@ -218,15 +218,6 @@ public class DataAccessRequestService {
         return dar;
     }
 
-    // TODO This needs be removed in a follow-on PR that refactors all usages to a non-deprecated update method.
-    @Deprecated // Use updateByReferenceIdVersion2
-    public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
-        darData.setSortDate(new Date().getTime());
-        dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData);
-        syncDataAccessRequestDatasets(darData.getDatasetIds(), referencedId);
-        return findByReferenceId(referencedId);
-    }
-
     public DataAccessRequest insertDraftDataAccessRequest(User user, DataAccessRequest dar) {
         if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(dar.getReferenceId()) || Objects.isNull(dar.getData())) {
             throw new IllegalArgumentException("User and DataAccessRequest are required");
@@ -354,7 +345,8 @@ public class DataAccessRequestService {
      * @param referenceId The DAR Reference Id
      * @return The updated DAR
      */
-    public DataAccessRequest cancelDataAccessRequest(String referenceId) {
+    public DataAccessRequest cancelDataAccessRequest(AuthUser authUser, String referenceId) {
+        User user = userDAO.findUserByEmail(authUser.getEmail());
         DataAccessRequest dar = findByReferenceId(referenceId);
         if (Objects.isNull(dar)) {
             throw new NotFoundException("Unable to find Data Access Request with the provided id: " + referenceId);
@@ -363,9 +355,8 @@ public class DataAccessRequestService {
         if (!electionIds.isEmpty()) {
             throw new UnsupportedOperationException("Cancelling this DAR is not allowed");
         }
-        DataAccessRequestData darData = dar.getData();
-        darData.setStatus(DarStatus.CANCELED.getValue());
-        updateByReferenceId(referenceId, darData);
+        dar.getData().setStatus(DarStatus.CANCELED.getValue());
+        updateByReferenceIdVersion2(user, dar);
         return findByReferenceId(referenceId);
     }
 

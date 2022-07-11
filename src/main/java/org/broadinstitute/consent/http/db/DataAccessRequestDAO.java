@@ -133,20 +133,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   List<DataAccessRequest> findByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
   /**
-   * Update DataAccessRequest by reference id and provided DataAccessRequestData
-   * Deprecated. Use `updateDataByReferenceIdVersion2`
-   *
-   * @param referenceId String
-   * @param data DataAccessRequestData
-   */
-  @Deprecated
-  @RegisterArgumentFactory(JsonArgumentFactory.class)
-  @SqlUpdate(
-      "UPDATE data_access_request SET data = to_jsonb(:data) WHERE reference_id = :referenceId")
-  void updateDataByReferenceId(
-      @Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
-
-  /**
    * Update DataAccessRequest properties by reference id.
    * This version supercedes updateDataByReferenceId.
    *

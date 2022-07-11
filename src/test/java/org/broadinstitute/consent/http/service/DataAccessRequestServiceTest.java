@@ -147,10 +147,9 @@ public class DataAccessRequestServiceTest {
         when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
         initService();
 
-        DataAccessRequest updated = service.cancelDataAccessRequest(dar.getReferenceId());
+        DataAccessRequest updated = service.cancelDataAccessRequest(authUser, dar.getReferenceId());
         assertNotNull(updated);
         assertNotNull(updated.getData());
         assertNotNull(updated.getData().getStatus());
@@ -162,10 +161,9 @@ public class DataAccessRequestServiceTest {
         when(electionDAO.getElectionIdsByReferenceIds(anyList())).thenReturn(List.of(1));
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
         initService();
 
-        service.cancelDataAccessRequest(dar.getReferenceId());
+        service.cancelDataAccessRequest(authUser, dar.getReferenceId());
     }
 
     @Test(expected = NotFoundException.class)
@@ -174,7 +172,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(null);
         initService();
 
-        service.cancelDataAccessRequest(dar.getReferenceId());
+        service.cancelDataAccessRequest(authUser, dar.getReferenceId());
     }
 
     @Test
