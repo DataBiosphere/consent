@@ -374,8 +374,7 @@ public class VoteService {
         collections.forEach(c -> {
             // Get the datasets in this collection that have been approved
             List<Integer> collectionDatasetIds = c.getDars().values().stream()
-                .map(DataAccessRequest::getData)
-                .map(DataAccessRequestData::getDatasetIds)
+                .map(DataAccessRequest::getDatasetIds)
                 .flatMap(List::stream)
                 .distinct()
                 .collect(Collectors.toList());

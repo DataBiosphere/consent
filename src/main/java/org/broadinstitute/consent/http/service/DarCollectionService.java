@@ -269,12 +269,12 @@ public class DarCollectionService {
    */
   public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections, List<Integer> filterDatasetIds) {
     // get datasetIds from each DAR from each collection
-    List<Integer> datasetIds = collections.stream()
-      .map(d-> d.getDars().values())
-      .flatMap(Collection::stream)
-      .map(d -> d.getData().getDatasetIds())
-      .flatMap(Collection::stream)
+    List<String> referenceIds = collections.stream()
+      .map(DarCollection::getDars)
+      .map(Map::keySet)
+      .flatMap(Set::stream)
       .collect(Collectors.toList());
+    List<Integer> datasetIds = referenceIds.isEmpty() ? List.of() : dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds);
     if(!datasetIds.isEmpty()) {
       // if filterDatasetIds has values, get the intersection between that and datasetIds
       if (!filterDatasetIds.isEmpty()) {
@@ -286,8 +286,7 @@ public class DarCollectionService {
 
       return collections.stream().map(c -> {
         Set<Dataset> collectionDatasets = c.getDars().values().stream()
-          .map(DataAccessRequest::getData)
-          .map(DataAccessRequestData::getDatasetIds)
+          .map(DataAccessRequest::getDatasetIds)
           .flatMap(Collection::stream)
           .map(datasetMap::get)
           .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
@@ -390,7 +389,7 @@ public class DarCollectionService {
 
     // Filter the list of DARs we can operate on by the datasets accessible to this chairperson
     List<DataAccessRequest> dars = collection.getDars().values().stream()
-      .filter(d -> datasetIds.containsAll(d.getData().getDatasetIds()))
+      .filter(d -> datasetIds.containsAll(d.getDatasetIds()))
       .collect(Collectors.toList());
 
     List<String> referenceIds = dars.stream()

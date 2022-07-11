@@ -270,6 +270,7 @@ public class DarCollectionServiceTest {
       .collect(Collectors.toList());
 
     when(datasetDAO.findDatasetWithDataUseByIdList(anyList())).thenReturn(datasets);
+    when(dataAccessRequestDAO.findAllDARDatasetRelations(any())).thenReturn(datasetIds);
     initService();
 
     collections = service.addDatasetsToCollections(collections, List.of());
@@ -302,6 +303,7 @@ public class DarCollectionServiceTest {
 
     // mocking out findDatasetWithDataUseByIdList to only return one of the datasets
     when(datasetDAO.findDatasetWithDataUseByIdList(List.of(dataset.getDataSetId()))).thenReturn(new HashSet<>(List.of(dataset)));
+    when(dataAccessRequestDAO.findAllDARDatasetRelations(any())).thenReturn(datasetIds);
 
     initService();
 
@@ -423,7 +425,7 @@ public class DarCollectionServiceTest {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setDatasetIds(List.of(dataset.getDataSetId()));
+    dar.addDatasetId(dataset.getDataSetId());
     dar.setData(data);
     DarCollection collection = createMockCollections(1).get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
@@ -456,7 +458,7 @@ public class DarCollectionServiceTest {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setDatasetIds(List.of(dataset.getDataSetId()));
+    dar.addDatasetId(dataset.getDataSetId());
     dar.setData(data);
     DarCollection collection = createMockCollections(1).get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
@@ -650,7 +652,7 @@ public class DarCollectionServiceTest {
 
     Integer datasetId = RandomUtils.nextInt(1, 100);
     datasets.add(generateMockDatasetWithDataUse(datasetId));
-    data.setDatasetIds(Collections.singletonList(datasetId));
+    dar.addDatasetId(datasetId);
     dar.setData(data);
     dar.setReferenceId(UUID.randomUUID().toString());
     return dar;

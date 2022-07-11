@@ -43,7 +43,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
-        " LEFT JOIN (SELECT DISTINCT jsonb_array_elements(((data #>> '{}')::jsonb->>'datasetIds')::jsonb)::INTEGER AS id FROM data_access_request) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
+        " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
         " LEFT JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
@@ -57,7 +57,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
-        " LEFT JOIN (SELECT DISTINCT jsonb_array_elements(((data #>> '{}')::jsonb->>'datasetIds')::jsonb)::INTEGER AS id FROM data_access_request) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
+        " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
         " LEFT JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
@@ -116,7 +116,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
-        " LEFT JOIN (SELECT DISTINCT jsonb_array_elements(((data #>> '{}')::jsonb->>'datasetIds')::jsonb)::INTEGER AS id FROM data_access_request) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
+        " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
         " LEFT JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
@@ -196,7 +196,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
-        " LEFT JOIN (SELECT DISTINCT jsonb_array_elements(((data #>> '{}')::jsonb->>'datasetIds')::jsonb)::INTEGER AS id FROM data_access_request) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
+        " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
         " LEFT JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
@@ -207,7 +207,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
-        " LEFT JOIN (SELECT DISTINCT jsonb_array_elements(((data #>> '{}')::jsonb->>'datasetIds')::jsonb)::INTEGER AS id FROM data_access_request) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
+        " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
         " LEFT JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
@@ -217,7 +217,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
-        " LEFT JOIN (SELECT DISTINCT jsonb_array_elements(((data #>> '{}')::jsonb->>'datasetIds')::jsonb)::INTEGER AS id FROM data_access_request) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
+        " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
         " LEFT JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
@@ -237,7 +237,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
-        " LEFT JOIN (SELECT DISTINCT jsonb_array_elements(((data #>> '{}')::jsonb->>'datasetIds')::jsonb)::INTEGER AS id FROM data_access_request) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
+        " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
         " LEFT JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
@@ -258,7 +258,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
-        " LEFT JOIN (SELECT DISTINCT jsonb_array_elements(((data #>> '{}')::jsonb->>'datasetIds')::jsonb)::INTEGER AS id FROM data_access_request) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
+        " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
         " LEFT JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
@@ -339,7 +339,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
-        " LEFT JOIN (SELECT DISTINCT jsonb_array_elements(((data #>> '{}')::jsonb->>'datasetIds')::jsonb)::INTEGER AS id FROM data_access_request) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
+        " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
         " INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +

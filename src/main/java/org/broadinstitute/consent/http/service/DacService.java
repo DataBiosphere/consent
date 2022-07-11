@@ -284,7 +284,7 @@ public class DacService {
                 return documents.
                   stream().
                   filter(d -> {
-                      List<Integer> datasetIds = d.getData().getDatasetIds();
+                      List<Integer> datasetIds = d.getDatasetIds();
                       return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
                   }).
                   collect(Collectors.toList());

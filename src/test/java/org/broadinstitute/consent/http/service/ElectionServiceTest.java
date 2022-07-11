@@ -147,7 +147,6 @@ public class ElectionServiceTest {
         sampleDataAccessRequest1.setUserId(2);
         DataAccessRequestData data = new DataAccessRequestData();
         data.setReferenceId(sampleElection1.getReferenceId());
-        data.setDatasetIds(Arrays.asList(sampleDataset1.getDataSetId()));
         DatasetEntry entry = new DatasetEntry();
         entry.setKey(sampleDataset1.getConsentName());
         entry.setValue(sampleDataset1.getName());
@@ -158,6 +157,7 @@ public class ElectionServiceTest {
         entryDetail.setObjectId(sampleDataset1.getObjectId());
         data.setDatasetDetail(Arrays.asList(entryDetail));
         sampleDataAccessRequest1.setData(data);
+        sampleDataAccessRequest1.addDatasetId(sampleDataset1.getDataSetId());
 
         sampleDac1 = new Dac();
         sampleDac1.setDacId(1);
