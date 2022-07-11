@@ -92,7 +92,7 @@ public class SupportRequestServiceTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testCreateSupportTicketNullName() {
+    public void testCreateSupportTicketMissingField() {
         String type = RandomStringUtils.randomAlphabetic(10);
         String email = RandomStringUtils.randomAlphabetic(10);
         String subject = RandomStringUtils.randomAlphabetic(10);
@@ -100,37 +100,6 @@ public class SupportRequestServiceTest {
         String url = RandomStringUtils.randomAlphabetic(10);
         service.createSupportTicket(null, type, email, subject, description, url);
     }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCreateSupportTicketNullEmail() {
-        String name = RandomStringUtils.randomAlphabetic(10);
-        String type = RandomStringUtils.randomAlphabetic(10);
-        String subject = RandomStringUtils.randomAlphabetic(10);
-        String description = RandomStringUtils.randomAlphabetic(10);
-        String url = RandomStringUtils.randomAlphabetic(10);
-        service.createSupportTicket(name, type, null, subject, description, url);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCreateSupportTicketNullSubject() {
-        String name = RandomStringUtils.randomAlphabetic(10);
-        String type = RandomStringUtils.randomAlphabetic(10);
-        String email = RandomStringUtils.randomAlphabetic(10);
-        String description = RandomStringUtils.randomAlphabetic(10);
-        String url = RandomStringUtils.randomAlphabetic(10);
-        service.createSupportTicket(name, type, email, null, description, url);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCreateSupportTicketNullDescription() {
-        String name = RandomStringUtils.randomAlphabetic(10);
-        String type = RandomStringUtils.randomAlphabetic(10);
-        String email = RandomStringUtils.randomAlphabetic(10);
-        String subject = RandomStringUtils.randomAlphabetic(10);
-        String url = RandomStringUtils.randomAlphabetic(10);
-        service.createSupportTicket(name, type, email, subject, null, url);
-    }
-
 
     @Test
     public void testPostTicketToSupport() throws Exception {

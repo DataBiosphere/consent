@@ -42,10 +42,16 @@ public class SupportRequestService {
             throw new IllegalArgumentException("Name and email of user requesting support is required");
         }
         if (Objects.isNull(subject)) {
-            throw new IllegalArgumentException("Subject of support ticket is required");
+            throw new IllegalArgumentException("Support ticket subject is required");
         }
         if (Objects.isNull(description)) {
-            throw new IllegalArgumentException("Description of support ticket is required");
+            throw new IllegalArgumentException("Support ticket description is required");
+        }
+        if (Objects.isNull(type)) {
+            throw new IllegalArgumentException("Support ticket type is required");
+        }
+        if (Objects.isNull(url)) {
+            throw new IllegalArgumentException("Support ticket url is required");
         }
 
         SupportRequester requester = new SupportRequester(name, email);
