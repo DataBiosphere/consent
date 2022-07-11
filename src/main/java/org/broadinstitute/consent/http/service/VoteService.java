@@ -285,7 +285,7 @@ public class VoteService {
         if (electionDAO.findElectionsWithFinalVoteByReferenceId(referenceId) == null) {
             throw new IllegalArgumentException();
         }
-        voteDAO.deleteVotes(referenceId);
+        voteDAO.deleteVotesByReferenceId(referenceId);
 
     }
 

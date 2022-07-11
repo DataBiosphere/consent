@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -23,6 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +38,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+
 public class DarCollectionService {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -44,10 +49,11 @@ public class DarCollectionService {
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
   private final VoteDAO voteDAO;
+  private final MatchDAO matchDAO;
   private final EmailNotifierService emailNotifierService;
 
   @Inject
-  public DarCollectionService(DarCollectionDAO darCollectionDAO, DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, EmailNotifierService emailNotifierService, VoteDAO voteDAO) {
+  public DarCollectionService(DarCollectionDAO darCollectionDAO, DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, EmailNotifierService emailNotifierService, VoteDAO voteDAO, MatchDAO matchDAO) {
     this.darCollectionDAO = darCollectionDAO;
     this.collectionServiceDAO = collectionServiceDAO;
     this.datasetDAO = datasetDAO;
@@ -55,6 +61,7 @@ public class DarCollectionService {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.emailNotifierService = emailNotifierService;
     this.voteDAO = voteDAO;
+    this.matchDAO = matchDAO;
   }
 
   public List<Integer> findDatasetIdsByUser(User user) {
@@ -213,6 +220,63 @@ public class DarCollectionService {
             .filter(Objects::nonNull)
             .distinct()
             .collect(Collectors.toList());
+  }
+
+  public void deleteByCollectionId(User user, Integer collectionId) throws NotAcceptableException, NotAuthorizedException, NotFoundException {
+    DarCollection coll = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    if (coll == null) {
+      throw new NotFoundException("DAR Collection does not exist at that id.");
+    }
+
+    // ensure the user is capable of deleting the collection
+    if (!user.hasUserRole(UserRoles.ADMIN) && !coll.getCreateUserId().equals(user.getUserId())) {
+      throw new NotAuthorizedException("Not authorized to delete DAR Collection.");
+    }
+
+    // get the reference ids of the dars in the collection
+    List<String> referenceIds =
+            coll.getDars().values().stream().map(DataAccessRequest::getReferenceId).distinct().collect(toList());
+
+    // ensure there are no elections; if there are, will attempt to delete (must be admin)
+    ensureNoElections(user, referenceIds);
+
+    // no elections left & user has perms => safe to delete collection
+
+    // delete DARs
+    matchDAO.deleteMatchesByPurposeIds(referenceIds);
+    dataAccessRequestDAO.deleteDARDatasetRelationByReferenceIds(referenceIds);
+    dataAccessRequestDAO.deleteByReferenceIds(referenceIds);
+
+    // delete collection
+    darCollectionDAO.deleteByCollectionId(collectionId);
+  }
+
+  // checks if there are any elections for any of the DARs in the referenceIds; if so,
+  // will attempt to delete them (must be admin to delete)
+  private void ensureNoElections(User user, List<String> referenceIds) throws NotAcceptableException {
+    // get elections across all reference ids
+    List<Election> allElections = electionDAO.findElectionsByReferenceIds(referenceIds);
+
+    // if there are already no elections, we're done!
+    if (allElections.isEmpty()) {
+      return;
+    }
+
+    // if there are any elections, we need to delete them.
+    // only admins can delete elections; make sure user is an admin
+    if (!user.hasUserRole(UserRoles.ADMIN)) {
+      throw new NotAcceptableException("Cannot delete DAR with elections.");
+    }
+
+    // delete all votes
+    voteDAO.deleteVotesByReferenceIds(referenceIds);
+
+    // delete all elections
+    List<Integer> electionIds = allElections.stream().map(Election::getElectionId).collect(toList());
+
+    electionDAO.deleteElectionsFromAccessRPs(electionIds);
+    electionDAO.deleteElectionsByIds(electionIds);
+
   }
 
   //Helper method for queryCollectionsByFiltersAndUserRoles

@@ -86,7 +86,7 @@ public class VoteServiceTest {
     private void doNothings() {
         doNothing().when(voteDAO).updateVote(anyBoolean(), anyString(), any(), anyInt(), anyBoolean(), anyInt(), any(), anyBoolean());
         doNothing().when(voteDAO).deleteVoteById(anyInt());
-        doNothing().when(voteDAO).deleteVotes(anyString());
+        doNothing().when(voteDAO).deleteVotesByReferenceId(anyString());
     }
 
     private void initService() {

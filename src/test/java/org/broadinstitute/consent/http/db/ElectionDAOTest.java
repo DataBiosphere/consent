@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -125,6 +126,86 @@ public class ElectionDAOTest extends DAOTestHelper {
     List<Election> foundElections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
     assertNotNull(foundElections);
     Assert.assertEquals(election.getElectionId(), foundElections.get(0).getElectionId());
+  }
+
+  @Test
+  public void testFindElectionsByReferenceId() {
+    Dataset dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+    Election election1 = createDataAccessElection(referenceId, datasetId);
+    Election election2 = createDataAccessElection(referenceId, datasetId);
+
+    List<Election> found = electionDAO.findElectionsByReferenceId(referenceId);
+    assertEquals(2, found.size());
+
+    assertTrue(found.contains(election1));
+    assertTrue(found.contains(election2));
+  }
+
+  @Test
+  public void testFindElectionsByReferenceIds() {
+    Dataset dataset = createDataset();
+    DataAccessRequest dar1 = createDataAccessRequestV3();
+    DataAccessRequest dar2 = createDataAccessRequestV3();
+
+    String referenceId1 = dar1.getReferenceId();
+    String referenceId2 = dar2.getReferenceId();
+
+    Integer datasetId = dataset.getDataSetId();
+
+    Election election1 = createDataAccessElection(referenceId1, datasetId);
+    Election election2 = createDataAccessElection(referenceId1, datasetId);
+
+    Election election3 = createDataAccessElection(referenceId2, datasetId);
+    Election election4 = createDataAccessElection(referenceId2, datasetId);
+
+    List<Election> found = electionDAO.findElectionsByReferenceId(referenceId1);
+    assertEquals(2, found.size());
+
+    found = electionDAO.findElectionsByReferenceId(referenceId2);
+    assertEquals(2, found.size());
+
+    found = electionDAO.findElectionsByReferenceIds(List.of(referenceId1, referenceId2));
+    assertEquals(4, found.size());
+
+    assertTrue(found.contains(election1));
+    assertTrue(found.contains(election2));
+    assertTrue(found.contains(election3));
+    assertTrue(found.contains(election4));
+  }
+
+  @Test
+  public void testDeleteElectionFromAccessRP() {
+    Dac dac = createDac();
+    Consent consent = createConsent(dac.getDacId());
+    Dataset dataset = createDataset();
+    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
+    Election accessElection = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
+    Election rpElection = createRPElection(consent.getConsentId(), dataset.getDataSetId());
+
+    electionDAO.insertAccessRP(accessElection.getElectionId(), rpElection.getElectionId());
+
+    assertEquals(rpElection.getElectionId(), electionDAO.findRPElectionByElectionAccessId(accessElection.getElectionId()));
+    assertEquals(accessElection.getElectionId(), electionDAO.findAccessElectionByElectionRPId(rpElection.getElectionId()));
+
+    // can delete using access election
+    electionDAO.deleteElectionFromAccessRP(accessElection.getElectionId());
+
+    assertNull(electionDAO.findRPElectionByElectionAccessId(accessElection.getElectionId()));
+    assertNull(electionDAO.findAccessElectionByElectionRPId(rpElection.getElectionId()));
+
+    electionDAO.insertAccessRP(accessElection.getElectionId(), rpElection.getElectionId());
+
+    assertEquals(rpElection.getElectionId(), electionDAO.findRPElectionByElectionAccessId(accessElection.getElectionId()));
+    assertEquals(accessElection.getElectionId(), electionDAO.findAccessElectionByElectionRPId(rpElection.getElectionId()));
+
+    // or by using rp election
+    electionDAO.deleteElectionFromAccessRP(rpElection.getElectionId());
+
+    assertNull(electionDAO.findRPElectionByElectionAccessId(accessElection.getElectionId()));
+    assertNull(electionDAO.findAccessElectionByElectionRPId(rpElection.getElectionId()));
   }
 
   @Test
@@ -438,5 +519,42 @@ public class ElectionDAOTest extends DAOTestHelper {
     electionDAO.updateElectionStatus(List.of(accessElection.getElectionId(), rpElection.getElectionId()), ElectionStatus.CANCELED.getValue());
     List<Election> electionsV2 = electionDAO.findOpenElectionsByReferenceIds(List.of(dar.referenceId));
     assertEquals(0, electionsV2.size());
+  }
+
+  @Test
+  public void testDeleteByReferenceId() {
+    Dataset dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+    Election e = createDataAccessElection(referenceId, datasetId);
+
+    List<Election> elections = electionDAO.findOpenElectionsByReferenceIds(List.of(dar.referenceId));
+    assertEquals(1, elections.size());
+
+    electionDAO.deleteElectionById(e.getElectionId());
+
+    elections = electionDAO.findOpenElectionsByReferenceIds(List.of(dar.referenceId));
+    assertEquals(0, elections.size());
+
+  }
+
+  @Test
+  public void testDeleteByReferenceIds() {
+    Dataset dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+    Election accessElection = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+
+    List<Election> elections = electionDAO.findOpenElectionsByReferenceIds(List.of(dar.referenceId));
+    assertEquals(2, elections.size());
+
+    electionDAO.deleteElectionsByIds(List.of(accessElection.getElectionId(), rpElection.getElectionId()));
+
+    elections = electionDAO.findOpenElectionsByReferenceIds(List.of(dar.referenceId));
+    assertEquals(0, elections.size());
+
   }
 }
