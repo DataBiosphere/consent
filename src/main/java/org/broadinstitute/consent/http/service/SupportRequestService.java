@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class SupportRequestService {
 
@@ -37,6 +38,16 @@ public class SupportRequestService {
 
 
     public SupportTicket createSupportTicket(String name, String type, String email, String subject, String description, String url) {
+        if (Objects.isNull(name) || Objects.isNull(email)) {
+            throw new IllegalArgumentException("Name and email of user requesting support is required");
+        }
+        if (Objects.isNull(subject)) {
+            throw new IllegalArgumentException("Subject of support ticket is required");
+        }
+        if (Objects.isNull(description)) {
+            throw new IllegalArgumentException("Description of support ticket is required");
+        }
+
         SupportRequester requester = new SupportRequester(name, email);
         List<CustomRequestField> customFields = new ArrayList<>();
         customFields.add(new CustomRequestField("360012744452", type));
