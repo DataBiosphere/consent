@@ -88,6 +88,7 @@ public class UserService {
             // Update User Properties
             List<UserProperty> userProps = userUpdateFields.buildUserProperties(userId);
             if (!userProps.isEmpty()) {
+                userPropertyDAO.deletePropertiesByUserAndKey(userProps);
                 userPropertyDAO.insertAll(userProps);
             }
             // Handle Roles.

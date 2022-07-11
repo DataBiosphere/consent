@@ -56,7 +56,7 @@ put:
               description: List of role IDs
               type: array
               items:
-                type: string
+                type: number
             eraCommonsId:
               description: The eRA Commons id for the user
               type: string
