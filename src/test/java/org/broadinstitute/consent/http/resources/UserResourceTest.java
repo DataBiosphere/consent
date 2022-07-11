@@ -379,6 +379,8 @@ public class UserResourceTest {
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     Gson gson = new Gson();
     when(userService.findUserById(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
     initResource();
     Response response = userResource.update(authUser, uriInfo, user.getUserId(), gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
