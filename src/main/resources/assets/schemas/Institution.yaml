@@ -20,3 +20,8 @@ properties:
     type: string
     format: Date
     description: Institution's last update date
+  signingOfficials:
+    description: Signing officials belonging to the institution.
+    type: array
+    items:
+      $ref: './SimplifiedUser.yaml'
