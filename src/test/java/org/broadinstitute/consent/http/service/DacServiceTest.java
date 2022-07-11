@@ -703,13 +703,13 @@ public class DacServiceTest {
                 mapToObj(i -> {
                     String referenceId = UUID.randomUUID().toString();
                     List<Integer> dataSetIds = Collections.singletonList(i);
-                    DataAccessRequest doc = new DataAccessRequest();
-                    doc.setReferenceId(referenceId);
+                    DataAccessRequest dar = new DataAccessRequest();
+                    dar.setReferenceId(referenceId);
                     DataAccessRequestData data = new DataAccessRequestData();
-                    data.setDatasetIds(dataSetIds);
+                    dar.setDatasetIds(dataSetIds);
                     data.setReferenceId(referenceId);
-                    doc.setData(data);
-                    return doc;
+                    dar.setData(data);
+                    return dar;
                 }).collect(Collectors.toList());
     }
 

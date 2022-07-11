@@ -85,7 +85,7 @@ public class DarCollectionServiceDAO {
 
                 // If the user is not an admin, then the dataset must be in the list of the user's DAC Datasets
                 // Otherwise, we need to skip election creation for this DAR as well.
-                Integer datasetId = dar.getData().getDatasetIds().get(0);
+                Integer datasetId = dar.getDatasetIds().get(0);
                 if (!isAdmin && !dacUserDatasetIds.contains(datasetId)) {
                     ignore = true;
                 }
