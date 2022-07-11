@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.models.supportticket;
 
+/**
+ * Represents comment describing issue for a Zendesk support ticket https://broadinstitute.zendesk.com/api/v2/requests.json
+ */
 public class SupportRequestComment {
     private String body;
 

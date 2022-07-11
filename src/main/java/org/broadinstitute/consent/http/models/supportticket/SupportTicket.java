@@ -2,6 +2,9 @@ package org.broadinstitute.consent.http.models.supportticket;
 
 import java.util.List;
 
+/**
+ * Represents ticket to request support required by the Zendesk API https://broadinstitute.zendesk.com/api/v2/requests.json
+ */
 public class SupportTicket {
 
     private SupportRequest request;
