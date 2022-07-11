@@ -16,7 +16,6 @@ import org.broadinstitute.consent.http.models.supportticket.SupportTicket;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 import javax.ws.rs.ServerErrorException;
-import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +56,7 @@ public class SupportRequestService {
         HttpResponse response = clientUtil.handleHttpRequest(request);
 
         if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+            logger.error(response.getStatusMessage());
             throw new ServerErrorException(response.getStatusMessage(), HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
         }
     }
