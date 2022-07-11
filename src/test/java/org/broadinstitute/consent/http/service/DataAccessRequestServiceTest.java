@@ -147,6 +147,7 @@ public class DataAccessRequestServiceTest {
         when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        when(userDAO.findUserByEmail(any())).thenReturn(new User());
         initService();
 
         DataAccessRequest updated = service.cancelDataAccessRequest(authUser, dar.getReferenceId());
