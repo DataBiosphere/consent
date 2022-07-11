@@ -134,7 +134,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
 
   /**
    * Update DataAccessRequest properties by reference id.
-   * This version supercedes updateDataByReferenceId.
    *
    * @param referenceId String
    * @param userId Integer User
@@ -146,7 +145,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
       "UPDATE data_access_request SET data = to_jsonb(:data), user_id = :userId, sort_date = :sortDate, submission_date = :submissionDate, update_date = :updateDate WHERE reference_id = :referenceId")
-  void updateDataByReferenceIdVersion2(
+  void updateDataByReferenceId(
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
       @Bind("sortDate") Date sortDate,

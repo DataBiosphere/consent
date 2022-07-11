@@ -356,7 +356,7 @@ public class DataAccessRequestService {
             throw new UnsupportedOperationException("Cancelling this DAR is not allowed");
         }
         dar.getData().setStatus(DarStatus.CANCELED.getValue());
-        updateByReferenceIdVersion2(user, dar);
+        updateByReferenceId(user, dar);
         return findByReferenceId(referenceId);
     }
 
@@ -453,7 +453,7 @@ public class DataAccessRequestService {
                     DataAccessRequest alreadyExists = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());
                     if (Objects.nonNull(alreadyExists)) {
                         dataAccessRequestDAO.updateDraftForCollection(collectionId, dataAccessRequest.getReferenceId());
-                        dataAccessRequestDAO.updateDataByReferenceIdVersion2(
+                        dataAccessRequestDAO.updateDataByReferenceId(
                             dataAccessRequest.getReferenceId(),
                             user.getUserId(),
                             new Date(darData.getSortDate()),
@@ -499,9 +499,9 @@ public class DataAccessRequestService {
      * @param dar The DataAccessRequest
      * @return The updated DataAccessRequest
      */
-    public DataAccessRequest updateByReferenceIdVersion2(User user, DataAccessRequest dar) {
+    public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
         Date now = new Date();
-        dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(),
+        dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(),
             user.getUserId(),
             now,
             dar.getSubmissionDate(),

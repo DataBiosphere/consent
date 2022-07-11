@@ -206,7 +206,7 @@ public class ElectionServiceTest {
     private void bunchOfDoNothings() throws Exception {
         doNothing().when(emailNotifierService).sendDisabledDatasetsMessage(any(), any(), any());
         doNothing().when(consentDAO).updateConsentSortDate(any(), any());
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(), any(), any(), any());
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(), any(), any(), any(), any());
         doNothing().when(electionDAO).insertAccessAndConsentElection(any(), any());
         doNothing().when(consentDAO).updateConsentUpdateStatus(any(), any());
         doNothing().when(electionDAO).insertAccessRP(any(), any());

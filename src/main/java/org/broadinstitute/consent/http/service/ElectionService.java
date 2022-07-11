@@ -571,7 +571,7 @@ public class ElectionService {
             dar.setSortDate(new Timestamp(createDate.getTime()));
             dar.getData().setSortDate(createDate.getTime());
             User user = userDAO.findUserById(dar.getUserId());
-            dataAccessRequestService.updateByReferenceIdVersion2(user, dar);
+            dataAccessRequestService.updateByReferenceId(user, dar);
         }
     }
 
