@@ -420,63 +420,49 @@ public class DataAccessRequestService {
     }
 
     /**
-     * Generate a list of DARs split by dataset id. Generate one DAR per dataset that is
-     * being requested. In the case of a single dataset DAR, update the existing value.
-     * In the case of multiple dataset DARs, update the first one and create new ones for each
-     * additional dataset past the first.
+     * Generate a DataAccessRequest from the provided DAR. The provided DAR may or may not exist in
+     * draft form, so it covers both cases of converting an existing draft to submitted and creating
+     * a brand new DAR from scratch.
      *
-     * @param user The User
+     * @param user The create User
      * @param dataAccessRequest DataAccessRequest with populated DAR data
-     * @return List of created DARs.
+     * @return The created DAR.
      */
-    public List<DataAccessRequest> createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
+    public DataAccessRequest createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
         if (Objects.isNull(user) || Objects.isNull(dataAccessRequest) || Objects.isNull(dataAccessRequest.getReferenceId()) || Objects.isNull(dataAccessRequest.getData())) {
             throw new IllegalArgumentException("User and DataAccessRequest are required");
         }
         Date now = new Date();
         long nowTime = now.getTime();
-        List<DataAccessRequest> newDARList = new ArrayList<>();
+        DataAccessRequest newDar;
         DataAccessRequestData darData = dataAccessRequest.getData();
         darData.setPartialDarCode(null);
         if (Objects.isNull(darData.getCreateDate())) {
             darData.setCreateDate(nowTime);
         }
         darData.setSortDate(nowTime);
-        List<Integer> datasets = dataAccessRequestDAO.findDARDatasetRelations(dataAccessRequest.getReferenceId());
-        if (CollectionUtils.isNotEmpty(datasets)) {
-            String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
-            Integer collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getUserId(), now);
-            for (int idx = 0; idx < datasets.size(); idx++) {
-                String darCode = (datasets.size() == 1) ? darCodeSequence: darCodeSequence + SUFFIX + idx ;
-                darData.setDarCode(darCode);
-                if (idx == 0) {
-                    DataAccessRequest alreadyExists = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());
-                    if (Objects.nonNull(alreadyExists)) {
-                        dataAccessRequestDAO.updateDraftForCollection(collectionId, dataAccessRequest.getReferenceId());
-                        dataAccessRequestDAO.updateDataByReferenceId(
-                            dataAccessRequest.getReferenceId(),
-                            user.getUserId(),
-                            new Date(darData.getSortDate()),
-                            now,
-                            now,
-                            darData);
-                        newDARList.add(findByReferenceId(dataAccessRequest.getReferenceId()));
-                        syncDataAccessRequestDatasets(List.of(datasets.get(idx)), dataAccessRequest.getReferenceId());
-                    } else {
-                        String referenceId = UUID.randomUUID().toString();
-                        DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
-                        newDARList.add(createdDar);
-                        syncDataAccessRequestDatasets(List.of(datasets.get(idx)), referenceId);
-                    }
-                } else {
-                    String referenceId = UUID.randomUUID().toString();
-                    DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
-                    newDARList.add(createdDar);
-                    syncDataAccessRequestDatasets(List.of(datasets.get(idx)), referenceId);
-                }
-            }
+        String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
+        Integer collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getUserId(), now);
+        darData.setDarCode(darCodeSequence);
+        DataAccessRequest existingDar = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());
+        List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
+        if (Objects.nonNull(existingDar)) {
+            dataAccessRequestDAO.updateDraftForCollection(collectionId, dataAccessRequest.getReferenceId());
+            dataAccessRequestDAO.updateDataByReferenceId(
+                dataAccessRequest.getReferenceId(),
+                user.getUserId(),
+                new Date(darData.getSortDate()),
+                now,
+                now,
+                darData);
+            newDar = findByReferenceId(dataAccessRequest.getReferenceId());
+            syncDataAccessRequestDatasets(datasetIds, dataAccessRequest.getReferenceId());
+        } else {
+            String referenceId = UUID.randomUUID().toString();
+            newDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
+            syncDataAccessRequestDatasets(datasetIds, referenceId);
         }
-        return newDARList;
+        return newDar;
     }
 
     public DataAccessRequest insertSubmittedDataAccessRequest(User user, String referencedId, DataAccessRequestData darData, Integer collectionId, Date now) {

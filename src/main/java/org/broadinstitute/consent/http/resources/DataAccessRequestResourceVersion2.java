@@ -93,24 +93,18 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      DataAccessRequest newDar = populateDarFromJsonString(user, dar);
-      List<DataAccessRequest> results =
-          dataAccessRequestService.createDataAccessRequest(user, newDar);
-      Integer collectionId = results.get(0).getCollectionId();
+      DataAccessRequest payload = populateDarFromJsonString(user, dar);
+      DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
+      Integer collectionId = newDar.getCollectionId();
       try {
           emailNotifierService.sendNewDARCollectionMessage(collectionId);
       } catch (Exception e) {
           logger.error("Exception sending email for collection id: " + collectionId, e);
       }
       URI uri = info.getRequestUriBuilder().build();
-      for (DataAccessRequest r : results) {
-        matchService.reprocessMatchesForPurpose(r.getReferenceId());
-      }
+      matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       return Response.created(uri)
-          .entity(
-              results.stream()
-                  .map(DataAccessRequest::convertToSimplifiedDar)
-                  .collect(Collectors.toList()))
+          .entity(newDar.convertToSimplifiedDar())
           .build();
     } catch (Exception e) {
       return createExceptionResponse(e);
