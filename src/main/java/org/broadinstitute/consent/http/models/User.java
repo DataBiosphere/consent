@@ -27,7 +27,6 @@ public class User {
           " u.email as u_email, " +
           " u.display_name as u_display_name, " +
           " u.create_date as u_create_date, " +
-          " u.additional_email as u_additional_email, " +
           " u.email_preference as u_email_preference, " +
           " u.institution_id as u_institution_id," +
           " u.era_commons_id as u_era_commons_id ";

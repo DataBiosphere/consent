@@ -71,8 +71,7 @@ public interface DacDAO extends Transactional<DacDAO> {
               " inner join user_role ur on ur.user_id = du.user_id " +
               " inner join roles r on r.roleId = ur.role_id " +
               " where lower(du.display_name) like concat('%', lower(:term), '%') " +
-              " or lower(du.email) like concat('%', lower(:term), '%') " +
-              " or lower(du.additional_email) like concat('%', lower(:term), '%') ")
+              " or lower(du.email) like concat('%', lower(:term), '%') " )
     Set<User> findAllDACUsersBySearchString(@Bind("term") String term);
 
     @SqlQuery("select * from dac where dac_id = :dacId")
