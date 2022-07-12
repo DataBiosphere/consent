@@ -141,9 +141,6 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.roleId = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
     List<User> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);
 
-    @SqlUpdate("update users set email_preference = :emailPreference where user_id = :userId")
-    void updateEmailPreference(@Bind("emailPreference") Boolean emailPreference, @Bind("userId") Integer userId);
-
     @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
@@ -252,9 +249,16 @@ public interface UserDAO extends Transactional<UserDAO> {
       + " AND u.institution_id = :institutionId")
     List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
-    @SqlUpdate("UPDATE users SET " +
-      " era_commons_id = :eraCommonsId " +
-      " WHERE user_id = :userId")
+    @SqlUpdate("update users set email_preference = :emailPreference WHERE user_id = :userId")
+    void updateEmailPreference(@Bind("userId") Integer userId, @Bind("emailPreference") Boolean emailPreference);
+
+    @SqlUpdate("UPDATE users SET era_commons_id = :eraCommonsId WHERE user_id = :userId")
     void updateEraCommonsId(@Bind("userId") Integer userId, @Bind("eraCommonsId") String eraCommonsId);
+
+    @SqlUpdate("UPDATE users SET institution_id = :institutionId WHERE user_id = :userId")
+    void updateInstitutionId(@Bind("userId") Integer userId, @Bind("institutionId") Integer institutionId);
+
+    @SqlUpdate("UPDATE users SET display_name = :displayName WHERE user_id = :userId")
+    void updateDisplayName(@Bind("userId") Integer userId, @Bind("displayName") String displayName);
 
 }
