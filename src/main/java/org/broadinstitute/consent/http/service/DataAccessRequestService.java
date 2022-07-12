@@ -72,7 +72,6 @@ public class DataAccessRequestService {
 
     private final DacService dacService;
     private final DataAccessReportsParser dataAccessReportsParser;
-    private static final String SUFFIX = "-A-";
 
     @Inject
     public DataAccessRequestService(CounterService counterService, DAOContainer container,
