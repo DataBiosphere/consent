@@ -17,6 +17,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -218,19 +219,43 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testDescribeUsersByRoleAndEmailPreference() {
         User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
-        userDAO.updateEmailPreference(true, researcher.getUserId());
+        userDAO.updateEmailPreference(researcher.getUserId(), true);
         Collection<User> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher", true);
         assertFalse(researchers.isEmpty());
 
         User owner = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
-        userDAO.updateEmailPreference(false, owner.getUserId());
+        userDAO.updateEmailPreference(owner.getUserId(), false);
         Collection<User> dataOwners = userDAO.describeUsersByRoleAndEmailPreference("DataOwner", false);
         assertFalse(dataOwners.isEmpty());
     }
 
     @Test
     public void testUpdateEmailPreference() {
-        // No-op ... tested in `testDescribeUsersByRoleAndEmailPreference()`
+        User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+        userDAO.updateEmailPreference(researcher.getUserId(), true);
+        User u1 = userDAO.findUserById(researcher.getUserId());
+        assertTrue(u1.getEmailPreference());
+        userDAO.updateEmailPreference(researcher.getUserId(), false);
+        User u2 = userDAO.findUserById(researcher.getUserId());
+        assertFalse(u2.getEmailPreference());
+    }
+
+    @Test
+    public void testUpdateInstitutionId() {
+        User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+        Integer institutionId = institutionDAO.insertInstitution("Institution", "it director", "it director email", researcher.getUserId(), new Date());
+        userDAO.updateInstitutionId(researcher.getUserId(), institutionId);
+        User u1 = userDAO.findUserById(researcher.getUserId());
+        assertEquals(institutionId, u1.getInstitutionId());
+    }
+
+    @Test
+    public void testUpdateDisplayName() {
+        User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+        String newName = RandomStringUtils.random(10, true, false);
+        userDAO.updateDisplayName(researcher.getUserId(), newName);
+        User u1 = userDAO.findUserById(researcher.getUserId());
+        assertEquals(newName, u1.getDisplayName());
     }
 
     @Test
