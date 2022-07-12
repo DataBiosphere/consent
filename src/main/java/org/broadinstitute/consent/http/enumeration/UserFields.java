@@ -25,7 +25,10 @@ public enum UserFields {
   ERA_STATUS("eraAuthorized", false),
   LINKEDIN_PROFILE("linkedIn", false),
   RESEARCHER_GATE("researcherGate", false),
-  ORCID("orcid", false);
+  ORCID("orcid", false),
+  SELECTED_SIGNING_OFFICIAL_ID("selectedSigningOfficialId", false),
+  SUGGESTED_SIGNING_OFFICIAL("suggestedSigningOfficial", false),
+  SUGGESTED_INSTITUTION("suggestedInstitution", false);
 
   public static final String LIBRARY_CARDS = "libraryCards";
   public static final String LIBRARY_CARD_ENTRIES = "libraryCardEntries";

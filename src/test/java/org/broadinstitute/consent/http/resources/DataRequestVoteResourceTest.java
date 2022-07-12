@@ -97,7 +97,7 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
     private DataAccessRequest createMockDAR() {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData darData = new DataAccessRequestData();
-        darData.setDatasetIds(List.of(1));
+        dar.setDatasetIds(List.of(1));
         darData.setDarCode("");
         dar.setData(darData);
         dar.setReferenceId("");

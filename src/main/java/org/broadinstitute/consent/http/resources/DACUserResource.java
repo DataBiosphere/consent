@@ -82,6 +82,7 @@ public class DACUserResource extends Resource {
         return searchUser;
     }
 
+    @Deprecated
     @PUT
     @Path("/{id}")
     @Consumes("application/json")

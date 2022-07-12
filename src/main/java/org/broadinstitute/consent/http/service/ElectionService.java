@@ -427,7 +427,7 @@ public class ElectionService {
     }
 
     private List<Dataset> verifyActiveDataSets(DataAccessRequest dar, String referenceId) throws Exception {
-        List<Integer> dataSets = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
+        List<Integer> dataSets = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getDatasetIds() : Collections.emptyList();
         List<Dataset> dataSetList = dataSets.isEmpty() ? Collections.emptyList() : dataSetDAO.findDatasetsByIdList(dataSets);
         List<String> disabledDataSets = dataSetList.stream()
                 .filter(ds -> !ds.getActive())
@@ -461,7 +461,7 @@ public class ElectionService {
             entry.setObjectId(dataSet.getObjectId());
             activeDatasetDetailEntries.add(entry);
         });
-        dar.getData().setDatasetIds(activeDatasetIds);
+        dar.setDatasetIds(activeDatasetIds);
         dar.getData().setDatasetDetail(activeDatasetDetailEntries);
         dataAccessRequestService.updateByReferenceId(referenceId, dar.getData());
     }
@@ -484,7 +484,7 @@ public class ElectionService {
             case DATA_ACCESS:
             case RP:
                 DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-                List<Integer> datasetIdList = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
+                List<Integer> datasetIdList = Objects.nonNull(dar) ? dar.getDatasetIds() : Collections.emptyList();
                 if (datasetIdList != null && !datasetIdList.isEmpty()) {
                     if (datasetIdList.size() > 1) {
                         logger.warn("DAR " +
@@ -605,7 +605,7 @@ public class ElectionService {
 
     private void sendResearcherNotification(String referenceId) throws Exception {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-        List<Integer> dataSetIdList = dar.getData().getDatasetIds();
+        List<Integer> dataSetIdList = dar.getDatasetIds();
         if (CollectionUtils.isNotEmpty(dataSetIdList)) {
             List<Dataset> dataSets = dataSetDAO.findDatasetsByIdList(dataSetIdList);
             List<DatasetMailDTO> datasetsDetail = new ArrayList<>();
@@ -649,7 +649,7 @@ public class ElectionService {
             return;
         }
 
-        List<Integer> datasetIdList = dar.getData().getDatasetIds();
+        List<Integer> datasetIdList = dar.getDatasetIds();
         if (CollectionUtils.isNotEmpty(datasetIdList)) {
             Map<Integer, List<DatasetAssociation>> userToAssociationMap = datasetAssociationDAO.
                     getDatasetAssociations(datasetIdList).stream().

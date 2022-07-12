@@ -32,7 +32,6 @@ import org.mockito.Mock;
 import javax.ws.rs.NotFoundException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -87,7 +86,7 @@ public class VoteServiceTest {
     private void doNothings() {
         doNothing().when(voteDAO).updateVote(anyBoolean(), anyString(), any(), anyInt(), anyBoolean(), anyInt(), any(), anyBoolean());
         doNothing().when(voteDAO).deleteVoteById(anyInt());
-        doNothing().when(voteDAO).deleteVotes(anyString());
+        doNothing().when(voteDAO).deleteVotesByReferenceId(anyString());
     }
 
     private void initService() {
@@ -650,14 +649,14 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
+        dar1.addDatasetId(d1.getDataSetId());
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);
 
         DataAccessRequest dar2 = new DataAccessRequest();
         DataAccessRequestData data2 = new DataAccessRequestData();
-        data2.setDatasetIds(List.of(d2.getDataSetId()));
+        dar2.addDatasetId(d2.getDataSetId());
         dar2.setCollectionId(1);
         dar2.setData(data2);
         dar2.setReferenceId(referenceId2);
@@ -723,14 +722,14 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
+        dar1.addDatasetId(d1.getDataSetId());
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);
 
         DataAccessRequest dar2 = new DataAccessRequest();
         DataAccessRequestData data2 = new DataAccessRequestData();
-        data2.setDatasetIds(List.of(d2.getDataSetId()));
+        dar2.addDatasetId(d2.getDataSetId());
         dar2.setCollectionId(2);
         dar2.setData(data2);
         dar2.setReferenceId(referenceId2);
@@ -781,7 +780,7 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
+        dar1.addDatasetId(d1.getDataSetId());
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);
@@ -832,7 +831,7 @@ public class VoteServiceTest {
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
-        data1.setDatasetIds(List.of(d1.getDataSetId()));
+        dar1.addDatasetId(d1.getDataSetId());
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);

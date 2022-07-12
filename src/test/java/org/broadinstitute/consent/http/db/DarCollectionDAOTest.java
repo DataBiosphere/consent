@@ -183,7 +183,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     if (Objects.isNull(dar)) {
       fail("DAR was not created in collection");
     }
-    dar.getData().setDatasetIds(List.of(dataset.getDataSetId()));
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
     dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), dar.getUserId(), new Date(), new Date(), new Date(), dar.getData());
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
@@ -314,6 +314,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   @Test
   public void testDeleteByCollectionId() {
     DarCollection collection = createDarCollection();
+    collection.getDars().keySet().forEach(k -> dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(k));
     dataAccessRequestDAO.deleteByCollectionId(collection.getDarCollectionId());
     darCollectionDAO.deleteByCollectionId(collection.getDarCollectionId());
     assertNull(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()));
@@ -787,8 +788,6 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     testDar.setSubmissionDate(now);
     testDar.setUpdateDate(now);
     DataAccessRequestData contents = new DataAccessRequestData();
-    // add data datasetId
-    contents.setDatasetIds(List.of(dataset.getDataSetId()));
     testDar.setData(contents);
 
     dataAccessRequestDAO.insertDataAccessRequest(
@@ -801,6 +800,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
             testDar.getUpdateDate(),
             testDar.getData()
     );
+    dataAccessRequestDAO.insertDARDatasetRelation(testDar.getReferenceId(), dataset.getDataSetId());
     return testDar;
   }
 

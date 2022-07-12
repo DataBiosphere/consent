@@ -1,4 +1,5 @@
 put:
+  deprecated: true
   summary: Update a limited set of user fields
   description: |
     Updates the user identified by the ID. Requires the authenticated user to have the same id as that of the user being updated except in the admin case - admins can update information for other users. A user's email cannot be updated. 

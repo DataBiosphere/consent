@@ -72,6 +72,10 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     @SqlUpdate("DELETE FROM match_entity WHERE purpose = :purposeId")
     void deleteMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
+    @SqlUpdate("DELETE FROM match_entity WHERE purpose IN (<purposeIds>)")
+    void deleteMatchesByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
+
+
     @SqlQuery("SELECT COUNT(*) FROM match_entity WHERE matchentity = :matchEntity AND failed = 'FALSE' ")
     Integer countMatchesByResult(@Bind("matchEntity") Boolean matchEntity);
 }
