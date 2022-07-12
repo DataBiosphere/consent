@@ -16,7 +16,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockserver.client.MockServerClient;
-import org.mockserver.matchers.MatchType;
 import org.mockserver.model.Header;
 import org.testcontainers.containers.MockServerContainer;
 
@@ -136,7 +135,7 @@ public class SupportRequestServiceTest {
                 supportRequest.getComment().getBody());
 
 
-        mockServerClient.when(request())
+        mockServerClient.when(request().withBody(json(expectedBody)))
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
