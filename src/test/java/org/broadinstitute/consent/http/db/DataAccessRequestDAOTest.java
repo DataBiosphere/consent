@@ -104,10 +104,19 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void testCreate() {
-        DataAccessRequest dar = createDataAccessRequestV3();
+        User user = createUserWithInstitution();
+        String darCode = "DAR-" + RandomUtils.nextInt(1, 999999999);
+        Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+        DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+        Dataset d1 = createDataset();
+        Dataset d2 = createDataset();
+        dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d1.getDataSetId());
+        dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d2.getDataSetId());
         DataAccessRequest foundDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
         assertNotNull(foundDar);
         assertNotNull(foundDar.getData());
+        assertTrue(foundDar.getDatasetIds().contains(d1.getDataSetId()));
+        assertTrue(foundDar.getDatasetIds().contains(d2.getDataSetId()));
     }
 
     @Test
