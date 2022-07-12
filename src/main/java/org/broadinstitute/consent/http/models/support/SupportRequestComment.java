@@ -6,8 +6,8 @@ package org.broadinstitute.consent.http.models.support;
 public class SupportRequestComment {
     private String body;
 
-    public SupportRequestComment(String description, String url) {
-        this.body = description + "\n\n------------------\nSubmitted from: " + url;
+    public SupportRequestComment(String body) {
+        this.body = body;
     }
 
     public String getBody() {

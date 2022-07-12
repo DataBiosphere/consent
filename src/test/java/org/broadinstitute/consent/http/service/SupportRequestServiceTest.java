@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
+import org.mockserver.model.HttpRequest;
 import org.testcontainers.containers.MockServerContainer;
 
 import javax.ws.rs.ServerErrorException;
@@ -32,7 +33,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
-import static org.mockserver.model.JsonBody.json;
 
 
 public class SupportRequestServiceTest {
@@ -134,14 +134,16 @@ public class SupportRequestServiceTest {
                 customField.getValue(),
                 supportRequest.getComment().getBody());
 
-
-        mockServerClient.when(request().withBody(json(expectedBody)))
+        mockServerClient.when(request().withMethod("POST"))
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-                        .withBody(request().getBodyAsString()));
-
+                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
         service.postTicketToSupport(ticket, authUser);
+
+        HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
+        assertEquals(1, requests.length);
+        Object requestBody = requests[0].getBody().getValue();
+        assertEquals(expectedBody, requestBody);
     }
 
     @Test(expected = ServerErrorException.class)
@@ -165,9 +167,7 @@ public class SupportRequestServiceTest {
                 RandomUtils.nextLong(),
                 RandomStringUtils.randomAlphabetic(10)
         ));
-        SupportRequestComment comment = new SupportRequestComment(
-                RandomStringUtils.randomAlphabetic(10),
-                RandomStringUtils.randomAlphabetic(10));
+        SupportRequestComment comment = new SupportRequestComment(RandomStringUtils.randomAlphabetic(10));
 
         return new SupportTicket(requester, subject, customFields, comment);
     }

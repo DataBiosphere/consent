@@ -72,7 +72,7 @@ public class SupportRequestService {
         customFields.add(new CustomRequestField(360012744292L, name));
         customFields.add(new CustomRequestField(360012782111L, email));
         customFields.add(new CustomRequestField(360018545031L, email));
-        SupportRequestComment comment = new SupportRequestComment(description, url);
+        SupportRequestComment comment = new SupportRequestComment( description + "\n\n------------------\nSubmitted from: " + url);
 
         return new SupportTicket(requester, subject, customFields, comment);
     }
@@ -80,11 +80,11 @@ public class SupportRequestService {
     public void postTicketToSupport(SupportTicket ticket, AuthUser authUser) throws Exception {
         GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
         //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
-        String ticketJson = (new GsonBuilder()
+        String ticketJson = new GsonBuilder()
                 .setPrettyPrinting()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create()
-                .toJson(ticket));
+                .toJson(ticket);
         //GsonFactory doesn't do more work on the ticket but an HttpContent object is needed for buildPostRequest
         JsonHttpContent content = new JsonHttpContent(new GsonFactory(), ticketJson);
         HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
