@@ -26,7 +26,7 @@ public class DataAccessRequestData {
             "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
             "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
             "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
-            "createDate", "sortDate");
+            "createDate", "sortDate", "additionalEmail", "checkNotifications" );
 
     // prefix for partialDarCode, should be pulled by functions that generate/update ONLY
     // since class is used within both drafts and submitted dars, it's best to control its implementation on the outer function call
