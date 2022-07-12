@@ -6,13 +6,15 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.supportticket.CustomRequestField;
-import org.broadinstitute.consent.http.models.supportticket.SupportRequestComment;
-import org.broadinstitute.consent.http.models.supportticket.SupportRequester;
-import org.broadinstitute.consent.http.models.supportticket.SupportTicket;
+import org.broadinstitute.consent.http.models.support.CustomRequestField;
+import org.broadinstitute.consent.http.models.support.SupportRequestComment;
+import org.broadinstitute.consent.http.models.support.SupportRequester;
+import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 import javax.ws.rs.ServerErrorException;
@@ -65,11 +67,11 @@ public class SupportRequestService {
 
         SupportRequester requester = new SupportRequester(name, email);
         List<CustomRequestField> customFields = new ArrayList<>();
-        customFields.add(new CustomRequestField("360012744452", type));
-        customFields.add(new CustomRequestField("360007369412", description));
-        customFields.add(new CustomRequestField("360012744292", name));
-        customFields.add(new CustomRequestField("360012782111", email));
-        customFields.add(new CustomRequestField("360018545031", email));
+        customFields.add(new CustomRequestField(360012744452L, type));
+        customFields.add(new CustomRequestField(360007369412L, description));
+        customFields.add(new CustomRequestField(360012744292L, name));
+        customFields.add(new CustomRequestField(360012782111L, email));
+        customFields.add(new CustomRequestField(360018545031L, email));
         SupportRequestComment comment = new SupportRequestComment(description, url);
 
         return new SupportTicket(requester, subject, customFields, comment);
@@ -77,7 +79,14 @@ public class SupportRequestService {
 
     public void postTicketToSupport(SupportTicket ticket, AuthUser authUser) throws Exception {
         GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
-        JsonHttpContent content = new JsonHttpContent(new GsonFactory(), ticket);
+        //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
+        String ticketJson = (new GsonBuilder()
+                .setPrettyPrinting()
+                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                .create()
+                .toJson(ticket));
+        //GsonFactory doesn't do more work on the ticket but an HttpContent object is needed for buildPostRequest
+        JsonHttpContent content = new JsonHttpContent(new GsonFactory(), ticketJson);
         HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
         HttpResponse response = clientUtil.handleHttpRequest(request);
 

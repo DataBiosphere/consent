@@ -1,22 +1,22 @@
-package org.broadinstitute.consent.http.models.supportticket;
+package org.broadinstitute.consent.http.models.support;
 
 import java.util.Objects;
 
 public class CustomRequestField {
 
-    private String id;
+    private long id;
     private String value;
 
-    public CustomRequestField(String id, String value) {
+    public CustomRequestField(long id, String value) {
         this.id = id;
         this.value = value;
     }
 
-    public String getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(long id) {
         this.id = id;
     }
 

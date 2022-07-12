@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.models.supportticket;
+package org.broadinstitute.consent.http.models.support;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class SupportTicket {
         private String subject;
         private List<CustomRequestField> customFields;
         private SupportRequestComment comment;
-        private final String ticketFormId = "360000669472";
+        private final long ticketFormId = 360000669472L;
 
 
         public SupportRequest(SupportRequester requester, String subject, List<CustomRequestField> customFields, SupportRequestComment comment) {
@@ -70,7 +70,7 @@ public class SupportTicket {
             this.comment = comment;
         }
 
-        public String getTicketFormId() {
+        public long getTicketFormId() {
             return ticketFormId;
         }
     }

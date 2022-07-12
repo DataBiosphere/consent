@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.models.supportticket;
+package org.broadinstitute.consent.http.models.support;
 
 /**
  * Represents comment describing issue for a Zendesk support ticket https://broadinstitute.zendesk.com/api/v2/requests.json

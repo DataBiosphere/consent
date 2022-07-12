@@ -2,12 +2,13 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.api.client.http.HttpStatusCodes;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.supportticket.CustomRequestField;
-import org.broadinstitute.consent.http.models.supportticket.SupportRequestComment;
-import org.broadinstitute.consent.http.models.supportticket.SupportRequester;
-import org.broadinstitute.consent.http.models.supportticket.SupportTicket;
+import org.broadinstitute.consent.http.models.support.CustomRequestField;
+import org.broadinstitute.consent.http.models.support.SupportRequestComment;
+import org.broadinstitute.consent.http.models.support.SupportRequester;
+import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -15,6 +16,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockserver.client.MockServerClient;
+import org.mockserver.matchers.MatchType;
 import org.mockserver.model.Header;
 import org.testcontainers.containers.MockServerContainer;
 
@@ -31,6 +33,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
+import static org.mockserver.model.JsonBody.json;
 
 
 public class SupportRequestServiceTest {
@@ -77,15 +80,15 @@ public class SupportRequestServiceTest {
         assertEquals(name, supportRequest.getRequester().getName());
         assertEquals(email, supportRequest.getRequester().getEmail());
         assertEquals(subject, supportRequest.getSubject());
-        assertEquals("360000669472", supportRequest.getTicketFormId());
+        assertEquals(360000669472L, supportRequest.getTicketFormId());
 
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
         assertEquals(5, customFields.size());
-        assertTrue(customFields.contains(new CustomRequestField("360012744452", type)));
-        assertTrue(customFields.contains(new CustomRequestField("360007369412", description)));
-        assertTrue(customFields.contains(new CustomRequestField("360012744292", name)));
-        assertTrue(customFields.contains(new CustomRequestField("360012782111", email)));
-        assertTrue(customFields.contains(new CustomRequestField("360018545031", email)));
+        assertTrue(customFields.contains(new CustomRequestField(360012744452L, type)));
+        assertTrue(customFields.contains(new CustomRequestField(360007369412L, description)));
+        assertTrue(customFields.contains(new CustomRequestField(360012744292L, name)));
+        assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
+        assertTrue(customFields.contains(new CustomRequestField(360018545031L, email)));
 
         String commentBody = description + "\n\n------------------\nSubmitted from: " + url;
         assertEquals(commentBody, supportRequest.getComment().getBody());
@@ -103,12 +106,43 @@ public class SupportRequestServiceTest {
 
     @Test
     public void testPostTicketToSupport() throws Exception {
+        SupportTicket ticket = generateTicket();
+        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+        CustomRequestField customField = supportRequest.getCustomFields().get(0);
+        String expectedBody = String.format("{\n" +
+                "  \"request\": {\n" +
+                "    \"requester\": {\n" +
+                "      \"name\": \"%s\",\n" +
+                "      \"email\": \"%s\"\n" +
+                "    },\n" +
+                "    \"subject\": \"%s\",\n" +
+                "    \"custom_fields\": [\n" +
+                "      {\n" +
+                "        \"id\": %d,\n" +
+                "        \"value\": \"%s\"\n" +
+                "      }\n" +
+                "    ],\n" +
+                "    \"comment\": {\n" +
+                "      \"body\": \"%s\"\n" +
+                "    },\n" +
+                "    \"ticket_form_id\": 360000669472\n" +
+                "  }\n" +
+                "}",
+                supportRequest.getRequester().getName(),
+                supportRequest.getRequester().getEmail(),
+                supportRequest.getSubject(),
+                customField.getId(),
+                customField.getValue(),
+                supportRequest.getComment().getBody());
+
+
         mockServerClient.when(request())
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                        .withBody(request().getBodyAsString()));
 
-        service.postTicketToSupport(generateTicket(), authUser);
+        service.postTicketToSupport(ticket, authUser);
     }
 
     @Test(expected = ServerErrorException.class)
@@ -129,7 +163,7 @@ public class SupportRequestServiceTest {
         String subject = RandomStringUtils.randomAlphabetic(10);
         List<CustomRequestField> customFields = new ArrayList<>();
         customFields.add(new CustomRequestField(
-                RandomStringUtils.random(10, false, true),
+                RandomUtils.nextLong(),
                 RandomStringUtils.randomAlphabetic(10)
         ));
         SupportRequestComment comment = new SupportRequestComment(
