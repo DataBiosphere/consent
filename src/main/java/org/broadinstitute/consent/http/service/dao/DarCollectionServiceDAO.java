@@ -134,7 +134,7 @@ public class DarCollectionServiceDAO {
             + "  FROM election "
             + "  WHERE electiontype = :electionType "
             + "  AND referenceid = :referenceId "
-            + "  AND dataset_id = :datasetId "
+            + "  AND datasetid = :datasetId "
             + "  ORDER BY createdate desc "
             + "  LIMIT 1) ";
     Update insert = handle.createUpdate(sql);
