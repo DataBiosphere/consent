@@ -268,6 +268,19 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     Election findLastElectionByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
+    @SqlQuery(
+        " SELECT e.* " +
+        " FROM election e " +
+        " INNER JOIN (SELECT referenceid, dataset_id, MAX(createdate) max_date FROM election WHERE LOWER(electiontype) = lower(:type) AND dataset_id = :datasetId GROUP BY referenceid) election_view " +
+        "    ON election_view.max_date = e.createdate " +
+        "    AND election_view.referenceid = e.referenceId " +
+        "    AND election_view.dataset_id = e.election_id " +
+        " WHERE LOWER(e.electiontype) = lower(:type) " +
+        " AND e.referenceid = :referenceId " +
+        " AND e.dataset_id = :datasetId ")
+    @UseRowMapper(SimpleElectionMapper.class)
+    Election findLastElectionByReferenceIdDatasetIdAndType(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId, @Bind("type") String type);
+
     @SqlQuery("select electionRPId from access_rp arp where arp.electionAccessId = :electionAccessId ")
     Integer findRPElectionByElectionAccessId(@Bind("electionAccessId") Integer electionAccessId);
 
