@@ -75,7 +75,7 @@ public class ResearcherServiceTest {
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
-        when(userPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(Collections.singletonList(prop));
+        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(Collections.singletonList(prop));
         initService();
 
         List<UserProperty> props = service.setProperties(propMap, authUser);
@@ -104,7 +104,7 @@ public class ResearcherServiceTest {
         }
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
-        when(userPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
+        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(props);
         initService();
 
         List<UserProperty> foundProps = service.updateProperties(propMap, authUser, true);
@@ -122,7 +122,7 @@ public class ResearcherServiceTest {
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
-        when(userPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(Collections.singletonList(prop));
+        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(Collections.singletonList(prop));
         initService();
 
         List<UserProperty> props = service.updateProperties(propMap, authUser, false);
@@ -176,7 +176,7 @@ public class ResearcherServiceTest {
         propMap.put(UserFields.COMPLETED.getValue(), Boolean.FALSE.toString());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
-        when(userPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
+        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(props);
         when(userPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.FALSE.toString());
         doNothing().when(userPropertyDAO).deletePropertiesByUserAndKey(any());
         doNothing().when(userPropertyDAO).insertAll(any());
@@ -204,7 +204,7 @@ public class ResearcherServiceTest {
         propMap.put(UserFields.COMPLETED.getValue(), Boolean.TRUE.toString());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
         when(userDAO.findUserById(any())).thenReturn(user);
-        when(userPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
+        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(props);
         when(userPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.TRUE.toString());
         doNothing().when(userPropertyDAO).deletePropertiesByUserAndKey(any());
         doNothing().when(userPropertyDAO).insertAll(any());

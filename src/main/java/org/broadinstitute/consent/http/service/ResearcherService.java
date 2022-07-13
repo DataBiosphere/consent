@@ -15,10 +15,12 @@ import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 public class ResearcherService {
@@ -53,9 +55,17 @@ public class ResearcherService {
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         if (validate) validateRequiredFields(researcherPropertiesMap);
         Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
-        boolean isUpdatedProfileCompleted = Boolean.parseBoolean(validatedProperties.get(UserFields.COMPLETED.getValue()));
-        String completed = userPropertyDAO.isProfileCompleted(user.getUserId());
-        boolean isProfileCompleted = Boolean.parseBoolean(completed);
+
+        boolean isUpdatedProfileCompleted = isCompleted(validatedProperties.keySet().stream().map((key) -> {
+            UserProperty p = new UserProperty();
+            p.setPropertyKey(key);
+            p.setPropertyValue(validatedProperties.get(key));
+            p.setUserId(user.getUserId());
+            return p;
+        }).collect(Collectors.toList()));
+
+        boolean isProfileCompleted = isCompleted(user.getProperties());
+
         List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getUserId());
         if (!isProfileCompleted && isUpdatedProfileCompleted) {
             saveProperties(properties);
@@ -64,6 +74,10 @@ public class ResearcherService {
             saveProperties(properties);
         }
         return describeResearcherProperties(user.getUserId());
+    }
+
+    private boolean isCompleted(List<String> existentProperties) {
+        return existentProperties.contains(UserFields.Ins)
     }
 
     private void saveProperties(List<UserProperty> properties) {
@@ -95,7 +109,8 @@ public class ResearcherService {
 
     private List<UserProperty> describeResearcherProperties(Integer userId) {
         validateUser(userId);
-        return userPropertyDAO.findResearcherPropertiesByUser(userId);
+        return userPropertyDAO.findResearcherPropertiesByUser(userId,
+                Arrays.stream(UserFields.values()).map(UserFields::getValue).collect(Collectors.toList()));
     }
 
     private void validateRequiredFields(Map<String, String> properties) {
