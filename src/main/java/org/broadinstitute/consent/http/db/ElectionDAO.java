@@ -271,13 +271,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery(
         " SELECT e.* " +
         " FROM election e " +
-        " INNER JOIN (SELECT referenceid, dataset_id, MAX(createdate) max_date FROM election WHERE LOWER(electiontype) = lower(:type) AND dataset_id = :datasetId GROUP BY referenceid) election_view " +
+        " INNER JOIN (SELECT referenceid, datasetid, MAX(createdate) max_date FROM election WHERE LOWER(electiontype) = lower(:type) AND datasetid = :datasetId GROUP BY referenceid, datasetid) election_view " +
         "    ON election_view.max_date = e.createdate " +
         "    AND election_view.referenceid = e.referenceId " +
-        "    AND election_view.dataset_id = e.election_id " +
+        "    AND election_view.datasetid = e.datasetid " +
         " WHERE LOWER(e.electiontype) = lower(:type) " +
         " AND e.referenceid = :referenceId " +
-        " AND e.dataset_id = :datasetId ")
+        " AND e.datasetid = :datasetId ")
     @UseRowMapper(SimpleElectionMapper.class)
     Election findLastElectionByReferenceIdDatasetIdAndType(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId, @Bind("type") String type);
 

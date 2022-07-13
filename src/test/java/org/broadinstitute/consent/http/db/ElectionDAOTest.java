@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -175,6 +176,62 @@ public class ElectionDAOTest extends DAOTestHelper {
     assertTrue(found.contains(election3));
     assertTrue(found.contains(election4));
   }
+
+  @Test
+  public void testFindLastElectionByReferenceIdDatasetIdAndType() {
+    // Goal is to create elections for a single dar across two datasets
+    // One set of elections will be canceled
+    // A new set will then be created
+    // We should find ONLY the most recent elections with this method
+    User user = createUser();
+    String darCode = "DAR-1234567890";
+    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    Dataset d1 = createDataset();
+    Dataset d2 = createDataset();
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d1.getDataSetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d2.getDataSetId());
+    // Create OPEN elections
+    List<Integer> firstElectionIds = Stream
+      .of(createElectionsForDarDataset(dar, d1), createElectionsForDarDataset(dar, d2))
+      .flatMap(List::stream)
+      .collect(Collectors.toList());
+    // Cancel those elections
+    firstElectionIds.forEach(id -> {
+      electionDAO.updateElectionById(id, ElectionStatus.CANCELED.getValue(), new Date(), true);
+    });
+    // Create a new set of elections
+    List<Integer> latestElectionIds = Stream
+      .of(createElectionsForDarDataset(dar, d1), createElectionsForDarDataset(dar, d2))
+      .flatMap(List::stream)
+      .collect(Collectors.toList());
+
+    Election latestForD1 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d1.getDataSetId(), ElectionType.DATA_ACCESS.getValue());
+    assertNotNull(latestForD1);
+    assertFalse(firstElectionIds.contains(latestForD1.getElectionId()));
+    assertTrue(latestElectionIds.contains(latestForD1.getElectionId()));
+
+    Election latestForD2 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d2.getDataSetId(), ElectionType.DATA_ACCESS.getValue());
+    assertNotNull(latestForD2);
+    assertFalse(firstElectionIds.contains(latestForD2.getElectionId()));
+    assertTrue(latestElectionIds.contains(latestForD2.getElectionId()));
+  }
+
+  /**
+   * Small helper method for `testFindLastElectionByReferenceIdDatasetIdAndType()`
+   * Creates OPEN Access and RP elections for dar/dataset combination
+   *
+   * @param dar DataAccessRequest
+   * @param d Dataset
+   * @return List of created electionIds
+   */
+  private List<Integer> createElectionsForDarDataset(DataAccessRequest dar, Dataset d) {
+    Election accessElection = createDataAccessElection(dar.getReferenceId(), d.getDataSetId());
+    Election rpElection = createRPElection(dar.getReferenceId(), d.getDataSetId());
+    electionDAO.insertAccessRP(accessElection.getElectionId(), rpElection.getElectionId());
+    return List.of(accessElection.getElectionId(), rpElection.getElectionId());
+  }
+
 
   @Test
   public void testDeleteElectionFromAccessRP() {
