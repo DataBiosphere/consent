@@ -106,34 +106,6 @@ public class SupportRequestServiceTest {
     @Test
     public void testPostTicketToSupport() throws Exception {
         SupportTicket ticket = generateTicket();
-        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        CustomRequestField customField = supportRequest.getCustomFields().get(0);
-        String expectedBody = String.format("{\n" +
-                "  \"request\": {\n" +
-                "    \"requester\": {\n" +
-                "      \"name\": \"%s\",\n" +
-                "      \"email\": \"%s\"\n" +
-                "    },\n" +
-                "    \"subject\": \"%s\",\n" +
-                "    \"custom_fields\": [\n" +
-                "      {\n" +
-                "        \"id\": %d,\n" +
-                "        \"value\": \"%s\"\n" +
-                "      }\n" +
-                "    ],\n" +
-                "    \"comment\": {\n" +
-                "      \"body\": \"%s\"\n" +
-                "    },\n" +
-                "    \"ticket_form_id\": 360000669472\n" +
-                "  }\n" +
-                "}",
-                supportRequest.getRequester().getName(),
-                supportRequest.getRequester().getEmail(),
-                supportRequest.getSubject(),
-                customField.getId(),
-                customField.getValue(),
-                supportRequest.getComment().getBody());
-
         mockServerClient.when(request().withMethod("POST"))
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
@@ -143,7 +115,7 @@ public class SupportRequestServiceTest {
         HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
         assertEquals(1, requests.length);
         Object requestBody = requests[0].getBody().getValue();
-        assertEquals(expectedBody, requestBody);
+        assertEquals(convertTicketToJson(ticket), requestBody);
     }
 
     @Test(expected = ServerErrorException.class)
@@ -154,6 +126,27 @@ public class SupportRequestServiceTest {
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
         service.postTicketToSupport(generateTicket(), authUser);
     }
+
+    @Test
+    public void testSendSuggestedPropertiesToSupport_NoUpdates() {
+
+    }
+
+    @Test
+    public void testSendSuggestedPropertiesToSupport_Institution() {
+
+    }
+
+    @Test
+    public void testSendSuggestedPropertiesToSupport_SigningOfficial() {
+
+    }
+
+    @Test
+    public void testSendSuggestedPropertiesToSupport_InstitutionSigningOfficial() {
+
+    }
+
 
     //creates support ticket with random values for testing postTicketToSupport
     private SupportTicket generateTicket() {
@@ -170,5 +163,35 @@ public class SupportRequestServiceTest {
         SupportRequestComment comment = new SupportRequestComment(RandomStringUtils.randomAlphabetic(10));
 
         return new SupportTicket(requester, subject, customFields, comment);
+    }
+
+    private String convertTicketToJson(SupportTicket ticket) {
+        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+        CustomRequestField customField = supportRequest.getCustomFields().get(0);
+        return String.format("{\n" +
+                        "  \"request\": {\n" +
+                        "    \"requester\": {\n" +
+                        "      \"name\": \"%s\",\n" +
+                        "      \"email\": \"%s\"\n" +
+                        "    },\n" +
+                        "    \"subject\": \"%s\",\n" +
+                        "    \"custom_fields\": [\n" +
+                        "      {\n" +
+                        "        \"id\": %d,\n" +
+                        "        \"value\": \"%s\"\n" +
+                        "      }\n" +
+                        "    ],\n" +
+                        "    \"comment\": {\n" +
+                        "      \"body\": \"%s\"\n" +
+                        "    },\n" +
+                        "    \"ticket_form_id\": 360000669472\n" +
+                        "  }\n" +
+                        "}",
+                supportRequest.getRequester().getName(),
+                supportRequest.getRequester().getEmail(),
+                supportRequest.getSubject(),
+                customField.getId(),
+                customField.getValue(),
+                supportRequest.getComment().getBody());
     }
 }
