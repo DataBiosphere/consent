@@ -19,10 +19,5 @@ public class DataAccessRequestReducer
     if (hasColumn(rowView, "dataset_id", Integer.class)) {
       dar.addDatasetId(rowView.getColumn("dataset_id", Integer.class));
     }
-    if (hasColumn(rowView, "data", String.class)) {
-      String darDataString = rowView.getColumn("data", String.class);
-      DataAccessRequestData data = translate(darDataString);
-      dar.setData(data);
-    }
   }
 }
