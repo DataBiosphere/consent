@@ -72,7 +72,7 @@ public class SupportRequestService {
         customFields.add(new CustomRequestField(360012744292L, name));
         customFields.add(new CustomRequestField(360012782111L, email));
         customFields.add(new CustomRequestField(360018545031L, email));
-        SupportRequestComment comment = new SupportRequestComment( description + "\n\n------------------\nSubmitted from: " + url);
+        SupportRequestComment comment = new SupportRequestComment(description + "\n\n------------------\nSubmitted from: " + url);
 
         return new SupportTicket(requester, subject, customFields, comment);
     }
