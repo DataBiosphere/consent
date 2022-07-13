@@ -174,15 +174,12 @@ public class UserDAOTest extends DAOTestHelper {
     public void testUpdateDACUser_case1() {
         User user = createUser();
         Institution firstInstitute = createInstitution();
-        String newEmail = getRandomEmailAddress();
         userDAO.updateUser(
                 "Dac User Test",
                 user.getUserId(),
-                newEmail,
                 firstInstitute.getId()
-                );
+        );
         User user2 = userDAO.findUserById(user.getUserId());
-        assertEquals(user2.getAdditionalEmail(), newEmail);
         assertEquals(user2.getInstitution().getId(), firstInstitute.getId());
     }
 

@@ -26,7 +26,7 @@ public class DataAccessRequestData {
             "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
             "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
             "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
-            "createDate", "sortDate");
+            "createDate", "sortDate", "additionalEmail", "checkNotifications" );
 
     // prefix for partialDarCode, should be pulled by functions that generate/update ONLY
     // since class is used within both drafts and submitted dars, it's best to control its implementation on the outer function call
@@ -54,7 +54,6 @@ public class DataAccessRequestData {
     private String pubmedId;
     private String scientificUrl;
     private Boolean eraExpiration;
-    private String academicEmail;
     private Boolean eraAuthorized;
     private String nihUsername;
     private String linkedIn;
@@ -314,15 +313,6 @@ public class DataAccessRequestData {
     public void setEraExpiration(Boolean eraExpiration) {
         this.eraExpiration = eraExpiration;
     }
-
-    public String getAcademicEmail() {
-        return academicEmail;
-    }
-
-    public void setAcademicEmail(String academicEmail) {
-        this.academicEmail = academicEmail;
-    }
-
     public Boolean getEraAuthorized() {
         return eraAuthorized;
     }

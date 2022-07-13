@@ -205,7 +205,7 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     User user = userDAO.findUserById(dar.getUserId());
     Institution institution = createInstitution();
     user.setInstitutionId(institution.getId());
-    userDAO.updateUser(user.getDisplayName(), user.getUserId(), user.getAdditionalEmail(), user.getInstitutionId());
+    userDAO.updateUser(user.getDisplayName(), user.getUserId(), user.getInstitutionId());
 
     List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByInstitutionId(institution.getId());
     assertFalse(collectionIds.isEmpty());

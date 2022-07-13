@@ -298,7 +298,7 @@ public class DAOTestHelper {
         String name = RandomStringUtils.randomAlphabetic(10);
         Integer userId = userDAO.insertUser(email, name, new Date());
         Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphanumeric(10), "itdirectorName", "itDirectorEmail", userId, new Date());
-        userDAO.updateUser(name, userId, email, institutionId);
+        userDAO.updateUser(name, userId, institutionId);
         userRoleDAO.insertSingleUserRole(7, userId);
         return userDAO.findUserById(userId);
     }
@@ -376,7 +376,7 @@ public class DAOTestHelper {
         Integer institutionId = createInstitution().getId();
         String email = RandomStringUtils.randomAlphabetic(11);
         Integer userId = userDAO.insertUser(email, "displayName", new Date());
-        userDAO.updateUser(email, userId, "additionalEmail", institutionId);
+        userDAO.updateUser(email, userId, institutionId);
         String stringValue = "value";
         Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue, userId, new Date());
         return libraryCardDAO.findLibraryCardById(id);
