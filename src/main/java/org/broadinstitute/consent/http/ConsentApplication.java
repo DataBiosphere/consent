@@ -93,6 +93,7 @@ import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.ReviewResultsService;
 import org.broadinstitute.consent.http.service.SummaryService;
+import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -192,6 +193,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
         final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class).get();
         final SamService samService = injector.getProvider(SamService.class).get();
+        final SupportRequestService supportRequestService = injector.getProvider(SupportRequestService.class).get();
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
@@ -253,7 +255,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new SamResource(samService, userService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
         env.jersey().register(new StatusResource(env.healthChecks()));
-        env.jersey().register(new UserResource(researcherService, samService, userService, datasetService));
+        env.jersey().register(new UserResource(researcherService, samService, userService, datasetService, supportRequestService));
         env.jersey().register(new TosResource(samService));
         env.jersey().register(injector.getInstance(VersionResource.class));
         env.jersey().register(new VoteResource(userService, voteService, electionService));
