@@ -44,7 +44,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       "   FROM election " +
       "   WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp'" +
       " ) AS e " +
-      "   ON (dar.reference_id = e.referenceid AND dd.dataset_id = e.datasetid) AND (dd.dataset_id = e.datasetid OR e.latest = e.electionid OR e.latest IS NULL) " +
+      "   ON (dar.reference_id = e.referenceid AND dd.dataset_id = e.datasetid) AND (e.latest = e.electionid OR e.latest IS NULL) " +
       " LEFT JOIN vote v ON v.electionid = e.electionid ";
 
   String filterQuery =
