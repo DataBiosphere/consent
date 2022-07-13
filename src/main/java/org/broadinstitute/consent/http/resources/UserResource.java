@@ -187,6 +187,26 @@ public class UserResource extends Resource {
     }
 
     @PUT
+    @Path("/me")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @PermitAll
+    public Response update(@Auth AuthUser authUser, @Context UriInfo info, String json) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
+            // Ensure that we have a real user with this ID, fail if we do not.
+            URI uri = info.getRequestUriBuilder().path("{id}").build(user.getUserId());
+            user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
+            Gson gson = new Gson();
+            JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
+            return Response.ok(uri).entity(gson.toJson(jsonUser)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
     @Path("/{userId}/{roleId}")
     @Produces("application/json")
     @RolesAllowed({ADMIN})
