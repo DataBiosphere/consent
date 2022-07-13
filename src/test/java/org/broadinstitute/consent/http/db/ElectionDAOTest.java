@@ -206,15 +206,25 @@ public class ElectionDAOTest extends DAOTestHelper {
       .flatMap(List::stream)
       .collect(Collectors.toList());
 
-    Election latestForD1 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d1.getDataSetId(), ElectionType.DATA_ACCESS.getValue());
-    assertNotNull(latestForD1);
-    assertFalse(firstElectionIds.contains(latestForD1.getElectionId()));
-    assertTrue(latestElectionIds.contains(latestForD1.getElectionId()));
+    Election latestAccessForD1 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d1.getDataSetId(), ElectionType.DATA_ACCESS.getValue());
+    assertNotNull(latestAccessForD1);
+    assertFalse(firstElectionIds.contains(latestAccessForD1.getElectionId()));
+    assertTrue(latestElectionIds.contains(latestAccessForD1.getElectionId()));
 
-    Election latestForD2 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d2.getDataSetId(), ElectionType.DATA_ACCESS.getValue());
-    assertNotNull(latestForD2);
-    assertFalse(firstElectionIds.contains(latestForD2.getElectionId()));
-    assertTrue(latestElectionIds.contains(latestForD2.getElectionId()));
+    Election latestRPForD1 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d1.getDataSetId(), ElectionType.RP.getValue());
+    assertNotNull(latestRPForD1);
+    assertFalse(firstElectionIds.contains(latestRPForD1.getElectionId()));
+    assertTrue(latestElectionIds.contains(latestRPForD1.getElectionId()));
+
+    Election latestAccessForD2 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d2.getDataSetId(), ElectionType.DATA_ACCESS.getValue());
+    assertNotNull(latestAccessForD2);
+    assertFalse(firstElectionIds.contains(latestAccessForD2.getElectionId()));
+    assertTrue(latestElectionIds.contains(latestAccessForD2.getElectionId()));
+
+    Election latestRPForD2 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d2.getDataSetId(), ElectionType.RP.getValue());
+    assertNotNull(latestRPForD2);
+    assertFalse(firstElectionIds.contains(latestRPForD2.getElectionId()));
+    assertTrue(latestElectionIds.contains(latestRPForD2.getElectionId()));
   }
 
   /**
