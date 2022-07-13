@@ -31,8 +31,8 @@ public class InstitutionResourceTest {
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final List<UserRole> adminRoles = Collections.singletonList(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
   private final List<UserRole> researcherRoles = Collections.singletonList(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-  private final User adminUser = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRoles, authUser.getEmail());
-  private final User researcherUser = new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRoles, authUser.getEmail());
+  private final User adminUser = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRoles);
+  private final User researcherUser = new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRoles);
 
   @Mock private InstitutionService institutionService;
   @Mock private UserService userService;

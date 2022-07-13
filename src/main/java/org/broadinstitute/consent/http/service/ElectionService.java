@@ -638,9 +638,17 @@ public class ElectionService {
      */
     private void sendDataCustodianNotification(String referenceId) {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-        final User researcher = (Objects.nonNull(dar) && Objects.nonNull(dar.getUserId())) ?
-                userDAO.findUserById(dar.getUserId()) :
-                null;
+        if (dar == null) {
+            logger.error("Unable to send data custodian approval message: dar could not be found with reference id "+referenceId+".");
+            return;
+        }
+
+        final User researcher = userDAO.findUserById(dar.getUserId());
+        if (researcher == null) {
+            logger.error("Unable to send data custodian approval message: researcher could not be found with user id "+dar.getUserId()+".");
+            return;
+        }
+
         List<Integer> datasetIdList = dar.getDatasetIds();
         if (CollectionUtils.isNotEmpty(datasetIdList)) {
             Map<Integer, List<DatasetAssociation>> userToAssociationMap = datasetAssociationDAO.
@@ -654,14 +662,11 @@ public class ElectionService {
                         map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier())).
                         collect(Collectors.toList());
                 try {
-                    String researcherEmail = Objects.nonNull(researcher) ?
-                            researcher.getEmail() :
-                            Objects.nonNull(dar.getData().getAcademicEmail()) ?
-                                    dar.getData().getAcademicEmail() :
-                                    dar.getData().getResearcher();
+                    String researcherEmail = researcher.getEmail();
                     String darCode = Objects.nonNull(dar.getData().getDarCode()) ?
                             dar.getData().getDarCode() :
                             dar.getReferenceId();
+
                     emailNotifierService.sendDataCustodianApprovalMessage(custodian.getEmail(), darCode, mailDTOS,
                             custodian.getDisplayName(), researcherEmail);
                 } catch (Exception e) {

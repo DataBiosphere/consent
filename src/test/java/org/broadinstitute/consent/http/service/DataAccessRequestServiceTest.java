@@ -537,7 +537,6 @@ public class DataAccessRequestServiceTest {
         data.setReferenceId(dar.getReferenceId());
         dar.addDatasetId(1);
         data.setForProfit(false);
-        data.setAcademicEmail("acad@email.com");
         data.setAddiction(false);
         data.setAddress1("");
         data.setAddress2("");

@@ -172,13 +172,12 @@ public class DACUserResourceTest {
     @Test
     public void testConvertJsonToDACUserDateIgnoredCase() {
         String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
-        String json = "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"createDate\": \"Oct 28, 2020\", \"additionalEmail\": \"additionalEmail\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
+        String json = "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"createDate\": \"Oct 28, 2020\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
         User user = new User(json);
         Assert.assertNotNull(user);
         Assert.assertNull(user.getCreateDate());
         Assert.assertEquals(user.getUserId().intValue(), 1);
         Assert.assertEquals(user.getEmail(), "email");
-        Assert.assertEquals(user.getAdditionalEmail(), "additionalEmail");
         Assert.assertEquals(user.getEmailPreference(), false);
         Assert.assertFalse(user.getRoles().isEmpty());
         Assert.assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
@@ -187,13 +186,12 @@ public class DACUserResourceTest {
     @Test
     public void testConvertJsonToDACUserNoCreateDate() {
         String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
-        String json = "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"additionalEmail\": \"additionalEmail\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
+        String json = "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
         User user = new User(json);
         Assert.assertNotNull(user);
         Assert.assertNull(user.getCreateDate());
         Assert.assertEquals(user.getUserId().intValue(), 1);
         Assert.assertEquals(user.getEmail(), "email");
-        Assert.assertEquals(user.getAdditionalEmail(), "additionalEmail");
         Assert.assertEquals(user.getEmailPreference(), false);
         Assert.assertFalse(user.getRoles().isEmpty());
         Assert.assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
@@ -204,7 +202,6 @@ public class DACUserResourceTest {
         user.setUserId(RandomUtils.nextInt(1, 100));
         user.setDisplayName("name");
         user.setEmail("email");
-        user.setAdditionalEmail("additional email");
         user.setEmailPreference(true);
         user.setInstitutionId(RandomUtils.nextInt(1, 100));
         UserRole userRole = new UserRole(roles.getRoleId(), roles.getRoleName());
