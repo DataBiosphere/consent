@@ -5,7 +5,6 @@ put:
     Updates the user identified by the ID. Requires the authenticated user to have the same id as that of the user being updated except in the admin case - admins can update information for other users. A user's email cannot be updated. 
     * The following fields can be updated via this endpoint
       * Display Name
-      * Additional Email
       * Institution Id
       * Email Preference
     * Users with the "Signing Official" are not permitted to change their institution. Such calls will result in a "Bad Request". "Signing Official" users are, however, allowed to save their
@@ -29,8 +28,6 @@ put:
               type: object
               properties:
                 displayName:
-                  type: string
-                additionalEmail:
                   type: string
                 institutionId:
                   type: number

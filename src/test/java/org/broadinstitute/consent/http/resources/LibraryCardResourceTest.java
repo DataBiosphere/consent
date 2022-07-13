@@ -39,10 +39,10 @@ public class LibraryCardResourceTest {
   private final List<UserRole> adminRoles = Collections.singletonList(
     new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())
   );
-  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRoles, authUser.getEmail());
+  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRoles);
   private final User lcUser = new User(2, "testuser@gmail.com", "Test User", new Date(), Collections.singletonList(
           new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())
-  ), "testuser@gmail.com");
+  ));
 
   private LibraryCardResource resource;
 
@@ -63,8 +63,7 @@ public class LibraryCardResourceTest {
   private User mockSOUser() {
     User mockUser = new User(2, "testuser@gmail.com", "Test User", new Date(),
         Collections.singletonList(
-            new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())),
-        "testuser@gmail.com");
+            new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
     return mockUser;
   }
 

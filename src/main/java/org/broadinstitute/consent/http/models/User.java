@@ -27,7 +27,6 @@ public class User {
           " u.email as u_email, " +
           " u.display_name as u_display_name, " +
           " u.create_date as u_create_date, " +
-          " u.additional_email as u_additional_email, " +
           " u.email_preference as u_email_preference, " +
           " u.institution_id as u_institution_id," +
           " u.era_commons_id as u_era_commons_id ";
@@ -49,9 +48,6 @@ public class User {
 
     @JsonProperty
     private Date createDate;
-
-    @JsonProperty
-    private String additionalEmail;
 
     @JsonProperty
     private List<UserRole> roles;
@@ -94,24 +90,14 @@ public class User {
         this.createDate = createDate;
     }
 
-    public User(Integer userId, String email, String displayName, Date createDate, String additionalEmail) {
-        this.userId = userId;
-        this.dacUserId = userId;
-        this.email = email;
-        this.displayName = displayName;
-        this.createDate = createDate;
-        this.additionalEmail = additionalEmail;
-    }
-
     public User(Integer userId, String email, String displayName, Date createDate,
-                List<UserRole> roles, String additionalEmail) {
+                List<UserRole> roles) {
         this.userId = userId;
         this.dacUserId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
         this.roles = roles;
-        this.additionalEmail = additionalEmail;
     }
 
     public User(GoogleUser googleUser) {
@@ -140,7 +126,6 @@ public class User {
         setUserId(u);
         setEmail(u);
         setDisplayName(u);
-        setAdditionalEmail(u);
         setEmailPreference(u);
         setRoles(u);
         setInstitutionId(u);
@@ -177,12 +162,6 @@ public class User {
     private void setDisplayName(User u) {
         if (!StringUtils.isEmpty(u.getDisplayName())) {
             this.setDisplayName(u.getDisplayName());
-        }
-    }
-
-    private void setAdditionalEmail(User u) {
-        if (!StringUtils.isEmpty(u.getAdditionalEmail())) {
-            this.setAdditionalEmail(u.getAdditionalEmail());
         }
     }
 
@@ -252,14 +231,6 @@ public class User {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
-    }
-
-    public String getAdditionalEmail() {
-        return additionalEmail;
-    }
-
-    public void setAdditionalEmail(String additionalEmail) {
-        this.additionalEmail = additionalEmail;
     }
 
     public Boolean getEmailPreference() {

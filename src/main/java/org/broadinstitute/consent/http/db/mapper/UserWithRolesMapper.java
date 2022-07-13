@@ -27,7 +27,6 @@ public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
       user.setEmail(r.getString("email"));
       user.setDisplayName(r.getString("display_name"));
       user.setCreateDate(r.getDate("create_date"));
-      user.setAdditionalEmail(r.getString("additional_email"));
       user.setEmailPreference(r.getBoolean("email_preference"));
       user.setRoles(new ArrayList<>());
       if (hasColumn(r, "completed")) {
