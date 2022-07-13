@@ -23,11 +23,13 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,7 +72,12 @@ public class UserService {
      * @param userId The User's ID
      * @return The updated User
      */
-    public User updateUserFieldsById(UserUpdateFields userUpdateFields, Integer userId) {
+    public User updateUserFieldsById(@NonNull User user, UserUpdateFields userUpdateFields, Integer userId) {
+        // must be updating oneself or be an admin
+        if (!user.hasUserRole(UserRoles.ADMIN) && !user.getUserId().equals(userId)) {
+            throw new NotAuthorizedException("Cannot update user.");
+        }
+
         if (Objects.nonNull(userUpdateFields)) {
             // Update Primary User Fields
             if (Objects.nonNull(userUpdateFields.getDisplayName())) {
@@ -91,8 +98,9 @@ public class UserService {
                 userPropertyDAO.deletePropertiesByUserAndKey(userProps);
                 userPropertyDAO.insertAll(userProps);
             }
-            // Handle Roles.
-            if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
+
+            // Handle Roles; must be admin to update roles.
+            if (user.hasUserRole(UserRoles.ADMIN) && Objects.nonNull(userUpdateFields.getUserRoleIds())) {
                 List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream().map(UserRole::getRoleId).collect(Collectors.toList());
                 List<Integer> roleIdsToAdd = userUpdateFields.getRoleIdsToAdd(currentRoleIds);
                 List<Integer> roleIdsToRemove = userUpdateFields.getRoleIdsToRemove(currentRoleIds);

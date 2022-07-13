@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,6 +89,10 @@ public class UserServiceTest {
 
         User user = new User();
         user.setUserId(1);
+
+        User caller = new User();
+        caller.setUserId(2);
+        caller.setRoles(List.of(admin, researcher, chair));
         // Note that we're starting out with 1 modifiable role (Admin) and 1 that is not (Chairperson)
         // and one role that should never be removed, but can be added (Researcher)
         // When we update this user, we'll ensure that the new roles are added, old roles are deleted,
@@ -111,7 +116,7 @@ public class UserServiceTest {
             fields.setSuggestedSigningOfficial(RandomStringUtils.random(10, true, false));
             fields.setSuggestedInstitution(RandomStringUtils.random(10, true, false));
             assertEquals(3, fields.buildUserProperties(user.getUserId()).size());
-            service.updateUserFieldsById(fields, user.getUserId());
+            service.updateUserFieldsById(caller, fields, user.getUserId());
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -125,6 +130,128 @@ public class UserServiceTest {
         verify(userRoleDAO, times(1)).insertUserRoles(List.of(so), 1);
         verify(userRoleDAO, times(1)).removeUserRoles( 1, List.of(admin.getRoleId()));
     }
+
+    @Test
+    public void testUpdateRoleAsNonAdmin() {
+        UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+
+        User user = new User();
+        user.setUserId(1);
+        // Note that we're starting out with 1 modifiable role (Admin) and 1 that is not (Chairperson)
+        // and one role that should never be removed, but can be added (Researcher)
+        // When we update this user, we'll ensure that the new roles are added, old roles are deleted,
+        // and the researcher & chairperson roles remain.
+        when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(List.of(researcher, chair));
+        when(userDAO.findUserById(any())).thenReturn(user);
+        spy(userDAO);
+        spy(userPropertyDAO);
+        spy(userRoleDAO);
+        initService();
+        try {
+            UserUpdateFields fields = new UserUpdateFields();
+            // We're modifying this user to have an SO role. This should leave in place
+            // both the Researcher and Chairperson roles, but remove the Admin role.
+            fields.setUserRoleIds(List.of(so.getRoleId()));
+            fields.setDisplayName(RandomStringUtils.random(10, true, false));
+            fields.setInstitutionId(1);
+            fields.setEmailPreference(true);
+            fields.setEraCommonsId(RandomStringUtils.random(10, true, false));
+            fields.setSelectedSigningOfficialId(1);
+            fields.setSuggestedSigningOfficial(RandomStringUtils.random(10, true, false));
+            fields.setSuggestedInstitution(RandomStringUtils.random(10, true, false));
+            assertEquals(3, fields.buildUserProperties(user.getUserId()).size());
+            service.updateUserFieldsById(user, fields, user.getUserId());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        // We added 3 user property values, we should have props for them:
+        verify(userDAO, times(1)).updateDisplayName(any(), any());
+        verify(userDAO, times(1)).updateInstitutionId(any(), any());
+        verify(userDAO, times(1)).updateEmailPreference(any(), any());
+        verify(userDAO, times(1)).updateEraCommonsId(any(), any());
+        verify(userPropertyDAO, times(1)).insertAll(any());
+        // Verify no role additions/deletions.
+        verify(userRoleDAO, times(0)).insertUserRoles( any(), any());
+        verify(userRoleDAO, times(0)).removeUserRoles( any(), any());
+    }
+
+    @Test(expected = NotAuthorizedException.class)
+    public void testUpdateNonAdminCannotCallForAnother() {
+        UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+
+        User user = new User();
+        user.setUserId(1);
+
+        User caller = new User();
+        caller.setUserId(2);
+        // Note that we're starting out with 1 modifiable role (Admin) and 1 that is not (Chairperson)
+        // and one role that should never be removed, but can be added (Researcher)
+        // When we update this user, we'll ensure that the new roles are added, old roles are deleted,
+        // and the researcher & chairperson roles remain.
+        when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(List.of(researcher, chair));
+        when(userDAO.findUserById(any())).thenReturn(user);
+        spy(userDAO);
+        spy(userPropertyDAO);
+        spy(userRoleDAO);
+        initService();
+        UserUpdateFields fields = new UserUpdateFields();
+        fields.setDisplayName(RandomStringUtils.random(10, true, false));
+        fields.setInstitutionId(1);
+        fields.setEmailPreference(true);
+        fields.setEraCommonsId(RandomStringUtils.random(10, true, false));
+        fields.setSelectedSigningOfficialId(1);
+        fields.setSuggestedSigningOfficial(RandomStringUtils.random(10, true, false));
+        fields.setSuggestedInstitution(RandomStringUtils.random(10, true, false));
+        assertEquals(3, fields.buildUserProperties(user.getUserId()).size());
+        service.updateUserFieldsById(caller, fields, user.getUserId());
+    }
+
+    @Test
+    public void testUpdateUserFieldsAsNonAdmin() {
+        UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+
+        User user = new User();
+        user.setUserId(1);
+        // Note that we're starting out with 1 modifiable role (Admin) and 1 that is not (Chairperson)
+        // and one role that should never be removed, but can be added (Researcher)
+        // When we update this user, we'll ensure that the new roles are added, old roles are deleted,
+        // and the researcher & chairperson roles remain.
+        when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(List.of(researcher, chair));
+        when(userDAO.findUserById(any())).thenReturn(user);
+        spy(userDAO);
+        spy(userPropertyDAO);
+        spy(userRoleDAO);
+        initService();
+        try {
+            UserUpdateFields fields = new UserUpdateFields();
+            fields.setDisplayName(RandomStringUtils.random(10, true, false));
+            fields.setInstitutionId(1);
+            fields.setEmailPreference(true);
+            fields.setEraCommonsId(RandomStringUtils.random(10, true, false));
+            fields.setSelectedSigningOfficialId(1);
+            fields.setSuggestedSigningOfficial(RandomStringUtils.random(10, true, false));
+            fields.setSuggestedInstitution(RandomStringUtils.random(10, true, false));
+            assertEquals(3, fields.buildUserProperties(user.getUserId()).size());
+            service.updateUserFieldsById(user, fields, user.getUserId());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        // We added 3 user property values, we should have props for them:
+        verify(userDAO, times(1)).updateDisplayName(any(), any());
+        verify(userDAO, times(1)).updateInstitutionId(any(), any());
+        verify(userDAO, times(1)).updateEmailPreference(any(), any());
+        verify(userDAO, times(1)).updateEraCommonsId(any(), any());
+        verify(userPropertyDAO, times(1)).insertAll(any());
+        // Verify no role additions/deletions.
+        verify(userRoleDAO, times(0)).insertUserRoles( any(), any());
+        verify(userRoleDAO, times(0)).removeUserRoles( any(), any());
+    }
+
 
     @Test
     public void createUserTest() {

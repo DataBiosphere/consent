@@ -175,11 +175,11 @@ public class UserResource extends Resource {
         try {
             UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
             // Ensure that we have a real user with this ID, fail if we do not.
-            userService.findUserById(userId);
+            User user = userService.findUserById(userId);
             URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
-            User user = userService.updateUserFieldsById(userUpdateFields, userId);
+            User updatedUser = userService.updateUserFieldsById(user, userUpdateFields, userId);
             Gson gson = new Gson();
-            JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
+            JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, updatedUser.getUserId());
             return Response.ok(uri).entity(gson.toJson(jsonUser)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -197,7 +197,7 @@ public class UserResource extends Resource {
             UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
             // Ensure that we have a real user with this ID, fail if we do not.
             URI uri = info.getRequestUriBuilder().path("{id}").build(user.getUserId());
-            user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
+            user = userService.updateUserFieldsById(user, userUpdateFields, user.getUserId());
             Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
             return Response.ok(uri).entity(gson.toJson(jsonUser)).build();
