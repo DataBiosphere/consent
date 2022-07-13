@@ -11,6 +11,8 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportRequestComment;
 import org.broadinstitute.consent.http.models.support.SupportRequester;
@@ -32,6 +34,8 @@ public class SupportRequestService {
     private final ServicesConfiguration configuration;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    private static final String TASK_REQUEST_TYPE = "task";
+
     @Inject
     public SupportRequestService(ServicesConfiguration configuration) {
         this.clientUtil = new HttpClientUtil();
@@ -40,12 +44,13 @@ public class SupportRequestService {
 
     /**
      * Builds a ticket with the proper structure to request support via Zendesk
-     * @param name The name of the user requesting support
-     * @param type The type of request ("question", "incident", "problem", "task")
-     * @param email The email of the user requesting support
-     * @param subject Subject line of the request
+     *
+     * @param name        The name of the user requesting support
+     * @param type        The type of request ("question", "incident", "problem", "task")
+     * @param email       The email of the user requesting support
+     * @param subject     Subject line of the request
      * @param description Description of the task or question
-     * @param url The API url of this request
+     * @param url         The API url of this request
      * @return A structured ticket used to make the request
      */
     public SupportTicket createSupportTicket(String name, String type, String email, String subject, String description, String url) {
@@ -96,5 +101,59 @@ public class SupportRequestService {
         }
     }
 
+    /**
+     * Sends a support ticket if the user has requested an unfamiliar institution or signing official
+     * @param userUpdateFields A UserUpdateFields object containing update information for the user
+     * @param user The user requesting the institution and/or signing official
+     * @param authUser AuthUser object used to build POST request
+     */
+    public void sendSuggestedPropertiesToSupport(UserUpdateFields userUpdateFields, User user, AuthUser authUser) {
+        if (Objects.nonNull(userUpdateFields) || Objects.nonNull(user)) {
+            String suggestedInstitution = userUpdateFields.getSuggestedInstitution();
+            String suggestedSigningOfficial = userUpdateFields.getSuggestedSigningOfficial();
 
+            // Only create and send ticket if either a suggestedInstitution or suggestedSigningOfficial has been provided
+            if (Objects.nonNull(suggestedInstitution) || Objects.nonNull(suggestedSigningOfficial)) {
+                String subject;
+                String description;
+
+                // Determine ticket subject and description
+                if (Objects.nonNull(suggestedInstitution) && Objects.nonNull(suggestedSigningOfficial)) {
+                    subject = "New Institution and Signing Official Request";
+                    description = String.format("User %s [%s] has requested a new signing official: {%s} and has requested a new institution: {%s}",
+                            user.getDisplayName(),
+                            user.getEmail(),
+                            suggestedSigningOfficial,
+                            suggestedInstitution);
+                } else if (Objects.nonNull(suggestedInstitution)) {
+                    subject = "New Institution Request";
+                    description = String.format("User %s [%s] has requested a new institution: {%s}",
+                            user.getDisplayName(),
+                            user.getEmail(),
+                            suggestedInstitution);
+                } else {
+                    subject = "New Signing Official Request";
+                    description = String.format("User %s [%s] has requested a new signing official: {%s}",
+                            user.getDisplayName(),
+                            user.getEmail(),
+                            suggestedSigningOfficial);
+                }
+
+                // Create and post ticket to support api
+                try {
+                    SupportTicket ticket = createSupportTicket(
+                            user.getDisplayName(),
+                            TASK_REQUEST_TYPE,
+                            user.getEmail(),
+                            subject,
+                            description,
+                            configuration.postSupportRequestUrl());
+                    postTicketToSupport(ticket, authUser);
+                } catch (Exception e) {
+                    throw new ServerErrorException("Unable to send support ticket for user with email: " + user.getEmail(),
+                            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+                }
+            }
+        }
+    }
 }
