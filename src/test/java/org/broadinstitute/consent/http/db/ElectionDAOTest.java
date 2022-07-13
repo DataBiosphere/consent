@@ -196,9 +196,7 @@ public class ElectionDAOTest extends DAOTestHelper {
       .flatMap(List::stream)
       .collect(Collectors.toList());
     // Cancel those elections
-    firstElectionIds.forEach(id -> {
-      electionDAO.updateElectionById(id, ElectionStatus.CANCELED.getValue(), new Date(), true);
-    });
+    firstElectionIds.forEach(id -> electionDAO.updateElectionById(id, ElectionStatus.CANCELED.getValue(), new Date(), true));
     // Create a new set of elections
     List<Integer> latestElectionIds = Stream
       .of(createElectionsForDarDataset(dar, d1), createElectionsForDarDataset(dar, d2))
@@ -499,7 +497,7 @@ public class ElectionDAOTest extends DAOTestHelper {
       recentClosedRPElection.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
     List<Election> elections =
       electionDAO.findLastElectionsByReferenceIds(Collections.singletonList(dar.referenceId));
-    List<Integer> electionIds = elections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
+    List<Integer> electionIds = elections.stream().map(Election::getElectionId).collect(Collectors.toList());
     assertFalse(elections.isEmpty());
     assertEquals(2, elections.size());
     assertTrue(electionIds.contains(recentClosedAccessElection.getElectionId()));
