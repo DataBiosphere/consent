@@ -77,6 +77,7 @@ public class DAOTestHelper {
     protected static InstitutionDAO institutionDAO;
     protected static LibraryCardDAO libraryCardDAO;
     protected static DarCollectionDAO darCollectionDAO;
+    protected static DarCollectionSummaryDAO darCollectionSummaryDAO;
 
     // This is a test-only DAO class where we manage the deletion
     // of all records between test runs.
