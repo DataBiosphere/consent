@@ -188,7 +188,6 @@ public class UserResource extends Resource {
     }
 
     @PUT
-    @Path("/me")
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
