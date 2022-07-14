@@ -113,7 +113,7 @@ public class SupportRequestServiceTest {
         SupportTicket ticket = generateTicket();
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         CustomRequestField customField = supportRequest.getCustomFields().get(0);
-        String ticketJson =  String.format("{\n" +
+        String ticketJson = String.format("{\n" +
                         "  \"request\": {\n" +
                         "    \"requester\": {\n" +
                         "      \"name\": \"%s\",\n" +

@@ -104,9 +104,10 @@ public class SupportRequestService {
 
     /**
      * Creates and sends a support ticket for a user requesting an unfamiliar institution and/or signing official, if provided
+     *
      * @param userUpdateFields A UserUpdateFields object containing update information for the user
-     * @param user The user requesting the institution and/or signing official
-     * @param authUser AuthUser object used to build POST request
+     * @param user             The user requesting the institution and/or signing official
+     * @param authUser         AuthUser object used to build POST request
      */
     public void handleSuggestedUserFieldsSupportRequest(UserUpdateFields userUpdateFields, User user, AuthUser authUser) {
         if (Objects.nonNull(userUpdateFields) && Objects.nonNull(user)) {
@@ -128,8 +129,9 @@ public class SupportRequestService {
 
     /**
      * Generates a support ticket for a user requesting an unfamiliar institution and/or signing official
+     *
      * @param userUpdateFields A UserUpdateFields object containing update information for the user
-     * @param user The user requesting the institution and/or signing official
+     * @param user             The user requesting the institution and/or signing official
      * @return A support ticket detailing the requested user fields
      * @throws IllegalArgumentException if both suggestedInstitution and suggestedSigningOfficial are null, preventing ticket creation
      */
@@ -152,7 +154,7 @@ public class SupportRequestService {
                     user.getDisplayName(),
                     user.getEmail(),
                     suggestedInstitution);
-        } else if (Objects.nonNull(suggestedSigningOfficial)){
+        } else if (Objects.nonNull(suggestedSigningOfficial)) {
             subject = "New Signing Official Request";
             description = String.format("User %s [%s] has requested a new signing official: {%s}",
                     user.getDisplayName(),
