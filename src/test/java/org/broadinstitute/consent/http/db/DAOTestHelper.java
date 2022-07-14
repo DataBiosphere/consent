@@ -280,6 +280,11 @@ public class DAOTestHelper {
                 RandomStringUtils.randomAlphabetic(i3);
         Integer userId = userDAO.insertUser(email, "display name", new Date());
         userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
+        UserProperty prop = new UserProperty();
+        prop.setUserId(userId);
+        prop.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
+        prop.setPropertyValue("test");
+        userPropertyDAO.insertAll(List.of(prop));
         return userDAO.findUserById(userId);
     }
 

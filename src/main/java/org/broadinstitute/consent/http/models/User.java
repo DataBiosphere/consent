@@ -58,6 +58,7 @@ public class User {
     @JsonProperty
     private Boolean emailPreference;
 
+    @Deprecated
     @JsonProperty
     private Boolean profileCompleted;
 

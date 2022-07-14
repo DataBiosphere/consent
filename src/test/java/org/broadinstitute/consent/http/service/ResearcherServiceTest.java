@@ -69,7 +69,7 @@ public class ResearcherServiceTest {
     public void testSetProperties() {
         UserProperty prop = new UserProperty(
                 user.getUserId(),
-                UserFields.DEPARTMENT.getValue(),
+                UserFields.SUGGESTED_INSTITUTION.getValue(),
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
@@ -89,133 +89,6 @@ public class ResearcherServiceTest {
         initService();
 
         service.setProperties(new HashMap<>(), authUser);
-    }
-
-    @Test
-    public void testUpdatePropertiesWithValidation() {
-        List<UserProperty> props = new ArrayList<>();
-        Map<String, String> propMap = new HashMap<>();
-        for (UserFields researcherField : UserFields.values()) {
-            if (researcherField.getRequired()) {
-                String val = RandomStringUtils.random(10, true, false);
-                props.add(new UserProperty(user.getUserId(), researcherField.getValue(), val));
-                propMap.put(researcherField.getValue(), val);
-            }
-        }
-        when(userDAO.findUserByEmail(any())).thenReturn(user);
-        when(userDAO.findUserById(any())).thenReturn(user);
-        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(props);
-        initService();
-
-        List<UserProperty> foundProps = service.updateProperties(propMap, authUser, true);
-        Assert.assertFalse(foundProps.isEmpty());
-        Assert.assertEquals(props.size(), foundProps.size());
-    }
-
-    @Test
-    public void testUpdatePropertiesNoValidation() {
-        UserProperty prop = new UserProperty(
-                user.getUserId(),
-                UserFields.DEPARTMENT.getValue(),
-                RandomStringUtils.random(10, true, false));
-        Map<String, String> propMap = new HashMap<>();
-        propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
-        when(userDAO.findUserByEmail(any())).thenReturn(user);
-        when(userDAO.findUserById(any())).thenReturn(user);
-        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(Collections.singletonList(prop));
-        initService();
-
-        List<UserProperty> props = service.updateProperties(propMap, authUser, false);
-        Assert.assertFalse(props.isEmpty());
-        Assert.assertEquals(propMap.size(), props.size());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testUpdatePropertiesMissingFields() {
-        UserProperty prop = new UserProperty(
-                user.getUserId(),
-                UserFields.DEPARTMENT.getValue(),
-                RandomStringUtils.random(10, true, false));
-        Map<String, String> propMap = new HashMap<>();
-        propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
-        when(userDAO.findUserByEmail(any())).thenReturn(user);
-        when(userDAO.findUserById(any())).thenReturn(user);
-        initService();
-
-        service.updateProperties(propMap, authUser, true);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testUpdatePropertiesInvalidFields() {
-        UserProperty prop = new UserProperty(
-                user.getUserId(),
-                RandomStringUtils.random(10, true, false),
-                RandomStringUtils.random(10, true, false));
-        Map<String, String> propMap = new HashMap<>();
-        propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
-        when(userDAO.findUserByEmail(any())).thenReturn(user);
-        when(userDAO.findUserById(any())).thenReturn(user);
-        initService();
-
-        service.updateProperties(propMap, authUser, true);
-    }
-
-    @Test
-    public void testUpdatePropertiesIncompleteProfile() throws Exception {
-        List<UserProperty> props = new ArrayList<>();
-        Map<String, String> propMap = new HashMap<>();
-        for (UserFields researcherField : UserFields.values()) {
-            if (researcherField.getRequired()) {
-                String val1 = RandomStringUtils.random(10, true, false);
-                String val2 = RandomStringUtils.random(10, true, false);
-                props.add(new UserProperty(user.getUserId(), researcherField.getValue(), val1));
-                propMap.put(researcherField.getValue(), val2);
-            }
-        }
-        props.add(new UserProperty(user.getUserId(), UserFields.COMPLETED.getValue(), Boolean.FALSE.toString()));
-        propMap.put(UserFields.COMPLETED.getValue(), Boolean.FALSE.toString());
-        when(userDAO.findUserByEmail(any())).thenReturn(user);
-        when(userDAO.findUserById(any())).thenReturn(user);
-        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(props);
-        when(userPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.FALSE.toString());
-        doNothing().when(userPropertyDAO).deletePropertiesByUserAndKey(any());
-        doNothing().when(userPropertyDAO).insertAll(any());
-        doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(any());
-        doNothing().when(emailNotifierService).sendNewResearcherCreatedMessage(any(), any());
-        initService();
-
-        List<UserProperty> foundProps = service.updateProperties(propMap, authUser, true);
-        Assert.assertFalse(foundProps.isEmpty());
-        Assert.assertEquals(props.size(), foundProps.size());
-        verify(emailNotifierService, times(0)).sendNewResearcherCreatedMessage(any(), any());
-    }
-
-    @Test
-    public void testUpdatePropertiesCompleteProfile() throws Exception {
-        List<UserProperty> props = new ArrayList<>();
-        Map<String, String> propMap = new HashMap<>();
-        for (UserFields researcherField : UserFields.values()) {
-            String val1 = RandomStringUtils.random(10, true, false);
-            String val2 = RandomStringUtils.random(10, true, false);
-            props.add(new UserProperty(user.getUserId(), researcherField.getValue(), val1));
-            propMap.put(researcherField.getValue(), val2);
-        }
-        props.add(new UserProperty(user.getUserId(), UserFields.COMPLETED.getValue(), Boolean.TRUE.toString()));
-        propMap.put(UserFields.COMPLETED.getValue(), Boolean.TRUE.toString());
-        when(userDAO.findUserByEmail(any())).thenReturn(user);
-        when(userDAO.findUserById(any())).thenReturn(user);
-        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(props);
-        when(userPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.TRUE.toString());
-        doNothing().when(userPropertyDAO).deletePropertiesByUserAndKey(any());
-        doNothing().when(userPropertyDAO).insertAll(any());
-        doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(any());
-        doNothing().when(emailNotifierService).sendNewResearcherCreatedMessage(any(), any());
-        initService();
-
-        List<UserProperty> foundProps = service.updateProperties(propMap, authUser, true);
-        Assert.assertFalse(foundProps.isEmpty());
-        Assert.assertEquals(props.size(), foundProps.size());
-        verify(emailNotifierService, never()).sendNewResearcherCreatedMessage(any(), any());
     }
 
 }

@@ -57,16 +57,8 @@ public class ResearcherService {
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         if (validate) validateRequiredFields(researcherPropertiesMap);
         Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
-        boolean isUpdatedProfileCompleted = Boolean.parseBoolean(validatedProperties.get(UserFields.COMPLETED.getValue()));
-        String completed = userPropertyDAO.isProfileCompleted(user.getUserId());
-        boolean isProfileCompleted = Boolean.parseBoolean(completed);
         List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getUserId());
-        if (!isProfileCompleted && isUpdatedProfileCompleted) {
-            saveProperties(properties);
-            notifyAdmins(user.getUserId());
-        } else {
-            saveProperties(properties);
-        }
+        saveProperties(properties);
         return describeResearcherProperties(user.getUserId());
     }
 

@@ -87,10 +87,6 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
       if (Objects.nonNull(rowView.getColumn("up_property_id", Integer.class))) {
         UserProperty p = rowView.getRow(UserProperty.class);
         user.addProperty(p);
-        // Note that the completed field is deprecated and will be removed in a future PR.
-        if (p.getPropertyKey().equalsIgnoreCase(UserFields.COMPLETED.getValue())) {
-          user.setProfileCompleted(Boolean.valueOf(p.getPropertyValue()));
-        }
       }
     } catch (MappingException e) {
       // Ignore any attempt to map a column that doesn't exist

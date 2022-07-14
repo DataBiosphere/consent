@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public enum UserFields {
-  COMPLETED("completed", false),
   ERA_EXPIRATION_DATE("eraExpiration", false),
   ERA_STATUS("eraAuthorized", false),
   SELECTED_SIGNING_OFFICIAL_ID("selectedSigningOfficialId", false),
