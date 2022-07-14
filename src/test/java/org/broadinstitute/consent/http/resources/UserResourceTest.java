@@ -426,7 +426,6 @@ public class UserResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
-
   @Test
   public void testDeleteRoleFromUser() {
     User user = createUserWithRole();

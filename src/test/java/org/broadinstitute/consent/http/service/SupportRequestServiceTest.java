@@ -113,7 +113,7 @@ public class SupportRequestServiceTest {
         SupportTicket ticket = generateTicket();
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         CustomRequestField customField = supportRequest.getCustomFields().get(0);
-        String ticketJson = String.format("{\n" +
+        String expectedBody = String.format("{\n" +
                         "  \"request\": {\n" +
                         "    \"requester\": {\n" +
                         "      \"name\": \"%s\",\n" +
@@ -148,7 +148,7 @@ public class SupportRequestServiceTest {
         HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
         assertEquals(1, requests.length);
         Object requestBody = requests[0].getBody().getValue();
-        assertEquals(ticketJson, requestBody);
+        assertEquals(expectedBody, requestBody);
     }
 
     @Test(expected = ServerErrorException.class)
