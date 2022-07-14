@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -90,9 +89,6 @@ public class UserServiceTest {
         User user = new User();
         user.setUserId(1);
 
-        User caller = new User();
-        caller.setUserId(2);
-        caller.setRoles(List.of(admin, researcher, chair));
         // Note that we're starting out with 1 modifiable role (Admin) and 1 that is not (Chairperson)
         // and one role that should never be removed, but can be added (Researcher)
         // When we update this user, we'll ensure that the new roles are added, old roles are deleted,
