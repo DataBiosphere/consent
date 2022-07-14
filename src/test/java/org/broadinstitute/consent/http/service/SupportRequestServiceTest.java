@@ -4,6 +4,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
@@ -71,7 +72,7 @@ public class SupportRequestServiceTest {
     @Test
     public void testCreateSupportTicket() {
         String name = RandomStringUtils.randomAlphabetic(10);
-        String type = RandomStringUtils.randomAlphabetic(10);
+        SupportRequestType type = SupportRequestType.QUESTION;
         String email = RandomStringUtils.randomAlphabetic(10);
         String subject = RandomStringUtils.randomAlphabetic(10);
         String description = RandomStringUtils.randomAlphabetic(10);
@@ -88,7 +89,7 @@ public class SupportRequestServiceTest {
 
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
         assertEquals(5, customFields.size());
-        assertTrue(customFields.contains(new CustomRequestField(360012744452L, type)));
+        assertTrue(customFields.contains(new CustomRequestField(360012744452L, type.getValue())));
         assertTrue(customFields.contains(new CustomRequestField(360007369412L, description)));
         assertTrue(customFields.contains(new CustomRequestField(360012744292L, name)));
         assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
@@ -100,7 +101,7 @@ public class SupportRequestServiceTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateSupportTicketMissingField() {
-        String type = RandomStringUtils.randomAlphabetic(10);
+        SupportRequestType type = SupportRequestType.QUESTION;
         String email = RandomStringUtils.randomAlphabetic(10);
         String subject = RandomStringUtils.randomAlphabetic(10);
         String description = RandomStringUtils.randomAlphabetic(10);
@@ -213,7 +214,7 @@ public class SupportRequestServiceTest {
                 suggestedInstitution);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
         assertEquals(5, customFields.size());
-        assertTrue(customFields.contains(new CustomRequestField(360012744452L, "task")));
+        assertTrue(customFields.contains(new CustomRequestField(360012744452L, SupportRequestType.TASK.getValue())));
         assertTrue(customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
         assertTrue(customFields.contains(new CustomRequestField(360012744292L, displayName)));
         assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
@@ -248,7 +249,7 @@ public class SupportRequestServiceTest {
                 suggestedSigningOfficial);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
         assertEquals(5, customFields.size());
-        assertTrue(customFields.contains(new CustomRequestField(360012744452L, "task")));
+        assertTrue(customFields.contains(new CustomRequestField(360012744452L, SupportRequestType.TASK.getValue())));
         assertTrue(customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
         assertTrue(customFields.contains(new CustomRequestField(360012744292L, displayName)));
         assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
@@ -286,7 +287,7 @@ public class SupportRequestServiceTest {
                 suggestedInstitution);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
         assertEquals(5, customFields.size());
-        assertTrue(customFields.contains(new CustomRequestField(360012744452L, "task")));
+        assertTrue(customFields.contains(new CustomRequestField(360012744452L, SupportRequestType.TASK.getValue())));
         assertTrue(customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
         assertTrue(customFields.contains(new CustomRequestField(360012744292L, displayName)));
         assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
