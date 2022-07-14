@@ -109,7 +109,7 @@ public class SupportRequestService {
      * @param authUser AuthUser object used to build POST request
      */
     public void handleSuggestedUserFieldsSupportRequest(UserUpdateFields userUpdateFields, User user, AuthUser authUser) {
-        if (Objects.nonNull(userUpdateFields) || Objects.nonNull(user)) {
+        if (Objects.nonNull(userUpdateFields) && Objects.nonNull(user)) {
             String suggestedInstitution = userUpdateFields.getSuggestedInstitution();
             String suggestedSigningOfficial = userUpdateFields.getSuggestedSigningOfficial();
 
