@@ -132,6 +132,7 @@ public class DAOTestHelper {
         institutionDAO = jdbi.onDemand(InstitutionDAO.class);
         libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
         darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
+        darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
         testingDAO = jdbi.onDemand(TestingDAO.class);
     }
 

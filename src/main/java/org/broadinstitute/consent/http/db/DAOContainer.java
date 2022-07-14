@@ -62,6 +62,10 @@ public class DAOContainer {
     return darCollectionDAO;
   }
 
+  public DarCollectionSummaryDAO getDarCollectionSummaryDAO() {
+    return darCollectionSummaryDAO;
+  }
+
   public void setDarCollectionDAO(
     DarCollectionDAO darCollectionDAO) {
     this.darCollectionDAO = darCollectionDAO;

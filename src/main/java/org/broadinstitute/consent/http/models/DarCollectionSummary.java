@@ -9,7 +9,9 @@ import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
 import java.sql.Timestamp;
 import java.util.Set;
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class DarCollectionSummary {
@@ -33,9 +35,6 @@ public class DarCollectionSummary {
   private String institutionName;
 
   @JsonProperty
-  private Integer datasetCount;
-
-  @JsonProperty
   private String status;
 
   @JsonProperty
@@ -44,14 +43,19 @@ public class DarCollectionSummary {
   @JsonProperty
   private Boolean hasVoted; 
 
+  @JsonProperty
+  private Integer datasetCount;
+
+  private Set<Integer> datasetIds;
   private List<Vote> votes;
-  private List<Election> elections;
+  private Map<Integer, Election> elections;
 
   public DarCollectionSummary() {
     this.votes = new ArrayList<>();
     this.actions = new HashSet<>();
-    this.elections = new ArrayList<>();
+    this.elections = new HashMap<>();
     this.hasVoted = false;
+    this.datasetIds = new HashSet<>();
   }
 
   public List<Vote> getVotes() {
@@ -67,14 +71,18 @@ public class DarCollectionSummary {
   }
 
   public void addElection(Election election) {
-    this.elections.add(election);
+    this.elections.put(election.getElectionId(), election);
   }
  
-  public List<Election> getElections() {
+  public Map<Integer, Election> getElections() {
     return elections;
   }
 
-  public void setElections(List<Election> elections) {
+  public Election findElection(Integer electionId) {
+    return elections.get(electionId);
+  }
+
+  public void setElections(Map<Integer, Election> elections) {
     this.elections = elections;
   }
 
@@ -134,16 +142,24 @@ public class DarCollectionSummary {
     this.institutionName = institutionName;
   }
 
+  public Set<Integer> getDatasetIds() {
+    return datasetIds;
+  }
+
+  public void setDatasetIds(Set<Integer> datasetIds) {
+    this.datasetIds = datasetIds;
+  }
+
+  public void setDatasetCount() {
+    this.datasetCount = this.datasetIds.size();
+  }
+
+  public void addDatasetId(Integer datasetId) {
+    this.datasetIds.add(datasetId);
+  }
+
   public Integer getDatasetCount() {
     return datasetCount;
-  }
-
-  public void setDatasetCount(Integer datasetCount) {
-    this.datasetCount = datasetCount;
-  }
-
-  public void setDatasetCount(List<Dataset> datasets) {
-    this.datasetCount = Math.toIntExact(datasets.stream().distinct().count());
   }
 
   public String getStatus() {
