@@ -101,53 +101,22 @@ public class SupportRequestService {
         }
     }
 
+
     /**
-     * Sends a support ticket if the user has requested an unfamiliar institution or signing official
+     * Creates and sends a support ticket for a user requesting an unfamiliar institution and/or signing official, if provided
      * @param userUpdateFields A UserUpdateFields object containing update information for the user
      * @param user The user requesting the institution and/or signing official
      * @param authUser AuthUser object used to build POST request
      */
-    public void sendSuggestedPropertiesToSupport(UserUpdateFields userUpdateFields, User user, AuthUser authUser) {
+    public void handleSuggestedUserFieldsSupportRequest(UserUpdateFields userUpdateFields, User user, AuthUser authUser) {
         if (Objects.nonNull(userUpdateFields) || Objects.nonNull(user)) {
             String suggestedInstitution = userUpdateFields.getSuggestedInstitution();
             String suggestedSigningOfficial = userUpdateFields.getSuggestedSigningOfficial();
 
             // Only create and send ticket if either a suggestedInstitution or suggestedSigningOfficial has been provided
             if (Objects.nonNull(suggestedInstitution) || Objects.nonNull(suggestedSigningOfficial)) {
-                String subject;
-                String description;
-
-                // Determine ticket subject and description
-                if (Objects.nonNull(suggestedInstitution) && Objects.nonNull(suggestedSigningOfficial)) {
-                    subject = "New Institution and Signing Official Request";
-                    description = String.format("User %s [%s] has requested a new signing official: {%s} and has requested a new institution: {%s}",
-                            user.getDisplayName(),
-                            user.getEmail(),
-                            suggestedSigningOfficial,
-                            suggestedInstitution);
-                } else if (Objects.nonNull(suggestedInstitution)) {
-                    subject = "New Institution Request";
-                    description = String.format("User %s [%s] has requested a new institution: {%s}",
-                            user.getDisplayName(),
-                            user.getEmail(),
-                            suggestedInstitution);
-                } else {
-                    subject = "New Signing Official Request";
-                    description = String.format("User %s [%s] has requested a new signing official: {%s}",
-                            user.getDisplayName(),
-                            user.getEmail(),
-                            suggestedSigningOfficial);
-                }
-
-                // Create and post ticket to support api
                 try {
-                    SupportTicket ticket = createSupportTicket(
-                            user.getDisplayName(),
-                            TASK_REQUEST_TYPE,
-                            user.getEmail(),
-                            subject,
-                            description,
-                            configuration.postSupportRequestUrl());
+                    SupportTicket ticket = createSuggestedUserFieldsTicket(userUpdateFields, user);
                     postTicketToSupport(ticket, authUser);
                 } catch (Exception e) {
                     throw new ServerErrorException("Unable to send support ticket for user with email: " + user.getEmail(),
@@ -155,5 +124,48 @@ public class SupportRequestService {
                 }
             }
         }
+    }
+
+    /**
+     * Generates a support ticket for a user requesting an unfamiliar institution and/or signing official
+     * @param userUpdateFields A UserUpdateFields object containing update information for the user
+     * @param user The user requesting the institution and/or signing official
+     * @return A support ticket detailing the requested user fields
+     * @throws IllegalArgumentException if both suggestedInstitution and suggestedSigningOfficial are null, preventing ticket creation
+     */
+    public SupportTicket createSuggestedUserFieldsTicket(UserUpdateFields userUpdateFields, User user) throws IllegalArgumentException {
+        String suggestedInstitution = userUpdateFields.getSuggestedInstitution();
+        String suggestedSigningOfficial = userUpdateFields.getSuggestedSigningOfficial();
+        String subject = null;
+        String description = null;
+
+        if (Objects.nonNull(suggestedInstitution) && Objects.nonNull(suggestedSigningOfficial)) {
+            subject = "New Institution and Signing Official Request";
+            description = String.format("User %s [%s] has requested a new signing official: {%s} and has requested a new institution: {%s}",
+                    user.getDisplayName(),
+                    user.getEmail(),
+                    suggestedSigningOfficial,
+                    suggestedInstitution);
+        } else if (Objects.nonNull(suggestedInstitution)) {
+            subject = "New Institution Request";
+            description = String.format("User %s [%s] has requested a new institution: {%s}",
+                    user.getDisplayName(),
+                    user.getEmail(),
+                    suggestedInstitution);
+        } else if (Objects.nonNull(suggestedSigningOfficial)){
+            subject = "New Signing Official Request";
+            description = String.format("User %s [%s] has requested a new signing official: {%s}",
+                    user.getDisplayName(),
+                    user.getEmail(),
+                    suggestedSigningOfficial);
+        }
+
+        return createSupportTicket(
+                user.getDisplayName(),
+                TASK_REQUEST_TYPE,
+                user.getEmail(),
+                subject,
+                description,
+                configuration.postSupportRequestUrl());
     }
 }

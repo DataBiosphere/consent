@@ -181,7 +181,7 @@ public class UserResource extends Resource {
             userService.findUserById(userId);
             URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
             User user = userService.updateUserFieldsById(userUpdateFields, userId);
-            supportRequestService.sendSuggestedPropertiesToSupport(userUpdateFields, user, authUser);
+            supportRequestService.handleSuggestedUserFieldsSupportRequest(userUpdateFields, user, authUser);
             Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
             return Response.ok(uri).entity(gson.toJson(jsonUser)).build();

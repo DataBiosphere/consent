@@ -391,7 +391,7 @@ public class UserResourceTest {
     initResource();
     Response response = userResource.update(authUser, uriInfo, user.getUserId(), gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    verify(supportRequestService, times(1)).sendSuggestedPropertiesToSupport(any(), any(), any());
+    verify(supportRequestService, times(1)).handleSuggestedUserFieldsSupportRequest(any(), any(), any());
   }
 
   @Test
