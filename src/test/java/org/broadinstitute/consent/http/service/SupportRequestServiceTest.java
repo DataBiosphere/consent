@@ -5,6 +5,8 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportRequestComment;
 import org.broadinstitute.consent.http.models.support.SupportRequester;
@@ -17,7 +19,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
+import org.mockserver.model.HttpError;
 import org.mockserver.model.HttpRequest;
+import org.mockserver.verify.VerificationTimes;
 import org.testcontainers.containers.MockServerContainer;
 
 import javax.ws.rs.ServerErrorException;
@@ -29,6 +33,7 @@ import static org.broadinstitute.consent.http.WithMockServer.IMAGE;
 import static org.eclipse.jetty.util.component.LifeCycle.stop;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
@@ -106,69 +111,9 @@ public class SupportRequestServiceTest {
     @Test
     public void testPostTicketToSupport() throws Exception {
         SupportTicket ticket = generateTicket();
-        mockServerClient.when(request().withMethod("POST"))
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
-        service.postTicketToSupport(ticket, authUser);
-
-        HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
-        assertEquals(1, requests.length);
-        Object requestBody = requests[0].getBody().getValue();
-        assertEquals(convertTicketToJson(ticket), requestBody);
-    }
-
-    @Test(expected = ServerErrorException.class)
-    public void testPostTicketToSupportServerError() throws Exception {
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
-        service.postTicketToSupport(generateTicket(), authUser);
-    }
-
-    @Test
-    public void testSendSuggestedPropertiesToSupport_NoUpdates() {
-
-    }
-
-    @Test
-    public void testSendSuggestedPropertiesToSupport_Institution() {
-
-    }
-
-    @Test
-    public void testSendSuggestedPropertiesToSupport_SigningOfficial() {
-
-    }
-
-    @Test
-    public void testSendSuggestedPropertiesToSupport_InstitutionSigningOfficial() {
-
-    }
-
-
-    //creates support ticket with random values for testing postTicketToSupport
-    private SupportTicket generateTicket() {
-        SupportRequester requester = new SupportRequester(
-                RandomStringUtils.randomAlphabetic(10),
-                RandomStringUtils.randomAlphabetic(10)
-        );
-        String subject = RandomStringUtils.randomAlphabetic(10);
-        List<CustomRequestField> customFields = new ArrayList<>();
-        customFields.add(new CustomRequestField(
-                RandomUtils.nextLong(),
-                RandomStringUtils.randomAlphabetic(10)
-        ));
-        SupportRequestComment comment = new SupportRequestComment(RandomStringUtils.randomAlphabetic(10));
-
-        return new SupportTicket(requester, subject, customFields, comment);
-    }
-
-    private String convertTicketToJson(SupportTicket ticket) {
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         CustomRequestField customField = supportRequest.getCustomFields().get(0);
-        return String.format("{\n" +
+        String ticketJson =  String.format("{\n" +
                         "  \"request\": {\n" +
                         "    \"requester\": {\n" +
                         "      \"name\": \"%s\",\n" +
@@ -193,5 +138,194 @@ public class SupportRequestServiceTest {
                 customField.getId(),
                 customField.getValue(),
                 supportRequest.getComment().getBody());
+
+        mockServerClient.when(request().withMethod("POST"))
+                .respond(response()
+                        .withHeader(Header.header("Content-Type", "application/json"))
+                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+        service.postTicketToSupport(ticket, authUser);
+
+        HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
+        assertEquals(1, requests.length);
+        Object requestBody = requests[0].getBody().getValue();
+        assertEquals(ticketJson, requestBody);
+    }
+
+    @Test(expected = ServerErrorException.class)
+    public void testPostTicketToSupportServerError() throws Exception {
+        mockServerClient.when(request())
+                .respond(response()
+                        .withHeader(Header.header("Content-Type", "application/json"))
+                        .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
+        service.postTicketToSupport(generateTicket(), authUser);
+    }
+
+    @Test
+    public void testHandleSuggestedUserFieldsSupportRequest() {
+        String displayName = RandomStringUtils.randomAlphabetic(10);
+        String email = RandomStringUtils.randomAlphabetic(10);
+        User user = new User();
+        user.setDisplayName(displayName);
+        user.setEmail(email);
+        UserUpdateFields updateFields = new UserUpdateFields();
+        updateFields.setSuggestedInstitution(RandomStringUtils.randomAlphabetic(10));
+
+        mockServerClient.when(request())
+                .respond(response()
+                        .withHeader(Header.header("Content-Type", "application/json"))
+                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+        service.handleSuggestedUserFieldsSupportRequest(updateFields, user, authUser);
+        mockServerClient.verify(request().withMethod("POST"), VerificationTimes.exactly(1));
+    }
+
+    @Test
+    public void testHandleSuggestedUserFieldsSupportRequest_NoUpdates() {
+        UserUpdateFields updateFields = new UserUpdateFields();
+        // verify no requests sent if no suggested user fields are provided; fail if request attempted
+        mockServerClient.when(request()).error(new HttpError());
+        service.handleSuggestedUserFieldsSupportRequest(updateFields, new User(), authUser);
+        assertNull(updateFields.getSuggestedInstitution());
+        assertNull(updateFields.getSuggestedSigningOfficial());
+    }
+
+    @Test
+    public void testCreateSuggestedUserFieldsTicket_Institution() {
+        String displayName = RandomStringUtils.randomAlphabetic(10);
+        String email = RandomStringUtils.randomAlphabetic(10);
+        User user = new User();
+        user.setDisplayName(displayName);
+        user.setEmail(email);
+
+        String suggestedInstitution = RandomStringUtils.randomAlphabetic(10);
+        UserUpdateFields updateFields = new UserUpdateFields();
+        updateFields.setSuggestedInstitution(suggestedInstitution);
+
+        SupportTicket ticket = service.createSuggestedUserFieldsTicket(updateFields, user);
+        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+        assertEquals(displayName, supportRequest.getRequester().getName());
+        assertEquals(email, supportRequest.getRequester().getEmail());
+        assertEquals("New Institution Request", supportRequest.getSubject());
+        assertEquals(360000669472L, supportRequest.getTicketFormId());
+
+        String expectedDescription = String.format("User %s [%s] has requested a new institution: {%s}",
+                user.getDisplayName(),
+                user.getEmail(),
+                suggestedInstitution);
+        List<CustomRequestField> customFields = supportRequest.getCustomFields();
+        assertEquals(5, customFields.size());
+        assertTrue(customFields.contains(new CustomRequestField(360012744452L, "task")));
+        assertTrue(customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
+        assertTrue(customFields.contains(new CustomRequestField(360012744292L, displayName)));
+        assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
+        assertTrue(customFields.contains(new CustomRequestField(360018545031L, email)));
+
+        String commentBody = expectedDescription + "\n\n------------------\nSubmitted from: " + config.postSupportRequestUrl();
+        assertEquals(commentBody, supportRequest.getComment().getBody());
+    }
+
+    @Test
+    public void testCreateSuggestedUserFieldsTicket_SigningOfficial() {
+        String displayName = RandomStringUtils.randomAlphabetic(10);
+        String email = RandomStringUtils.randomAlphabetic(10);
+        User user = new User();
+        user.setDisplayName(displayName);
+        user.setEmail(email);
+
+        String suggestedSigningOfficial = RandomStringUtils.randomAlphabetic(10);
+        UserUpdateFields updateFields = new UserUpdateFields();
+        updateFields.setSuggestedSigningOfficial(suggestedSigningOfficial);
+
+        SupportTicket ticket = service.createSuggestedUserFieldsTicket(updateFields, user);
+        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+        assertEquals(displayName, supportRequest.getRequester().getName());
+        assertEquals(email, supportRequest.getRequester().getEmail());
+        assertEquals("New Signing Official Request", supportRequest.getSubject());
+        assertEquals(360000669472L, supportRequest.getTicketFormId());
+
+        String expectedDescription = String.format("User %s [%s] has requested a new signing official: {%s}",
+                user.getDisplayName(),
+                user.getEmail(),
+                suggestedSigningOfficial);
+        List<CustomRequestField> customFields = supportRequest.getCustomFields();
+        assertEquals(5, customFields.size());
+        assertTrue(customFields.contains(new CustomRequestField(360012744452L, "task")));
+        assertTrue(customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
+        assertTrue(customFields.contains(new CustomRequestField(360012744292L, displayName)));
+        assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
+        assertTrue(customFields.contains(new CustomRequestField(360018545031L, email)));
+
+        String commentBody = expectedDescription + "\n\n------------------\nSubmitted from: " + config.postSupportRequestUrl();
+        assertEquals(commentBody, supportRequest.getComment().getBody());
+    }
+
+    @Test
+    public void testCreateSuggestedUserFieldsTicket_InstitutionSigningOfficial() {
+        String displayName = RandomStringUtils.randomAlphabetic(10);
+        String email = RandomStringUtils.randomAlphabetic(10);
+        User user = new User();
+        user.setDisplayName(displayName);
+        user.setEmail(email);
+
+        String suggestedSigningOfficial = RandomStringUtils.randomAlphabetic(10);
+        String suggestedInstitution = RandomStringUtils.randomAlphabetic(10);
+        UserUpdateFields updateFields = new UserUpdateFields();
+        updateFields.setSuggestedSigningOfficial(suggestedSigningOfficial);
+        updateFields.setSuggestedInstitution(suggestedInstitution);
+
+        SupportTicket ticket = service.createSuggestedUserFieldsTicket(updateFields, user);
+        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+        assertEquals(displayName, supportRequest.getRequester().getName());
+        assertEquals(email, supportRequest.getRequester().getEmail());
+        assertEquals("New Institution and Signing Official Request", supportRequest.getSubject());
+        assertEquals(360000669472L, supportRequest.getTicketFormId());
+
+        String expectedDescription = String.format("User %s [%s] has requested a new signing official: {%s} and has requested a new institution: {%s}",
+                user.getDisplayName(),
+                user.getEmail(),
+                suggestedSigningOfficial,
+                suggestedInstitution);
+        List<CustomRequestField> customFields = supportRequest.getCustomFields();
+        assertEquals(5, customFields.size());
+        assertTrue(customFields.contains(new CustomRequestField(360012744452L, "task")));
+        assertTrue(customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
+        assertTrue(customFields.contains(new CustomRequestField(360012744292L, displayName)));
+        assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
+        assertTrue(customFields.contains(new CustomRequestField(360018545031L, email)));
+
+        String commentBody = expectedDescription + "\n\n------------------\nSubmitted from: " + config.postSupportRequestUrl();
+        assertEquals(commentBody, supportRequest.getComment().getBody());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateSuggestedUserFieldsTicket_NoFieldsError() {
+        String displayName = RandomStringUtils.randomAlphabetic(10);
+        String email = RandomStringUtils.randomAlphabetic(10);
+        User user = new User();
+        user.setDisplayName(displayName);
+        user.setEmail(email);
+        //fail to create ticket if both suggestedSigningOfficial and suggestedInstitution are null
+        UserUpdateFields updateFields = new UserUpdateFields();
+        assertNull(updateFields.getSuggestedSigningOfficial());
+        assertNull(updateFields.getSuggestedInstitution());
+
+        service.createSuggestedUserFieldsTicket(updateFields, user);
+    }
+
+
+    //creates support ticket with random values for testing postTicketToSupport
+    private SupportTicket generateTicket() {
+        SupportRequester requester = new SupportRequester(
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10)
+        );
+        String subject = RandomStringUtils.randomAlphabetic(10);
+        List<CustomRequestField> customFields = new ArrayList<>();
+        customFields.add(new CustomRequestField(
+                RandomUtils.nextLong(),
+                RandomStringUtils.randomAlphabetic(10)
+        ));
+        SupportRequestComment comment = new SupportRequestComment(RandomStringUtils.randomAlphabetic(10));
+
+        return new SupportTicket(requester, subject, customFields, comment);
     }
 }

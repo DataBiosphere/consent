@@ -402,7 +402,7 @@ public class UserResourceTest {
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
-    doThrow(new ServerErrorException(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)).when(supportRequestService).sendSuggestedPropertiesToSupport(any(), any(), any());
+    doThrow(new ServerErrorException(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)).when(supportRequestService).handleSuggestedUserFieldsSupportRequest(any(), any(), any());
     initResource();
     Response response = userResource.update(authUser, uriInfo, user.getUserId(), gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
