@@ -40,6 +40,7 @@ public class ResearcherService {
         this.emailNotifierService = emailNotifierService;
     }
 
+    @Deprecated
     public List<UserProperty> setProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser) throws NotFoundException, IllegalArgumentException {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
@@ -50,22 +51,15 @@ public class ResearcherService {
         return describeResearcherProperties(user.getUserId());
     }
 
+    @Deprecated
     public List<UserProperty> updateProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser, Boolean validate) throws NotFoundException, IllegalArgumentException {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         if (validate) validateRequiredFields(researcherPropertiesMap);
         Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
-
-        boolean isUpdatedProfileCompleted = isCompleted(validatedProperties.keySet().stream().map((key) -> {
-            UserProperty p = new UserProperty();
-            p.setPropertyKey(key);
-            p.setPropertyValue(validatedProperties.get(key));
-            p.setUserId(user.getUserId());
-            return p;
-        }).collect(Collectors.toList()));
-
-        boolean isProfileCompleted = isCompleted(user.getProperties());
-
+        boolean isUpdatedProfileCompleted = Boolean.parseBoolean(validatedProperties.get(UserFields.COMPLETED.getValue()));
+        String completed = userPropertyDAO.isProfileCompleted(user.getUserId());
+        boolean isProfileCompleted = Boolean.parseBoolean(completed);
         List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getUserId());
         if (!isProfileCompleted && isUpdatedProfileCompleted) {
             saveProperties(properties);
@@ -74,10 +68,6 @@ public class ResearcherService {
             saveProperties(properties);
         }
         return describeResearcherProperties(user.getUserId());
-    }
-
-    private boolean isCompleted(List<String> existentProperties) {
-        return existentProperties.contains(UserFields.Ins)
     }
 
     private void saveProperties(List<UserProperty> properties) {
