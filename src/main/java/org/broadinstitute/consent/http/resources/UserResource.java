@@ -175,9 +175,9 @@ public class UserResource extends Resource {
         try {
             UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
             // Ensure that we have a real user with this ID, fail if we do not.
-            User user = userService.findUserById(userId);
+            userService.findUserById(userId);
             URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
-            User updatedUser = userService.updateUserFieldsById(user, userUpdateFields, userId);
+            User updatedUser = userService.updateUserFieldsById(userUpdateFields, userId);
             Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, updatedUser.getUserId());
             return Response.ok(uri).entity(gson.toJson(jsonUser)).build();
@@ -191,15 +191,20 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response update(@Auth AuthUser authUser, @Context UriInfo info, String json) {
+    public Response updateSelf(@Auth AuthUser authUser, @Context UriInfo info, String json) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
-            // Ensure that we have a real user with this ID, fail if we do not.
-            URI uri = info.getRequestUriBuilder().path("{id}").build(user.getUserId());
-            user = userService.updateUserFieldsById(user, userUpdateFields, user.getUserId());
+
+            if (Objects.nonNull(userUpdateFields.getUserRoleIds()) && !user.hasUserRole(UserRoles.ADMIN)) {
+                throw new BadRequestException("Cannot change user roles");
+            }
+
+            user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
             Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
+
+            URI uri = info.getRequestUriBuilder().path("").build();
             return Response.ok(uri).entity(gson.toJson(jsonUser)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

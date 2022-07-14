@@ -72,12 +72,7 @@ public class UserService {
      * @param userId The User's ID
      * @return The updated User
      */
-    public User updateUserFieldsById(@NonNull User user, UserUpdateFields userUpdateFields, Integer userId) {
-        // must be updating oneself or be an admin
-        if (!user.hasUserRole(UserRoles.ADMIN) && !user.getUserId().equals(userId)) {
-            throw new NotAuthorizedException("Cannot update user.");
-        }
-
+    public User updateUserFieldsById(UserUpdateFields userUpdateFields, Integer userId) {
         if (Objects.nonNull(userUpdateFields)) {
             // Update Primary User Fields
             if (Objects.nonNull(userUpdateFields.getDisplayName())) {
@@ -100,7 +95,7 @@ public class UserService {
             }
 
             // Handle Roles; must be admin to update roles.
-            if (user.hasUserRole(UserRoles.ADMIN) && Objects.nonNull(userUpdateFields.getUserRoleIds())) {
+            if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
                 List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream().map(UserRole::getRoleId).collect(Collectors.toList());
                 List<Integer> roleIdsToAdd = userUpdateFields.getRoleIdsToAdd(currentRoleIds);
                 List<Integer> roleIdsToRemove = userUpdateFields.getRoleIdsToRemove(currentRoleIds);
