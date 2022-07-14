@@ -17,7 +17,7 @@ post:
     500:
       description: Server error.
 put:
-  summary: Update limited user fields by id
+  summary: Update limited user fields
   description: |
     Updates a limited number of the current user's fields
   tags:

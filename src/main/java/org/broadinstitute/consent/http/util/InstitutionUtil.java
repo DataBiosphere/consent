@@ -43,7 +43,8 @@ public class InstitutionUtil {
                 || fieldName.equals("name")
                 || fieldName.equals("signingOfficials")
                 || fieldName.equals("displayName")
-                || fieldName.equals("userId"));
+                || fieldName.equals("userId")
+                || fieldName.equals("email"));
       }
 
       // NOTE: shouldSkipClass is mandatory when creating an ExclusionStrategy

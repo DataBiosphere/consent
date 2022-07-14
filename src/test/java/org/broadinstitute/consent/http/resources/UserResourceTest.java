@@ -400,7 +400,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testUpdateSelfRoles() {
+  public void testUpdateSelfRolesNotAdmin() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setUserRoleIds(List.of(1)); // any roles
@@ -412,19 +412,6 @@ public class UserResourceTest {
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  public void testUpdateSelfRolesNotAdmin() {
-    User user = createUserWithRole();
-    UserUpdateFields userUpdateFields = new UserUpdateFields();
-    Gson gson = new Gson();
-    when(userService.findUserById(any())).thenReturn(user);
-    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
-    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
-    initResource();
-    Response response = userResource.update(authUser, uriInfo, user.getUserId(), gson.toJson(userUpdateFields));
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
