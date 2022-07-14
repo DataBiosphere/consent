@@ -6,7 +6,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
-import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -15,24 +14,15 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
-import org.postgresql.util.PSQLException;
-import org.postgresql.util.PSQLState;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
@@ -132,12 +122,12 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Election collectionOneElection = createElection(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue(), darOne.getReferenceId(), dataset.getDataSetId());
     Integer collectionOneElectionId = collectionOneElection.getElectionId();
     Integer collectionOnePrevElectionId = collectionOnePrevElection.getElectionId();
-    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue(),
-        darTwo.getReferenceId(), datasetTwo.getDataSetId());
-    Integer collectionTwoElectionId = collectionTwoElection.getElectionId(); 
     Election excludedElection = createElection(ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.CLOSED.getValue(),
         excludedDar.getReferenceId(), excludedDataset.getDataSetId());
+    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue(),
+        darTwo.getReferenceId(), datasetTwo.getDataSetId());
+    Integer collectionTwoElectionId = collectionTwoElection.getElectionId(); 
     Integer excludedElectionId = excludedElection.getElectionId();
     
     //create old votes to ensure that they don't get pulled in by the query
@@ -160,8 +150,32 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Vote collectionTwoVoteChair = createVote(userChairId, collectionTwoElectionId, VoteType.CHAIRPERSON.getValue());
 
     List<Integer> targetDatasets = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
-    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userOneId, targetDatasets);
+    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userChairId, targetDatasets);
     assertNotNull(summaries);
+    assertEquals(2, summaries.size());
+    summaries.forEach((s) -> {
+      assertEquals(1, s.getDatasetIds().size());
+      s.getDatasetIds().stream()
+        .forEach((id) -> assertTrue(targetDatasets.contains(id)));
+      
+      List<Integer> targetVotes;
+      Integer electionId;
+
+      if(s.getDarCollectionId() == 1) {
+        targetVotes = List.of(collectionOneVoteChair.getVoteId(), collectionOneVoteThree.getVoteId());
+        electionId = collectionOneElection.getElectionId();
+      } else {
+        targetVotes = List.of(collectionTwoVoteChair.getVoteId(), collectionTwoVoteThree.getVoteId());
+        electionId = collectionTwoElection.getElectionId();
+      }
+      s.getElections().entrySet().stream()
+        .forEach((e) -> {
+          assertEquals(electionId, e.getKey());
+        });
+      s.getVotes().forEach((v) -> {
+        assertTrue(targetVotes.contains(v.getVoteId()));
+      });
+    });
   }
 
   

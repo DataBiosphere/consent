@@ -44,9 +44,7 @@ public class DarCollectionSummaryReducer implements LinkedHashMapRowReducer<Inte
       }
 
     } catch(Exception e) {
-      //Don't handle exceptions (for now)
+      //Don't handle exceptions
     }
-
-
   }
 }

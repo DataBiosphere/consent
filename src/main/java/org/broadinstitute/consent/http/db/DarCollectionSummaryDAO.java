@@ -45,7 +45,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       "ON dar.reference_id = dd.reference_id " +
     "WHERE dd.dataset_id IN (<datasetIds>) " +
     	"AND e.latest = e.electionid " +
-    	"AND LOWER(v.type) = 'final' OR v.dacuserid = :currentUserId"
+    	"AND (LOWER(v.type) = 'final' OR v.dacuserid = :currentUserId)"
   )
   List<DarCollectionSummary> getDarCollectionSummariesForDAC(
       @Bind("currentUserId") Integer currentUserId,
