@@ -92,7 +92,7 @@ public class UserService {
                 userPropertyDAO.insertAll(userProps);
             }
 
-            // Handle Roles; must be admin to update roles.
+            // Handle Roles
             if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
                 List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream().map(UserRole::getRoleId).collect(Collectors.toList());
                 List<Integer> roleIdsToAdd = userUpdateFields.getRoleIdsToAdd(currentRoleIds);

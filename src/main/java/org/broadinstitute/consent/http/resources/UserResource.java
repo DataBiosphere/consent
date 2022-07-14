@@ -177,11 +177,10 @@ public class UserResource extends Resource {
             UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
             // Ensure that we have a real user with this ID, fail if we do not.
             userService.findUserById(userId);
-            URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
             User updatedUser = userService.updateUserFieldsById(userUpdateFields, userId);
             Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, updatedUser.getUserId());
-            return Response.ok(uri).entity(gson.toJson(jsonUser)).build();
+            return Response.ok().entity(gson.toJson(jsonUser)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -197,15 +196,14 @@ public class UserResource extends Resource {
             UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
 
             if (Objects.nonNull(userUpdateFields.getUserRoleIds()) && !user.hasUserRole(UserRoles.ADMIN)) {
-                throw new BadRequestException("Cannot change user roles");
+                throw new BadRequestException("Cannot change user's roles.");
             }
 
             user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
             Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
 
-            URI uri = info.getRequestUriBuilder().path("").build();
-            return Response.ok(uri).entity(gson.toJson(jsonUser)).build();
+            return Response.ok().entity(gson.toJson(jsonUser)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
