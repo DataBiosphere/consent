@@ -175,8 +175,60 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
       s.getVotes().forEach((v) -> {
         assertTrue(targetVotes.contains(v.getVoteId()));
       });
+      assertEquals(1, s.getDatasetCount());
     });
   }
 
-  
+  @Test
+  public void testGetDarCollectionSummaryForSO() {
+
+    Dac dac = createDacForTest(); // NOTE: may not need this, remove if true
+    User userOne = createUserForTest();
+    User userTwo = createUserForTest();
+    Integer userOneId = userOne.getUserId();
+    Integer userTwoId = userTwo.getUserId();
+
+    Institution institution = createInstitution(userOneId);
+    Institution institutionTwo = createInstitution(userTwoId);
+    Integer institutionId = institution.getId();
+    userOne = assignInstitutionToUser(userOne, institutionId);
+    userTwo = assignInstitutionToUser(userTwo, institutionTwo.getId());
+    Dataset dataset = createDataset(userOneId);
+    Dataset datasetTwo = createDataset(userTwoId);
+    Integer collectionOneId = createDarCollection(userOneId);
+    Integer collectionTwoId = createDarCollection(userTwoId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
+    DataAccessRequest darTwo = createDataAccessRequest(collectionTwoId, userTwoId);
+
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDataSetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(), datasetTwo.getDataSetId());
+
+    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.CLOSED.getValue(),
+        darOne.getReferenceId(), dataset.getDataSetId());
+    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue(),
+        darOne.getReferenceId(), dataset.getDataSetId());
+    Integer collectionOneElectionId = collectionOneElection.getElectionId();
+    Integer collectionOnePrevElectionId = collectionOnePrevElection.getElectionId();
+    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue(),
+        darTwo.getReferenceId(), datasetTwo.getDataSetId());
+    Integer collectionTwoElectionId = collectionTwoElection.getElectionId();
+
+    List<Integer> targetDatasets = List.of(dataset.getDataSetId());
+    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForSO(institutionId);
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    summaries.forEach((s) -> {
+      assertEquals(1, s.getDatasetIds().size());
+      s.getDatasetIds().stream()
+          .forEach((id) -> assertTrue(targetDatasets.contains(id)));
+
+      Integer electionId = collectionOneElection.getElectionId();
+      s.getElections().entrySet().stream()
+          .forEach((e) -> {
+            assertEquals(electionId, e.getKey());
+          });
+      assertEquals(1, s.getDatasetCount());
+    });
+  }
 }
