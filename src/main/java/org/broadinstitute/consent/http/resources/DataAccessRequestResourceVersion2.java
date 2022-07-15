@@ -159,7 +159,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
       DataAccessRequest updatedDar =
-          dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
+          dataAccessRequestService.updateByReferenceId(user, originalDar);
       matchService.reprocessMatchesForPurpose(referenceId);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
@@ -247,8 +247,9 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       // it in dar data.
       data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
+      originalDar.addDatasetIds(data.getDatasetIds());
       DataAccessRequest updatedDar =
-          dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
+          dataAccessRequestService.updateByReferenceId(user, originalDar);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -403,8 +404,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       data.setReferenceId(referenceId);
     }
     newDar.setData(data);
-    // TODO: Update the UI to pass in dataset ids on the DAR object itself.
-    newDar.setDatasetIds(data.getDatasetIds());
+    newDar.addDatasetIds(data.getDatasetIds());
     return newDar;
   }
 
@@ -444,7 +444,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       default:
         break;
     }
-    return dataAccessRequestService.updateByReferenceIdVersion2(user, dar);
+    return dataAccessRequestService.updateByReferenceId(user, dar);
   }
 
   private void deleteDarDocument(DataAccessRequest dar, String blobIdName) {

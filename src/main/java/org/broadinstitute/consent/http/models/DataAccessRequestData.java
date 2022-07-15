@@ -567,19 +567,18 @@ public class DataAccessRequestData {
         this.sortDate = sortDate;
     }
 
-    @Deprecated
+    /**
+     * Used for the initial population of datasets a DAR is associated to.
+     * Intended to be used solely for simpler construction from the UI.
+     *
+     * @return List of dataset ids associated to the DAR.
+     */
     public List<Integer> getDatasetIds() {
         if (Objects.isNull(datasetIds)) {
             return Collections.emptyList();
         }
         return datasetIds;
     }
-
-    @Deprecated
-    public void setDatasetIds(List<Integer> datasetIds) {
-        this.datasetIds = datasetIds;
-    }
-
     public List<DatasetDetailEntry> getDatasetDetail() {
         if (Objects.isNull(datasetDetail)) {
             return Collections.emptyList();

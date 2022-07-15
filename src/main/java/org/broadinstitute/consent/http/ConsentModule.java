@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -88,6 +89,7 @@ public class ConsentModule extends AbstractModule {
     private final ConsentAuditDAO consentAuditDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DarCollectionDAO darCollectionDAO;
+    private final DarCollectionSummaryDAO darCollectionSummaryDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
 
@@ -120,6 +122,7 @@ public class ConsentModule extends AbstractModule {
         this.consentAuditDAO = this.jdbi.onDemand(ConsentAuditDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
         this.darCollectionDAO = this.jdbi.onDemand(DarCollectionDAO.class);
+        this.darCollectionSummaryDAO = this.jdbi.onDemand(DarCollectionSummaryDAO.class);
         this.institutionDAO = this.jdbi.onDemand((InstitutionDAO.class));
         this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
     }
@@ -139,6 +142,7 @@ public class ConsentModule extends AbstractModule {
         container.setDacDAO(providesDacDAO());
         container.setDataAccessRequestDAO(providesDataAccessRequestDAO());
         container.setDarCollectionDAO(providesDARCollectionDAO());
+        container.setDarCollectionSummaryDAO(providesDarCollectionSummaryDAO());
         container.setDatasetAssociationDAO(providesDatasetAssociationDAO());
         container.setDatasetDAO(providesDatasetDAO());
         container.setElectionDAO(providesElectionDAO());
@@ -275,6 +279,7 @@ public class ConsentModule extends AbstractModule {
                 providesDatasetDAO(),
                 providesLibraryCardDAO(),
                 providesDatasetAssociationDAO(),
+                providesDataAccessRequestDAO(),
                 providesMailMessageDAO(),
                 providesDacService(),
                 providesEmailNotifierService(),
@@ -330,6 +335,11 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DarCollectionDAO providesDARCollectionDAO() {
         return darCollectionDAO;
+    }
+
+    @Provides
+    DarCollectionSummaryDAO providesDarCollectionSummaryDAO() {
+        return darCollectionSummaryDAO;
     }
 
     @Provides
