@@ -147,10 +147,10 @@ public class DataAccessRequestServiceTest {
         when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
+        when(userDAO.findUserByEmail(any())).thenReturn(new User());
         initService();
 
-        DataAccessRequest updated = service.cancelDataAccessRequest(dar.getReferenceId());
+        DataAccessRequest updated = service.cancelDataAccessRequest(authUser, dar.getReferenceId());
         assertNotNull(updated);
         assertNotNull(updated.getData());
         assertNotNull(updated.getData().getStatus());
@@ -162,10 +162,9 @@ public class DataAccessRequestServiceTest {
         when(electionDAO.getElectionIdsByReferenceIds(anyList())).thenReturn(List.of(1));
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
         initService();
 
-        service.cancelDataAccessRequest(dar.getReferenceId());
+        service.cancelDataAccessRequest(authUser, dar.getReferenceId());
     }
 
     @Test(expected = NotFoundException.class)
@@ -174,7 +173,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(null);
         initService();
 
-        service.cancelDataAccessRequest(dar.getReferenceId());
+        service.cancelDataAccessRequest(authUser, dar.getReferenceId());
     }
 
     @Test
@@ -186,7 +185,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(List.of(1, 2, 3));
         doNothing().when(dataAccessRequestDAO).updateDraftByReferenceId(any(), any());
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(), any(), any(), any());
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(), any(), any(), any(), any());
         doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
         initService();
         List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
@@ -222,11 +221,11 @@ public class DataAccessRequestServiceTest {
         dar.setCollectionId(RandomUtils.nextInt(0, 100));
         User user = new User(1, "email@test.org", "Display Name", new Date());
         dar.addDatasetIds(Arrays.asList(1, 2, 3));
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(),
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(),
             any(), any(), any(), any());
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         initService();
-        DataAccessRequest newDar = service.updateByReferenceIdVersion2(user, dar);
+        DataAccessRequest newDar = service.updateByReferenceId(user, dar);
         assertNotNull(newDar);
     }
 
@@ -235,12 +234,12 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         User user = new User(1, "email@test.org", "Display Name", new Date());
         dar.addDatasetIds(Arrays.asList(1, 2, 3));
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(),
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(),
           any(), any(), any(), any());
         doNothing().when(darCollectionDAO).updateDarCollection(any(), any(), any());
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         initService();
-        DataAccessRequest newDar = service.updateByReferenceIdVersion2(user, dar);
+        DataAccessRequest newDar = service.updateByReferenceId(user, dar);
         assertNotNull(newDar);
     }
 

@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.glassfish.hk2.utilities.reflection.Logger;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -179,12 +180,36 @@ public class UserResource extends Resource {
             UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
             // Ensure that we have a real user with this ID, fail if we do not.
             userService.findUserById(userId);
+            User updatedUser = userService.updateUserFieldsById(userUpdateFields, userId);
+            Gson gson = new Gson();
+            JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, updatedUser.getUserId());
+            return Response.ok().entity(gson.toJson(jsonUser)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @PermitAll
+    public Response updateSelf(@Auth AuthUser authUser, @Context UriInfo info, String json) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
+
+            if (Objects.nonNull(userUpdateFields.getUserRoleIds()) && !user.hasUserRole(UserRoles.ADMIN)) {
+                throw new BadRequestException("Cannot change user's roles.");
+            }
+
+            user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
             URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
             User user = userService.updateUserFieldsById(userUpdateFields, userId);
             supportRequestService.handleSuggestedUserFieldsSupportRequest(userUpdateFields, user, authUser);
             Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
-            return Response.ok(uri).entity(gson.toJson(jsonUser)).build();
+
+            return Response.ok().entity(gson.toJson(jsonUser)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

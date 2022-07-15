@@ -409,6 +409,35 @@ public class UserResourceTest {
   }
 
   @Test
+  public void testUpdateSelf() {
+    User user = createUserWithRole();
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateSelfRolesNotAdmin() {
+    User user = createUserWithRole();
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    userUpdateFields.setUserRoleIds(List.of(1)); // any roles
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
   public void testUpdateUserNotFound() {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenThrow(new NotFoundException());

@@ -2477,24 +2477,7 @@ paths:
   /api/match/purpose/batch/:
     $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
   /api/user:
-    post:
-      summary: Create User
-      description: Create a user with RESEARCHER role using the user's current authentication status.
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the created user.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        400:
-          description: Unable to validate the user's google identity.
-        409:
-          description: User should be unique
-        500:
-          description: Server error.
+    $ref: './paths/user.yaml'
   /api/user/me:
     get:
       summary: Find currently authenticated user

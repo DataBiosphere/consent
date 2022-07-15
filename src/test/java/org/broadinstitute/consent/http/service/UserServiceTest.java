@@ -88,6 +88,7 @@ public class UserServiceTest {
 
         User user = new User();
         user.setUserId(1);
+
         // Note that we're starting out with 1 modifiable role (Admin) and 1 that is not (Chairperson)
         // and one role that should never be removed, but can be added (Researcher)
         // When we update this user, we'll ensure that the new roles are added, old roles are deleted,
