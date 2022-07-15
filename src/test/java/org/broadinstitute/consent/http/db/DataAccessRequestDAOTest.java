@@ -135,6 +135,9 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateByReferenceIdVersion2() {
         DataAccessRequest dar = createDataAccessRequestV3();
+    @Test
+    public void testUpdateByReferenceId() {
+        DataAccessRequest dar = createDataAccessRequestV3();
         Date now = new Date();
         User user = createUser();
         String rus = RandomStringUtils.random(10, true, false);

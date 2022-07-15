@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import liquibase.pro.packaged.G;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -384,6 +383,35 @@ public class UserResourceTest {
     initResource();
     Response response = userResource.update(authUser, uriInfo, user.getUserId(), gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateSelf() {
+    User user = createUserWithRole();
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateSelfRolesNotAdmin() {
+    User user = createUserWithRole();
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    userUpdateFields.setUserRoleIds(List.of(1)); // any roles
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test

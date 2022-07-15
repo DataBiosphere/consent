@@ -424,7 +424,7 @@ public class ElectionService {
             }
             List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(referenceId);
             if (!datasetIds.isEmpty()) {
-                verifyActiveDataSets(dataAccessRequest, datasetIds);
+                verifyActiveDatasets(dataAccessRequest, datasetIds);
                 Consent consent = consentDAO.findConsentFromDatasetID(datasetIds.get(0));
                 consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), ElectionStatus.CLOSED.getValue());
             }
@@ -432,7 +432,7 @@ public class ElectionService {
         return consentElection;
     }
 
-    private void verifyActiveDataSets(DataAccessRequest dataAccessRequest, List<Integer> datasetIds) throws Exception {
+    private void verifyActiveDatasets(DataAccessRequest dataAccessRequest, List<Integer> datasetIds) throws Exception {
         List<Dataset> datasets = datasetDAO.findDatasetsByIdList(datasetIds);
         List<String> disabledDatasets = datasets.stream()
                 .filter(ds -> !ds.getActive())
