@@ -124,7 +124,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testUpdateByReferenceIdVersion2() {
+    public void testUpdateByReferenceId() {
         DataAccessRequest dar = createDataAccessRequestV3();
         Date now = new Date();
         User user = createUser();
