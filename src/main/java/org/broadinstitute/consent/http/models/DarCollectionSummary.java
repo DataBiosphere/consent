@@ -123,11 +123,11 @@ public class DarCollectionSummary {
     this.researcherName = researcherName;
   }
 
-  public String getResearcherInstitutionName() {
+  public String getInstitutionName() {
     return institutionName;
   }
 
-  public void setResearcherInstitutuionName(String institutionName) {
+  public void setInstitutionName(String institutionName) {
     this.institutionName = institutionName;
   }
 
