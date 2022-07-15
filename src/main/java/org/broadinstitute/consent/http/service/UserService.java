@@ -91,7 +91,8 @@ public class UserService {
                 userPropertyDAO.deletePropertiesByUserAndKey(userProps);
                 userPropertyDAO.insertAll(userProps);
             }
-            // Handle Roles.
+
+            // Handle Roles
             if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
                 List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream().map(UserRole::getRoleId).collect(Collectors.toList());
                 List<Integer> roleIdsToAdd = userUpdateFields.getRoleIdsToAdd(currentRoleIds);
