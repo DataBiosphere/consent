@@ -48,10 +48,10 @@ public class DarCollectionResourceTest {
   private final List<UserRole> researcherRole = List.of(
     new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())
   );
-  private final User researcher = new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRole, authUser.getEmail());
+  private final User researcher = new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRole);
   private final List<UserRole> signingOfficialRole = List.of(
           new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
-  private final User signingOfficial = new User(4, authUser.getEmail(), "Display Name", new Date(), signingOfficialRole, authUser.getEmail());
+  private final User signingOfficial = new User(4, authUser.getEmail(), "Display Name", new Date(), signingOfficialRole);
 
   private DarCollectionResource resource;
 
@@ -67,7 +67,7 @@ public class DarCollectionResourceTest {
   private DataAccessRequest mockDataAccessRequestWithDatasetIds() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setDatasetIds(List.of(RandomUtils.nextInt(1, 100)));
+    dar.addDatasetId(RandomUtils.nextInt(1, 100));
     dar.setData(data);
     return dar;
   }
@@ -113,7 +113,7 @@ public class DarCollectionResourceTest {
   public void testGetCollectionsForUserByRoleAdmin() {
     List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
     UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole), authUser.getEmail());
+    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
 
     when(userService.findUserByEmail(anyString())).thenReturn(admin);
     when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
@@ -128,7 +128,7 @@ public class DarCollectionResourceTest {
     // Test that a user who has access cannot access as a role they do not have.
     List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
     UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole), authUser.getEmail());
+    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
 
     when(userService.findUserByEmail(anyString())).thenReturn(admin);
     when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
@@ -144,7 +144,7 @@ public class DarCollectionResourceTest {
     List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
     UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     UserRole soRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole, soRole), authUser.getEmail());
+    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole, soRole));
 
     when(userService.findUserByEmail(anyString())).thenReturn(admin);
     when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
@@ -184,7 +184,7 @@ public class DarCollectionResourceTest {
   public void testGetCollectionByIdAdmin() {
     DarCollection collection = mockDarCollection();
     UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole), authUser.getEmail());
+    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
@@ -262,7 +262,7 @@ public class DarCollectionResourceTest {
   public void testGetCollectionByIdChair() {
     List<UserRole> chairRole = List.of(
             new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
@@ -285,7 +285,7 @@ public class DarCollectionResourceTest {
   public void testGetCollectionByIdDacMember() {
     List<UserRole> chairRole = List.of(
             new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName()));
-    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
@@ -308,7 +308,7 @@ public class DarCollectionResourceTest {
   public void testGetCollectionByIdDacMemberNoDatasetIdMatch() {
     List<UserRole> chairRole = List.of(
             new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
@@ -440,7 +440,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_asAdmin() {
     List<UserRole> adminRole = List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRole, authUser.getEmail());
+    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRole);
 
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(admin.getUserId());
@@ -455,7 +455,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_asChair() {
     List<UserRole> chairRole = List.of(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+    User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole);
 
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(chair.getUserId());
@@ -470,7 +470,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_asChairAsAdmin() {
     List<UserRole> chairRole = List.of(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+    User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole);
 
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(chair.getUserId());

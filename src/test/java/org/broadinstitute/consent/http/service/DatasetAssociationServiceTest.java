@@ -106,10 +106,10 @@ public class DatasetAssociationServiceTest {
     Dataset ds1 = new Dataset(1, "DS-001", "DS-001", new Date(), true);
     Dataset ds2 = new Dataset(2, "DS-002", "DS-002", new Date(), true);
 
-    User chairperson = new User(1, "originalchair@broad.com", "Original Chairperson", new Date(), chairpersonList(), null);
-    User member = new User(2, "originalchair@broad.com", "Original Chairperson", new Date(), memberList(), null);
-    User dataOwner1 = new User(3, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList(), null);
-    User dataOwner2 = new User(4, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList(), null);
+    User chairperson = new User(1, "originalchair@broad.com", "Original Chairperson", new Date(), chairpersonList());
+    User member = new User(2, "originalchair@broad.com", "Original Chairperson", new Date(), memberList());
+    User dataOwner1 = new User(3, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList());
+    User dataOwner2 = new User(4, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList());
 
     private List<UserRole> chairpersonList(){
         return Arrays.asList(getChairpersonRole());

@@ -5,6 +5,7 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -23,7 +24,6 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -56,28 +56,31 @@ public class ElectionService {
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
     private final UserDAO userDAO;
-    private final DatasetDAO dataSetDAO;
+    private final DatasetDAO datasetDAO;
     private final LibraryCardDAO libraryCardDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DacService dacService;
     private final DataAccessRequestService dataAccessRequestService;
     private final EmailNotifierService emailNotifierService;
     private final UseRestrictionConverter useRestrictionConverter;
-    private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
+    private final String INACTIVE_DS = "Election was not created. The following Datasets are disabled : ";
     private static final Logger logger = LoggerFactory.getLogger("ElectionService");
 
     @Inject
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
-                           DatasetDAO dataSetDAO, LibraryCardDAO libraryCardDAO, DatasetAssociationDAO datasetAssociationDAO, MailMessageDAO mailMessageDAO,
+                           DatasetDAO datasetDAO, LibraryCardDAO libraryCardDAO, DatasetAssociationDAO datasetAssociationDAO,
+                           DataAccessRequestDAO dataAccessRequestDAO, MailMessageDAO mailMessageDAO,
                            DacService dacService, EmailNotifierService emailNotifierService,
                            DataAccessRequestService dataAccessRequestService, UseRestrictionConverter useRestrictionConverter) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.userDAO = userDAO;
-        this.dataSetDAO = dataSetDAO;
+        this.datasetDAO = datasetDAO;
         this.libraryCardDAO = libraryCardDAO;
         this.datasetAssociationDAO = datasetAssociationDAO;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.mailMessageDAO = mailMessageDAO;
         this.emailNotifierService = emailNotifierService;
         this.dacService = dacService;
@@ -419,51 +422,32 @@ public class ElectionService {
             if (Objects.isNull(dataAccessRequest) || Objects.isNull(dataAccessRequest.getData())) {
                 throw new NotFoundException();
             }
-            List<Dataset> dataSets = verifyActiveDataSets(dataAccessRequest, referenceId);
-            Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
-            consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), ElectionStatus.CLOSED.getValue());
+            List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(referenceId);
+            if (!datasetIds.isEmpty()) {
+                verifyActiveDatasets(dataAccessRequest, datasetIds);
+                Consent consent = consentDAO.findConsentFromDatasetID(datasetIds.get(0));
+                consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), ElectionStatus.CLOSED.getValue());
+            }
         }
         return consentElection;
     }
 
-    private List<Dataset> verifyActiveDataSets(DataAccessRequest dar, String referenceId) throws Exception {
-        List<Integer> dataSets = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
-        List<Dataset> dataSetList = dataSets.isEmpty() ? Collections.emptyList() : dataSetDAO.findDatasetsByIdList(dataSets);
-        List<String> disabledDataSets = dataSetList.stream()
+    private void verifyActiveDatasets(DataAccessRequest dataAccessRequest, List<Integer> datasetIds) throws Exception {
+        List<Dataset> datasets = datasetDAO.findDatasetsByIdList(datasetIds);
+        List<String> disabledDatasets = datasets.stream()
                 .filter(ds -> !ds.getActive())
                 .map(Dataset::getObjectId)
                 .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(disabledDataSets)) {
-            boolean createElection = disabledDataSets.size() != dataSetList.size();
-            User user = userDAO.findUserById(dar.getUserId());
+        if (CollectionUtils.isNotEmpty(disabledDatasets)) {
+            boolean createElection = disabledDatasets.size() != datasets.size();
+            User user = userDAO.findUserById(dataAccessRequest.getUserId());
             if (!createElection) {
-                emailNotifierService.sendDisabledDatasetsMessage(user, disabledDataSets, dar.getData().getDarCode());
-                throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
+                emailNotifierService.sendDisabledDatasetsMessage(user, disabledDatasets, dataAccessRequest.getData().getDarCode());
+                throw new IllegalArgumentException(INACTIVE_DS + disabledDatasets);
             } else {
-                updateDataAccessRequest(dataSetList, dar, referenceId);
-                emailNotifierService.sendDisabledDatasetsMessage(user, disabledDataSets, dar.getData().getDarCode());
+                emailNotifierService.sendDisabledDatasetsMessage(user, disabledDatasets, dataAccessRequest.getData().getDarCode());
             }
         }
-        return dataSetList;
-    }
-
-    private void updateDataAccessRequest(List<Dataset> dataSets, DataAccessRequest dar, String referenceId) {
-        List<DatasetDetailEntry> activeDatasetDetailEntries = new ArrayList<>();
-        List<Integer> activeDatasetIds = new ArrayList<>();
-        List<Dataset> activeDataSets = dataSets.stream()
-                .filter(Dataset::getActive)
-                .collect(Collectors.toList());
-        activeDataSets.forEach((dataSet) -> {
-            activeDatasetIds.add(dataSet.getDataSetId());
-            DatasetDetailEntry entry = new DatasetDetailEntry();
-            entry.setDatasetId(dataSet.getDataSetId().toString());
-            entry.setName(dataSet.getName());
-            entry.setObjectId(dataSet.getObjectId());
-            activeDatasetDetailEntries.add(entry);
-        });
-        dar.getData().setDatasetIds(activeDatasetIds);
-        dar.getData().setDatasetDetail(activeDatasetDetailEntries);
-        dataAccessRequestService.updateByReferenceId(referenceId, dar.getData());
     }
 
     private DataAccessRequest describeDataAccessRequestById(String id) {
@@ -484,7 +468,7 @@ public class ElectionService {
             case DATA_ACCESS:
             case RP:
                 DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-                List<Integer> datasetIdList = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
+                List<Integer> datasetIdList = Objects.nonNull(dar) ? dar.getDatasetIds() : Collections.emptyList();
                 if (datasetIdList != null && !datasetIdList.isEmpty()) {
                     if (datasetIdList.size() > 1) {
                         logger.warn("DAR " +
@@ -587,7 +571,7 @@ public class ElectionService {
             dar.setSortDate(new Timestamp(createDate.getTime()));
             dar.getData().setSortDate(createDate.getTime());
             User user = userDAO.findUserById(dar.getUserId());
-            dataAccessRequestService.updateByReferenceIdVersion2(user, dar);
+            dataAccessRequestService.updateByReferenceId(user, dar);
         }
     }
 
@@ -605,9 +589,9 @@ public class ElectionService {
 
     private void sendResearcherNotification(String referenceId) throws Exception {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-        List<Integer> dataSetIdList = dar.getData().getDatasetIds();
+        List<Integer> dataSetIdList = dar.getDatasetIds();
         if (CollectionUtils.isNotEmpty(dataSetIdList)) {
-            List<Dataset> dataSets = dataSetDAO.findDatasetsByIdList(dataSetIdList);
+            List<Dataset> dataSets = datasetDAO.findDatasetsByIdList(dataSetIdList);
             List<DatasetMailDTO> datasetsDetail = new ArrayList<>();
             dataSets.forEach(ds ->
                     datasetsDetail.add(new DatasetMailDTO(ds.getName(), ds.getDatasetIdentifier()))
@@ -638,10 +622,18 @@ public class ElectionService {
      */
     private void sendDataCustodianNotification(String referenceId) {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-        final User researcher = (Objects.nonNull(dar) && Objects.nonNull(dar.getUserId())) ?
-                userDAO.findUserById(dar.getUserId()) :
-                null;
-        List<Integer> datasetIdList = dar.getData().getDatasetIds();
+        if (dar == null) {
+            logger.error("Unable to send data custodian approval message: dar could not be found with reference id "+referenceId+".");
+            return;
+        }
+
+        final User researcher = userDAO.findUserById(dar.getUserId());
+        if (researcher == null) {
+            logger.error("Unable to send data custodian approval message: researcher could not be found with user id "+dar.getUserId()+".");
+            return;
+        }
+
+        List<Integer> datasetIdList = dar.getDatasetIds();
         if (CollectionUtils.isNotEmpty(datasetIdList)) {
             Map<Integer, List<DatasetAssociation>> userToAssociationMap = datasetAssociationDAO.
                     getDatasetAssociations(datasetIdList).stream().
@@ -650,18 +642,15 @@ public class ElectionService {
                 User custodian = userDAO.findUserById(userId);
                 List<Integer> datasetIds = associationList.stream().
                         map(DatasetAssociation::getDatasetId).collect(Collectors.toList());
-                List<DatasetMailDTO> mailDTOS = dataSetDAO.findDatasetsByIdList(datasetIds).stream().
+                List<DatasetMailDTO> mailDTOS = datasetDAO.findDatasetsByIdList(datasetIds).stream().
                         map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier())).
                         collect(Collectors.toList());
                 try {
-                    String researcherEmail = Objects.nonNull(researcher) ?
-                            researcher.getEmail() :
-                            Objects.nonNull(dar.getData().getAcademicEmail()) ?
-                                    dar.getData().getAcademicEmail() :
-                                    dar.getData().getResearcher();
+                    String researcherEmail = researcher.getEmail();
                     String darCode = Objects.nonNull(dar.getData().getDarCode()) ?
                             dar.getData().getDarCode() :
                             dar.getReferenceId();
+
                     emailNotifierService.sendDataCustodianApprovalMessage(custodian.getEmail(), darCode, mailDTOS,
                             custodian.getDisplayName(), researcherEmail);
                 } catch (Exception e) {

@@ -320,7 +320,6 @@ public class MatchServiceTest {
         when(consentDAO.findConsentById(any())).thenReturn(consent);
         when(consentDAO.checkConsentById(any())).thenReturn(consent.getConsentId());
         List<Dataset> dataSets = getSampleDataAccessRequest(referenceId)
-                .getData()
                 .getDatasetIds()
                 .stream()
                 .map(id -> {
@@ -344,7 +343,7 @@ public class MatchServiceTest {
         DataAccessRequestData data = new DataAccessRequestData();
         data.setReferenceId(referenceId);
         data.setHmb(true);
-        data.setDatasetIds(Collections.singletonList(1));
+        dar.addDatasetId(1);
         dar.setData(data);
         return dar;
     }

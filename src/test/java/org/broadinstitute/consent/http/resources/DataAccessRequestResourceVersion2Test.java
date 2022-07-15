@@ -59,7 +59,7 @@ public class DataAccessRequestResourceVersion2Test {
 
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final List<UserRole> roles = Collections.singletonList(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), roles, authUser.getEmail());
+  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
 
   private DataAccessRequestResourceVersion2 resource;
 
@@ -127,7 +127,7 @@ public class DataAccessRequestResourceVersion2Test {
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-      when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+      when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
@@ -144,7 +144,7 @@ public class DataAccessRequestResourceVersion2Test {
     try {
       when(userService.findUserByEmail(any())).thenReturn(invalidUser);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-      when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+      when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
@@ -173,7 +173,7 @@ public class DataAccessRequestResourceVersion2Test {
     DataAccessRequest dar = generateDataAccessRequest();
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     initResource();
 
     Response response = resource.updatePartialDataAccessRequest(authUser, "", "{}");
@@ -186,7 +186,7 @@ public class DataAccessRequestResourceVersion2Test {
     DataAccessRequest dar = generateDataAccessRequest();
     when(userService.findUserByEmail(any())).thenReturn(invalidUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     initResource();
 
     Response response = resource.updatePartialDataAccessRequest(authUser, "", "{}");
@@ -230,7 +230,7 @@ public class DataAccessRequestResourceVersion2Test {
   public void testUploadIrbDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
-    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -266,7 +266,7 @@ public class DataAccessRequestResourceVersion2Test {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setIrbDocumentLocation(RandomStringUtils.random(10));
     dar.getData().setIrbDocumentName(RandomStringUtils.random(10) + ".txt");
-    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -318,7 +318,7 @@ public class DataAccessRequestResourceVersion2Test {
   public void testUploadCollaborationDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
-    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -354,7 +354,7 @@ public class DataAccessRequestResourceVersion2Test {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setCollaborationLetterLocation(RandomStringUtils.random(10));
     dar.getData().setCollaborationLetterName(RandomStringUtils.random(10) + ".txt");
-    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -375,7 +375,7 @@ public class DataAccessRequestResourceVersion2Test {
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
-    data.setDatasetIds(Arrays.asList(1, 2));
+    dar.setDatasetIds(Arrays.asList(1, 2));
     dar.setData(data);
     dar.setUserId(user.getUserId());
     dar.setCreateDate(now);

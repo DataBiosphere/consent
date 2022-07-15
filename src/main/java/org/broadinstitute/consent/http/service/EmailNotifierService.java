@@ -119,8 +119,7 @@ public class EmailNotifierService {
             DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
             List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
             List<Integer> datasetIds = collection.getDars().values().stream()
-                    .map(DataAccessRequest::getData)
-                    .map(DataAccessRequestData::getDatasetIds)
+                    .map(DataAccessRequest::getDatasetIds)
                     .flatMap(List::stream)
                     .collect(Collectors.toList());
             Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
@@ -148,7 +147,7 @@ public class EmailNotifierService {
                 Map<String, String> data = retrieveForCollect(electionId, chair);
                 String collectUrl = generateCollectVoteUrl(SERVER_URL, data.get("electionType"), data.get("entityId"), data.get("electionId"));
                 Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), collectUrl);
-                Set<String> emails = StringUtils.isNotEmpty(data.get("additionalEmail")) ? new HashSet<>(Arrays.asList(data.get("additionalEmail"), data.get("email"))) : new HashSet<>(Collections.singletonList(data.get("email")));
+                Set<String> emails = Set.of(data.get("email"));
                 mailService.sendCollectMessage(emails, data.get("entityName"), data.get("electionType"), template);
                 emailDAO.insertEmail(null, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 1, new Date(), template.toString());
             }
@@ -160,7 +159,7 @@ public class EmailNotifierService {
             Map<String, String> data = retrieveForVote(voteId);
             String voteUrl = generateUserVoteUrl(SERVER_URL, data.get("electionType"), data.get("voteId"), data.get("entityId"), data.get("rpVoteId"));
             Writer template = templateHelper.getReminderTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), voteUrl);
-            Set<String> emails = StringUtils.isNotEmpty(data.get("additionalEmail")) ?  new HashSet<>(Arrays.asList(data.get("additionalEmail"), data.get("email"))) :  new HashSet<>(Collections.singletonList(data.get("email")));
+            Set<String> emails = Set.of(data.get("email"));
             mailService.sendReminderMessage(emails, data.get("entityName"), data.get("electionType"), template);
             emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
             voteDAO.updateVoteReminderFlag(voteId, true);
@@ -263,19 +262,11 @@ public class EmailNotifierService {
     }
 
     private Set<String> getEmails(List<User> users) {
-        Set<String> emails = users.stream()
-                .map(u -> {
-                    if (Objects.nonNull(u.getAdditionalEmail())) {
-                        return List.of(u.getEmail(), u.getAdditionalEmail());
-                    }
-                    return List.of(u.getEmail());
-                })
+        return users.stream()
+                .map(u -> List.of(u.getEmail()))
                 .flatMap(Collection::stream)
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.toSet());
-        List<String> academicEmails =  getAcademicEmails(users);
-        if (CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
-        return emails;
     }
 
     private User describeDACUserById(Integer id) throws IllegalArgumentException {
@@ -329,7 +320,6 @@ public class EmailNotifierService {
         dataMap.put("electionId",  election.getElectionId().toString());
         dataMap.put("dacUserId", user.getUserId().toString());
         dataMap.put("email",  user.getEmail());
-        dataMap.put("additionalEmail",  user.getAdditionalEmail());
         if(dataMap.get("electionType").equals(ElectionTypeString.DATA_ACCESS.getValue())){
             dataMap.put("rpVoteId", findRpVoteId(election.getElectionId(), user.getUserId()));
         } else if(dataMap.get("electionType").equals(ElectionTypeString.RP.getValue())){
@@ -361,11 +351,10 @@ public class EmailNotifierService {
                 election.getReferenceId(),
                 election.getElectionId().toString(),
                 user.getUserId().toString(),
-                user.getEmail(),
-                user.getAdditionalEmail());
+                user.getEmail());
     }
 
-    private Map<String, String> createDataMap(String displayName, String electionType, String referenceId, String electionId, String dacUserId, String email, String additionalEmail){
+    private Map<String, String> createDataMap(String displayName, String electionType, String referenceId, String electionId, String dacUserId, String email){
         Map<String, String> dataMap = new HashMap<>();
         dataMap.put("userName", displayName);
         dataMap.put("electionType", retrieveElectionTypeStringCollect(electionType));
@@ -374,7 +363,6 @@ public class EmailNotifierService {
         dataMap.put("electionId", electionId);
         dataMap.put("dacUserId", dacUserId);
         dataMap.put("email", email);
-        dataMap.put("additionalEmail", additionalEmail);
         return dataMap;
     }
 
@@ -412,27 +400,5 @@ public class EmailNotifierService {
             return ElectionTypeString.TRANSLATE_DUL.getValue();
         }
         return ElectionTypeString.DATA_ACCESS.getValue();
-    }
-
-    private List<String> getAcademicEmails(List<User> users) {
-        List<String> academicEmails = new ArrayList<>();
-        if(CollectionUtils.isNotEmpty(users)) {
-            List<Integer> userIds = users.stream().map(User::getUserId).collect(Collectors.toList());
-            List<UserProperty> researcherProperties = userPropertyDAO.findResearcherPropertiesByUserIds(userIds);
-            Map<Integer, List<UserProperty>> researcherPropertiesMap = researcherProperties.stream().collect(Collectors.groupingBy(
-                UserProperty::getUserId));
-            researcherPropertiesMap.forEach((userId, properties) -> {
-                Optional<UserProperty> checkNotification = properties.stream().filter(rp -> rp.getPropertyKey().equals(
-                    UserFields.CHECK_NOTIFICATIONS.getValue())).findFirst();
-                if (checkNotification.isPresent() && checkNotification.get().getPropertyValue().equals("true")) {
-                    Optional<UserProperty> academicEmailRP = properties.stream().
-                            filter(rp -> rp.getPropertyKey().equals(UserFields.ACADEMIC_BUSINESS_EMAIL.getValue())).
-                            findFirst();
-                    academicEmailRP.ifPresent(rp -> academicEmails.add(rp.getPropertyValue()));
-
-                }
-            });
-        }
-        return academicEmails;
     }
 }

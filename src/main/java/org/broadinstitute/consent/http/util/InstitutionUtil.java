@@ -38,11 +38,13 @@ public class InstitutionUtil {
       @Override
       public boolean shouldSkipField(FieldAttributes field) {
         String fieldName = field.getName();
-        if (!isAdmin && (fieldName != "id" && fieldName != "name")) {
-          return true;
-        } else {
-          return false;
-        }
+        
+        return !isAdmin && !(fieldName.equals("id")
+                || fieldName.equals("name")
+                || fieldName.equals("signingOfficials")
+                || fieldName.equals("displayName")
+                || fieldName.equals("userId")
+                || fieldName.equals("email"));
       }
 
       // NOTE: shouldSkipClass is mandatory when creating an ExclusionStrategy

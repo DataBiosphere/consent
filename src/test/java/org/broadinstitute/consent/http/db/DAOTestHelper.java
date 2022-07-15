@@ -300,7 +300,7 @@ public class DAOTestHelper {
         String name = RandomStringUtils.randomAlphabetic(10);
         Integer userId = userDAO.insertUser(email, name, new Date());
         Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphanumeric(10), "itdirectorName", "itDirectorEmail", userId, new Date());
-        userDAO.updateUser(name, userId, email, institutionId);
+        userDAO.updateUser(name, userId, institutionId);
         userRoleDAO.insertSingleUserRole(7, userId);
         return userDAO.findUserById(userId);
     }
@@ -378,7 +378,7 @@ public class DAOTestHelper {
         Integer institutionId = createInstitution().getId();
         String email = RandomStringUtils.randomAlphabetic(11);
         Integer userId = userDAO.insertUser(email, "displayName", new Date());
-        userDAO.updateUser(email, userId, "additionalEmail", institutionId);
+        userDAO.updateUser(email, userId, institutionId);
         String stringValue = "value";
         Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue, userId, new Date());
         return libraryCardDAO.findLibraryCardById(id);
@@ -443,11 +443,10 @@ public class DAOTestHelper {
 
     protected DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId, int datasetId, int userId, String darCode) {
         DataAccessRequestData data = new DataAccessRequestData();
-        List<Integer> datasetIds = Collections.singletonList(datasetId);
-        data.setDatasetIds(datasetIds);
         data.setProjectTitle(RandomStringUtils.random(10));
         String referenceId = RandomStringUtils.randomAlphanumeric(20);
         dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(), new Date(), new Date(), new Date(), data);
+        dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
         return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
 
@@ -500,10 +499,11 @@ public class DAOTestHelper {
 
     protected DarCollection createDarCollection() {
         User user = createUserWithInstitution();
-        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
         Dataset dataset = createDataset();
         DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+        dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
         Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         createFinalVote(user.getUserId(), cancelled.getElectionId());
@@ -543,6 +543,7 @@ public class DAOTestHelper {
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
         Dataset dataset = createDataset();
         DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+        dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
         Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         createFinalVote(user.getUserId(), cancelled.getElectionId());
@@ -557,11 +558,11 @@ public class DAOTestHelper {
         DataAccessRequest dar = new DataAccessRequest();
         dar.setReferenceId(UUID.randomUUID().toString());
         DataAccessRequestData data = new DataAccessRequestData();
-        data.setDatasetIds(List.of(dataset.getDataSetId()));
         dar.setData(data);
         dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getUserId(), now, now, now, now, data);
         dataAccessRequestDAO.updateDraftForCollection(collectionId, dar.getReferenceId());
         dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
+        dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
         return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     }
 }

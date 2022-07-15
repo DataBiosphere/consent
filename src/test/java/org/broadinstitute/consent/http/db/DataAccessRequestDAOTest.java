@@ -126,24 +126,12 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateByReferenceId() {
         DataAccessRequest dar = createDataAccessRequestV3();
-        String rus = RandomStringUtils.random(10, true, false);
-        dar.getData().setRus(rus);
-        dar.getData().setValidRestriction(false);
-        dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getData());
-        DataAccessRequest updatedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-        assertEquals(rus, updatedDar.getData().getRus());
-        assertFalse(updatedDar.getData().getValidRestriction());
-    }
-
-    @Test
-    public void testUpdateByReferenceIdVersion2() {
-        DataAccessRequest dar = createDataAccessRequestV3();
         Date now = new Date();
         User user = createUser();
         String rus = RandomStringUtils.random(10, true, false);
         dar.getData().setRus(rus);
         dar.getData().setValidRestriction(false);
-        dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), user.getUserId(), now, now, now, dar.getData());
+        dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), user.getUserId(), now, now, now, dar.getData());
         DataAccessRequest updatedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
         assertEquals(rus, updatedDar.getData().getRus());
         assertFalse(updatedDar.getData().getValidRestriction());
@@ -260,8 +248,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         testDar.setSubmissionDate(now);
         testDar.setUpdateDate(now);
         DataAccessRequestData contents = new DataAccessRequestData();
-        // add data datasetId
-        contents.setDatasetIds(List.of(dataset.getDataSetId()));
         testDar.setData(contents);
         dataAccessRequestDAO.insertDataAccessRequest(
                 testDar.getCollectionId(),
@@ -274,7 +260,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
                 testDar.getData()
         );
         dataAccessRequestDAO.insertDARDatasetRelation(testDar.getReferenceId(), dataset.getDataSetId());
-        return testDar;
+        return dataAccessRequestDAO.findByReferenceId(testDar.getReferenceId());
     }
 
     // local method to create a Draft DAR
@@ -474,7 +460,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         assertNotNull(dataSetIds);
         assertFalse(dataSetIds.isEmpty());
-        assertEquals(dataSetIds, testDar1.getData().getDatasetIds());
+        assertEquals(dataSetIds, testDar1.getDatasetIds());
     }
 
     @Test
@@ -486,7 +472,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         List<Integer> returned = dataAccessRequestDAO.findDARDatasetRelations(testDar1.getReferenceId());
 
         assertNotNull(returned);
-        assertEquals(testDar1.getData().getDatasetIds(), returned);
+        assertEquals(testDar1.getDatasetIds(), returned);
 
         dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(testDar1.getReferenceId());
         List<Integer> returnedAfter = dataAccessRequestDAO.findDARDatasetRelations(testDar1.getReferenceId());
@@ -510,8 +496,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertNotNull(returnedDarDatasets1);
         assertNotNull(returnedDarDatasets2);
 
-        assertEquals(testDar1.getData().getDatasetIds(), returnedDarDatasets1);
-        assertEquals(testDar2.getData().getDatasetIds(), returnedDarDatasets2);
+        assertEquals(testDar1.getDatasetIds(), returnedDarDatasets1);
+        assertEquals(testDar2.getDatasetIds(), returnedDarDatasets2);
 
         dataAccessRequestDAO.deleteDARDatasetRelationByReferenceIds(List.of(testDar1.getReferenceId(), testDar2.getReferenceId()));
 

@@ -197,7 +197,8 @@ public class ConsentModule extends AbstractModule {
             providesElectionDAO(),
             providesDataAccessRequestDAO(),
             providesEmailNotifierService(),
-            providesVoteDAO()
+            providesVoteDAO(),
+            providesMatchDAO()
         );
     }
 
@@ -278,6 +279,7 @@ public class ConsentModule extends AbstractModule {
                 providesDatasetDAO(),
                 providesLibraryCardDAO(),
                 providesDatasetAssociationDAO(),
+                providesDataAccessRequestDAO(),
                 providesMailMessageDAO(),
                 providesDacService(),
                 providesEmailNotifierService(),
@@ -471,7 +473,7 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     InstitutionService providesInstitutionService() {
-        return new InstitutionService(providesInstitutionDAO());
+        return new InstitutionService(providesInstitutionDAO(), providesUserDAO());
     }
 
     @Provides

@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -18,6 +19,7 @@ import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.glassfish.hk2.utilities.reflection.Logger;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -160,6 +162,48 @@ public class UserResource extends Resource {
         try {
             List<User> users = userService.findUsersByInstitutionId(institutionId);
             return Response.ok().entity(users).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
+    @Path("/{id}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN})
+    public Response update(@Auth AuthUser authUser, @Context UriInfo info, @PathParam("id") Integer userId, String json) {
+        try {
+            UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
+            // Ensure that we have a real user with this ID, fail if we do not.
+            userService.findUserById(userId);
+            User updatedUser = userService.updateUserFieldsById(userUpdateFields, userId);
+            Gson gson = new Gson();
+            JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, updatedUser.getUserId());
+            return Response.ok().entity(gson.toJson(jsonUser)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @PermitAll
+    public Response updateSelf(@Auth AuthUser authUser, @Context UriInfo info, String json) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
+
+            if (Objects.nonNull(userUpdateFields.getUserRoleIds()) && !user.hasUserRole(UserRoles.ADMIN)) {
+                throw new BadRequestException("Cannot change user's roles.");
+            }
+
+            user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
+            Gson gson = new Gson();
+            JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
+
+            return Response.ok().entity(gson.toJson(jsonUser)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

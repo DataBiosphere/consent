@@ -138,7 +138,7 @@ public class DataAccessRequestResource extends Resource {
     public Response cancelDataAccessRequest(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
         validateAuthedRoleUser(Collections.emptyList(), authUser, referenceId);
         try {
-            DataAccessRequest dar = dataAccessRequestService.cancelDataAccessRequest(referenceId);
+            DataAccessRequest dar = dataAccessRequestService.cancelDataAccessRequest(authUser, referenceId);
             return Response.ok().entity(dar).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -152,7 +152,7 @@ public class DataAccessRequestResource extends Resource {
     private Optional<Integer> getDatasetIdForDarId(String id) {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
         List<Integer> datasetIdList = (Objects.nonNull(dar.getData())) ?
-                dar.getData().getDatasetIds() :
+                dar.getDatasetIds() :
                 Collections.emptyList();
         if (datasetIdList == null || datasetIdList.isEmpty()) {
             return Optional.empty();

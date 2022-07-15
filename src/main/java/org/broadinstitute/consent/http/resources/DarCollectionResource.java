@@ -20,6 +20,7 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -96,6 +97,20 @@ public class DarCollectionResource extends Resource {
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
 
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @DELETE
+  @Path("{collectionId}")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, RESEARCHER})
+  public Response deleteDarCollection(@Auth AuthUser authUser, @PathParam("collectionId") Integer collectionId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      darCollectionService.deleteByCollectionId(user, collectionId);
+      return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

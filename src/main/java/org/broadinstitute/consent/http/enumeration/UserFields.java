@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public enum UserFields {
-  ACADEMIC_BUSINESS_EMAIL("academicEmail", true),
   DEPARTMENT("department", true),
   STREET_ADDRESS_1("address1", true),
   CITY("city", true),
@@ -27,7 +26,9 @@ public enum UserFields {
   LINKEDIN_PROFILE("linkedIn", false),
   RESEARCHER_GATE("researcherGate", false),
   ORCID("orcid", false),
-  CHECK_NOTIFICATIONS("checkNotifications", false);
+  SELECTED_SIGNING_OFFICIAL_ID("selectedSigningOfficialId", false),
+  SUGGESTED_SIGNING_OFFICIAL("suggestedSigningOfficial", false),
+  SUGGESTED_INSTITUTION("suggestedInstitution", false);
 
   public static final String LIBRARY_CARDS = "libraryCards";
   public static final String LIBRARY_CARD_ENTRIES = "libraryCardEntries";
