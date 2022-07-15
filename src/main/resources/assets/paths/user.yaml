@@ -19,7 +19,8 @@ post:
 put:
   summary: Update limited user fields
   description: |
-    Updates a limited number of the current user's fields
+    Updates a limited number of the current user's fields 
+    and sends a support request if suggestedInstitution or suggestedSigningOfficial are populated
   tags:
     - User
   requestBody:
