@@ -47,7 +47,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   private User assignInstitutionToUser(User user, Integer institutionId) {
-    userDAO.updateUser(user.getDisplayName(), user.getUserId(), null, institutionId);
+    userDAO.updateUser(user.getDisplayName(), user.getUserId(), institutionId);
     return userDAO.findUserById(user.getUserId());
   }
 
