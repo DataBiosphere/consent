@@ -5,8 +5,7 @@ get:
       * Admin - all DAR collection summaries
       * DAC Chair/Member - collections requesting datasets associated with their DAC 
       * Signing Official - collections created by researchers belonging to their institution
-      * Researcher - collections created by the researcher 
-    Canceled DAR collections are not returned
+      * Researcher - collections created by the researcher
   tags:
     - DAR Collection
   parameters:
