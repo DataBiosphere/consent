@@ -44,8 +44,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     "INNER JOIN dar_dataset dd " +
       "ON dar.reference_id = dd.reference_id " +
     "WHERE dd.dataset_id IN (<datasetIds>) " +
-    	"AND e.latest = e.electionid " +
-    	"AND (LOWER(v.type) = 'final' OR v.dacuserid = :currentUserId)"
+    	"AND (e.latest = e.electionid OR e.electionid IS NULL) " +
+    	"AND (LOWER(v.type) = 'final' OR (v.dacuserid = :currentUserId OR v.voteid IS NULL))"
   )
   List<DarCollectionSummary> getDarCollectionSummariesForDAC(
       @Bind("currentUserId") Integer currentUserId,
@@ -76,7 +76,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     "INNER JOIN dar_dataset dd " +
       "ON dar.reference_id = dd.reference_id " +
     "WHERE u.institution_id = :institutionId " +
-    	"AND e.latest = e.electionid"
+    	"AND (e.latest = e.electionid OR e.electionid IS NULL)"
   )
   List<DarCollectionSummary> getDarCollectionSummariesForSO(
       @Bind("institutionId") Integer institutionId);
@@ -105,7 +105,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       "ON e.referenceid = dar.reference_id " +
     "INNER JOIN dar_dataset dd " +
       "ON dar.reference_id = dd.reference_id " +
-    "WHERE e.latest = e.electionid"
+    "WHERE (e.latest = e.electionid OR e.electionid IS NULL)"
   )
   List<DarCollectionSummary> getDarCollectionSummariesForAdmin();
 
@@ -134,7 +134,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     "INNER JOIN dar_dataset dd " +
       "ON dar.reference_id = dd.reference_id " +
     "WHERE c.create_user_id = :userId " +
-    	"AND e.latest = e.electionid"
+    	"AND (e.latest = e.electionid OR e.electionid IS NULL)"
   )
   List<DarCollectionSummary> getDarCollectionSummariesForResearcher(
       @Bind("userId") Integer userId);

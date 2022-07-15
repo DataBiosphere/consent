@@ -41,9 +41,6 @@ public class DarCollectionSummary {
   private Set<String> actions;
 
   @JsonProperty
-  private Boolean hasVoted; 
-
-  @JsonProperty
   private int datasetCount;
 
   private Set<Integer> datasetIds;
@@ -54,7 +51,6 @@ public class DarCollectionSummary {
     this.votes = new ArrayList<>();
     this.actions = new HashSet<>();
     this.elections = new HashMap<>();
-    this.hasVoted = false;
     this.datasetIds = new HashSet<>();
     this.datasetCount = 0;
   }
@@ -85,14 +81,6 @@ public class DarCollectionSummary {
 
   public void setElections(Map<Integer, Election> elections) {
     this.elections = elections;
-  }
-
-  public void setHasVoted(Boolean hasVoted) {
-    this.hasVoted = hasVoted;
-  }
-
-  public Boolean getHasVoted() {
-    return hasVoted;
   }
 
   public Integer getDarCollectionId() {

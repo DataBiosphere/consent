@@ -7,6 +7,8 @@ import org.broadinstitute.consent.http.models.Vote;
 import java.lang.Integer;
 import java.util.Objects;
 import org.jdbi.v3.core.result.RowView;
+import org.jdbi.v3.core.mapper.MappingException;
+import org.jdbi.v3.core.mapper.NoSuchMapperException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 
 import java.util.Map;
@@ -20,31 +22,29 @@ public class DarCollectionSummaryReducer implements LinkedHashMapRowReducer<Inte
       rowView.getColumn("dar_collection_id", Integer.class),
       id -> rowView.getRow(DarCollectionSummary.class)
     );
+    Election election;
+    Vote vote;
+    Integer datasetId;
     try {
-      Integer electionId = rowView.getColumn("electionid", Integer.class);
-      if(Objects.isNull(summary.findElection(electionId))) {
-        Election election = rowView.getRow(Election.class);
-        if(Objects.nonNull(election)) {
-          summary.addElection(election);
-          summary.addDatasetId(election.getDataSetId());
-        }
-      }
 
-      Vote vote = rowView.getRow(Vote.class);
-      if(Objects.nonNull(vote)) {
-        summary.addVote(vote);
-        if(Objects.nonNull(vote.getVote())) {
-          summary.setHasVoted(true);
-        }
-      }
-
-      Integer datasetId = rowView.getColumn("dd_datasetid", Integer.class);
-      if(Objects.nonNull(datasetId)) {
+      datasetId = rowView.getColumn("dd_datasetid", Integer.class);
+      if (Objects.nonNull(datasetId)) {
         summary.addDatasetId(datasetId);
       }
 
-    } catch(Exception e) {
-      //Don't handle exceptions
+      election = rowView.getRow(Election.class);
+      if(Objects.nonNull(election.getElectionId())) {
+        summary.addElection(election);
+        summary.addDatasetId(election.getDataSetId());
+      }
+
+      vote = rowView.getRow(Vote.class);
+      if(Objects.nonNull(vote.getVoteId())) {
+        summary.addVote(vote);
+      }
+
+    } catch(NoSuchMapperException e) {
+      //ignore these exceptions, just means there's no elections and votes on the collection for this query
     }
   }
 }
