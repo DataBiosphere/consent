@@ -1,0 +1,35 @@
+type: object
+properties:
+  darCollectionId:
+    type: integer
+    description: Collection ID
+  darCode:
+    type: string
+    description: Code designation referenced by DARs within collection
+  name:
+    type: string
+    description: Collection name
+  submissionDate:
+    type: string
+    format: date
+    description: Collection submission date
+  researcherName:
+    type: string
+    description: Collection creator's name
+  institutionName:
+    type: string
+    description: Collection creator's institution
+  status:
+    type: string
+    description: Collection status
+  actions:
+    type: array
+    description: List of actions allowed on this collection
+    items:
+      type: string
+  hasVoted:
+    type: boolean
+    description: User has or has not voted on this collection
+  datasetCount:
+    type: integer
+    description: The count of datasets for this collection

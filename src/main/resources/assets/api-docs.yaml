@@ -37,6 +37,8 @@ paths:
     $ref: './paths/collectionsByQuery.yaml'
   /api/collections/role/{roleName}:
     $ref: './paths/collectionsByRoleName.yaml'
+  /api/collections/role/{roleName}/summary:
+    $ref: './paths/collectionsByRoleNameSummary.yaml'
   /api/collections/{collectionId}/cancel:
     $ref: './paths/cancelCollectionByCollectionId.yaml'
   /api/collections/{collectionId}/election:
