@@ -203,8 +203,6 @@ public class UserResource extends Resource {
             }
 
             user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
-            URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
-            User user = userService.updateUserFieldsById(userUpdateFields, userId);
             supportRequestService.handleSuggestedUserFieldsSupportRequest(userUpdateFields, user, authUser);
             Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
