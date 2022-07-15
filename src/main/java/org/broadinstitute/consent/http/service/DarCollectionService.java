@@ -24,6 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -73,7 +75,7 @@ public class DarCollectionService {
    * @param userRole The role the user is making the request as
    * @return List of DarCollectionSummary objects
    */
-  public List<DarCollectionSummary> getSummariesForRoleName(User user, String userRole) {
+  public List<Object> getSummariesForRoleName(User user, String userRole) {
     switch (userRole) {
       case Resource.ADMIN:
         // TODO: Find all
@@ -256,6 +258,63 @@ public class DarCollectionService {
             .collect(Collectors.toList());
   }
 
+  public void deleteByCollectionId(User user, Integer collectionId) throws NotAcceptableException, NotAuthorizedException, NotFoundException {
+    DarCollection coll = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    if (coll == null) {
+      throw new NotFoundException("DAR Collection does not exist at that id.");
+    }
+
+    // ensure the user is capable of deleting the collection
+    if (!user.hasUserRole(UserRoles.ADMIN) && !coll.getCreateUserId().equals(user.getUserId())) {
+      throw new NotAuthorizedException("Not authorized to delete DAR Collection.");
+    }
+
+    // get the reference ids of the dars in the collection
+    List<String> referenceIds =
+            coll.getDars().values().stream().map(DataAccessRequest::getReferenceId).distinct().collect(toList());
+
+    // ensure there are no elections; if there are, will attempt to delete (must be admin)
+    ensureNoElections(user, referenceIds);
+
+    // no elections left & user has perms => safe to delete collection
+
+    // delete DARs
+    matchDAO.deleteMatchesByPurposeIds(referenceIds);
+    dataAccessRequestDAO.deleteDARDatasetRelationByReferenceIds(referenceIds);
+    dataAccessRequestDAO.deleteByReferenceIds(referenceIds);
+
+    // delete collection
+    darCollectionDAO.deleteByCollectionId(collectionId);
+  }
+
+  // checks if there are any elections for any of the DARs in the referenceIds; if so,
+  // will attempt to delete them (must be admin to delete)
+  private void ensureNoElections(User user, List<String> referenceIds) throws NotAcceptableException {
+    // get elections across all reference ids
+    List<Election> allElections = electionDAO.findElectionsByReferenceIds(referenceIds);
+
+    // if there are already no elections, we're done!
+    if (allElections.isEmpty()) {
+      return;
+    }
+
+    // if there are any elections, we need to delete them.
+    // only admins can delete elections; make sure user is an admin
+    if (!user.hasUserRole(UserRoles.ADMIN)) {
+      throw new NotAcceptableException("Cannot delete DAR with elections.");
+    }
+
+    // delete all votes
+    voteDAO.deleteVotesByReferenceIds(referenceIds);
+
+    // delete all elections
+    List<Integer> electionIds = allElections.stream().map(Election::getElectionId).collect(toList());
+
+    electionDAO.deleteElectionsFromAccessRPs(electionIds);
+    electionDAO.deleteElectionsByIds(electionIds);
+
+  }
+
   //Helper method for queryCollectionsByFiltersAndUserRoles
   //Verifies user role and determines unfiltered count total via DAO methods
   private Integer getCountForUnfilteredQueryByRole(User user, String userRole) {
@@ -310,12 +369,12 @@ public class DarCollectionService {
    */
   public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections, List<Integer> filterDatasetIds) {
     // get datasetIds from each DAR from each collection
-    List<Integer> datasetIds = collections.stream()
-      .map(d-> d.getDars().values())
-      .flatMap(Collection::stream)
-      .map(d -> d.getData().getDatasetIds())
-      .flatMap(Collection::stream)
+    List<String> referenceIds = collections.stream()
+      .map(DarCollection::getDars)
+      .map(Map::keySet)
+      .flatMap(Set::stream)
       .collect(Collectors.toList());
+    List<Integer> datasetIds = referenceIds.isEmpty() ? List.of() : dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds);
     if(!datasetIds.isEmpty()) {
       // if filterDatasetIds has values, get the intersection between that and datasetIds
       if (!filterDatasetIds.isEmpty()) {
