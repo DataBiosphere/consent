@@ -33,7 +33,4 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
 
     @SqlBatch("DELETE FROM user_property WHERE userid = :userId AND propertykey = :propertyKey")
     void deletePropertiesByUserAndKey(@BindBean Collection<UserProperty> researcherProperties);
-
-    @SqlQuery("SELECT * FROM user_property WHERE userid IN (<userIds>)")
-    List<UserProperty> findResearcherPropertiesByUserIds(@BindList("userIds") List<Integer> userIds);
 }

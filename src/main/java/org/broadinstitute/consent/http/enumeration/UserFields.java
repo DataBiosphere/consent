@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.enumeration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public enum UserFields {
   ERA_EXPIRATION_DATE("eraExpiration", false),
@@ -22,6 +24,10 @@ public enum UserFields {
 
   public String getValue() {
     return value;
+  }
+
+  public static List<String> getValues() {
+    return Stream.of(UserFields.values()).map(UserFields::getValue).collect(Collectors.toList());
   }
 
   public Boolean getRequired() {

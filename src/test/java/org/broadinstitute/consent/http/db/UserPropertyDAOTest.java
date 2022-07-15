@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.junit.Assert;
 import org.junit.Test;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.List;
 
@@ -17,17 +18,17 @@ public class UserPropertyDAOTest extends DAOTestHelper {
 
         UserProperty suggestedInstitution = new UserProperty();
         suggestedInstitution.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
-        suggestedInstitution.setPropertyValue("asdfasdf");
+        suggestedInstitution.setPropertyValue(RandomStringUtils.random(10));
         suggestedInstitution.setUserId(user.getUserId());
 
         UserProperty suggestedSigningOfficial = new UserProperty();
         suggestedSigningOfficial.setPropertyKey(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
-        suggestedSigningOfficial.setPropertyValue("afhjlsfjklsda");
+        suggestedSigningOfficial.setPropertyValue(RandomStringUtils.random(10));
         suggestedSigningOfficial.setUserId(user.getUserId());
 
         UserProperty notPresent = new UserProperty();
         notPresent.setPropertyKey("nonExistentKey");
-        notPresent.setPropertyValue("jasjsd");
+        notPresent.setPropertyValue(RandomStringUtils.random(10));
         notPresent.setUserId(user.getUserId());
 
         List<UserProperty> props = userPropertyDAO.findResearcherPropertiesByUser(
@@ -54,10 +55,10 @@ public class UserPropertyDAOTest extends DAOTestHelper {
 
         Assert.assertTrue(props.stream().anyMatch((p) ->
                 (p.getPropertyKey().equals(UserFields.SUGGESTED_INSTITUTION.getValue())
-                        && p.getPropertyValue().equals("asdfasdf"))));
+                        && p.getPropertyValue().equals(suggestedInstitution.getPropertyValue()))));
 
         Assert.assertTrue(props.stream().anyMatch((p) ->
                 (p.getPropertyKey().equals(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue())
-                        && p.getPropertyValue().equals("afhjlsfjklsda"))));
+                        && p.getPropertyValue().equals(suggestedSigningOfficial.getPropertyValue()))));
     }
 }

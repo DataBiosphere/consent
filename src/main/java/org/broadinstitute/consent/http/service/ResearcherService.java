@@ -92,7 +92,7 @@ public class ResearcherService {
     private List<UserProperty> describeResearcherProperties(Integer userId) {
         validateUser(userId);
         return userPropertyDAO.findResearcherPropertiesByUser(userId,
-                Arrays.stream(UserFields.values()).map(UserFields::getValue).collect(Collectors.toList()));
+                UserFields.getValues());
     }
 
     private void validateRequiredFields(Map<String, String> properties) {

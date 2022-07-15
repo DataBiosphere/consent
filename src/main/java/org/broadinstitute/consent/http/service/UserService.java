@@ -246,8 +246,7 @@ public class UserService {
     }
 
     public List<UserProperty> findAllUserProperties(Integer userId) {
-        return userPropertyDAO.findResearcherPropertiesByUser(userId,
-                Arrays.stream(UserFields.values()).map(UserFields::getValue).collect(Collectors.toList()));
+        return userPropertyDAO.findResearcherPropertiesByUser(userId, UserFields.getValues());
     }
 
     public List<User> describeAdminUsersThatWantToReceiveMails() {
