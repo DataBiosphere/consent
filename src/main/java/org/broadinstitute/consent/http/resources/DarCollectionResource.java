@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.PaginationResponse;
@@ -89,7 +90,7 @@ public class DarCollectionResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       validateUserHasRoleName(user, roleName);
       // TODO: Replace with DarCollectionSummary when available
-      List<Object> summaries = darCollectionService.getSummariesForRoleName(user, roleName);
+      List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRoleName(user, roleName);
       return Response.ok().entity(summaries).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

@@ -46,12 +46,14 @@ public class DarCollectionSummary {
   private Set<Integer> datasetIds;
   private List<Vote> votes;
   private Map<Integer, Election> elections;
+  private Map<String, String> darStatuses;
 
   public DarCollectionSummary() {
     this.votes = new ArrayList<>();
     this.actions = new HashSet<>();
     this.elections = new HashMap<>();
     this.datasetIds = new HashSet<>();
+    this.darStatuses = new HashMap<>();
     this.datasetCount = 0;
   }
 
@@ -167,6 +169,14 @@ public class DarCollectionSummary {
   public void addAction(String action) {
     String newAction = DarCollectionActions.valueOf(action.toUpperCase()).getValue();
     actions.add(newAction);
+  }
+
+  public void addStatus(String status, String referenceId) {
+    darStatuses.put(referenceId, status);
+  }
+
+  public Map<String, String> getDarStatuses() {
+    return darStatuses;
   }
 
   @Override

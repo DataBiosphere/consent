@@ -7,9 +7,12 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
+import org.broadinstitute.consent.http.enumeration.DarCollectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -31,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -75,7 +79,66 @@ public class DarCollectionService {
    * @param userRole The role the user is making the request as
    * @return List of DarCollectionSummary objects
    */
-  public List<Object> getSummariesForRoleName(User user, String userRole) {
+  private void updateStatusCount(Map<String, Integer> statusCount, String status) {
+    Integer count = statusCount.get(status);
+    if(Objects.isNull(count)) {
+      statusCount.put(status, 0);
+    }
+    statusCount.put(status, count + 1);
+  }
+
+  private void determineCollectionStatus(DarCollectionSummary summary, Map<String, Integer> statusCount, Integer datasetCount, Integer electionCount) {
+    //If there are no elections, status is unreviewed
+    //if there are some elections open, status is in process
+    //if all elections are closed or canceled and electionCount == datasetCount, status is complete
+    if(electionCount == 0) {
+      summary.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
+    } else if(electionCount == datasetCount) {
+      Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
+      if(openCount == 0) {
+        summary.setStatus(DarCollectionStatus.COMPLETE.getValue());
+      }
+    } else {
+      summary.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
+    }
+  }
+
+  private void processDarCollectionSummariesForAdminActions(List<DarCollectionSummary> summaries) {
+    //if at least one election is open, show cancel
+    //if at least one election is not open, show cancel
+    Map<String, Integer> statusCount = new HashMap<>();
+    summaries.forEach(s -> {
+      Map<Integer, Election> elections = s.getElections();
+      elections.values().forEach(e -> {
+        String status = e.getStatus();
+        updateStatusCount(statusCount, status);
+        if(status == ElectionStatus.OPEN.getValue()) {
+          s.addAction(DarCollectionActions.CANCEL.getValue());
+        } else {
+          s.addAction(DarCollectionActions.OPEN.getValue());
+        }
+      });
+      determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+    });
+  }
+
+  private void processDarCollectionSummariesForResearcher(List<DarCollectionSummary> summaries) {
+    //if an election exists, cancel does not appear
+    //if there are no elections, review and cancel are present
+    //if the collection is canceled, revise and review is present
+    summaries.forEach(s -> {
+      Map<Integer, Election> elections = s.getElections();
+      int electionCount = elections.values().size();
+      if(electionCount == 0) {
+        s.addAction(DarCollectionActions.REVIEW.getValue());
+        s.addAction(DarCollectionActions.CANCEL.getValue());
+      } else {
+        
+      }
+    });
+  }
+
+  public List<DarCollectionSummary> getSummariesForRoleName(User user, String userRole) {
     switch (userRole) {
       case Resource.ADMIN:
         // TODO: Find all
