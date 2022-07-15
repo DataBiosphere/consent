@@ -386,8 +386,7 @@ public class DarCollectionService {
 
       return collections.stream().map(c -> {
         Set<Dataset> collectionDatasets = c.getDars().values().stream()
-          .map(DataAccessRequest::getData)
-          .map(DataAccessRequestData::getDatasetIds)
+          .map(DataAccessRequest::getDatasetIds)
           .flatMap(Collection::stream)
           .map(datasetMap::get)
           .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
@@ -490,7 +489,7 @@ public class DarCollectionService {
 
     // Filter the list of DARs we can operate on by the datasets accessible to this chairperson
     List<DataAccessRequest> dars = collection.getDars().values().stream()
-      .filter(d -> datasetIds.containsAll(d.getData().getDatasetIds()))
+      .filter(d -> datasetIds.containsAll(d.getDatasetIds()))
       .collect(Collectors.toList());
 
     List<String> referenceIds = dars.stream()
