@@ -1,0 +1,34 @@
+get:
+  summary: Get DAR Collection Summaries By Role Name
+  description: |
+    Returns DAR collection summaries by Role Name
+      * Admin - all DAR collection summaries
+      * DAC Chair/Member - collections requesting datasets associated with their DAC 
+      * Signing Official - collections created by researchers belonging to their institution
+      * Researcher - collections created by the researcher 
+    Canceled DAR collections are not returned
+  tags:
+    - DAR Collection
+  parameters:
+    - name: roleName
+      in: path
+      description: String value that represents the role name to query by
+      schema:
+        type: string
+        enum: [Admin, Chairperson, Member, SigningOfficial, Researcher]
+  responses:
+    200:
+      description: Returns a list of DAR Collection Summaries
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DarCollectionSummary.yaml'
+    400:
+      description: Bad Request
+    404:
+      description: Not Found
+    500:
+      description: Internal Server Error
+

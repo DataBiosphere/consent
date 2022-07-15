@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.PaginationResponse;
@@ -75,6 +76,21 @@ public class DarCollectionResource extends Resource {
       validateUserHasRoleName(user, roleName);
       List<DarCollection> collections = darCollectionService.getCollectionsForUserByRoleName(user, roleName);
       return Response.ok().entity(collections).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("role/{roleName}/summary")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
+  public Response getCollectionSummariesForUserByRole(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateUserHasRoleName(user, roleName);
+      List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRoleName(user, roleName);
+      return Response.ok().entity(summaries).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
