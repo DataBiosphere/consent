@@ -63,6 +63,42 @@ public class DarCollectionService {
     this.matchDAO = matchDAO;
   }
 
+  /**
+   * Find all DarCollectionSummaries for a given role name.
+   *  Admins can see all summaries
+   *  Chairs and Members can see summaries for datasets they have access to
+   *  Signing Officials can see summaries for researchers in their institution
+   *  Researchers can see only their own summaries
+   *
+   * @param user The user making the request
+   * @param userRole The role the user is making the request as
+   * @return List of DarCollectionSummary objects
+   */
+  public List<Object> getSummariesForRoleName(User user, String userRole) {
+    switch (userRole) {
+      case Resource.ADMIN:
+        // TODO: Find all
+        break;
+      case Resource.SIGNINGOFFICIAL:
+        // TODO: Find by creator institution
+        break;
+      case Resource.CHAIRPERSON:
+      case Resource.MEMBER:
+        List<Integer> dacIds = user.getRoles().stream()
+          .map(UserRole::getDacId)
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
+        List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
+        // TODO: Find by collectionIds
+        break;
+      case Resource.RESEARCHER:
+        // TODO: Find by creatorId
+        break;
+      default:
+    }
+    return List.of();
+  }
+
   public List<Integer> findDatasetIdsByUser(User user) {
     return datasetDAO.findDatasetsByAuthUserEmail(user.getEmail())
         .stream()

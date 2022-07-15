@@ -12,6 +12,7 @@ public class DAOContainer {
   private DacDAO dacDAO;
   private DataAccessRequestDAO dataAccessRequestDAO;
   private DarCollectionDAO darCollectionDAO;
+  private DarCollectionSummaryDAO darCollectionSummaryDAO;
   private DatasetAssociationDAO datasetAssociationDAO;
   private DatasetDAO datasetDAO;
   private ElectionDAO electionDAO;
@@ -61,9 +62,19 @@ public class DAOContainer {
     return darCollectionDAO;
   }
 
+  public DarCollectionSummaryDAO getDarCollectionSummaryDAO() {
+    return darCollectionSummaryDAO;
+  }
+
   public void setDarCollectionDAO(
     DarCollectionDAO darCollectionDAO) {
     this.darCollectionDAO = darCollectionDAO;
+  }
+
+  public void setDarCollectionSummaryDAO(
+    DarCollectionSummaryDAO darCollectionSummaryDAO
+  ) {
+    this.darCollectionSummaryDAO = darCollectionSummaryDAO;
   }
 
   public DatasetAssociationDAO getDatasetAssociationDAO() {
