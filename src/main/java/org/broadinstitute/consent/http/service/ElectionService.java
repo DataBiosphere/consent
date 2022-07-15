@@ -432,7 +432,7 @@ public class ElectionService {
         return consentElection;
     }
 
-    private void verifyActiveDataSets(DataAccessRequest dataAccessRequest, List<Integer> datasetIds) throws Exception {
+    private void verifyActiveDatasets(DataAccessRequest dataAccessRequest, List<Integer> datasetIds) throws Exception {
         List<Dataset> datasets = datasetDAO.findDatasetsByIdList(datasetIds);
         List<String> disabledDatasets = datasets.stream()
                 .filter(ds -> !ds.getActive())
