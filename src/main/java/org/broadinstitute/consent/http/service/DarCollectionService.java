@@ -88,6 +88,7 @@ public class DarCollectionService {
     Integer count = statusCount.get(status);
     if(Objects.isNull(count)) {
       statusCount.put(status, 0);
+      count = 0;
     }
     statusCount.put(status, count + 1);
   }
@@ -100,8 +101,10 @@ public class DarCollectionService {
       summary.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
     } else if(electionCount == datasetCount) {
       Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
-      if(openCount == 0) {
+      if(Objects.isNull(openCount)) {
         summary.setStatus(DarCollectionStatus.COMPLETE.getValue());
+      } else {
+        summary.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
       }
     } else {
       summary.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
@@ -111,19 +114,24 @@ public class DarCollectionService {
   private void processDarCollectionSummariesForAdmin(List<DarCollectionSummary> summaries) {
     //if at least one election is open, show cancel
     //if at least one election is not open, show cancel
-    Map<String, Integer> statusCount = new HashMap<>();
     summaries.forEach(s -> {
+      Map<String, Integer> statusCount = new HashMap<>();
       Map<Integer, Election> elections = s.getElections();
-      elections.values().forEach(e -> {
-        String status = e.getStatus();
-        updateStatusCount(statusCount, status);
-        if(status == ElectionStatus.OPEN.getValue()) {
-          s.addAction(DarCollectionActions.CANCEL.getValue());
-        } else {
-          s.addAction(DarCollectionActions.OPEN.getValue());
-        }
-      });
-      determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+      if(elections.size() == 0) {
+        s.addAction(DarCollectionActions.OPEN.getValue());
+        s.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
+      } else {
+        elections.values().forEach(e -> {
+          String status = e.getStatus();
+          updateStatusCount(statusCount, status);
+          if(status == ElectionStatus.OPEN.getValue()) {
+            s.addAction(DarCollectionActions.CANCEL.getValue());
+          } else {
+            s.addAction(DarCollectionActions.OPEN.getValue());
+          }
+        });
+        determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+      }
     });
   }
 
@@ -131,7 +139,9 @@ public class DarCollectionService {
     drafts.forEach(d -> {
       try{
         DarCollectionSummary summary = new DarCollectionSummary();
-        String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd").format(d.getCreateDate());
+        Date createDate = new Date(d.getData().getCreateDate());
+        String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
+          .format(createDate).toString();
         summary.setDarCode(darCode);
         summary.setStatus(DarCollectionStatus.DRAFT.getValue());
         summary.setName(d.getData().getProjectTitle());
@@ -154,15 +164,22 @@ public class DarCollectionService {
       int electionCount = elections.values().size();
       elections.values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
       s.addAction(DarCollectionActions.REVIEW.getValue());
-      //check dar statuses, if they're all canceled show revise
-      Boolean isCanceled = s.getDarStatuses().values().stream()
-        .allMatch(st -> st.equalsIgnoreCase(DarStatus.CANCELED.getValue()));
-      if(isCanceled) {
-        s.addAction(DarCollectionActions.REVISE.getValue());
-      } else if(electionCount == 0) {
-        s.addAction(DarCollectionActions.CANCEL.getValue());
+      //check dar statuses, if they're all canceled show revise (but only if there are no elections)
+      Boolean isCanceled = false;
+      if(electionCount == 0) {
+        Collection<String> darStatuses = s.getDarStatuses().values();
+        isCanceled = darStatuses.size() > 0 && darStatuses.stream()
+          .allMatch(st -> st.equalsIgnoreCase(DarStatus.CANCELED.getValue()));
+        if(isCanceled) {
+          s.addAction(DarCollectionActions.REVISE.getValue());
+          s.setStatus(DarCollectionStatus.CANCELED.getValue());
+        } else {
+          s.addAction(DarCollectionActions.CANCEL.getValue());
+          s.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
+        }
+      } else {
+        determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
       }
-      determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
     });
   }
 
@@ -212,6 +229,7 @@ public class DarCollectionService {
     summaries.forEach(s -> {
       Map<String, Integer> statusCount = new HashMap<>();
       s.getElections().values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
+      determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
     });
   }
 
