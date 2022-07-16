@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -9,12 +11,12 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
 import org.broadinstitute.consent.http.enumeration.DarCollectionStatus;
+import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
@@ -34,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +52,7 @@ public class DarCollectionService {
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final DarCollectionDAO darCollectionDAO;
   private final DarCollectionServiceDAO collectionServiceDAO;
+  private final DarCollectionSummaryDAO darCollectionSummaryDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
@@ -57,7 +61,7 @@ public class DarCollectionService {
   private final EmailNotifierService emailNotifierService;
 
   @Inject
-  public DarCollectionService(DarCollectionDAO darCollectionDAO, DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, EmailNotifierService emailNotifierService, VoteDAO voteDAO, MatchDAO matchDAO) {
+  public DarCollectionService(DarCollectionDAO darCollectionDAO, DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, EmailNotifierService emailNotifierService, VoteDAO voteDAO, MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO) {
     this.darCollectionDAO = darCollectionDAO;
     this.collectionServiceDAO = collectionServiceDAO;
     this.datasetDAO = datasetDAO;
@@ -66,6 +70,7 @@ public class DarCollectionService {
     this.emailNotifierService = emailNotifierService;
     this.voteDAO = voteDAO;
     this.matchDAO = matchDAO;
+    this.darCollectionSummaryDAO = darCollectionSummaryDAO;
   }
 
   /**
@@ -103,7 +108,7 @@ public class DarCollectionService {
     }
   }
 
-  private void processDarCollectionSummariesForAdminActions(List<DarCollectionSummary> summaries) {
+  private void processDarCollectionSummariesForAdmin(List<DarCollectionSummary> summaries) {
     //if at least one election is open, show cancel
     //if at least one election is not open, show cancel
     Map<String, Integer> statusCount = new HashMap<>();
@@ -122,45 +127,126 @@ public class DarCollectionService {
     });
   }
 
-  private void processDarCollectionSummariesForResearcher(List<DarCollectionSummary> summaries) {
-    //if an election exists, cancel does not appear
-    //if there are no elections, review and cancel are present
-    //if the collection is canceled, revise and review is present
-    summaries.forEach(s -> {
-      Map<Integer, Election> elections = s.getElections();
-      int electionCount = elections.values().size();
-      if(electionCount == 0) {
-        s.addAction(DarCollectionActions.REVIEW.getValue());
-        s.addAction(DarCollectionActions.CANCEL.getValue());
-      } else {
-        
+  private void processDarCollectionDraftsAsSummaries(List<DataAccessRequest> drafts, List<DarCollectionSummary> summaries) {
+    drafts.forEach(d -> {
+      try{
+        DarCollectionSummary summary = new DarCollectionSummary();
+        String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd").format(d.getCreateDate());
+        summary.setDarCode(darCode);
+        summary.setStatus(DarCollectionStatus.DRAFT.getValue());
+        summary.setName(d.getData().getProjectTitle());
+        summary.addAction(DarCollectionActions.RESUME.getValue());
+        summary.addAction(DarCollectionActions.DELETE.getValue());
+        summaries.add(summary);
+      } catch(Exception e) {
+        logger.warn("Error processing draft with id: " + d.getId());
       }
     });
   }
 
+  private void processDarCollectionSummariesForResearcher(List<DarCollectionSummary> summaries) {
+    //if an election exists, cancel does not appear
+    //if there are no elections, review and cancel are present
+    //if the collection is canceled, revise and review is present
+    Map<String, Integer> statusCount = new HashMap<>();
+    summaries.forEach(s -> {
+      Map<Integer, Election> elections = s.getElections();
+      int electionCount = elections.values().size();
+      elections.values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
+      s.addAction(DarCollectionActions.REVIEW.getValue());
+      //check dar statuses, if they're all canceled show revise
+      Boolean isCanceled = s.getDarStatuses().values().stream()
+        .allMatch(st -> st.equalsIgnoreCase(DarStatus.CANCELED.getValue()));
+      if(isCanceled) {
+        s.addAction(DarCollectionActions.REVISE.getValue());
+      } else if(electionCount == 0) {
+        s.addAction(DarCollectionActions.CANCEL.getValue());
+      }
+      determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+    });
+  }
+
+  private void processDarCollectionSummariesForDAC(List<DarCollectionSummary> summaries, UserRoles role) {
+    Map<String, Integer> statusCount = new HashMap<>();
+    summaries.forEach(s -> {
+      if(role == UserRoles.MEMBER) {
+        Boolean isVotable = s.getElections().values()
+          .stream()
+          .anyMatch(election -> election.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
+        if(isVotable) {
+          s.addAction(DarCollectionActions.VOTE.getValue());
+        }
+      } else {
+        //if there are no elections, only show open
+        //if there is any closed or canceled elections, or if some datasets dont have an election, show open
+        //if there are any open elections, show cancel and vote
+        Map<Integer, Election> elections = s.getElections();
+        if(elections.size() == 0) {
+          s.addAction(DarCollectionActions.OPEN.getValue());
+        } else {
+          if (elections.size() != s.getDatasetCount()) {
+            s.addAction(DarCollectionActions.OPEN.getValue());
+          }
+          elections.values().forEach(election -> {
+            updateStatusCount(statusCount, election.getStatus());
+            ElectionStatus status = ElectionStatus.valueOf(election.getStatus());
+            switch (status) {
+              case CLOSED:
+              case CANCELED:
+                s.addAction(DarCollectionActions.OPEN.getValue());
+                break;
+              case OPEN:
+                s.addAction(DarCollectionActions.CANCEL.getValue());
+                s.addAction(DarCollectionActions.VOTE.getValue());
+              default:
+                break;
+            }
+          });
+        }
+      }
+      determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+    });
+  }
+
+  private void processDarCollectionSummariesForSO(List<DarCollectionSummary> summaries) {
+    summaries.forEach(s -> {
+      Map<String, Integer> statusCount = new HashMap<>();
+      s.getElections().values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
+    });
+  }
+
   public List<DarCollectionSummary> getSummariesForRoleName(User user, String userRole) {
-    switch (userRole) {
-      case Resource.ADMIN:
-        // TODO: Find all
+    List<DarCollectionSummary> summaries = new ArrayList<>();
+    UserRoles role = UserRoles.getUserRoleFromName(userRole);
+    Integer userId = user.getUserId();
+    switch (role) {
+      case ADMIN:
+        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
+        processDarCollectionSummariesForAdmin(summaries);
         break;
-      case Resource.SIGNINGOFFICIAL:
-        // TODO: Find by creator institution
+      case SIGNINGOFFICIAL:
+        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
+        processDarCollectionSummariesForSO(summaries);
         break;
-      case Resource.CHAIRPERSON:
-      case Resource.MEMBER:
-        List<Integer> dacIds = user.getRoles().stream()
-          .map(UserRole::getDacId)
-          .filter(Objects::nonNull)
+      case CHAIRPERSON:
+      case MEMBER:
+        userId = user.getUserId();
+        List<Integer> datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+          .map(d -> d.getDataSetId())
           .collect(Collectors.toList());
-        List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
-        // TODO: Find by collectionIds
+          summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
+          processDarCollectionSummariesForDAC(summaries, role);
         break;
-      case Resource.RESEARCHER:
-        // TODO: Find by creatorId
+      case RESEARCHER:
+        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+        processDarCollectionSummariesForResearcher(summaries);
+        List<DataAccessRequest> drafts = dataAccessRequestDAO.findAllDraftsByUserId(userId);
+        processDarCollectionDraftsAsSummaries(drafts, summaries);
         break;
       default:
+        break;
     }
-    return List.of();
+    return summaries;
   }
 
   public List<Integer> findDatasetIdsByUser(User user) {
