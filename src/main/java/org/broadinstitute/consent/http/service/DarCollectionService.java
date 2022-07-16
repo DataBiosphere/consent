@@ -184,19 +184,30 @@ public class DarCollectionService {
   }
 
   private void processDarCollectionSummariesForDAC(List<DarCollectionSummary> summaries, UserRoles role) {
-    Map<String, Integer> statusCount = new HashMap<>();
     summaries.forEach(s -> {
       if(role == UserRoles.MEMBER) {
-        Boolean isVotable = s.getElections().values()
-          .stream()
-          .anyMatch(election -> election.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
+        Collection<Election> elections = s.getElections().values();
+        Integer electionCount = elections.size();
+        Boolean isVotable = electionCount == 0 ?
+          false :
+          elections
+            .stream()
+            .anyMatch(election -> election.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
         if(isVotable) {
+          s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
           s.addAction(DarCollectionActions.VOTE.getValue());
+        } else {
+          if(electionCount != s.getDatasetCount()) {
+            s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
+          } else {
+            s.setStatus(DarCollectionStatus.COMPLETE.getValue());
+          }
         }
       } else {
         //if there are no elections, only show open
         //if there is any closed or canceled elections, or if some datasets dont have an election, show open
         //if there are any open elections, show cancel and vote
+        Map<String, Integer> statusCount = new HashMap<>();
         Map<Integer, Election> elections = s.getElections();
         if(elections.size() == 0) {
           s.addAction(DarCollectionActions.OPEN.getValue());
@@ -219,9 +230,9 @@ public class DarCollectionService {
                 break;
             }
           });
+          determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
         }
       }
-      determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
     });
   }
 

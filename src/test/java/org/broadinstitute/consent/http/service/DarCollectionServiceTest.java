@@ -1030,6 +1030,55 @@ public class DarCollectionServiceTest {
     assertTrue(testFour.getActions().equals(expectedFourActions));
   }
 
+  @Test
+  public void testProcessDarCollectionSummariesForDACMember() {
+    User user = new User();
+    user.setUserId(1);
+
+    //summaryOne -> no open elections (no action)
+    //summaryTwo -> at least one open election (vote button)
+
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.addDatasetId(1);
+    summary.addDatasetId(2);
+    Election election = new Election();
+    election.setStatus(ElectionStatus.CLOSED.getValue());
+    election.setElectionId(1);
+    Election electionTwo = new Election();
+    electionTwo.setStatus(ElectionStatus.CANCELED.getValue());
+    electionTwo.setElectionId(2);
+    summary.addElection(election);
+    summary.addElection(electionTwo);
+
+    DarCollectionSummary summaryTwo = new DarCollectionSummary();
+    summaryTwo.addDatasetId(3);
+    Election electionThree = new Election();
+    electionThree.setElectionId(3);
+    electionThree.setStatus(ElectionStatus.OPEN.getValue());
+    summaryTwo.addElection(electionThree);
+
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
+      .thenReturn(List.of(summary, summaryTwo));
+    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+
+    initService();
+    
+    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user, UserRoles.MEMBER.getRoleName());
+
+    assertNotNull(summaries);
+    assertEquals(2, summaries.size());
+
+    DarCollectionSummary testOne = summaries.get(0);
+    Set<String> expectedOneActions = Set.of();
+    assertTrue(testOne.getActions().equals(expectedOneActions));
+    assertEquals(DarCollectionStatus.COMPLETE.getValue(), testOne.getStatus());
+
+    DarCollectionSummary testTwo = summaries.get(1);
+    Set<String> expectedTwoActions = Set.of("Vote");
+    assertTrue(testTwo.getActions().equals(expectedTwoActions));
+    assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testTwo.getStatus());
+  }
+
   private void queryCollectionsAssertions(PaginationResponse<DarCollection> response, int expectedUnfilteredCount, int expectedFilteredCount) {
     assertEquals(expectedUnfilteredCount, (int)response.getUnfilteredCount());
     assertEquals(expectedFilteredCount, (int)response.getFilteredCount());
