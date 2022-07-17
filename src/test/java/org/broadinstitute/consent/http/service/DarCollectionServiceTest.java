@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.velocity.util.ArrayListWrapper;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -960,7 +959,7 @@ public class DarCollectionServiceTest {
     electionTwo.setElectionId(2);
     electionTwo.setStatus(ElectionStatus.OPEN.getValue());
     summaryOne.addElection(electionOne);
-    summaryOne.addElection(electionOne);
+    summaryOne.addElection(electionTwo);
     summaryOne.addDatasetId(datasetOne.getDataSetId());
     summaryOne.addDatasetId(datasetTwo.getDataSetId());
 
@@ -1057,8 +1056,11 @@ public class DarCollectionServiceTest {
     electionThree.setStatus(ElectionStatus.OPEN.getValue());
     summaryTwo.addElection(electionThree);
 
+    DarCollectionSummary summaryThree = new DarCollectionSummary();
+    summaryThree.addDatasetId(4);
+
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
-      .thenReturn(List.of(summary, summaryTwo));
+      .thenReturn(List.of(summary, summaryTwo, summaryThree));
     when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
 
     initService();
@@ -1066,7 +1068,7 @@ public class DarCollectionServiceTest {
     List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user, UserRoles.MEMBER.getRoleName());
 
     assertNotNull(summaries);
-    assertEquals(2, summaries.size());
+    assertEquals(3, summaries.size());
 
     DarCollectionSummary testOne = summaries.get(0);
     Set<String> expectedOneActions = Set.of();
@@ -1077,6 +1079,150 @@ public class DarCollectionServiceTest {
     Set<String> expectedTwoActions = Set.of("Vote");
     assertTrue(testTwo.getActions().equals(expectedTwoActions));
     assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testTwo.getStatus());
+
+    DarCollectionSummary testThree = summaries.get(2);
+    Set<String> expectedThreeActions = Set.of();
+    assertTrue(testThree.getActions().equals(expectedThreeActions));
+    assertEquals(DarCollectionStatus.UNREVIEWED.getValue(), testThree.getStatus());
+  }
+
+  @Test
+  public void testProcessDarCollectionSummariesForChair() {
+    //summaryOne -> all elections present and open
+    //summaryTwo -> mix of open elections : absent/canceled elections (in process)
+    //summaryThree -> all canceled elections (Complete)
+    //summaryFour -> no elections (unreviewed)
+    //summaryFive -> mix of open : absent/closed elections (in process, but cancel action does not appear)
+    //summarySix -> all closed elections (complete, only open available)
+
+    User user = new User();
+    user.setUserId(1);
+
+    DarCollectionSummary summaryOne = new DarCollectionSummary();
+    Dataset datasetOne = new Dataset();
+    datasetOne.setDataSetId(1);
+    Dataset datasetTwo = new Dataset();
+    datasetTwo.setDataSetId(2);
+    Election electionOne = new Election();
+    electionOne.setElectionId(1);
+    electionOne.setStatus(ElectionStatus.OPEN.getValue());
+    Election electionTwo = new Election();
+    electionTwo.setElectionId(2);
+    electionTwo.setStatus(ElectionStatus.OPEN.getValue());
+    summaryOne.addElection(electionOne);
+    summaryOne.addElection(electionTwo);
+    summaryOne.addDatasetId(datasetOne.getDataSetId());
+    summaryOne.addDatasetId(datasetTwo.getDataSetId());
+
+    DarCollectionSummary summaryTwo = new DarCollectionSummary();
+    Dataset datasetThree = new Dataset();
+    datasetThree.setDataSetId(3);
+    Dataset datasetFour = new Dataset();
+    datasetFour.setDataSetId(4);
+    Dataset datasetFive = new Dataset();
+    datasetFive.setDataSetId(5);
+    Election electionThree = new Election();
+    electionThree.setElectionId(3);
+    electionThree.setStatus(ElectionStatus.OPEN.getValue());
+    Election electionFour = new Election();
+    electionFour.setElectionId(4);
+    electionFour.setStatus(ElectionStatus.CANCELED.getValue());
+    summaryTwo.addElection(electionThree);
+    summaryTwo.addElection(electionFour);
+    summaryTwo.addDatasetId(datasetThree.getDataSetId());
+    summaryTwo.addDatasetId(datasetFour.getDataSetId());
+    summaryTwo.addDatasetId(datasetFive.getDataSetId());
+
+    DarCollectionSummary summaryThree = new DarCollectionSummary();
+    Dataset datasetSix = new Dataset();
+    datasetSix.setDataSetId(6);
+    Election electionFive = new Election();
+    electionFive.setElectionId(5);
+    electionFive.setStatus(ElectionStatus.CANCELED.getValue());
+    summaryThree.addElection(electionFive);
+    summaryThree.addDatasetId(datasetSix.getDataSetId());
+
+    DarCollectionSummary summaryFour = new DarCollectionSummary();
+    Dataset datasetSeven = new Dataset();
+    datasetSeven.setDataSetId(7);
+    summaryFour.addDatasetId(datasetSeven.getDataSetId());
+
+    DarCollectionSummary summaryFive = new DarCollectionSummary();
+    Election electionSix = new Election();
+    electionSix.setElectionId(6);
+    electionSix.setStatus(ElectionStatus.OPEN.getValue());
+    Election electionSeven = new Election();
+    electionSeven.setElectionId(7);
+    electionSeven.setStatus(ElectionStatus.CLOSED.getValue());
+    summaryFive.addElection(electionSix);
+    summaryFive.addElection(electionSeven);
+    summaryFive.addDatasetId(7);
+    summaryFive.addDatasetId(8);
+    summaryFive.addDatasetId(9);
+
+    DarCollectionSummary summarySix = new DarCollectionSummary();
+    Election electionEight = new Election();
+    electionEight.setElectionId(8);
+    electionEight.setStatus(ElectionStatus.CLOSED.getValue());
+    Election electionNine = new Election();
+    electionNine.setElectionId(9);
+    electionNine.setStatus(ElectionStatus.CLOSED.getValue());
+    summarySix.addElection(electionEight);
+    summarySix.addElection(electionNine);
+    summarySix.addDatasetId(10);
+    summarySix.addDatasetId(11);
+
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
+      .thenReturn(List.of(summaryOne, summaryTwo, summaryThree, summaryFour, summaryFive, summarySix));
+    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+    
+    initService();
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user, UserRoles.CHAIRPERSON.getRoleName());
+    assertEquals(6, summaries.size());
+
+    DarCollectionSummary testOne = summaries.get(0);
+    Set<String> expectedOneActions = Set.of(
+        DarCollectionActions.VOTE.getValue(),
+        DarCollectionActions.CANCEL.getValue());
+    assertTrue(testOne.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
+    assertTrue(testOne.getActions().equals(expectedOneActions));
+
+    DarCollectionSummary testTwo = summaries.get(1);
+    Set<String> expectedTwoActions = Set.of(
+        DarCollectionActions.VOTE.getValue(),
+        DarCollectionActions.CANCEL.getValue(),
+        DarCollectionActions.OPEN.getValue());
+    assertTrue(testTwo.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
+    assertTrue(testTwo.getActions().equals(expectedTwoActions));
+
+    DarCollectionSummary testThree = summaries.get(2);
+    Set<String> expectedThreeActions = Set.of(
+        DarCollectionActions.OPEN.getValue());
+    assertTrue(testThree.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
+    assertTrue(testThree.getActions().equals(expectedThreeActions));
+
+    DarCollectionSummary testFour = summaries.get(3);
+    Set<String> expectedFourActions = Set.of(
+        DarCollectionActions.OPEN.getValue());
+    assertTrue(testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
+    assertTrue(testFour.getActions().equals(expectedFourActions));
+
+    DarCollectionSummary testFive = summaries.get(4);
+    Set<String> expectedFiveActions = Set.of(
+        DarCollectionActions.OPEN.getValue(),
+        DarCollectionActions.VOTE.getValue()
+    );
+    assertTrue(testFive.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
+    assertTrue(testFive.getActions().equals(expectedFiveActions));
+
+    DarCollectionSummary testSix = summaries.get(5);
+    Set<String> expectedSixActions = Set.of(
+        DarCollectionActions.OPEN.getValue()
+    );
+    assertTrue(testSix.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
+    assertTrue(testSix.getActions().equals(expectedSixActions));
+    
   }
 
   private void queryCollectionsAssertions(PaginationResponse<DarCollection> response, int expectedUnfilteredCount, int expectedFilteredCount) {

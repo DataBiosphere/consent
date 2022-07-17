@@ -23,6 +23,15 @@ public enum ElectionStatus {
         return null;
     }
 
+    public static ElectionStatus getStatusFromString(String value) {
+        for (ElectionStatus e : ElectionStatus.values()) {
+            if (e.getValue().equalsIgnoreCase(value)) {
+                return e;
+            }
+        }
+        return null;
+    }
+
     public static String getValues() {
         StringBuilder values = new StringBuilder();
         for (ElectionStatus e : ElectionStatus.values()) {
