@@ -27,9 +27,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 
 import javax.ws.rs.BadRequestException;
@@ -37,7 +35,6 @@ import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -48,7 +45,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;

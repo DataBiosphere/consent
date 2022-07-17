@@ -354,6 +354,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
           .forEach((e) -> {
             assertEquals(electionId, e.getKey());
           });
+      assertEquals(1, s.getDarStatuses().size());
+      s.getDarStatuses().values().forEach(status -> assertEquals("test", status));
       assertEquals(1, s.getDatasetCount());
     });
   }
