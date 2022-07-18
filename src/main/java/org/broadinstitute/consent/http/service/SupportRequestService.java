@@ -10,6 +10,7 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
@@ -34,7 +35,6 @@ public class SupportRequestService {
     private final ServicesConfiguration configuration;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static final String TASK_REQUEST_TYPE = "task";
 
     @Inject
     public SupportRequestService(ServicesConfiguration configuration) {
@@ -53,7 +53,7 @@ public class SupportRequestService {
      * @param url         The API url of this request
      * @return A structured ticket used to make the request
      */
-    public SupportTicket createSupportTicket(String name, String type, String email, String subject, String description, String url) {
+    public SupportTicket createSupportTicket(String name, SupportRequestType type, String email, String subject, String description, String url) {
         if (Objects.isNull(name) || Objects.isNull(email)) {
             throw new IllegalArgumentException("Name and email of user requesting support is required");
         }
@@ -72,7 +72,7 @@ public class SupportRequestService {
 
         SupportRequester requester = new SupportRequester(name, email);
         List<CustomRequestField> customFields = new ArrayList<>();
-        customFields.add(new CustomRequestField(360012744452L, type));
+        customFields.add(new CustomRequestField(360012744452L, type.getValue()));
         customFields.add(new CustomRequestField(360007369412L, description));
         customFields.add(new CustomRequestField(360012744292L, name));
         customFields.add(new CustomRequestField(360012782111L, email));
@@ -164,7 +164,7 @@ public class SupportRequestService {
 
         return createSupportTicket(
                 user.getDisplayName(),
-                TASK_REQUEST_TYPE,
+                SupportRequestType.TASK,
                 user.getEmail(),
                 subject,
                 description,
