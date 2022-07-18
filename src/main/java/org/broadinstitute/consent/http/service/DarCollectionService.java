@@ -113,7 +113,7 @@ public class DarCollectionService {
 
   private void processDarCollectionSummariesForAdmin(List<DarCollectionSummary> summaries) {
     //if at least one election is open, show cancel
-    //if at least one election is not open, show cancel
+    //if at least one non-open/absent election, show open
     summaries.forEach(s -> {
       Map<String, Integer> statusCount = new HashMap<>();
       Map<Integer, Election> elections = s.getElections();

@@ -89,7 +89,6 @@ public class DarCollectionResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       validateUserHasRoleName(user, roleName);
-      // TODO: Replace with DarCollectionSummary when available
       List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRoleName(user, roleName);
       return Response.ok().entity(summaries).build();
     } catch (Exception e) {
