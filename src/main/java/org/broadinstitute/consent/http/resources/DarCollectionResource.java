@@ -81,20 +81,20 @@ public class DarCollectionResource extends Resource {
     }
   }
 
-  // @GET
-  // @Path("role/{roleName}/summary")
-  // @Produces("application/json")
-  // @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
-  // public Response getCollectionSummariesForUserByRole(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
-  //   try {
-  //     User user = userService.findUserByEmail(authUser.getEmail());
-  //     validateUserHasRoleName(user, roleName);
-  //     List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRoleName(user, roleName);
-  //     return Response.ok().entity(summaries).build();
-  //   } catch (Exception e) {
-  //     return createExceptionResponse(e);
-  //   }
-  // }
+  @GET
+  @Path("role/{roleName}/summary")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
+  public Response getCollectionSummariesForUserByRole(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateUserHasRoleName(user, roleName);
+      List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRoleName(user, roleName);
+      return Response.ok().entity(summaries).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 
   @GET
   @Path("{collectionId}")
