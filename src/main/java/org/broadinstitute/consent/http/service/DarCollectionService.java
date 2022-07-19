@@ -74,6 +74,10 @@ public class DarCollectionService {
   }
 
   private void updateStatusCount(Map<String, Integer> statusCount, String status) {
+    if(Objects.isNull(status)) {
+      //If the status is null, track it as Undefined to ensure election is accounted for
+      status = "Undefined";
+    }
     Integer count = statusCount.get(status);
     if(Objects.isNull(count)) {
       statusCount.put(status, 0);
