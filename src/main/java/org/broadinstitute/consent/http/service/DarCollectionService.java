@@ -73,17 +73,6 @@ public class DarCollectionService {
     this.darCollectionSummaryDAO = darCollectionSummaryDAO;
   }
 
-  /**
-   * Find all DarCollectionSummaries for a given role name.
-   *  Admins can see all summaries
-   *  Chairs and Members can see summaries for datasets they have access to
-   *  Signing Officials can see summaries for researchers in their institution
-   *  Researchers can see only their own summaries
-   *
-   * @param user The user making the request
-   * @param userRole The role the user is making the request as
-   * @return List of DarCollectionSummary objects
-   */
   private void updateStatusCount(Map<String, Integer> statusCount, String status) {
     Integer count = statusCount.get(status);
     if(Objects.isNull(count)) {
@@ -97,9 +86,9 @@ public class DarCollectionService {
     //If there are no elections, status is unreviewed
     //if there are some elections open, status is in process
     //if all elections are closed or canceled and electionCount == datasetCount, status is complete
-    if(electionCount == 0) {
+    if(electionCount.equals(0)) {
       summary.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
-    } else if(electionCount == datasetCount) {
+    } else if(electionCount.equals(datasetCount)) {
       Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
       if(Objects.isNull(openCount)) {
         summary.setStatus(DarCollectionStatus.COMPLETE.getValue());
@@ -124,7 +113,7 @@ public class DarCollectionService {
         elections.values().forEach(e -> {
           String status = e.getStatus();
           updateStatusCount(statusCount, status);
-          if(status == ElectionStatus.OPEN.getValue()) {
+          if(status.equals(ElectionStatus.OPEN.getValue())) {
             s.addAction(DarCollectionActions.CANCEL.getValue());
           } else {
             s.addAction(DarCollectionActions.OPEN.getValue());
@@ -141,7 +130,7 @@ public class DarCollectionService {
         DarCollectionSummary summary = new DarCollectionSummary();
         Date createDate = new Date(d.getData().getCreateDate());
         String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
-          .format(createDate).toString();
+          .format(createDate);
         summary.setDarCode(darCode);
         summary.setStatus(DarCollectionStatus.DRAFT.getValue());
         summary.setName(d.getData().getProjectTitle());
@@ -165,10 +154,9 @@ public class DarCollectionService {
       elections.values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
       s.addAction(DarCollectionActions.REVIEW.getValue());
       //check dar statuses, if they're all canceled show revise (but only if there are no elections)
-      Boolean isCanceled = false;
       if(electionCount == 0) {
         Collection<String> darStatuses = s.getDarStatuses().values();
-        isCanceled = darStatuses.size() > 0 && darStatuses.stream()
+        Boolean isCanceled = darStatuses.size() > 0 && darStatuses.stream()
           .allMatch(st -> st.equalsIgnoreCase(DarStatus.CANCELED.getValue()));
         if(isCanceled) {
           s.addAction(DarCollectionActions.REVISE.getValue());
@@ -202,7 +190,7 @@ public class DarCollectionService {
           } else {
             //non-votable states
               //all canceled (complete)
-              //some datasets do not have elections (in process) (legacy)
+              //some datasets do not have elections (in process)
               //all voted on (complete)
               //no elections 
             if(electionCount < s.getDatasetCount()) {
@@ -265,6 +253,17 @@ public class DarCollectionService {
     });
   }
 
+  /**
+   * Find all DarCollectionSummaries for a given role name.
+   * Admins can see all summaries
+   * Chairs and Members can see summaries for datasets they have access to
+   * Signing Officials can see summaries for researchers in their institution
+   * Researchers can see only their own summaries
+   *
+   * @param user     The user making the request
+   * @param userRole The role the user is making the request as
+   * @return List of DarCollectionSummary objects
+   */
   public List<DarCollectionSummary> getSummariesForRoleName(User user, String userRole) {
     List<DarCollectionSummary> summaries = new ArrayList<>();
     UserRoles role = UserRoles.getUserRoleFromName(userRole);
