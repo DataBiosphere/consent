@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.ResearcherService;
+import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.Assert;
@@ -25,6 +26,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
@@ -48,8 +50,11 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 public class UserResourceTest {
 
@@ -62,6 +67,8 @@ public class UserResourceTest {
   @Mock private SamService samService;
 
   @Mock private DatasetService datasetService;
+
+  @Mock private SupportRequestService supportRequestService;
 
   private UserResource userResource;
 
@@ -90,7 +97,7 @@ public class UserResourceTest {
   }
 
   private void initResource() {
-    userResource = new UserResource(researcherService, samService, userService, datasetService);
+    userResource = new UserResource(researcherService, samService, userService, datasetService, supportRequestService);
   }
 
   @Test
@@ -373,19 +380,6 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testUpdate() {
-    User user = createUserWithRole();
-    UserUpdateFields userUpdateFields = new UserUpdateFields();
-    Gson gson = new Gson();
-    when(userService.findUserById(any())).thenReturn(user);
-    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
-    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
-    initResource();
-    Response response = userResource.update(authUser, uriInfo, user.getUserId(), gson.toJson(userUpdateFields));
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
-
-  @Test
   public void testUpdateSelf() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
@@ -394,9 +388,11 @@ public class UserResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    spy(supportRequestService);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    verify(supportRequestService, times(1)).handleSuggestedUserFieldsSupportRequest(any(), any(), any());
   }
 
   @Test
@@ -409,9 +405,41 @@ public class UserResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    spy(supportRequestService);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    //no support request sent if update to user fails
+    verify(supportRequestService, times(0)).handleSuggestedUserFieldsSupportRequest(any(), any(), any());
+  }
+
+  @Test
+  public void testUpdateSelfSupportRequestError() {
+    User user = createUserWithRole();
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    doThrow(new ServerErrorException(HttpStatusCodes.STATUS_CODE_SERVER_ERROR))
+            .when(supportRequestService).handleSuggestedUserFieldsSupportRequest(any(), any(), any());
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  public void testUpdate() {
+    User user = createUserWithRole();
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    initResource();
+    Response response = userResource.update(authUser, uriInfo, user.getUserId(), gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
