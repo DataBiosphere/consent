@@ -15,6 +15,7 @@ public class ServicesConfiguration {
 
   private boolean activateSupportNotifications = false;
 
+
   public String getOntologyURL() {
     return ontologyURL;
   }

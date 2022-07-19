@@ -50,6 +50,7 @@ import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.ReviewResultsService;
 import org.broadinstitute.consent.http.service.SummaryService;
+import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
@@ -525,5 +526,10 @@ public class ConsentModule extends AbstractModule {
     @Provides
     SamService providesSamService() {
         return new SamService(config.getServicesConfiguration());
+    }
+
+    @Provides
+    SupportRequestService providesSupportRequestService() {
+        return new SupportRequestService(config.getServicesConfiguration());
     }
 }
