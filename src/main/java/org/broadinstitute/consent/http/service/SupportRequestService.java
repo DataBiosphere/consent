@@ -96,7 +96,7 @@ public class SupportRequestService {
         HttpResponse response = clientUtil.handleHttpRequest(request);
 
         if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
-            logger.error(response.getStatusMessage());
+            logger.error("Error posting ticket to support: " + response.getStatusMessage());
             throw new ServerErrorException(response.getStatusMessage(), HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
         }
     }
@@ -120,6 +120,7 @@ public class SupportRequestService {
                     SupportTicket ticket = createSuggestedUserFieldsTicket(userUpdateFields, user);
                     postTicketToSupport(ticket, authUser);
                 } catch (Exception e) {
+                    logger.error("Exception sending suggested user fields support request: " + e.getMessage());
                     throw new ServerErrorException("Unable to send support ticket for user with email: " + user.getEmail(),
                             HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
                 }
