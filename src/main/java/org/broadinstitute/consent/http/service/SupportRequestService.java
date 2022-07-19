@@ -83,21 +83,25 @@ public class SupportRequestService {
     }
 
     public void postTicketToSupport(SupportTicket ticket, AuthUser authUser) throws Exception {
-        GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
-        //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
-        String ticketJson = new GsonBuilder()
-                .setPrettyPrinting()
-                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                .create()
-                .toJson(ticket);
-        //GsonFactory doesn't do more work on the ticket but an HttpContent object is needed for buildPostRequest
-        JsonHttpContent content = new JsonHttpContent(new GsonFactory(), ticketJson);
-        HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
-        HttpResponse response = clientUtil.handleHttpRequest(request);
+        if (configuration.isActivateSupportNotifications()) {
+            GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
+            //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
+            String ticketJson = new GsonBuilder()
+                    .setPrettyPrinting()
+                    .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                    .create()
+                    .toJson(ticket);
+            //GsonFactory doesn't do more work on the ticket but an HttpContent object is needed for buildPostRequest
+            JsonHttpContent content = new JsonHttpContent(new GsonFactory(), ticketJson);
+            HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
+            HttpResponse response = clientUtil.handleHttpRequest(request);
 
-        if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
-            logger.error("Error posting ticket to support: " + response.getStatusMessage());
-            throw new ServerErrorException(response.getStatusMessage(), HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+            if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+                logger.error("Error posting ticket to support: " + response.getStatusMessage());
+                throw new ServerErrorException(response.getStatusMessage(), HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+            }
+        } else {
+            logger.debug("Not configured to send support requests");
         }
     }
 

@@ -13,6 +13,8 @@ public class ServicesConfiguration {
 
   @NotNull private String samUrl;
 
+  private boolean activateSupportNotifications = false;
+
   public String getOntologyURL() {
     return ontologyURL;
   }
@@ -81,4 +83,11 @@ public class ServicesConfiguration {
     return "https://broadinstitute.zendesk.com/api/v2/requests.json";
   }
 
+  public boolean isActivateSupportNotifications() {
+    return activateSupportNotifications;
+  }
+
+  public void setActivateSupportNotifications(boolean activateSupportNotifications) {
+    this.activateSupportNotifications = activateSupportNotifications;
+  }
 }
