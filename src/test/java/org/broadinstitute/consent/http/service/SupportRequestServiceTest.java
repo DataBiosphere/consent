@@ -60,6 +60,7 @@ public class SupportRequestServiceTest {
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
         mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
+        when(config.isActivateSupportNotifications()).thenReturn(true);
         when(config.postSupportRequestUrl()).thenReturn("http://" + container.getHost() + ":" + container.getServerPort() + "/");
         service = new SupportRequestService(config);
     }
@@ -150,6 +151,15 @@ public class SupportRequestServiceTest {
         assertEquals(1, requests.length);
         Object requestBody = requests[0].getBody().getValue();
         assertEquals(expectedBody, requestBody);
+    }
+
+    @Test
+    public void testPostTicketToSupportNotificationsNotActivated() throws Exception {
+        SupportTicket ticket = generateTicket();
+        when(config.isActivateSupportNotifications()).thenReturn(false);
+        // verify no requests sent if activateSupportNotifications is false; throw error if post attempted
+        mockServerClient.when(request()).error(new HttpError());
+        service.postTicketToSupport(ticket, authUser);
     }
 
     @Test(expected = ServerErrorException.class)
