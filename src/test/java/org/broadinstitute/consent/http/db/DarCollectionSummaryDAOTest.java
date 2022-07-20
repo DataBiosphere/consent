@@ -32,6 +32,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Date submissionDate = new Date();
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(RandomStringUtils.randomAlphabetic(20));
+    data.setStatus("test");
     dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, createDate, new Date(), submissionDate, new Date(), data);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
@@ -353,6 +354,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
           .forEach((e) -> {
             assertEquals(electionId, e.getKey());
           });
+      assertEquals(1, s.getDarStatuses().size());
+      s.getDarStatuses().values().forEach(status -> assertEquals("test", status));
       assertEquals(1, s.getDatasetCount());
     });
   }
@@ -491,7 +494,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
       assertEquals(1, s.getDatasetIds().size());
       s.getDatasetIds().stream()
           .forEach((id) -> assertTrue(targetDatasets.contains(id)));
-
+      s.getDarStatuses().values()
+        .forEach((st) -> assertTrue(st.equalsIgnoreCase("test")));
       assertEquals(0, s.getElections().size());
       assertEquals(1, s.getDatasetCount());
     });

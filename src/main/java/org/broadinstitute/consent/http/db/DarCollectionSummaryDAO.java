@@ -115,9 +115,10 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @UseRowReducer(DarCollectionSummaryReducer.class)
   @SqlQuery
   (
-    "SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, u.display_name as researcher_name, " +
+    "SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name, " +
       "i.institution_name, e.electionid, e.status, e.datasetid, e.referenceid, dd.dataset_id as dd_datasetid, " +      
-      "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name " +
+      "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name, " +
+      "(dar.data #>> '{}')::jsonb ->> 'status' AS dar_status " +
     "FROM dar_collection c " +
     "INNER JOIN users u " +
       "ON u.user_id = c.create_user_id " +
