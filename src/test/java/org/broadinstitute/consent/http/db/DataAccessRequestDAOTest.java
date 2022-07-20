@@ -44,7 +44,11 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(dars.isEmpty());
 
         createDataAccessRequestV3();
-        createDraftDataAccessRequest();
+        DataAccessRequest draft = createDraftDataAccessRequest();
+        Dataset d1 = createDataset();
+        Dataset d2 = createDataset();
+        dataAccessRequestDAO.insertDARDatasetRelation(draft.getReferenceId(), d1.getDataSetId());
+        dataAccessRequestDAO.insertDARDatasetRelation(draft.getReferenceId(), d2.getDataSetId());
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertFalse(newDars.isEmpty());
         assertEquals(1, newDars.size());
@@ -54,6 +58,10 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testFindAllDraftsByUserId() {
         DataAccessRequest dar = createDraftDataAccessRequest();
+        Dataset d1 = createDataset();
+        Dataset d2 = createDataset();
+        dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d1.getDataSetId());
+        dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d2.getDataSetId());
 
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDraftsByUserId(dar.getUserId());
         assertFalse(newDars.isEmpty());
