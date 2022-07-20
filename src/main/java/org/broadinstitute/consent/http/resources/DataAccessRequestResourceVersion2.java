@@ -103,9 +103,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       }
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
-      return Response.created(uri)
-          .entity(newDar.convertToSimplifiedDar())
-          .build();
+      return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

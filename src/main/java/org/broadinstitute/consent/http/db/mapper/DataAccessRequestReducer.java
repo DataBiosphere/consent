@@ -1,10 +1,8 @@
 package org.broadinstitute.consent.http.db.mapper;
 
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
-import org.postgresql.util.PGobject;
 
 import java.util.Map;
 
