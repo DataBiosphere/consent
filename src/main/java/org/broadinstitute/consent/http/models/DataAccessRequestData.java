@@ -26,7 +26,7 @@ public class DataAccessRequestData {
             "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
             "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
             "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
-            "createDate", "sortDate", "additionalEmail", "checkNotifications, partialDarCode" );
+            "createDate", "sortDate", "additionalEmail", "checkNotifications", "partialDarCode" );
 
     private String referenceId;
     private String investigator;
