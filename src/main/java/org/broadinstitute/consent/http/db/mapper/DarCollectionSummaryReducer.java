@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db.mapper;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 
 import java.lang.Integer;
 import java.util.Objects;
@@ -25,11 +26,22 @@ public class DarCollectionSummaryReducer implements LinkedHashMapRowReducer<Inte
     Election election;
     Vote vote;
     Integer datasetId;
+    String darStatus;
+    String darReferenceId;
     try {
-
       datasetId = rowView.getColumn("dd_datasetid", Integer.class);
       if (Objects.nonNull(datasetId)) {
         summary.addDatasetId(datasetId);
+      }
+      
+      try{
+        darStatus = rowView.getColumn("dar_status", String.class);
+        darReferenceId = rowView.getColumn("dar_reference_id", String.class);
+        if (Objects.nonNull(darStatus)) {
+          summary.addStatus(darStatus, darReferenceId);
+        }
+      } catch(MappingException e) {
+        //ignore exception, it means dar_status and dar_reference_id wasn't included for this query
       }
 
       election = rowView.getRow(Election.class);

@@ -10,7 +10,10 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportRequestComment;
 import org.broadinstitute.consent.http.models.support.SupportRequester;
@@ -32,6 +35,7 @@ public class SupportRequestService {
     private final ServicesConfiguration configuration;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+
     @Inject
     public SupportRequestService(ServicesConfiguration configuration) {
         this.clientUtil = new HttpClientUtil();
@@ -40,15 +44,16 @@ public class SupportRequestService {
 
     /**
      * Builds a ticket with the proper structure to request support via Zendesk
-     * @param name The name of the user requesting support
-     * @param type The type of request ("question", "incident", "problem", "task")
-     * @param email The email of the user requesting support
-     * @param subject Subject line of the request
+     *
+     * @param name        The name of the user requesting support
+     * @param type        The type of request ("question", "incident", "problem", "task")
+     * @param email       The email of the user requesting support
+     * @param subject     Subject line of the request
      * @param description Description of the task or question
-     * @param url The API url of this request
+     * @param url         The API url of this request
      * @return A structured ticket used to make the request
      */
-    public SupportTicket createSupportTicket(String name, String type, String email, String subject, String description, String url) {
+    public SupportTicket createSupportTicket(String name, SupportRequestType type, String email, String subject, String description, String url) {
         if (Objects.isNull(name) || Objects.isNull(email)) {
             throw new IllegalArgumentException("Name and email of user requesting support is required");
         }
@@ -67,7 +72,7 @@ public class SupportRequestService {
 
         SupportRequester requester = new SupportRequester(name, email);
         List<CustomRequestField> customFields = new ArrayList<>();
-        customFields.add(new CustomRequestField(360012744452L, type));
+        customFields.add(new CustomRequestField(360012744452L, type.getValue()));
         customFields.add(new CustomRequestField(360007369412L, description));
         customFields.add(new CustomRequestField(360012744292L, name));
         customFields.add(new CustomRequestField(360012782111L, email));
@@ -78,23 +83,96 @@ public class SupportRequestService {
     }
 
     public void postTicketToSupport(SupportTicket ticket, AuthUser authUser) throws Exception {
-        GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
-        //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
-        String ticketJson = new GsonBuilder()
-                .setPrettyPrinting()
-                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                .create()
-                .toJson(ticket);
-        //GsonFactory doesn't do more work on the ticket but an HttpContent object is needed for buildPostRequest
-        JsonHttpContent content = new JsonHttpContent(new GsonFactory(), ticketJson);
-        HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
-        HttpResponse response = clientUtil.handleHttpRequest(request);
+        if (configuration.isActivateSupportNotifications()) {
+            GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
+            //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
+            String ticketJson = new GsonBuilder()
+                    .setPrettyPrinting()
+                    .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                    .create()
+                    .toJson(ticket);
+            //GsonFactory doesn't do more work on the ticket but an HttpContent object is needed for buildPostRequest
+            JsonHttpContent content = new JsonHttpContent(new GsonFactory(), ticketJson);
+            HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
+            HttpResponse response = clientUtil.handleHttpRequest(request);
 
-        if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
-            logger.error(response.getStatusMessage());
-            throw new ServerErrorException(response.getStatusMessage(), HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+            if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+                logger.error("Error posting ticket to support: " + response.getStatusMessage());
+                throw new ServerErrorException(response.getStatusMessage(), HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+            }
+        } else {
+            logger.debug("Not configured to send support requests");
         }
     }
 
 
+    /**
+     * Creates and sends a support ticket for a user requesting an unfamiliar institution and/or signing official, if provided
+     *
+     * @param userUpdateFields A UserUpdateFields object containing update information for the user
+     * @param user             The user requesting the institution and/or signing official
+     * @param authUser         AuthUser object used to build POST request
+     */
+    public void handleSuggestedUserFieldsSupportRequest(UserUpdateFields userUpdateFields, User user, AuthUser authUser) {
+        if (Objects.nonNull(userUpdateFields) && Objects.nonNull(user)) {
+            String suggestedInstitution = userUpdateFields.getSuggestedInstitution();
+            String suggestedSigningOfficial = userUpdateFields.getSuggestedSigningOfficial();
+
+            // Only create and send ticket if either a suggestedInstitution or suggestedSigningOfficial has been provided
+            if (Objects.nonNull(suggestedInstitution) || Objects.nonNull(suggestedSigningOfficial)) {
+                try {
+                    SupportTicket ticket = createSuggestedUserFieldsTicket(userUpdateFields, user);
+                    postTicketToSupport(ticket, authUser);
+                } catch (Exception e) {
+                    logger.error("Exception sending suggested user fields support request: " + e.getMessage());
+                    throw new ServerErrorException("Unable to send support ticket for user with email: " + user.getEmail(),
+                            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+                }
+            }
+        }
+    }
+
+    /**
+     * Generates a support ticket for a user requesting an unfamiliar institution and/or signing official
+     *
+     * @param userUpdateFields A UserUpdateFields object containing update information for the user
+     * @param user             The user requesting the institution and/or signing official
+     * @return A support ticket detailing the requested user fields
+     * @throws IllegalArgumentException if both suggestedInstitution and suggestedSigningOfficial are null, preventing ticket creation
+     */
+    public SupportTicket createSuggestedUserFieldsTicket(UserUpdateFields userUpdateFields, User user) throws IllegalArgumentException {
+        String suggestedInstitution = userUpdateFields.getSuggestedInstitution();
+        String suggestedSigningOfficial = userUpdateFields.getSuggestedSigningOfficial();
+        String subject = null;
+        String description = null;
+
+        if (Objects.nonNull(suggestedInstitution) && Objects.nonNull(suggestedSigningOfficial)) {
+            subject = "New Institution and Signing Official Request";
+            description = String.format("User %s [%s] has requested a new signing official: {%s} and has requested a new institution: {%s}",
+                    user.getDisplayName(),
+                    user.getEmail(),
+                    suggestedSigningOfficial,
+                    suggestedInstitution);
+        } else if (Objects.nonNull(suggestedInstitution)) {
+            subject = "New Institution Request";
+            description = String.format("User %s [%s] has requested a new institution: {%s}",
+                    user.getDisplayName(),
+                    user.getEmail(),
+                    suggestedInstitution);
+        } else if (Objects.nonNull(suggestedSigningOfficial)) {
+            subject = "New Signing Official Request";
+            description = String.format("User %s [%s] has requested a new signing official: {%s}",
+                    user.getDisplayName(),
+                    user.getEmail(),
+                    suggestedSigningOfficial);
+        }
+
+        return createSupportTicket(
+                user.getDisplayName(),
+                SupportRequestType.TASK,
+                user.getEmail(),
+                subject,
+                description,
+                configuration.postSupportRequestUrl());
+    }
 }

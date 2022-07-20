@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ResearcherService;
+import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
@@ -54,14 +55,16 @@ public class UserResource extends Resource {
     private final Gson gson = new Gson();
     private final SamService samService;
     private final DatasetService datasetService;
+    private final SupportRequestService supportRequestService;
 
     @Inject
-    public UserResource(ResearcherService researcherService,
-                        SamService samService, UserService userService, DatasetService datasetService) {
+    public UserResource(ResearcherService researcherService, SamService samService, UserService userService,
+                        DatasetService datasetService, SupportRequestService supportRequestService) {
         this.researcherService = researcherService;
         this.samService = samService;
         this.userService = userService;
         this.datasetService = datasetService;
+        this.supportRequestService = supportRequestService;
     }
 
     @GET
@@ -200,6 +203,7 @@ public class UserResource extends Resource {
             }
 
             user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
+            supportRequestService.handleSuggestedUserFieldsSupportRequest(userUpdateFields, user, authUser);
             Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
 

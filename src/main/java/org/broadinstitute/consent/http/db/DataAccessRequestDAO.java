@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * For all json queries, note the double `??` for jdbi3 escaped jsonb operators:
- * <a href="https://jdbi.org/#_postgresql">JDBI</a>
+ * <a href="https://jdbi.org/#_postgresql">...</a>
  */
 @RegisterRowMapper(DataAccessRequestMapper.class)
 public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO> {
@@ -69,8 +69,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
           + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
           + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
-          + "  WHERE (dar.data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
-          + "  OR dar.draft = true "
+          + "  WHERE dar.draft = true "
           + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) "
           + "  ORDER BY dar.update_date DESC")
   List<DataAccessRequest> findAllDraftDataAccessRequests();
@@ -85,9 +84,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
           + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
           + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
-          + "  WHERE ( (dar.data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] "
-          + "          OR dar.draft = true "
-          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)) "
+          + "  WHERE dar.draft = true "
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) "
           + "  AND dar.user_id = :userId "
           + "  ORDER BY dar.sort_date DESC")
   List<DataAccessRequest> findAllDraftsByUserId(@Bind("userId") Integer userId);
@@ -115,7 +113,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @param referenceId String
    * @return DataAccessRequest
    */
-
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
