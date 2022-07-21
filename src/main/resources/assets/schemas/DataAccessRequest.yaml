@@ -29,10 +29,7 @@ properties:
     type: object
     description: Map of elections tied to the DAR (electionid - election)
     items:
-      $ref: './Election.yaml' 
-  partialDarCode:
-    type: string
-    description: Unique Partial DAR Code
+      $ref: './Election.yaml'
   projectTitle:
     type: string
     description: Project Title
