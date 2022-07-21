@@ -11,7 +11,7 @@
 
   <properties>
     <java.version>11</java.version>
-    <liquibase.version>4.12.0</liquibase.version>
+    <liquibase.version>4.13.0</liquibase.version>
     <dropwizard.version>2.1.1</dropwizard.version>
     <owl.version>5.1.20</owl.version>
     <postgres.version>42.4.0</postgres.version>
@@ -582,7 +582,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-storage</artifactId>
-      <version>v1-rev20220608-1.32.1</version>
+      <version>v1-rev20220705-1.32.1</version>
     </dependency>
 
     <dependency>
@@ -638,7 +638,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.3.1</version>
+      <version>8.3.2</version>
     </dependency>
 
     <!-- See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/11441966 -->

@@ -222,8 +222,6 @@ public class DataAccessRequestService {
             throw new IllegalArgumentException("User and DataAccessRequest are required");
         }
         Date now = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        dar.getData().setPartialDarCode(DataAccessRequestData.partialDarCodePrefix + sdf.format(now));
         dataAccessRequestDAO.insertDraftDataAccessRequest(
             dar.getReferenceId(),
             user.getUserId(),
@@ -312,8 +310,6 @@ public class DataAccessRequestService {
         newData.setReferenceId(referenceId);
         newData.setCreateDate(now.getTime());
         newData.setSortDate(now.getTime());
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        newData.setPartialDarCode(DataAccessRequestData.partialDarCodePrefix + sdf.format(now));
         dataAccessRequestDAO.insertDraftDataAccessRequest(
             referenceId,
             user.getUserId(),
@@ -435,7 +431,6 @@ public class DataAccessRequestService {
         long nowTime = now.getTime();
         DataAccessRequest newDar;
         DataAccessRequestData darData = dataAccessRequest.getData();
-        darData.setPartialDarCode(null);
         if (Objects.isNull(darData.getCreateDate())) {
             darData.setCreateDate(nowTime);
         }

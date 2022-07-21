@@ -26,11 +26,7 @@ public class DataAccessRequestData {
             "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
             "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
             "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
-            "createDate", "sortDate", "additionalEmail", "checkNotifications" );
-
-    // prefix for partialDarCode, should be pulled by functions that generate/update ONLY
-    // since class is used within both drafts and submitted dars, it's best to control its implementation on the outer function call
-    public static final String partialDarCodePrefix = "temp_DAR_";
+            "createDate", "sortDate", "additionalEmail", "checkNotifications", "partialDarCode" );
 
     private String referenceId;
     private String investigator;
@@ -96,8 +92,6 @@ public class DataAccessRequestData {
     private List<DatasetEntry> datasets;
     @SerializedName(value = "darCode", alternate = "dar_code")
     private String darCode;
-    @SerializedName(value = "partialDarCode", alternate = "partial_dar_code")
-    private String partialDarCode;
     private Object restriction;
     @SerializedName(value = "validRestriction", alternate = "valid_restriction")
     private Boolean validRestriction;
@@ -517,14 +511,6 @@ public class DataAccessRequestData {
 
     public void setDarCode(String darCode) {
         this.darCode = darCode;
-    }
-
-    public String getPartialDarCode() {
-        return partialDarCode;
-    }
-
-    public void setPartialDarCode(String partialDarCode) {
-        this.partialDarCode = partialDarCode;
     }
 
     public Object getRestriction() {
