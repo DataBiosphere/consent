@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -80,6 +81,26 @@ public class DacDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindById() {
+        Integer id = dacDAO.createDac(
+                "Test_" + RandomStringUtils.random(20, true, true),
+                "Test_" + RandomStringUtils.random(20, true, true),
+                new Date());
+        Dac dac = dacDAO.findById(id);
+        Assert.assertEquals(id, dac.getDacId());
+    }
+
+    @Test
+    public void testCreateDac() {
+        Integer id = dacDAO.createDac(
+                "Test_" + RandomStringUtils.random(20, true, true),
+                "Test_" + RandomStringUtils.random(20, true, true),
+                new Date());
+        Dac dac = dacDAO.findById(id);
+        Assert.assertEquals(dac.getDacId(), id);
+    }
+
+    @Test
     public void testUpdateDac() {
         String newValue = "New Value";
         Dac dac = createDac();
@@ -88,6 +109,30 @@ public class DacDAOTest extends DAOTestHelper {
 
         Assert.assertEquals(updatedDac.getName(), newValue);
         Assert.assertEquals(updatedDac.getDescription(), newValue);
+    }
+
+    @Test
+    public void testDeleteDacMembers() {
+        Dac dac = createDac();
+        Integer memberRoleId = UserRoles.MEMBER.getRoleId();
+        User user1 = createUser();
+        dacDAO.addDacMember(memberRoleId, user1.getUserId(), dac.getDacId());
+        User user2 = createUser();
+        dacDAO.addDacMember(memberRoleId, user2.getUserId(), dac.getDacId());
+
+        dacDAO.deleteDacMembers(dac.getDacId());
+        List<User> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
+        Assert.assertTrue(dacMembers.isEmpty());
+    }
+
+    @Test
+    public void testDeleteDac() {
+        Dac dac = createDac();
+        Assert.assertNotNull(dac.getDacId());
+
+        dacDAO.deleteDac(dac.getDacId());
+        Dac deletedDac = dacDAO.findById(dac.getDacId());
+        Assert.assertNull(deletedDac);
     }
 
     @Test
@@ -162,6 +207,21 @@ public class DacDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testRemoveDacMember() {
+        Dac dac = createDac();
+        Integer chairRoleId = UserRoles.CHAIRPERSON.getRoleId();
+        Integer memberRoleId = UserRoles.MEMBER.getRoleId();
+        User user1 = createUser();
+        dacDAO.addDacMember(memberRoleId, user1.getUserId(), dac.getDacId());
+        User user2 = createUser();
+        dacDAO.addDacMember(chairRoleId, user2.getUserId(), dac.getDacId());
+        List<UserRole> userRoles = dacDAO.findUserRolesForUser(user2.getUserId());
+        userRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
+        List<UserRole> userRolesRemoved = dacDAO.findUserRolesForUser(user2.getUserId());
+        Assert.assertTrue(userRolesRemoved.isEmpty());
+    }
+
+    @Test
     public void testGetRoleById() {
         Role chair = dacDAO.getRoleById(UserRoles.CHAIRPERSON.getRoleId());
         Assert.assertEquals(
@@ -171,6 +231,15 @@ public class DacDAOTest extends DAOTestHelper {
         Assert.assertEquals(
                 member.getName().toLowerCase(),
                 UserRoles.MEMBER.getRoleName().toLowerCase());
+    }
+
+    @Test
+    public void testFindUserRolesForUser() {
+        Dac dac = createDac();
+        User chair = createUser(); // Creates a user with researcher role; UserRole #1
+        dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId()); // ; UserRole #2
+        List<UserRole> userRoles = dacDAO.findUserRolesForUser(chair.getUserId()).stream().distinct().collect(Collectors.toList());
+        Assert.assertEquals(userRoles.size(), 2);
     }
 
     @Test
