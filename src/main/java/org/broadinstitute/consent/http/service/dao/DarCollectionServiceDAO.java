@@ -166,7 +166,8 @@ public class DarCollectionServiceDAO {
             + "         (SELECT coalesce (MAX(version), 0) + 1 "
             + "          FROM election AS electionVersion "
             + "          WHERE referenceid = :referenceId "
-            + "          AND electiontype = :electionType) "
+            + "          AND electiontype = :electionType "
+            + "          AND datasetid = :datasetId) "
             + "        )";
     Update insert = handle.createUpdate(sql);
     insert.bind("electionType", electionType);

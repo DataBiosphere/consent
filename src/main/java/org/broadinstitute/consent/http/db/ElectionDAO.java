@@ -41,9 +41,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                            @Bind("referenceId") String referenceId,
                            @Bind("datasetId") Integer dataSetId);
 
-    @SqlUpdate("insert into election (electionType, status, createDate,referenceId, finalAccessVote, dataUseLetter, dulName, datasetId, version) values " +
-            "(:electionType, :status, :createDate,:referenceId, :finalAccessVote, :dataUseLetter, :dulName, :datasetId, " +
-            " (SELECT coalesce (MAX(version), 0) + 1 FROM election AS electionVersion  where referenceId = :referenceId))")
+    @SqlUpdate(
+            " INSERT INTO election (electiontype, status, createdate, referenceid, finalaccessvote, datauseletter, dulname, datasetid, version) " +
+            " VALUES (:electionType, :status, :createDate,:referenceId, :finalAccessVote, :dataUseLetter, :dulName, :datasetId, " +
+            "        (SELECT COALESCE (MAX(version), 0) + 1 FROM election WHERE referenceid = :referenceId AND electiontype = :electionType AND datasetid = :datasetId)) ")
     @GetGeneratedKeys
     Integer insertElection(@Bind("electionType") String electionType,
                            @Bind("status") String status,
@@ -52,7 +53,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                            @Bind("finalAccessVote") Boolean finalAccessVote,
                            @Bind("dataUseLetter") String dataUseLetter,
                            @Bind("dulName") String dulName,
-                           @Bind("datasetId") Integer dataSetId);
+                           @Bind("datasetId") Integer datasetId);
 
     @SqlUpdate("delete  from election where electionId = :electionId")
     void deleteElectionById(@Bind("electionId") Integer electionId);
