@@ -64,6 +64,7 @@ import org.broadinstitute.consent.http.resources.ErrorResource;
 import org.broadinstitute.consent.http.resources.IndexerResource;
 import org.broadinstitute.consent.http.resources.InstitutionResource;
 import org.broadinstitute.consent.http.resources.LibraryCardResource;
+import org.broadinstitute.consent.http.resources.LivenessResource;
 import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
 import org.broadinstitute.consent.http.resources.NihAccountResource;
@@ -259,6 +260,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new TosResource(samService));
         env.jersey().register(injector.getInstance(VersionResource.class));
         env.jersey().register(new VoteResource(userService, voteService, electionService));
+        env.jersey().register(new LivenessResource());
 
         // Authentication filters
         final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
