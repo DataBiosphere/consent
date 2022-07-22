@@ -327,7 +327,7 @@ public class DarCollectionService {
       case CHAIRPERSON:
         userId = user.getUserId();
         datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
-                .map(d -> d.getDataSetId())
+                .map(DatasetDTO::getDataSetId)
                 .collect(Collectors.toList());
         //get summary
         processDarCollectionSummaryForChair(summary);
@@ -335,7 +335,7 @@ public class DarCollectionService {
       case MEMBER:
         userId = user.getUserId();
         datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
-                .map(d -> d.getDataSetId())
+                .map(DatasetDTO::getDataSetId)
                 .collect(Collectors.toList());
         //get summary
         processDarCollectionSummaryForMember(summary);
@@ -343,7 +343,7 @@ public class DarCollectionService {
       case RESEARCHER:
         //get summary & process if not null
         processDarCollectionSummaryForResearcher(summary);
-        //need endpoint for draft
+        //need query to get draft using collectionId
         //List<DataAccessRequest> drafts = dataAccessRequestDAO.findAllDraftsByUserId(userId);
         //in this case, give empty list in place of summaries and get single element after processes
         //processDarCollectionDraftAsSummary(drafts);

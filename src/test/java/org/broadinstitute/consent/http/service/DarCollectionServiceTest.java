@@ -850,7 +850,7 @@ public class DarCollectionServiceTest {
   public void testProcessDarCollectionSummariesForResearcher() {
 
     //summaryOne -> in review (elections present)
-    //summarytwo -> no elections 
+    //summarytwo -> no elections
     //summaryThree -> no elections, canceled
     //summaryThree -> draft
 
@@ -895,7 +895,7 @@ public class DarCollectionServiceTest {
     mockSummaries.add(summaryThree);
     when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(draft));
     when(darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(any())).thenReturn(mockSummaries);
-    
+
     initService();
 
     List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
@@ -908,7 +908,7 @@ public class DarCollectionServiceTest {
       DarCollectionActions.REVIEW.getValue()
     );
     assertTrue(testOne.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-    assertTrue(testOne.getActions().equals(expectedOneActions));
+    assertEquals(testOne.getActions(), expectedOneActions);
 
     DarCollectionSummary testTwo = summaries.get(1);
     Set<String> expectedTwoActions = Set.of(
@@ -916,21 +916,21 @@ public class DarCollectionServiceTest {
       DarCollectionActions.CANCEL.getValue()
     );
     assertTrue(testTwo.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
-    assertTrue(testTwo.getActions().equals(expectedTwoActions));
+    assertEquals(testTwo.getActions(), expectedTwoActions);
 
     DarCollectionSummary testThree = summaries.get(2);
     Set<String> expectedThreeActions = Set.of(
         DarCollectionActions.REVIEW.getValue(),
         DarCollectionActions.REVISE.getValue());
     assertTrue(testThree.getStatus().equalsIgnoreCase(DarCollectionStatus.CANCELED.getValue()));
-    assertTrue(testThree.getActions().equals(expectedThreeActions));
+    assertEquals(testThree.getActions(), expectedThreeActions);
 
     DarCollectionSummary testDraft = summaries.get(3);
     Set<String> expectedDraftActions = Set.of(
         DarCollectionActions.RESUME.getValue(),
         DarCollectionActions.DELETE.getValue());
     assertTrue(testDraft.getStatus().equalsIgnoreCase(DarCollectionStatus.DRAFT.getValue()));
-    assertTrue(testDraft.getActions().equals(expectedDraftActions));
+    assertEquals(testDraft.getActions(), expectedDraftActions);
   }
 
   @Test
@@ -994,7 +994,7 @@ public class DarCollectionServiceTest {
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin())
       .thenReturn(List.of(summaryOne, summaryTwo, summaryThree, summaryFour));
-    
+
     initService();
 
     List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user, UserRoles.ADMIN.getRoleName());
@@ -1003,26 +1003,26 @@ public class DarCollectionServiceTest {
     Set<String> expectedOneActions = Set.of(
         DarCollectionActions.CANCEL.getValue());
     assertTrue(testOne.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-    assertTrue(testOne.getActions().equals(expectedOneActions));
+    assertEquals(testOne.getActions(), expectedOneActions);
 
     DarCollectionSummary testTwo = summaries.get(1);
     Set<String> expectedTwoActions = Set.of(
         DarCollectionActions.CANCEL.getValue(),
         DarCollectionActions.OPEN.getValue());
     assertTrue(testTwo.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-    assertTrue(testTwo.getActions().equals(expectedTwoActions));
+    assertEquals(testTwo.getActions(), expectedTwoActions);
 
     DarCollectionSummary testThree = summaries.get(2);
     Set<String> expectedThreeActions = Set.of(
         DarCollectionActions.OPEN.getValue());
     assertTrue(testThree.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
-    assertTrue(testThree.getActions().equals(expectedThreeActions));
+    assertEquals(testThree.getActions(), expectedThreeActions);
 
     DarCollectionSummary testFour = summaries.get(3);
     Set<String> expectedFourActions = Set.of(
         DarCollectionActions.OPEN.getValue());
     assertTrue(testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
-    assertTrue(testFour.getActions().equals(expectedFourActions));
+    assertEquals(testFour.getActions(), expectedFourActions);
   }
 
   @Test
@@ -1060,7 +1060,7 @@ public class DarCollectionServiceTest {
     when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
 
     initService();
-    
+
     List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user, UserRoles.MEMBER.getRoleName());
 
     assertNotNull(summaries);
@@ -1068,17 +1068,17 @@ public class DarCollectionServiceTest {
 
     DarCollectionSummary testOne = summaries.get(0);
     Set<String> expectedOneActions = Set.of();
-    assertTrue(testOne.getActions().equals(expectedOneActions));
+    assertEquals(testOne.getActions(), expectedOneActions);
     assertEquals(DarCollectionStatus.COMPLETE.getValue(), testOne.getStatus());
 
     DarCollectionSummary testTwo = summaries.get(1);
     Set<String> expectedTwoActions = Set.of("Vote");
-    assertTrue(testTwo.getActions().equals(expectedTwoActions));
+    assertEquals(testTwo.getActions(), expectedTwoActions);
     assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testTwo.getStatus());
 
     DarCollectionSummary testThree = summaries.get(2);
     Set<String> expectedThreeActions = Set.of();
-    assertTrue(testThree.getActions().equals(expectedThreeActions));
+    assertEquals(testThree.getActions(), expectedThreeActions);
     assertEquals(DarCollectionStatus.UNREVIEWED.getValue(), testThree.getStatus());
   }
 
@@ -1171,7 +1171,7 @@ public class DarCollectionServiceTest {
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
       .thenReturn(List.of(summaryOne, summaryTwo, summaryThree, summaryFour, summaryFive, summarySix));
     when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
-    
+
     initService();
 
     List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user, UserRoles.CHAIRPERSON.getRoleName());
@@ -1182,7 +1182,7 @@ public class DarCollectionServiceTest {
         DarCollectionActions.VOTE.getValue(),
         DarCollectionActions.CANCEL.getValue());
     assertTrue(testOne.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-    assertTrue(testOne.getActions().equals(expectedOneActions));
+    assertEquals(testOne.getActions(), expectedOneActions);
 
     DarCollectionSummary testTwo = summaries.get(1);
     Set<String> expectedTwoActions = Set.of(
@@ -1190,19 +1190,19 @@ public class DarCollectionServiceTest {
         DarCollectionActions.CANCEL.getValue(),
         DarCollectionActions.OPEN.getValue());
     assertTrue(testTwo.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-    assertTrue(testTwo.getActions().equals(expectedTwoActions));
+    assertEquals(testTwo.getActions(), expectedTwoActions);
 
     DarCollectionSummary testThree = summaries.get(2);
     Set<String> expectedThreeActions = Set.of(
         DarCollectionActions.OPEN.getValue());
     assertTrue(testThree.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
-    assertTrue(testThree.getActions().equals(expectedThreeActions));
+    assertEquals(testThree.getActions(), expectedThreeActions);
 
     DarCollectionSummary testFour = summaries.get(3);
     Set<String> expectedFourActions = Set.of(
         DarCollectionActions.OPEN.getValue());
     assertTrue(testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
-    assertTrue(testFour.getActions().equals(expectedFourActions));
+    assertEquals(testFour.getActions(), expectedFourActions);
 
     DarCollectionSummary testFive = summaries.get(4);
     Set<String> expectedFiveActions = Set.of(
@@ -1210,15 +1210,15 @@ public class DarCollectionServiceTest {
         DarCollectionActions.VOTE.getValue()
     );
     assertTrue(testFive.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-    assertTrue(testFive.getActions().equals(expectedFiveActions));
+    assertEquals(testFive.getActions(), expectedFiveActions);
 
     DarCollectionSummary testSix = summaries.get(5);
     Set<String> expectedSixActions = Set.of(
         DarCollectionActions.OPEN.getValue()
     );
     assertTrue(testSix.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
-    assertTrue(testSix.getActions().equals(expectedSixActions));
-    
+    assertEquals(testSix.getActions(), expectedSixActions);
+
   }
 
   private void queryCollectionsAssertions(PaginationResponse<DarCollection> response, int expectedUnfilteredCount, int expectedFilteredCount) {
