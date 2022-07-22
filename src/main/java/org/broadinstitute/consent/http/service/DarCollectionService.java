@@ -321,35 +321,33 @@ public class DarCollectionService {
   public DarCollectionSummary getSummaryForRoleNameByCollectionId(User user, String userRole, Integer collectionId) {
     List<DarCollectionSummary> summary = new ArrayList<>();
     UserRoles role = UserRoles.getUserRoleFromName(userRole);
-    Integer userId = user.getUserId();
+    Integer userId = user.getUserId();;
     List<Integer> datasetIds;
     switch (role) {
       case ADMIN:
-        summary = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
+        summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
         processDarCollectionSummariesForAdmin(summary);
         break;
       case SIGNINGOFFICIAL:
-        summary = darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
+        summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
         processDarCollectionSummariesForSO(summary);
         break;
       case CHAIRPERSON:
-        userId = user.getUserId();
         datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
                 .map(d -> d.getDataSetId())
                 .collect(Collectors.toList());
-        summary = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
+        summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, datasetIds, collectionId);
         processDarCollectionSummariesForChair(summary);
         break;
       case MEMBER:
-        userId = user.getUserId();
         datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
                 .map(d -> d.getDataSetId())
                 .collect(Collectors.toList());
-        summary = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
+        summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, datasetIds, collectionId);
         processDarCollectionSumariesForMember(summary);
         break;
       case RESEARCHER:
-        summary = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+        summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
         processDarCollectionSummariesForResearcher(summary);
         break;
       default:
