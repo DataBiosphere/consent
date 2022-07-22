@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Institution;
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -245,13 +247,12 @@ public class UserService {
     }
 
     public List<UserProperty> findAllUserProperties(Integer userId) {
-        return userPropertyDAO.findResearcherPropertiesByUser(userId);
+        return userPropertyDAO.findResearcherPropertiesByUser(userId, UserFields.getValues());
     }
 
     public List<User> describeAdminUsersThatWantToReceiveMails() {
         return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
     }
-
 
     public User updateDACUserById(Map<String, User> dac, Integer id) throws IllegalArgumentException, NotFoundException {
         User updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
@@ -276,7 +277,7 @@ public class UserService {
         try {
             userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getInstitutionId());
         } catch (UnableToExecuteStatementException e) {
-            throw new IllegalArgumentException("Email shoud be unique.");
+            throw new IllegalArgumentException("Email should be unique.");
         }
         return userDAO.findUserById(id);
     }

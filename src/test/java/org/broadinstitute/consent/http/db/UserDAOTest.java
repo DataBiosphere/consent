@@ -199,21 +199,6 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindUsersWithProfileCompleted() {
-        User u = createUser();
-        UserProperty p = new UserProperty();
-        p.setPropertyKey(UserFields.COMPLETED.getValue());
-        p.setPropertyValue("true");
-        p.setUserId(u.getUserId());
-        userPropertyDAO.insertAll(Collections.singletonList(p));
-        List<User> users = new ArrayList<>(userDAO.findUsers());
-        assertNotNull(users);
-        assertFalse(users.isEmpty());
-        assertEquals(1, users.size());
-        assertTrue(users.get(0).getProfileCompleted());
-    }
-
-    @Test
     public void testDescribeUsersByRoleAndEmailPreference() {
         User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
         userDAO.updateEmailPreference(researcher.getUserId(), true);

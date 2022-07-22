@@ -24,6 +24,7 @@ properties:
     format: date
     description: Describes the date the User was created.
   profileCompleted:
+    deprecated: true
     type: boolean
     description: The profile is completed. Researchers only.
   roles:

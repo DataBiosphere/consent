@@ -58,6 +58,7 @@ public class User {
     @JsonProperty
     private Boolean emailPreference;
 
+    @Deprecated
     @JsonProperty
     private Boolean profileCompleted;
 
@@ -241,10 +242,12 @@ public class User {
         this.emailPreference = emailPreference;
     }
 
+    @Deprecated
     public Boolean getProfileCompleted() {
         return profileCompleted;
     }
 
+    @Deprecated
     public void setProfileCompleted(Boolean profileCompleted) {
         this.profileCompleted = profileCompleted;
     }

@@ -29,6 +29,8 @@ public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
       user.setCreateDate(r.getDate("create_date"));
       user.setEmailPreference(r.getBoolean("email_preference"));
       user.setRoles(new ArrayList<>());
+
+      // populate for backwards compatibility
       if (hasColumn(r, "completed")) {
         user.setProfileCompleted(Boolean.valueOf(r.getString("completed")));
       }
@@ -39,6 +41,7 @@ public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
       user = users.get(r.getInt("user_id"));
     }
     addRole(r, user);
+
     // Populate for backwards compatibility.
     user.setDacUserId();
     users.put(user.getUserId(), user);
