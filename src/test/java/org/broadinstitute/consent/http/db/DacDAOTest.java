@@ -31,7 +31,7 @@ public class DacDAOTest extends DAOTestHelper {
             Dataset ds = createDataset();
             Consent c = createConsent(d.getDacId());
             consentDAO.insertConsentAssociation(c.getConsentId(), ASSOCIATION_TYPE_TEST, ds.getDataSetId());
-        };
+        }
         List<Dac> dacList = dacDAO.findAll();
         Assert.assertEquals(count, dacList.size());
     }
