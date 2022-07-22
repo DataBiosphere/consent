@@ -281,8 +281,12 @@ public class DAOTestHelper {
                 "." +
                 RandomStringUtils.randomAlphabetic(i3);
         Integer userId = userDAO.insertUser(email, "display name", new Date());
-        createUserProperty(userId, UserFields.ORCID.getValue());
         userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
+        UserProperty prop = new UserProperty();
+        prop.setUserId(userId);
+        prop.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
+        prop.setPropertyValue("test");
+        userPropertyDAO.insertAll(List.of(prop));
         return userDAO.findUserById(userId);
     }
 
@@ -536,9 +540,9 @@ public class DAOTestHelper {
     protected DarCollection createDarCollectionMultipleUserProperties() {
         User user = createUser();
         Integer userId = user.getUserId();
-        createUserProperty(userId, UserFields.PI_NAME.getValue());
-        createUserProperty(userId, UserFields.PI_EMAIL.getValue());
-        createUserProperty(userId, UserFields.DEPARTMENT.getValue());
+        createUserProperty(userId, UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
+        createUserProperty(userId, UserFields.SUGGESTED_INSTITUTION.getValue());
+        createUserProperty(userId, UserFields.ERA_STATUS.getValue());
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
         Dataset dataset = createDataset();

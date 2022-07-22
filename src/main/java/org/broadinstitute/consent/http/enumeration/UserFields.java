@@ -2,30 +2,12 @@ package org.broadinstitute.consent.http.enumeration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public enum UserFields {
-  DEPARTMENT("department", true),
-  STREET_ADDRESS_1("address1", true),
-  CITY("city", true),
-  ZIP_POSTAL_CODE("zipcode", true),
-  ARE_YOU_PRINCIPAL_INVESTIGATOR("isThePI", true),
-  COUNTRY("country", true),
-  DIVISION("division", false),
-  STREET_ADDRESS_2("address2", false),
-  STATE("state", false),
-  PUBMED_ID("pubmedID", false),
-  SCIENTIFIC_URL("scientificURL", false),
-  DO_YOU_HAVE_PI("havePI", false),
-  PI_NAME("piName", false),
-  PI_EMAIL("piEmail", false),
-  PI_eRA_COMMONS_ID("piERACommonsID", false),
-  COMPLETED("completed", false),
-  INVESTIGATOR("investigator", false),
   ERA_EXPIRATION_DATE("eraExpiration", false),
   ERA_STATUS("eraAuthorized", false),
-  LINKEDIN_PROFILE("linkedIn", false),
-  RESEARCHER_GATE("researcherGate", false),
-  ORCID("orcid", false),
   SELECTED_SIGNING_OFFICIAL_ID("selectedSigningOfficialId", false),
   SUGGESTED_SIGNING_OFFICIAL("suggestedSigningOfficial", false),
   SUGGESTED_INSTITUTION("suggestedInstitution", false);
@@ -42,6 +24,10 @@ public enum UserFields {
 
   public String getValue() {
     return value;
+  }
+
+  public static List<String> getValues() {
+    return Stream.of(UserFields.values()).map(UserFields::getValue).collect(Collectors.toList());
   }
 
   public Boolean getRequired() {
