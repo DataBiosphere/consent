@@ -96,6 +96,47 @@ public class DarCollectionResource extends Resource {
     }
   }
 
+
+  @GET
+  @Path("role/{roleName}/{collectionId}/summary")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
+  public Response getCollectionSummaryForRoleById(@Auth AuthUser authUser, @PathParam("roleName") String roleName, @PathParam("collectionId") Integer collectionId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateUserHasRoleName(user, roleName); //throws BadRequestException if user does not have roleName
+      DarCollection collection = darCollectionService.getByCollectionId(collectionId);
+
+      boolean allowedAccess;
+      switch (roleName) {
+        case Resource.ADMIN:
+          allowedAccess = checkAdminPermissions(user);
+          break;
+        case Resource.CHAIRPERSON:
+        case Resource.MEMBER:
+          allowedAccess = checkDacPermissions(user, collection);
+          break;
+        case Resource.SIGNINGOFFICIAL:
+          allowedAccess = checkSoPermissions(user, collection);
+          break;
+        case Resource.RESEARCHER:
+          allowedAccess = user.getUserId().equals(collection.getCreateUserId());
+          break;
+        default:
+          throw new BadRequestException("Invalid role selection: " + roleName);
+      }
+      if (!allowedAccess) {
+        // user has role but is not allowed to view collection; throw NotFoundException to avoid leaking existence
+        throw new NotFoundException();
+      }
+
+      DarCollectionSummary summary = darCollectionService.getSummaryForRoleNameByCollectionId(user, roleName, collectionId);
+      return Response.ok().entity(summary).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @GET
   @Path("{collectionId}")
   @Produces("application/json")
