@@ -32,109 +32,151 @@ public interface DacDAO extends Transactional<DacDAO> {
     String QUERY_FIELD_SEPARATOR = ", ";
 
     /**
-     * @return A Dac with Datasets
+     * Find all DACs
+     *
+     * @return List<Dac>
      */
     @RegisterBeanMapper(value = Dac.class)
     @RegisterBeanMapper(value = DatasetDTO.class)
     @UseRowReducer(DacWithDatasetsReducer.class)
-    @SqlQuery("SELECT " +
-                " dac.dac_id, dac.name, dac.description, " +
-                " d.datasetid, d.name AS dataset_name, DATE(d.createdate) AS dataset_create_date, d.objectid, d.active, d.needs_approval, " +
-                " d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, d.update_user_id, " +
-                " ca.consentid, c.translateduserestriction, c.datause as consent_data_use " +
-                " FROM dac " +
-                " LEFT OUTER JOIN consents c ON c.dac_id = dac.dac_id " +
-                " LEFT OUTER JOIN consentassociations ca ON ca.consentid = c.consentid " +
-                " LEFT OUTER JOIN dataset d ON ca.datasetid = d.datasetid")
+    @SqlQuery(
+        "SELECT dac.dac_id, dac.name, dac.description, d.datasetid, d.name AS dataset_name, DATE(d.createdate) AS dataset_create_date, "
+            + " d.objectid, d.active, d.needs_approval, d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, "
+            + " d.update_user_id, ca.consentid, c.translateduserestriction, c.datause AS consent_data_use "
+            + " FROM dac "
+            + " LEFT OUTER JOIN consents c ON c.dac_id = dac.dac_id "
+            + " LEFT OUTER JOIN consentassociations ca ON ca.consentid = c.consentid "
+            + " LEFT OUTER JOIN dataset d ON ca.datasetid = d.datasetid")
     List<Dac> findAll();
 
-    @SqlQuery("select distinct d.* from dac d " +
-            " inner join user_role ur on ur.dac_id = d.dac_id " +
-            " inner join users u on ur.user_id = u.user_id " +
-            " where u.email = :email ")
+    /**
+     * Find all DACs by user email
+     *
+     * @param email The user email
+     * @return List<Dac>
+     */
+    @SqlQuery(
+        "SELECT distinct d.* FROM dac d "
+            + " INNER JOIN user_role ur ON ur.dac_id = d.dac_id "
+            + " INNER JOIN users u ON ur.user_id = u.user_id "
+            + " WHERE u.email = :email ")
     List<Dac> findDacsForEmail(@Bind("email") String email);
 
+    /**
+     * Find all Users associated with a DAC
+     *
+     * @return List<User>
+     */
     @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
-    @SqlQuery(" SELECT " +
-      User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
-      " r.name, " +
-      " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +
-      " FROM users u " +
-      " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id IS NOT NULL " +
-      " INNER JOIN roles r ON r.roleId = ur.role_id")
+    @SqlQuery(
+        "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+            + " r.name, "
+            + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
+            + " FROM users u "
+            + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id IS NOT NULL "
+            + " INNER JOIN roles r ON r.roleId = ur.role_id")
     List<User> findAllDACUserMemberships();
 
+    /**
+     * Find all Users with a specific string in the display_name or email
+     *
+     * @param term The string to search against
+     * @return Set<User>
+     */
     @UseRowMapper(UserWithRolesMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du " +
-              " inner join user_role ur on ur.user_id = du.user_id " +
-              " inner join roles r on r.roleId = ur.role_id " +
-              " where lower(du.display_name) like concat('%', lower(:term), '%') " +
-              " or lower(du.email) like concat('%', lower(:term), '%') " )
+    @SqlQuery(
+        "SELECT du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id FROM users du "
+            + " INNER JOIN user_role ur ON ur.user_id = du.user_id "
+            + " INNER JOIN roles r ON r.roleId = ur.role_id "
+            + " WHERE LOWER(du.display_name) LIKE concat('%', LOWER(:term), '%') "
+            + " OR LOWER(du.email) LIKE concat('%', LOWER(:term), '%') " )
     Set<User> findAllDACUsersBySearchString(@Bind("term") String term);
 
-    @SqlQuery("select * from dac where dac_id = :dacId")
+    /**
+     * Find a DAC by id
+     *
+     * @param dacId The dac_id to lookup
+     * @return Dac
+     */
+    @SqlQuery("SELECT * FROM dac WHERE dac_id = :dacId")
     Dac findById(@Bind("dacId") Integer dacId);
 
-    @SqlUpdate("insert into dac (name, description, create_date) values (:name, :description, :createDate)")
+    /**
+     * Create a Dac given name, description, and create date
+     *
+     * @param name The name for the new DAC
+     * @param description The description for the new DAC
+     * @param createDate The date this new DAC was created
+     * @return Integer
+     */
+    @SqlUpdate("INSERT INTO dac (name, description, create_date) VALUES (:name, :description, :createDate)")
     @GetGeneratedKeys
     Integer createDac(@Bind("name") String name, @Bind("description") String description, @Bind("createDate") Date createDate);
 
-    @SqlUpdate("update dac set name = :name, description = :description, update_date = :updateDate where dac_id = :dacId")
+    @SqlUpdate("UPDATE dac SET name = :name, description = :description, update_date = :updateDate WHERE dac_id = :dacId")
     void updateDac(
             @Bind("name") String name,
             @Bind("description") String description,
             @Bind("updateDate") Date updateDate,
             @Bind("dacId") Integer dacId);
 
-    @SqlUpdate("delete from user_role where dac_id = :dacId")
+    /**
+     * Delete all members from a specified DAC
+     *
+     * @param dacId The DAC id to remove users from
+     */
+    @SqlUpdate("DELETE FROM user_role WHERE dac_id = :dacId")
     void deleteDacMembers(@Bind("dacId") Integer dacId);
 
-    @SqlUpdate("delete from dac where dac_id = :dacId")
+    @SqlUpdate("DELETE FROM dac WHERE dac_id = :dacId")
     void deleteDac(@Bind("dacId") Integer dacId);
 
     @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
-    @SqlQuery("SELECT "
-        + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
-        + " FROM users u "
-        + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
-        + " INNER JOIN roles r ON r.roleid = ur.role_id "
-        + " WHERE ur.dac_id = :dacId ")
+    @SqlQuery(
+        "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+            + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+            + " FROM users u "
+            + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
+            + " INNER JOIN roles r ON r.roleid = ur.role_id "
+            + " WHERE ur.dac_id = :dacId ")
     List<User> findMembersByDacId(@Bind("dacId") Integer dacId);
 
     @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
-    @SqlQuery("SELECT "
-        + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
-        + " FROM users u "
-        + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
-        + " INNER JOIN roles r ON r.roleid = ur.role_id "
-        + " WHERE ur.dac_id = :dacId "
-        + " AND ur.role_id = :roleId ")
+    @SqlQuery(
+        "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+            + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+            + " FROM users u "
+            + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
+            + " INNER JOIN roles r ON r.roleid = ur.role_id "
+            + " WHERE ur.dac_id = :dacId "
+            + " AND ur.role_id = :roleId ")
     List<User> findMembersByDacIdAndRoleId(@Bind("dacId") Integer dacId, @Bind("roleId") Integer roleId);
 
-    @SqlUpdate("insert into user_role (role_id, user_id, dac_id) values (:roleId, :userId, :dacId)")
+    @SqlUpdate("INSERT INTO user_role (role_id, user_id, dac_id) VALUES (:roleId, :userId, :dacId)")
     void addDacMember(@Bind("roleId") Integer roleId, @Bind("userId") Integer userId, @Bind("dacId") Integer dacId);
 
-    @SqlUpdate("delete from user_role where user_role_id = :userRoleId")
+    @SqlUpdate("DELETE FROM user_role WHERE user_role_id = :userRoleId")
     void removeDacMember(@Bind("userRoleId") Integer userRoleId);
 
     @UseRowMapper(RoleMapper.class)
-    @SqlQuery("select * from roles where roleId = :roleId")
+    @SqlQuery("SELECT * FROM roles WHERE roleId = :roleId")
     Role getRoleById(@Bind("roleId") Integer roleId);
 
     @UseRowMapper(UserRoleMapper.class)
-    @SqlQuery("select ur.*, r.name from user_role ur inner join roles r on ur.role_id = r.roleId where ur.user_id = :userId")
+    @SqlQuery(
+        "SELECT ur.*, r.name FROM user_role ur INNER JOIN roles r ON ur.role_id = r.roleId WHERE ur.user_id = :userId")
     List<UserRole> findUserRolesForUser(@Bind("userId") Integer userId);
 
     @UseRowMapper(UserRoleMapper.class)
-    @SqlQuery("select ur.*, r.name from user_role ur inner join roles r on ur.role_id = r.roleId where ur.user_id in (<userIds>)")
+    @SqlQuery(
+        "SELECT ur.*, r.name FROM user_role ur "
+            + " INNER JOIN roles r ON ur.role_id = r.roleId WHERE ur.user_id IN (<userIds>)")
     List<UserRole> findUserRolesForUsers(@BindList("userIds") List<Integer> userIds);
 
     /**
@@ -146,11 +188,11 @@ public interface DacDAO extends Transactional<DacDAO> {
      * @return All DACs that corresponds to the provided dataset ids
      */
     @RegisterRowMapper(DacMapper.class)
-    @SqlQuery("SELECT d.*, a.datasetid " +
-            " FROM dac d " +
-            " INNER JOIN consents c ON d.dac_id = c.dac_id " +
-            " INNER JOIN consentassociations a ON a.consentid = c.consentid " +
-            " WHERE a.datasetid IN (<datasetIds>) ")
+    @SqlQuery(
+        "SELECT d.*, a.datasetid FROM dac d "
+            + " INNER JOIN consents c ON d.dac_id = c.dac_id "
+            + " INNER JOIN consentassociations a ON a.consentid = c.consentid "
+            + " WHERE a.datasetid IN (<datasetIds>) ")
     Set<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
 
 }
