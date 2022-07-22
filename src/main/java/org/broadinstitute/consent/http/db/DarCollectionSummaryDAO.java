@@ -182,7 +182,6 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
           @Bind("collectionId") Integer collectionId);
 
 
-
   @RegisterBeanMapper(value = DarCollectionSummary.class)
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = Election.class)
