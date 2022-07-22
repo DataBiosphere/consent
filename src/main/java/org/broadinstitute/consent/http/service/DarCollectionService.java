@@ -310,6 +310,58 @@ public class DarCollectionService {
     return summaries;
   }
 
+  /**
+   * Finds the DarCollectionSummary for a given darCollectionId, processed by the given role name.
+   *
+   * @param user     The user making the request
+   * @param userRole The role the user is making the request as
+   * @param collectionId The darCollectionId of the requested DarCollectionSummary
+   * @return A DarCollectionSummary object
+   */
+  public DarCollectionSummary getSummaryForRoleNameByCollectionId(User user, String userRole, Integer collectionId) {
+    List<DarCollectionSummary> summary = new ArrayList<>();
+    UserRoles role = UserRoles.getUserRoleFromName(userRole);
+    Integer userId = user.getUserId();
+    List<Integer> datasetIds;
+    switch (role) {
+      case ADMIN:
+        summary = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
+        processDarCollectionSummariesForAdmin(summary);
+        break;
+      case SIGNINGOFFICIAL:
+        summary = darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
+        processDarCollectionSummariesForSO(summary);
+        break;
+      case CHAIRPERSON:
+        userId = user.getUserId();
+        datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+                .map(d -> d.getDataSetId())
+                .collect(Collectors.toList());
+        summary = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
+        processDarCollectionSummariesForChair(summary);
+        break;
+      case MEMBER:
+        userId = user.getUserId();
+        datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+                .map(d -> d.getDataSetId())
+                .collect(Collectors.toList());
+        summary = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
+        processDarCollectionSumariesForMember(summary);
+        break;
+      case RESEARCHER:
+        summary = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+        processDarCollectionSummariesForResearcher(summary);
+        break;
+      default:
+        break;
+    }
+    if (summary.size() != 1) {
+      throw new NotFoundException("Collection summary with the collection id of " + collectionId + " was not found");
+    }
+
+    return summary.get(0);
+  }
+
   public List<Integer> findDatasetIdsByUser(User user) {
     return datasetDAO.findDatasetsByAuthUserEmail(user.getEmail())
         .stream()
