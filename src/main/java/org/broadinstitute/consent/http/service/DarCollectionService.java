@@ -105,31 +105,6 @@ public class DarCollectionService {
     }
   }
 
-  //TODO: remove once refactored
-  private void processDarCollectionSummariesForAdmin(List<DarCollectionSummary> summaries) {
-    //if at least one election is open, show cancel
-    //if at least one non-open/absent election, show open
-    summaries.forEach(s -> {
-      Map<String, Integer> statusCount = new HashMap<>();
-      Map<Integer, Election> elections = s.getElections();
-      if(elections.size() == 0) {
-        s.addAction(DarCollectionActions.OPEN.getValue());
-        s.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
-      } else {
-        elections.values().forEach(e -> {
-          String status = e.getStatus();
-          updateStatusCount(statusCount, status);
-          if(status.equals(ElectionStatus.OPEN.getValue())) {
-            s.addAction(DarCollectionActions.CANCEL.getValue());
-          } else {
-            s.addAction(DarCollectionActions.OPEN.getValue());
-          }
-        });
-        determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
-      }
-    });
-  }
-
   private void processDarCollectionSummaryForAdmin(DarCollectionSummary summary) {
     //if at least one election is open, show cancel
     //if at least one non-open/absent election, show open
@@ -152,26 +127,6 @@ public class DarCollectionService {
       }
   }
 
-  //TODO remove once refactored
-  private void processDarCollectionDraftsAsSummaries(List<DataAccessRequest> drafts, List<DarCollectionSummary> summaries) {
-    drafts.forEach(d -> {
-      try{
-        DarCollectionSummary summary = new DarCollectionSummary();
-        Date createDate = new Date(d.getData().getCreateDate());
-        String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
-          .format(createDate);
-        summary.setDarCode(darCode);
-        summary.setStatus(DarCollectionStatus.DRAFT.getValue());
-        summary.setName(d.getData().getProjectTitle());
-        summary.addAction(DarCollectionActions.RESUME.getValue());
-        summary.addAction(DarCollectionActions.DELETE.getValue());
-        summaries.add(summary);
-      } catch(Exception e) {
-        logger.warn("Error processing draft with id: " + d.getId());
-      }
-    });
-  }
-
   private DarCollectionSummary processDarCollectionDraftAsSummary(DataAccessRequest draft) {
     DarCollectionSummary summary = new DarCollectionSummary();
     try{
@@ -187,35 +142,6 @@ public class DarCollectionService {
         logger.warn("Error processing draft with id: " + draft.getId());
       }
     return summary;
-  }
-
-//TODO remove once refactored
-  private void processDarCollectionSummariesForResearcher(List<DarCollectionSummary> summaries) {
-    //if an election exists, cancel does not appear
-    //if there are no elections, review and cancel are present
-    //if the collection is canceled, revise and review is present
-    Map<String, Integer> statusCount = new HashMap<>();
-    summaries.forEach(s -> {
-      Map<Integer, Election> elections = s.getElections();
-      int electionCount = elections.values().size();
-      elections.values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
-      s.addAction(DarCollectionActions.REVIEW.getValue());
-      //check dar statuses, if they're all canceled show revise (but only if there are no elections)
-      if(electionCount == 0) {
-        Collection<String> darStatuses = s.getDarStatuses().values();
-        Boolean isCanceled = darStatuses.size() > 0 && darStatuses.stream()
-          .allMatch(st -> st.equalsIgnoreCase(DarStatus.CANCELED.getValue()));
-        if(isCanceled) {
-          s.addAction(DarCollectionActions.REVISE.getValue());
-          s.setStatus(DarCollectionStatus.CANCELED.getValue());
-        } else {
-          s.addAction(DarCollectionActions.CANCEL.getValue());
-          s.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
-        }
-      } else {
-        determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
-      }
-    });
   }
 
   private void processDarCollectionSummaryForResearcher(DarCollectionSummary summary) {
@@ -242,39 +168,6 @@ public class DarCollectionService {
       } else {
         determineCollectionStatus(summary, statusCount, summary.getDatasetCount(), summary.getElections().size());
       }
-  }
-
-  //TODO remove once refactored
-  private void processDarCollectionSummariesForMember(List<DarCollectionSummary> summaries) {
-    summaries.forEach(s -> {
-      Collection<Election> elections = s.getElections().values();
-        Integer electionCount = elections.size();
-        //if there are no elections present, unreviewed
-        //if there are elections present. in process
-        if(electionCount == 0) {
-          s.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
-        } else {
-          Boolean isVotable = elections
-            .stream()
-            .anyMatch(election -> election.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
-
-          if(isVotable) {
-            s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
-            s.addAction(DarCollectionActions.VOTE.getValue());
-          } else {
-            //non-votable states
-              //all canceled (complete)
-              //some datasets do not have elections (in process)
-              //all voted on (complete)
-              //no elections
-            if(electionCount < s.getDatasetCount()) {
-              s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
-            } else {
-              s.setStatus(DarCollectionStatus.COMPLETE.getValue());
-            }
-          }
-        }
-    });
   }
 
   private void processDarCollectionSummaryForMember(DarCollectionSummary summary) {
@@ -305,48 +198,6 @@ public class DarCollectionService {
           }
         }
       }
-  }
-
-//todo remove once refactored
-  private void processDarCollectionSummariesForChair(List<DarCollectionSummary> summaries) {
-    summaries.forEach(s -> {
-      //if there are no elections, only show open
-      //if there is any closed or canceled elections, or if some datasets dont have an election, show open
-      //if there are any open elections, show cancel and vote
-      Map<String, Integer> statusCount = new HashMap<>();
-      Map<Integer, Election> elections = s.getElections();
-      if(elections.size() == 0) {
-        s.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
-        s.addAction(DarCollectionActions.OPEN.getValue());
-      } else {
-        if (elections.size() < s.getDatasetCount()) {
-          s.addAction(DarCollectionActions.OPEN.getValue());
-        }
-        elections.values().forEach(election -> {
-          String statusString = election.getStatus();
-          updateStatusCount(statusCount, statusString);
-          ElectionStatus status = ElectionStatus.getStatusFromString(statusString);
-          switch (status) {
-            case CLOSED:
-            case CANCELED:
-              s.addAction(DarCollectionActions.OPEN.getValue());
-              break;
-            case OPEN:
-              s.addAction(DarCollectionActions.VOTE.getValue());
-            default:
-              break;
-          }
-        });
-        Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
-        Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
-        //add cancel if there are no closed elections and at least one open election
-        if(Objects.isNull(closedCount) && Objects.nonNull(openCount)) {
-          s.addAction(DarCollectionActions.CANCEL.getValue());
-        }
-
-        determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
-      }
-    });
   }
 
   private void processDarCollectionSummaryForChair(DarCollectionSummary summary) {
@@ -386,15 +237,6 @@ public class DarCollectionService {
 
         determineCollectionStatus(summary, statusCount, summary.getDatasetCount(), summary.getElections().size());
       }
-  }
-
-  //TODO remove once refactored
-  private void processDarCollectionSummariesForSO(List<DarCollectionSummary> summaries) {
-    summaries.forEach(s -> {
-      Map<String, Integer> statusCount = new HashMap<>();
-      s.getElections().values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
-      determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
-    });
   }
 
   private void processDarCollectionSummaryForSO(DarCollectionSummary summary) {
@@ -476,11 +318,11 @@ public class DarCollectionService {
     switch (role) {
       case ADMIN:
         //get summary
-        processDarCollectionSummariesForAdmin(summary);
+        processDarCollectionSummaryForAdmin(summary);
         break;
       case SIGNINGOFFICIAL:
         //get summary
-        processDarCollectionSummariesForSO(summary);
+        processDarCollectionSummaryForSO(summary);
         break;
       case CHAIRPERSON:
         userId = user.getUserId();
@@ -488,7 +330,7 @@ public class DarCollectionService {
                 .map(d -> d.getDataSetId())
                 .collect(Collectors.toList());
         //get summary
-        processDarCollectionSummariesForChair(summary);
+        processDarCollectionSummaryForChair(summary);
         break;
       case MEMBER:
         userId = user.getUserId();
@@ -496,15 +338,15 @@ public class DarCollectionService {
                 .map(d -> d.getDataSetId())
                 .collect(Collectors.toList());
         //get summary
-        processDarCollectionSumariesForMember(summary);
+        processDarCollectionSummaryForMember(summary);
         break;
       case RESEARCHER:
         //get summary & process if not null
-        processDarCollectionSummariesForResearcher(summary);
+        processDarCollectionSummaryForResearcher(summary);
         //need endpoint for draft
-        List<DataAccessRequest> drafts = dataAccessRequestDAO.findAllDraftsByUserId(userId);
+        //List<DataAccessRequest> drafts = dataAccessRequestDAO.findAllDraftsByUserId(userId);
         //in this case, give empty list in place of summaries and get single element after processes
-        processDarCollectionDraftsAsSummaries(drafts, summaries);
+        //processDarCollectionDraftAsSummary(drafts);
         break;
       default:
         break;
