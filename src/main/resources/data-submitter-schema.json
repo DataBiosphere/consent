@@ -1,0 +1,364 @@
+{
+  "id": "https://consent.dsde-prod.broadinstitute.org/schemas/dataset-submission",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Dataset Submission Schema",
+  "version": 1,
+  "type": "object",
+  "properties": {
+    "studyName": {
+      "type": "string",
+      "label": "Study Name",
+      "description": "The study name",
+      "isRequired": true
+    },
+    "studyType": {
+      "type": "string",
+      "label": "Study Type",
+      "description": "The study type",
+      "isRequired": true
+    },
+    "studyDescription": {
+      "type": "string",
+      "label": "Study Description",
+      "description": "Description of the study",
+      "isRequired": true
+    },
+    "dataTypes": {
+      "type": "string",
+      "label": "Data Types",
+      "description": "All data types that study encompasses",
+      "isRequired": true
+    },
+    "fileTypes": {
+      "type": "array",
+      "items": { "$ref":  "#/$defs/fileTypeObject"},
+      "description": "List of File Types",
+      "isRequired": true
+    },
+    "phenotypeIndication": {
+      "type": "string",
+      "label": "Phenotype/Indication Studied",
+      "description": "Phenotype/Indication Studied",
+      "isRequired": true
+    },
+    "species": {
+      "type": "string",
+      "label": "Species",
+      "description": "Species",
+      "isRequired": true
+    },
+    "piName": {
+      "type": "string",
+      "label": "Principal Investigator Name",
+      "description": "Principal Investigator Name",
+      "isRequired": true
+    },
+    "dataSubmitterName": {
+      "type": "string",
+      "label": "Data Submitter Name",
+      "description": "Data Submitter Name",
+      "isRequired": true
+    },
+    "dataSubmitterEmail": {
+      "type": "string",
+      "label": "Data Submitter Email",
+      "description": "Data Submitter Email",
+      "isRequired": true
+    },
+    "dataCustodianEmail": {
+      "type": "string",
+      "label": "Data Custodian Email",
+      "description": "Data Custodian Email",
+      "isRequired": true
+    },
+    "publicVisibility": {
+      "type": "boolean",
+      "label": "Public Visibility",
+      "description": "Public Visibility of this study",
+      "prompt": "Please select if you would like your dataset to be publicly visible for the requesters to see and select for an access request",
+      "isRequired": true
+    },
+    "nihAnvilUse": {
+      "type": "array",
+      "items": {
+          "type": "string",
+          "enum": ["I did", "I will", "No"]
+      }
+    },
+    "submittingToAnvil": {
+      "type": "boolean",
+      "label": "Are you planning to submit to AnVIL?",
+      "description": "Are you planning to submit to AnVIL?"
+    },
+    "dbGaPPhsID": {
+      "type": "string",
+      "label": "dbGaP phs ID",
+      "description": "dbGaP phs ID"
+    },
+    "dbGaPStudyRegistrationName": {
+      "type": "string",
+      "label": "dbGaP Study Registration Name",
+      "description": "dbGaP Study Registration Name"
+    },
+    "embargoReleaseDate": {
+      "type": "string",
+      "label": "Embargo Release Date",
+      "description": "Embargo Release Date"
+    },
+    "sequencingCenter": {
+      "type": "string",
+      "label": "Sequencing Center",
+      "description": "Sequencing Center"
+    },
+    "piEmail": {
+      "type": "string",
+      "label": "Principal Investigator Email",
+      "description": "Principal Investigator Email"
+    },
+    "piInstitution": {
+      "type": "number",
+      "label": "Principal Investigator Institution",
+      "description": "Principal Investigator Institution"
+    },
+    "nihGrantContractNumber": {
+      "type": "string",
+      "label": "NIH Grant or Contract Number",
+      "description": "NIH Grant or Contract Number"
+    },
+    "nihICsSupportingStudy": {
+      "type": "string",
+      "label": "NIH ICs Supporting the Study",
+      "description": "NIH ICs Supporting the Study"
+    },
+    "nihProgramOfficerName": {
+      "type": "string",
+      "label": "NIH Program Officer Name",
+      "description": "NIH Program Officer Name"
+    },
+    "nihInstitutionCenterSubmission": {
+      "type": "string",
+      "label": "NIH Institution/Center for Submission",
+      "description": "NIH Institution/Center for Submission"
+    },
+    "nihGenomicProgramAdministratorName": {
+      "type": "string",
+      "label": "NIH Genomic Program Administrator Name",
+      "description": "NIH Genomic Program Administrator Name"
+    },
+    "multiCenterStudy": {
+      "type": "boolean",
+      "label": "Is this a multi-center study?",
+      "description": "Is this a multi-center study?"
+    },
+    "collaboratingSites": {
+      "type": "string",
+      "label": "What are the collaborating sites?",
+      "description": "What are the collaborating sites?"
+    },
+    "controlledAccessRequiredForGenomicSummaryResultsGSR": {
+      "type": "boolean",
+      "label": "Is controlled access required for genomic summary results (GSR)?",
+      "description": "Is controlled access required for genomic summary results (GSR)?"
+    },
+    "controlledAccessRequiredForGenomicSummaryResultsGSRNotRequiredExplanation": {
+      "type": "string",
+      "label": "If no, explain why controlled access is required for GSR",
+      "description": "If no, explain why controlled access is required for GSR"
+    },
+    "alternativeDataSharingPlan": {
+      "type": "boolean",
+      "label": "Are you requesting an Alternative Data Sharing Plan for samples that cannot be shared through a public repository or database?",
+      "description": "Are you requesting an Alternative Data Sharing Plan for samples that cannot be shared through a public repository or database?"
+    },
+    "alternativeDataSharingPlanReasons": {
+      "type": "array",
+      "label": "Please mark the reasons for which you are requesting an Alternative Data Sharing Plan (check all that apply)",
+      "description": "Please mark the reasons for which you are requesting an Alternative Data Sharing Plan (check all that apply)",
+      "items": {
+        "type": "string",
+        "enum": [
+          "The consent forms are unavailable or non-existent for samples collected after January 25, 2015",
+          "The consent process did not specifically address future use or broad data sharing for samples collected after January 25, 2015",
+          "The consent process inadequately addresses risks related to future use or broad data sharing for samples collected after January 25, 2015",
+          "The consent process specifically precludes future use or broad data sharing (including a statement that use of data will be limited to the original researchers)",
+          "Other informed consent limitations or concerns",
+          "Other"
+        ]
+      }
+    },
+    "alternativeDataSharingPlanExplanation": {
+      "type": "string",
+      "label": "Explanation of Request",
+      "description": "Explanation of Request"
+    },
+    "alternativeDataSharingPlanFileName": {
+      "type": "string",
+      "label": "Upload your alternative sharing plan (file upload)",
+      "description": "Upload your alternative sharing plan (file upload)"
+    },
+    "alternativeDataSharingPlanDataSubmitted": {
+      "type": "array",
+      "label": "Data will be submitted",
+      "description": "Upload your alternative sharing plan (file upload)",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Within 3 months of the last data generated or last clinical visit",
+          "By batches over Study Timeline (e.g. based on clinical trial enrollment benchmarks)"
+        ]
+      }
+    },
+    "alternativeDataSharingPlanDataReleased": {
+      "type": "boolean",
+      "label": "Data to be released will meet the timeframes specified in the NHGRI Guidance for Data Submission and Data Release",
+      "description": "Data to be released will meet the timeframes specified in the NHGRI Guidance for Data Submission and Data Release"
+    },
+    "alternativeDataSharingPlanTargetDeliveryDate": {
+      "type": "string",
+      "label": "Target Delivery Date",
+      "description": "Target Delivery Date"
+    },
+    "alternativeDataSharingPlanTargetPublicReleaseDate": {
+      "type": "string",
+      "label": "Target Public Release Date",
+      "description": "Target Public Release Date"
+    },
+    "alternativeDataSharingPlanControlledOpenAccess": {
+      "type": "array",
+      "label": "Does the data need to be managed under Controlled or Open Access?",
+      "description": "Does the data need to be managed under Controlled or Open Access?",
+      "items": {
+        "type": "string",
+        "enum": ["Controlled Access", "Open Access"]
+      }
+    },
+    "dataAccessCommittee": {
+      "type": "number",
+      "label": "Please select which DAC should govern requests for this dataset",
+      "description": "Data Access Committee ID"
+    },
+    "consentGroups": {
+      "type": "array",
+      "label": "Consent Groups",
+      "description": "Consent Groups",
+      "items": { "$ref":  "#/$defs/consentGroup"},
+      "isRequired": true
+    }
+  },
+  "$defs": {
+    "fileTypeObject": {
+      "type": "object",
+      "properties": {
+        "fileType": {
+          "type": "string",
+          "description": "File Type"
+        },
+        "functionalEquivalence": {
+          "type": "string",
+          "description": "Functional Equivalence"
+        },
+        "numberOfParticipants": {
+          "type": "string",
+          "description": "# of Participants"
+        }
+      }
+    },
+    "consentGroup": {
+      "type": "object",
+      "properties": {
+        "consentGroupName": {
+          "type": "string",
+          "label": "Consent Group Name",
+          "description": "Consent Group Name"
+        },
+        "generalResearchUse": {
+          "type": "boolean",
+          "label": "General Research Use",
+          "description": "General Research Use"
+        },
+        "hmb": {
+          "type": "boolean",
+          "label": "Health/Medical/Biomedical Research Use",
+          "description": "Health/Medical/Biomedical Research Use"
+        },
+        "diseaseSpecificUse": {
+          "type": "array",
+          "label": "Disease-Specific Research Use",
+          "description": "Disease-Specific Research Use",
+          "items": {
+            "type": "string"
+          }
+        },
+        "poa": {
+          "type": "boolean",
+          "label": "Populations, Origins, Ancestry Use",
+          "description": "Populations, Origins, Ancestry Use"
+        },
+        "otherPrimary": {
+          "type": "string",
+          "label": "Other",
+          "description": "Other"
+        },
+        "nmds": {
+          "type": "boolean",
+          "label": "No Methods Development or validation studies (NMDS)",
+          "description": "No Methods Development or validation studies (NMDS)"
+        },
+        "gso": {
+          "type": "boolean",
+          "label": "Genetic studies only (GSO)",
+          "description": "Genetic studies only (GSO)"
+        },
+        "pub": {
+          "type": "boolean",
+          "label": "Publication Required (PUB)",
+          "description": "Publication Required (PUB)"
+        },
+        "col": {
+          "type": "boolean",
+          "label": "Collaboration Required (COL)",
+          "description": "Collaboration Required (COL)"
+        },
+        "irb": {
+          "type": "boolean",
+          "label": "Ethics Approval Required (IRB)",
+          "description": "Ethics Approval Required (IRB)"
+        },
+        "gs": {
+          "type": "string",
+          "label": "Geographic Restriction (GS-)",
+          "description": "Geographic Restriction (GS-)"
+        },
+        "mor": {
+          "type": "boolean",
+          "label": "Publication Moratorium (MOR)",
+          "description": "Publication Moratorium (MOR)"
+        },
+        "npu": {
+          "type": "boolean",
+          "label": "Non-profit Use Only (NPU)",
+          "description": "Non-profit Use Only (NPU)"
+        },
+        "otherSecondary": {
+          "type": "string",
+          "label": "Other",
+          "description": "Other"
+        },
+        "dataLocation": {
+          "type": "array",
+          "label": "Please provide the location of your data resource for this consent group",
+          "description": "Data Location",
+          "items": {
+            "type": "string",
+            "enum": ["AnVIL Workspace", "Terra Workspace", "TDR Location", "Not Determined"]
+          }
+        },
+        "url": {
+          "type": "string",
+          "label": "Free text field for entering URL of data",
+          "description": "Free text field for entering URL of data"
+        }
+      }
+    }
+  }
+}
