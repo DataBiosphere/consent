@@ -35,8 +35,12 @@ public class DarCollectionSummaryReducer implements LinkedHashMapRowReducer<Inte
       }
       
       try{
-        darStatus = rowView.getColumn("dar_status", String.class);
         darReferenceId = rowView.getColumn("dar_reference_id", String.class);
+        if (Objects.nonNull(darReferenceId)) {
+          summary.addReferenceId(darReferenceId);
+        }
+
+        darStatus = rowView.getColumn("dar_status", String.class);
         if (Objects.nonNull(darStatus)) {
           summary.addStatus(darStatus, darReferenceId);
         }
