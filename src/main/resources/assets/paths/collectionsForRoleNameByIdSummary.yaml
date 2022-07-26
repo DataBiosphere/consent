@@ -1,0 +1,38 @@
+get:
+  summary: Get DAR Collection Summary For Role Name By Collection Id
+  description: |
+    Returns DAR collection summary by darCollectionId based on Role Name
+    Access is restricted to:
+      * Admin - all DAR collection summaries
+      * DAC Chair/Member - collections requesting datasets associated with their DAC 
+      * Signing Official - collections created by researchers belonging to their institution
+      * Researcher - collections created by the researcher
+  tags:
+    - DAR Collection
+  parameters:
+    - name: roleName
+      in: path
+      description: String value that represents the role name to query by
+      schema:
+        type: string
+        enum: [Admin, Chairperson, Member, SigningOfficial, Researcher]
+    - name: collectionId
+      in: path
+      description: DAR Collection Id
+      type: integer
+  responses:
+    200:
+      description: Returns the request DAR Collection Summary
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DarCollectionSummary.yaml'
+    400:
+      description: Bad Request
+    404:
+      description: Not Found
+    500:
+      description: Internal Server Error
+
