@@ -2541,6 +2541,7 @@ paths:
     $ref: './paths/userByIdv2.yaml'
   /api/user/profile:
     post:
+      deprecated: true
       summary: Create user properties.
       description: Create properties for the current user.
       requestBody:
@@ -2562,6 +2563,7 @@ paths:
         500:
           description: Server error.
     put:
+      deprecated: true
       summary: Update user properties
       description: Updates a user.
       requestBody:

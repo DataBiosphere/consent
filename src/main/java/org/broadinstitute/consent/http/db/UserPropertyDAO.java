@@ -17,9 +17,11 @@ import java.util.List;
 @RegisterRowMapper(UserPropertyMapper.class)
 public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
 
-    @SqlQuery("SELECT * FROM user_property WHERE userid = :userId")
-    List<UserProperty> findResearcherPropertiesByUser(@Bind("userId") Integer userId);
+    @SqlQuery("SELECT * FROM user_property WHERE userid = :userId AND propertykey IN (<properties>)")
+    List<UserProperty> findResearcherPropertiesByUser(@Bind("userId") Integer userId,
+                                                      @BindList("properties") List<String> properties);
 
+    @Deprecated
     @SqlQuery("SELECT propertyvalue FROM USER_PROPERTY WHERE userid = :userId AND propertykey = 'completed'")
     String isProfileCompleted(@Bind("userId") Integer userId);
 
@@ -31,7 +33,4 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
 
     @SqlBatch("DELETE FROM user_property WHERE userid = :userId AND propertykey = :propertyKey")
     void deletePropertiesByUserAndKey(@BindBean Collection<UserProperty> researcherProperties);
-
-    @SqlQuery("SELECT * FROM user_property WHERE userid IN (<userIds>)")
-    List<UserProperty> findResearcherPropertiesByUserIds(@BindList("userIds") List<Integer> userIds);
 }
