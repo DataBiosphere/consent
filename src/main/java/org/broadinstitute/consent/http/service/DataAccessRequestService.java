@@ -37,7 +37,6 @@ import javax.ws.rs.NotFoundException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -435,10 +434,16 @@ public class DataAccessRequestService {
             darData.setCreateDate(nowTime);
         }
         darData.setSortDate(nowTime);
-        String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
-        Integer collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getUserId(), now);
-        darData.setDarCode(darCodeSequence);
         DataAccessRequest existingDar = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());
+        Integer collectionId;
+        // Only create a new DarCollection if we haven't done so already
+        if (Objects.nonNull(existingDar) && Objects.nonNull(existingDar.getCollectionId())) {
+            collectionId = existingDar.getCollectionId();
+        } else {
+            String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
+            collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getUserId(), now);
+            darData.setDarCode(darCodeSequence);
+        }
         List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
         if (Objects.nonNull(existingDar)) {
             dataAccessRequestDAO.updateDraftForCollection(collectionId, dataAccessRequest.getReferenceId());
