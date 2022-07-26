@@ -1221,6 +1221,206 @@ public class DarCollectionServiceTest {
 
   }
 
+  @Test
+  public void testGetSummaryForRoleNameByCollectionId_SO() {
+    User user = new User();
+    user.setUserId(1);
+
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+    summary.setDarCollectionId(collectionId);
+    Dataset datasetOne = new Dataset();
+    datasetOne.setDataSetId(1);
+    Dataset datasetTwo = new Dataset();
+    datasetTwo.setDataSetId(2);
+    Election electionOne = new Election();
+    electionOne.setElectionId(1);
+    electionOne.setStatus(ElectionStatus.OPEN.getValue());
+    Election electionTwo = new Election();
+    electionTwo.setElectionId(2);
+    electionTwo.setStatus(ElectionStatus.CLOSED.getValue());
+    summary.addElection(electionOne);
+    summary.addElection(electionTwo);
+    summary.addDatasetId(datasetOne.getDataSetId());
+    summary.addDatasetId(datasetTwo.getDataSetId());
+
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
+            .thenReturn(List.of(summary));
+    initService();
+
+    DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user, UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
+    assertNotNull(summaryResult);
+
+    assertTrue(summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
+    assertEquals(Set.of(), summaryResult.getActions());
+  }
+
+  @Test
+  public void testGetSummaryForRoleNameByCollectionId_Researcher() {
+    User user = new User();
+    user.setUserId(1);
+
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+    summary.setDarCollectionId(collectionId);
+    Dataset datasetOne = new Dataset();
+    datasetOne.setDataSetId(1);
+    Dataset datasetTwo = new Dataset();
+    datasetTwo.setDataSetId(2);
+    Election electionOne = new Election();
+    electionOne.setElectionId(1);
+    electionOne.setStatus(ElectionStatus.OPEN.getValue());
+    Election electionTwo = new Election();
+    electionTwo.setElectionId(2);
+    electionTwo.setStatus(ElectionStatus.CLOSED.getValue());
+    summary.addElection(electionOne);
+    summary.addElection(electionTwo);
+    summary.addDatasetId(datasetOne.getDataSetId());
+    summary.addDatasetId(datasetTwo.getDataSetId());
+
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
+            .thenReturn(List.of(summary));
+    initService();
+
+    DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user, UserRoles.RESEARCHER.getRoleName(), collectionId);
+    assertNotNull(summaryResult);
+
+    Set<String> expectedActions = Set.of(
+            DarCollectionActions.REVIEW.getValue());
+    assertTrue(summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
+    assertEquals(expectedActions, summaryResult.getActions());
+  }
+
+  @Test
+  public void testGetSummaryForRoleNameByCollectionId_Admin() {
+    User user = new User();
+    user.setUserId(1);
+
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+    summary.setDarCollectionId(collectionId);
+    Dataset datasetOne = new Dataset();
+    datasetOne.setDataSetId(1);
+    Dataset datasetTwo = new Dataset();
+    datasetTwo.setDataSetId(2);
+    Election electionOne = new Election();
+    electionOne.setElectionId(1);
+    electionOne.setStatus(ElectionStatus.OPEN.getValue());
+    Election electionTwo = new Election();
+    electionTwo.setElectionId(2);
+    electionTwo.setStatus(ElectionStatus.CLOSED.getValue());
+    summary.addElection(electionOne);
+    summary.addElection(electionTwo);
+    summary.addDatasetId(datasetOne.getDataSetId());
+    summary.addDatasetId(datasetTwo.getDataSetId());
+
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
+            .thenReturn(List.of(summary));
+    initService();
+
+    DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user, UserRoles.ADMIN.getRoleName(), collectionId);
+    assertNotNull(summaryResult);
+
+    Set<String> expectedActions = Set.of(
+            DarCollectionActions.CANCEL.getValue(),
+            DarCollectionActions.OPEN.getValue());
+    assertTrue(summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
+    assertEquals(expectedActions, summaryResult.getActions());
+  }
+
+  @Test
+  public void testGetSummaryForRoleNameByCollectionId_Chair() {
+    User user = new User();
+    user.setUserId(1);
+
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+    summary.setDarCollectionId(collectionId);
+    Dataset datasetOne = new Dataset();
+    datasetOne.setDataSetId(1);
+    Dataset datasetTwo = new Dataset();
+    datasetTwo.setDataSetId(2);
+    Election electionOne = new Election();
+    electionOne.setElectionId(1);
+    electionOne.setStatus(ElectionStatus.OPEN.getValue());
+    Election electionTwo = new Election();
+    electionTwo.setElectionId(2);
+    electionTwo.setStatus(ElectionStatus.CANCELED.getValue());
+    summary.addElection(electionOne);
+    summary.addElection(electionTwo);
+    summary.addDatasetId(datasetOne.getDataSetId());
+    summary.addDatasetId(datasetTwo.getDataSetId());
+
+    when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(user.getUserId(), List.of(), collectionId))
+            .thenReturn(List.of(summary));
+    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+
+    initService();
+
+    DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user, UserRoles.CHAIRPERSON.getRoleName(), collectionId);
+    assertNotNull(summaryResult);
+
+    Set<String> expectedActions = Set.of(
+            DarCollectionActions.VOTE.getValue(),
+            DarCollectionActions.CANCEL.getValue(),
+            DarCollectionActions.OPEN.getValue());
+    assertTrue(summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
+    assertEquals(expectedActions, summaryResult.getActions());
+  }
+
+  @Test
+  public void testGetSummaryForRoleNameByCollectionId_DACMember() {
+    User user = new User();
+    user.setUserId(1);
+
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+    summary.setDarCollectionId(collectionId);
+    Dataset datasetOne = new Dataset();
+    datasetOne.setDataSetId(1);
+    Dataset datasetTwo = new Dataset();
+    datasetTwo.setDataSetId(2);
+    Election electionOne = new Election();
+    electionOne.setElectionId(1);
+    electionOne.setStatus(ElectionStatus.OPEN.getValue());
+    Election electionTwo = new Election();
+    electionTwo.setElectionId(2);
+    electionTwo.setStatus(ElectionStatus.CLOSED.getValue());
+    summary.addElection(electionOne);
+    summary.addElection(electionTwo);
+    summary.addDatasetId(datasetOne.getDataSetId());
+    summary.addDatasetId(datasetTwo.getDataSetId());
+
+    when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(user.getUserId(), List.of(), collectionId))
+            .thenReturn(List.of(summary));
+    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+
+    initService();
+
+    DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user, UserRoles.MEMBER.getRoleName(), collectionId);
+    assertNotNull(summaryResult);
+
+    Set<String> expectedActions = Set.of(
+            DarCollectionActions.VOTE.getValue());
+    assertTrue(summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
+    assertEquals(expectedActions, summaryResult.getActions());
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testGetSummaryForRoleNameByCollectionId_NoSummaryFound() {
+    User user = new User();
+    user.setUserId(1);
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+    summary.setDarCollectionId(collectionId);
+
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
+            .thenReturn(List.of());
+    initService();
+
+    service.getSummaryForRoleNameByCollectionId(user, UserRoles.RESEARCHER.getRoleName(), collectionId);
+  }
+
   private void queryCollectionsAssertions(PaginationResponse<DarCollection> response, int expectedUnfilteredCount, int expectedFilteredCount) {
     assertEquals(expectedUnfilteredCount, (int)response.getUnfilteredCount());
     assertEquals(expectedFilteredCount, (int)response.getFilteredCount());

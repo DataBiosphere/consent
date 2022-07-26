@@ -24,6 +24,7 @@ import org.mockito.Mock;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 
 
@@ -964,5 +965,23 @@ public class DarCollectionResourceTest {
 
     Response response = resource.getCollectionSummaryForRoleById(authUser, "invalid", collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_CollectionNotFound() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+    user.addRole(userRole);
+    DarCollection mockCollection = new DarCollection();
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getByCollectionId(collectionId)).thenThrow(new NotFoundException());
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenThrow(new NotFoundException());
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.RESEARCHER.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 }
