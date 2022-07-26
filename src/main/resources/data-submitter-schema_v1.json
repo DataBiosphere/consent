@@ -12,7 +12,7 @@
       "isRequired": true
     },
     "studyType": {
-      "type": "string",
+      "enum": ["Observational", "Interventional", "Descriptive", "Analytical", "Prospective", "Retrospective", "Case report", "Case series", "Cross-sectional", "Cohort study"],
       "label": "Study Type",
       "description": "The study type",
       "isRequired": true
@@ -24,10 +24,13 @@
       "isRequired": true
     },
     "dataTypes": {
-      "type": "string",
+      "type": "array",
       "label": "Data Types",
       "description": "All data types that study encompasses",
-      "isRequired": true
+      "isRequired": true,
+      "items": {
+        "type": "string"
+      }
     },
     "fileTypes": {
       "type": "array",
@@ -53,23 +56,20 @@
       "description": "Principal Investigator Name",
       "isRequired": true
     },
-    "dataSubmitterName": {
-      "type": "string",
-      "label": "Data Submitter Name",
-      "description": "Data Submitter Name",
-      "isRequired": true
-    },
-    "dataSubmitterEmail": {
-      "type": "string",
-      "label": "Data Submitter Email",
-      "description": "Data Submitter Email",
+    "dataSubmitter": {
+      "type": "number",
+      "label": "Data Submitter",
+      "description": "The user creating this dataset submission",
       "isRequired": true
     },
     "dataCustodianEmail": {
-      "type": "string",
+      "type": "array",
       "label": "Data Custodian Email",
       "description": "Data Custodian Email",
-      "isRequired": true
+      "isRequired": true,
+      "items": {
+        "type": "string"
+      }
     },
     "publicVisibility": {
       "type": "boolean",
@@ -128,7 +128,8 @@
     "nihICsSupportingStudy": {
       "type": "string",
       "label": "NIH ICs Supporting the Study",
-      "description": "NIH ICs Supporting the Study"
+      "description": "NIH ICs Supporting the Study",
+      "enum": [""]
     },
     "nihProgramOfficerName": {
       "type": "string",
@@ -138,7 +139,8 @@
     "nihInstitutionCenterSubmission": {
       "type": "string",
       "label": "NIH Institution/Center for Submission",
-      "description": "NIH Institution/Center for Submission"
+      "description": "NIH Institution/Center for Submission",
+      "enum": [""]
     },
     "nihGenomicProgramAdministratorName": {
       "type": "string",
@@ -151,9 +153,12 @@
       "description": "Is this a multi-center study?"
     },
     "collaboratingSites": {
-      "type": "string",
+      "type": "array",
       "label": "What are the collaborating sites?",
-      "description": "What are the collaborating sites?"
+      "description": "What are the collaborating sites?",
+      "items": {
+        "type": "string"
+      }
     },
     "controlledAccessRequiredForGenomicSummaryResultsGSR": {
       "type": "boolean",
@@ -251,7 +256,8 @@
       "properties": {
         "fileType": {
           "type": "string",
-          "description": "File Type"
+          "description": "File Type",
+          "enum": ["Arrays", "Genome", "Exome", "Survey", "Phenotype"]
         },
         "functionalEquivalence": {
           "type": "string",
