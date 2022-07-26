@@ -1,7 +1,7 @@
 get:
   summary: Get DAR Collection Summary For Role Name By Collection Id
   description: |
-    Returns DAR collection summary by darCollectionId based on Role Name
+    Returns DAR collection summary by darCollectionId based on Role Name. 
     Access is restricted to:
       * Admin - all DAR collection summaries
       * DAC Chair/Member - collections requesting datasets associated with their DAC 

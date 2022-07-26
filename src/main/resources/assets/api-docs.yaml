@@ -39,7 +39,7 @@ paths:
     $ref: './paths/collectionsByRoleName.yaml'
   /api/collections/role/{roleName}/summary:
     $ref: './paths/collectionsByRoleNameSummary.yaml'
-  /api/collections/role/{roleName}/{collectionId}/summary:
+  /api/collections/role/{roleName}/summary/{collectionId}:
     $ref: './paths/collectionsForRoleNameByIdSummary.yaml'
   /api/collections/{collectionId}/cancel:
     $ref: './paths/cancelCollectionByCollectionId.yaml'

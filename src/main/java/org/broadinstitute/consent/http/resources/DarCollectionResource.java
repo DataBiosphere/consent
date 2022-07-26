@@ -98,7 +98,7 @@ public class DarCollectionResource extends Resource {
 
 
   @GET
-  @Path("role/{roleName}/{collectionId}/summary")
+  @Path("role/{roleName}/summary/{collectionId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
   public Response getCollectionSummaryForRoleById(@Auth AuthUser authUser, @PathParam("roleName") String roleName, @PathParam("collectionId") Integer collectionId) {
