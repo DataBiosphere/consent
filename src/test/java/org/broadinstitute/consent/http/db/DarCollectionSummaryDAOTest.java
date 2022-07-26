@@ -540,20 +540,19 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    summaries.forEach((s) -> {
-      assertEquals(1, s.getDatasetIds().size());
-      s.getDatasetIds().stream()
+    DarCollectionSummary summary = summaries.get(0);
+
+    assertEquals(collectionOneId, summary.getDarCollectionId());
+    assertEquals(1, summary.getDatasetIds().size());
+    summary.getDatasetIds()
               .forEach((id) -> assertTrue(targetDatasets.contains(id)));
 
-      Integer electionId = collectionOneElection.getElectionId();
-      s.getElections().entrySet().stream()
-              .forEach((e) -> {
-                assertEquals(electionId, e.getKey());
-              });
-      assertEquals(1, s.getDarStatuses().size());
-      s.getDarStatuses().values().forEach(status -> assertEquals("test", status));
-      assertEquals(1, s.getDatasetCount());
-    });
+    Integer electionId = collectionOneElection.getElectionId();
+    summary.getElections().entrySet()
+              .forEach((e) -> assertEquals(electionId, e.getKey()));
+      assertEquals(1, summary.getDarStatuses().size());
+    summary.getDarStatuses().values().forEach(status -> assertEquals("test", status));
+      assertEquals(1, summary.getDatasetCount());
   }
 
   @Test
@@ -588,13 +587,13 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    summaries.forEach((s) -> {
-      assertEquals(1, s.getDatasetIds().size());
-      s.getDatasetIds().stream()
+    DarCollectionSummary summary = summaries.get(0);
+    assertEquals(collectionOneId, summary.getDarCollectionId());
+    assertEquals(1, summary.getDatasetIds().size());
+    summary.getDatasetIds()
               .forEach((id) -> assertTrue(targetDatasets.contains(id)));
-      assertEquals(0, s.getElections().size());
-      assertEquals(1, s.getDatasetCount());
-    });
+    assertEquals(0, summary.getElections().size());
+    assertEquals(1, summary.getDatasetCount());
   }
 
   @Test
@@ -652,23 +651,19 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    summaries.forEach((s) -> {
-      assertEquals(1, s.getDatasetIds().size());
-      s.getDatasetIds().stream()
+    DarCollectionSummary summary = summaries.get(0);
+    assertEquals(collectionOneId, summary.getDarCollectionId());
+    assertEquals(1, summary.getDatasetIds().size());
+    summary.getDatasetIds()
               .forEach((id) -> assertTrue(targetDatasets.contains(id)));
 
-      List<Integer> targetVotes = List.of(collectionOneVoteChair.getVoteId(), collectionOneVoteThree.getVoteId());
-      Integer electionId = collectionOneElection.getElectionId();
+    List<Integer> targetVotes = List.of(collectionOneVoteChair.getVoteId(), collectionOneVoteThree.getVoteId());
+    Integer electionId = collectionOneElection.getElectionId();
 
-      s.getElections().entrySet().stream()
-              .forEach((e) -> {
-                assertEquals(electionId, e.getKey());
-              });
-      s.getVotes().forEach((v) -> {
-        assertTrue(targetVotes.contains(v.getVoteId()));
-      });
-      assertEquals(1, s.getDatasetCount());
-    });
+    summary.getElections().entrySet()
+            .forEach((e) -> assertEquals(electionId, e.getKey()));
+    summary.getVotes().forEach((v) -> assertTrue(targetVotes.contains(v.getVoteId())));
+    assertEquals(1, summary.getDatasetCount());
   }
 
   @Test
@@ -707,14 +702,14 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    summaries.forEach((s) -> {
-      assertEquals(1, s.getDatasetIds().size());
-      s.getDatasetIds().stream()
-              .forEach((id) -> assertTrue(targetDatasets.contains(id)));
+    DarCollectionSummary summary = summaries.get(0);
+    assertEquals(collectionOneId, summary.getDarCollectionId());
+    assertEquals(1, summary.getDatasetIds().size());
+    summary.getDatasetIds()
+            .forEach((id) -> assertTrue(targetDatasets.contains(id)));
 
-      assertEquals(0, s.getElections().size());
-      assertEquals(0, s.getVotes().size());
-      assertEquals(1, s.getDatasetCount());
-    });
+    assertEquals(0, summary.getElections().size());
+    assertEquals(0, summary.getVotes().size());
+    assertEquals(1, summary.getDatasetCount());
   }
 }
