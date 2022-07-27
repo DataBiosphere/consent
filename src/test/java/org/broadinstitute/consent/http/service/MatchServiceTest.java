@@ -240,13 +240,25 @@ public class MatchServiceTest {
     }
 
     @Test
-    public void testFindMatchForPurpose() throws Exception {
-        initSingleMatchMocks("DAR-2", sampleConsent1);
+    public void testFindMatchForDataAccessRequest() {
+        DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
+        dar.setDatasetIds(List.of(1, 2, 3));
+        when(consentDAO.findConsentFromDatasetID(any())).thenReturn(sampleConsent1);
+        when(consentDAO.findConsentById(any())).thenReturn(sampleConsent1);
+        when(consentDAO.checkConsentById(any())).thenReturn(sampleConsent1.getConsentId());
+        when(matchDAO.findMatchById(any())).thenReturn(sampleMatch1);
+        when(rmo.isResult()).thenReturn(true);
+        when(response.readEntity(any(GenericType.class))).thenReturn(rmo);
+        when(response.getStatus()).thenReturn(200);
+        when(builder.post(any())).thenReturn(response);
+        when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
+        when(clientMock.target(config.getMatchURL())).thenReturn(target);
         initService();
 
-        Match match = service.createMatchesForPurpose("DAR-2");
-        assertTrue(match.getMatch());
-        assertFalse(match.getFailed());
+        List<Match> matches = service.createMatchesForDataAccessRequest(dar);
+        assertTrue(matches.get(0).getMatch());
+        assertFalse(matches.get(0).getFailed());
+        assertEquals(dar.getDatasetIds().size(), matches.size());
     }
 
     @Test

@@ -188,8 +188,8 @@ public class DataAccessRequestServiceTest {
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(), any(), any(), any(), any());
         doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
         initService();
-        List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
-        assertEquals(3, newDars.size());
+        DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
+        assertNotNull(newDar);
     }
 
     @Test
@@ -207,12 +207,8 @@ public class DataAccessRequestServiceTest {
         when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class))).thenReturn(RandomUtils.nextInt(1,100));
         doNothing().when(dataAccessRequestDAO).insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
         initService();
-        List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
-        assertEquals(3, newDars.size());
-        Integer collectionId = newDars.get(0).getCollectionId();
-        for(DataAccessRequest darElement: newDars) {
-            assertEquals(collectionId, darElement.getCollectionId());
-        }
+        DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
+        assertNotNull(newDar);
     }
 
     @Test

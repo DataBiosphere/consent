@@ -218,6 +218,37 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
+  public void testGetDarCollectionSummaryForDAC_ArchivedCollection() {
+    Dac dac = createDacForTest();
+    User userOne = createUserForTest();
+    User userChair = createUserForTest();
+    Integer userOneId = userOne.getUserId();
+    Integer userChairId = userChair.getUserId();
+
+    Institution institution = createInstitution(userOneId);
+    Integer institutionId = institution.getId();
+    userOne = assignInstitutionToUser(userOne, institutionId);
+    userChair = assignInstitutionToUser(userChair, institutionId);
+    Dataset dataset = createDataset(userOneId);
+    Integer collectionOneId = createDarCollection(userOneId);
+    Integer archivedCollectionId = createDarCollection(userOneId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
+    DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
+
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDataSetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDataSetId());
+
+    List<Integer> targetDatasets = List.of(dataset.getDataSetId());
+    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userOneId, targetDatasets);
+
+    //test that only the non-archived collection was pulled by the query
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
+  }
+
+  @Test
   public void testGetDarCollectionSummaryForSO() {
 
     Dac dac = createDacForTest();
@@ -303,6 +334,33 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
       assertEquals(0, s.getElections().size());
       assertEquals(1, s.getDatasetCount());
     });
+  }
+
+  @Test
+  public void testGetDarCollectionSummaryForSO_ArchivedCollection() {
+    Dac dac = createDacForTest();
+    User userOne = createUserForTest();
+    Integer userOneId = userOne.getUserId();
+
+    Institution institution = createInstitution(userOneId);
+    Integer institutionId = institution.getId();
+    userOne = assignInstitutionToUser(userOne, institutionId);
+    Dataset dataset = createDataset(userOneId);
+    Integer collectionOneId = createDarCollection(userOneId);
+    Integer archivedCollectionId = createDarCollection(userOneId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
+    DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
+
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDataSetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDataSetId());
+
+    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForSO(institutionId);
+
+    //test that only the non-archived collection was pulled by the query
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
   }
 
   @Test
@@ -404,6 +462,33 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
+  public void testGetDarCollectionSummaryForResearcher_ArchivedCollection() {
+    Dac dac = createDacForTest();
+    User userOne = createUserForTest();
+    Integer userOneId = userOne.getUserId();
+
+    Institution institution = createInstitution(userOneId);
+    Integer institutionId = institution.getId();
+    userOne = assignInstitutionToUser(userOne, institutionId);
+    Dataset dataset = createDataset(userOneId);
+    Integer collectionOneId = createDarCollection(userOneId);
+    Integer archivedCollectionId = createDarCollection(userOneId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
+    DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
+
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDataSetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDataSetId());
+
+    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userOneId);
+
+    //test that only the non-archived collection was pulled by the query
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
+  }
+
+  @Test
   public void testGetDarCollectionSummaryForAdmin() {
 
     Dac dac = createDacForTest();
@@ -501,6 +586,31 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
       assertEquals(1, s.getDatasetCount());
     });
   }
+  
+    public void testGetDarCollectionSummaryForAdmin_ArchivedCollection() {
+    Dac dac = createDacForTest();
+    User userOne = createUserForTest();
+    Integer userOneId = userOne.getUserId();
+
+    Institution institution = createInstitution(userOneId);
+    Integer institutionId = institution.getId();
+    userOne = assignInstitutionToUser(userOne, institutionId);
+    Dataset dataset = createDataset(userOneId);
+    Integer collectionOneId = createDarCollection(userOneId);
+    Integer archivedCollectionId = createDarCollection(userOneId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
+    DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
+
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDataSetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDataSetId());
+
+    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
+
+    //test that only the non-archived collection was pulled by the query
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
 
   @Test
   public void testGetDarCollectionSummaryByCollectionId() {

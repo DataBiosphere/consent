@@ -92,7 +92,7 @@ public class DataAccessRequestResourceVersion2Test {
       data.setReferenceId(dar.getReferenceId());
       dar.setData(data);
       when(dataAccessRequestService.createDataAccessRequest(any(), any()))
-          .thenReturn(List.of(dar));
+          .thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
       doNothing().when(emailNotifierService).sendNewDARCollectionMessage(any());
     } catch (Exception e) {
