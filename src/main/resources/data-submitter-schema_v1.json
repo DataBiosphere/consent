@@ -4,31 +4,42 @@
   "title": "Dataset Submission Schema",
   "version": 1,
   "type": "object",
+  "required": [
+    "studyName",
+    "studyType",
+    "studyDescription",
+    "dataTypes",
+    "fileTypes",
+    "phenotypeIndication",
+    "species",
+    "piName",
+    "dataSubmitterUserId",
+    "dataCustodianEmail",
+    "publicVisibility",
+    "dataAccessCommitteeId",
+    "consentGroups"
+  ],
   "properties": {
     "studyName": {
       "type": "string",
       "label": "Study Name",
-      "description": "The study name",
-      "isRequired": true
+      "description": "The study name"
     },
     "studyType": {
       "type": "string",
       "enum": ["Observational", "Interventional", "Descriptive", "Analytical", "Prospective", "Retrospective", "Case report", "Case series", "Cross-sectional", "Cohort study"],
       "label": "Study Type",
-      "description": "The study type",
-      "isRequired": true
+      "description": "The study type"
     },
     "studyDescription": {
       "type": "string",
       "label": "Study Description",
-      "description": "Description of the study",
-      "isRequired": true
+      "description": "Description of the study"
     },
     "dataTypes": {
       "type": "array",
       "label": "Data Types",
       "description": "All data types that study encompasses",
-      "isRequired": true,
       "items": {
         "type": "string"
       }
@@ -36,39 +47,33 @@
     "fileTypes": {
       "type": "array",
       "items": { "$ref":  "#/$defs/fileTypeObject"},
-      "description": "List of File Types",
-      "isRequired": true
+      "description": "List of File Types"
     },
     "phenotypeIndication": {
       "type": "string",
       "label": "Phenotype/Indication Studied",
-      "description": "Phenotype/Indication Studied",
-      "isRequired": true
+      "description": "Phenotype/Indication Studied"
     },
     "species": {
       "type": "string",
       "label": "Species",
-      "description": "Species",
-      "isRequired": true
+      "description": "Species"
     },
     "piName": {
       "type": "string",
       "label": "Principal Investigator Name",
-      "description": "Principal Investigator Name",
-      "isRequired": true
+      "description": "Principal Investigator Name"
     },
-    "dataSubmitter": {
+    "dataSubmitterUserId": {
       "type": "number",
       "label": "Data Submitter",
-      "description": "The user creating this dataset submission",
-      "isRequired": true
+      "description": "The user creating the dataset submission"
     },
     "dataCustodianEmail": {
       "type": "array",
       "format": "email",
       "label": "Data Custodian Email",
       "description": "Data Custodian Email",
-      "isRequired": true,
       "items": {
         "type": "string"
       }
@@ -77,8 +82,7 @@
       "type": "boolean",
       "label": "Public Visibility",
       "description": "Public Visibility of this study",
-      "prompt": "Please select if you would like your dataset to be publicly visible for the requesters to see and select for an access request",
-      "isRequired": true
+      "prompt": "Please select if you would like your dataset to be publicly visible for the requesters to see and select for an access request"
     },
     "nihAnvilUse": {
       "type": "array",
@@ -240,18 +244,16 @@
       "description": "Does the data need to be managed under Controlled or Open Access?",
       "enum": ["Controlled Access", "Open Access"]
     },
-    "dataAccessCommittee": {
+    "dataAccessCommitteeId": {
       "type": "number",
       "label": "Please select which DAC should govern requests for this dataset",
-      "description": "Data Access Committee ID",
-      "isRequired": true
+      "description": "Data Access Committee ID"
     },
     "consentGroups": {
       "type": "array",
       "label": "Consent Groups",
       "description": "Consent Groups",
-      "items": { "$ref":  "#/$defs/consentGroup"},
-      "isRequired": true
+      "items": { "$ref":  "#/$defs/consentGroup"}
     }
   },
   "$defs": {
