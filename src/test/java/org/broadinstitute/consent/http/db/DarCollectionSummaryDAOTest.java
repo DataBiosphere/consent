@@ -169,7 +169,6 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     });
   }
 
-
   @Test
   public void testGetDarCollectionSummaryForDAC_NoElectionsPresent() {
     Dac dac = createDacForTest();
@@ -301,7 +300,6 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
       assertEquals(1, s.getDatasetCount());
     });
   }
-
 
   @Test
   public void testGetDarCollectionSummaryForSO_NoElectionsPresent() {
