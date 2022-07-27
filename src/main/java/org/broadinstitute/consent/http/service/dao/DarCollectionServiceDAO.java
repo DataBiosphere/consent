@@ -82,7 +82,7 @@ public class DarCollectionServiceDAO {
                 dar.getDatasetIds().forEach(datasetId -> {
                     // If there is an existing open election for this DAR+Dataset, we can ignore it
                     Election lastDataAccessElection = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), datasetId, ElectionType.DATA_ACCESS.getValue());
-                    boolean ignore = Objects.nonNull(lastDataAccessElection) && lastDataAccessElection.getStatus().equals(ElectionStatus.OPEN.getValue());
+                    boolean ignore = Objects.nonNull(lastDataAccessElection) && lastDataAccessElection.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue());
 
                     // If the user is not an admin, then the dataset must be in the list of the user's DAC Datasets
                     // Otherwise, we need to skip election creation for this DAR as well.
