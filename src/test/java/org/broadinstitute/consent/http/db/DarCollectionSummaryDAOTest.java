@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -711,5 +712,34 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertEquals(0, summary.getElections().size());
     assertEquals(0, summary.getVotes().size());
     assertEquals(1, summary.getDatasetCount());
+  }
+
+  @Test
+  public void testGetDarCollectionSummaryForDACByCollectionId_ArchivedCollection() {
+    Dac dac = createDacForTest();
+    User userOne = createUserForTest();
+    User userChair = createUserForTest();
+    Integer userOneId = userOne.getUserId();
+    Integer userChairId = userChair.getUserId();
+
+    Institution institution = createInstitution(userOneId);
+    Integer institutionId = institution.getId();
+    userOne = assignInstitutionToUser(userOne, institutionId);
+    userChair = assignInstitutionToUser(userChair, institutionId);
+    Dataset dataset = createDataset(userOneId);
+    Integer archivedCollectionId = createDarCollection(userOneId);
+    DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
+    DataAccessRequestData archivedDarData = new DataAccessRequestData();
+    archivedDarData.setStatus(DarStatus.ARCHIVED.getValue());
+    archivedDar.setData(archivedDarData);
+    dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDataSetId());
+
+
+    List<Integer> targetDatasets = List.of(dataset.getDataSetId());
+    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(
+    userChairId, targetDatasets, archivedCollectionId);
+
+    assertNotNull(summaries);
+    assertEquals(0, summaries.size());
   }
 }
