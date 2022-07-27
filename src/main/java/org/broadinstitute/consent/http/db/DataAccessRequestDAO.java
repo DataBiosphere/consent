@@ -1,12 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
-import org.broadinstitute.consent.http.db.mapper.DarDatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestReducer;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DarDataset;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.json.internal.JsonArgumentFactory;
 import org.jdbi.v3.sqlobject.config.RegisterArgumentFactory;
@@ -14,9 +13,9 @@ import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
@@ -119,8 +118,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
           + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
           + "  WHERE dar.reference_id = :referenceId "
-          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) "
-          + "  limit 1 ")
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) ")
   DataAccessRequest findByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
@@ -174,9 +172,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
 
   @SqlUpdate(
       "UPDATE data_access_request dar SET data=jsonb_set((dar.data #>> '{}')::jsonb, '{status}', '\"Canceled\"')" +
-      "WHERE reference_id IN (<referenceIds>)"
-    )
-    void cancelByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+      "WHERE reference_id IN (<referenceIds>)")
+  void cancelByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
   /**
    * Delete all DataAccessRequests with the given collection id
@@ -256,9 +253,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    *
    * @return List<DataAccessRequest>
    */
-  @SqlQuery(" SELECT dar.id, dar.reference_id,dar. collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, (dar.data #>> '{}')::jsonb AS data "
+  @UseRowReducer(DataAccessRequestReducer.class)
+  @SqlQuery(" SELECT dd.dataset_id, dar.id, dar.reference_id,dar. collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, (dar.data #>> '{}')::jsonb AS data "
       + " FROM data_access_request dar "
       + " INNER JOIN users u ON u.user_id = dar.user_id AND u.institution_id = :institutionId "
+      + " LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
       + " WHERE dar.draft != true "
       + " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ")
   List<DataAccessRequest> findAllDataAccessRequestsForInstitution(@Bind("institutionId") Integer institutionId);
@@ -317,20 +316,4 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery("SELECT distinct dataset_id FROM dar_dataset ")
   List<Integer> findAllDARDatasetRelationDatasetIds();
 
-  /**
-   * Returns all dataset_ids that match any of the referenceIds inside of the "referenceIds" list
-   *
-   * @param referenceIds List<String>
-   */
-  @RegisterRowMapper(DarDatasetMapper.class)
-  @SqlQuery("SELECT distinct reference_id, dataset_id FROM dar_dataset WHERE reference_id IN (<referenceIds>)")
-  List<DarDataset> findAllDARDatasets(@BindList("referenceIds") List<String> referenceIds);
-
-  @SqlQuery(
-      " SELECT distinct d.reference_id "
-          + " FROM dar_dataset d "
-          + " INNER JOIN data_access_request dar ON dar.reference_id = d.reference_id AND dar.collection_id = :collectionId "
-          + " WHERE d.dataset_id IN <datasetIds> ")
-  List<String> findReferenceIdsForDatasetIdsWithCollectionId(
-      @BindList("datasetIds") List<Integer> datasetIds, @Bind("collectionId") Integer collectionId);
 }
