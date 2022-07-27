@@ -731,7 +731,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
     DataAccessRequestData archivedDarData = new DataAccessRequestData();
     archivedDarData.setStatus(DarStatus.ARCHIVED.getValue());
-    archivedDar.setData(archivedDarData);
+    dataAccessRequestDAO.updateDataByReferenceId(archivedDar.getReferenceId(), userOneId, new Date(), new Date(), new Date(), archivedDarData);
     dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDataSetId());
 
 
