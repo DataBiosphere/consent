@@ -151,8 +151,8 @@ public class DarCollectionService {
     //if an election exists, cancel does not appear
     //if there are no elections, review and cancel are present
     //if the collection is canceled, revise and review is present
-    Map<String, Integer> statusCount = new HashMap<>();
     summaries.forEach(s -> {
+      Map<String, Integer> statusCount = new HashMap<>();
       Map<Integer, Election> elections = s.getElections();
       int electionCount = elections.values().size();
       elections.values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
