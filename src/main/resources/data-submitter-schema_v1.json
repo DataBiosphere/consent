@@ -1,6 +1,6 @@
 {
   "id": "https://consent.dsde-prod.broadinstitute.org/schemas/dataset-submission",
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Dataset Submission Schema",
   "version": 1,
   "type": "object",
@@ -12,6 +12,7 @@
       "isRequired": true
     },
     "studyType": {
+      "type": "string",
       "enum": ["Observational", "Interventional", "Descriptive", "Analytical", "Prospective", "Retrospective", "Case report", "Case series", "Cross-sectional", "Cohort study"],
       "label": "Study Type",
       "description": "The study type",
@@ -64,6 +65,7 @@
     },
     "dataCustodianEmail": {
       "type": "array",
+      "format": "email",
       "label": "Data Custodian Email",
       "description": "Data Custodian Email",
       "isRequired": true,
@@ -102,6 +104,7 @@
     },
     "embargoReleaseDate": {
       "type": "string",
+      "format": "date",
       "label": "Embargo Release Date",
       "description": "Embargo Release Date"
     },
@@ -112,6 +115,7 @@
     },
     "piEmail": {
       "type": "string",
+      "format": "email",
       "label": "Principal Investigator Email",
       "description": "Principal Investigator Email"
     },
@@ -220,27 +224,27 @@
     },
     "alternativeDataSharingPlanTargetDeliveryDate": {
       "type": "string",
+      "format": "date",
       "label": "Target Delivery Date",
       "description": "Target Delivery Date"
     },
     "alternativeDataSharingPlanTargetPublicReleaseDate": {
       "type": "string",
+      "format": "date",
       "label": "Target Public Release Date",
       "description": "Target Public Release Date"
     },
     "alternativeDataSharingPlanControlledOpenAccess": {
-      "type": "array",
+      "type": "string",
       "label": "Does the data need to be managed under Controlled or Open Access?",
       "description": "Does the data need to be managed under Controlled or Open Access?",
-      "items": {
-        "type": "string",
-        "enum": ["Controlled Access", "Open Access"]
-      }
+      "enum": ["Controlled Access", "Open Access"]
     },
     "dataAccessCommittee": {
       "type": "number",
       "label": "Please select which DAC should govern requests for this dataset",
-      "description": "Data Access Committee ID"
+      "description": "Data Access Committee ID",
+      "isRequired": true
     },
     "consentGroups": {
       "type": "array",
@@ -361,6 +365,7 @@
         },
         "url": {
           "type": "string",
+          "format": "uri",
           "label": "Free text field for entering URL of data",
           "description": "Free text field for entering URL of data"
         }
