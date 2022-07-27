@@ -729,15 +729,34 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset(userOneId);
     Integer archivedCollectionId = createDarCollection(userOneId);
     DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
-    DataAccessRequestData archivedDarData = new DataAccessRequestData();
-    archivedDarData.setStatus(DarStatus.ARCHIVED.getValue());
-    dataAccessRequestDAO.updateDataByReferenceId(archivedDar.getReferenceId(), userOneId, new Date(), new Date(), new Date(), archivedDarData);
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
     dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDataSetId());
 
 
     List<Integer> targetDatasets = List.of(dataset.getDataSetId());
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(
     userChairId, targetDatasets, archivedCollectionId);
+
+    assertNotNull(summaries);
+    assertEquals(0, summaries.size());
+  }
+
+  @Test
+  public void testGetDarCollectionSummaryByCollectionId_ArchivedCollection() {
+    Dac dac = createDacForTest();
+    User userOne = createUserForTest();
+    Integer userOneId = userOne.getUserId();
+
+    Institution institution = createInstitution(userOneId);
+    Integer institutionId = institution.getId();
+    userOne = assignInstitutionToUser(userOne, institutionId);
+    Dataset dataset = createDataset(userOneId);
+    Integer archivedCollectionId = createDarCollection(userOneId);
+    DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
+    dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDataSetId());
+
+    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(archivedCollectionId);
 
     assertNotNull(summaries);
     assertEquals(0, summaries.size());
