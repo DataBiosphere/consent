@@ -2,7 +2,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <changeSet id="85.0" author="grushton">
-        <!--Now back populate the dar_dataset table-->
+        <!--Back populate missing dataset ids for elections where we have a valid dataset id -->
         <sql>
             UPDATE election
             SET datasetid = (SELECT (((data #>> '{}')::jsonb->>'datasetIds')::json->>0)::bigint FROM data_access_request WHERE reference_id = referenceid LIMIT 1)
