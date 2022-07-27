@@ -255,10 +255,6 @@ public class EmailNotifierService {
         return user;
     }
 
-//    private Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String URL, String action) throws IOException, TemplateException {
-//        return templateHelper.getNewResearcherCreatedTemplate(admin, researcherName, URL, action);
-//    }
-
     private void sendNewCaseMessage(Set<String> userAddress, String electionType, String entityId, Writer template) throws MessagingException {
         mailService.sendNewCaseMessage(userAddress, entityId, electionType, template);
     }
