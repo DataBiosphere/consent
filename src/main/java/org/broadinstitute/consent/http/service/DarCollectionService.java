@@ -175,7 +175,7 @@ public class DarCollectionService {
     });
   }
 
-  private void processDarCollectionSumariesForMember(List<DarCollectionSummary> summaries) {
+  private void processDarCollectionSummariesForMember(List<DarCollectionSummary> summaries) {
     summaries.forEach(s -> {
       Collection<Election> elections = s.getElections().values();
         Integer electionCount = elections.size();
@@ -296,7 +296,7 @@ public class DarCollectionService {
           .map(d -> d.getDataSetId())
           .collect(Collectors.toList());
           summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
-          processDarCollectionSumariesForMember(summaries);
+          processDarCollectionSummariesForMember(summaries);
         break;
       case RESEARCHER:
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
@@ -319,45 +319,45 @@ public class DarCollectionService {
    * @return A DarCollectionSummary object
    */
   public DarCollectionSummary getSummaryForRoleNameByCollectionId(User user, String userRole, Integer collectionId) {
-    List<DarCollectionSummary> summary = new ArrayList<>();
+    DarCollectionSummary summary = null;
     UserRoles role = UserRoles.getUserRoleFromName(userRole);
     Integer userId = user.getUserId();;
     List<Integer> datasetIds;
-    switch (role) {
-      case ADMIN:
-        summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
-        processDarCollectionSummariesForAdmin(summary);
-        break;
-      case SIGNINGOFFICIAL:
-        summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
-        processDarCollectionSummariesForSO(summary);
-        break;
-      case CHAIRPERSON:
-        datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
-                .map(d -> d.getDataSetId())
-                .collect(Collectors.toList());
-        summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, datasetIds, collectionId);
-        processDarCollectionSummariesForChair(summary);
-        break;
-      case MEMBER:
-        datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
-                .map(d -> d.getDataSetId())
-                .collect(Collectors.toList());
-        summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, datasetIds, collectionId);
-        processDarCollectionSumariesForMember(summary);
-        break;
-      case RESEARCHER:
-        summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
-        processDarCollectionSummariesForResearcher(summary);
-        break;
-      default:
-        break;
-    }
-    if (summary.size() != 1) {
+    try {
+      switch (role) {
+        case ADMIN:
+          summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
+          processDarCollectionSummariesForAdmin(List.of(summary));
+          break;
+        case SIGNINGOFFICIAL:
+          summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
+          processDarCollectionSummariesForSO(List.of(summary));
+          break;
+        case CHAIRPERSON:
+          datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+          .map(d -> d.getDataSetId())
+          .collect(Collectors.toList());
+          summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, datasetIds, collectionId);
+          processDarCollectionSummariesForChair(List.of(summary));
+          break;
+        case MEMBER:
+          datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+          .map(d -> d.getDataSetId())
+          .collect(Collectors.toList());
+          summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, datasetIds, collectionId);
+          processDarCollectionSummariesForMember(List.of(summary));
+          break;
+        case RESEARCHER:
+          summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
+          processDarCollectionSummariesForResearcher(List.of(summary));
+          break;
+        default:
+          break;
+      }
+      return summary;
+    } catch (NullPointerException e) {
       throw new NotFoundException("Collection summary with the collection id of " + collectionId + " was not found");
     }
-
-    return summary.get(0);
   }
 
   public List<Integer> findDatasetIdsByUser(User user) {

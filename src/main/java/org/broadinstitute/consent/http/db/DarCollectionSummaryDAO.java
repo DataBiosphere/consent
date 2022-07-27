@@ -175,7 +175,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       "AND (LOWER(v.type) = 'final' OR (v.dacuserid = :currentUserId OR v.voteid IS NULL)) " +
       "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )"
   )
-  List<DarCollectionSummary> getDarCollectionSummaryForDACByCollectionId(
+  DarCollectionSummary getDarCollectionSummaryForDACByCollectionId(
           @Bind("currentUserId") Integer currentUserId,
           @BindList("datasetIds") List<Integer> datasetIds,
           @Bind("collectionId") Integer collectionId);
@@ -210,6 +210,6 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       "AND (e.latest = e.electionid OR e.electionid IS NULL) " +
       "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )"
   )
-  List<DarCollectionSummary> getDarCollectionSummaryByCollectionId(
+  DarCollectionSummary getDarCollectionSummaryByCollectionId(
           @Bind("collectionId") Integer collectionId);
 }
