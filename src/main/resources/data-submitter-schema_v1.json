@@ -1,5 +1,5 @@
 {
-  "id": "https://consent.dsde-prod.broadinstitute.org/schemas/dataset-submission",
+  "$id": "https://consent.dsde-prod.broadinstitute.org/schemas/dataset-submission",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Dataset Submission Schema",
   "version": 1,
