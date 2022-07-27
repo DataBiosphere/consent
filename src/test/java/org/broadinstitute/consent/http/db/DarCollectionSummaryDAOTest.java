@@ -586,8 +586,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
       assertEquals(1, s.getDatasetCount());
     });
   }
-  
-    public void testGetDarCollectionSummaryForAdmin_ArchivedCollection() {
+  @Test
+  public void testGetDarCollectionSummaryForAdmin_ArchivedCollection() {
     Dac dac = createDacForTest();
     User userOne = createUserForTest();
     Integer userOneId = userOne.getUserId();
@@ -611,6 +611,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
+  }
 
   @Test
   public void testGetDarCollectionSummaryByCollectionId() {
