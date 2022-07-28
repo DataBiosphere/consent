@@ -131,10 +131,9 @@ public class MatchService {
         removeMatchesForPurpose(purposeId);
         DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
         if (Objects.nonNull(dar)) {
-            Match match = createMatchesForPurpose(dar.getReferenceId());
-            createMatches(Collections.singletonList(match));
+            List<Match> matches = createMatchesForDataAccessRequest(dar);
+            createMatches(matches);
         }
-
     }
 
     public void removeMatchesForPurpose(String purposeId) {
@@ -160,22 +159,20 @@ public class MatchService {
         return match;
     }
 
-    public Match createMatchesForPurpose(String purposeId){
-        Match match = null;
-        DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
-        if (Objects.nonNull(dar)) {
-            List<Integer> dataSetIdList = dar.getDatasetIds();
-            Consent consent = findRelatedConsent(dataSetIdList);
+    protected List<Match> createMatchesForDataAccessRequest(DataAccessRequest dar) {
+        List<Match> matches = new ArrayList<>();
+        dar.getDatasetIds().forEach(id -> {
+            Consent consent = findRelatedConsent(List.of(id));
             if (Objects.nonNull(consent)) {
                 try {
-                    match = singleEntitiesMatch(consent, dar);
+                    matches.add(singleEntitiesMatch(consent, dar));
                 } catch (Exception e) {
-                    logger.error("Error finding single match for purpose: " + purposeId);
-                    match = createMatch(consent.getConsentId(), purposeId, true, false);
+                    logger.error("Error finding single match for purpose: " + dar.getReferenceId());
+                    matches.add(createMatch(consent.getConsentId(), dar.getReferenceId(), true, false));
                 }
             }
-        }
-        return match;
+        });
+        return matches;
     }
 
     public List<Match> createMatchesForConsent(String consentId) {
