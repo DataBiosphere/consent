@@ -137,7 +137,7 @@
       "type": "string",
       "label": "NIH ICs Supporting the Study",
       "description": "NIH ICs Supporting the Study",
-      "enum": [""]
+      "enum": ["NCI", "NEI", "NHLBI", "NHGRI", "NIA", "NIAAA", "NIAID", "NIAMS", "NIBIB", "NICHD", "NIDCD", "NIDCR", "NIDDK", "NIDA", "NIEHS", "NIGMS", "NIMH", "NIMHD", "NINDS", "NINR", "NLM", "CC", "CIT", "CSR", "FIC", "NCATS", "NCCIH"]
     },
     "nihProgramOfficerName": {
       "type": "string",
@@ -148,7 +148,7 @@
       "type": "string",
       "label": "NIH Institution/Center for Submission",
       "description": "NIH Institution/Center for Submission",
-      "enum": [""]
+      "enum": ["NCI", "NEI", "NHLBI", "NHGRI", "NIA", "NIAAA", "NIAID", "NIAMS", "NIBIB", "NICHD", "NIDCD", "NIDCR", "NIDDK", "NIDA", "NIEHS", "NIGMS", "NIMH", "NIMHD", "NINDS", "NINR", "NLM", "CC", "CIT", "CSR", "FIC", "NCATS", "NCCIH"]
     },
     "nihGenomicProgramAdministratorName": {
       "type": "string",
