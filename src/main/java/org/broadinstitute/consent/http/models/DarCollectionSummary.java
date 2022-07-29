@@ -43,6 +43,8 @@ public class DarCollectionSummary {
   @JsonProperty
   private int datasetCount;
 
+  private Integer researcherId;
+  private Integer institutionId;
   private Set<Integer> datasetIds;
   private List<Vote> votes;
   private Map<Integer, Election> elections;
@@ -72,7 +74,7 @@ public class DarCollectionSummary {
   public void addElection(Election election) {
     this.elections.put(election.getElectionId(), election);
   }
- 
+
   public Map<Integer, Election> getElections() {
     return elections;
   }
@@ -125,12 +127,28 @@ public class DarCollectionSummary {
     this.researcherName = researcherName;
   }
 
+  public Integer getResearcherId() {
+    return researcherId;
+  }
+
+  public void setResearcherId(Integer researcherId) {
+    this.researcherId = researcherId;
+  }
+
   public String getInstitutionName() {
     return institutionName;
   }
 
   public void setInstitutionName(String institutionName) {
     this.institutionName = institutionName;
+  }
+
+  public Integer getInstitutionId() {
+    return institutionId;
+  }
+
+  public void setInstitutionId(Integer institutionId) {
+    this.institutionId = institutionId;
   }
 
   public Set<Integer> getDatasetIds() {

@@ -105,7 +105,7 @@ public class DarCollectionResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       validateUserHasRoleName(user, roleName); //throws BadRequestException if user does not have roleName
-      DarCollection collection = darCollectionService.getByCollectionId(collectionId);
+      DarCollectionSummary summary = darCollectionService.getSummaryForRoleNameByCollectionId(user, roleName, collectionId);
 
       boolean allowedAccess;
       switch (roleName) {
@@ -114,13 +114,15 @@ public class DarCollectionResource extends Resource {
           break;
         case Resource.CHAIRPERSON:
         case Resource.MEMBER:
-          allowedAccess = checkDacPermissionsForCollection(user, collection);
+          List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
+          allowedAccess = summary.getDatasetIds().stream().anyMatch(userDatasetIds::contains);
           break;
         case Resource.SIGNINGOFFICIAL:
-          allowedAccess = checkSoPermissionsForCollection(user, collection);
+          allowedAccess = Objects.nonNull(user.getInstitutionId()) &&
+          user.getInstitutionId().equals(summary.getInstitutionId());
           break;
         case Resource.RESEARCHER:
-          allowedAccess = user.getUserId().equals(collection.getCreateUserId());
+          allowedAccess = user.getUserId().equals(summary.getResearcherId());
           break;
         default:
           throw new BadRequestException("Invalid role selection: " + roleName);
@@ -130,7 +132,6 @@ public class DarCollectionResource extends Resource {
         throw new NotFoundException("Collection with the collection id of " + collectionId + " was not found");
       }
 
-      DarCollectionSummary summary = darCollectionService.getSummaryForRoleNameByCollectionId(user, roleName, collectionId);
       return Response.ok().entity(summary).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
