@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -262,7 +263,8 @@ public class DAOTestHelper {
             dar.getReferenceId(),
             RandomUtils.nextBoolean(),
             false,
-            new Date());
+            new Date(),
+            MatchAlgorithm.V2.getVersion());
         return matchDAO.findMatchById(matchId);
     }
 

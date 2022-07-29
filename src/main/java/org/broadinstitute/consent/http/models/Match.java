@@ -25,14 +25,18 @@ public class Match {
     @JsonProperty
     private Date createDate;
 
+    @JsonProperty
+    private String algorithmVersion;
 
-    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate){
+
+    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate, String algorithmVersion){
         this.id = id;
         this.consent = consent;
         this.purpose = purpose;
         this.match = match;
         this.failed = failed;
         this.createDate = createDate;
+        this.algorithmVersion = algorithmVersion;
     }
 
     public Match(){
@@ -84,5 +88,13 @@ public class Match {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    public String getAlgorithmVersion() {
+        return algorithmVersion;
+    }
+
+    public void setAlgorithmVersion(String algorithmVersion) {
+        this.algorithmVersion = algorithmVersion;
     }
 }

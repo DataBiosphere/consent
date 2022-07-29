@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -73,7 +74,7 @@ public class MatchService {
         validateConsent(match.getConsent());
         validatePurpose(match.getPurpose());
         try{
-            Integer id = matchDAO.insertMatch(match.getConsent(), match.getPurpose(), match.getMatch(), match.getFailed(), new Date());
+            Integer id = matchDAO.insertMatch(match.getConsent(), match.getPurpose(), match.getMatch(), match.getFailed(), new Date(), MatchAlgorithm.V2.getVersion());
             return findMatchById(id);
         }catch (Exception e){
             throw new IllegalArgumentException("Already exist a match for the specified consent and purpose");
@@ -236,6 +237,7 @@ public class MatchService {
         match.setFailed(failed);
         match.setMatch(isMatch);
         match.setCreateDate(new Date());
+        match.setAlgorithmVersion(MatchAlgorithm.V2.getVersion());
         return match;
     }
 
@@ -273,9 +275,8 @@ public class MatchService {
     }
 
     private RequestMatchingObject createRequestObject(Consent consent, DataAccessRequest dar) {
-        DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
-        UseRestriction darUseRestriction = useRestrictionConverter.parseUseRestriction(dataUse, DataUseTranslationType.PURPOSE);
-        return new RequestMatchingObject(consent.getUseRestriction(), darUseRestriction);
+        DataUse darDataUse = useRestrictionConverter.parseDataUsePurpose(dar);
+        return new RequestMatchingObject(consent.getDataUse(), darDataUse);
     }
 
     public List<Match> findMatchesByPurposeId(String purposeId) {

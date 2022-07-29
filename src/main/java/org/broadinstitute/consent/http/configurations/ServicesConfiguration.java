@@ -33,7 +33,7 @@ public class ServicesConfiguration {
   }
 
   public String getMatchURL() {
-    return getOntologyURL() + "match";
+    return getOntologyURL() + "match/v2";
   }
 
   public String getValidateUseRestrictionURL() {

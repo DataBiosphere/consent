@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -54,6 +55,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class MatchServiceTest {
     @Mock
@@ -133,14 +135,14 @@ public class MatchServiceTest {
         reqmo2 = new RequestMatchingObject(sampleConsent2.getUseRestriction(), sampleUsePurpose1);
         resmo2 = new ResponseMatchingObject(false, reqmo2);
 
-        sampleMatch1 = new Match(1, "CONS-1", "DAR-2", true, false, new Date());
+        sampleMatch1 = new Match(1, "CONS-1", "DAR-2", true, false, new Date(), MatchAlgorithm.V1.getVersion());
     }
 
     @Before
     public void setUp() throws UnknownIdentifierException, IOException {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         setUpMockedResponses();
-        when(config.getMatchURL()).thenReturn("http://ontology.org/match");
+        when(config.getMatchURL()).thenReturn("http://ontology.org/match/v2");
         when(dataAccessRequestDAO.findByReferenceId("NullDar")).thenReturn(null);
         when(consentDAO.findConsentById("NullConsent")).thenReturn(null);
         doAnswer(invocationOnMock -> { throw new UnknownIdentifierException("AbsentConsent"); }).when(consentDAO).findConsentById("AbsentConsent");
@@ -184,7 +186,7 @@ public class MatchServiceTest {
     @Test
     public void testCreate() throws Exception {
         initSingleMatchMocks("DAR-2", sampleConsent1);
-        when(matchDAO.insertMatch(any(), any(), any(), any(), any()))
+        when(matchDAO.insertMatch(any(), any(), any(), any(), any(), any()))
                 .thenReturn(sampleMatch1.getId());
         when(matchDAO.findMatchById(any()))
                 .thenReturn(sampleMatch1);
@@ -315,7 +317,7 @@ public class MatchServiceTest {
 
     @Test
     public void testFindMatchesForLatestDataAccessElectionsByPurposeIds() {
-        Match mockMatch = new Match(1, "test", "purpose", true, true, null);
+        Match mockMatch = new Match(1, "test", "purpose", true, true, null, MatchAlgorithm.V1.getVersion());
         when(matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList()))
             .thenReturn(List.of(mockMatch));
         initService();

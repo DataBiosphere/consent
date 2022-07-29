@@ -1,0 +1,15 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="86.0" author="grushton">
+        <!-- Add a version to the match table to capture which algorithm version it applies to -->
+        <addColumn tableName="match_entity">
+            <column name="algorithm_version" type="varchar(255)" defaultValue="v1">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="match_entity" columnName="algorithm_version"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

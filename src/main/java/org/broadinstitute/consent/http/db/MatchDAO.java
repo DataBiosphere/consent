@@ -45,6 +45,7 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     @SqlQuery("SELECT * FROM match_entity WHERE purpose IN (<purposeId>)")
     List<Match> findMatchesForPurposeIds(@BindList("purposeId") List<String> purposeId);
 
+    @Deprecated
     @SqlUpdate(
             " INSERT INTO match_entity " +
             " (consent, purpose, matchentity, failed, createdate) VALUES " +
@@ -55,6 +56,18 @@ public interface MatchDAO extends Transactional<MatchDAO> {
                         @Bind("match") Boolean match,
                         @Bind("failed") Boolean failed,
                         @Bind("createDate") Date date);
+
+    @SqlUpdate(
+            " INSERT INTO match_entity " +
+            " (consent, purpose, matchentity, failed, createdate, algorithm_version) VALUES " +
+            " (:consentId, :purposeId, :match, :failed, :createDate, :algorithmVersion)")
+    @GetGeneratedKeys
+    Integer insertMatch(@Bind("consentId") String consentId,
+                        @Bind("purposeId") String purposeId,
+                        @Bind("match") Boolean match,
+                        @Bind("failed") Boolean failed,
+                        @Bind("createDate") Date date,
+                        @Bind("algorithmVersion") String algorithmVersion);
 
     @SqlBatch("INSERT INTO match_entity (consent, purpose, matchentity, failed, createdate) VALUES (:consent, :purpose, :match, :failed, :createDate)")
     void insertAll(@BindBean List<Match> matches);
