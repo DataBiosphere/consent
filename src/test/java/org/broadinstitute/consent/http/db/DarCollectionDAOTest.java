@@ -349,9 +349,9 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     List<DarCollection> collectionsResult = darCollectionDAO.getFilteredListForResearcher("dar_code", "ASC", dar1.getUserId(), "");
     assertEquals(2, collectionsResult.size());
 
-    DataAccessRequest darOne = new ArrayList<>(collectionsResult.get(0).getDars().values()).get(0);
-    DataAccessRequest darTwo = new ArrayList<>(collectionsResult.get(1).getDars().values()).get(0);
-    int comparatorValue = darOne.getData().getDarCode().compareTo(darTwo.getData().getDarCode());
+    DarCollection collectionOne = collectionsResult.get(0);
+    DarCollection collectionTwo = collectionsResult.get(1);
+    int comparatorValue = collectionOne.getDarCode().compareTo(collectionTwo.getDarCode());
     assertTrue(comparatorValue < 0);
   }
 
