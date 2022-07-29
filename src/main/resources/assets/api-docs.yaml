@@ -2929,6 +2929,8 @@ paths:
           description: Dataset with specified ID does not exist
         500:
           description: Internal Server Error
+  /liveness:
+    $ref: './paths/liveness.yaml'
   /status:
     get:
       summary: System Health Status
@@ -2967,7 +2969,6 @@ paths:
                 $ref: '#/components/schemas/Version'
         500:
           description: Internal Server Error
-
 components:
   securitySchemes:
     googleoauth:
