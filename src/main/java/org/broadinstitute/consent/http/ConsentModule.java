@@ -307,8 +307,7 @@ public class ConsentModule extends AbstractModule {
                 providesMailService(),
                 providesFreeMarkerTemplateHelper(),
                 config.getServicesConfiguration().getLocalURL(),
-                config.getMailConfiguration().isActivateEmailNotifications(),
-                providesResearcherPropertyDAO()
+                config.getMailConfiguration().isActivateEmailNotifications()
         );
     }
 
@@ -501,8 +500,7 @@ public class ConsentModule extends AbstractModule {
     ResearcherService providesResearcherService() {
         return new ResearcherService(
                 providesResearcherPropertyDAO(),
-                providesUserDAO(),
-                providesEmailNotifierService()
+                providesUserDAO()
         );
     }
 
