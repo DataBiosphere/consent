@@ -5,6 +5,7 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -21,6 +22,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
@@ -60,6 +62,7 @@ public class ElectionService {
     private final LibraryCardDAO libraryCardDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
+    private final DarCollectionDAO darCollectionDAO;
     private final DacService dacService;
     private final DataAccessRequestService dataAccessRequestService;
     private final EmailNotifierService emailNotifierService;
@@ -70,8 +73,8 @@ public class ElectionService {
     @Inject
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
                            DatasetDAO datasetDAO, LibraryCardDAO libraryCardDAO, DatasetAssociationDAO datasetAssociationDAO,
-                           DataAccessRequestDAO dataAccessRequestDAO, MailMessageDAO mailMessageDAO,
-                           DacService dacService, EmailNotifierService emailNotifierService,
+                           DataAccessRequestDAO dataAccessRequestDAO, DarCollectionDAO darCollectionDAO,
+                           MailMessageDAO mailMessageDAO, DacService dacService, EmailNotifierService emailNotifierService,
                            DataAccessRequestService dataAccessRequestService, UseRestrictionConverter useRestrictionConverter) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
@@ -81,6 +84,7 @@ public class ElectionService {
         this.libraryCardDAO = libraryCardDAO;
         this.datasetAssociationDAO = datasetAssociationDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
+        this.darCollectionDAO = darCollectionDAO;
         this.mailMessageDAO = mailMessageDAO;
         this.emailNotifierService = emailNotifierService;
         this.dacService = dacService;
@@ -94,17 +98,13 @@ public class ElectionService {
             elections = dacService.filterElectionsByDAC(
                     electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()),
                     authUser);
-            List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-            List<DataAccessRequest> dataAccessRequests = dataAccessRequestService.
-                    getDataAccessRequestsByReferenceIds(referenceIds);
             elections.forEach(election -> {
-                Optional<DataAccessRequest> darOption = dataAccessRequests.stream().
-                        filter(d -> d.getReferenceId().equals(election.getReferenceId())).
-                        findFirst();
-                darOption.ifPresent(dar -> {
-                    election.setDisplayId(dar.getData().getDarCode());
+                DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
+                if (Objects.nonNull(collection)) {
+                    DataAccessRequest dar = collection.getDars().get(election.getReferenceId());
+                    election.setDisplayId(collection.getDarCode());
                     election.setProjectTitle(dar.getData().getProjectTitle());
-                });
+                }
             });
         } else {
             elections = dacService.filterElectionsByDAC(
@@ -418,13 +418,13 @@ public class ElectionService {
     private Election validateAndGetDULElection(String referenceId, ElectionType electionType) throws Exception {
         Election consentElection = null;
         if (electionType.equals(ElectionType.DATA_ACCESS)) {
-            DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(referenceId);
-            if (Objects.isNull(dataAccessRequest) || Objects.isNull(dataAccessRequest.getData())) {
+            DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
+            if (Objects.isNull(collection)) {
                 throw new NotFoundException();
             }
             List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(referenceId);
             if (!datasetIds.isEmpty()) {
-                verifyActiveDatasets(dataAccessRequest, datasetIds);
+                verifyActiveDatasets(collection, datasetIds);
                 Consent consent = consentDAO.findConsentFromDatasetID(datasetIds.get(0));
                 consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), ElectionStatus.CLOSED.getValue());
             }
@@ -432,7 +432,7 @@ public class ElectionService {
         return consentElection;
     }
 
-    private void verifyActiveDatasets(DataAccessRequest dataAccessRequest, List<Integer> datasetIds) throws Exception {
+    private void verifyActiveDatasets(DarCollection collection, List<Integer> datasetIds) throws Exception {
         List<Dataset> datasets = datasetDAO.findDatasetsByIdList(datasetIds);
         List<String> disabledDatasets = datasets.stream()
                 .filter(ds -> !ds.getActive())
@@ -440,12 +440,10 @@ public class ElectionService {
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(disabledDatasets)) {
             boolean createElection = disabledDatasets.size() != datasets.size();
-            User user = userDAO.findUserById(dataAccessRequest.getUserId());
+            User user = userDAO.findUserById(collection.getCreateUserId());
+            emailNotifierService.sendDisabledDatasetsMessage(user, disabledDatasets, collection.getDarCode());
             if (!createElection) {
-                emailNotifierService.sendDisabledDatasetsMessage(user, disabledDatasets, dataAccessRequest.getData().getDarCode());
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDatasets);
-            } else {
-                emailNotifierService.sendDisabledDatasetsMessage(user, disabledDatasets, dataAccessRequest.getData().getDarCode());
             }
         }
     }
@@ -588,8 +586,8 @@ public class ElectionService {
     }
 
     private void sendResearcherNotification(String referenceId) throws Exception {
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-        List<Integer> dataSetIdList = dar.getDatasetIds();
+        DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
+        List<Integer> dataSetIdList = dataAccessRequestDAO.findDARDatasetRelations(referenceId);
         if (CollectionUtils.isNotEmpty(dataSetIdList)) {
             List<Dataset> dataSets = datasetDAO.findDatasetsByIdList(dataSetIdList);
             List<DatasetMailDTO> datasetsDetail = new ArrayList<>();
@@ -610,7 +608,7 @@ public class ElectionService {
                     translatedUseRestriction = "";
                 }
             }
-            emailNotifierService.sendResearcherDarApproved(dar.getData().getDarCode(),  dar.getUserId(), datasetsDetail, translatedUseRestriction);
+            emailNotifierService.sendResearcherDarApproved(collection.getDarCode(),  collection.getCreateUserId(), datasetsDetail, translatedUseRestriction);
         }
     }
 
@@ -621,8 +619,9 @@ public class ElectionService {
      * @param referenceId The DAR reference id
      */
     private void sendDataCustodianNotification(String referenceId) {
+        DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-        if (dar == null) {
+        if (collection == null || dar == null) {
             logger.error("Unable to send data custodian approval message: dar could not be found with reference id "+referenceId+".");
             return;
         }
@@ -647,9 +646,9 @@ public class ElectionService {
                         collect(Collectors.toList());
                 try {
                     String researcherEmail = researcher.getEmail();
-                    String darCode = Objects.nonNull(dar.getData().getDarCode()) ?
-                            dar.getData().getDarCode() :
-                            dar.getReferenceId();
+                    String darCode = Objects.nonNull(collection.getDarCode()) ?
+                            collection.getDarCode() :
+                            referenceId;
 
                     emailNotifierService.sendDataCustodianApprovalMessage(custodian.getEmail(), darCode, mailDTOS,
                             custodian.getDisplayName(), researcherEmail);
