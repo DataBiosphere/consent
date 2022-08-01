@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+import org.jdbi.v3.sqlobject.customizer.Bind;
 
 import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
@@ -207,9 +208,9 @@ public class EmailNotifierService {
             Map<String, List<Election>> reviewedDatasets = new HashMap<>();
             for(Election election: elections) {
                 List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
-                DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(election.getReferenceId());
-                String dar_code = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDarCode() : "";
-                reviewedDatasets.put(dar_code, dsElections);
+                DarCollection collection = collectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
+                String darCode = Objects.nonNull(collection) ? collection.getDarCode() : "";
+                reviewedDatasets.put(darCode, dsElections);
             }
             List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
             if(CollectionUtils.isNotEmpty(users)) {
@@ -381,8 +382,8 @@ public class EmailNotifierService {
             Consent consent = consentDAO.findConsentById(referenceId);
             return Objects.nonNull(consent) ? consent.getName() : " ";
         } else {
-            DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
-            return (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) ? dar.getData().getDarCode() : " ";
+            DarCollection collection = collectionDAO.findDARCollectionByReferenceId(referenceId);
+            return Objects.nonNull(collection) ? collection.getDarCode() : " ";
         }
     }
 
