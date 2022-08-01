@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -20,6 +21,8 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.models.matching.DataUseRequestMatchingObject;
+import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
 import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
 import org.broadinstitute.consent.http.models.matching.ResponseMatchingObject;
 import org.glassfish.jersey.client.ClientProperties;
@@ -47,41 +50,32 @@ public class MatchService {
     private final UseRestrictionConverter useRestrictionConverter;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final DataAccessRequestDAO dataAccessRequestDAO;
-    private final DatasetDAO dataSetDAO;
-    private final WebTarget matchServiceTarget;
+    private final DatasetDAO datasetDAO;
+    private final WebTarget matchServiceTargetV1;
+    private final WebTarget matchServiceTargetV2;
 
     private final GenericType<ResponseMatchingObject> rmo = new GenericType<>(){};
 
     @Inject
     public MatchService(Client client, ServicesConfiguration config, ConsentDAO consentDAO, MatchDAO matchDAO,
-                        ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
+                        ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO datasetDAO,
                         UseRestrictionConverter useRestrictionConverter) {
         this.matchDAO = matchDAO;
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.useRestrictionConverter = useRestrictionConverter;
-        this.dataSetDAO = dataSetDAO;
+        this.datasetDAO = datasetDAO;
 
         Integer timeout = 1000 * 60 * 3; // 3 minute timeout so ontology can properly do matching.
         client.property(ClientProperties.CONNECT_TIMEOUT, timeout);
         client.property(ClientProperties.READ_TIMEOUT, timeout);
-        matchServiceTarget = client.target(config.getMatchURL());
+        matchServiceTargetV1 = client.target(config.getMatchURL());
+        matchServiceTargetV2 = client.target(config.getMatchURL_v2());
     }
 
-    public Match create(Match match){
-        validateConsent(match.getConsent());
-        validatePurpose(match.getPurpose());
-        try{
-            Integer id = matchDAO.insertMatch(match.getConsent(), match.getPurpose(), match.getMatch(), match.getFailed(), new Date());
-            return findMatchById(id);
-        }catch (Exception e){
-            throw new IllegalArgumentException("Already exist a match for the specified consent and purpose");
-        }
-    }
-
-    public void createMatches(List<Match> match){
-        if(CollectionUtils.isNotEmpty(match)){
+    public void insertMatches(List<Match> match){
+        if (CollectionUtils.isNotEmpty(match)) {
             matchDAO.insertAll(match);
         }
     }
@@ -123,7 +117,7 @@ public class MatchService {
         removeMatchesForConsent(consentId);
         if (!consentDAO.checkManualReview(consentId)) {
             List<Match> matches = createMatchesForConsent(consentId);
-            createMatches(matches);
+            insertMatches(matches);
         }
     }
 
@@ -132,7 +126,7 @@ public class MatchService {
         DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
         if (Objects.nonNull(dar)) {
             List<Match> matches = createMatchesForDataAccessRequest(dar);
-            createMatches(matches);
+            insertMatches(matches);
         }
     }
 
@@ -144,31 +138,16 @@ public class MatchService {
         matchDAO.deleteMatchesByConsentId(consentId);
     }
 
-    public Match findSingleMatch(String consentId, String purposeId) {
-        Match match = null;
-        try {
-            Consent consent = findConsent(consentId);
-            DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
-            if(consent != null || dar != null) {
-                match = singleEntitiesMatch(consent, dar);
-            }
-        } catch (Exception e) {
-            logger.error("Error finding single match for consent: " + consentId + " and purpose: " + purposeId);
-            return null;
-        }
-        return match;
-    }
-
     protected List<Match> createMatchesForDataAccessRequest(DataAccessRequest dar) {
         List<Match> matches = new ArrayList<>();
         dar.getDatasetIds().forEach(id -> {
-            Consent consent = findRelatedConsent(List.of(id));
-            if (Objects.nonNull(consent)) {
+            Dataset dataset = datasetDAO.findDatasetById(id);
+            if (Objects.nonNull(dataset)) {
                 try {
-                    matches.add(singleEntitiesMatch(consent, dar));
+                    matches.add(singleEntitiesMatchV2(dataset, dar));
                 } catch (Exception e) {
                     logger.error("Error finding single match for purpose: " + dar.getReferenceId());
-                    matches.add(createMatch(consent.getConsentId(), dar.getReferenceId(), true, false));
+                    matches.add(createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2));
                 }
             }
         });
@@ -178,17 +157,17 @@ public class MatchService {
     public List<Match> createMatchesForConsent(String consentId) {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
-        List<Dataset> dataSets = dataSetDAO.getDatasetsForConsent(consentId);
+        List<Dataset> dataSets = datasetDAO.getDatasetsForConsent(consentId);
         List<DataAccessRequest> dars = findRelatedDars(dataSets.stream().map(Dataset::getDataSetId).collect(Collectors.toList()));
         if (consent != null && !dars.isEmpty()) {
             Match match;
             for (DataAccessRequest dar : dars) {
                 try {
-                    match = singleEntitiesMatch(consent, dar);
+                    match = singleEntitiesMatchV1(consent, dar);
                     matches.add(match);
                 } catch (Exception e) {
                     logger.error("Error finding  matches for consent: " + consentId);
-                    matches.add(createMatch(consentId, dar.getReferenceId(), true, false));
+                    matches.add(createMatch(consentId, dar.getReferenceId(), true, false, MatchAlgorithm.V1));
                 }
             }
         }
@@ -207,7 +186,7 @@ public class MatchService {
         }
     }
 
-    private Match singleEntitiesMatch(Consent consent, DataAccessRequest dar) {
+    private Match singleEntitiesMatchV1(Consent consent, DataAccessRequest dar) {
         if (consent == null) {
             logger.error("Consent is null");
             throw new IllegalArgumentException("Consent cannot be null");
@@ -219,23 +198,47 @@ public class MatchService {
         Match match;
         RequestMatchingObject requestObject = createRequestObject(consent, dar);
         String json = new Gson().toJson(requestObject);
-        Response res = matchServiceTarget.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
+        Response res = matchServiceTargetV1.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
         if (res.getStatus() == Response.Status.OK.getStatusCode()) {
             ResponseMatchingObject entity = res.readEntity(rmo);
-            match = createMatch(consent.getConsentId(), dar.getReferenceId(), false, entity.isResult());
+            match = createMatch(consent.getConsentId(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V1);
         } else {
-            match = createMatch(consent.getConsentId(), dar.getReferenceId(), true, false);
+            match = createMatch(consent.getConsentId(), dar.getReferenceId(), true, false, MatchAlgorithm.V1);
         }
         return match;
     }
 
-    private Match createMatch(String consentId, String purposeId, boolean failed, boolean isMatch) {
+    private Match singleEntitiesMatchV2(Dataset dataset, DataAccessRequest dar) {
+        if (Objects.isNull(dataset)) {
+            logger.error("Dataset is null");
+            throw new IllegalArgumentException("Consent cannot be null");
+        }
+        if (Objects.isNull(dar)) {
+            logger.error("Data Access Request is null");
+            throw new IllegalArgumentException("Data Access Request cannot be null");
+        }
+        Match match;
+        DataUseRequestMatchingObject requestObject = createRequestObject(dataset, dar);
+        String json = new Gson().toJson(requestObject);
+        Response res = matchServiceTargetV2.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
+        if (res.getStatus() == Response.Status.OK.getStatusCode()) {
+            GenericType<DataUseResponseMatchingObject> durmo = new GenericType<>(){};
+            DataUseResponseMatchingObject entity = res.readEntity(durmo);
+            match = createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V2);
+        } else {
+            match = createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2);
+        }
+        return match;
+    }
+
+    private Match createMatch(String consentId, String purposeId, boolean failed, boolean isMatch, MatchAlgorithm algorithm) {
         Match match = new Match();
         match.setConsent(consentId);
         match.setPurpose(purposeId);
         match.setFailed(failed);
         match.setMatch(isMatch);
         match.setCreateDate(new Date());
+        match.setAlgorithmVersion(algorithm.getVersion());
         return match;
     }
 
@@ -258,25 +261,24 @@ public class MatchService {
         return consent;
     }
 
-    private Consent findRelatedConsent(List<Integer> dataSetIdList) {
-        Consent consent =  null;
-        if (CollectionUtils.isNotEmpty(dataSetIdList)) {
-            consent = consentDAO.findConsentFromDatasetID(dataSetIdList.get(0));
-        }
-        return consent;
-    }
-
     private List<DataAccessRequest> findRelatedDars(List<Integer> dataSetIds) {
         return dataAccessRequestDAO.findAllDataAccessRequests().stream()
                 .filter(d -> !Collections.disjoint(dataSetIds, d.getDatasetIds()))
                 .collect(Collectors.toList());
     }
 
+
     private RequestMatchingObject createRequestObject(Consent consent, DataAccessRequest dar) {
         DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
         UseRestriction darUseRestriction = useRestrictionConverter.parseUseRestriction(dataUse, DataUseTranslationType.PURPOSE);
         return new RequestMatchingObject(consent.getUseRestriction(), darUseRestriction);
     }
+
+    private DataUseRequestMatchingObject createRequestObject(Dataset dataset, DataAccessRequest dar) {
+        DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
+        return new DataUseRequestMatchingObject(dataset.getDataUse(), dataUse);
+    }
+
 
     public List<Match> findMatchesByPurposeId(String purposeId) {
         return matchDAO.findMatchesByPurposeId(purposeId);

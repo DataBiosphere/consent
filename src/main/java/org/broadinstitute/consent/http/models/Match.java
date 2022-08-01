@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 
 import java.util.Date;
 
@@ -25,7 +26,10 @@ public class Match {
     @JsonProperty
     private Date createDate;
 
+    @JsonProperty
+    private String algorithmVersion;
 
+    @Deprecated
     public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate){
         this.id = id;
         this.consent = consent;
@@ -33,6 +37,17 @@ public class Match {
         this.match = match;
         this.failed = failed;
         this.createDate = createDate;
+        this.algorithmVersion = MatchAlgorithm.V1.getVersion();
+    }
+
+    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate, String algorithmVersion){
+        this.id = id;
+        this.consent = consent;
+        this.purpose = purpose;
+        this.match = match;
+        this.failed = failed;
+        this.createDate = createDate;
+        this.algorithmVersion = algorithmVersion;
     }
 
     public Match(){
@@ -84,5 +99,13 @@ public class Match {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    public String getAlgorithmVersion() {
+        return algorithmVersion;
+    }
+
+    public void setAlgorithmVersion(String algorithmVersion) {
+        this.algorithmVersion = algorithmVersion;
     }
 }
