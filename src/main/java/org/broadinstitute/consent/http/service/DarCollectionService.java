@@ -318,6 +318,7 @@ public class DarCollectionService {
 
   public DarCollectionSummary draftDarCollection(DarCollection sourceCollection) {
     this.dataAccessRequestDAO.updateDraftByCollectionId(sourceCollection.getDarCollectionId(), true);
+    this.darCollectionDAO.updateCollectionDraftStatus(sourceCollection.getDarCollectionId(), true);
 
     // get updated collection
     sourceCollection = this.darCollectionDAO.findDARCollectionByCollectionId(sourceCollection.getDarCollectionId());

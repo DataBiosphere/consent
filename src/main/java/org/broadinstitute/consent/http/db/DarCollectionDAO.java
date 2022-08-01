@@ -321,6 +321,9 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @SqlUpdate("DELETE FROM dar_collection WHERE collection_id = :collectionId")
   void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
 
+  @SqlUpdate("UPDATE dar_collection SET draft = :draft WHERE collection_id = :collectionId")
+  void updateCollectionDraftStatus(@Bind("collectionId") Integer collectionId, @Bind("draft") boolean draft);
+
   String coreCountQuery = "SELECT COUNT(DISTINCT c.collection_id) "
       + "FROM dar_collection c "
       + "INNER JOIN users u ON u.user_id = c.create_user_id "
@@ -383,7 +386,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
       + " WHERE c.create_user_id = :userId AND ("
-      + DarCollection.FILTER_TERMS_QUERY + ") " + archiveFilterQuery + orderStatement)
+      + DarCollection.FILTER_TERMS_QUERY + " AND c.draft = false " + archiveFilterQuery + orderStatement)
   List<DarCollection> getFilteredListForResearcher(
       @Define("sortField") String sortField,
       @Define("sortOrder") String sortOrder,
