@@ -474,6 +474,8 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.singletonList(dar));
         when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
                 .thenReturn(dar);
+        when(darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId()))
+                .thenReturn(new DarCollection());
         when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
                 .thenReturn(new Date());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
@@ -507,6 +509,8 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.singletonList(dar));
         when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
                 .thenReturn(dar);
+        when(darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId()))
+                .thenReturn(new DarCollection());
         when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
                 .thenReturn(new Date());
         when(userDAO.findUserByEmail(any())).thenReturn(user);

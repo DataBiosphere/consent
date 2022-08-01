@@ -89,12 +89,7 @@ public class EmailNotifierServiceTest {
     @Test
     public void testSendDataCustodianApprovalMessage() {
         initService();
-        DataAccessRequest dar = new DataAccessRequest();
-        DataAccessRequestData data = new DataAccessRequestData();
-        data.setDarCode("DAR-123456789");
-        data.setTranslatedUseRestriction("Translated Use Restriction");
-        dar.setReferenceId(UUID.randomUUID().toString());
-        dar.setData(data);
+        String darCode = "DAR-123456789";
         List<DatasetMailDTO> datasets = new ArrayList<>();
         datasets.add(new DatasetMailDTO("DS-1 Name", "DS-1 Alias"));
         datasets.add(new DatasetMailDTO("DS-2 Name", "DS-2 Alias"));
@@ -102,7 +97,7 @@ public class EmailNotifierServiceTest {
         String dataDepositorName = "Data Depositor Name";
         String researcherEmail = "researcher@test.com";
         try {
-            service.sendDataCustodianApprovalMessage(defaultAccount, dar.getData().getDarCode(), datasets,
+            service.sendDataCustodianApprovalMessage(defaultAccount, darCode, datasets,
                     dataDepositorName, researcherEmail);
         } catch (Exception e) {
             fail("Should not fail sending message: " + e);

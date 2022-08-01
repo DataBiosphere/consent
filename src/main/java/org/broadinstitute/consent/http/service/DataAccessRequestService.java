@@ -578,13 +578,14 @@ public class DataAccessRequestService {
         if (CollectionUtils.isNotEmpty(darList)){
             for(DataAccessRequest dar: darList){
                 String referenceId = dar.getReferenceId();
+                DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
                 User researcher = userDAO.findUserById(dar.getUserId());
                 Date approvalDate = electionDAO.findApprovalAccessElectionDate(referenceId);
-                if (Objects.nonNull(approvalDate) && Objects.nonNull(researcher)) {
+                if (Objects.nonNull(approvalDate) && Objects.nonNull(researcher) && Objects.nonNull(collection)) {
                     String email = researcher.getEmail();
                     String name = researcher.getDisplayName();
                     String institution = (Objects.isNull(researcher.getInstitutionId())) ? "" : institutionDAO.findInstitutionById(researcher.getInstitutionId()).getName();
-                    String darCode = dar.getData().getDarCode();
+                    String darCode = collection.getDarCode();
                     builder.append(dataAccessReportsParser.getDataSetApprovedUsersLine(requestingUser, email, name, institution, darCode, approvalDate));
                 }
             }
