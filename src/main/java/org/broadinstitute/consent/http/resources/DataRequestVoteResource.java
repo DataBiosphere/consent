@@ -8,11 +8,13 @@ import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -50,6 +52,7 @@ public class DataRequestVoteResource extends Resource {
 
     private final UserService userService;
     private final DataAccessRequestService dataAccessRequestService;
+    private final DarCollectionService darCollectionService;
     private final DatasetService datasetService;
     private final DatasetAssociationService datasetAssociationService;
     private final ElectionService electionService;
@@ -61,6 +64,7 @@ public class DataRequestVoteResource extends Resource {
     @Inject
     public DataRequestVoteResource(
             DataAccessRequestService dataAccessRequestService,
+            DarCollectionService darCollectionService,
             DatasetAssociationService datasetAssociationService,
             EmailNotifierService emailNotifierService,
             VoteService voteService,
@@ -71,6 +75,7 @@ public class DataRequestVoteResource extends Resource {
         this.userService = userService;
         this.datasetService = datasetService;
         this.dataAccessRequestService = dataAccessRequestService;
+        this.darCollectionService = darCollectionService;
         this.datasetAssociationService = datasetAssociationService;
         this.electionService = electionService;
         this.voteService = voteService;
@@ -117,8 +122,7 @@ public class DataRequestVoteResource extends Resource {
             Vote parsedVote = new Gson().fromJson(json, Vote.class);
             electionService.submitFinalAccessVoteDataRequestElection(parsedVote.getElectionId(), parsedVote.getVote());
             Vote updatedVote = voteService.updateVoteById(parsedVote, id);
-            DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-            createDataOwnerElection(updatedVote, dar);
+            createDataOwnerElection(updatedVote, referenceId);
             return Response.ok(updatedVote).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -241,7 +245,7 @@ public class DataRequestVoteResource extends Resource {
                 existingVote.getDacUserId());
     }
 
-    private void createDataOwnerElection(Vote vote, DataAccessRequest dar) throws MessagingException, IOException, TemplateException {
+    private void createDataOwnerElection(Vote vote, String referenceId) throws MessagingException, IOException, TemplateException {
         Vote agreementVote = null;
         Vote finalVote = null;
         if(vote.getType().equals(VoteType.FINAL.getValue())){
@@ -253,18 +257,20 @@ public class DataRequestVoteResource extends Resource {
             finalVote = CollectionUtils.isNotEmpty(finalVotes) ? finalVotes.get(0) : null;
             agreementVote = vote;
         }
-        if((finalVote != null && finalVote.getVote() != null && finalVote.getVote()) && (agreementVote == null || (agreementVote != null && agreementVote.getVote() != null))){
-            List<Dataset> needsApprovedDataSets = datasetService.findNeedsApprovalDataSetByObjectId(dar.getDatasetIds());
+        if((finalVote != null && finalVote.getVote() != null && finalVote.getVote()) && (agreementVote == null || agreementVote.getVote() != null)){
+            DarCollection collection = darCollectionService.getByReferenceId(referenceId);
+            List<Integer> datasetIds = collection.getDars().get(referenceId).getDatasetIds();
+            List<Dataset> needsApprovedDataSets = datasetService.findNeedsApprovalDataSetByObjectId(datasetIds);
             List<Integer> dataSetIds = needsApprovedDataSets.stream().map(Dataset::getDataSetId).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(needsApprovedDataSets)){
                 Map<User, List<Dataset>> dataOwnerDataSet = datasetAssociationService.findDataOwnersWithAssociatedDataSets(dataSetIds);
-                List<Election> elections = electionService.createDataSetElections(dar.getReferenceId(), dataOwnerDataSet);
+                List<Election> elections = electionService.createDataSetElections(referenceId, dataOwnerDataSet);
                 if(CollectionUtils.isNotEmpty(elections)){
                     elections.forEach(voteService::createDataOwnersReviewVotes);
                 }
                 List<User> admins = userService.describeAdminUsersThatWantToReceiveMails();
                 if(CollectionUtils.isNotEmpty(admins)) {
-                    emailNotifierService.sendAdminFlaggedDarApproved(dar.getData().getDarCode(), admins, dataOwnerDataSet);
+                    emailNotifierService.sendAdminFlaggedDarApproved(collection.getDarCode(), admins, dataOwnerDataSet);
                 }
             }
         }
