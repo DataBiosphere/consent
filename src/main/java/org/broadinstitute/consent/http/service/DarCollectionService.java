@@ -148,6 +148,7 @@ public class DarCollectionService {
     summary.setName(d.getData().getProjectTitle());
     summary.addAction(DarCollectionActions.RESUME.getValue());
     summary.addAction(DarCollectionActions.DELETE.getValue());
+    summary.addReferenceId(d.referenceId);
 
     return summary;
   }
