@@ -69,7 +69,7 @@ public class DarCollectionServiceDAO {
           // only applies to the current one in this handle.
           handle.getConnection().setAutoCommit(false);
           List<Update> inserts = new ArrayList<>();
-          // For each DAR, create:
+          // For each Dataset in each DAR, create:
           //    1. Access Election
           //    2. Member votes for access election
           //        2a. Chair Vote for chair
@@ -79,24 +79,26 @@ public class DarCollectionServiceDAO {
           //    4. Member votes for rp election
           //        4a. Chair Vote for chair
           collection.getDars().values().forEach(dar -> {
-                // If there is an existing open election for this DAR, we can ignore it
-                Election lastDataAccessElection = electionDAO.findLastElectionByReferenceIdAndType(dar.getReferenceId(), ElectionType.DATA_ACCESS.getValue());
-                boolean ignore = Objects.nonNull(lastDataAccessElection) && lastDataAccessElection.getStatus().equals(ElectionStatus.OPEN.getValue());
+                dar.getDatasetIds().forEach(datasetId -> {
+                    // If there is an existing open election for this DAR+Dataset, we can ignore it
+                    Election lastDataAccessElection = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), datasetId, ElectionType.DATA_ACCESS.getValue());
+                    boolean ignore = Objects.nonNull(lastDataAccessElection) && lastDataAccessElection.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue());
 
-                // If the user is not an admin, then the dataset must be in the list of the user's DAC Datasets
-                // Otherwise, we need to skip election creation for this DAR as well.
-                Integer datasetId = dar.getDatasetIds().get(0);
-                if (!isAdmin && !dacUserDatasetIds.contains(datasetId)) {
-                    ignore = true;
-                }
-                if (!ignore) {
-                    List<User> voteUsers = findVoteUsersForDataset(datasetId);
-                    inserts.add(createElectionInsert(handle, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, datasetId));
-                    inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
-                    inserts.add(createElectionInsert(handle, ElectionType.RP.getValue(), dar.getReferenceId(), now, datasetId));
-                    inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.RP.getValue(), dar.getReferenceId(), now, dar.requiresManualReview()));
-                    createdElectionReferenceIds.add(dar.getReferenceId());
-                }
+                    // If the user is not an admin, then the dataset must be in the list of the user's DAC Datasets
+                    // Otherwise, we need to skip election creation for this DAR as well.
+                    if (!isAdmin && !dacUserDatasetIds.contains(datasetId)) {
+                        ignore = true;
+                    }
+                    if (!ignore) {
+                        List<User> voteUsers = findVoteUsersForDataset(datasetId);
+                        inserts.add(createElectionInsert(handle, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, datasetId));
+                        inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), datasetId, now, dar.requiresManualReview()));
+                        inserts.add(createElectionInsert(handle, ElectionType.RP.getValue(), dar.getReferenceId(), now, datasetId));
+                        inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.RP.getValue(), dar.getReferenceId(), datasetId, now, dar.requiresManualReview()));
+                        createdElectionReferenceIds.add(dar.getReferenceId());
+                    }
+                });
+
           });
           inserts.forEach(Update::execute);
           handle.commit();
@@ -104,20 +106,20 @@ public class DarCollectionServiceDAO {
     return createdElectionReferenceIds;
   }
 
-  private List<Update> createVoteInsertsForUsers(Handle handle, List<User> voteUsers, String electionType, String referenceId, Date now, Boolean isManualReview) {
+  private List<Update> createVoteInsertsForUsers(Handle handle, List<User> voteUsers, String electionType, String referenceId, Integer datasetId, Date now, Boolean isManualReview) {
     List<Update> userVotes = new ArrayList<>();
     voteUsers.forEach(
         u -> {
           // All users get a minimum of one DAC vote type for both RP and DataAccess election types
-          userVotes.add(createVoteInsert(handle, VoteType.DAC.getValue(), electionType, referenceId, now, u.getUserId()));
+          userVotes.add(createVoteInsert(handle, VoteType.DAC.getValue(), electionType, referenceId, datasetId, now, u.getUserId()));
           // Chairpersons get a Chairperson vote for both RP and DataAccess election types
           if (u.hasUserRole(UserRoles.CHAIRPERSON)) {
-            userVotes.add(createVoteInsert(handle, VoteType.CHAIRPERSON.getValue(), electionType, referenceId, now, u.getUserId()));
+            userVotes.add(createVoteInsert(handle, VoteType.CHAIRPERSON.getValue(), electionType, referenceId, datasetId, now, u.getUserId()));
             // Chairpersons get Final and Agreement votes for DataAccess elections
             if (ElectionType.DATA_ACCESS.getValue().equals(electionType)) {
-                userVotes.add(createVoteInsert(handle, VoteType.FINAL.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, now, u.getUserId()));
+                userVotes.add(createVoteInsert(handle, VoteType.FINAL.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, datasetId, now, u.getUserId()));
                 if (!isManualReview) {
-                  userVotes.add(createVoteInsert(handle, VoteType.AGREEMENT.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, now, u.getUserId()));
+                  userVotes.add(createVoteInsert(handle, VoteType.AGREEMENT.getValue(), ElectionType.DATA_ACCESS.getValue(), referenceId, datasetId, now, u.getUserId()));
                 }
             }
           }
@@ -125,13 +127,14 @@ public class DarCollectionServiceDAO {
     return userVotes;
   }
 
-  private Update createVoteInsert(Handle handle, String voteType, String electionType, String referenceId, Date now, Integer userId) {
+  private Update createVoteInsert(Handle handle, String voteType, String electionType, String referenceId, Integer datasetId, Date now, Integer userId) {
     final String sql =
         " INSERT INTO vote (createdate, dacuserid, electionid, type, remindersent) "
             + " (SELECT :createDate, :userId, electionid, :voteType, false "
             + "  FROM election "
             + "  WHERE electiontype = :electionType "
             + "  AND referenceid = :referenceId "
+            + "  AND datasetid = :datasetId "
             + "  ORDER BY createdate desc "
             + "  LIMIT 1) ";
     Update insert = handle.createUpdate(sql);
@@ -140,6 +143,7 @@ public class DarCollectionServiceDAO {
     insert.bind("voteType", voteType);
     insert.bind("electionType", electionType);
     insert.bind("referenceId", referenceId);
+    insert.bind("datasetId", datasetId);
     return insert;
   }
 
@@ -162,7 +166,8 @@ public class DarCollectionServiceDAO {
             + "         (SELECT coalesce (MAX(version), 0) + 1 "
             + "          FROM election AS electionVersion "
             + "          WHERE referenceid = :referenceId "
-            + "          AND electiontype = :electionType) "
+            + "          AND electiontype = :electionType "
+            + "          AND datasetid = :datasetId) "
             + "        )";
     Update insert = handle.createUpdate(sql);
     insert.bind("electionType", electionType);

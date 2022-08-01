@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -11,33 +10,26 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 public class ResearcherService {
     private final UserPropertyDAO userPropertyDAO;
     private final UserDAO userDAO;
-    private final EmailNotifierService emailNotifierService;
-    private static final String ACTION_REGISTERED = "registered";
 
     protected Logger logger() {
         return LoggerFactory.getLogger(this.getClass());
     }
 
     @Inject
-    public ResearcherService(UserPropertyDAO userPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService) {
+    public ResearcherService(UserPropertyDAO userPropertyDAO, UserDAO userDAO) {
         this.userPropertyDAO = userPropertyDAO;
         this.userDAO = userDAO;
-        this.emailNotifierService = emailNotifierService;
     }
 
     @Deprecated
@@ -47,7 +39,6 @@ public class ResearcherService {
         Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
         List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getUserId());
         saveProperties(properties);
-        notifyAdmins(user.getUserId());
         return describeResearcherProperties(user.getUserId());
     }
 
@@ -122,16 +113,4 @@ public class ResearcherService {
         return properties;
     }
 
-    private void notifyAdmins(Integer userId) {
-        String completed = userPropertyDAO.isProfileCompleted(userId);
-        if (Boolean.parseBoolean(completed)) {
-            try {
-                emailNotifierService.sendNewResearcherCreatedMessage(userId, ResearcherService.ACTION_REGISTERED);
-            } catch (IOException | TemplateException | MessagingException e) {
-                logger().error("Error when notifying the admin(s) about the researcher action: " +
-                        ResearcherService.ACTION_REGISTERED + ", for user: " +
-                        userDAO.findUserById(userId).getDisplayName());
-            }
-        }
-    }
 }
