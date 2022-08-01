@@ -453,11 +453,9 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
 
     assertEquals(2, collectionsResult.size());
     assertEquals(collections.get(0).getDarCode(), collectionsResult.get(0).getDarCode());
-
+    assertEquals(collections.get(1).getDarCode(), collectionsResult.get(1).getDarCode());
     assertEquals(1, collectionsResult.get(0).getDars().size());
     assertEquals(1, collectionsResult.get(1).getDars().size());
-    assertEquals(darCodeOne, collectionsResult.get(0).getDarCode());
-    assertEquals(darCodeTwo, collectionsResult.get(1).getDarCode());
   }
 
   @Test
@@ -475,12 +473,10 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
 
     List<DarCollection> collectionsResult = darCollectionDAO.getFilteredListForResearcher("dar_code", "ASC", user.getUserId(), "");
     assertEquals(2, collectionsResult.size());
-    assertEquals(collectionsResult.get(0).getDarCode(), collections.get(0).getDarCode());
-
+    assertEquals(collections.get(0).getDarCode(), collectionsResult.get(0).getDarCode());
+    assertEquals(collections.get(1).getDarCode(), collectionsResult.get(1).getDarCode());
     assertEquals(1, collectionsResult.get(0).getDars().size());
     assertEquals(1, collectionsResult.get(1).getDars().size());
-    assertEquals(darCodeOne, collectionsResult.get(0).getDarCode());
-    assertEquals(darCodeTwo, collectionsResult.get(1).getDarCode());
   }
 
   @Test

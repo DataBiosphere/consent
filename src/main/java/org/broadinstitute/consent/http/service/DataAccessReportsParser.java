@@ -75,7 +75,7 @@ public class DataAccessReportsParser {
     return builder.toString();
   }
 
-    public void addApprovedDARLine(FileWriter darWriter, Election election, DataAccessRequest dar, String profileName, String institution, String consentName, String translatedUseRestriction) throws IOException {
+    public void addApprovedDARLine(FileWriter darWriter, Election election, DataAccessRequest dar, String darCode, String profileName, String institution, String consentName, String translatedUseRestriction) throws IOException {
         String rusSummary = Objects.nonNull(dar.getData()) && StringUtils.isNotEmpty(dar.getData().getNonTechRus()) ?  dar.getData().getNonTechRus().replace("\n", " ") : "";
         String content1 =  profileName + DEFAULT_SEPARATOR + institution + DEFAULT_SEPARATOR;
         String electionDate = (Objects.nonNull(election.getFinalVoteDate())) ? formatTimeToDate(election.getFinalVoteDate().getTime()) : "";
@@ -83,14 +83,14 @@ public class DataAccessReportsParser {
                 formatTimeToDate(dar.getSortDate().getTime()) + DEFAULT_SEPARATOR +
                 electionDate + DEFAULT_SEPARATOR +
                 "--";
-        addDARLine(darWriter, dar, content1, content2, consentName, translatedUseRestriction);
+        addDARLine(darWriter, dar, darCode, content1, content2, consentName, translatedUseRestriction);
     }
 
-    public void addReviewedDARLine(FileWriter darWriter, Election election, DataAccessRequest dar, String consentName, String translatedUseRestriction) throws IOException {
+    public void addReviewedDARLine(FileWriter darWriter, Election election, DataAccessRequest dar, String darCode, String consentName, String translatedUseRestriction) throws IOException {
         String finalVote = election.getFinalVote() ? "Yes" : "No";
         String content2 = formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
                           finalVote;
-        addDARLine(darWriter, dar, "", content2, consentName, translatedUseRestriction);
+        addDARLine(darWriter, dar, darCode,"", content2, consentName, translatedUseRestriction);
     }
 
     public String getDataSetApprovedUsersLine(User user, String email, String name, String institution, String darCode, Date approvalDate) {
@@ -121,7 +121,7 @@ public class DataAccessReportsParser {
         return month.toString() + "/" + day.toString() + "/" + year.toString();
     }
 
-    private void addDARLine(FileWriter darWriter, DataAccessRequest dar, String customContent1, String customContent2, String consentName, String translatedUseRestriction) throws IOException {
+    private void addDARLine(FileWriter darWriter, DataAccessRequest dar, String darCode, String customContent1, String customContent2, String consentName, String translatedUseRestriction) throws IOException {
         List<String> datasetNames = new ArrayList<>();
         List<Integer> dataSetIds = new ArrayList<>();
         List<String> dataSetUUIds = new ArrayList<>();
@@ -140,7 +140,7 @@ public class DataAccessReportsParser {
             String sDUL = StringUtils.isNotEmpty(translatedUseRestriction) ? translatedUseRestriction.replace("\n", " ") : "";
             String translatedRestriction = StringUtils.isNotEmpty(dar.getData().getTranslatedUseRestriction()) ? dar.getData().getTranslatedUseRestriction().replace("<br>", " ") : "";
             darWriter.write(
-              dar.getData().getDarCode() + DEFAULT_SEPARATOR +
+               darCode + DEFAULT_SEPARATOR +
                 StringUtils.join(datasetNames, ",") + DEFAULT_SEPARATOR +
                 StringUtils.join(dataSetUUIds, ",") + DEFAULT_SEPARATOR +
                 consentName + DEFAULT_SEPARATOR +
