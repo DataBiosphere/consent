@@ -326,7 +326,8 @@ public class ConsentModule extends AbstractModule {
                 providesVoteDAO(),
                 providesDacService(),
                 providesUserService(),
-                providesVoteService());
+                providesVoteService(),
+                providesDarCollectionService());
     }
 
     @Provides
