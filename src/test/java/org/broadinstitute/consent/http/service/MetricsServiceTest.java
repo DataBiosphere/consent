@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -44,6 +45,8 @@ public class MetricsServiceTest {
 
   @Mock private DataAccessRequestDAO darDAO;
 
+  @Mock private DarCollectionDAO darCollectionDAO;
+
   @Mock private MatchDAO matchDAO;
 
   @Mock private ElectionDAO electionDAO;
@@ -56,7 +59,7 @@ public class MetricsServiceTest {
   }
 
   private void initService() {
-    service = new MetricsService(dacService, dataSetDAO, darDAO, matchDAO, electionDAO);
+    service = new MetricsService(dacService, dataSetDAO, darDAO, darCollectionDAO, matchDAO, electionDAO);
   }
 
   @Test

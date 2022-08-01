@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
+
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -19,6 +21,7 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacDecisionMetrics;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -35,14 +38,16 @@ public class MetricsService {
   private final DacService dacService;
   private final DatasetDAO dataSetDAO;
   private final DataAccessRequestDAO darDAO;
+  private final DarCollectionDAO darCollectionDAO;
   private final MatchDAO matchDAO;
   private final ElectionDAO electionDAO;
 
   @Inject
-  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO, MatchDAO matchDAO, ElectionDAO electionDAO) {
+  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO, DarCollectionDAO darCollectionDAO, MatchDAO matchDAO, ElectionDAO electionDAO) {
     this.dacService = dacService;
     this.dataSetDAO = dataSetDAO;
     this.darDAO = darDAO;
+    this.darCollectionDAO = darCollectionDAO;
     this.matchDAO = matchDAO;
     this.electionDAO = electionDAO;
   }
@@ -163,13 +168,17 @@ public class MetricsService {
                     .findFirst())
               .flatMap(Function.identity());
 
+          DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(dataAccessRequest.getReferenceId());
+          String darCode = Objects.nonNull(collection) ? collection.getDarCode() : null;
+
           return new DarDecisionMetrics(
             dataAccessRequest,
             dac.orElse(null),
             dataset,
             accessElection.orElse(null),
             rpElection.orElse(null),
-            match.orElse(null));
+            match.orElse(null),
+            darCode);
         })
       .collect(Collectors.toList());
   }
