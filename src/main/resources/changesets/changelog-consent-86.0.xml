@@ -8,8 +8,13 @@
                 <constraints nullable="true"/>
             </column>
         </addColumn>
+        <dropForeignKeyConstraint baseTableName="match_entity" constraintName="fkmatchconsent"/>
         <rollback>
             <dropColumn tableName="match_entity" columnName="algorithm_version"/>
+            <addForeignKeyConstraint baseColumnNames="consent" baseTableName="match_entity"
+                                     constraintName="fkmatchconsent" deferrable="false" initiallyDeferred="false"
+                                     onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="consentid"
+                                     referencedTableName="consents" referencesUniqueColumn="false"/>
         </rollback>
     </changeSet>
 </databaseChangeLog>

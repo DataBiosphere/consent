@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -68,6 +69,7 @@ public class MatchDAOTest extends DAOTestHelper {
     match.setFailed(false);
     match.setCreateDate(new Date());
     match.setMatch(RandomUtils.nextBoolean());
+    match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     return match;
   }
 

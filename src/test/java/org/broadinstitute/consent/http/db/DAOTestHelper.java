@@ -255,10 +255,10 @@ public class DAOTestHelper {
     protected Match createMatch() {
         DataAccessRequest dar = createDataAccessRequestV3();
         Dac dac = createDac();
-        Consent consent = createConsent(dac.getDacId());
+        Dataset dataset = createDataset();
         Integer matchId =
         matchDAO.insertMatch(
-            consent.getConsentId(),
+            dataset.getDatasetIdentifier(),
             dar.getReferenceId(),
             RandomUtils.nextBoolean(),
             false,
