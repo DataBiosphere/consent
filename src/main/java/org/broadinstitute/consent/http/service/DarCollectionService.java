@@ -131,20 +131,25 @@ public class DarCollectionService {
   private void processDarCollectionDraftsAsSummaries(List<DataAccessRequest> drafts, List<DarCollectionSummary> summaries) {
     drafts.forEach(d -> {
       try{
-        DarCollectionSummary summary = new DarCollectionSummary();
-        Date createDate = new Date(d.getData().getCreateDate());
-        String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
-          .format(createDate);
-        summary.setDarCode(darCode);
-        summary.setStatus(DarCollectionStatus.DRAFT.getValue());
-        summary.setName(d.getData().getProjectTitle());
-        summary.addAction(DarCollectionActions.RESUME.getValue());
-        summary.addAction(DarCollectionActions.DELETE.getValue());
-        summaries.add(summary);
+        summaries.add(processDraftAsSummary(d));
       } catch(Exception e) {
         logger.warn("Error processing draft with id: " + d.getId());
       }
     });
+  }
+
+  private DarCollectionSummary processDraftAsSummary(DataAccessRequest d) {
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Date createDate = new Date(d.getData().getCreateDate());
+    String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
+            .format(createDate);
+    summary.setDarCode(darCode);
+    summary.setStatus(DarCollectionStatus.DRAFT.getValue());
+    summary.setName(d.getData().getProjectTitle());
+    summary.addAction(DarCollectionActions.RESUME.getValue());
+    summary.addAction(DarCollectionActions.DELETE.getValue());
+
+    return summary;
   }
 
   private void processDarCollectionSummariesForResearcher(List<DarCollectionSummary> summaries) {
@@ -308,6 +313,15 @@ public class DarCollectionService {
         break;
     }
     return summaries;
+  }
+
+  public DarCollectionSummary draftDarCollection(DarCollection sourceCollection) {
+    this.dataAccessRequestDAO.updateDraftByCollectionId(sourceCollection.getDarCollectionId(), true);
+
+    // get updated collection
+    sourceCollection = this.darCollectionDAO.findDARCollectionByCollectionId(sourceCollection.getDarCollectionId());
+
+    return this.processDraftAsSummary(new ArrayList<>(sourceCollection.getDars().values()).get(0));
   }
 
   public List<Integer> findDatasetIdsByUser(User user) {

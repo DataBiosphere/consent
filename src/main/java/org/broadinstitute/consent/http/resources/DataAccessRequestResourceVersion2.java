@@ -385,6 +385,11 @@ public class DataAccessRequestResourceVersion2 extends Resource {
           && existingDar.getUserId().equals(user.getUserId())
           && existingDar.getDraft()) {
         newDar.setReferenceId(data.getReferenceId());
+
+        // if draft was part of a collection, we should use the same collection.
+        if (Objects.nonNull(existingDar.getCollectionId())) {
+          newDar.setCollectionId(existingDar.getCollectionId());
+        }
       } else {
         String referenceId = UUID.randomUUID().toString();
         newDar.setReferenceId(referenceId);
