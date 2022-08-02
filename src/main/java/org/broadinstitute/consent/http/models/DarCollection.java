@@ -67,9 +67,6 @@ public class DarCollection {
   private Integer updateUserId;
 
   @JsonProperty
-  private Boolean draft;
-
-  @JsonProperty
   private Map<String, DataAccessRequest> dars;
 
   @JsonProperty
@@ -101,11 +98,6 @@ public class DarCollection {
   public void setDarCode(String darCode) {
     this.darCode = darCode;
   }
-
-  public Boolean getDraft() {
-    return this.draft;
-  }
-  public void setDraft(boolean draft) { this.draft = draft; }
 
   public Timestamp getCreateDate() {
     return createDate;
