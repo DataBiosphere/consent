@@ -517,9 +517,9 @@ public class DataAccessRequestService {
             for (Election election : elections) {
                 try {
                     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
-                    DataAccessRequest dataAccessRequest = collection.getDars().get(election.getReferenceId());
-                    User user = userDAO.findUserById(collection.getCreateUserId());
-                    if (Objects.nonNull(dataAccessRequest) && Objects.nonNull(dataAccessRequest.getData()) && Objects.nonNull(user)) {
+                    DataAccessRequest dataAccessRequest = findByReferenceId(election.getReferenceId());
+                    User user = userDAO.findUserById(dataAccessRequest.getUserId());
+                    if (Objects.nonNull(collection) && Objects.nonNull(user)) {
                         Integer datasetId = !CollectionUtils.isEmpty(dataAccessRequest.getDatasetIds()) ? dataAccessRequest.getDatasetIds().get(0) : null;
                         String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
                         Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
@@ -552,8 +552,8 @@ public class DataAccessRequestService {
         if (CollectionUtils.isNotEmpty(elections)) {
             for (Election election : elections) {
                 DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
-                DataAccessRequest dar = collection.getDars().get(election.getReferenceId());
-                if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
+                DataAccessRequest dar = findByReferenceId(election.getReferenceId());
+                if (Objects.nonNull(dar) && Objects.nonNull(collection)) {
                     Integer datasetId = !CollectionUtils.isEmpty(dar.getDatasetIds()) ? dar.getDatasetIds().get(0) : null;
                     String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
                     Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;

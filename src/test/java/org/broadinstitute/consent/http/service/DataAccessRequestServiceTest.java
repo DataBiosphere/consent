@@ -416,6 +416,7 @@ public class DataAccessRequestServiceTest {
         user.setInstitutionId(1);
         Institution institution = new Institution();
         institution.setName("Institution");
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
         when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
                 .thenReturn("CONS-1");
@@ -448,6 +449,7 @@ public class DataAccessRequestServiceTest {
         Map<String, DataAccessRequest> dars = new HashMap<>();
         dars.put(election.getReferenceId(), dar);
         collection.setDars(dars);
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
         when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
                 .thenReturn("CONS-1");

@@ -90,7 +90,7 @@ public class DataAccessReportsParser {
         String finalVote = election.getFinalVote() ? "Yes" : "No";
         String content2 = formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
                           finalVote;
-        addDARLine(darWriter, dar, darCode,"", content2, consentName, translatedUseRestriction);
+        addDARLine(darWriter, dar, darCode, "", content2, consentName, translatedUseRestriction);
     }
 
     public String getDataSetApprovedUsersLine(User user, String email, String name, String institution, String darCode, Date approvalDate) {

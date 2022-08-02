@@ -44,6 +44,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -259,7 +260,7 @@ public class DataRequestVoteResource extends Resource {
         }
         if((finalVote != null && finalVote.getVote() != null && finalVote.getVote()) && (agreementVote == null || agreementVote.getVote() != null)){
             DarCollection collection = darCollectionService.getByReferenceId(referenceId);
-            List<Integer> datasetIds = collection.getDars().get(referenceId).getDatasetIds();
+            List<Integer> datasetIds = Objects.nonNull(collection) ? collection.getDars().get(referenceId).getDatasetIds() : List.of();
             List<Dataset> needsApprovedDataSets = datasetService.findNeedsApprovalDataSetByObjectId(datasetIds);
             List<Integer> dataSetIds = needsApprovedDataSets.stream().map(Dataset::getDataSetId).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(needsApprovedDataSets)){
