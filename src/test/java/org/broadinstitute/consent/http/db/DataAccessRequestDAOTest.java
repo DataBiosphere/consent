@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertEquals;
@@ -108,6 +109,32 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertFalse(draftDars2.isEmpty());
         assertEquals(1, draftDars2.size());
+    }
+
+
+    @Test
+    public void updateDraftToNonDraftByCollectionId() {
+        DarCollection darColl = createDarCollection();
+        DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).get(0);
+
+        dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, true);
+        dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+        assertEquals(true, dar.getDraft());
+        dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, false);
+        dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+        assertEquals(false, dar.getDraft());
+    }
+
+    @Test
+    public void updateNonDraftToDraftByCollectionId() {
+        DarCollection darColl = createDarCollection();
+        DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).get(0);
+
+        dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+        assertEquals(false, dar.getDraft());
+        dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, true);
+        dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+        assertEquals(true, dar.getDraft());
     }
 
     @Test

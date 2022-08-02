@@ -16,6 +16,9 @@ import java.util.HashSet;
 
 public class DarCollectionSummary {
 
+  public static final String FILTER_DRAFT_DAR_COLLECTIONS =
+          "EXISTS (SELECT * FROM data_access_request WHERE (collection_id = c.collection_id and draft = false))";
+
   @JsonProperty
   private Integer darCollectionId;
 

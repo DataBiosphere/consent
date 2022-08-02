@@ -134,6 +134,7 @@ public class DarCollectionService {
         summaries.add(processDraftAsSummary(d));
       } catch(Exception e) {
         logger.warn("Error processing draft with id: " + d.getId());
+        logger.warn(e.getMessage());
       }
     });
   }
@@ -141,8 +142,14 @@ public class DarCollectionService {
   private DarCollectionSummary processDraftAsSummary(DataAccessRequest d) {
     DarCollectionSummary summary = new DarCollectionSummary();
     Date createDate = new Date(d.getData().getCreateDate());
-    String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
-            .format(createDate);
+    String darCode;
+    if (Objects.nonNull(d.getData().getDarCode())) {
+      darCode = d.getData().getDarCode();
+    } else {
+      darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
+              .format(createDate);
+    }
+
     summary.setDarCode(darCode);
     summary.setStatus(DarCollectionStatus.DRAFT.getValue());
     summary.setName(d.getData().getProjectTitle());
