@@ -52,6 +52,7 @@ public class ConsentResource extends Resource {
         this.matchService = matchService;
     }
 
+    @Deprecated
     @Path("{id}")
     @GET
     @Produces("application/json")

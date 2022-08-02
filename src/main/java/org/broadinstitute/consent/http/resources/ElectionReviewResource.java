@@ -39,6 +39,7 @@ public class ElectionReviewResource extends Resource {
         this.darService = darService;
     }
 
+    @Deprecated
     @GET
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
