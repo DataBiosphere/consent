@@ -340,6 +340,7 @@ paths:
     $ref: './paths/consent.yaml'
   /api/consent/{id}:
     get:
+      deprecated: true
       summary: Get Consent by ID
       description: Returns the consent identified by the ID.
       parameters:
@@ -421,6 +422,7 @@ paths:
           description: The consent for the id couldn't be found.
   /api/consent/{consentId}/vote/{id}:
     post:
+      deprecated: true
       summary: firstVoteUpdate
       description: Returns the created vote.
       parameters:
@@ -455,6 +457,7 @@ paths:
         404:
           description: The association type wasn't send, or the application couldn't find any consents that matched the search criteria.
     put:
+      deprecated: true
       summary: updateConsentVote
       description: Returns the updated vote.
       parameters:
@@ -487,6 +490,7 @@ paths:
         400:
           description: Bad Request, malformed entity, etc.
     get:
+      deprecated: true
       summary: describe
       description: Returns the required vote.
       parameters:
@@ -1453,6 +1457,7 @@ paths:
                 format: binary
   /api/consent/{id}/dul:
     get:
+      deprecated: true
       summary: getDUL
       description: Returns Data Use Letter file specified by consentId.
       parameters:
@@ -2067,6 +2072,7 @@ paths:
           description: Server error.
   /api/electionReview:
     get:
+      deprecated: true
       summary: getCollectElectionReview
       description: Returns the ElectionReview from an Open Election identified by reference Id.
       parameters:
