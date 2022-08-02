@@ -532,7 +532,8 @@ public class ConsentModule extends AbstractModule {
             providesUserDAO(),
             providesConsentDAO(),
             providesDatasetDAO(),
-            providesMatchDAO()
+            providesMatchDAO(),
+            providesDARCollectionDAO()
         );
     }
 

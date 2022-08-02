@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -14,6 +15,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
@@ -44,13 +46,14 @@ public class SummaryService {
     private final ConsentDAO consentDAO;
     private final DatasetDAO datasetDAO;
     private final MatchDAO matchDAO;
+    private final DarCollectionDAO darCollectionDAO;
     private final DataAccessRequestService dataAccessRequestService;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
     public SummaryService(DataAccessRequestService dataAccessRequestService, VoteDAO dao,
         ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO, DatasetDAO datasetDAO,
-        MatchDAO matchDAO) {
+        MatchDAO matchDAO, DarCollectionDAO darCollectionDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.voteDAO = dao;
         this.electionDAO = electionDAO;
@@ -58,6 +61,7 @@ public class SummaryService {
         this.consentDAO = consentDAO;
         this.datasetDAO = datasetDAO;
         this.matchDAO = matchDAO;
+        this.darCollectionDAO = darCollectionDAO;
     }
 
     public Summary describeConsentSummaryCases() {
@@ -283,9 +287,12 @@ public class SummaryService {
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
           List<Integer> datasetId = dar.getDatasetIds();
           if (CollectionUtils.isNotEmpty(datasetId)) {
+            DarCollection collection =  darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
+            String darCode = Objects.nonNull(collection) ? collection.getDarCode() : null;
             Optional<User> darUser = darUsers.stream().filter(u -> u.getUserId().equals(dar.getUserId())).findFirst();
             details.add(new DataAccessRequestSummaryDetail(
                 dar,
+                darCode,
                 accessElection,
                 accessElectionVotes,
                 rpElectionVotes,
