@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -16,7 +15,6 @@ import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -92,7 +90,7 @@ public class MetricsServiceTest {
     List<Election> election = generateElection(dars.get(0).getReferenceId());
     Set<DatasetDTO> dataset = new HashSet<>(generateDatasetDTO(1));
     DarCollection collection = new DarCollection();
-    collection.setDarCode(RandomStringUtils.randomAlphanumeric(5));
+    collection.setDarCode("DAR-" + RandomUtils.nextInt(1, 999999999));
 
     when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(dataset);
     when(darDAO.findAllDataAccessRequestsByDatasetId(any())).thenReturn(dars);
