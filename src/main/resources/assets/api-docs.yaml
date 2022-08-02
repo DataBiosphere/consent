@@ -2117,6 +2117,7 @@ paths:
                 type: string
   /api/electionReview/{electionId}:
     get:
+      deprecated: true
       summary: describeElectionReviewByElectionId
       description: "Returns the ElectionReview from an Election identified by ElectionId. This endpoint doesn't filter votes by isFinalAccess attribute so the reviewVote array of the retrieved ElectionReview will contain the isFinalAccess = TRUE Vote."
       parameters:
