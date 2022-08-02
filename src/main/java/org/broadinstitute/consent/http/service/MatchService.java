@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -16,8 +15,8 @@ import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -74,19 +73,20 @@ public class MatchService {
         matchServiceTargetV2 = client.target(config.getMatchURL_v2());
     }
 
-    public void insertMatches(List<Match> match){
-        if (CollectionUtils.isNotEmpty(match)) {
-            matchDAO.insertAll(match);
-        }
-    }
-
-    public Match update(Match match, Integer id) {
-        validateConsent(match.getConsent());
-        validatePurpose(match.getPurpose());
-        if (matchDAO.findMatchById(id) == null)
-            throw new NotFoundException("Match for the specified id does not exist");
-        matchDAO.updateMatch(id, match.getMatch(), match.getConsent(), match.getPurpose(), match.getFailed());
-        return findMatchById(id);
+    public void insertMatches(List<Match> match) {
+        match.forEach(m -> {
+            Integer id = matchDAO.insertMatch(
+                m.getConsent(),
+                m.getPurpose(),
+                m.getMatch(),
+                m.getFailed(),
+                new Date(),
+                m.getAlgorithmVersion()
+            );
+            m.getFailureReasons().forEach(f -> {
+                matchDAO.insertFailureReason(id, f);
+            });
+        });
     }
 
     public Match findMatchById(Integer id) {
@@ -131,10 +131,12 @@ public class MatchService {
     }
 
     public void removeMatchesForPurpose(String purposeId) {
+        matchDAO.deleteFailureReasonsByPurposeIds(List.of(purposeId));
         matchDAO.deleteMatchesByPurposeId(purposeId);
     }
 
     public void removeMatchesForConsent(String consentId) {
+        matchDAO.deleteFailureReasonsByConsentIds(List.of(consentId));
         matchDAO.deleteMatchesByConsentId(consentId);
     }
 
@@ -146,8 +148,9 @@ public class MatchService {
                 try {
                     matches.add(singleEntitiesMatchV2(dataset, dar));
                 } catch (Exception e) {
-                    logger.error("Error finding single match for purpose: " + dar.getReferenceId());
-                    matches.add(createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2));
+                    String message = "Error finding single match for purpose: " + dar.getReferenceId();
+                    logger.error(message);
+                    matches.add(createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of(message)));
                 }
             }
         });
@@ -167,23 +170,11 @@ public class MatchService {
                     matches.add(match);
                 } catch (Exception e) {
                     logger.error("Error finding  matches for consent: " + consentId);
-                    matches.add(createMatch(consentId, dar.getReferenceId(), true, false, MatchAlgorithm.V1));
+                    matches.add(createMatch(consentId, dar.getReferenceId(), true, false, MatchAlgorithm.V1, List.of()));
                 }
             }
         }
         return matches;
-    }
-
-    private void validateConsent(String consentId) {
-        if (StringUtils.isEmpty(consentDAO.checkConsentById(consentId))) {
-            throw new IllegalArgumentException("Consent for the specified id does not exist");
-        }
-    }
-
-    private void validatePurpose(String purposeId) {
-        if (dataAccessRequestDAO.findByReferenceId(purposeId) == null) {
-            throw new IllegalArgumentException("Purpose for the specified id does not exist");
-        }
     }
 
     private Match singleEntitiesMatchV1(Consent consent, DataAccessRequest dar) {
@@ -201,9 +192,9 @@ public class MatchService {
         Response res = matchServiceTargetV1.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
         if (res.getStatus() == Response.Status.OK.getStatusCode()) {
             ResponseMatchingObject entity = res.readEntity(rmo);
-            match = createMatch(consent.getConsentId(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V1);
+            match = createMatch(consent.getConsentId(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V1, List.of());
         } else {
-            match = createMatch(consent.getConsentId(), dar.getReferenceId(), true, false, MatchAlgorithm.V1);
+            match = createMatch(consent.getConsentId(), dar.getReferenceId(), true, false, MatchAlgorithm.V1, List.of());
         }
         return match;
     }
@@ -224,14 +215,14 @@ public class MatchService {
         if (res.getStatus() == Response.Status.OK.getStatusCode()) {
             GenericType<DataUseResponseMatchingObject> durmo = new GenericType<>(){};
             DataUseResponseMatchingObject entity = res.readEntity(durmo);
-            match = createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V2);
+            match = createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V2, entity.getFailureReasons());
         } else {
-            match = createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2);
+            match = createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of());
         }
         return match;
     }
 
-    private Match createMatch(String consentId, String purposeId, boolean failed, boolean isMatch, MatchAlgorithm algorithm) {
+    private Match createMatch(String consentId, String purposeId, boolean failed, boolean isMatch, MatchAlgorithm algorithm, List<String> failureReasons) {
         Match match = new Match();
         match.setConsent(consentId);
         match.setPurpose(purposeId);
@@ -239,6 +230,7 @@ public class MatchService {
         match.setMatch(isMatch);
         match.setCreateDate(new Date());
         match.setAlgorithmVersion(algorithm.getVersion());
+        match.setFailureReasons(failureReasons);
         return match;
     }
 

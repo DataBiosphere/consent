@@ -4,7 +4,10 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 public class Match {
 
@@ -28,6 +31,8 @@ public class Match {
 
     @JsonProperty
     private String algorithmVersion;
+
+    private List<String> failureReasons;
 
     @Deprecated
     public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate){
@@ -107,5 +112,25 @@ public class Match {
 
     public void setAlgorithmVersion(String algorithmVersion) {
         this.algorithmVersion = algorithmVersion;
+    }
+
+    public List<String> getFailureReasons() {
+        if (Objects.isNull(this.failureReasons)) {
+            return List.of();
+        }
+        return failureReasons;
+    }
+
+    public void setFailureReasons(List<String> failureReasons) {
+        this.failureReasons = failureReasons;
+    }
+
+    public void addFailureReason(String reason) {
+        if (Objects.isNull(this.failureReasons)) {
+            this.failureReasons = new ArrayList<>();
+        }
+        if (!this.failureReasons.contains(reason)) {
+            this.failureReasons.add(reason);
+        }
     }
 }

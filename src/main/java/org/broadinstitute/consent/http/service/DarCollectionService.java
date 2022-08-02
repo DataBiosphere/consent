@@ -187,7 +187,7 @@ public class DarCollectionService {
           Boolean isVotable = elections
             .stream()
             .anyMatch(election -> election.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
-          
+
           if(isVotable) {
             s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
             s.addAction(DarCollectionActions.VOTE.getValue());
@@ -196,7 +196,7 @@ public class DarCollectionService {
               //all canceled (complete)
               //some datasets do not have elections (in process)
               //all voted on (complete)
-              //no elections 
+              //no elections
             if(electionCount < s.getDatasetCount()) {
               s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
             } else {
@@ -206,7 +206,7 @@ public class DarCollectionService {
         }
     });
   }
-  
+
 
   private void processDarCollectionSummariesForChair(List<DarCollectionSummary> summaries) {
     summaries.forEach(s -> {
@@ -489,6 +489,7 @@ public class DarCollectionService {
     // no elections left & user has perms => safe to delete collection
 
     // delete DARs
+    matchDAO.deleteFailureReasonsByPurposeIds(referenceIds);
     matchDAO.deleteMatchesByPurposeIds(referenceIds);
     dataAccessRequestDAO.deleteDARDatasetRelationByReferenceIds(referenceIds);
     dataAccessRequestDAO.deleteByReferenceIds(referenceIds);

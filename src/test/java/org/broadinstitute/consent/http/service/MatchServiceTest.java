@@ -177,18 +177,6 @@ public class MatchServiceTest {
     }
 
     @Test
-    public void testUpdate() {
-        initSingleMatchMocks("DAR-2", sampleConsent1);
-        doNothing().when(matchDAO).updateMatch(any(), any(), any(), any(), any());
-        when(matchDAO.findMatchById(1)).thenReturn(sampleMatch1);
-        initService();
-
-        Match match = service.update(sampleMatch1, 1);
-        assertNotNull(match);
-        assertEquals("CONS-1", match.getConsent());
-    }
-
-    @Test
     public void testFindMatchById() {
         initSingleMatchMocks("DAR-2", sampleConsent1);
         when(matchDAO.findMatchById(1)).thenReturn(sampleMatch1);

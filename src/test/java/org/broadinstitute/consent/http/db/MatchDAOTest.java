@@ -74,21 +74,6 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateMatch() {
-    Match m = createMatch();
-
-    matchDAO.updateMatch(
-            m.getId(),
-            true,
-            m.getConsent(),
-            m.getPurpose(),
-            false);
-    Match found = matchDAO.findMatchById(m.getId());
-    assertTrue(found.getMatch());
-    assertFalse(found.getFailed());
-  }
-
-  @Test
   public void testDeleteMatchesByConsentId() {
     Match m = createMatch();
 
