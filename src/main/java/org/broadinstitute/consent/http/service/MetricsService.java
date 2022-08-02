@@ -59,11 +59,11 @@ public class MetricsService {
     @JsonProperty final String nonTechRus;
     @JsonProperty final String referenceId;
 
-    public DarMetricsSummary(DataAccessRequest dar) {
+    public DarMetricsSummary(DataAccessRequest dar, String darCode) {
       if (dar != null && dar.data != null) {
         this.updateDate = dar.getUpdateDate();
         this.projectTitle = dar.data.getProjectTitle();
-        this.darCode =  dar.data.getDarCode();
+        this.darCode =  darCode;
         this.nonTechRus =  dar.data.getNonTechRus();
         this.referenceId = dar.getReferenceId();
       } else {
@@ -232,9 +232,10 @@ public class MetricsService {
     //find dars with the given datasetId in their list of datasetIds, datasetId is a String so it can be converted to jsonb in query
     //convert all dars into smaller objects that only contain the information needed
     List<DataAccessRequest> dars = darDAO.findAllDataAccessRequestsByDatasetId(Integer.toString(datasetId));
-    List<DarMetricsSummary> darInfo = dars.stream().map(dar ->
-      new DarMetricsSummary(dar))
-      .collect(Collectors.toList());
+    List<DarMetricsSummary> darInfo = dars.stream().map(dar -> {
+              DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
+              return new DarMetricsSummary(dar, collection.getDarCode());
+            }).collect(Collectors.toList());
 
     //if there are associated dars, find associated access elections so we know how many and which dars are approved/denied
     List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId)).collect(Collectors.toList());
