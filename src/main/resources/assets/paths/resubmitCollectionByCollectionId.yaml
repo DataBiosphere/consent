@@ -12,7 +12,7 @@ put:
         type: integer
   responses:
     200:
-      description: Returns new draft DAR
+      description: Returns DAR summary
       content:
         application/json:
           schema:
