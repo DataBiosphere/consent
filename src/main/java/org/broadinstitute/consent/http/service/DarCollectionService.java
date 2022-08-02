@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -17,6 +18,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
@@ -325,6 +327,24 @@ public class DarCollectionService {
 
   public DarCollectionSummary draftDarCollection(DarCollection sourceCollection) {
     this.dataAccessRequestDAO.updateDraftByCollectionId(sourceCollection.getDarCollectionId(), true);
+    sourceCollection.getDars().values().forEach((d) -> {
+      Date now = new Date();
+      DataAccessRequestData newData = new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
+      newData.setDarCode(null);
+      newData.setStatus(null);
+      newData.setReferenceId(d.getReferenceId());
+      newData.setCreateDate(now.getTime());
+      newData.setSortDate(now.getTime());
+      dataAccessRequestDAO.updateDataByReferenceId(
+              d.getReferenceId(),
+              d.getUserId(),
+              now,
+              null,
+              now,
+              newData
+      );
+    });
+
 
     // get updated collection
     sourceCollection = this.darCollectionDAO.findDARCollectionByCollectionId(sourceCollection.getDarCollectionId());
