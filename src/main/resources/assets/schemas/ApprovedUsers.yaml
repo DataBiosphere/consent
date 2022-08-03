@@ -1,0 +1,13 @@
+type: object
+properties:
+
+  ApprovedUsers:
+    type: array
+    items:
+      type: object
+      properties:
+        emails:
+          type: array
+          items:
+            type: string
+            description: Approved user email

@@ -1967,6 +1967,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/DatasetAssociation'
+  /api/tdr/{identifier}/approved/users:
+    $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/election/{id}:
     get:
       summary: describeElectionById

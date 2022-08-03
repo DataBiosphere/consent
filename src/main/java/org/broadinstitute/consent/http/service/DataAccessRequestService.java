@@ -42,6 +42,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -592,20 +593,11 @@ public class DataAccessRequestService {
         return builder.toString();
     }
 
-    public List<User> getUsersApprovedForDataset(Dataset dataset) {
-        List<DataAccessRequest> dars = this.dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
-        List<User> users = new ArrayList<>();
+    public Collection<User> getUsersApprovedForDataset(Dataset dataset) {
+        List<DataAccessRequest> dars = this.dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
+        Set<Integer> userIds = dars.stream().map(DataAccessRequest::getUserId).collect(Collectors.toSet());
 
-        for(DataAccessRequest dar: dars){
-            String referenceId = dar.getReferenceId();
-            User researcher = userDAO.findUserById(dar.getUserId());
-            Date approvalDate = electionDAO.findApprovalAccessElectionDate(referenceId);
-            if (Objects.nonNull(approvalDate) && Objects.nonNull(researcher)) {
-                users.add(researcher);
-            }
-        }
-
-        return users;
+        return this.userDAO.findUsers(userIds);
     }
 
     /**
