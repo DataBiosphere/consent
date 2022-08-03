@@ -107,6 +107,18 @@ public class DatasetService {
     }
 
     /**
+     * Finds a Dataset by a formatted dataset identifier.
+     *
+     * @param datasetIdentifier The formatted identifier, e.g. DUOS-123456
+     * @return the Dataset with the given identifier
+     * @throws IllegalArgumentException if datasetIdentifier is invalid
+     */
+    public Dataset findDatasetByIdentifier(String datasetIdentifier) throws IllegalArgumentException {
+        Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
+        return datasetDAO.findDatasetByAlias(alias);
+    }
+
+    /**
      * Create a minimal consent from the data provided in a Dataset.
      *
      * @param dataset The DataSetDTO

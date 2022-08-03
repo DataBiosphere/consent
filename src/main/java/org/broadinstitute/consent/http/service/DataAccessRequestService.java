@@ -592,6 +592,22 @@ public class DataAccessRequestService {
         return builder.toString();
     }
 
+    public List<User> getUsersApprovedForDataset(Dataset dataset) {
+        List<DataAccessRequest> dars = this.dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
+        List<User> users = new ArrayList<>();
+
+        for(DataAccessRequest dar: dars){
+            String referenceId = dar.getReferenceId();
+            User researcher = userDAO.findUserById(dar.getUserId());
+            Date approvalDate = electionDAO.findApprovalAccessElectionDate(referenceId);
+            if (Objects.nonNull(approvalDate) && Objects.nonNull(researcher)) {
+                users.add(researcher);
+            }
+        }
+
+        return users;
+    }
+
     /**
      * @param authUser AuthUser
      * @return List<DataAccessRequest>
