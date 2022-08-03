@@ -1,9 +1,6 @@
 package org.broadinstitute.consent.http.models.tdr;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class ApprovedUser {
-    @JsonProperty
     private String email;
 
     public ApprovedUser(String email) {
