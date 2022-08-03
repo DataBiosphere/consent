@@ -141,7 +141,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     "WHERE c.create_user_id = :userId " +
     	"AND (e.latest = e.electionid OR e.electionid IS NULL) " +
         "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL ) " +
-        "AND (EXISTS (SELECT * FROM data_access_request WHERE (collection_id = c.collection_id and draft = false)))"
+        "AND ("+DarCollectionSummary.FILTER_DRAFT_DAR_COLLECTIONS+")"
   )
   List<DarCollectionSummary> getDarCollectionSummariesForResearcher(
       @Bind("userId") Integer userId);

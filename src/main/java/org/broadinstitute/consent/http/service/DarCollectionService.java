@@ -136,7 +136,6 @@ public class DarCollectionService {
         summaries.add(processDraftAsSummary(d));
       } catch(Exception e) {
         logger.warn("Error processing draft with id: " + d.getId());
-        logger.warn(e.getMessage());
       }
     });
   }
@@ -144,13 +143,8 @@ public class DarCollectionService {
   private DarCollectionSummary processDraftAsSummary(DataAccessRequest d) {
     DarCollectionSummary summary = new DarCollectionSummary();
     Date createDate = new Date(d.getData().getCreateDate());
-    String darCode;
-    if (Objects.nonNull(d.getData().getDarCode())) {
-      darCode = d.getData().getDarCode();
-    } else {
-      darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
-              .format(createDate);
-    }
+    String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
+            .format(createDate);
 
     summary.setDarCode(darCode);
     summary.setStatus(DarCollectionStatus.DRAFT.getValue());
@@ -325,7 +319,7 @@ public class DarCollectionService {
     return summaries;
   }
 
-  public DarCollectionSummary draftDarCollection(DarCollection sourceCollection) {
+  public DarCollectionSummary updateCollectionToDraftStatus(DarCollection sourceCollection) {
     this.dataAccessRequestDAO.updateDraftByCollectionId(sourceCollection.getDarCollectionId(), true);
     sourceCollection.getDars().values().forEach((d) -> {
       Date now = new Date();
@@ -333,7 +327,6 @@ public class DarCollectionService {
       newData.setDarCode(null);
       newData.setStatus(null);
       newData.setReferenceId(d.getReferenceId());
-      newData.setCreateDate(now.getTime());
       newData.setSortDate(now.getTime());
       dataAccessRequestDAO.updateDataByReferenceId(
               d.getReferenceId(),
