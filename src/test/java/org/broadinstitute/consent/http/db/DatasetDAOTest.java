@@ -70,6 +70,16 @@ public class DatasetDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindDatasetByAlias() {
+        Dataset dataset = createDataset();
+
+        Dataset foundDataset = datasetDAO.findDatasetByAlias(1);
+
+        assertNotNull(foundDataset);
+        assertEquals(dataset.getDataSetId(), foundDataset.getDataSetId());
+    }
+
+    @Test
     public void testFindNeedsApprovalDataSetByDataSetId() {
         Dataset dataset = createDataset();
         datasetDAO.updateDatasetNeedsApproval(dataset.getDataSetId(), true);
