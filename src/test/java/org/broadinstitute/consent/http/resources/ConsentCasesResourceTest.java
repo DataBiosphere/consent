@@ -105,16 +105,6 @@ public class ConsentCasesResourceTest {
         assertNull(summaryDetails);
     }
 
-    @Test
-    public void testDescribeClosedElections() {
-        when(electionService.describeClosedElectionsByType(anyString(), notNull())).thenReturn(Collections.emptyList());
-        initResource();
-        Response response = resource.describeClosedElections(null);
-        Assert.assertEquals(200, response.getStatus());
-        List elections = ((List) response.getEntity());
-        Assert.assertTrue(elections.isEmpty());
-    }
-
     private void initResource() {
         resource = new ConsentCasesResource(electionService, pendingCaseService, summaryService);
     }

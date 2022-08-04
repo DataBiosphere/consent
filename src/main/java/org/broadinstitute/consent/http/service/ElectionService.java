@@ -88,47 +88,6 @@ public class ElectionService {
         this.useRestrictionConverter = useRestrictionConverter;
     }
 
-    public List<Election> describeClosedElectionsByType(String type, AuthUser authUser) {
-        List<Election> elections;
-        if (type.equals(ElectionType.DATA_ACCESS.getValue())) {
-            elections = dacService.filterElectionsByDAC(
-                    electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()),
-                    authUser);
-            List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-            List<DataAccessRequest> dataAccessRequests = dataAccessRequestService.
-                    getDataAccessRequestsByReferenceIds(referenceIds);
-            elections.forEach(election -> {
-                Optional<DataAccessRequest> darOption = dataAccessRequests.stream().
-                        filter(d -> d.getReferenceId().equals(election.getReferenceId())).
-                        findFirst();
-                darOption.ifPresent(dar -> {
-                    election.setDisplayId(dar.getData().getDarCode());
-                    election.setProjectTitle(dar.getData().getProjectTitle());
-                });
-            });
-        } else {
-            elections = dacService.filterElectionsByDAC(
-                    electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, ElectionStatus.CLOSED.getValue()),
-                    authUser
-            );
-            if (!elections.isEmpty()) {
-                List<String> consentIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-                Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
-                elections.forEach(election -> {
-                    List<Consent> c = consents.stream().filter(cs -> cs.getConsentId().equals(election.getReferenceId())).
-                            collect(Collectors.toList());
-                    election.setDisplayId(c.get(0).getName());
-                    election.setConsentGroupName(c.get(0).getGroupName());
-                });
-            }
-        }
-
-        if (elections.isEmpty()) {
-            throw new NotFoundException("Couldn't find any closed elections");
-        }
-        return elections.stream().distinct().collect(Collectors.toList());
-    }
-
     @Deprecated // Use election creation per entity, i.e. DarCollectionService.createElectionsForDarCollection()
     public Election createElection(Election election, String referenceId, ElectionType electionType) throws Exception {
         Election consentElection = validateAndGetDULElection(referenceId, electionType);

@@ -300,26 +300,6 @@ public class ElectionServiceTest {
     }
 
     @Test
-    public void testDescribeClosedElectionsByType_DataAccess() {
-        when(dacService.filterElectionsByDAC(any(), any()))
-                .thenReturn(Arrays.asList(sampleElection2));
-        initService();
-        List<Election> elections = service.describeClosedElectionsByType(ElectionType.DATA_ACCESS.getValue(), authUser);
-        assertNotNull(elections);
-        assertEquals(1, elections.size());
-    }
-
-    @Test
-    public void testDescribeClosedElectionsByType_Other() {
-        when(dacService.filterElectionsByDAC(any(), any()))
-                .thenReturn(Arrays.asList(sampleElection2));
-        initService();
-        List<Election> elections = service.describeClosedElectionsByType(ElectionType.DATA_SET.getValue(), authUser);
-        assertNotNull(elections);
-        assertEquals(1, elections.size());
-    }
-
-    @Test
     public void testCreateElection() throws Exception {
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any())).thenReturn(null);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(sampleDataAccessRequest1);

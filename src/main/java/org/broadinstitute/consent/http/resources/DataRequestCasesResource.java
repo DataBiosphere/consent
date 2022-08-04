@@ -60,13 +60,4 @@ public class DataRequestCasesResource extends Resource {
     }
 
 
-    @GET
-    @Path("/closed")
-    @Produces("application/json")
-    @RolesAllowed({CHAIRPERSON, MEMBER, ALUMNI, ADMIN})
-    public Response describeClosedElections(@Auth AuthUser authUser) {
-        List<Election> elections = electionService.describeClosedElectionsByType(ElectionType.DATA_ACCESS.getValue(), authUser);
-        return Response.ok().entity(elections).build();
-    }
-
 }

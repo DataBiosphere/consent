@@ -81,13 +81,4 @@ public class ConsentCasesResource extends Resource {
     }
 
 
-    @GET
-    @Path("/closed")
-    @Produces("application/json")
-    @RolesAllowed({MEMBER, CHAIRPERSON, ALUMNI, ADMIN})
-    public Response describeClosedElections(@Auth AuthUser authUser) {
-        List<Election> elections = electionService.describeClosedElectionsByType(ElectionType.TRANSLATE_DUL.getValue(), authUser);
-        return Response.ok().entity(elections).build();
-    }
-
 }

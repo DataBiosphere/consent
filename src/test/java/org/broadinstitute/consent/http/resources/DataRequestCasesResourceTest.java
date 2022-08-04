@@ -55,16 +55,6 @@ public class DataRequestCasesResourceTest {
         Assert.assertTrue(summaries.isEmpty());
     }
 
-    @Test
-    public void testDescribeClosedElections() {
-        when(electionService.describeClosedElectionsByType(any(), any())).thenReturn(Collections.emptyList());
-        initResource();
-        Response response = resource.describeClosedElections(null);
-        Assert.assertEquals(200, response.getStatus());
-        List cases = ((List) response.getEntity());
-        Assert.assertTrue(cases.isEmpty());
-    }
-
     private void initResource() {
         resource = new DataRequestCasesResource(electionService, pendingCaseService, summaryService);
     }
