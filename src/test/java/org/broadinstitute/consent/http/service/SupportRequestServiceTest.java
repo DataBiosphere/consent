@@ -5,7 +5,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
@@ -141,7 +140,7 @@ public class SupportRequestServiceTest {
         mockServerClient.when(request().withMethod("POST"))
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+                        .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED));
         service.postTicketToSupport(ticket);
 
         HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
@@ -181,7 +180,7 @@ public class SupportRequestServiceTest {
         mockServerClient.when(request())
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+                        .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED));
         service.handleSuggestedUserFieldsSupportRequest(updateFields, user);
         mockServerClient.verify(request().withMethod("POST"), VerificationTimes.exactly(1));
     }
