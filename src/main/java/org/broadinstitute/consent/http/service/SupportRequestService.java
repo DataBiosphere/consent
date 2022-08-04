@@ -11,7 +11,6 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
@@ -82,7 +81,7 @@ public class SupportRequestService {
         return new SupportTicket(requester, subject, customFields, comment);
     }
 
-    public void postTicketToSupport(SupportTicket ticket, AuthUser authUser) throws Exception {
+    public void postTicketToSupport(SupportTicket ticket) throws Exception {
         if (configuration.isActivateSupportNotifications()) {
             GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
             //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
@@ -93,7 +92,7 @@ public class SupportRequestService {
                     .toJson(ticket);
             //GsonFactory doesn't do more work on the ticket but an HttpContent object is needed for buildPostRequest
             JsonHttpContent content = new JsonHttpContent(new GsonFactory(), ticketJson);
-            HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
+            HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, content);
             HttpResponse response = clientUtil.handleHttpRequest(request);
 
             if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
@@ -111,9 +110,8 @@ public class SupportRequestService {
      *
      * @param userUpdateFields A UserUpdateFields object containing update information for the user
      * @param user             The user requesting the institution and/or signing official
-     * @param authUser         AuthUser object used to build POST request
      */
-    public void handleSuggestedUserFieldsSupportRequest(UserUpdateFields userUpdateFields, User user, AuthUser authUser) {
+    public void handleSuggestedUserFieldsSupportRequest(UserUpdateFields userUpdateFields, User user) {
         if (Objects.nonNull(userUpdateFields) && Objects.nonNull(user)) {
             String suggestedInstitution = userUpdateFields.getSuggestedInstitution();
             String suggestedSigningOfficial = userUpdateFields.getSuggestedSigningOfficial();
@@ -122,7 +120,7 @@ public class SupportRequestService {
             if (Objects.nonNull(suggestedInstitution) || Objects.nonNull(suggestedSigningOfficial)) {
                 try {
                     SupportTicket ticket = createSuggestedUserFieldsTicket(userUpdateFields, user);
-                    postTicketToSupport(ticket, authUser);
+                    postTicketToSupport(ticket);
                 } catch (Exception e) {
                     logger.error("Exception sending suggested user fields support request: " + e.getMessage());
                     throw new ServerErrorException("Unable to send support ticket for user with email: " + user.getEmail(),

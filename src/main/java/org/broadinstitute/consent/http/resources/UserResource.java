@@ -203,7 +203,7 @@ public class UserResource extends Resource {
             }
 
             user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
-            supportRequestService.handleSuggestedUserFieldsSupportRequest(userUpdateFields, user, authUser);
+            supportRequestService.handleSuggestedUserFieldsSupportRequest(userUpdateFields, user);
             Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
 

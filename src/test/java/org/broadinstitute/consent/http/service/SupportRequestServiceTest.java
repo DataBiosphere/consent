@@ -50,9 +50,6 @@ public class SupportRequestServiceTest {
     @Mock
     private ServicesConfiguration config;
 
-    @Mock
-    private AuthUser authUser;
-
     @Rule
     public MockServerContainer container = new MockServerContainer(IMAGE);
 
@@ -145,7 +142,7 @@ public class SupportRequestServiceTest {
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
-        service.postTicketToSupport(ticket, authUser);
+        service.postTicketToSupport(ticket);
 
         HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
         assertEquals(1, requests.length);
@@ -159,7 +156,7 @@ public class SupportRequestServiceTest {
         when(config.isActivateSupportNotifications()).thenReturn(false);
         // verify no requests sent if activateSupportNotifications is false; throw error if post attempted
         mockServerClient.when(request()).error(new HttpError());
-        service.postTicketToSupport(ticket, authUser);
+        service.postTicketToSupport(ticket);
     }
 
     @Test(expected = ServerErrorException.class)
@@ -168,7 +165,7 @@ public class SupportRequestServiceTest {
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
-        service.postTicketToSupport(generateTicket(), authUser);
+        service.postTicketToSupport(generateTicket());
     }
 
     @Test
@@ -185,7 +182,7 @@ public class SupportRequestServiceTest {
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
-        service.handleSuggestedUserFieldsSupportRequest(updateFields, user, authUser);
+        service.handleSuggestedUserFieldsSupportRequest(updateFields, user);
         mockServerClient.verify(request().withMethod("POST"), VerificationTimes.exactly(1));
     }
 
@@ -194,7 +191,7 @@ public class SupportRequestServiceTest {
         UserUpdateFields updateFields = new UserUpdateFields();
         // verify no requests sent if no suggested user fields are provided; fail if request attempted
         mockServerClient.when(request()).error(new HttpError());
-        service.handleSuggestedUserFieldsSupportRequest(updateFields, new User(), authUser);
+        service.handleSuggestedUserFieldsSupportRequest(updateFields, new User());
         assertNull(updateFields.getSuggestedInstitution());
         assertNull(updateFields.getSuggestedSigningOfficial());
     }
