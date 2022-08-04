@@ -73,7 +73,7 @@ public class DatasetDAOTest extends DAOTestHelper {
     public void testFindDatasetByAlias() {
         Dataset dataset = createDataset();
 
-        Dataset foundDataset = datasetDAO.findDatasetByAlias(1);
+        Dataset foundDataset = datasetDAO.findDatasetByAlias(dataset.getAlias());
 
         assertNotNull(foundDataset);
         assertEquals(dataset.getDataSetId(), foundDataset.getDataSetId());
