@@ -74,8 +74,6 @@ public class ElectionServiceTest {
     @Mock
     private DatasetAssociationDAO datasetAssociationDAO;
     @Mock
-    private DacService dacService;
-    @Mock
     private DataAccessRequestService dataAccessRequestService;
     @Mock
     private DataAccessRequestDAO dataAccessRequestDAO;
@@ -296,7 +294,7 @@ public class ElectionServiceTest {
     }
 
     private void initService() {
-        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, dataAccessRequestDAO, mailMessageDAO, dacService, emailNotifierService, dataAccessRequestService, useRestrictionConverter);
+        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, dataAccessRequestDAO, mailMessageDAO, emailNotifierService, dataAccessRequestService, useRestrictionConverter);
     }
 
     @Test
