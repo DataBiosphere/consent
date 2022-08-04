@@ -24,7 +24,6 @@ import org.broadinstitute.consent.http.models.DacDecisionMetrics;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
