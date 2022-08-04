@@ -55,6 +55,7 @@ public class ElectionReviewResource extends Resource {
         return ("{ \"open\" : " + service.openElections() + " }");
     }
 
+    @Deprecated
     @GET
     @Path("/{electionId}")
     @Produces("application/json")
