@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.common.base.Objects;
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 
 import java.util.Date;
 
@@ -10,23 +11,33 @@ public class DatasetProperty {
     private Integer dataSetId;
     private Integer propertyKey;
     private String propertyName;
-    private String propertyValue;
+    private Object propertyValue;
     private Date createDate;
+    private String mapping;
+    private DatasetPropertyType propertyType;
 
     public DatasetProperty(){
     }
 
-    public DatasetProperty(Integer propertyId, Integer  dataSetId, Integer propertyKey, String propertyValue,
+    public DatasetProperty(Integer propertyId,
+                           Integer  dataSetId,
+                           Integer propertyKey,
+                           String propertyValue,
+                           DatasetPropertyType type,
                            Date createDate) {
-        this(dataSetId, propertyKey, propertyValue, createDate);
+        this(dataSetId, propertyKey, propertyValue, type, createDate);
         this.propertyId = propertyId;
     }
 
-    public DatasetProperty(Integer  dataSetId, Integer propertyKey, String propertyValue,
+    public DatasetProperty(Integer  dataSetId,
+                           Integer propertyKey,
+                           String propertyValue,
+                           DatasetPropertyType type,
                            Date createDate){
         this.dataSetId = dataSetId;
         this.propertyKey = propertyKey;
-        this.propertyValue = propertyValue;
+        this.propertyValue = type.coerce(propertyValue);
+        this.propertyType = type;
         this.createDate = createDate;
     }
 
@@ -62,11 +73,11 @@ public class DatasetProperty {
         this.propertyName = propertyName;
     }
 
-    public String getPropertyValue() {
+    public Object getPropertyValue() {
         return propertyValue;
     }
 
-    public void setPropertyValue(String propertyValue) {
+    public void setPropertyValue(Object propertyValue) {
         this.propertyValue = propertyValue;
     }
 
@@ -76,6 +87,14 @@ public class DatasetProperty {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    public DatasetPropertyType getPropertyType() {
+        return this.propertyType;
+    }
+
+    public void setPropertyType(DatasetPropertyType propertyType) {
+        this.propertyType = propertyType;
     }
 
     @Override

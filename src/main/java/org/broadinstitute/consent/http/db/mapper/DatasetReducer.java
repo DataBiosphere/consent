@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -40,12 +41,22 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
         && hasColumn(rowView, "propertyvalue", String.class)) {
       String keyName = rowView.getColumn("key", String.class);
       String propVal = rowView.getColumn("propertyvalue", String.class);
+      DatasetPropertyType propType = DatasetPropertyType.String;
+      if (hasColumn(rowView, "propertytype", String.class)) {
+          propType = DatasetPropertyType.parse(rowView.getColumn("propertytype", String.class));
+      }
+
       if (Objects.nonNull(keyName) && Objects.nonNull(propVal)) {
-        DatasetProperty prop = new DatasetProperty();
-        prop.setDataSetId(dataset.getDataSetId());
-        prop.setPropertyValue(propVal);
-        prop.setPropertyName(keyName);
-        dataset.addProperty(prop);
+        try {
+          DatasetProperty prop = new DatasetProperty();
+          prop.setDataSetId(dataset.getDataSetId());
+          prop.setPropertyValue(propType.coerce(propVal));
+          prop.setPropertyName(keyName);
+          prop.setPropertyType(propType);
+          dataset.addProperty(prop);
+        } catch (Exception e) {
+          // do nothing.
+        }
       }
     }
     // The name property doesn't always come through, add it manually:

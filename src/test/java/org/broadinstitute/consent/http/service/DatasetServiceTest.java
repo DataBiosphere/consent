@@ -323,7 +323,7 @@ public class DatasetServiceTest {
         dataSetDTO.setDatasetName(dataset.getName());
         Set<DatasetProperty> datasetProps = getDatasetProperties();
         List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-            new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue())
+            new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
         ).collect(Collectors.toList());
         dataSetDTO.setProperties(dtoProps);
         dataset.setProperties(datasetProps);
@@ -417,7 +417,7 @@ public class DatasetServiceTest {
         //dataset properties are the same between the existing dataset and the update datasetDTO - no modification
         Set<DatasetProperty> datasetProps = getDatasetProperties();
         List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-                new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue())
+                new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
         ).collect(Collectors.toList());
         datasetDTO.setProperties(dtoProps);
         dataset.setProperties(datasetProps);

@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -281,7 +282,7 @@ public class DatasetService {
     private void updateDatasetProperties(List<DatasetProperty> updateProperties,
                                          List<DatasetProperty> deleteProperties, List<DatasetProperty> addProperties) {
         updateProperties.forEach(p -> datasetDAO
-              .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue()));
+              .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue().toString()));
         deleteProperties.forEach(
               p -> datasetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
         datasetDAO.insertDatasetProperties(addProperties);
@@ -311,8 +312,10 @@ public class DatasetService {
               .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals(DATASET_NAME_KEY))
               .map(p ->
                     new DatasetProperty(datasetId,
-                          dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
-                          p.getPropertyValue(), now)
+                            dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
+                            p.getPropertyValue(),
+                            DatasetPropertyType.String,
+                            now)
               )
               .collect(Collectors.toList());
     }
