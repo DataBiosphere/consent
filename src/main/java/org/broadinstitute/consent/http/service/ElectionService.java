@@ -18,7 +18,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -39,7 +38,6 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -60,7 +58,6 @@ public class ElectionService {
     private final LibraryCardDAO libraryCardDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
-    private final DacService dacService;
     private final DataAccessRequestService dataAccessRequestService;
     private final EmailNotifierService emailNotifierService;
     private final UseRestrictionConverter useRestrictionConverter;
@@ -71,7 +68,7 @@ public class ElectionService {
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
                            DatasetDAO datasetDAO, LibraryCardDAO libraryCardDAO, DatasetAssociationDAO datasetAssociationDAO,
                            DataAccessRequestDAO dataAccessRequestDAO, MailMessageDAO mailMessageDAO,
-                           DacService dacService, EmailNotifierService emailNotifierService,
+                           EmailNotifierService emailNotifierService,
                            DataAccessRequestService dataAccessRequestService, UseRestrictionConverter useRestrictionConverter) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
@@ -83,7 +80,6 @@ public class ElectionService {
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.mailMessageDAO = mailMessageDAO;
         this.emailNotifierService = emailNotifierService;
-        this.dacService = dacService;
         this.dataAccessRequestService = dataAccessRequestService;
         this.useRestrictionConverter = useRestrictionConverter;
     }
