@@ -95,7 +95,7 @@ public class SupportRequestService {
             HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, content);
             HttpResponse response = clientUtil.handleHttpRequest(request);
 
-            if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+            if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_CREATED) {
                 logger.error("Error posting ticket to support: " + response.getStatusMessage());
                 throw new ServerErrorException(response.getStatusMessage(), HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
             }
