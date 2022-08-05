@@ -33,6 +33,9 @@ public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, Ro
         if (hasColumn(rowView, "createdate", Date.class)) {
             match.setCreateDate(rowView.getColumn("createdate", Date.class));
         }
+        if (hasColumn(rowView, "failure_reason", String.class)) {
+            match.addFailureReason(rowView.getColumn("failure_reason", String.class));
+        }
     }
 
 }
