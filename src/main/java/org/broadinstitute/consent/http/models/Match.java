@@ -121,7 +121,7 @@ public class Match {
         if (Objects.isNull(this.failureReasons)) {
             this.failureReasons = new ArrayList<>();
         }
-        if (!this.failureReasons.contains(reason)) {
+        if (!this.failureReasons.contains(reason) && !reason.isBlank()) {
             this.failureReasons.add(reason);
         }
     }
