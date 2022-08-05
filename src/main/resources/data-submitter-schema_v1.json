@@ -71,11 +71,11 @@
     },
     "dataCustodianEmail": {
       "type": "array",
-      "format": "email",
       "label": "Data Custodian Email",
       "description": "Data Custodian Email",
       "items": {
-        "type": "string"
+        "type": "string",
+        "format": "email"
       }
     },
     "publicVisibility": {
@@ -190,6 +190,8 @@
       "items": {
         "type": "string",
         "enum": [
+          "Legal Restrictions",
+          "Informed consent processes are inadequate to support data for sharing for the following reasons:",
           "The consent forms are unavailable or non-existent for samples collected after January 25, 2015",
           "The consent process did not specifically address future use or broad data sharing for samples collected after January 25, 2015",
           "The consent process inadequately addresses risks related to future use or broad data sharing for samples collected after January 25, 2015",
@@ -258,6 +260,7 @@
   },
   "$defs": {
     "fileTypeObject": {
+      "required": ["fileType", "functionalEquivalence", "numberOfParticipants"],
       "type": "object",
       "properties": {
         "fileType": {
@@ -270,12 +273,18 @@
           "description": "Functional Equivalence"
         },
         "numberOfParticipants": {
-          "type": "string",
+          "type": "number",
           "description": "# of Participants"
         }
       }
     },
     "consentGroup": {
+      "required": ["consentGroupName"],
+      "oneOf": [
+        {"required":  ["generalResearchUse"]},
+        {"required":  ["hmb"]},
+        {"required":  ["diseaseSpecificUse"]}
+      ],
       "type": "object",
       "properties": {
         "consentGroupName": {
