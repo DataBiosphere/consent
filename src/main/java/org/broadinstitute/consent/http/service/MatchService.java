@@ -83,9 +83,11 @@ public class MatchService {
                 new Date(),
                 m.getAlgorithmVersion()
             );
-            m.getFailureReasons().forEach(f -> {
-                matchDAO.insertFailureReason(id, f);
-            });
+            if (!m.getFailureReasons().isEmpty()) {
+                m.getFailureReasons().forEach(f -> {
+                    matchDAO.insertFailureReason(id, f);
+                });
+            }
         });
     }
 
