@@ -8,9 +8,6 @@ public class DataUseRequestMatchingObject {
 
     public DataUse purpose;
 
-    public DataUseRequestMatchingObject(){
-    }
-
     public DataUseRequestMatchingObject(DataUse consent, DataUse purpose) {
         this.consent = consent;
         this.purpose = purpose;
