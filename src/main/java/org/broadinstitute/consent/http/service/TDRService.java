@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,8 +25,11 @@ public class TDRService {
     public ApprovedUsers getApprovedUsersForDataset(Dataset dataset) {
         Collection<User> users = this.dataAccessRequestService.getUsersApprovedForDataset(dataset);
 
-        List<ApprovedUser> approvedUsers =
-                users.stream().map((u) -> new ApprovedUser(u.getEmail())).collect(Collectors.toList());
+        List<ApprovedUser> approvedUsers = users
+                .stream()
+                .map((u) -> new ApprovedUser(u.getEmail()))
+                .sorted(Comparator.comparing(ApprovedUser::getEmail))
+                .collect(Collectors.toList());
 
         return new ApprovedUsers(approvedUsers);
     }

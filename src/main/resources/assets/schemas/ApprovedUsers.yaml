@@ -1,7 +1,6 @@
 type: object
 properties:
-
-  ApprovedUsers:
+  approvedUsers:
     type: array
     items:
       type: object

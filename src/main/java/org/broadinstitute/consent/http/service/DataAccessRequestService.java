@@ -594,8 +594,7 @@ public class DataAccessRequestService {
     }
 
     public Collection<User> getUsersApprovedForDataset(Dataset dataset) {
-        List<DataAccessRequest> dars = this.dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
-        Set<Integer> userIds = dars.stream().map(DataAccessRequest::getUserId).collect(Collectors.toSet());
+        List<Integer> userIds = this.dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset.getDataSetId());
         if (userIds.isEmpty()) {
             return List.of();
         }
