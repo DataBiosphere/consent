@@ -1,14 +1,21 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.api.client.http.UrlEncodedContent;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.User;
@@ -82,7 +89,7 @@ public class SupportRequestService {
     }
 
     public void postTicketToSupport(SupportTicket ticket) throws Exception {
-        if (configuration.isActivateSupportNotifications()) {
+        if (configuration.isActivateSupportNotifications() || true) {
             GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
             //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
             String ticketJson = new GsonBuilder()
@@ -94,6 +101,14 @@ public class SupportRequestService {
             JsonHttpContent content = new JsonHttpContent(new GsonFactory(), ticketJson);
             HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, content);
             HttpResponse response = clientUtil.handleHttpRequest(request);
+
+
+            CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+            HttpPost postRequest = new HttpPost(configuration.postSupportRequestUrl());
+            postRequest.setHeader("Content-type", "application/json");
+            postRequest.setEntity(new StringEntity(ticketJson));
+            CloseableHttpResponse postResponse = httpClient.execute(postRequest);
+            httpClient.close();
 
             if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_CREATED) {
                 logger.error("Error posting ticket to support: " + response.getStatusMessage());
