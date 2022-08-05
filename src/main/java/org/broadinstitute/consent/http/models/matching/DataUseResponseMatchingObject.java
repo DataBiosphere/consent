@@ -1,18 +1,13 @@
 package org.broadinstitute.consent.http.models.matching;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 
 public class DataUseResponseMatchingObject {
 
-    @JsonProperty
     public boolean result;
 
-    @JsonProperty
     public DataUseRequestMatchingObject matchPair;
 
-    @JsonProperty
     public List<String> failureReasons;
 
     public DataUseResponseMatchingObject() {

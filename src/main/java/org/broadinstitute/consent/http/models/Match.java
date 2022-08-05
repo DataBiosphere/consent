@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 
 import java.util.ArrayList;
@@ -11,25 +10,18 @@ import java.util.Objects;
 
 public class Match {
 
-    @JsonProperty
     private Integer id;
 
-    @JsonProperty
     private String consent;
 
-    @JsonProperty
     private String purpose;
 
-    @JsonProperty
     private Boolean match;
 
-    @JsonProperty
     private Boolean failed;
 
-    @JsonProperty
     private Date createDate;
 
-    @JsonProperty
     private String algorithmVersion;
 
     private List<String> failureReasons;
