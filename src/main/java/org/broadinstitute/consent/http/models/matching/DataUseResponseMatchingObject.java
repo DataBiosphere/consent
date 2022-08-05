@@ -10,9 +10,6 @@ public class DataUseResponseMatchingObject {
 
     public List<String> failureReasons;
 
-    public DataUseResponseMatchingObject() {
-    }
-
     public DataUseResponseMatchingObject(boolean result, DataUseRequestMatchingObject matchPair, List<String> failureReasons) {
         this.result = result;
         this.matchPair = matchPair;
