@@ -106,10 +106,10 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     @SqlUpdate("DELETE FROM match_entity WHERE purpose IN (<purposeIds>)")
     void deleteMatchesByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
 
-    @SqlUpdate("DELETE FROM match_failure_reason WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE consent IN (<consentIds>) ")
+    @SqlUpdate("DELETE FROM match_failure_reason WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE consent IN (<consentIds>)) ")
     void deleteFailureReasonsByConsentIds(@BindList("consentIds") List<String> consentIds);
 
-    @SqlUpdate("DELETE FROM match_failure_reason WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE purpose IN (<purposeIds>) ")
+    @SqlUpdate("DELETE FROM match_failure_reason WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE purpose IN (<purposeIds>)) ")
     void deleteFailureReasonsByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
 
     @SqlQuery("SELECT COUNT(*) FROM match_entity WHERE matchentity = :matchEntity AND failed = 'FALSE' ")
