@@ -386,7 +386,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
           && existingDar.getDraft()) {
         newDar.setReferenceId(data.getReferenceId());
 
-        // if draft was part of a collection, we should use the same collection.
+        // if dar was part of a collection, we should use the same collection.
         if (Objects.nonNull(existingDar.getCollectionId())) {
           newDar.setCollectionId(existingDar.getCollectionId());
         }
