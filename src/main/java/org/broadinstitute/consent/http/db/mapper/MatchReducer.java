@@ -21,9 +21,6 @@ public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, Ro
         if (hasColumn(rowView, "algorithm_version", String.class)) {
             match.setAlgorithmVersion(rowView.getColumn("algorithm_version", String.class));
         }
-        if (hasColumn(rowView, "failure_reason", String.class)) {
-            match.addFailureReason(rowView.getColumn("failure_reason", String.class));
-        }
         if (hasColumn(rowView, "matchentity", Boolean.class)) {
             match.setMatch(rowView.getColumn("matchentity", Boolean.class));
         }
@@ -34,7 +31,10 @@ public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, Ro
             match.setCreateDate(rowView.getColumn("createdate", Date.class));
         }
         if (hasColumn(rowView, "failure_reason", String.class)) {
-            match.addFailureReason(rowView.getColumn("failure_reason", String.class));
+            String failure = rowView.getColumn("failure_reason", String.class);
+            if (!failure.isBlank()) {
+                match.addFailureReason(rowView.getColumn("failure_reason", String.class));
+            }
         }
     }
 
