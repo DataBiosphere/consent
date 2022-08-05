@@ -3,6 +3,11 @@ properties:
   darCollectionId:
     type: integer
     description: Collection ID
+  referenceIds:
+    type: array
+    description: List of DAR reference ids within this collection.
+    items:
+      type: string
   darCode:
     type: string
     description: Code designation referenced by DARs within collection

@@ -118,6 +118,7 @@ public class ConsentResource extends Resource {
     }
 
 
+    @Deprecated
     @DELETE
     @Produces("application/json")
     @Path("{id}")
