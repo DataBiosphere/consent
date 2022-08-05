@@ -191,6 +191,7 @@ paths:
                $ref: '#/components/schemas/ErrorResponse'
   /api/consent/{consentId}/election:
     post:
+      deprecated: true
       summary: Create Consent Election
       description: Creates a consent election
       parameters:
@@ -218,6 +219,7 @@ paths:
           description: The consent sent as a parameter does not exist.
   /api/consent/{consentId}/election/dac/{dacId}:
     post:
+      deprecated: true
       summary: Create Consent Election For Dac
       description: |
         Creates a consent election for a data access committee. Assigns the consent to the provided
@@ -314,6 +316,7 @@ paths:
           description: "The Election/Consent doesn't exist."
   /api/consent/manage:
     get:
+      deprecated: true
       summary: Manage Consents
       description: Returns the list of consents available to be managed.
       tags:

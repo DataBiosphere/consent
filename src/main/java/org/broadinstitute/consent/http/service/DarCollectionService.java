@@ -140,6 +140,7 @@ public class DarCollectionService {
         summary.setName(d.getData().getProjectTitle());
         summary.addAction(DarCollectionActions.RESUME.getValue());
         summary.addAction(DarCollectionActions.DELETE.getValue());
+        summary.addReferenceId(d.referenceId);
         summaries.add(summary);
       } catch(Exception e) {
         logger.warn("Error processing draft with id: " + d.getId());
