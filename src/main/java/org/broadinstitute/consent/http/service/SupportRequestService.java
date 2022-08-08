@@ -21,7 +21,6 @@ import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ServerErrorException;
 
 import org.slf4j.Logger;
@@ -31,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class SupportRequestService {
 
@@ -114,34 +112,6 @@ public class SupportRequestService {
         }
     }
 
-
-    /**
-     * Creates and sends a support ticket for a user requesting an unfamiliar institution and/or signing official, if provided
-     *
-     * @param userUpdateFields A UserUpdateFields object containing update information for the user
-     * @param user             The user requesting the institution and/or signing official
-     */
-    public void handleSuggestedUserFieldsSupportRequest(UserUpdateFields userUpdateFields, User user) {
-        if (Objects.nonNull(userUpdateFields) && Objects.nonNull(user)) {
-            String suggestedInstitution = userUpdateFields.getSuggestedInstitution();
-            String suggestedSigningOfficial = userUpdateFields.getSuggestedSigningOfficial();
-
-            // Only create and send ticket if either a suggestedInstitution or suggestedSigningOfficial has been provided
-            if (Objects.nonNull(suggestedInstitution) || Objects.nonNull(suggestedSigningOfficial)) {
-                try {
-                    SupportTicket ticket = createSuggestedUserFieldsTicket(userUpdateFields, user);
-                    postTicketToSupport(ticket);
-                } catch (Exception e) {
-                    logger.error("Exception sending suggested user fields support request: " + e.getMessage());
-                    throw new ServerErrorException("Unable to send support ticket for user with email: " + user.getEmail(),
-                            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-                }
-            }
-        }
-    }
-
-
-
     /**
      * Creates and sends a support ticket for a user selecting an existing or requesting an unfamiliar institution
      * and/or signing official, if provided
@@ -187,8 +157,8 @@ public class SupportRequestService {
         List<String> subjectItems = new ArrayList<>();
         List<String> descriptionItems = new ArrayList<>();
         if (Objects.nonNull(suggestedInstitution)) {
-            subjectItems.add("New Institution Suggestion");
-            descriptionItems.add("- suggested a new institution: " + suggestedInstitution);
+            subjectItems.add("New Institution Request");
+            descriptionItems.add("- requested a new institution: " + suggestedInstitution);
         }
         if (Objects.nonNull(selectedInstitutionId)) {
             Institution selectedInstitution = institutionDAO.findInstitutionById(selectedInstitutionId);
@@ -200,8 +170,8 @@ public class SupportRequestService {
             );
         }
         if (Objects.nonNull(suggestedSigningOfficial)) {
-            subjectItems.add("New Signing Official Suggestion");
-            descriptionItems.add("- suggested a new signing official: " + suggestedSigningOfficial);
+            subjectItems.add("New Signing Official Request");
+            descriptionItems.add("- requested a new signing official: " + suggestedSigningOfficial);
         }
         if (Objects.nonNull(selectedSigningOfficialId)) {
             User selectedSigningOfficial = userDAO.findUserById(selectedSigningOfficialId);
@@ -223,52 +193,6 @@ public class SupportRequestService {
                 user.getDisplayName(),
                 user.getEmail(),
                 String.join("\n", descriptionItems));
-
-        return createSupportTicket(
-                user.getDisplayName(),
-                SupportRequestType.TASK,
-                user.getEmail(),
-                subject,
-                description,
-                configuration.postSupportRequestUrl());
-    }
-
-
-
-    /**
-     * Generates a support ticket for a user requesting an unfamiliar institution and/or signing official
-     *
-     * @param userUpdateFields A UserUpdateFields object containing update information for the user
-     * @param user             The user requesting the institution and/or signing official
-     * @return A support ticket detailing the requested user fields
-     * @throws IllegalArgumentException if both suggestedInstitution and suggestedSigningOfficial are null, preventing ticket creation
-     */
-    public SupportTicket createSuggestedUserFieldsTicket(UserUpdateFields userUpdateFields, User user) throws IllegalArgumentException {
-        String suggestedInstitution = userUpdateFields.getSuggestedInstitution();
-        String suggestedSigningOfficial = userUpdateFields.getSuggestedSigningOfficial();
-        String subject = null;
-        String description = null;
-
-        if (Objects.nonNull(suggestedInstitution) && Objects.nonNull(suggestedSigningOfficial)) {
-            subject = "New Institution and Signing Official Request";
-            description = String.format("User %s [%s] has requested a new signing official: {%s} and has requested a new institution: {%s}",
-                    user.getDisplayName(),
-                    user.getEmail(),
-                    suggestedSigningOfficial,
-                    suggestedInstitution);
-        } else if (Objects.nonNull(suggestedInstitution)) {
-            subject = "New Institution Request";
-            description = String.format("User %s [%s] has requested a new institution: {%s}",
-                    user.getDisplayName(),
-                    user.getEmail(),
-                    suggestedInstitution);
-        } else if (Objects.nonNull(suggestedSigningOfficial)) {
-            subject = "New Signing Official Request";
-            description = String.format("User %s [%s] has requested a new signing official: {%s}",
-                    user.getDisplayName(),
-                    user.getEmail(),
-                    suggestedSigningOfficial);
-        }
 
         return createSupportTicket(
                 user.getDisplayName(),
