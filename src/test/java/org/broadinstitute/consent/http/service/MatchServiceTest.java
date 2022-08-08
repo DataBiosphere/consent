@@ -1,56 +1,44 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.gson.Gson;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
-import org.broadinstitute.consent.http.models.grammar.And;
-import org.broadinstitute.consent.http.models.grammar.Named;
-import org.broadinstitute.consent.http.models.grammar.Not;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
-import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
-import org.broadinstitute.consent.http.models.matching.ResponseMatchingObject;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -72,20 +60,8 @@ public class MatchServiceTest {
     private DataAccessRequestDAO dataAccessRequestDAO;
     @Mock
     private MatchDAO matchDAO;
-    @Mock
-    private DataAccessRequestService dataAccessRequestService;
 
     private MatchService service;
-
-    private static Consent sampleConsent1;
-    private static Consent sampleConsent2;
-    private static Election sampleElection1;
-    private static Election sampleElection2;
-    private static RequestMatchingObject reqmo1;
-    private static RequestMatchingObject reqmo2;
-    private static ResponseMatchingObject resmo1;
-    private static ResponseMatchingObject resmo2;
-    private static Match sampleMatch1;
 
     @Mock
     private Client clientMock;
@@ -95,8 +71,6 @@ public class MatchServiceTest {
     private Invocation.Builder builder;
     @Mock
     private Response response;
-    @Mock
-    private ResponseMatchingObject rmo;
     @Mock
     private UseRestrictionConverter useRestrictionConverter;
 
@@ -108,83 +82,91 @@ public class MatchServiceTest {
 
     @BeforeClass
     public static void setUpClass() {
-        UseRestriction sampleUseRestriction1 = new And(
-                new Not(new Named("http://purl.obolibrary.org/obo/DUO_0000015")),
-                new Not(new Named("http://purl.obolibrary.org/obo/DUO_0000011")),
-                new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/control"))
-        );
-        UseRestriction sampleUseRestriction2 = new And(
-                new Named("http://purl.obolibrary.org/obo/DUO_0000018"),
-                new Named("http://www.broadinstitute.org/ontologies/DUOS/female")
-        );
-        UseRestriction sampleUsePurpose1 = new And(
-                new Named("http://purl.obolibrary.org/obo/DUO_0000018")
-        );
-        sampleConsent1 = new Consent(false, sampleUseRestriction1, "A data use letter", "sampleConsent1", null, null, null, "Group Name Test");
-        sampleConsent1.setConsentId("CONS-1");
-        sampleConsent2 = new Consent(false, sampleUseRestriction2, "A data use letter", "sampleConsent1", null, null, null, "Group Name Test");
-        sampleConsent2.setConsentId("CONS-2");
-
-        sampleElection1 = new Election(1, ElectionType.TRANSLATE_DUL.getValue(),
-                ElectionStatus.OPEN.getValue(), new Date(),
-                "CONS-1", new Date(), false, 1);
-        sampleElection2 = new Election(1, ElectionType.TRANSLATE_DUL.getValue(),
-                ElectionStatus.OPEN.getValue(), new Date(),
-                "CONS-2", new Date(), false, 1);
-
-        reqmo1 = new RequestMatchingObject(sampleConsent1.getUseRestriction(), sampleUsePurpose1);
-        resmo1 = new ResponseMatchingObject(true, reqmo1);
-        reqmo2 = new RequestMatchingObject(sampleConsent2.getUseRestriction(), sampleUsePurpose1);
-        resmo2 = new ResponseMatchingObject(false, reqmo2);
-
-        sampleMatch1 = new Match(1, "CONS-1", "DAR-2", true, false, new Date());
     }
 
     @Before
     public void setUp() throws UnknownIdentifierException, IOException {
         openMocks(this);
-        setUpMockedResponses();
-        when(config.getMatchURL()).thenReturn("http://ontology.org/match");
-        when(dataAccessRequestDAO.findByReferenceId("NullDar")).thenReturn(null);
-        when(consentDAO.findConsentById("NullConsent")).thenReturn(null);
-        doAnswer(invocationOnMock -> { throw new UnknownIdentifierException("AbsentConsent"); }).when(consentDAO).findConsentById("AbsentConsent");
-        when(consentDAO.findConsentById("CONS-2")).thenReturn(sampleConsent2);
-        when(electionDAO.findLastElectionByReferenceIdAndType("CONS-1", ElectionType.TRANSLATE_DUL.getValue())).thenReturn(sampleElection1);
-        when(electionDAO.findLastElectionByReferenceIdAndType("CONS-2", ElectionType.TRANSLATE_DUL.getValue())).thenReturn(sampleElection2);
-        when(consentDAO.findConsentFromDatasetID(1)).thenReturn(sampleConsent1);
     }
 
-    private void setUpMockedResponses() {
+    @Test
+    public void testInsertMatches() {
+        when(matchDAO.insertMatch(any(), any(), any(), any(), any(), any())).thenReturn(1);
+        doNothing().when(matchDAO).insertFailureReason(any(), any());
+        spy(matchDAO);
+        initService();
 
-        final Invocation.Builder builderMock = Mockito.mock(Invocation.Builder.class);
-        final WebTarget webTargetMock = Mockito.mock(WebTarget.class);
-
-        final Response okResponseMock = Mockito.mock(Response.class);
-        Mockito.when(okResponseMock.getStatus()).thenReturn(Response.Status.OK.getStatusCode());
-        Mockito.when(okResponseMock.readEntity((GenericType<Object>) any())).thenReturn(resmo1);
-
-        final Response noMatchResponseMock = Mockito.mock(Response.class);
-        Mockito.when(noMatchResponseMock.getStatus()).thenReturn(Response.Status.OK.getStatusCode());
-        Mockito.when(noMatchResponseMock.readEntity((GenericType<Object>) any())).thenReturn(resmo2);
-
-        Mockito.when(builderMock.post(Entity.json(new Gson().toJson(reqmo1)))).thenReturn(okResponseMock);
-        doAnswer(invocationOnMock -> { throw new TimeoutException(); }).when(builderMock).post(Entity.json(new Gson().toJson(reqmo2)));
-
-        Mockito.when(webTargetMock.request(MediaType.APPLICATION_JSON)).thenReturn(builderMock);
-        clientMock = Mockito.mock(Client.class);
-        Mockito.when(clientMock.target(Mockito.anyString())).thenReturn(webTargetMock);
-        Mockito.when(webTargetMock.queryParam(Mockito.anyString(), Mockito.anyString())).thenReturn(webTargetMock);
+        service.insertMatches(List.of(new Match()));
+        verify(matchDAO, atLeastOnce()).insertMatch(any(), any(), any(), any(), any(), any());
     }
 
     @Test
     public void testFindMatchById() {
-        initSingleMatchMocks("DAR-2", sampleConsent1);
-        when(matchDAO.findMatchById(1)).thenReturn(sampleMatch1);
+        Match m = createMatchObject();
+        when(matchDAO.findMatchById(m.getId())).thenReturn(m);
+        spy(matchDAO);
         initService();
 
-        Match match = service.findMatchById(1);
+        Match match = service.findMatchById(m.getId());
         assertNotNull(match);
-        assertEquals("CONS-1", match.getConsent());
+        verify(matchDAO, atLeastOnce()).findMatchById(any());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testFindMatchByIdNotFound() {
+        Match m = createMatchObject();
+        when(matchDAO.findMatchById(m.getId())).thenReturn(null);
+        initService();
+
+        service.findMatchById(m.getId());
+    }
+
+    @Test
+    public void testFindMatchByConsentIdAndPurposeId() {
+        Match m = createMatchObject();
+        when(matchDAO.findMatchByPurposeIdAndConsentId(any(), any())).thenReturn(m);
+        spy(matchDAO);
+        initService();
+
+        Match match = service.findMatchByConsentIdAndPurposeId(m.getConsent(), m.getPurpose());
+        assertNotNull(match);
+        verify(matchDAO, atLeastOnce()).findMatchByPurposeIdAndConsentId(any(), any());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testFindMatchByConsentIdAndPurposeIdNotFound() {
+        Match m = createMatchObject();
+        when(matchDAO.findMatchByPurposeIdAndConsentId(any(), any())).thenReturn(null);
+        spy(matchDAO);
+        initService();
+
+        service.findMatchByConsentIdAndPurposeId(m.getConsent(), m.getPurpose());
+        verify(matchDAO, atLeastOnce()).findMatchByPurposeIdAndConsentId(any(), any());
+    }
+
+    @Test
+    public void testFindMatchByConsentId() {
+        Match m = createMatchObject();
+        when(matchDAO.findMatchesByConsentId(any())).thenReturn(List.of(m));
+        spy(matchDAO);
+        initService();
+
+        List<Match> matches = service.findMatchByConsentId(m.getConsent());
+        assertNotNull(matches);
+        assertEquals(1, matches.size());
+        verify(matchDAO, atLeastOnce()).findMatchesByConsentId(any());
+    }
+
+    @Test
+    public void testFindMatchByConsentIdNotFound() {
+        Match m = createMatchObject();
+        when(matchDAO.findMatchesByConsentId(any())).thenReturn(List.of());
+        spy(matchDAO);
+        initService();
+
+        List<Match> matches = service.findMatchByConsentId(m.getConsent());
+        assertTrue(matches.isEmpty());
+        verify(matchDAO, atLeastOnce()).findMatchesByConsentId(any());
     }
 
     @Test
@@ -205,91 +187,91 @@ public class MatchServiceTest {
     }
 
     @Test
-    public void testFindMatchesForConsent() {
-        initSingleMatchMocks("DAR-2", sampleConsent1);
+    public void testCreateMatchesForConsent() {
+        Match m = createMatchObject();
+        Dataset dataset = new Dataset();
+        dataset.setDataSetId(1);
+        DataAccessRequest dar = new DataAccessRequest();
+        dar.addDatasetId(1);
+        when(datasetDAO.getDatasetsForConsent(any())).thenReturn(List.of(dataset));
+        when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
+        spy(datasetDAO);
+        spy(dataAccessRequestDAO);
         initService();
 
-        List<Match> matches = service.createMatchesForConsent(sampleConsent1.getConsentId());
-
-        assertEquals(1, matches.size());
-        assertFalse(matches.get(0).getFailed());
-        assertTrue(matches.get(0).getMatch());
+        service.createMatchesForConsent(m.getConsent());
+        verify(datasetDAO, atLeastOnce()).getDatasetsForConsent(any());
+        verify(dataAccessRequestDAO, atLeastOnce()).findAllDataAccessRequests();
     }
 
     @Test
-    public void testProcessMatchesForConsent() {
-        initSingleMatchMocks("DAR-2", sampleConsent1);
-        when(matchDAO.findMatchesByConsentId(sampleConsent1.getConsentId()))
-                .thenReturn(Arrays.asList(sampleMatch1));
-        when(consentDAO.checkManualReview("CONS-1"))
-                .thenReturn(true);
-        doNothing().when(matchDAO).insertAll(any());
+    public void testFindMatchesByPurposeId() {
+        Match m = createMatchObject();
+        when(matchDAO.findMatchesByPurposeId(any())).thenReturn(List.of(m));
+        spy(matchDAO);
         initService();
 
-        service.reprocessMatchesForConsent("CONS-1");
+        List<Match> matches = service.findMatchesByPurposeId(m.getConsent());
+        assertFalse(matches.isEmpty());
+        verify(matchDAO, atLeastOnce()).findMatchesByPurposeId(any());
     }
 
     @Test
-    public void testProcessMatchesForPurpose() {
-        initSingleMatchMocks("DAR-2", sampleConsent1);
-        doNothing().when(matchDAO).insertAll(any());
+    public void testReprocessMatchesForConsent() {
+        Match m = createMatchObject();
+        when(matchDAO.findMatchesByConsentId(any())).thenReturn(List.of(m));
         initService();
 
-        service.reprocessMatchesForPurpose(sampleMatch1.getPurpose());
+        try {
+            service.reprocessMatchesForConsent(m.getConsent());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testReprocessMatchesForPurpose() {
+        Match m = createMatchObject();
+        initService();
+
+        try {
+            service.reprocessMatchesForPurpose(m.getPurpose());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
     }
 
     @Test
     public void testRemoveMatchesForPurpose() {
-        initSingleMatchMocks("DAR-2", sampleConsent1);
-
+        spy(matchDAO);
         initService();
 
         service.removeMatchesForPurpose("DAR-2");
+        verify(matchDAO, atLeastOnce()).deleteFailureReasonsByPurposeIds(anyList());
+        verify(matchDAO, atLeastOnce()).deleteMatchesByPurposeId(any());
     }
 
     @Test
     public void testRemoveMatchesForConsent() {
-        initSingleMatchMocks("DAR-2", sampleConsent1);
-
+        Match m = createMatchObject();
+        spy(matchDAO);
         initService();
 
-        service.removeMatchesForConsent(sampleConsent1.getConsentId());
+        service.removeMatchesForConsent(m.getConsent());
+        verify(matchDAO, atLeastOnce()).deleteFailureReasonsByConsentIds(anyList());
+        verify(matchDAO, atLeastOnce()).deleteMatchesByConsentId(any());
     }
 
     @Test
     public void testFindMatchesForLatestDataAccessElectionsByPurposeIds() {
-        Match mockMatch = new Match(1, "test", "purpose", true, true, null);
-        when(matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList()))
-            .thenReturn(List.of(mockMatch));
+        Match m = createMatchObject();
+        when(matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList())).thenReturn(List.of(m));
+        spy(matchDAO);
         initService();
         List<Match> matches = service.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of("test"));
         assertEquals(1, matches.size());
-        assertEquals(mockMatch.getId(), matches.get(0).getId());
-    }
-
-    @SuppressWarnings("unchecked")
-    private void initSingleMatchMocks(String referenceId, Consent consent) {
-        DataAccessRequest dar2 = getSampleDataAccessRequest("DAR-2");
-        when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar2));
-        when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar2);
-        when(consentDAO.findConsentById(any())).thenReturn(consent);
-        when(consentDAO.checkConsentById(any())).thenReturn(consent.getConsentId());
-        List<Dataset> dataSets = getSampleDataAccessRequest(referenceId)
-                .getDatasetIds()
-                .stream()
-                .map(id -> {
-                    Dataset d = new Dataset(); d.setDataSetId(id); return d;} )
-                .collect(Collectors.toList());
-        when(datasetDAO.getDatasetsForConsent(consent.getConsentId())).thenReturn(dataSets);
-        when(rmo.isResult()).thenReturn(true);
-        when(response.readEntity(any(GenericType.class))).thenReturn(rmo);
-        when(response.getStatus()).thenReturn(200);
-        when(builder.post(any())).thenReturn(response);
-        when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
-        when(clientMock.target(config.getMatchURL())).thenReturn(target);
-
-        when(dataAccessRequestService.findByReferenceId(referenceId)).thenReturn(dar2);
-        when(matchDAO.findMatchById(any())).thenReturn(sampleMatch1);
+        assertEquals(m.getId(), matches.get(0).getId());
+        verify(matchDAO, atLeastOnce()).findMatchesForLatestDataAccessElectionsByPurposeIds(anyList());
     }
 
     private DataAccessRequest getSampleDataAccessRequest(String referenceId) {
@@ -301,5 +283,9 @@ public class MatchServiceTest {
         dar.addDatasetId(1);
         dar.setData(data);
         return dar;
+    }
+
+    private Match createMatchObject() {
+        return new Match(1, UUID.randomUUID().toString(), UUID.randomUUID().toString(), true, false, new Date(), MatchAlgorithm.V2.getVersion());
     }
 }

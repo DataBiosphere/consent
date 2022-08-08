@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
