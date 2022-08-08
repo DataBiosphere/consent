@@ -23,7 +23,7 @@ public class TDRService {
     }
 
     public ApprovedUsers getApprovedUsersForDataset(Dataset dataset) {
-        Collection<User> users = this.dataAccessRequestService.getUsersApprovedForDataset(dataset);
+        Collection<User> users = dataAccessRequestService.getUsersApprovedForDataset(dataset);
 
         List<ApprovedUser> approvedUsers = users
                 .stream()

@@ -15,6 +15,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+import java.util.Objects;
 
 @Path("api/tdr")
 public class TDRResource extends Resource {
@@ -36,7 +37,7 @@ public class TDRResource extends Resource {
     public Response getApprovedUsers(@Auth AuthUser authUser, @PathParam("identifier") String identifier) {
         try {
             Dataset dataset = this.datasetService.findDatasetByIdentifier(identifier);
-            if (dataset == null) {
+            if (Objects.isNull(dataset)) {
                 throw new NotFoundException("Could not find dataset " + identifier);
             }
 
