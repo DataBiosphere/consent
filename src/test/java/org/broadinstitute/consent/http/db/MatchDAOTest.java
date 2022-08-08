@@ -16,6 +16,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class MatchDAOTest extends DAOTestHelper {
@@ -161,5 +162,26 @@ public class MatchDAOTest extends DAOTestHelper {
     //Again, a match like this usually isn't generated in a normal workflow unless bug occurs, but having the 'DataAccess' condition is a nice safety net
     List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertTrue(matchResults.isEmpty());
+  }
+
+  @Test
+  public void testFindMatchByPurposeIdAndConsentId() {
+    Match match = makeMockMatch(UUID.randomUUID().toString());
+    matchDAO.insertAll(List.of(match));
+    Match foundMatch = matchDAO.findMatchByPurposeIdAndConsentId(match.getPurpose(), match.getConsent());
+    assertNotNull(foundMatch);
+  }
+  @Test
+  public void testFindMatchById() {
+    Match match = makeMockMatch(UUID.randomUUID().toString());
+    Integer matchId = matchDAO.insertMatch(
+      match.getConsent(),
+      match.getPurpose(),
+      match.getMatch(),
+      match.getFailed(),
+      match.getCreateDate(),
+      match.getAlgorithmVersion());
+    Match foundMatch = matchDAO.findMatchById(matchId);
+    assertNotNull(foundMatch);
   }
 }
