@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.models.Dac;
@@ -184,4 +185,24 @@ public class MatchDAOTest extends DAOTestHelper {
     Match foundMatch = matchDAO.findMatchById(matchId);
     assertNotNull(foundMatch);
   }
+  @Test
+  public void testInsertFailureReason() {
+    Match match = makeMockMatch(UUID.randomUUID().toString());
+    match.setMatch(false);
+    match.setAlgorithmVersion(MatchAlgorithm.V2.getVersion());
+    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
+    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
+    Integer matchId = matchDAO.insertMatch(
+      match.getConsent(),
+      match.getPurpose(),
+      match.getMatch(),
+      match.getFailed(),
+      match.getCreateDate(),
+      match.getAlgorithmVersion());
+    match.getFailureReasons().forEach(f -> matchDAO.insertFailureReason(matchId, f));
+    Match foundMatch = matchDAO.findMatchById(matchId);
+    assertNotNull(foundMatch);
+    assertEquals(match.getFailureReasons().size(), foundMatch.getFailureReasons().size());
+  }
+
 }
