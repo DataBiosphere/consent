@@ -4,6 +4,8 @@ import com.google.api.client.http.HttpStatusCodes;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
@@ -47,6 +49,12 @@ public class SupportRequestServiceTest {
     private MockServerClient mockServerClient;
 
     @Mock
+    private InstitutionDAO institutionDAO;
+
+    @Mock
+    private UserDAO userDAO;
+
+    @Mock
     private ServicesConfiguration config;
 
     @Rule
@@ -58,7 +66,7 @@ public class SupportRequestServiceTest {
         mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
         when(config.isActivateSupportNotifications()).thenReturn(true);
         when(config.postSupportRequestUrl()).thenReturn("http://" + container.getHost() + ":" + container.getServerPort() + "/");
-        service = new SupportRequestService(config);
+        service = new SupportRequestService(config, institutionDAO, userDAO);
     }
 
     @After

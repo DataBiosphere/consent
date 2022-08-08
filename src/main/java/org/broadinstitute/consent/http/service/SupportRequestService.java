@@ -9,7 +9,10 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
@@ -18,6 +21,7 @@ import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ServerErrorException;
 
 import org.slf4j.Logger;
@@ -27,8 +31,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class SupportRequestService {
+
+    private final InstitutionDAO institutionDAO;
+    private final UserDAO userDAO;
 
     private final HttpClientUtil clientUtil;
     private final ServicesConfiguration configuration;
@@ -36,7 +44,9 @@ public class SupportRequestService {
 
 
     @Inject
-    public SupportRequestService(ServicesConfiguration configuration) {
+    public SupportRequestService(ServicesConfiguration configuration, InstitutionDAO institutionDAO, UserDAO userDAO) {
+        this.institutionDAO = institutionDAO;
+        this.userDAO = userDAO;
         this.clientUtil = new HttpClientUtil();
         this.configuration = configuration;
     }
@@ -129,6 +139,101 @@ public class SupportRequestService {
             }
         }
     }
+
+
+
+    /**
+     * Creates and sends a support ticket for a user selecting an existing or requesting an unfamiliar institution
+     * and/or signing official, if provided
+     *
+     * @param userUpdateFields A UserUpdateFields object containing update information for the user
+     * @param user             The user requesting the institution and/or signing official
+     */
+    public void handleInstitutionSOSupportRequest(UserUpdateFields userUpdateFields, User user) {
+        if (Objects.nonNull(userUpdateFields) && Objects.nonNull(user)) {
+            boolean updateFieldProvided = Objects.nonNull(userUpdateFields.getSuggestedInstitution())
+                    || Objects.nonNull(userUpdateFields.getInstitutionId())
+                    || Objects.nonNull(userUpdateFields.getSuggestedSigningOfficial())
+                    || Objects.nonNull(userUpdateFields.getSelectedSigningOfficialId());
+
+            //only send ticket if an institution or signing official is provided; ignore otherwise
+            if (updateFieldProvided) {
+                try {
+                    SupportTicket ticket = createInstitutionSOSupportTicket(userUpdateFields, user);
+                    postTicketToSupport(ticket);
+                } catch (Exception e) {
+                    logger.error("Exception sending suggested user fields support request: " + e.getMessage());
+                    throw new ServerErrorException("Unable to send support ticket for user with email: " + user.getEmail(),
+                            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+                }
+            }
+        }
+    }
+
+    /**
+     * Generates a support ticket for a user selecting an existing or requesting an unfamiliar institution and/or signing official
+     *
+     * @param userUpdateFields A UserUpdateFields object containing update information for the user
+     * @param user             The user requesting the institution and/or signing official
+     * @return A support ticket detailing the requested user fields
+     */
+    public SupportTicket createInstitutionSOSupportTicket(UserUpdateFields userUpdateFields, User user) {
+        String suggestedInstitution = userUpdateFields.getSuggestedInstitution();
+        Integer selectedInstitutionId = userUpdateFields.getInstitutionId();
+        String suggestedSigningOfficial = userUpdateFields.getSuggestedSigningOfficial();
+        Integer selectedSigningOfficialId = userUpdateFields.getSelectedSigningOfficialId();
+
+        //Generate subject and description of ticket based on provided fields
+        List<String> subjectItems = new ArrayList<>();
+        List<String> descriptionItems = new ArrayList<>();
+        if (Objects.nonNull(suggestedInstitution)) {
+            subjectItems.add("New Institution Suggestion");
+            descriptionItems.add("- suggested a new institution: " + suggestedInstitution);
+        }
+        if (Objects.nonNull(selectedInstitutionId)) {
+            Institution selectedInstitution = institutionDAO.findInstitutionById(selectedInstitutionId);
+            subjectItems.add("Institution Selection");
+            descriptionItems.add(
+                    Objects.nonNull(selectedInstitution)
+                            ? "- selected an existing institution: " + selectedInstitution.getName()
+                            : "- attempted to select institution with id " + selectedInstitutionId + " (not found)"
+            );
+        }
+        if (Objects.nonNull(suggestedSigningOfficial)) {
+            subjectItems.add("New Signing Official Suggestion");
+            descriptionItems.add("- suggested a new signing official: " + suggestedSigningOfficial);
+        }
+        if (Objects.nonNull(selectedSigningOfficialId)) {
+            User selectedSigningOfficial = userDAO.findUserById(selectedSigningOfficialId);
+            subjectItems.add("Signing Official Selection");
+            descriptionItems.add(
+                    Objects.nonNull(selectedSigningOfficial)
+                            ? String.format("- selected an existing signing official: %s, %s",
+                            selectedSigningOfficial.getDisplayName(),
+                            selectedSigningOfficial.getEmail())
+                            : "- attempted to select signing official with id " + selectedSigningOfficialId + " (not found)"
+            );
+        }
+
+        //Append items for ticket subject and description
+        String subject = String.format("%s user updates: %s",
+                user.getDisplayName(),
+                String.join(", ", subjectItems));
+        String description = String.format("User %s [%s] has:\n%s",
+                user.getDisplayName(),
+                user.getEmail(),
+                String.join("\n", descriptionItems));
+
+        return createSupportTicket(
+                user.getDisplayName(),
+                SupportRequestType.TASK,
+                user.getEmail(),
+                subject,
+                description,
+                configuration.postSupportRequestUrl());
+    }
+
+
 
     /**
      * Generates a support ticket for a user requesting an unfamiliar institution and/or signing official
