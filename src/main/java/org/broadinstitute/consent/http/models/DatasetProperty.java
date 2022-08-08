@@ -13,7 +13,7 @@ public class DatasetProperty {
     private String propertyName;
     private Object propertyValue;
     private Date createDate;
-    private String mapping;
+    private String schemaProperty;
     private DatasetPropertyType propertyType;
 
     public DatasetProperty(){
@@ -39,6 +39,31 @@ public class DatasetProperty {
         this.propertyValue = type.coerce(propertyValue);
         this.propertyType = type;
         this.createDate = createDate;
+    }
+
+    public DatasetProperty(Integer propertyId,
+                           Integer  dataSetId,
+                           Integer propertyKey,
+                           String schemaProperty,
+                           String propertyValue,
+                           DatasetPropertyType type,
+                           Date createDate) {
+        this(dataSetId, propertyKey, schemaProperty, propertyValue, type, createDate);
+        this.propertyId = propertyId;
+    }
+
+    public DatasetProperty(Integer  dataSetId,
+                           Integer propertyKey,
+                           String schemaProperty,
+                           String propertyValue,
+                           DatasetPropertyType type,
+                           Date createDate){
+        this.dataSetId = dataSetId;
+        this.propertyKey = propertyKey;
+        this.propertyValue = type.coerce(propertyValue);
+        this.propertyType = type;
+        this.createDate = createDate;
+        this.schemaProperty = schemaProperty;
     }
 
     public Integer getPropertyId() {
@@ -73,8 +98,20 @@ public class DatasetProperty {
         this.propertyName = propertyName;
     }
 
+    public String getSchemaProperty() {
+        return this.schemaProperty;
+    }
+
+    public void setSchemaProperty(String schemaProperty) {
+        this.schemaProperty = schemaProperty;
+    }
+
     public Object getPropertyValue() {
         return propertyValue;
+    }
+
+    public String getPropertyValueAsString() {
+        return this.propertyValue.toString();
     }
 
     public void setPropertyValue(Object propertyValue) {

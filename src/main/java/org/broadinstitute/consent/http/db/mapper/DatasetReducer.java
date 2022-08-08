@@ -41,6 +41,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
         && hasColumn(rowView, "propertyvalue", String.class)) {
       String keyName = rowView.getColumn("key", String.class);
       String propVal = rowView.getColumn("propertyvalue", String.class);
+      String schemaProp = rowView.getColumn("schemaproperty", String.class);
       DatasetPropertyType propType = DatasetPropertyType.String;
       if (hasColumn(rowView, "propertytype", String.class)) {
           propType = DatasetPropertyType.parse(rowView.getColumn("propertytype", String.class));
@@ -53,6 +54,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
           prop.setPropertyValue(propType.coerce(propVal));
           prop.setPropertyName(keyName);
           prop.setPropertyType(propType);
+          prop.setSchemaProperty(schemaProp);
           dataset.addProperty(prop);
         } catch (Exception e) {
           // do nothing.

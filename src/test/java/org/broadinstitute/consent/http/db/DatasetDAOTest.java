@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import com.google.gson.JsonObject;
+import com.nimbusds.jose.util.JSONObjectUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -15,6 +17,7 @@ import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -214,6 +217,174 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(originalProperty.getPropertyKey(), returnedProperty.getPropertyKey());
         assertEquals(originalProperty.getPropertyId(), returnedProperty.getPropertyId());
         assertNotEquals(originalProperty.getPropertyValue(), returnedProperty.getPropertyValue());
+    }
+
+    @Test
+    public void testCreateNumberTypedDatasetProperty() {
+        Dataset d = createDataset();
+
+        Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+        datasetDAO.deleteDatasetPropertyByKey(d.getDataSetId(), propertyToDelete.getPropertyKey());
+
+        List<DatasetProperty> newProps = List.of(
+                new DatasetProperty(
+                        d.getDataSetId(),
+                        1,
+                        "10",
+                        DatasetPropertyType.Number,
+                        new Date())
+        );
+        datasetDAO.insertDatasetProperties(newProps);
+
+        Dataset dWithProps = datasetDAO.findDatasetById(d.getDataSetId());
+
+        assertEquals(1, dWithProps.getProperties().size());
+        DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+        assertEquals(DatasetPropertyType.Number, prop.getPropertyType());
+        assertEquals("10", prop.getPropertyValueAsString());
+        assertEquals(10, prop.getPropertyValue());
+    }
+
+    @Test
+    public void testCreateDateTypedDatasetProperty() {
+        Dataset d = createDataset();
+        Instant now = Instant.now();
+
+        Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+        datasetDAO.deleteDatasetPropertyByKey(d.getDataSetId(), propertyToDelete.getPropertyKey());
+
+        List<DatasetProperty> newProps = List.of(
+                new DatasetProperty(
+                        d.getDataSetId(),
+                        1,
+                        now.toString(),
+                        DatasetPropertyType.Date,
+                        new Date())
+        );
+        datasetDAO.insertDatasetProperties(newProps);
+
+        Dataset dWithProps = datasetDAO.findDatasetById(d.getDataSetId());
+
+        assertEquals(1, dWithProps.getProperties().size());
+        DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+        assertEquals(DatasetPropertyType.Date, prop.getPropertyType());
+        assertEquals(now.toString(), prop.getPropertyValueAsString());
+        assertEquals(now, prop.getPropertyValue());
+    }
+
+    @Test
+    public void testCreateBooleanTypedDatasetProperty() {
+        Dataset d = createDataset();
+        Boolean bool = Boolean.FALSE;
+
+        Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+        datasetDAO.deleteDatasetPropertyByKey(d.getDataSetId(), propertyToDelete.getPropertyKey());
+
+        List<DatasetProperty> newProps = List.of(
+                new DatasetProperty(
+                        d.getDataSetId(),
+                        1,
+                        bool.toString(),
+                        DatasetPropertyType.Boolean,
+                        new Date())
+        );
+        datasetDAO.insertDatasetProperties(newProps);
+
+        Dataset dWithProps = datasetDAO.findDatasetById(d.getDataSetId());
+
+        assertEquals(1, dWithProps.getProperties().size());
+        DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+        assertEquals(DatasetPropertyType.Boolean, prop.getPropertyType());
+        assertEquals(bool.toString(), prop.getPropertyValueAsString());
+        assertEquals(Boolean.FALSE, prop.getPropertyValue());
+    }
+
+    @Test
+    public void testCreateJsonTypedDatasetProperty() {
+        Dataset d = createDataset();
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.add("test", new JsonObject());
+
+        Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+        datasetDAO.deleteDatasetPropertyByKey(d.getDataSetId(), propertyToDelete.getPropertyKey());
+
+        List<DatasetProperty> newProps = List.of(
+                new DatasetProperty(
+                        d.getDataSetId(),
+                        1,
+                        jsonObject.toString(),
+                        DatasetPropertyType.Json,
+                        new Date())
+        );
+        datasetDAO.insertDatasetProperties(newProps);
+
+        Dataset dWithProps = datasetDAO.findDatasetById(d.getDataSetId());
+
+        assertEquals(1, dWithProps.getProperties().size());
+        DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+        assertEquals(DatasetPropertyType.Json, prop.getPropertyType());
+        assertEquals(jsonObject.toString(), prop.getPropertyValueAsString());
+        assertEquals(jsonObject, prop.getPropertyValue());
+    }
+
+    @Test
+    public void testCreateStringTypedDatasetProperty() {
+        Dataset d = createDataset();
+        String value = "hi";
+
+        Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+        datasetDAO.deleteDatasetPropertyByKey(d.getDataSetId(), propertyToDelete.getPropertyKey());
+
+        List<DatasetProperty> newProps = List.of(
+                new DatasetProperty(
+                        d.getDataSetId(),
+                        1,
+                        value,
+                        DatasetPropertyType.String,
+                        new Date())
+        );
+        datasetDAO.insertDatasetProperties(newProps);
+
+        Dataset dWithProps = datasetDAO.findDatasetById(d.getDataSetId());
+
+        assertEquals(1, dWithProps.getProperties().size());
+        DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+        assertEquals(DatasetPropertyType.String, prop.getPropertyType());
+        assertEquals(value, prop.getPropertyValueAsString());
+        assertEquals(value, prop.getPropertyValue());
+    }
+
+    @Test
+    public void testCreateTypedDatasetPropertyWithSchema() {
+        Dataset d = createDataset();
+        String schemaValue = "test test test test";
+
+        Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+        datasetDAO.deleteDatasetPropertyByKey(d.getDataSetId(), propertyToDelete.getPropertyKey());
+
+        List<DatasetProperty> newProps = List.of(
+                new DatasetProperty(
+                        d.getDataSetId(),
+                        1,
+                        schemaValue,
+                        "asdf",
+                        DatasetPropertyType.String,
+                        new Date())
+        );
+        datasetDAO.insertDatasetProperties(newProps);
+
+        Dataset dWithProps = datasetDAO.findDatasetById(d.getDataSetId());
+
+        assertEquals(1, dWithProps.getProperties().size());
+        DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+        assertEquals(DatasetPropertyType.String, prop.getPropertyType());
+        assertEquals(schemaValue, prop.getSchemaProperty());
     }
 
     @Test

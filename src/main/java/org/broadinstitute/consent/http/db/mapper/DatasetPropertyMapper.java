@@ -15,6 +15,7 @@ public class DatasetPropertyMapper implements RowMapper<DatasetProperty> {
           r.getInt("propertyid"),
           r.getInt("datasetid"),
           r.getInt("propertykey"),
+          r.getString("schemaproperty"),
           r.getString("propertyvalue"),
           DatasetPropertyType.parse(r.getString("propertytype")),
           r.getTimestamp("createdate")
