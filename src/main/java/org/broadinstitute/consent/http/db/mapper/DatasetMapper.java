@@ -32,7 +32,7 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
               dataset.setUpdateUserId(userId);
           }
       }
-      if(hasColumn(r, "dataUse")) {
+      if (hasColumn(r, "dataUse")) {
         dataset.setDataUse(DataUse.parseDataUse(r.getString("datause")).orElse(null));
       }
       dataset.setActive(r.getBoolean("active"));

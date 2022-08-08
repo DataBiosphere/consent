@@ -31,9 +31,9 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
       if (Objects.nonNull(rowView.getColumn("datasetid", Integer.class))) {
         DatasetDTO dto = rowView.getRow(DatasetDTO.class);
 
-        try { 
-          //aliased columns must be set directly 
-          
+        try {
+          //aliased columns must be set directly
+
           if (Objects.nonNull(rowView.getColumn("dataset_alias", String.class))) {
             String dsAlias = rowView.getColumn("dataset_alias", String.class);
             try {
@@ -56,9 +56,9 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
         } catch (Exception e) {
           //no values for these columns
         }
-        
-        if (Objects.nonNull(rowView.getColumn("consent_data_use", String.class))) {
-          String duStr = rowView.getColumn("consent_data_use", String.class);
+
+        if (Objects.nonNull(rowView.getColumn("dataset_data_use", String.class))) {
+          String duStr = rowView.getColumn("dataset_data_use", String.class);
           Optional<DataUse> du = DataUse.parseDataUse(duStr);
           du.ifPresent(dto::setDataUse);
         }

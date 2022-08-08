@@ -1,0 +1,22 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="87.0" author="grushton">
+        <!-- Copy over consent data use strings into their associated dataset  -->
+        <addColumn tableName="dataset">
+            <column name="data_use" type="text"/>
+        </addColumn>
+        <sql>
+            UPDATE dataset d
+            SET data_use = (SELECT c.datause
+                              FROM consents c
+                              INNER JOIN consentassociations ca
+                                  ON c.consentid = ca.consentid
+                                  AND ca.datasetid = d.datasetid)
+            WHERE data_use IS NULL;
+        </sql>
+        <rollback>
+            <dropColumn tableName="dataset" columnName="data_use"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
