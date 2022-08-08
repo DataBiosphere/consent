@@ -6,6 +6,7 @@ import org.jdbi.v3.core.result.RowView;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 
 public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, RowMapperHelper {
 
@@ -32,7 +33,7 @@ public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, Ro
         }
         if (hasColumn(rowView, "failure_reason", String.class)) {
             String failure = rowView.getColumn("failure_reason", String.class);
-            if (!failure.isBlank()) {
+            if (Objects.nonNull(failure) && !failure.isBlank()) {
                 match.addFailureReason(rowView.getColumn("failure_reason", String.class));
             }
         }
