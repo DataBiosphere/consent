@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class DarCollectionSummary {
-
   @JsonProperty
   private Integer darCollectionId;
 

@@ -240,6 +240,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate("UPDATE data_access_request SET draft = :draft WHERE reference_id = :referenceId ")
   void updateDraftByReferenceId(@Bind("referenceId") String referenceId, @Bind("draft") Boolean draft);
 
+  @SqlUpdate("UPDATE data_access_request SET draft = :draft WHERE collection_id = :collectionId ")
+  void updateDraftByCollectionId(@Bind("collectionId") Integer collectionId, @Bind("draft") Boolean draft);
+
   @SqlUpdate("UPDATE data_access_request SET draft = false, collection_id = :collectionId WHERE reference_id = :referenceId")
   void updateDraftForCollection(@Bind("collectionId") Integer collectionId, @Bind("referenceId") String referenceId);
 

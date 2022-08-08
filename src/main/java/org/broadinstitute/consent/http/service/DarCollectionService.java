@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -17,6 +18,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PaginationResponse;
@@ -131,21 +133,27 @@ public class DarCollectionService {
   private void processDarCollectionDraftsAsSummaries(List<DataAccessRequest> drafts, List<DarCollectionSummary> summaries) {
     drafts.forEach(d -> {
       try{
-        DarCollectionSummary summary = new DarCollectionSummary();
-        Date createDate = new Date(d.getData().getCreateDate());
-        String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
-          .format(createDate);
-        summary.setDarCode(darCode);
-        summary.setStatus(DarCollectionStatus.DRAFT.getValue());
-        summary.setName(d.getData().getProjectTitle());
-        summary.addAction(DarCollectionActions.RESUME.getValue());
-        summary.addAction(DarCollectionActions.DELETE.getValue());
-        summary.addReferenceId(d.referenceId);
-        summaries.add(summary);
+        summaries.add(processDraftAsSummary(d));
       } catch(Exception e) {
         logger.warn("Error processing draft with id: " + d.getId());
       }
     });
+  }
+
+  private DarCollectionSummary processDraftAsSummary(DataAccessRequest d) {
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Date createDate = new Date(d.getData().getCreateDate());
+    String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
+            .format(createDate);
+
+    summary.setDarCode(darCode);
+    summary.setStatus(DarCollectionStatus.DRAFT.getValue());
+    summary.setName(d.getData().getProjectTitle());
+    summary.addAction(DarCollectionActions.RESUME.getValue());
+    summary.addAction(DarCollectionActions.DELETE.getValue());
+    summary.addReferenceId(d.referenceId);
+
+    return summary;
   }
 
   private void processDarCollectionSummariesForResearcher(List<DarCollectionSummary> summaries) {
@@ -309,6 +317,32 @@ public class DarCollectionService {
         break;
     }
     return summaries;
+  }
+
+  public DarCollectionSummary updateCollectionToDraftStatus(DarCollection sourceCollection) {
+    this.dataAccessRequestDAO.updateDraftByCollectionId(sourceCollection.getDarCollectionId(), true);
+    sourceCollection.getDars().values().forEach((d) -> {
+      Date now = new Date();
+      DataAccessRequestData newData = new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
+      newData.setDarCode(null);
+      newData.setStatus(null);
+      newData.setReferenceId(d.getReferenceId());
+      newData.setSortDate(now.getTime());
+      dataAccessRequestDAO.updateDataByReferenceId(
+              d.getReferenceId(),
+              d.getUserId(),
+              now,
+              null,
+              now,
+              newData
+      );
+    });
+
+
+    // get updated collection
+    sourceCollection = this.darCollectionDAO.findDARCollectionByCollectionId(sourceCollection.getDarCollectionId());
+
+    return this.processDraftAsSummary(new ArrayList<>(sourceCollection.getDars().values()).get(0));
   }
 
   public List<Integer> findDatasetIdsByUser(User user) {
