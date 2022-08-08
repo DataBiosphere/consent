@@ -72,6 +72,7 @@ import org.broadinstitute.consent.http.resources.ResearcherResource;
 import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.resources.SwaggerResource;
+import org.broadinstitute.consent.http.resources.TDRResource;
 import org.broadinstitute.consent.http.resources.TosResource;
 import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
@@ -95,6 +96,7 @@ import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.ReviewResultsService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
+import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -195,6 +197,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class).get();
         final SamService samService = injector.getProvider(SamService.class).get();
         final SupportRequestService supportRequestService = injector.getProvider(SupportRequestService.class).get();
+        final TDRService tdrService = injector.getProvider(TDRService.class).get();
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
@@ -261,6 +264,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(injector.getInstance(VersionResource.class));
         env.jersey().register(new VoteResource(userService, voteService, electionService));
         env.jersey().register(new LivenessResource());
+        env.jersey().register(new TDRResource(tdrService, datasetService));
 
         // Authentication filters
         final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();

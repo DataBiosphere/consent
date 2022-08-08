@@ -240,6 +240,35 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
+    public void testGetUsersApprovedForDataset() {
+        Dataset d = new Dataset();
+        d.setDataSetId(10);
+
+        User user1 = new User();
+        user1.setUserId(10);
+        User user2 = new User();
+        user2.setUserId(20);
+
+        DataAccessRequest dar1 = new DataAccessRequest();
+        dar1.setUserId(10);
+        DataAccessRequest dar2 = new DataAccessRequest();
+        dar2.setUserId(20);
+
+
+        when(this.dataAccessRequestDAO
+                .findAllUserIdsWithApprovedDARsByDatasetId(d.getDataSetId()))
+                .thenReturn(List.of(dar1.getUserId(), dar2.getUserId()));
+
+        when(this.userDAO.findUsers(List.of(dar1.getUserId(), dar2.getUserId())))
+                .thenReturn(List.of(user1, user2));
+
+        initService();
+
+        assertEquals(List.of(user1, user2),
+                service.getUsersApprovedForDataset(d));
+    }
+
+    @Test
     public void testInsertDraftDataAccessRequest() {
         User user = new User();
         user.setUserId(1);

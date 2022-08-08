@@ -42,6 +42,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -590,6 +591,14 @@ public class DataAccessRequestService {
             }
         }
         return builder.toString();
+    }
+
+    public Collection<User> getUsersApprovedForDataset(Dataset dataset) {
+        List<Integer> userIds = this.dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset.getDataSetId());
+        if (userIds.isEmpty()) {
+            return List.of();
+        }
+        return this.userDAO.findUsers(userIds);
     }
 
     /**
