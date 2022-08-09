@@ -105,14 +105,6 @@ public class Dac {
         this.datasetIds.add(datasetId);
     }
 
-    public List<Dataset> getDatasets() {
-        return datasets;
-    }
-
-    public void setDatasets(List<Dataset> datasets) {
-        this.datasets = datasets;
-    }
-
     public void addDataset(Dataset dataset) {
         if (Objects.isNull(datasets)) {
             datasets = new ArrayList<>();

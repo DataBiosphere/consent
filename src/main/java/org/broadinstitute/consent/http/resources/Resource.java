@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import java.util.Objects;
+
+import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -212,6 +214,10 @@ abstract public class Resource {
         if (Objects.isNull(thisRole) || !user.hasUserRole(thisRole)) {
             throw new BadRequestException("Invalid role selection: " + roleName);
         }
+    }
+
+    protected String unmarshal(Object o) {
+        return new Gson().toJson(o);
     }
 
 }
