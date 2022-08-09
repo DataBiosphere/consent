@@ -94,7 +94,7 @@ public class MetricsServiceTest {
 
     when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(dataset);
     when(darDAO.findAllDataAccessRequestsByDatasetId(any())).thenReturn(dars);
-    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
+    when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(collection));
     when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), eq("DataAccess"))).thenReturn(election);
 
     initService();
