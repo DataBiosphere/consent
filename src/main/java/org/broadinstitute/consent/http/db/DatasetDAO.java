@@ -85,7 +85,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     @Deprecated
     @SqlBatch("INSERT INTO dataset (name, createdate, objectid, active, alias, data_use) VALUES (:name, :createDate, :objectId, :active, :alias, :dataUse)")
-    void insertAll(@BindBean Collection<Dataset> dataSets);
+    void insertAll(@BindBean Collection<Dataset> datasets);
 
     @SqlBatch("INSERT INTO datasetproperty (datasetid, propertykey, propertyvalue, createdate )" +
             " VALUES (:dataSetId, :propertyKey, :propertyValue, :createDate)")

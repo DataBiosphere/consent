@@ -217,8 +217,8 @@ abstract public class Resource {
     }
 
     /**
-     * Unmarshal an object using `Gson`. In general, we should prefer Gson over Jackson
-     * for ease of use and less boilerplate code.
+     * Unmarshal/serialize an object using `Gson`. In general, we should prefer Gson
+     * over Jackson for ease of use and the need for far less boilerplate code.
      *
      * @param o The object to unmarshal
      * @return String version of the object
