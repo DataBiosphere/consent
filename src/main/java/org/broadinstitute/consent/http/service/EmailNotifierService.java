@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -198,10 +199,14 @@ public class EmailNotifierService {
     public void sendClosedDataSetElectionsMessage(List<Election> elections) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             Map<String, List<Election>> reviewedDatasets = new HashMap<>();
+            List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
+            List<DarCollection> darCollections = collectionDAO.findDARCollectionsByReferenceIds(referenceIds);
             for(Election election: elections) {
                 List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
-                DarCollection collection = collectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
-                String darCode = Objects.nonNull(collection) ? collection.getDarCode() : "";
+                Optional<DarCollection> collection = darCollections.stream()
+                        .filter(c -> c.getDars().containsKey(election.getReferenceId()))
+                        .findFirst();
+                String darCode = collection.map(DarCollection::getDarCode).orElse("");
                 reviewedDatasets.put(darCode, dsElections);
             }
             List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);

@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -117,6 +118,10 @@ public class MetricsService {
 
   private List<DarDecisionMetrics> getDarMetrics(List<DataAccessRequest> dars,
                                                  List<Dataset> datasets, List<Election> elections, List<Match> matches, List<Dac> dacs) {
+    List<Integer> darCollectionIds = dars.stream().map(DataAccessRequest::getCollectionId).collect(Collectors.toList());
+    List<DarCollection> darCollections = darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
+    Map<Integer, DarCollection> collectionMap = darCollections.stream().collect(Collectors.toMap(DarCollection::getDarCollectionId, Function.identity()));
+
     return dars.stream()
       .map(
         dataAccessRequest -> {
@@ -167,7 +172,7 @@ public class MetricsService {
                     .findFirst())
               .flatMap(Function.identity());
 
-          DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(dataAccessRequest.getReferenceId());
+          DarCollection collection = collectionMap.get(dataAccessRequest.collectionId);
           String darCode = Objects.nonNull(collection) ? collection.getDarCode() : null;
 
           return new DarDecisionMetrics(
@@ -231,10 +236,15 @@ public class MetricsService {
     //find dars with the given datasetId in their list of datasetIds, datasetId is a String so it can be converted to jsonb in query
     //convert all dars into smaller objects that only contain the information needed
     List<DataAccessRequest> dars = darDAO.findAllDataAccessRequestsByDatasetId(Integer.toString(datasetId));
+    List<Integer> darCollectionIds = dars.stream().map(DataAccessRequest::getCollectionId).collect(Collectors.toList());
+    List<DarCollection> darCollections = darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
+    Map<Integer, DarCollection> collectionMap = darCollections.stream().collect(Collectors.toMap(DarCollection::getDarCollectionId, Function.identity()));
+
     List<DarMetricsSummary> darInfo = dars.stream().map(dar -> {
-              DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
-              return new DarMetricsSummary(dar, collection.getDarCode());
-            }).collect(Collectors.toList());
+      DarCollection collection = collectionMap.get(dar.getCollectionId());
+      String darCode = Objects.nonNull(collection) ? collection.getDarCode() : null;
+      return new DarMetricsSummary(dar, darCode);
+    }).collect(Collectors.toList());
 
     //if there are associated dars, find associated access elections so we know how many and which dars are approved/denied
     List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId)).collect(Collectors.toList());

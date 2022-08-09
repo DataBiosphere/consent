@@ -98,11 +98,15 @@ public class ElectionService {
             elections = dacService.filterElectionsByDAC(
                     electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()),
                     authUser);
+            List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
+            List<DarCollection> darCollections = darCollectionDAO.findDARCollectionsByReferenceIds(referenceIds);
             elections.forEach(election -> {
-                DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
-                if (Objects.nonNull(collection)) {
-                    DataAccessRequest dar = collection.getDars().get(election.getReferenceId());
-                    election.setDisplayId(collection.getDarCode());
+                Optional<DarCollection> collection = darCollections.stream()
+                        .filter(c -> c.getDars().containsKey(election.getReferenceId()))
+                        .findFirst();
+                if (collection.isPresent()) {
+                    DataAccessRequest dar = collection.get().getDars().get(election.getReferenceId());
+                    election.setDisplayId(collection.get().getDarCode());
                     election.setProjectTitle(dar.getData().getProjectTitle());
                 }
             });
