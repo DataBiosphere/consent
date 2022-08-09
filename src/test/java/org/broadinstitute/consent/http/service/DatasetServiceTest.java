@@ -184,7 +184,7 @@ public class DatasetServiceTest {
         doNothing().when(datasetDAO).updateDatasetNeedsApproval(any(), any());
         initService();
 
-        Dataset dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, true);
+        Dataset dataSet = datasetService.updateNeedsReviewDatasets(dataSetId, true);
         assertNotNull(dataSet);
     }
 

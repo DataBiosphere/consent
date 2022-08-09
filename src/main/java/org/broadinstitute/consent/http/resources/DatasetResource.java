@@ -170,7 +170,7 @@ public class DatasetResource extends Resource {
             Optional<Dataset> updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
             if (updatedDataset.isPresent()) {
                 URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.get().getDataSetId());
-                return Response.ok(uri).entity(updatedDataset.get()).build();
+                return Response.ok(uri).entity(unmarshal(updatedDataset.get())).build();
             }
             else {
                 return Response.noContent().build();
@@ -229,7 +229,7 @@ public class DatasetResource extends Resource {
     public Response validateDatasetName(@QueryParam("name") String name) {
         try {
             Dataset datasetWithName = datasetService.getDatasetByName(name);
-            return Response.ok().entity(datasetWithName.getDataSetId()).build();
+            return Response.ok().entity(unmarshal(datasetWithName.getDataSetId())).build();
         } catch (Exception e) {
             throw new NotFoundException("Could not find the dataset with name: " + name);
         }
@@ -370,8 +370,8 @@ public class DatasetResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
         try{
-            Dataset dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, needsApproval);
-            return Response.ok().entity(dataSet).build();
+            Dataset dataset = datasetService.updateNeedsReviewDatasets(dataSetId, needsApproval);
+            return Response.ok().entity(unmarshal(dataset)).build();
         }catch (Exception e){
             return createExceptionResponse(e);
         }

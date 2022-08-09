@@ -9,8 +9,6 @@ import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -87,16 +85,16 @@ public class DatasetService {
         }
     }
 
-    public Dataset updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval) {
-        if (datasetDAO.findDatasetById(dataSetId) == null) {
+    public Dataset updateNeedsReviewDatasets(Integer datasetId, Boolean needsApproval) {
+        if (datasetDAO.findDatasetById(datasetId) == null) {
             throw new NotFoundException("DataSet doesn't exist");
         }
-        datasetDAO.updateDatasetNeedsApproval(dataSetId, needsApproval);
-        return datasetDAO.findDatasetById(dataSetId);
+        datasetDAO.updateDatasetNeedsApproval(datasetId, needsApproval);
+        return datasetDAO.findDatasetById(datasetId);
     }
 
-    public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
-        return datasetDAO.findNeedsApprovalDatasetByDatasetId(dataSetIdList);
+    public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> datasetIdList) {
+        return datasetDAO.findNeedsApprovalDatasetByDatasetId(datasetIdList);
     }
 
     public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
