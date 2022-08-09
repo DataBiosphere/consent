@@ -21,8 +21,8 @@ import static org.junit.Assert.assertTrue;
 public class InstitutionUtilTest {
   private final List<UserRole> adminRoles = Collections.singletonList(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
   private final List<UserRole> researcherRoles = Collections.singletonList(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-  private final User adminUser = new User(1, "Admin", "Display Name", new Date(), adminRoles, "Admin");
-  private final User researcherUser = new User(1, "Researcher", "Display Name", new Date(), researcherRoles, "Researcher");
+  private final User adminUser = new User(1, "Admin", "Display Name", new Date(), adminRoles);
+  private final User researcherUser = new User(1, "Researcher", "Display Name", new Date(), researcherRoles);
 
   private InstitutionUtil util;
 

@@ -2,17 +2,21 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -52,16 +56,24 @@ public class DataAccessReportsParser {
                         HeaderDAR.APPROVED_DISAPPROVED.getValue() + END_OF_LINE);
     }
 
-
-    public void setDataSetApprovedUsersHeader(FileWriter darWriter) throws IOException {
-        darWriter.write(
-                HeaderDAR.USERNAME.getValue() + DEFAULT_SEPARATOR +
-                        HeaderDAR.NAME.getValue() + DEFAULT_SEPARATOR +
-                        HeaderDAR.ORGANIZATION.getValue() + DEFAULT_SEPARATOR +
-                        HeaderDAR.DAR_ID.getValue() + DEFAULT_SEPARATOR +
-                        HeaderDAR.DATE_REQUEST_APPROVAL.getValue() + DEFAULT_SEPARATOR +
-                        HeaderDAR.RENEWAL_DATE.getValue() + END_OF_LINE);
+  public String getDatasetApprovedUsersHeader(User user) {
+    StringBuilder builder = new StringBuilder();
+    if (user.doesUserHaveAnyRoleInSet(EnumSet.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER))) {
+      builder
+        .append(HeaderDAR.USERNAME.getValue())
+        .append(DEFAULT_SEPARATOR);
     }
+    builder
+        .append(HeaderDAR.NAME.getValue())
+        .append(DEFAULT_SEPARATOR)
+        .append(HeaderDAR.ORGANIZATION.getValue())
+        .append(DEFAULT_SEPARATOR)
+        .append(HeaderDAR.DAR_ID.getValue())
+        .append(DEFAULT_SEPARATOR)
+        .append(HeaderDAR.DATE_REQUEST_APPROVAL.getValue())
+        .append(END_OF_LINE);
+    return builder.toString();
+  }
 
     public void addApprovedDARLine(FileWriter darWriter, Election election, DataAccessRequest dar, String profileName, String institution, String consentName, String translatedUseRestriction) throws IOException {
         String rusSummary = Objects.nonNull(dar.getData()) && StringUtils.isNotEmpty(dar.getData().getNonTechRus()) ?  dar.getData().getNonTechRus().replace("\n", " ") : "";
@@ -81,15 +93,23 @@ public class DataAccessReportsParser {
         addDARLine(darWriter, dar, "", content2, consentName, translatedUseRestriction);
     }
 
-
-    public void addDataSetApprovedUsersLine(FileWriter darWriter, String email, String name, String institution, String darCode, Date approvalDate) throws IOException {
-        darWriter.write(
-                email + DEFAULT_SEPARATOR +
-                    name + DEFAULT_SEPARATOR +
-                    institution + DEFAULT_SEPARATOR +
-                    darCode + DEFAULT_SEPARATOR +
-                    formatTimeToDate(approvalDate.getTime()) + DEFAULT_SEPARATOR +
-                    " - " + END_OF_LINE);
+    public String getDataSetApprovedUsersLine(User user, String email, String name, String institution, String darCode, Date approvalDate) {
+      StringBuilder builder = new StringBuilder();
+      if (user.doesUserHaveAnyRoleInSet(EnumSet.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER))) {
+        builder
+            .append(email)
+            .append(DEFAULT_SEPARATOR);
+      }
+      builder
+          .append(name)
+          .append(DEFAULT_SEPARATOR)
+          .append(institution)
+          .append(DEFAULT_SEPARATOR)
+          .append(darCode)
+          .append(DEFAULT_SEPARATOR)
+          .append(formatTimeToDate(approvalDate.getTime()))
+          .append(END_OF_LINE);
+      return builder.toString();
     }
 
     private String formatTimeToDate(long time) {
@@ -111,7 +131,7 @@ public class DataAccessReportsParser {
                 try {
                     Integer id = Integer.parseInt(detail.getDatasetId());
                     dataSetIds.add(id);
-                    dataSetUUIds.add(DataSet.parseAliasToIdentifier(id));
+                    dataSetUUIds.add(Dataset.parseAliasToIdentifier(id));
                 } catch (Exception e) {
                     logger.warn("Invalid Dataset ID: " + detail.getDatasetId());
                 }

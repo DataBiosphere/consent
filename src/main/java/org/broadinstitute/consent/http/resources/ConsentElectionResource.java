@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -57,6 +57,7 @@ public class ConsentElectionResource extends Resource {
         this.electionService = electionService;
     }
 
+    @Deprecated
     @POST
     @Consumes("application/json")
     @Path("/dac/{dacId}")
@@ -90,6 +91,7 @@ public class ConsentElectionResource extends Resource {
         return Response.created(uri).build();
     }
 
+    @Deprecated
     @POST
     @Consumes("application/json")
     @RolesAllowed({ADMIN, CHAIRPERSON})
@@ -123,7 +125,7 @@ public class ConsentElectionResource extends Resource {
     private URI createElectionURI(UriInfo info, Election election, String consentId) throws Exception {
         // For a consent election, any dataset associated to the consent is
         // appropriate for assignment to this election.
-        Optional<DataSet> dataset = dacService.findDatasetsByConsentId(consentId).
+        Optional<Dataset> dataset = dacService.findDatasetsByConsentId(consentId).
                 stream().
                 findFirst();
         dataset.ifPresent(dataSet -> election.setDataSetId(dataSet.getDataSetId()));

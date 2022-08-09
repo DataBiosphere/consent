@@ -9,20 +9,20 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Optional;
+
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DefaultAuthFilterTest {
 
-    public static final int CREATED = Response.Status.CREATED.getStatusCode();
     private Optional principal = Optional.of("Testing DefaulthAuthFilter");
 
     @Rule
@@ -46,7 +46,7 @@ public class DefaultAuthFilterTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         when(requestContext.getHeaders()).thenReturn(headers);
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
     }

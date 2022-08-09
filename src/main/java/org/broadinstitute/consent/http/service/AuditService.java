@@ -20,7 +20,7 @@ public class AuditService {
     }
 
     public void saveAssociationAuditList(List<String> ids, String modifiedTable, String changeAction, String modifiedByUserEmail) {
-        int modifiedByUserId = userDAO.findUserByEmail(modifiedByUserEmail).getDacUserId();
+        int modifiedByUserId = userDAO.findUserByEmail(modifiedByUserEmail).getUserId();
         List<ConsentAudit> auditList = createAuditList(ids, modifiedTable, changeAction, modifiedByUserId);
         consentAuditDAO.batchInsertWorkspaceAudit(auditList);
     }
@@ -35,7 +35,7 @@ public class AuditService {
     }
 
     public void saveConsentAudit(String consentId, String modifiedTable, String changeAction, String modifiedByUserEmail) {
-        int modifiedByUserId = userDAO.findUserByEmail(modifiedByUserEmail).getDacUserId();
+        int modifiedByUserId = userDAO.findUserByEmail(modifiedByUserEmail).getUserId();
         saveAuditInfo(new ConsentAudit(consentId, modifiedTable, changeAction, modifiedByUserId, new Date()));
     }
 

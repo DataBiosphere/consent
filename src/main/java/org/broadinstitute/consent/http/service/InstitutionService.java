@@ -3,25 +3,30 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.NotFoundException;
 
 public class InstitutionService {
 
   private final InstitutionDAO institutionDAO;
+  private final UserDAO userDAO;
 
   @Inject
-  public InstitutionService(InstitutionDAO institutionDAO) {
+  public InstitutionService(InstitutionDAO institutionDAO, UserDAO userDAO) {
     this.institutionDAO = institutionDAO;
+    this.userDAO = userDAO;
   }
 
   public Institution createInstitution(Institution institution, Integer userId) {
-      checkForEmptyName(institution); 
+      checkForEmptyName(institution);
       checkUserId(userId);
       Date createTimestamp = new Date();
       Integer id = institutionDAO.insertInstitution(
@@ -41,11 +46,11 @@ public class InstitutionService {
     checkForEmptyName(institutionPayload);
     Date updateDate = new Date();
     institutionDAO.updateInstitutionById(
-      id, 
-      institutionPayload.getName(), 
-      institutionPayload.getItDirectorEmail(), 
-      institutionPayload.getItDirectorName(), 
-      userId, 
+      id,
+      institutionPayload.getName(),
+      institutionPayload.getItDirectorEmail(),
+      institutionPayload.getItDirectorName(),
+      userId,
       updateDate
     );
     return institutionDAO.findInstitutionById(id);
@@ -60,11 +65,21 @@ public class InstitutionService {
   public Institution findInstitutionById(Integer id) {
     Institution institution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(institution);
-    return institutionDAO.findInstitutionById(id);
+
+    List<SimplifiedUser> signingOfficials = userDAO.getSOsByInstitution(id).stream()
+            .map(SimplifiedUser::new)
+            .collect(Collectors.toList());
+    institution.setSigningOfficials(signingOfficials);
+
+    return institution;
   }
 
   public List<Institution> findAllInstitutions() {
     return institutionDAO.findAllInstitutions();
+  }
+
+  public List<Institution> findAllInstitutionsByName(String name) {
+    return institutionDAO.findInstitutionsByName(name);
   }
 
   private void checkForEmptyName(Institution institution) {

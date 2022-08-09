@@ -23,17 +23,16 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
         id -> rowView.getRow(Institution.class));
 
     User create_user = new User();
-    if (Objects.nonNull(rowView.getColumn("u_dacuserid", Integer.class))) {
+    if (Objects.nonNull(rowView.getColumn("u_user_id", Integer.class))) {
         create_user = rowView.getRow(User.class);
     }
 
 
     User update_user = new User();
-    update_user.setDacUserId(rowView.getColumn("u2_dacuserid", Integer.class));
+    update_user.setUserId(rowView.getColumn("u2_user_id", Integer.class));
     update_user.setEmail(rowView.getColumn("u2_email", String.class));
-    update_user.setDisplayName(rowView.getColumn("u2_displayname", String.class));
-    update_user.setCreateDate(rowView.getColumn("u2_createdate", Timestamp.class));
-    update_user.setAdditionalEmail(rowView.getColumn("u2_additional_email", String.class));
+    update_user.setDisplayName(rowView.getColumn("u2_display_name", String.class));
+    update_user.setCreateDate(rowView.getColumn("u2_create_date", Timestamp.class));
     update_user.setEmailPreference(rowView.getColumn("u2_email_preference", Boolean.class));
     update_user.setEraCommonsId(rowView.getColumn("u2_era_commons_id", String.class));
 
@@ -41,9 +40,8 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
     institution.setCreateUser(create_user);
     institution.setUpdateUser(update_user);
 
-    if (Objects.nonNull(rowView.getColumn("so_dacuserid", Integer.class))) {
-      SimplifiedUser so_user = new SimplifiedUser();
-      so_user = rowView.getRow(SimplifiedUser.class);
+    if (Objects.nonNull(rowView.getColumn("so_user_id", Integer.class))) {
+      SimplifiedUser so_user = rowView.getRow(SimplifiedUser.class);
       institution.addSigningOfficial(so_user);
     }
 

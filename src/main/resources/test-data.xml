@@ -26,10 +26,10 @@
 
     <!--insert admin user-->
     <changeSet author="rfricke" id="test.2">
-        <insert tableName="dacuser">
+        <insert tableName="users">
             <column name="email" value="duos-automation-admin@broad-duos-dev.iam.gserviceaccount.com"/>
-            <column name="displayname" value="DUOS Automation Admin"/>
-            <column name="createdate" value="2021-02-12 02:56:27.386"/>
+            <column name="display_name" value="DUOS Automation Admin"/>
+            <column name="create_date" value="2021-02-12 02:56:27.386"/>
             <column name="email_preference" value="0"/>
         </insert>
     </changeSet>
@@ -38,19 +38,19 @@
     <changeSet dbms="postgresql" author="rfricke" id="test.3">
         <sql>
             INSERT INTO user_role (user_id, role_id)
-            SELECT dacuserid, roleid
-            FROM dacuser
+            SELECT user_id, roleid
+            FROM users
             INNER JOIN roles on roles.name = 'Admin'
-            WHERE dacuser.email = 'duos-automation-admin@broad-duos-dev.iam.gserviceaccount.com'
+            WHERE users.email = 'duos-automation-admin@broad-duos-dev.iam.gserviceaccount.com'
         </sql>
     </changeSet>
 
     <!--insert chair user-->
     <changeSet author="rfricke" id="test.4">
-        <insert tableName="dacuser">
+        <insert tableName="users">
             <column name="email" value="duos-automation-chair@broad-duos-dev.iam.gserviceaccount.com"/>
-            <column name="displayname" value="DUOS Automation Chair"/>
-            <column name="createdate" value="2021-02-12 02:56:27.386"/>
+            <column name="display_name" value="DUOS Automation Chair"/>
+            <column name="create_date" value="2021-02-12 02:56:27.386"/>
             <column name="email_preference" value="0"/>
         </insert>
     </changeSet>
@@ -59,20 +59,20 @@
     <changeSet dbms="postgresql" author="rfricke" id="test.5">
         <sql>
             INSERT INTO user_role (user_id, role_id, dac_id)
-            SELECT dacuserid, roleid, dac_id
-            FROM dacuser
+            SELECT user_id, roleid, dac_id
+            FROM users
             INNER JOIN dac on dac.name like '%test%'
             INNER JOIN roles on roles.name = 'Chairperson'
-            WHERE dacuser.email = 'duos-automation-chair@broad-duos-dev.iam.gserviceaccount.com'
+            WHERE users.email = 'duos-automation-chair@broad-duos-dev.iam.gserviceaccount.com'
         </sql>
     </changeSet>
 
     <!--insert member user-->
     <changeSet author="rfricke" id="test.6">
-        <insert tableName="dacuser">
+        <insert tableName="users">
             <column name="email" value="duos-automation-member@broad-duos-dev.iam.gserviceaccount.com"/>
-            <column name="displayname" value="DUOS Automation Member"/>
-            <column name="createdate" value="2021-02-12 02:56:27.386"/>
+            <column name="display_name" value="DUOS Automation Member"/>
+            <column name="create_date" value="2021-02-12 02:56:27.386"/>
             <column name="email_preference" value="0"/>
         </insert>
     </changeSet>
@@ -81,20 +81,20 @@
     <changeSet dbms="postgresql" author="rfricke" id="test.7">
         <sql>
             INSERT INTO user_role (user_id, role_id, dac_id)
-            SELECT dacuserid, roleid, dac_id
-            FROM dacuser
+            SELECT user_id, roleid, dac_id
+            FROM users
             INNER JOIN dac on dac.name like '%test%'
             INNER JOIN roles on roles.name = 'Member'
-            WHERE dacuser.email = 'duos-automation-member@broad-duos-dev.iam.gserviceaccount.com'
+            WHERE users.email = 'duos-automation-member@broad-duos-dev.iam.gserviceaccount.com'
         </sql>
     </changeSet>
 
     <!--insert researcher user-->
     <changeSet author="rfricke" id="test.8">
-        <insert tableName="dacuser">
+        <insert tableName="users">
             <column name="email" value="duos-automation-researcher@broad-duos-dev.iam.gserviceaccount.com"/>
-            <column name="displayname" value="DUOS Automation Researcher"/>
-            <column name="createdate" value="2021-02-12 02:56:27.386"/>
+            <column name="display_name" value="DUOS Automation Researcher"/>
+            <column name="create_date" value="2021-02-12 02:56:27.386"/>
             <column name="email_preference" value="0"/>
         </insert>
     </changeSet>
@@ -103,20 +103,20 @@
     <changeSet dbms="postgresql" author="rfricke" id="test.9">
         <sql>
             INSERT INTO user_role (user_id, role_id)
-            SELECT dacuserid, roleid
-            FROM dacuser
+            SELECT user_id, roleid
+            FROM users
             INNER JOIN dac on dac.name like '%test%'
             INNER JOIN roles on roles.name = 'Researcher'
-            WHERE dacuser.email = 'duos-automation-researcher@broad-duos-dev.iam.gserviceaccount.com'
+            WHERE users.email = 'duos-automation-researcher@broad-duos-dev.iam.gserviceaccount.com'
         </sql>
     </changeSet>
 
     <!--insert dataowner user-->
     <changeSet author="rfricke" id="test.10">
-        <insert tableName="dacuser">
+        <insert tableName="users">
             <column name="email" value="duos-automation-dataowner@broad-duos-dev.iam.gserviceaccount.com"/>
-            <column name="displayname" value="DUOS Automation DataOwner"/>
-            <column name="createdate" value="2021-02-12 02:56:27.386"/>
+            <column name="display_name" value="DUOS Automation DataOwner"/>
+            <column name="create_date" value="2021-02-12 02:56:27.386"/>
             <column name="email_preference" value="0"/>
         </insert>
     </changeSet>
@@ -125,11 +125,11 @@
     <changeSet dbms="postgresql" author="rfricke" id="test.11">
         <sql>
             INSERT INTO user_role (user_id, role_id, dac_id)
-            SELECT dacuserid, roleid, dac_id
-            FROM dacuser
+            SELECT user_id, roleid, dac_id
+            FROM users
             INNER JOIN dac on dac.name like '%test%'
             INNER JOIN roles on roles.name = 'DataOwner'
-            WHERE dacuser.email = 'duos-automation-dataowner@broad-duos-dev.iam.gserviceaccount.com'
+            WHERE users.email = 'duos-automation-dataowner@broad-duos-dev.iam.gserviceaccount.com'
         </sql>
     </changeSet>
 

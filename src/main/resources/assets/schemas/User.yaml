@@ -1,8 +1,15 @@
 type: object
 properties:
-  dacUserId:
+  userId:
     type: integer
     description: ID of the user
+  dacUserId:
+    deprecated: true
+    type: integer
+    description: | 
+      ID of the user. This is a deprecated field and will be removed in a 
+      future release. It is a duplicate of the `userId` field and is still
+      in use in the UI.
   email:
     type: string
     description: Email of the user
@@ -17,6 +24,7 @@ properties:
     format: date
     description: Describes the date the User was created.
   profileCompleted:
+    deprecated: true
     type: boolean
     description: The profile is completed. Researchers only.
   roles:

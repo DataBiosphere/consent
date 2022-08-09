@@ -1,27 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -31,9 +9,11 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
+import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -42,20 +22,45 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotFoundException;
+import java.io.File;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessRequestServiceTest {
 
@@ -84,13 +89,13 @@ public class DataAccessRequestServiceTest {
     @Mock
     private InstitutionDAO institutionDAO;
     @Mock
-    private ElectionService electionService;
+    private MatchDAO matchDAO;
 
     private DataAccessRequestService service;
 
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
+        openMocks(this);
         doNothings();
     }
 
@@ -109,6 +114,7 @@ public class DataAccessRequestServiceTest {
         container.setDatasetDAO(dataSetDAO);
         container.setElectionDAO(electionDAO);
         container.setVoteDAO(voteDAO);
+        container.setMatchDAO(matchDAO);
         service = new DataAccessRequestService(counterService, container, dacService);
     }
 
@@ -117,17 +123,17 @@ public class DataAccessRequestServiceTest {
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setData(new DataAccessRequestData());
-        dar.getData().setDatasetIds(Collections.singletonList(genericId));
+        dar.addDatasetId(genericId);
         when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar));
         Election e = new Election();
         e.setReferenceId(dar.getReferenceId());
         e.setElectionId(genericId);
         when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), any())).thenReturn(Collections.singletonList(e));
-        DataSet ds = new DataSet();
+        Dataset ds = new Dataset();
         ds.setConsentName(dar.getReferenceId());
         ds.setDataSetId(1);
         ds.setName("test dataset");
-        when(dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()))
+        when(dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()))
                 .thenReturn(Collections.singletonList(ds));
         initService();
 
@@ -141,10 +147,10 @@ public class DataAccessRequestServiceTest {
         when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
+        when(userDAO.findUserByEmail(any())).thenReturn(new User());
         initService();
 
-        DataAccessRequest updated = service.cancelDataAccessRequest(dar.getReferenceId());
+        DataAccessRequest updated = service.cancelDataAccessRequest(authUser, dar.getReferenceId());
         assertNotNull(updated);
         assertNotNull(updated.getData());
         assertNotNull(updated.getData().getStatus());
@@ -156,10 +162,9 @@ public class DataAccessRequestServiceTest {
         when(electionDAO.getElectionIdsByReferenceIds(anyList())).thenReturn(List.of(1));
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any());
         initService();
 
-        service.cancelDataAccessRequest(dar.getReferenceId());
+        service.cancelDataAccessRequest(authUser, dar.getReferenceId());
     }
 
     @Test(expected = NotFoundException.class)
@@ -168,28 +173,29 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(null);
         initService();
 
-        service.cancelDataAccessRequest(dar.getReferenceId());
+        service.cancelDataAccessRequest(authUser, dar.getReferenceId());
     }
 
     @Test
     public void testCreateDataAccessRequest_Update() {
         DataAccessRequest dar = generateDataAccessRequest();
-        dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
+        dar.addDatasetIds(List.of(1, 2, 3));
         User user = new User(1, "email@test.org", "Display Name", new Date());
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(List.of(1, 2, 3));
         doNothing().when(dataAccessRequestDAO).updateDraftByReferenceId(any(), any());
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(), any(), any(), any());
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(), any(), any(), any(), any());
         doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
         initService();
-        List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
-        assertEquals(3, newDars.size());
+        DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
+        assertNotNull(newDar);
     }
 
     @Test
     public void testCreateDataAccessRequest_Create() {
         DataAccessRequest dar = generateDataAccessRequest();
-        dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
+        dar.addDatasetIds(List.of(1, 2, 3));
         dar.setCreateDate(new Timestamp(1000));
         dar.setSortDate(new Timestamp(1000));
         dar.setReferenceId("id");
@@ -197,15 +203,12 @@ public class DataAccessRequestServiceTest {
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
         when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
+        when(dataAccessRequestDAO.findDARDatasetRelations(any())).thenReturn(List.of(1, 2, 3));
         when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class))).thenReturn(RandomUtils.nextInt(1,100));
-        doNothing().when(dataAccessRequestDAO).insertVersion3(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
+        doNothing().when(dataAccessRequestDAO).insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
         initService();
-        List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
-        assertEquals(3, newDars.size());
-        Integer collectionId = newDars.get(0).getCollectionId();
-        for(DataAccessRequest darElement: newDars) {
-            assertEquals(collectionId, darElement.getCollectionId());
-        }
+        DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
+        assertNotNull(newDar);
     }
 
     @Test
@@ -213,12 +216,12 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setCollectionId(RandomUtils.nextInt(0, 100));
         User user = new User(1, "email@test.org", "Display Name", new Date());
-        dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(),
+        dar.addDatasetIds(Arrays.asList(1, 2, 3));
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(),
             any(), any(), any(), any());
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         initService();
-        DataAccessRequest newDar = service.updateByReferenceIdVersion2(user, dar);
+        DataAccessRequest newDar = service.updateByReferenceId(user, dar);
         assertNotNull(newDar);
     }
 
@@ -226,20 +229,49 @@ public class DataAccessRequestServiceTest {
     public void testUpdateByReferenceIdVersion2_WithCollection() {
         DataAccessRequest dar = generateDataAccessRequest();
         User user = new User(1, "email@test.org", "Display Name", new Date());
-        dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(),
+        dar.addDatasetIds(Arrays.asList(1, 2, 3));
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(),
           any(), any(), any(), any());
         doNothing().when(darCollectionDAO).updateDarCollection(any(), any(), any());
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         initService();
-        DataAccessRequest newDar = service.updateByReferenceIdVersion2(user, dar);
+        DataAccessRequest newDar = service.updateByReferenceId(user, dar);
         assertNotNull(newDar);
+    }
+
+    @Test
+    public void testGetUsersApprovedForDataset() {
+        Dataset d = new Dataset();
+        d.setDataSetId(10);
+
+        User user1 = new User();
+        user1.setUserId(10);
+        User user2 = new User();
+        user2.setUserId(20);
+
+        DataAccessRequest dar1 = new DataAccessRequest();
+        dar1.setUserId(10);
+        DataAccessRequest dar2 = new DataAccessRequest();
+        dar2.setUserId(20);
+
+
+        when(this.dataAccessRequestDAO
+                .findAllUserIdsWithApprovedDARsByDatasetId(d.getDataSetId()))
+                .thenReturn(List.of(dar1.getUserId(), dar2.getUserId()));
+
+        when(this.userDAO.findUsers(List.of(dar1.getUserId(), dar2.getUserId())))
+                .thenReturn(List.of(user1, user2));
+
+        initService();
+
+        assertEquals(List.of(user1, user2),
+                service.getUsersApprovedForDataset(d));
     }
 
     @Test
     public void testInsertDraftDataAccessRequest() {
         User user = new User();
-        user.setDacUserId(1);
+        user.setUserId(1);
         DataAccessRequest draft = generateDataAccessRequest();
         doNothing()
             .when(dataAccessRequestDAO)
@@ -266,7 +298,7 @@ public class DataAccessRequestServiceTest {
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setData(new DataAccessRequestData());
-        dar.getData().setDatasetIds(Collections.singletonList(genericId));
+        dar.addDatasetId(genericId);
         when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar));
         when(dacService.filterDataAccessRequestsByDac(any(), any())).thenReturn(Collections.singletonList(dar));
 
@@ -306,7 +338,7 @@ public class DataAccessRequestServiceTest {
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setData(new DataAccessRequestData());
-        dar.getData().setDatasetIds(Collections.singletonList(genericId));
+        dar.addDatasetId(genericId);
         when(dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(any())).thenReturn(Collections.singletonList(dar));
 
         Election e = new Election();
@@ -352,7 +384,7 @@ public class DataAccessRequestServiceTest {
         Integer genericId = 1;
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setData(new DataAccessRequestData());
-        dar.getData().setDatasetIds(Collections.singletonList(genericId));
+        dar.addDatasetId(genericId);
         when(dataAccessRequestDAO.findAllDarsByUserId(any())).thenReturn(Collections.singletonList(dar));
 
         Election e = new Election();
@@ -402,13 +434,13 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         User user = new User();
-        user.setDacUserId(1);
+        user.setUserId(1);
         user.setDisplayName("displayName");
         user.setInstitutionId(1);
         Institution institution = new Institution();
         institution.setName("Institution");
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        when(dataSetDAO.getAssociatedConsentIdByDataSetId(any()))
+        when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
                 .thenReturn("CONS-1");
 
         Consent consent = new Consent();
@@ -436,7 +468,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        when(dataSetDAO.getAssociatedConsentIdByDataSetId(any()))
+        when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
                 .thenReturn("CONS-1");
 
         Consent consent = new Consent();
@@ -457,11 +489,11 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void testCreateDataSetApprovedUsersDocument() {
+    public void testCreateDatasetApprovedUsersContentAsNonPrivilegedUser() {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
         User user = new User();
-        user.setDacUserId(1);
+        user.setUserId(1);
         user.setDisplayName("displayName");
         user.setInstitutionId(1);
         Institution institution = new Institution();
@@ -473,51 +505,51 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(dar);
         when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
                 .thenReturn(new Date());
-
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
 
         initService();
 
         try {
-            File file = service.createDataSetApprovedUsersDocument(1);
-
-            assertNotNull(file);
-        } catch (IOException ioe) {
+            String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
+            System.out.println(approvedUsers);
+            assertNotNull(approvedUsers);
+            assertFalse(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
+        } catch (Exception ioe) {
             assert false;
         }
     }
 
     @Test
-    public void testDARModalDetailsDTOBuilder() {
+    public void testCreateDatasetApprovedUsersContentAsPrivilegedUser() {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
-        User researcher = new User();
-        researcher.setDacUserId(1);
-        researcher.setDisplayName("displayName");
-        researcher.setInstitutionId(1);
-        Institution institution = new Institution();
-        institution.setId(1);
-        institution.setName("Institution");
-        DataSet ds = new DataSet();
-        ds.setDataSetId(1);
-        ds.setName("DS-1");
-        ds.setConsentName(dar.getReferenceId());
-
-        when(userDAO.findUserById(any())).thenReturn(researcher);
-        when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
-        when(dataAccessRequestDAO.findByReferenceId(any()))
-                .thenReturn(dar);
-        when(dataSetDAO.findDataSetsByIdList(dar.data.getDatasetIds()))
-                .thenReturn(Collections.singletonList(ds));
-
         User user = new User();
-        user.setDacUserId(1);
-        user.setEmail("test@test.com");
-        user.setDisplayName("Test User");
+        UserRole userRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+        user.addRole(userRole);
+        user.setUserId(1);
+        user.setDisplayName("displayName");
+        user.setInstitutionId(1);
+        Institution institution = new Institution();
+        institution.setName("Institution");
+        when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
+        when(dataAccessRequestDAO.findAllDataAccessRequests())
+                .thenReturn(Collections.singletonList(dar));
+        when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
+                .thenReturn(dar);
+        when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
+                .thenReturn(new Date());
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+
         initService();
 
-        DARModalDetailsDTO darModalDetailsDTO = service.DARModalDetailsDTOBuilder(dar, user, electionService);
-        assertNotNull(darModalDetailsDTO);
-        assertEquals("Institution", darModalDetailsDTO.getInstitutionName());
+        try {
+            String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
+            System.out.println(approvedUsers);
+            assertNotNull(approvedUsers);
+            assertTrue(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
+        } catch (Exception ioe) {
+            assert false;
+        }
     }
 
     private DataAccessRequest generateDataAccessRequest() {
@@ -527,9 +559,8 @@ public class DataAccessRequestServiceTest {
         dar.setUserId(userId);
         dar.setReferenceId(UUID.randomUUID().toString());
         data.setReferenceId(dar.getReferenceId());
-        data.setDatasetIds(Collections.singletonList(1));
+        dar.addDatasetId(1);
         data.setForProfit(false);
-        data.setAcademicEmail("acad@email.com");
         data.setAddiction(false);
         data.setAddress1("");
         data.setAddress2("");
@@ -569,10 +600,10 @@ public class DataAccessRequestServiceTest {
         return dar;
     }
 
-    private Election generateElection(Integer dataSetId) {
+    private Election generateElection(Integer datasetId) {
         String refId = UUID.randomUUID().toString();
         Election election = new Election();
-        election.setDataSetId(dataSetId);
+        election.setDataSetId(datasetId);
         election.setReferenceId(refId);
 
         return election;
@@ -610,7 +641,7 @@ public class DataAccessRequestServiceTest {
         dar.setReferenceId("referenceId");
         dar.setUserId(1);
         DataAccessRequestData data = new DataAccessRequestData();
-        data.setDatasetIds(Arrays.asList(361));
+        dar.addDatasetId(361);
         dar.setData(data);
         when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(Arrays.asList(dar));
         initService();
@@ -624,7 +655,7 @@ public class DataAccessRequestServiceTest {
         dar.setReferenceId("referenceId");
         dar.setUserId(1);
         DataAccessRequestData data = new DataAccessRequestData();
-        data.setDatasetIds(Arrays.asList(361));
+        dar.addDatasetId(361);
         dar.setData(data);
         when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(Arrays.asList(dar));
         initService();
@@ -690,8 +721,8 @@ public class DataAccessRequestServiceTest {
         DataAccessRequestData data = new DataAccessRequestData();
         data.setReferenceId(UUID.randomUUID().toString());
         data.setStatus(DarStatus.CANCELED.getValue());
-        data.setDatasetIds(List.of());
         dar.setData(data);
+        dar.setDatasetIds(null);
         dar.setReferenceId(data.getReferenceId());
         sourceCollection.addDar(dar);
         initService();
@@ -705,7 +736,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
         data.setStatus(DarStatus.CANCELED.getValue());
-        data.setDatasetIds(List.of(1));
+        dar.addDatasetId(1);
         data.setReferenceId(UUID.randomUUID().toString());
         dar.setData(data);
         dar.setReferenceId(data.getReferenceId());
@@ -722,7 +753,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
         data.setStatus(DarStatus.CANCELED.getValue());
-        data.setDatasetIds(List.of(1));
+        dar.addDatasetId(1);
         data.setReferenceId(UUID.randomUUID().toString());
         dar.setData(data);
         dar.setReferenceId(data.getReferenceId());
@@ -742,6 +773,65 @@ public class DataAccessRequestServiceTest {
         service.createDraftDarFromCanceledCollection(user, sourceCollection);
     }
 
+    @Test
+    public void testDeleteByReferenceIdAdmin() {
+        String referenceId = UUID.randomUUID().toString();
+        User adminUser = new User();
+        adminUser.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+        Election election = new Election();
+        election.setElectionId(1);
+        election.setReferenceId(referenceId);
+        when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of(election));
+        doNothing().when(voteDAO).deleteVotesByReferenceId(any());
+        doNothing().when(electionDAO).deleteElectionFromAccessRP(any());
+        doNothing().when(electionDAO).deleteElectionById(any());
+        doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
+        doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        initService();
+
+        try {
+            service.deleteByReferenceId(adminUser, referenceId);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testDeleteByReferenceIdResearcherSuccess() {
+        String referenceId = UUID.randomUUID().toString();
+        User user = new User();
+        user.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+        when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of());
+        doNothing().when(voteDAO).deleteVotesByReferenceId(any());
+        doNothing().when(electionDAO).deleteElectionFromAccessRP(any());
+        doNothing().when(electionDAO).deleteElectionById(any());
+        doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
+        doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
+        initService();
+
+        service.deleteByReferenceId(user, referenceId);
+    }
+
+    @Test(expected = NotAcceptableException.class)
+    public void testDeleteByReferenceIdResearcherFailure() {
+        String referenceId = UUID.randomUUID().toString();
+        User user = new User();
+        user.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+        Election election = new Election();
+        election.setElectionId(1);
+        election.setReferenceId(referenceId);
+        when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of(election));
+        doNothing().when(voteDAO).deleteVotesByReferenceId(any());
+        doNothing().when(electionDAO).deleteElectionFromAccessRP(any());
+        doNothing().when(electionDAO).deleteElectionById(any());
+        doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
+        doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
+        doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
+        initService();
+
+        service.deleteByReferenceId(user, referenceId);
+    }
 
     private class LongerThanTwo implements ArgumentMatcher<String> {
 

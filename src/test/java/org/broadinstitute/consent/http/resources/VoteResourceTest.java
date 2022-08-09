@@ -1,9 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.gson.Gson;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Before;
@@ -11,11 +14,15 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -26,13 +33,17 @@ public class VoteResourceTest {
 
   @Mock private VoteService voteService;
 
+  @Mock private ElectionService electionService;
+
   @Mock private AuthUser authUser;
 
-  private User user = new User();
+  private final User user = new User();
 
-  private Vote vote = new Vote();
+  private final Vote vote = new Vote();
 
   private VoteResource resource;
+
+  private final Gson gson = new Gson();
 
   @Before
   public void setUp() {
@@ -40,65 +51,323 @@ public class VoteResourceTest {
   }
 
   private void initResource() {
-    resource = new VoteResource(userService, voteService);
+    resource = new VoteResource(userService, voteService, electionService);
   }
 
   @Test
   public void testUpdateVotes_invalidJson() {
     initResource();
-    Response response = resource.updateVotes(authUser, true, "rationale", "{\"ID\":12345}");
+    Response response = resource.updateVotes(authUser, "{\"vote\": true, \"ID\":12345}");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVotes_nullIds() {
+    initResource();
+    Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate();
+    voteUpdate.setVote(true);
+    voteUpdate.setRationale("example");
+
+    Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
   public void testUpdateVotes_noIds() {
     initResource();
-    Response response = resource.updateVotes(authUser, true, "rationale", "[]");
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", new ArrayList<>());
+    Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
+
 
   @Test
   public void testUpdateVotes_noVotesForIds() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(Collections.emptyList());
     initResource();
-    Response response = resource.updateVotes(authUser, true, "rationale", "[1]");
+
+    Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1));
+    Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
+  public void testUpdateVotes_noVoteValue() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
+    initResource();
+
+    Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate();
+    voteUpdate.setRationale("example");
+    voteUpdate.setVoteIds(List.of(1, 2, 3));
+
+    Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
   public void testUpdateVotes_invalidUser() {
-    user.setDacUserId(1);
+    user.setUserId(1);
     vote.setDacUserId(2);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
     initResource();
 
-    Response response = resource.updateVotes(authUser, true, "rationale", "[1, 2, 3]");
+    Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
+    Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
   public void testUpdateVotes_closedElection() {
-    user.setDacUserId(1);
-    vote.setDacUserId(2);
+    user.setUserId(1);
+    vote.setDacUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new IllegalArgumentException()).when(voteService).findVotesByIds(any());
     initResource();
 
-    Response response = resource.updateVotes(authUser, true, "rationale", "[1, 2, 3]");
+    Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
+    Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
-  public void testUpdateVotes() {
-    user.setDacUserId(1);
+  public void testUpdateVotes_allMemberVotes() {
+      user.setUserId(1);
+      vote.setDacUserId(1);
+      vote.setType("DAC");
+      vote.setVote(true);
+      Vote voteTwo = new Vote();
+      voteTwo.setVote(true);
+      voteTwo.setType("DAC");
+      voteTwo.setDacUserId(1);
+      Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
+      when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
+              .thenReturn(List.of(vote));
+      initResource();
+
+      Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
+      assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVotes_allYes_allRP() {
+      user.setUserId(1);
+      vote.setDacUserId(1);
+      vote.setType("Chairperson");
+      vote.setVote(true);
+      Vote voteTwo = new Vote();
+      voteTwo.setVote(true);
+      voteTwo.setType("Chairperson");
+      voteTwo.setDacUserId(1);
+      Election election = new Election();
+      Election electionTwo = new Election();
+      election.setElectionType("RP");
+      electionTwo.setElectionType("RP");
+      Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
+      when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
+              .thenReturn(List.of(vote));
+
+      initResource();
+
+      Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
+      assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVotes_allNo_allRP() {
+      user.setUserId(1);
+      vote.setDacUserId(1);
+      vote.setType("Chairperson");
+      vote.setVote(false);
+      Vote voteTwo = new Vote();
+      voteTwo.setVote(false);
+      voteTwo.setType("Chairperson");
+      voteTwo.setDacUserId(1);
+      Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(false, "example", List.of(1, 2, 3));
+      when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
+              .thenReturn(List.of(vote));
+      initResource();
+
+      Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
+      assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVotes_allYes_allDataAccess_AllCards() {
+      user.setUserId(1);
+      vote.setDacUserId(1);
+      vote.setVoteId(1);
+      vote.setType("Chairperson");
+      vote.setVote(true);
+      Vote voteTwo = new Vote();
+      voteTwo.setType("Chairperson");
+      voteTwo.setVoteId(2);
+      voteTwo.setDacUserId(1);
+      voteTwo.setVote(true);
+      Election election = new Election();
+      election.setElectionId(1);
+      Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
+      when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
+              .thenReturn(List.of(vote, voteTwo));
+      when(electionService.findElectionsByVoteIdsAndType(anyList(), anyString()))
+              .thenReturn(List.of(election));
+      when(electionService.findElectionsWithCardHoldingUsersByElectionIds(anyList()))
+              .thenReturn(List.of(election));
+
+      initResource();
+
+      Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
+      assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVotes_allNo_allDataAccess_AllCards() {
+      user.setUserId(1);
+      vote.setDacUserId(1);
+      vote.setVoteId(1);
+      vote.setType("Chairperson");
+      vote.setVote(false);
+      Vote voteTwo = new Vote();
+      voteTwo.setType("Chairperson");
+      voteTwo.setVoteId(2);
+      voteTwo.setDacUserId(1);
+      voteTwo.setVote(false);
+      Election election = new Election();
+      election.setElectionId(1);
+      Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(false, "example", List.of(1, 2, 3));
+      when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
+              .thenReturn(List.of(vote, voteTwo));
+      when(electionService.findElectionsByVoteIdsAndType(anyList(), anyString()))
+              .thenReturn(List.of(election));
+      when(electionService.findElectionsWithCardHoldingUsersByElectionIds(anyList()))
+              .thenReturn(List.of(election));
+
+      initResource();
+
+      Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
+      assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVotes_allYes_allDataAccess_NotAllCards() {
+      user.setUserId(1);
+      vote.setDacUserId(1);
+      vote.setVoteId(1);
+      vote.setType("Chairperson");
+      vote.setVote(true);
+      Vote voteTwo = new Vote();
+      voteTwo.setType("Chairperson");
+      voteTwo.setVoteId(2);
+      voteTwo.setDacUserId(1);
+      voteTwo.setVote(true);
+      Election election = new Election();
+      election.setElectionId(1);
+      Election electionTwo = new Election();
+      election.setElectionId(2);
+      Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
+      when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
+              .thenReturn(List.of(vote, voteTwo));
+      when(electionService.findElectionsByVoteIdsAndType(anyList(), anyString()))
+              .thenReturn(List.of(election, electionTwo));
+      when(electionService.findElectionsWithCardHoldingUsersByElectionIds(anyList()))
+              .thenReturn(List.of(election));
+      initResource();
+
+      Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
+      assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVotes_noRationale() {
+    user.setUserId(1);
     vote.setDacUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
     initResource();
 
-    Response response = resource.updateVotes(authUser, true, "rationale", "[1, 2, 3]");
+    Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate();
+    voteUpdate.setVote(false);
+    voteUpdate.setVoteIds(List.of(1, 2, 3));
+
+    Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVoteRationale_InvalidJson() {
+    String invalidJson = "[]";
+    initResource();
+
+    Response response = resource.updateVoteRationale(authUser, invalidJson);
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVoteRationale_EmptyVoteIds() {
+    Vote.RationaleUpdate update = new Vote.RationaleUpdate();
+    update.setRationale("Rationale");
+    initResource();
+
+    Response response = resource.updateVoteRationale(authUser, new Gson().toJson(update));
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVoteRationale_NoVotesFound() {
+    user.setUserId(1);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(voteService.findVotesByIds(any())).thenReturn(List.of());
+    Vote.RationaleUpdate update = new Vote.RationaleUpdate();
+    update.setVoteIds(List.of(1));
+    update.setRationale("Rationale");
+    initResource();
+
+    Response response = resource.updateVoteRationale(authUser, new Gson().toJson(update));
+    assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVoteRationale_UserNotOwnerOfVotes() {
+    user.setUserId(1);
+    vote.setDacUserId(2);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
+    Vote.RationaleUpdate update = new Vote.RationaleUpdate();
+    update.setVoteIds(List.of(1));
+    update.setRationale("Rationale");
+    initResource();
+
+    Response response = resource.updateVoteRationale(authUser, new Gson().toJson(update));
+    assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateVoteRationale_Success() {
+    user.setUserId(1);
+    vote.setDacUserId(1);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
+    when(voteService.updateRationaleByVoteIds(any(), any())).thenReturn(List.of(vote));
+    Vote.RationaleUpdate update = new Vote.RationaleUpdate();
+    update.setVoteIds(List.of(1));
+    update.setRationale("Rationale");
+    initResource();
+
+    Response response = resource.updateVoteRationale(authUser, new Gson().toJson(update));
+    assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
   }
 }

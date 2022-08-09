@@ -3,7 +3,9 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.db.mapper.ElectionReviewVoteMapper;
 import org.broadinstitute.consent.http.db.mapper.VoteMapper;
 import org.broadinstitute.consent.http.models.ElectionReviewVote;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -23,20 +25,26 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("SELECT v.* FROM vote v INNER JOIN election ON election.electionid = v.electionid WHERE election.referenceid = :referenceId")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
-    @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId "
-            + "where election.electionId = :electionId and lower(v.type) != 'chairperson'")
+    @SqlQuery(" SELECT v.*, u.email, u.display_name "
+          + " FROM vote v "
+          + " INNER JOIN election ON election.electionId = v.electionId "
+          + " INNER JOIN users u ON u.user_id = v.dacUserId "
+          + " WHERE election.electionId = :electionId AND LOWER(v.type) != 'chairperson'")
     @UseRowMapper(ElectionReviewVoteMapper.class)
     List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId);
 
-    @SqlQuery("SELECT v.*, u.email, u.displayName FROM vote v "
-            + " INNER JOIN election ON election.electionId = v.electionId "
-            + " INNER JOIN dacuser u ON u.dacUserId = v.dacUserId "
-            + " WHERE election.electionId = :electionId")
+    @SqlQuery("SELECT v.*, u.email, u.display_name FROM vote v "
+            + " INNER JOIN election ON election.electionid = v.electionid "
+            + " INNER JOIN users u ON u.user_id = v.dacuserid "
+            + " WHERE election.electionid = :electionId")
     @UseRowMapper(ElectionReviewVoteMapper.class)
     List<ElectionReviewVote> findAllElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId);
 
-    @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId "
-            + "where election.electionId = :electionId and lower(v.type) = lower(:type)")
+    @SqlQuery(" SELECT v.*, u.email, u.display_name "
+            + " FROM vote v "
+            + " INNER JOIN election ON election.electionid = v.electionId "
+            + " INNER JOIN users u ON u.user_id = v.dacUserId "
+            + " WHERE election.electionid = :electionId AND LOWER(v.type) = LOWER(:type)")
     @UseRowMapper(ElectionReviewVoteMapper.class)
     List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
@@ -72,15 +80,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     List<Vote> findVotesByElectionIdAndDACUserIds(@Bind("electionId") Integer electionId,
                                                   @BindList("dacUserIds") List<Integer> dacUserIds);
 
-    @SqlQuery("select * from vote v where v.electionId = :electionId and v.dacUserId = :dacUserId and lower(v.type) = lower(:voteType)")
-    List<Vote> findVotesByElectionIdAndType(@Bind("electionId") Integer electionId,
-                                            @Bind("dacUserId") Integer dacUserId,
-                                            @Bind("voteType") String voteType);
-
-    @SqlQuery("select * from vote v where v.electionId = :electionId and lower(v.type) = lower(:type)")
-    @Deprecated // This query can return a list of votes and should be avoided
-    Vote findVoteByElectionIdAndType(@Bind("electionId") Integer electionId, @Bind("type") String type);
-
     @SqlQuery("select * from vote v where v.electionId = :electionId and v.dacUserId = :dacUserId and lower(v.type) = 'final'")
     Vote findChairPersonVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
                                                      @Bind("dacUserId") Integer dacUserId);
@@ -101,7 +100,11 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     void deleteVoteById(@Bind("voteId") Integer voteId);
 
     @SqlUpdate("delete from vote v where electionId in (select electionId from election where referenceId = :referenceId) ")
-    void deleteVotes(@Bind("referenceId") String referenceId);
+    void deleteVotesByReferenceId(@Bind("referenceId") String referenceId);
+
+    @SqlUpdate("delete from vote v where electionId in (select electionId from election where referenceId in (<referenceIds>)) ")
+    void deleteVotesByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
 
     @SqlUpdate("update vote set vote = :vote, updateDate = :updateDate, rationale = :rationale, reminderSent = :reminderSent, createDate = :createDate, has_concerns = :hasConcerns where voteId = :voteId")
     void updateVote(@Bind("vote") Boolean vote,
@@ -153,5 +156,16 @@ public interface VoteDAO extends Transactional<VoteDAO> {
 
     @SqlQuery("select vote from vote v where v.electionId = :electionId and lower(v.type) = 'chairperson'")
     Boolean findChairPersonVoteByElectionId(@Bind("electionId") Integer electionId);
+
+    @SqlUpdate("UPDATE vote v SET rationale = :rationale WHERE v.voteid IN (<voteIds>)")
+    void updateRationaleByVoteIds(@BindList("voteIds") List<Integer> voteIds, @Bind("rationale") String rationale);
+
+    @RegisterBeanMapper(value = User.class)
+    @SqlQuery(" SELECT DISTINCT u.* " +
+        " FROM users u " +
+        " INNER JOIN vote v ON v.dacuserid = u.user_id " +
+        " INNER JOIN election e ON v.electionid = e.electionid " +
+        " WHERE e.referenceid IN (<referenceIds>) ")
+    List<User> findVoteUsersByElectionReferenceIdList(@BindList("referenceIds") List<String> referenceIds);
 
 }

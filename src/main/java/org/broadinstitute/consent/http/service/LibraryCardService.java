@@ -30,11 +30,11 @@ public class LibraryCardService {
         this.userDAO = userDAO;
     }
 
-    public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) throws Exception {
+    public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) {
         throwIfNull(libraryCard);
         Boolean isAdmin = checkIsAdmin(user);
         //If user is not an admin, use user's institutionId rather than the value provided in the payload
-        if (!isAdmin && libraryCard.getInstitutionId() != user.getInstitutionId()) {
+        if (!isAdmin && !libraryCard.getInstitutionId().equals(user.getInstitutionId())) {
             throw new BadRequestException("Card payload not valid");
         }
         checkIfCardExists(libraryCard);
@@ -174,7 +174,7 @@ public class LibraryCardService {
                 //If a user is found, update the card to have the correct userId associated
                 User user = userDAO.findUserByEmail(card.getUserEmail());
                 if(!Objects.isNull(user)) {
-                    Integer userId = user.getDacUserId();
+                    Integer userId = user.getUserId();
                     card.setUserId(userId);
                 }
             }

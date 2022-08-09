@@ -16,16 +16,32 @@ import java.util.Objects;
 /**
  * This class works well for individual Users as well as collections.
  */
-public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, User> {
+public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, User>, RowMapperHelper {
   @Override
   public void accumulate(Map<Integer, User> map, RowView rowView) {
+    // Some queries look for `user_id` while those that use a prefix look for `u_user_id`
+    Integer userId = 0;
+    if (hasColumn(rowView, "user_id", Integer.class)) {
+      userId = rowView.getColumn("user_id", Integer.class);
+    } else if (hasColumn(rowView, "u_user_id", Integer.class)) {
+      userId = rowView.getColumn("u_user_id", Integer.class);
+    }
     User user =
         map.computeIfAbsent(
-            rowView.getColumn("dacuserid", Integer.class),
+            userId,
             id -> rowView.getRow(User.class));
+    // Populate for backwards compatibility.
+    user.setDacUserId();
 
     try {
-      if (Objects.nonNull(rowView.getColumn("user_role_id", Integer.class))) {
+      // Some queries look for `user_role_id` while those that use a prefix look for `u_user_role_id`
+      Integer userRoleId = null;
+      if (hasColumn(rowView, "user_role_id", Integer.class)) {
+        userRoleId = rowView.getColumn("user_role_id", Integer.class);
+      } else if (hasColumn(rowView, "ur_user_role_id", Integer.class)) {
+        userRoleId = rowView.getColumn("ur_user_role_id", Integer.class);
+      }
+      if (Objects.nonNull(userRoleId)) {
         UserRole ur = rowView.getRow(UserRole.class);
         user.addRole(ur);
       }
@@ -71,10 +87,6 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
       if (Objects.nonNull(rowView.getColumn("up_property_id", Integer.class))) {
         UserProperty p = rowView.getRow(UserProperty.class);
         user.addProperty(p);
-        // Note that the completed field is deprecated and will be removed in a future PR.
-        if (p.getPropertyKey().equalsIgnoreCase(UserFields.COMPLETED.getValue())) {
-          user.setProfileCompleted(Boolean.valueOf(p.getPropertyValue()));
-        }
       }
     } catch (MappingException e) {
       // Ignore any attempt to map a column that doesn't exist

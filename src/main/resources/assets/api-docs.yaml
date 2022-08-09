@@ -25,99 +25,6 @@ security:
       - profile
 
 paths:
-  /api/approvalExpirationTime:
-    get:
-      summary: Get the approval expiration time
-      description: |
-        Get the approval expiration time. If no existing time exists, a
-        default time of 7 days is returned.
-      tags:
-        - Election
-      responses:
-        200:
-          description: The approval expiration time
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApprovalExpirationTime'
-    post:
-      summary: Create approval expiration time
-      description: Create approval expiration time
-      tags:
-        - Election
-      requestBody:
-        description: Approval Expiration Time
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApprovalExpirationTime'
-      responses:
-        201:
-          description: Successfully created
-        400:
-          description: Bad Request
-  /api/approvalExpirationTime/{id}:
-    get:
-      summary: Get the approval expiration time
-      description: Get the approval expiration time
-      tags:
-        - Election
-      parameters:
-        - name: id
-          in: path
-          description: Approval Expiration Time id
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: The approval expiration time
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApprovalExpirationTime'
-        400:
-          description: ApprovalExpirationTime not found
-    put:
-      summary: Update approval expiration time
-      description: Update approval expiration time
-      tags:
-        - Election
-      parameters:
-        - name: id
-          in: path
-          description: Approval Expiration Time id
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        description: Approval Expiration Time
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApprovalExpirationTime'
-      responses:
-        200:
-          description: Successfully updated
-        400:
-          description: Bad Request
-    delete:
-      summary: Delete approval expiration time
-      description: Delete approval expiration time
-      tags:
-        - Election
-      parameters:
-        - name: id
-          in: path
-          description: Approval Expiration Time id
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Successfully deleted
   /api/collections:
     $ref: './paths/collections.yaml'
   /api/collections/{collectionId}:
@@ -130,6 +37,8 @@ paths:
     $ref: './paths/collectionsByQuery.yaml'
   /api/collections/role/{roleName}:
     $ref: './paths/collectionsByRoleName.yaml'
+  /api/collections/role/{roleName}/summary:
+    $ref: './paths/collectionsByRoleNameSummary.yaml'
   /api/collections/{collectionId}/cancel:
     $ref: './paths/cancelCollectionByCollectionId.yaml'
   /api/collections/{collectionId}/election:
@@ -282,6 +191,7 @@ paths:
                $ref: '#/components/schemas/ErrorResponse'
   /api/consent/{consentId}/election:
     post:
+      deprecated: true
       summary: Create Consent Election
       description: Creates a consent election
       parameters:
@@ -309,6 +219,7 @@ paths:
           description: The consent sent as a parameter does not exist.
   /api/consent/{consentId}/election/dac/{dacId}:
     post:
+      deprecated: true
       summary: Create Consent Election For Dac
       description: |
         Creates a consent election for a data access committee. Assigns the consent to the provided
@@ -405,6 +316,7 @@ paths:
           description: "The Election/Consent doesn't exist."
   /api/consent/manage:
     get:
+      deprecated: true
       summary: Manage Consents
       description: Returns the list of consents available to be managed.
       tags:
@@ -431,6 +343,7 @@ paths:
     $ref: './paths/consent.yaml'
   /api/consent/{id}:
     get:
+      deprecated: true
       summary: Get Consent by ID
       description: Returns the consent identified by the ID.
       parameters:
@@ -512,6 +425,7 @@ paths:
           description: The consent for the id couldn't be found.
   /api/consent/{consentId}/vote/{id}:
     post:
+      deprecated: true
       summary: firstVoteUpdate
       description: Returns the created vote.
       parameters:
@@ -546,6 +460,7 @@ paths:
         404:
           description: The association type wasn't send, or the application couldn't find any consents that matched the search criteria.
     put:
+      deprecated: true
       summary: updateConsentVote
       description: Returns the updated vote.
       parameters:
@@ -578,6 +493,7 @@ paths:
         400:
           description: Bad Request, malformed entity, etc.
     get:
+      deprecated: true
       summary: describe
       description: Returns the required vote.
       parameters:
@@ -988,85 +904,7 @@ paths:
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
   /api/dar/v2/{referenceId}:
-    get:
-      summary: Get a Data Access Request by Reference Id
-      description: Returns the created Data Access Request.
-      parameters:
-        - name: referenceId
-          in: path
-          description: The referenceId of the Data Access Request
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns a Data Access Request
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/DataAccessRequest.yaml'
-        400:
-          description: The provided Reference Id is not a valid DAR identifier
-        404:
-          description: No DAR can be found with the provided identifier
-        500:
-          description: Server Error
-    put:
-      summary: Update a Data Access Request by Reference Id
-      description: Returns the updated Data Access Request.
-      parameters:
-        - name: referenceId
-          in: path
-          description: The referenceId of the Data Access Request
-          required: true
-          schema:
-            type: string
-        - name: dar
-          in: body
-          description: The fields that represent a DAR in json format.
-          required: true
-          schema:
-            $ref: './schemas/DataAccessRequest.yaml'
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns a Data Access Request
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/DataAccessRequest.yaml'
-        403:
-          description: Updates are restricted to the create user.
-        500:
-          description: Internal Server Error.
-    delete:
-      summary: delete
-      description: Deletes the DAR by reference id
-      parameters:
-        - name: referenceId
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Data Access Request was deleted
-          content:
-            application/json:
-              schema:
-                type: string
-        403:
-          description: Forbidden
-        404:
-          description: The requested DAR couldn't be found.
-        406:
-          description: There are existing resources that reference this Data Access Request
+    $ref: './paths/darV2ByReferenceId.yaml'
   /api/dar/v2/draft:
     post:
       summary: Create Draft Data Access Request
@@ -1320,22 +1158,6 @@ paths:
           description: Unable to find the Data Access Request with the provided id
         500:
           description: Internal error
-  /api/dar/modalSummary/{id}:
-    get:
-      summary: getDataAcessRequestModalSummary
-      description: Retrieves a DARModalDetails.
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: 'Returns a DARModalDetails initialized with the DAR associated with the provided Id.'
   /api/dar/find/{id}/consent:
     get:
       summary: describeConsentForDAR
@@ -1638,6 +1460,7 @@ paths:
                 format: binary
   /api/consent/{id}/dul:
     get:
+      deprecated: true
       summary: getDUL
       description: Returns Data Use Letter file specified by consentId.
       parameters:
@@ -1809,34 +1632,6 @@ paths:
         404:
           description: The Election doesn't exist.
   /api/dataRequest/{requestId}/vote/{id}:
-    get:
-      summary: Find the vote for the Data Access Request and Vote ID
-      description: Returns the Vote with the specified Id.
-      parameters:
-        - name: requestId
-          in: path
-          description: Reference Id of the Election of the requested Vote (this value is not used in the search, its only to complete the path)
-          required: true
-          schema:
-            type: string
-        - name: id
-          in: path
-          description: Vote ID
-          required: true
-          schema:
-            type: integer
-      tags:
-        - Vote
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the requested Vote.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Vote'
-        404:
-          description: The Vote doesn't exist.
     post:
       summary: Create a Data Access Request Vote
       description: update a Vote specified by VoteId of a DataRequest Election.
@@ -1971,6 +1766,7 @@ paths:
     get:
       summary: Get Datasets
       description: Returns Dataset list filtered by authenticated user.
+      deprecated: true
       tags:
         - Datasets
       responses:
@@ -1984,31 +1780,7 @@ paths:
                   $ref: './schemas/Dataset.yaml'
 
   /api/dataset/v2:
-    post:
-      summary: Creates the Dataset from JSON
-      description: Creates the Dataset from JSON
-      requestBody:
-        description: Submitted dataset registration form. Dataset must contain the property Dataset Name with a unique value and a valid DataUse object.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: './schemas/Dataset.yaml'
-      tags:
-        - Datasets
-      responses:
-        201:
-          description: Successfully created Dataset
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/Dataset.yaml'
-        400:
-          description: External Error (invalid input)
-        409:
-          description: Dataset Name given is already in use by another dataset
-        500:
-          description: Internal Error (something went wrong processing a valid input)
+    $ref: './paths/datasetV2.yaml'
   /api/dataset/validate:
     get:
       summary: validateDatasetName
@@ -2075,54 +1847,25 @@ paths:
   /api/dataset/{id}:
     $ref: './paths/datasetById.yaml'
   /api/dataset/{id}/approved/users:
-    get:
-      summary: Dataset Approved Users
-      description: Dataset Approved Users
-      parameters:
-        - name: id
-          in: path
-          description: The dataset id
-          required: true
-          schema:
-            type: integer
-      tags:
-        - Datasets
-      responses:
-        200:
-          description: Dataset Approved Users
-          content:
-            text/plain:
-              schema:
-                type: string
-          headers:
-            Content-type:
-              schema:
-                type: string
-              description: text/plain
-            Content-Disposition:
-              schema:
-                type: string
-              description: attachment; filename=DatasetApprovedUsers.tsv
-        500:
-          description: Server error.
+    $ref: './paths/datasetByIdApprovedUsers.yaml'
   /api/dataset/download:
     post:
-      summary: downloadDataSets
+      summary: Download datasets by id list
       description: Returns the dataset Properties of the datasets whose Ids are in the idList
-      parameters:
-        - name: idList
-          in: body
-          description: List of DatasetIds.
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
+      requestBody:
+        description: List of Dataset Ids
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
       tags:
         - Datasets
       responses:
         200:
-          description: The Dataset was deleted.
+          description: The specified datasets were downloaded.
         500:
           description: Server error.
   /api/dataset/autocomplete/{partial}:
@@ -2229,6 +1972,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/DatasetAssociation'
+  /api/tdr/{identifier}/approved/users:
+    $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/election/{id}:
     get:
       summary: describeElectionById
@@ -2332,6 +2077,7 @@ paths:
           description: Server error.
   /api/electionReview:
     get:
+      deprecated: true
       summary: getCollectElectionReview
       description: Returns the ElectionReview from an Open Election identified by reference Id.
       parameters:
@@ -2376,6 +2122,7 @@ paths:
                 type: string
   /api/electionReview/{electionId}:
     get:
+      deprecated: true
       summary: describeElectionReviewByElectionId
       description: "Returns the ElectionReview from an Election identified by ElectionId. This endpoint doesn't filter votes by isFinalAccess attribute so the reviewVote array of the retrieved ElectionReview will contain the isFinalAccess = TRUE Vote."
       parameters:
@@ -2468,105 +2215,9 @@ paths:
           description: Server error.
 
   /api/institutions:
-    get:
-      summary: Institution INDEX resource
-      description: Fetches all institutions
-      tags:
-        - Institutions
-      responses:
-        200:
-          description: Returns all institutions, along with their create user, update user, and signing official users if there are any.
-            If no results are found, an empty array is returned.
-            Admin will see all details while non-Admins will only see a subset.
-        500:
-          description: Internal Server Error
-    post:
-      summary: Institution CREATE resource
-      description: Creates new institution record based on json payload
-      tags:
-        - Institutions
-      requestBody:
-        description: Required JSON payload representing updated Institution
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Institution'
-      responses:
-        201:
-          description: Creates and returns newly created record.
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
+    $ref: './paths/institutions.yaml'
   /api/institutions/{id}:
-    get:
-      summary: Institution GET
-      description: Fetches Institution based on id param
-      tags:
-        - Institutions
-      parameters:
-        - name: id
-          in: path
-          description: Institution ID
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Returns target institution.
-            Admin will see all details while non-Admins will only see a subset.
-        404:
-          description: Institution not found
-        500:
-          description: Internal Server Error
-    put:
-      summary: Institution UPDATE
-      description: Updates institution based on id and json payload
-      tags:
-        - Institutions
-      parameters:
-        - name: id
-          in: path
-          description: Institution ID
-          required: true
-          schema:
-            type: string
-      requestBody:
-        description: Required JSON payload representing updated Institution
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Institution'
-      responses:
-        200:
-          description: Updates and returns target institution
-        400:
-          description: Bad Request
-        404:
-          description: Institution not found
-        500:
-          description: Internal Server Error
-    delete:
-      summary: Institution DELETE
-      description: Deletes institution based on id
-      tags:
-        - Institutions
-      parameters:
-        - name: id
-          in: path
-          description: Institution ID
-          required: True
-          schema:
-            type: string
-      responses:
-        204:
-          description: Deletes target institution (no return entity)
-        404:
-          description: Institution not found
-        500:
-          description: Internal Server Error
+    $ref: './paths/institutionById.yaml'
   /api/libraryCards:
     get:
       summary: Library Card INDEX resource
@@ -2837,26 +2488,10 @@ paths:
                   $ref: '#/components/schemas/MatchResult'
         500:
           description: Server error.
-
+  /api/match/purpose/batch/:
+    $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
   /api/user:
-    post:
-      summary: Create User
-      description: Create a user with RESEARCHER role using the user's current authentication status.
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the created user.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        400:
-          description: Unable to validate the user's google identity.
-        409:
-          description: User should be unique
-        500:
-          description: Server error.
+    $ref: './paths/user.yaml'
   /api/user/me:
     get:
       summary: Find currently authenticated user
@@ -2874,6 +2509,8 @@ paths:
           description: User not found
         500:
           description: Server error.
+  /api/user/me/dac/datasets:
+    $ref: './paths/getDatasetsFromUserDacs.yaml'
   /api/user/institution/{institutionId}:
     $ref: './paths/userInstitutionByInstitutionId.yaml'
   /api/user/institution/unassigned:
@@ -2913,31 +2550,10 @@ paths:
         500:
           description: Server error.
   /api/user/{userId}:
-    get:
-      summary: Find user by id
-      description: Finds user by the user id. Available to Admin, Chair, and Member roles
-      parameters:
-        - name: userId
-          in: path
-          description: The id of the user
-          required: true
-          schema:
-            type: number
-      tags:
-        - User
-      responses:
-        200:
-          description: The user, along with researcher properties and library cards
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        404:
-          description: User not found
-        500:
-          description: Server error.
+    $ref: './paths/userByIdv2.yaml'
   /api/user/profile:
     post:
+      deprecated: true
       summary: Create user properties.
       description: Create properties for the current user.
       requestBody:
@@ -2959,6 +2575,7 @@ paths:
         500:
           description: Server error.
     put:
+      deprecated: true
       summary: Update user properties
       description: Updates a user.
       requestBody:
@@ -3269,6 +2886,8 @@ paths:
     $ref: './paths/samResourceTypes.yaml'
   /api/votes:
     $ref: './paths/votes.yaml'
+  /api/votes/rationale:
+    $ref: './paths/votesRationale.yaml'
   /metrics/dac/decision:
     get:
       summary: Dac Decision Metrics
@@ -3322,6 +2941,8 @@ paths:
           description: Dataset with specified ID does not exist
         500:
           description: Internal Server Error
+  /liveness:
+    $ref: './paths/liveness.yaml'
   /status:
     get:
       summary: System Health Status
@@ -3360,7 +2981,6 @@ paths:
                 $ref: '#/components/schemas/Version'
         500:
           description: Internal Server Error
-
 components:
   securitySchemes:
     googleoauth:
@@ -3422,27 +3042,7 @@ components:
     Vote:
       $ref: './schemas/Vote.yaml'
     MatchResult:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: The id of the stored match result
-        consent:
-          type: string
-          description: The Consent ID
-        purpose:
-          type: string
-          description: The Data Access Request ID
-        match:
-          type: boolean
-          description: The match condition between the Consent and Data Access Request
-        failed:
-          type: boolean
-          description: Indicates a system failure or not. If true, the system was not able to
-            perform a logic match between the two objects due to a server error.
-        createDate:
-          type: string
-          description: A string representation of the date that this match result was created.
+      $ref: './schemas/MatchResult.yaml'
     Match:
       type: object
       properties:
@@ -3817,14 +3417,7 @@ components:
           items:
             $ref: '#/components/schemas/User'
     SimplifiedUser:
-      type: object
-      properties:
-        dacUserId:
-          type: integer
-          description: ID of the user
-        displayName:
-          type: string
-          description: Name of the user
+      $ref: './schemas/SimplifiedUser.yaml'
     SamSelfDiagnostics:
       $ref: './schemas/SamSelfDiagnostics.yaml'
     SamUserInfo:

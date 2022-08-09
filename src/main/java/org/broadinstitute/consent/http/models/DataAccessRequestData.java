@@ -26,11 +26,7 @@ public class DataAccessRequestData {
             "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
             "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
             "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
-            "createDate", "sortDate");
-
-    // prefix for partialDarCode, should be pulled by functions that generate/update ONLY
-    // since class is used within both drafts and submitted dars, it's best to control its implementation on the outer function call
-    public static final String partialDarCodePrefix = "temp_DAR_";
+            "createDate", "sortDate", "additionalEmail", "checkNotifications", "partialDarCode" );
 
     private String referenceId;
     private String investigator;
@@ -46,6 +42,7 @@ public class DataAccessRequestData {
     private String country;
     private String projectTitle;
     private Boolean checkCollaborator;
+    private Boolean checkNihDataOnly;
     private String researcher;
     private String isThePi;
     private String havePi;
@@ -53,7 +50,6 @@ public class DataAccessRequestData {
     private String pubmedId;
     private String scientificUrl;
     private Boolean eraExpiration;
-    private String academicEmail;
     private Boolean eraAuthorized;
     private String nihUsername;
     private String linkedIn;
@@ -96,14 +92,13 @@ public class DataAccessRequestData {
     private List<DatasetEntry> datasets;
     @SerializedName(value = "darCode", alternate = "dar_code")
     private String darCode;
-    @SerializedName(value = "partialDarCode", alternate = "partial_dar_code")
-    private String partialDarCode;
     private Object restriction;
     @SerializedName(value = "validRestriction", alternate = "valid_restriction")
     private Boolean validRestriction;
     private String translatedUseRestriction;
     private Long createDate;
     private Long sortDate;
+    @Deprecated
     @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
     private List<Integer> datasetIds;
     private List<DatasetDetailEntry> datasetDetail;
@@ -249,6 +244,14 @@ public class DataAccessRequestData {
         this.checkCollaborator = checkCollaborator;
     }
 
+    public Boolean getCheckNihDataOnly() {
+        return checkNihDataOnly;
+    }
+
+    public void setCheckNihDataOnly(Boolean checkNihDataOnly) {
+        this.checkNihDataOnly = checkNihDataOnly;
+    }
+
     public String getResearcher() {
         return researcher;
     }
@@ -304,15 +307,6 @@ public class DataAccessRequestData {
     public void setEraExpiration(Boolean eraExpiration) {
         this.eraExpiration = eraExpiration;
     }
-
-    public String getAcademicEmail() {
-        return academicEmail;
-    }
-
-    public void setAcademicEmail(String academicEmail) {
-        this.academicEmail = academicEmail;
-    }
-
     public Boolean getEraAuthorized() {
         return eraAuthorized;
     }
@@ -519,14 +513,6 @@ public class DataAccessRequestData {
         this.darCode = darCode;
     }
 
-    public String getPartialDarCode() {
-        return partialDarCode;
-    }
-
-    public void setPartialDarCode(String partialDarCode) {
-        this.partialDarCode = partialDarCode;
-    }
-
     public Object getRestriction() {
         return restriction;
     }
@@ -567,17 +553,18 @@ public class DataAccessRequestData {
         this.sortDate = sortDate;
     }
 
+    /**
+     * Used for the initial population of datasets a DAR is associated to.
+     * Intended to be used solely for simpler construction from the UI.
+     *
+     * @return List of dataset ids associated to the DAR.
+     */
     public List<Integer> getDatasetIds() {
         if (Objects.isNull(datasetIds)) {
             return Collections.emptyList();
         }
         return datasetIds;
     }
-
-    public void setDatasetIds(List<Integer> datasetIds) {
-        this.datasetIds = datasetIds;
-    }
-
     public List<DatasetDetailEntry> getDatasetDetail() {
         if (Objects.isNull(datasetDetail)) {
             return Collections.emptyList();

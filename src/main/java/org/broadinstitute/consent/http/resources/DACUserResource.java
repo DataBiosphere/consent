@@ -59,7 +59,7 @@ public class DACUserResource extends Resource {
             User user = userService.createUser(new User(json));
             // Update email preference
             getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->
-                    userService.updateEmailPreference(aBoolean, user.getDacUserId())
+                    userService.updateEmailPreference(aBoolean, user.getUserId())
             );
             URI uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
             return Response.created(uri).entity(user).build();
@@ -78,10 +78,11 @@ public class DACUserResource extends Resource {
                 .of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
                 .collect(Collectors.toList()),
             findByAuthUser(authUser),
-            searchUser.getDacUserId());
+            searchUser.getUserId());
         return searchUser;
     }
 
+    @Deprecated
     @PUT
     @Path("/{id}")
     @Consumes("application/json")
@@ -113,7 +114,7 @@ public class DACUserResource extends Resource {
             JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
             JsonElement updateUser = jsonObject.get(UserRolesHandler.UPDATED_USER_KEY);
             getEmailPreferenceValueFromUserJson(updateUser.toString()).ifPresent(aBoolean ->
-                    userService.updateEmailPreference(aBoolean, user.getDacUserId())
+                    userService.updateEmailPreference(aBoolean, user.getUserId())
             );
             Gson gson = new Gson();
             JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);

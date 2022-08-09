@@ -12,9 +12,12 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.ResearcherService;
+import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.Assert;
@@ -23,6 +26,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
@@ -42,11 +46,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 public class UserResourceTest {
 
@@ -57,6 +65,10 @@ public class UserResourceTest {
   @Mock private ResearcherService researcherService;
 
   @Mock private SamService samService;
+
+  @Mock private DatasetService datasetService;
+
+  @Mock private SupportRequestService supportRequestService;
 
   private UserResource userResource;
 
@@ -85,7 +97,7 @@ public class UserResourceTest {
   }
 
   private void initResource() {
-    userResource = new UserResource(researcherService, samService, userService);
+    userResource = new UserResource(researcherService, samService, userService, datasetService, supportRequestService);
   }
 
   @Test
@@ -368,6 +380,87 @@ public class UserResourceTest {
   }
 
   @Test
+  public void testUpdateSelf() {
+    User user = createUserWithRole();
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    spy(supportRequestService);
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    verify(supportRequestService, times(1)).handleSuggestedUserFieldsSupportRequest(any(), any(), any());
+  }
+
+  @Test
+  public void testUpdateSelfRolesNotAdmin() {
+    User user = createUserWithRole();
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    userUpdateFields.setUserRoleIds(List.of(1)); // any roles
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    spy(supportRequestService);
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    //no support request sent if update to user fails
+    verify(supportRequestService, times(0)).handleSuggestedUserFieldsSupportRequest(any(), any(), any());
+  }
+
+  @Test
+  public void testUpdateSelfSupportRequestError() {
+    User user = createUserWithRole();
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    doThrow(new ServerErrorException(HttpStatusCodes.STATUS_CODE_SERVER_ERROR))
+            .when(supportRequestService).handleSuggestedUserFieldsSupportRequest(any(), any(), any());
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  public void testUpdate() {
+    User user = createUserWithRole();
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    initResource();
+    Response response = userResource.update(authUser, uriInfo, user.getUserId(), gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateUserNotFound() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenThrow(new NotFoundException());
+    initResource();
+    Response response = userResource.update(authUser, uriInfo, user.getUserId(), "");
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateUserInvalidJson() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenThrow(new NotFoundException());
+    initResource();
+    Response response = userResource.update(authUser, uriInfo, user.getUserId(), "}{][");
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
   public void testDeleteRoleFromUser() {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
@@ -375,7 +468,7 @@ public class UserResourceTest {
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(userJson.getAsJsonObject());
     initResource();
-    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.RESEARCHER.getRoleId());
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), UserRoles.RESEARCHER.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     User returnedUser = new User((String)response.getEntity());
     assertEquals(user.getEmail(), returnedUser.getEmail());
@@ -386,7 +479,7 @@ public class UserResourceTest {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
     initResource();
-    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), 8);
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), 8);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
@@ -398,7 +491,7 @@ public class UserResourceTest {
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(userJson.getAsJsonObject());
     initResource();
-    Response response = userResource.deleteRoleFromUser(authUser, user.getDacUserId(), UserRoles.ADMIN.getRoleId());
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), UserRoles.ADMIN.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     User returnedUser = new User((String)response.getEntity());
     assertEquals(user.getEmail(), returnedUser.getEmail());
@@ -438,9 +531,23 @@ public class UserResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
+  @Test
+  public void testGetDatasetsFromUserDacs() {
+    User user = createUserWithRole();
+    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    user.addRole(admin);
+    when(datasetService.findDatasetsByDacIds(anyList())).thenReturn(Collections.emptySet());
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    initResource();
+
+    Response response = userResource.getDatasetsFromUserDacs(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+
   private User createUserWithRole() {
     User user = new User();
-    user.setDacUserId(1);
+    user.setUserId(1);
     user.setDisplayName("Test");
     user.setEmail("Test");
     UserRole researcher = new UserRole();
@@ -454,7 +561,7 @@ public class UserResourceTest {
 
   private User createUserWithInstitution() {
     User user = new User();
-    user.setDacUserId(1);
+    user.setUserId(1);
     user.setDisplayName("Test Name");
     user.setEmail("Test Email");
     user.setInstitutionId(1);

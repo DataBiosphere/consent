@@ -1,21 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
-
 import com.google.inject.Inject;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -25,7 +10,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.HeaderSummary;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Consent;
@@ -33,7 +17,6 @@ import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.Summary;
@@ -41,6 +24,17 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 
 public class SummaryService {
 
@@ -51,8 +45,6 @@ public class SummaryService {
     private final DatasetDAO datasetDAO;
     private final MatchDAO matchDAO;
     private final DataAccessRequestService dataAccessRequestService;
-    private static final String SEPARATOR = "\t";
-    private static final String END_OF_LINE = System.lineSeparator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
@@ -186,7 +178,7 @@ public class SummaryService {
                 electionVotes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
             Collection<User> electionUsers =
                 users.stream()
-                    .filter(du -> electionVotesUserIds.contains(du.getDacUserId()))
+                    .filter(du -> electionVotesUserIds.contains(du.getUserId()))
                     .collect(Collectors.toSet());
             Optional<Vote> chairPersonVote =
                 electionVotes.stream()
@@ -194,7 +186,7 @@ public class SummaryService {
                     .findFirst();
             Optional<User> chairPerson = chairPersonVote
                 .flatMap(vote -> users.stream()
-                .filter(du -> du.getDacUserId().equals(vote.getDacUserId()))
+                .filter(du -> du.getUserId().equals(vote.getDacUserId()))
                 .findFirst());
             ConsentSummaryDetail detail = new ConsentSummaryDetail(
                     election,
@@ -223,21 +215,19 @@ public class SummaryService {
    */
   public List<DataAccessRequestSummaryDetail> listDataAccessRequestSummaryDetails() {
     List<DataAccessRequestSummaryDetail> details = new ArrayList<>();
-    List<Election> accessElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue()).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toUnmodifiableList());
-    List<Election> rpElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue()).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toUnmodifiableList());
+    List<Election> accessElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue()).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toList());
+    List<Election> rpElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue()).stream().filter(e -> Objects.nonNull(e.getFinalVote())).distinct().collect(Collectors.toList());
     if (!accessElections.isEmpty()) {
       List<String> referenceIds = accessElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
       List<DataAccessRequest> dataAccessRequests = referenceIds.isEmpty() ? Collections.emptyList() : dataAccessRequestService.getDataAccessRequestsByReferenceIds(referenceIds);
       List<Integer> datasetIds =
           dataAccessRequests.stream()
             .filter(Objects::nonNull)
-            .map(DataAccessRequest::getData)
-            .filter(Objects::nonNull)
-            .map(DataAccessRequestData::getDatasetIds)
+            .map(DataAccessRequest::getDatasetIds)
             .flatMap(List::stream)
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
-      List<Association> associations = datasetIds.isEmpty() ? Collections.emptyList() : datasetDAO.getAssociationsForDataSetIdList(datasetIds);
+      List<Association> associations = datasetIds.isEmpty() ? Collections.emptyList() : datasetDAO.getAssociationsForDatasetIdList(datasetIds);
       List<String> associatedConsentIds = associations.stream().map(Association::getConsentId).collect(Collectors.toList());
       List<Election> consentElections = associatedConsentIds.isEmpty() ? Collections.emptyList() : electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
       List<Integer> accessElectionIds = accessElections.stream().map(Election::getElectionId).collect(Collectors.toList());
@@ -262,7 +252,7 @@ public class SummaryService {
             .filter(ev -> ev.getElectionId().equals(accessElection.getElectionId()))
             .collect(Collectors.toList()) :
             Collections.emptyList();
-        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toUnmodifiableList());
+        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toList());
         maxNumberOfDACMembers = Math.max(maxNumberOfDACMembers, dacUserIds.size());
       }
 
@@ -281,19 +271,19 @@ public class SummaryService {
             .stream()
             .filter(ev -> ev.getElectionId().equals(election.getElectionId()))
             .collect(Collectors.toList())).orElse(Collections.emptyList());
-        Optional<Match> matchOption = matchList.stream().filter(m -> m.getPurpose().equals(accessElection.getReferenceId())).findFirst(); 
+        Optional<Match> matchOption = matchList.stream().filter(m -> m.getPurpose().equals(accessElection.getReferenceId())).findFirst();
         Optional<DataAccessRequest> darOption = dataAccessRequests.stream()
             .filter(Objects::nonNull)
             .filter(d -> d.getReferenceId().equalsIgnoreCase(accessElection.getReferenceId()))
             .findFirst();
         DataAccessRequest dar = darOption.orElse(null);
-        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toUnmodifiableList());
-        List<User> dacMembers = voteUsers.stream().filter(v -> dacUserIds.contains(v.getDacUserId())).collect(Collectors.toUnmodifiableList());
+        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toList());
+        List<User> dacMembers = voteUsers.stream().filter(v -> dacUserIds.contains(v.getUserId())).collect(Collectors.toList());
 
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
-          List<Integer> datasetId = dar.getData().getDatasetIds();
+          List<Integer> datasetId = dar.getDatasetIds();
           if (CollectionUtils.isNotEmpty(datasetId)) {
-            Optional<User> darUser = darUsers.stream().filter(u -> u.getDacUserId().equals(dar.getUserId())).findFirst();
+            Optional<User> darUser = darUsers.stream().filter(u -> u.getUserId().equals(dar.getUserId())).findFirst();
             details.add(new DataAccessRequestSummaryDetail(
                 dar,
                 accessElection,
@@ -311,99 +301,5 @@ public class SummaryService {
     }
     return details;
   }
-
-    public File describeDataSetElectionsVotesForDar(String referenceId) {
-        File file = null;
-        try {
-            file = File.createTempFile("dar" + referenceId + "DatasetElectionsDetail", ".txt");
-            try (FileWriter summaryWriter = new FileWriter(file)) {
-                List<Election> elections = electionDAO.findLastElectionsByReferenceIdAndType(referenceId, ElectionType.DATA_SET.getValue());
-                Map<Integer, List<Vote>> electionsData = new HashMap<>();
-                int maxNumberOfVotes = 0;
-                for(Election e: elections){
-                    List<Vote> votes = voteDAO.findVoteByTypeAndElectionId(e.getElectionId(), VoteType.DATA_OWNER.getValue());
-                    electionsData.put(e.getElectionId(), votes);
-                    if(votes.size() > maxNumberOfVotes){
-                        maxNumberOfVotes = votes.size();
-                    }
-                }
-                setDatasetElectionsHeader(summaryWriter, maxNumberOfVotes);
-
-                String dar_code = dataAccessRequestService.findByReferenceId(referenceId).getData().getDarCode();
-                String dar_election_result;
-                try{
-                    dar_election_result = (electionDAO.findLastElectionByReferenceIdAndType(referenceId, ElectionType.DATA_ACCESS.getValue())).getFinalAccessVote() ? "Approved" : "Denied";
-                } catch (NullPointerException e){
-                    dar_election_result = "Pending";
-                }
-                for (Election election : elections) {
-                    summaryWriter.write( dar_code + SEPARATOR);
-                    summaryWriter.write( dar_election_result + SEPARATOR);
-                    DataSet dataset = datasetDAO.findDataSetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
-                    summaryWriter.write( dataset.getObjectId() + SEPARATOR);
-                    summaryWriter.write( dataset.getName() + SEPARATOR);
-                    summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);
-                    List<Vote> votes = electionsData.get(election.getElectionId());
-                    for(Vote datasetVote : votes){
-                        User user = userDAO.findUserById(datasetVote.getDacUserId());
-                        summaryWriter.write(user.getDisplayName() + SEPARATOR);
-                        summaryWriter.write(user.getEmail() + SEPARATOR);
-                        summaryWriter.write(datasetVoteResult(datasetVote) + SEPARATOR);
-                        summaryWriter.write(datasetVote.getRationale() == null ? "None" : datasetVote.getRationale());
-                        summaryWriter.write(SEPARATOR);
-                    }
-                   summaryWriter.write(END_OF_LINE);
-                }
-            }
-            return file;
-        } catch (Exception e) {
-            logger.error("There is an error trying to create resume of dataset votes file, error: "+ e.getMessage());
-        }
-        return file;
-    }
-
-    private String electionResult(Boolean result){
-        try{
-            if(result){
-                return "Approved";
-            } else {
-                return "Denied";
-            }
-        } catch( NullPointerException e) {
-            return "Pending";
-        }
-    }
-
-    private String datasetVoteResult(Vote vote){
-        try{
-            if(vote.getVote()){
-                return "Approved";
-            } else {
-                return "Denied";
-            }
-        } catch( NullPointerException e) {
-            if(vote.getHasConcerns()){
-                return "Denied";
-            }
-            return "Pending";
-        }
-    }
-
-    private void setDatasetElectionsHeader(FileWriter summaryWriter , Integer maxNumberOfVotes) throws IOException {
-        summaryWriter.write(
-                HeaderSummary.DATA_REQUEST_ID.getValue() + SEPARATOR +
-                        HeaderSummary.FINAL_DECISION_DAR.getValue() + SEPARATOR +
-                        HeaderSummary.DATASET_ID.getValue() + SEPARATOR +
-                        HeaderSummary.DATASET_NAME.getValue() + SEPARATOR +
-                        HeaderSummary.DATASET_FINAL_STATUS.getValue() + SEPARATOR);
-        for (int i = 0; i < maxNumberOfVotes; i++) {
-            summaryWriter.write(
-                    HeaderSummary.DATA_OWNER_NAME.getValue() + SEPARATOR +
-                            HeaderSummary.DATA_OWNER_EMAIL.getValue() + SEPARATOR +
-                            HeaderSummary.DATA_OWNER_VOTE.getValue() + SEPARATOR +
-                            HeaderSummary.DATA_OWNER_COMMENT.getValue() + SEPARATOR);
-        }
-        summaryWriter.write(END_OF_LINE);
-    }
 
 }

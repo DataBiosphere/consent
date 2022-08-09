@@ -13,6 +13,9 @@ public class ServicesConfiguration {
 
   @NotNull private String samUrl;
 
+  private boolean activateSupportNotifications = false;
+
+
   public String getOntologyURL() {
     return ontologyURL;
   }
@@ -39,6 +42,10 @@ public class ServicesConfiguration {
 
   public String getDARTranslateUrl() {
     return getOntologyURL() + "schemas/data-use/dar/translate";
+  }
+
+  public String getConsentTranslateUrl() {
+    return getOntologyURL() + "schemas/data-use/consent/translate";
   }
 
   public String getSamUrl() {
@@ -69,7 +76,19 @@ public class ServicesConfiguration {
     return getSamUrl() + "tos/text";
   }
 
-  public String postTosAcceptedUrl() {
+  public String tosRegistrationUrl() {
     return getSamUrl() + "register/user/v1/termsofservice";
+  }
+
+  public String postSupportRequestUrl() {
+    return "https://broadinstitute.zendesk.com/api/v2/requests.json";
+  }
+
+  public boolean isActivateSupportNotifications() {
+    return activateSupportNotifications;
+  }
+
+  public void setActivateSupportNotifications(boolean activateSupportNotifications) {
+    this.activateSupportNotifications = activateSupportNotifications;
   }
 }

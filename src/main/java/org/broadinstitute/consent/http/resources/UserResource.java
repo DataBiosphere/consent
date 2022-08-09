@@ -11,11 +11,16 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ResearcherService;
+import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.glassfish.hk2.utilities.reflection.Logger;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -39,6 +44,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Path("api/user")
 public class UserResource extends Resource {
@@ -47,13 +54,17 @@ public class UserResource extends Resource {
     private final ResearcherService researcherService;
     private final Gson gson = new Gson();
     private final SamService samService;
+    private final DatasetService datasetService;
+    private final SupportRequestService supportRequestService;
 
     @Inject
-    public UserResource(ResearcherService researcherService,
-                        SamService samService, UserService userService) {
+    public UserResource(ResearcherService researcherService, SamService samService, UserService userService,
+                        DatasetService datasetService, SupportRequestService supportRequestService) {
         this.researcherService = researcherService;
         this.samService = samService;
         this.userService = userService;
+        this.datasetService = datasetService;
+        this.supportRequestService = supportRequestService;
     }
 
     @GET
@@ -93,8 +104,27 @@ public class UserResource extends Resource {
             if (Objects.isNull(authUser.getUserStatusInfo())) {
                 samService.asyncPostRegistrationInfo(authUser);
             }
-            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
             return Response.ok(gson.toJson(userJson)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Path("/me/dac/datasets")
+    @Produces("application/json")
+    @RolesAllowed({CHAIRPERSON, MEMBER})
+    public Response getDatasetsFromUserDacs(@Auth AuthUser authUser) {
+        try {
+            Set<DatasetDTO> datasets;
+            User user = userService.findUserByEmail(authUser.getEmail());
+            List<Integer> dacIds = user.getRoles().stream()
+                .filter(r -> Objects.nonNull(r.getDacId()))
+                .map(UserRole::getDacId)
+                .collect(Collectors.toList());
+            datasets = dacIds.isEmpty() ? Set.of() : datasetService.findDatasetsByDacIds(dacIds);
+            return Response.ok().entity(datasets).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -141,6 +171,49 @@ public class UserResource extends Resource {
     }
 
     @PUT
+    @Path("/{id}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN})
+    public Response update(@Auth AuthUser authUser, @Context UriInfo info, @PathParam("id") Integer userId, String json) {
+        try {
+            UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
+            // Ensure that we have a real user with this ID, fail if we do not.
+            userService.findUserById(userId);
+            User updatedUser = userService.updateUserFieldsById(userUpdateFields, userId);
+            Gson gson = new Gson();
+            JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, updatedUser.getUserId());
+            return Response.ok().entity(gson.toJson(jsonUser)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @PermitAll
+    public Response updateSelf(@Auth AuthUser authUser, @Context UriInfo info, String json) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
+
+            if (Objects.nonNull(userUpdateFields.getUserRoleIds()) && !user.hasUserRole(UserRoles.ADMIN)) {
+                throw new BadRequestException("Cannot change user's roles.");
+            }
+
+            user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
+            supportRequestService.handleSuggestedUserFieldsSupportRequest(userUpdateFields, user, authUser);
+            Gson gson = new Gson();
+            JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
+
+            return Response.ok().entity(gson.toJson(jsonUser)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
     @Path("/{userId}/{roleId}")
     @Produces("application/json")
     @RolesAllowed({ADMIN})
@@ -151,7 +224,7 @@ public class UserResource extends Resource {
             if (UserRoles.isValidNonDACRoleId(roleId)) {
                 if (!currentUserRoleIds.contains(roleId)) {
                     UserRole role = new UserRole(roleId, UserRoles.getUserRoleFromId(roleId).getRoleName());
-                    userService.insertUserRoles(Collections.singletonList(role), user.getDacUserId());
+                    userService.insertUserRoles(Collections.singletonList(role), user.getUserId());
                     JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
                     return Response.ok().entity(gson.toJson(userJson)).build();
                 } else {
@@ -258,7 +331,7 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             researcherService.setProperties(userPropertiesMap, authUser);
-            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
             return Response.created(info.getRequestUriBuilder().build()).entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -273,7 +346,7 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             researcherService.updateProperties(userProperties, authUser, validate);
-            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
             return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

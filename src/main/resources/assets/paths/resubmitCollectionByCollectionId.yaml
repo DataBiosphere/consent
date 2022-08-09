@@ -12,11 +12,11 @@ put:
         type: integer
   responses:
     200:
-      description: Returns new draft DAR
+      description: Returns DAR summary
       content:
         application/json:
           schema:
-            $ref: '../schemas/DataAccessRequest.yaml'
+            $ref: '../schemas/DarCollectionSummary.yaml'
     400: 
       description: Bad Request (dar collection is not canceled)
     404:

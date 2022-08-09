@@ -83,7 +83,7 @@ public class LibraryCardResource extends Resource{
     try{
       User user = userService.findUserByEmail(authUser.getEmail());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
-      payload.setCreateUserId(user.getDacUserId());
+      payload.setCreateUserId(user.getUserId());
       LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload, user);
       return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(newLibraryCard).build();
     } catch(Exception e) {
@@ -100,7 +100,7 @@ public class LibraryCardResource extends Resource{
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
-      LibraryCard updatedLibraryCard = libraryCardService.updateLibraryCard(payload, id, user.getDacUserId());
+      LibraryCard updatedLibraryCard = libraryCardService.updateLibraryCard(payload, id, user.getUserId());
       return Response.ok().entity(updatedLibraryCard).build();
     } catch(Exception e) {
       return createExceptionResponse(e);

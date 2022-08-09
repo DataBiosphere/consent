@@ -25,6 +25,7 @@ public class ConsentManageResource extends Resource {
         this.consentService = consentService;
     }
 
+    @Deprecated
     @GET
     @Path("/manage")
     @RolesAllowed(ADMIN)

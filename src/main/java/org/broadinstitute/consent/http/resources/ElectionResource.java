@@ -1,14 +1,13 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
+import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.VoteService;
-
-import io.dropwizard.auth.Auth;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -19,9 +18,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -91,7 +88,7 @@ public class ElectionResource extends Resource {
         }
     }
 
-
+    @Deprecated
     @GET
     @Consumes("application/json")
     @Produces("application/json")
@@ -100,19 +97,6 @@ public class ElectionResource extends Resource {
     public Response describeElectionByVoteId(@PathParam("voteId") Integer id) {
         try {
             return Response.ok().entity(electionService.describeElectionByVoteId(id)).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
-    @GET
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/checkdataset")
-    @PermitAll
-    public Response isDataSetElectionOpen(@Context UriInfo info) {
-        try {
-            return Response.ok().entity("{ \"open\" : " + electionService.isDataSetElectionOpen() + " }").build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

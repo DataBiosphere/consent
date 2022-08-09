@@ -7,12 +7,12 @@ package org.broadinstitute.consent.http.db;
 @SuppressWarnings("unused")
 public class DAOContainer {
 
-  private ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
   private ConsentDAO consentDAO;
   private CounterDAO counterDAO;
   private DacDAO dacDAO;
   private DataAccessRequestDAO dataAccessRequestDAO;
   private DarCollectionDAO darCollectionDAO;
+  private DarCollectionSummaryDAO darCollectionSummaryDAO;
   private DatasetAssociationDAO datasetAssociationDAO;
   private DatasetDAO datasetDAO;
   private ElectionDAO electionDAO;
@@ -24,15 +24,6 @@ public class DAOContainer {
   private VoteDAO voteDAO;
   private ConsentAuditDAO consentAuditDAO;
   private InstitutionDAO institutionDAO;
-
-  public ApprovalExpirationTimeDAO getApprovalExpirationTimeDAO() {
-    return approvalExpirationTimeDAO;
-  }
-
-  public void setApprovalExpirationTimeDAO(
-      ApprovalExpirationTimeDAO approvalExpirationTimeDAO) {
-    this.approvalExpirationTimeDAO = approvalExpirationTimeDAO;
-  }
 
   public ConsentDAO getConsentDAO() {
     return consentDAO;
@@ -71,9 +62,19 @@ public class DAOContainer {
     return darCollectionDAO;
   }
 
+  public DarCollectionSummaryDAO getDarCollectionSummaryDAO() {
+    return darCollectionSummaryDAO;
+  }
+
   public void setDarCollectionDAO(
     DarCollectionDAO darCollectionDAO) {
     this.darCollectionDAO = darCollectionDAO;
+  }
+
+  public void setDarCollectionSummaryDAO(
+    DarCollectionSummaryDAO darCollectionSummaryDAO
+  ) {
+    this.darCollectionSummaryDAO = darCollectionSummaryDAO;
   }
 
   public DatasetAssociationDAO getDatasetAssociationDAO() {

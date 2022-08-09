@@ -4,6 +4,7 @@ import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.util.concurrent.FutureCallback;
@@ -52,6 +53,9 @@ public class SamService {
     GenericUrl genericUrl = new GenericUrl(configuration.getV1ResourceTypesUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
+    if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+      logger.error("Error getting resource types from Sam: " + response.getStatusMessage());
+    }
     String body = response.parseAsString();
     Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>() {}.getType();
     return new Gson().fromJson(body, resourceTypesListType);
@@ -61,6 +65,9 @@ public class SamService {
     GenericUrl genericUrl = new GenericUrl(configuration.getRegisterUserV2SelfInfoUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
+    if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+      logger.error("Error getting user registration information from Sam: " + response.getStatusMessage());
+    }
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatusInfo.class);
   }
@@ -69,6 +76,9 @@ public class SamService {
     GenericUrl genericUrl = new GenericUrl(configuration.getV2SelfDiagnosticsUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
+    if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+      logger.error("Error getting enabled statuses of user from Sam: " + response.getStatusMessage());
+    }
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatusDiagnostics.class);
   }
@@ -77,6 +87,9 @@ public class SamService {
     GenericUrl genericUrl = new GenericUrl(configuration.postRegisterUserV2SelfUrl());
     HttpRequest request = clientUtil.buildPostRequest(genericUrl, new EmptyContent(), authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
+    if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+      logger.error("Error posting user registration information to Sam: " + response.getStatusMessage());
+    }
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatus.class);
   }
@@ -106,14 +119,31 @@ public class SamService {
     HttpRequest request = clientUtil.buildUnAuthedGetRequest(genericUrl);
     request.getHeaders().setAccept(MediaType.TEXT_PLAIN);
     HttpResponse response = clientUtil.handleHttpRequest(request);
+    if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+      logger.error("Error getting Terms of Service text from Sam: " + response.getStatusMessage());
+    }
     return response.parseAsString();
   }
 
   public TosResponse postTosAcceptedStatus(AuthUser authUser) throws Exception {
-    GenericUrl genericUrl = new GenericUrl(configuration.postTosAcceptedUrl());
+    GenericUrl genericUrl = new GenericUrl(configuration.tosRegistrationUrl());
     JsonHttpContent content = new JsonHttpContent(new GsonFactory(), "app.terra.bio/#terms-of-service");
     HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
+    if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+      logger.error("Error accepting Terms of Service through Sam: " + response.getStatusMessage());
+    }
+    String body = response.parseAsString();
+    return new Gson().fromJson(body, TosResponse.class);
+  }
+
+  public TosResponse removeTosAcceptedStatus(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(configuration.tosRegistrationUrl());
+    HttpRequest request = clientUtil.buildDeleteRequest(genericUrl, authUser);
+    HttpResponse response = clientUtil.handleHttpRequest(request);
+    if (response.getStatusCode() != HttpStatusCodes.STATUS_CODE_OK) {
+      logger.error("Error removing Terms of Service acceptance through Sam: " + response.getStatusMessage());
+    }
     String body = response.parseAsString();
     return new Gson().fromJson(body, TosResponse.class);
   }

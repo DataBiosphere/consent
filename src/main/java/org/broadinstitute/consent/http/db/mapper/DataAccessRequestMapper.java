@@ -22,6 +22,7 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
                 dar.setCollectionId(collectionId);
             }
         }
+        dar.setParentId(resultSet.getString("parent_id"));
         dar.setDraft(resultSet.getBoolean("draft"));
         dar.setUserId(resultSet.getInt("user_id"));
         dar.setCreateDate(resultSet.getTimestamp("create_date"));
@@ -30,6 +31,9 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
         dar.setUpdateDate(resultSet.getTimestamp("update_date"));
         String darDataString = resultSet.getObject("data", PGobject.class).getValue();
         DataAccessRequestData data = translate(darDataString);
+        if (hasColumn(resultSet, "dataset_id")) {
+            dar.addDatasetId(resultSet.getInt("dataset_id"));
+        }
         dar.setData(data);
         return dar;
     }

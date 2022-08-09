@@ -93,27 +93,17 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
-        return Response
-          .status(Response.Status.FORBIDDEN)
-                .entity("Library Card required for creating Data Access Requests")
-          .build();
+      DataAccessRequest payload = populateDarFromJsonString(user, dar);
+      DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
+      Integer collectionId = newDar.getCollectionId();
+      try {
+          emailNotifierService.sendNewDARCollectionMessage(collectionId);
+      } catch (Exception e) {
+          logger.error("Exception sending email for collection id: " + collectionId, e);
       }
-      DataAccessRequest newDar = populateDarFromJsonString(user, dar);
-      List<DataAccessRequest> results =
-          dataAccessRequestService.createDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().build();
-      for (DataAccessRequest r : results) {
-        matchService.reprocessMatchesForPurpose(r.getReferenceId());
-        emailNotifierService.sendNewDARRequestMessage(
-            r.getData().getDarCode(), r.getData().getDatasetIds());
-      }
-      return Response.created(uri)
-          .entity(
-              results.stream()
-                  .map(DataAccessRequest::convertToSimplifiedDar)
-                  .collect(Collectors.toList()))
-          .build();
+      matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
+      return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -161,7 +151,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
       DataAccessRequest updatedDar =
-          dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
+          dataAccessRequestService.updateByReferenceId(user, originalDar);
       matchService.reprocessMatchesForPurpose(referenceId);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
@@ -176,7 +166,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   public Response getDraftDataAccessRequests(@Auth AuthUser authUser) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      List<DataAccessRequest> draftDars = dataAccessRequestService.findAllDraftDataAccessRequestsByUser(user.getDacUserId());
+      List<DataAccessRequest> draftDars = dataAccessRequestService.findAllDraftDataAccessRequestsByUser(user.getUserId());
       return Response.ok().entity(draftDars).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -191,7 +181,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     try {
       User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-      if (dar.getUserId().equals(user.getDacUserId())) {
+      if (dar.getUserId().equals(user.getUserId())) {
         return Response.ok().entity(dar).build();
       }
       throw new ForbiddenException("User does not have permission");
@@ -226,7 +216,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   public Response getDraftManageDataAccessRequests(@Auth AuthUser authUser) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      List<DataAccessRequestManage> partials = dataAccessRequestService.getDraftDataAccessRequestManage(user.getDacUserId());
+      List<DataAccessRequestManage> partials = dataAccessRequestService.getDraftDataAccessRequestManage(user.getUserId());
       return Response.ok().entity(partials).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -249,8 +239,9 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       // it in dar data.
       data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
+      originalDar.addDatasetIds(data.getDatasetIds());
       DataAccessRequest updatedDar =
-          dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
+          dataAccessRequestService.updateByReferenceId(user, originalDar);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -360,7 +351,8 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   public Response deleteDar(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
     validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
     try {
-      dataAccessRequestService.deleteByReferenceId(referenceId);
+      User user = findUserByEmail(authUser.getEmail());
+      dataAccessRequestService.deleteByReferenceId(user, referenceId);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -390,9 +382,14 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest existingDar =
           dataAccessRequestService.findByReferenceId(data.getReferenceId());
       if (Objects.nonNull(existingDar)
-          && existingDar.getUserId().equals(user.getDacUserId())
+          && existingDar.getUserId().equals(user.getUserId())
           && existingDar.getDraft()) {
         newDar.setReferenceId(data.getReferenceId());
+
+        // if dar was part of a collection, we should use the same collection.
+        if (Objects.nonNull(existingDar.getCollectionId())) {
+          newDar.setCollectionId(existingDar.getCollectionId());
+        }
       } else {
         String referenceId = UUID.randomUUID().toString();
         newDar.setReferenceId(referenceId);
@@ -404,11 +401,12 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       data.setReferenceId(referenceId);
     }
     newDar.setData(data);
+    newDar.addDatasetIds(data.getDatasetIds());
     return newDar;
   }
 
   private void checkAuthorizedUpdateUser(User user, DataAccessRequest dar) {
-    if (!user.getDacUserId().equals(dar.getUserId())) {
+    if (!user.getUserId().equals(dar.getUserId())) {
       throw new ForbiddenException("User not authorized to update this Data Access Request");
     }
   }
@@ -443,7 +441,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       default:
         break;
     }
-    return dataAccessRequestService.updateByReferenceIdVersion2(user, dar);
+    return dataAccessRequestService.updateByReferenceId(user, dar);
   }
 
   private void deleteDarDocument(DataAccessRequest dar, String blobIdName) {

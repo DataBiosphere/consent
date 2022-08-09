@@ -2,16 +2,21 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 
 import javax.annotation.security.PermitAll;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -25,10 +30,12 @@ import java.util.List;
 public class SamResource extends Resource {
 
   private final SamService samService;
+  private final UserService userService;
 
   @Inject
-  public SamResource(SamService samService) {
+  public SamResource(SamService samService, UserService userService) {
     this.samService = samService;
+    this.userService = userService;
   }
 
   @Path("resource-types")
@@ -90,7 +97,37 @@ public class SamResource extends Resource {
   @PermitAll
   public Response postSelfTos(@Auth AuthUser authUser) {
     try {
+      // Ensure that the user is a registered DUOS and SAM user before accepting ToS:
+      try {
+        userService.findUserByEmail(authUser.getEmail());
+      } catch (NotFoundException nfe) {
+        User user = new User();
+        user.setEmail(authUser.getEmail());
+        user.setDisplayName(authUser.getName());
+        userService.createUser(user);
+      }
+      try {
+        samService.postRegistrationInfo(authUser);
+      } catch (ConsentConflictException cce) {
+        // no-op in the case of conflicts.
+      } catch (Exception e) {
+        return createExceptionResponse(e);
+      }
       TosResponse tosResponse = samService.postTosAcceptedStatus(authUser);
+      return Response.ok().entity(tosResponse).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+
+  @Path("register/self/tos")
+  @DELETE
+  @Produces("application/json")
+  @PermitAll
+  public Response removeTos(@Auth AuthUser authUser) {
+    try {
+      TosResponse tosResponse = samService.removeTosAcceptedStatus(authUser);
       return Response.ok().entity(tosResponse).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

@@ -10,7 +10,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -31,15 +31,15 @@ public class MailMessageDAOTest extends DAOTestHelper {
     public void testInsertEmail() {
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac d = createDac();
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Consent c = createConsent(d.getDacId());
-        createAssociation(c.getConsentId(), dataset.getDataSetId());
-        Election e = createAccessElection(c.getConsentId(), dataset.getDataSetId());
-        Vote vote = createChairpersonVote(chair.getDacUserId(), e.getElectionId());
+        consentDAO.insertConsentAssociation(c.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
+        Election e = createDataAccessElection(c.getConsentId(), dataset.getDataSetId());
+        Vote vote = createChairpersonVote(chair.getUserId(), e.getElectionId());
         mailMessageDAO.insertEmail(
                 vote.getVoteId(),
                 e.getReferenceId(),
-                chair.getDacUserId(),
+                chair.getUserId(),
                 1,
                 new Date(),
                 RandomStringUtils.random(10, true, false)
@@ -53,12 +53,12 @@ public class MailMessageDAOTest extends DAOTestHelper {
     public void testInsertBulkEmailNoVotes() {
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac d = createDac();
-        DataSet dataset = createDataset();
+        Dataset dataset = createDataset();
         Consent c = createConsent(d.getDacId());
-        createAssociation(c.getConsentId(), dataset.getDataSetId());
-        Election e = createAccessElection(c.getConsentId(), dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(c.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
+        Election e = createDataAccessElection(c.getConsentId(), dataset.getDataSetId());
         mailMessageDAO.insertBulkEmailNoVotes(
-                Collections.singletonList(chair.getDacUserId()),
+                Collections.singletonList(chair.getUserId()),
                 e.getReferenceId(),
                 1,
                 new Date(),

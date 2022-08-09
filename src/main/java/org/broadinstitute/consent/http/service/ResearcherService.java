@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -11,9 +10,7 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,46 +21,36 @@ import java.util.Map;
 public class ResearcherService {
     private final UserPropertyDAO userPropertyDAO;
     private final UserDAO userDAO;
-    private final EmailNotifierService emailNotifierService;
-    private static final String ACTION_REGISTERED = "registered";
 
     protected Logger logger() {
         return LoggerFactory.getLogger(this.getClass());
     }
 
     @Inject
-    public ResearcherService(UserPropertyDAO userPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService) {
+    public ResearcherService(UserPropertyDAO userPropertyDAO, UserDAO userDAO) {
         this.userPropertyDAO = userPropertyDAO;
         this.userDAO = userDAO;
-        this.emailNotifierService = emailNotifierService;
     }
 
+    @Deprecated
     public List<UserProperty> setProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser) throws NotFoundException, IllegalArgumentException {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
-        List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getDacUserId());
+        List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getUserId());
         saveProperties(properties);
-        notifyAdmins(user.getDacUserId());
-        return describeResearcherProperties(user.getDacUserId());
+        return describeResearcherProperties(user.getUserId());
     }
 
+    @Deprecated
     public List<UserProperty> updateProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser, Boolean validate) throws NotFoundException, IllegalArgumentException {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         if (validate) validateRequiredFields(researcherPropertiesMap);
         Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
-        boolean isUpdatedProfileCompleted = Boolean.parseBoolean(validatedProperties.get(UserFields.COMPLETED.getValue()));
-        String completed = userPropertyDAO.isProfileCompleted(user.getDacUserId());
-        boolean isProfileCompleted = Boolean.parseBoolean(completed);
-        List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getDacUserId());
-        if (!isProfileCompleted && isUpdatedProfileCompleted) {
-            saveProperties(properties);
-            notifyAdmins(user.getDacUserId());
-        } else {
-            saveProperties(properties);
-        }
-        return describeResearcherProperties(user.getDacUserId());
+        List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getUserId());
+        saveProperties(properties);
+        return describeResearcherProperties(user.getUserId());
     }
 
     private void saveProperties(List<UserProperty> properties) {
@@ -95,7 +82,8 @@ public class ResearcherService {
 
     private List<UserProperty> describeResearcherProperties(Integer userId) {
         validateUser(userId);
-        return userPropertyDAO.findResearcherPropertiesByUser(userId);
+        return userPropertyDAO.findResearcherPropertiesByUser(userId,
+                UserFields.getValues());
     }
 
     private void validateRequiredFields(Map<String, String> properties) {
@@ -125,16 +113,4 @@ public class ResearcherService {
         return properties;
     }
 
-    private void notifyAdmins(Integer userId) {
-        String completed = userPropertyDAO.isProfileCompleted(userId);
-        if (Boolean.parseBoolean(completed)) {
-            try {
-                emailNotifierService.sendNewResearcherCreatedMessage(userId, ResearcherService.ACTION_REGISTERED);
-            } catch (IOException | TemplateException | MessagingException e) {
-                logger().error("Error when notifying the admin(s) about the researcher action: " +
-                        ResearcherService.ACTION_REGISTERED + ", for user: " +
-                        userDAO.findUserById(userId).getDisplayName());
-            }
-        }
-    }
 }

@@ -1,45 +1,12 @@
 type: object
 properties:
-  profileName:
-    type: string
-  country:
-    type: string
-  city:
-    type: string
-  address1:
-    type: string
-  address2:
-    type: string
-  orcid:
-    type: string
-  completed:
-    type: string
-  libraryCards:
-    type: array
-    description: List of string values of the organizations for all library cards the user has access to.
-    items:
-      type: string
-  zipcode:
-    type: string
-  libraryCardEntries:
-    type: array
-    items:
-      $ref: './LibraryCard.yaml'
-  institution:
-    type: string
-  nihUsername:
-    type: string
-  academicEmail:
-    type: string
-  state:
-    type: string
-  isThePI:
-    type: string
-  department:
-    type: string
-  checkNotifications:
-    type: string
   eraAuthorized:
     type: string
   eraExpiration:
+    type: string
+  suggestedInstitution:
+    type: string
+  suggestedSigningOfficial:
+    type: string
+  selectedSigningOfficial:
     type: string

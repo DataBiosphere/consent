@@ -1,19 +1,39 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import com.google.gson.JsonSyntaxException;
+import org.apache.commons.text.StringEscapeUtils;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.jdbi.v3.core.result.RowView;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Objects;
 
-import com.google.gson.JsonSyntaxException;
-import org.apache.commons.text.StringEscapeUtils;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public interface RowMapperHelper {
 
   Logger log = LoggerFactory.getLogger(RowMapperHelper.class);
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  /*
+   * Utility method to check if a column exists in the row view or not.
+   *
+   * @param rowView The RowView
+   * @param columnName The column name
+   * @param clazz The class that corresponds to the column
+   * @return True if the column is in the results, false otherwise
+   */
+  default boolean hasColumn(RowView rowView, String columnName, Class clazz) {
+    try {
+      rowView.getColumn(columnName, clazz);
+      return true;
+    } catch (Exception e) {
+      log.debug("RowView does not contain column " + columnName);
+      return false;
+    }
+  }
 
   /**
    * Utility method to check if a column exists in the result set or not.

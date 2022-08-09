@@ -40,6 +40,7 @@ public class ConsentVoteResource extends Resource {
         this.electionService = electionService;
     }
 
+    @Deprecated
     @POST
     @Consumes("application/json")
     @Path("/{id}")
@@ -61,6 +62,7 @@ public class ConsentVoteResource extends Resource {
         }
     }
 
+    @Deprecated
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
@@ -76,6 +78,7 @@ public class ConsentVoteResource extends Resource {
         }
     }
 
+    @Deprecated
     @GET
     @Produces("application/json")
     @Path("/{id}")

@@ -60,7 +60,7 @@ object Requests {
 
   object User {
     val userResponse: String = "userResponse"
-    val dacUserId: String = "dacUserId"
+    val userId: String = "userId"
     val userByIdResponse: String = "userByIdResponse"
 
     def me(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
@@ -69,7 +69,7 @@ object Requests {
         .headers(TestConfig.jsonHeader)
         .headers(additionalHeaders)
         .check(bodyString.saveAs(userResponse))
-        .check(jsonPath("$.dacUserId").saveAs(dacUserId))
+        .check(jsonPath("$.userId").saveAs(userId))
         .check(status.is(expectedStatus))
     }
 
@@ -94,13 +94,13 @@ object Requests {
       responseContent
     }
 
-    def dataSetCatalog(expectedStatus: Int, dacUserId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+    def dataSetCatalog(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("DataSet Catalog Requests")
         .get("/")
         .headers(TestConfig.jsonHeader)
         .headers(additionalHeaders)
         .resources(
-          DataSet.byUserId(expectedStatus, dacUserId, additionalHeaders),
+          DataSet.byUserId(expectedStatus, userId, additionalHeaders),
           Dac.list(expectedStatus, additionalHeaders)
         )
     }
@@ -110,9 +110,9 @@ object Requests {
     val dataSetResponse: String = "DATASET_RESPONSE"
     val dataSetsByDataSetId: String = "DATASET_BYDSID_"
 
-    def byUserId(expectedStatus: Int, dacUserId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+    def byUserId(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get DataSet By User")
-        .get("/api/dataset?dacUserId=" + dacUserId)
+        .get("/api/dataset?userId=" + userId)
         .headers(TestConfig.jsonHeader)
         .headers(additionalHeaders)
         .check(bodyString.saveAs(dataSetResponse))

@@ -1,6 +1,26 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.enumeration.VoteStatus;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.PendingCase;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -10,37 +30,12 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.ws.rs.NotFoundException;
-import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.enumeration.VoteStatus;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.PendingCase;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.dto.DataOwnerCase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PendingCaseService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ConsentDAO consentDAO;
     private final DataAccessRequestService dataAccessRequestService;
-    private final DatasetDAO dataSetDAO;
     private final ElectionDAO electionDAO;
 
     private final VoteDAO voteDAO;
@@ -50,11 +45,10 @@ public class PendingCaseService {
 
     @Inject
     public PendingCaseService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
-                              DatasetDAO dataSetDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
+                              ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
                               UserService userService, VoteService voteService) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestService = dataAccessRequestService;
-        this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.dacService = dacService;
@@ -67,7 +61,7 @@ public class PendingCaseService {
         List<Integer> roleIds = user.getRoles().stream().
                 map(UserRole::getRoleId).
                 collect(Collectors.toList());
-        Integer dacUserId = user.getDacUserId();
+        Integer dacUserId = user.getUserId();
         List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = dacService.filterElectionsByDAC(elections, authUser).
                 stream().
@@ -98,7 +92,7 @@ public class PendingCaseService {
 
     public List<PendingCase> describeDataRequestPendingCases(AuthUser authUser) throws NotFoundException {
         User user = userService.findUserByEmail(authUser.getEmail());
-        Integer dacUserId = user.getDacUserId();
+        Integer dacUserId = user.getUserId();
         boolean isChair = dacService.isAuthUserChair(authUser);
         List<Election> unfilteredElections = isChair ?
                 electionDAO.findOpenLastElectionsByTypeAndFinalAccessVoteForChairPerson(ElectionType.DATA_ACCESS.getValue(), false) :
@@ -135,36 +129,6 @@ public class PendingCaseService {
             }
         }
         return pendingCases.stream().distinct().collect(Collectors.toList());
-    }
-
-    public List<DataOwnerCase> describeDataOwnerPendingCases(Integer dataOwnerId, AuthUser authUser) {
-        List<Election> elections = dacService.filterElectionsByDAC(
-                electionDAO.getElectionByTypeAndStatus(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue()),
-                authUser
-        );
-        List<DataOwnerCase> pendingCases = new ArrayList<>();
-        if (elections != null) {
-            for (Election election : elections) {
-                DataOwnerCase dataOwnerCase = new DataOwnerCase();
-                List<Vote> dataOwnerVotes = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), dataOwnerId, VoteType.DATA_OWNER.getValue());
-                if (CollectionUtils.isNotEmpty(dataOwnerVotes)) {
-                    dataOwnerVotes.forEach(v -> {
-                        DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(election.getReferenceId());
-                        DataSet dataSet = dataSetDAO.findDataSetById(election.getDataSetId());
-                        dataOwnerCase.setAlias(dataSet.getAlias());
-                        dataOwnerCase.setDarCode(dataAccessRequest != null ? dataAccessRequest.getData().getDarCode() : null);
-                        dataOwnerCase.setDataSetId(dataSet.getDataSetId());
-                        dataOwnerCase.setDataSetName(dataSet.getName());
-                        dataOwnerCase.setVoteId(v.getVoteId());
-                        dataOwnerCase.setAlreadyVoted(v.getVote() != null);
-                        dataOwnerCase.setReferenceId(election.getReferenceId());
-                        dataOwnerCase.setHasConcerns(v.getHasConcerns());
-                        pendingCases.add(dataOwnerCase);
-                    });
-                }
-            }
-        }
-        return pendingCases;
     }
 
     private void setGeneralFields(PendingCase pendingCase, Election election, Vote vote, boolean isReminderSent) {
@@ -273,7 +237,7 @@ public class PendingCaseService {
         }
         logger.info(String.format(
                 "Creating missing votes for user id '%s', election id '%s', reference id '%s' ",
-                user.getDacUserId(),
+                user.getUserId(),
                 e.getElectionId(),
                 e.getReferenceId()
         ));

@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Institution;
@@ -19,14 +20,18 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -35,8 +40,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UserService {
 
@@ -62,20 +65,79 @@ public class UserService {
         this.libraryCardDAO = libraryCardDAO;
     }
 
+    /**
+     * Update a select group of user fields for a user id.
+     *
+     * @param userUpdateFields A UserUpdateFields object for all update information
+     * @param userId The User's ID
+     * @return The updated User
+     */
+    public User updateUserFieldsById(UserUpdateFields userUpdateFields, Integer userId) {
+        if (Objects.nonNull(userUpdateFields)) {
+            // Update Primary User Fields
+            if (Objects.nonNull(userUpdateFields.getDisplayName())) {
+                userDAO.updateDisplayName(userId, userUpdateFields.getDisplayName());
+            }
+            if (Objects.nonNull(userUpdateFields.getInstitutionId())) {
+                userDAO.updateInstitutionId(userId, userUpdateFields.getInstitutionId());
+            }
+            if (Objects.nonNull(userUpdateFields.getEmailPreference())) {
+                userDAO.updateEmailPreference(userId, userUpdateFields.getEmailPreference());
+            }
+            if (Objects.nonNull(userUpdateFields.getEraCommonsId())) {
+                userDAO.updateEraCommonsId(userId, userUpdateFields.getEraCommonsId());
+            }
+            // Update User Properties
+            List<UserProperty> userProps = userUpdateFields.buildUserProperties(userId);
+            if (!userProps.isEmpty()) {
+                userPropertyDAO.deletePropertiesByUserAndKey(userProps);
+                userPropertyDAO.insertAll(userProps);
+            }
+
+            // Handle Roles
+            if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
+                List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream().map(UserRole::getRoleId).collect(Collectors.toList());
+                List<Integer> roleIdsToAdd = userUpdateFields.getRoleIdsToAdd(currentRoleIds);
+                List<Integer> roleIdsToRemove = userUpdateFields.getRoleIdsToRemove(currentRoleIds);
+                // Add the new role ids to the user
+                if (!roleIdsToAdd.isEmpty()) {
+                    List<UserRole> newRoles = roleIdsToAdd.stream()
+                        .map(id -> new UserRole(id, Objects.requireNonNull(UserRoles.getUserRoleFromId(id)).getRoleName()))
+                        .collect(Collectors.toList());
+                    userRoleDAO.insertUserRoles(newRoles, userId);
+                }
+                // Remove the old role ids from the user
+                if (!roleIdsToRemove.isEmpty()) {
+                    userRoleDAO.removeUserRoles(userId, roleIdsToRemove);
+                }
+            }
+
+        }
+        return findUserById(userId);
+    }
+
     public static class SimplifiedUser {
+        public Integer userId;
+        @Deprecated
         public Integer dacUserId;
         public String displayName;
         public String email;
 
         public SimplifiedUser(User user) {
+            this.userId = user.getUserId();
+            this.dacUserId = user.getUserId();
             this.displayName = user.getDisplayName();
-            this.dacUserId = user.getDacUserId();
             this.email = user.getEmail();
         }
 
         public SimplifiedUser() {
         }
 
+        public void setUserId(Integer userId) {
+            this.userId = userId;
+        }
+
+        @Deprecated
         public void setDacUserId(Integer userId) {
             this.dacUserId = userId;
         }
@@ -100,10 +162,10 @@ public class UserService {
         if (Objects.nonNull(existingUser)) {
             throw new BadRequestException("User exists with this email address: " + user.getEmail());
         }
-        Integer dacUserID = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
-        insertUserRoles(user.getRoles(), dacUserID);
+        Integer userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
+        insertUserRoles(user.getRoles(), userId);
         addExistingLibraryCards(user);
-        return userDAO.findUserById(dacUserID);
+        return userDAO.findUserById(userId);
     }
 
     public User findUserById(Integer id) throws NotFoundException {
@@ -111,7 +173,7 @@ public class UserService {
         if (user == null) {
             throw new NotFoundException("Unable to find user with id: " + id);
         }
-        List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getDacUserId());
+        List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
         if (Objects.nonNull(cards) && !cards.isEmpty()) {
             user.setLibraryCards(cards);
         }
@@ -123,7 +185,7 @@ public class UserService {
         if (user == null) {
             throw new NotFoundException("Unable to find user with email: " + email);
         }
-        List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getDacUserId());
+        List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
         if (Objects.nonNull(cards) && !cards.isEmpty()) {
             user.setLibraryCards(cards);
         }
@@ -168,30 +230,29 @@ public class UserService {
             throw new NotFoundException("The user for the specified E-Mail address does not exist");
         }
         List<Integer> roleIds = userRoleDAO.
-                findRolesByUserId(user.getDacUserId()).
+                findRolesByUserId(user.getUserId()).
                 stream().
                 map(UserRole::getRoleId).
                 collect(Collectors.toList());
         if (!roleIds.isEmpty()) {
-            userRoleDAO.removeUserRoles(user.getDacUserId(), roleIds);
+            userRoleDAO.removeUserRoles(user.getUserId(), roleIds);
         }
-        List<Vote> votes = voteDAO.findVotesByUserId(user.getDacUserId());
+        List<Vote> votes = voteDAO.findVotesByUserId(user.getUserId());
         if (!votes.isEmpty()) {
             List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
             voteDAO.removeVotesByIds(voteIds);
         }
-        userPropertyDAO.deleteAllPropertiesByUser(user.getDacUserId());
-        userDAO.deleteUserById(user.getDacUserId());
+        userPropertyDAO.deleteAllPropertiesByUser(user.getUserId());
+        userDAO.deleteUserById(user.getUserId());
     }
 
     public List<UserProperty> findAllUserProperties(Integer userId) {
-        return userPropertyDAO.findResearcherPropertiesByUser(userId);
+        return userPropertyDAO.findResearcherPropertiesByUser(userId, UserFields.getValues());
     }
 
     public List<User> describeAdminUsersThatWantToReceiveMails() {
         return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
     }
-
 
     public User updateDACUserById(Map<String, User> dac, Integer id) throws IllegalArgumentException, NotFoundException {
         User updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
@@ -214,15 +275,15 @@ public class UserService {
         }
 
         try {
-            userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail(), updatedUser.getInstitutionId());
+            userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getInstitutionId());
         } catch (UnableToExecuteStatementException e) {
-            throw new IllegalArgumentException("Email shoud be unique.");
+            throw new IllegalArgumentException("Email should be unique.");
         }
         return userDAO.findUserById(id);
     }
 
     public void updateEmailPreference(boolean preference, Integer userId) {
-        userDAO.updateEmailPreference(preference, userId);
+        userDAO.updateEmailPreference(userId, preference);
     }
 
     public List<SimplifiedUser> findSOsByInstitutionId(Integer institutionId) {
@@ -245,9 +306,9 @@ public class UserService {
         return userDAO.findUsersByInstitution(institutionId);
     }
 
-    public void deleteUserRole(User authUser, Integer dacUserId, Integer roleId) {
-        userRoleDAO.removeSingleUserRole(dacUserId, roleId);
-        logger.info("User " + authUser.getDisplayName() + " deleted roleId: " + roleId + " from User ID: " + dacUserId);
+    public void deleteUserRole(User authUser, Integer userId, Integer roleId) {
+        userRoleDAO.removeSingleUserRole(userId, roleId);
+        logger.info("User " + authUser.getDisplayName() + " deleted roleId: " + roleId + " from User ID: " + userId);
     }
 
     public List<User> findUsersWithNoInstitution() {
@@ -264,7 +325,7 @@ public class UserService {
     public JsonObject findUserWithPropertiesByIdAsJsonObject(AuthUser authUser, Integer userId) {
         Gson gson = new Gson();
         User user = findUserById(userId);
-        List<UserProperty> props = findAllUserProperties(user.getDacUserId());
+        List<UserProperty> props = findAllUserProperties(user.getUserId());
         List<LibraryCard> entries = Objects.nonNull(user.getLibraryCards()) ? user.getLibraryCards() : List.of();
         JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
         JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
@@ -295,13 +356,13 @@ public class UserService {
         });
     }
 
-    public void insertUserRoles(List<UserRole> roles, Integer dacUserId) {
+    public void insertUserRoles(List<UserRole> roles, Integer userId) {
         roles.forEach(r -> {
             if (r.getRoleId() == null) {
                 r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));
             }
         });
-        userRoleDAO.insertUserRoles(roles, dacUserId);
+        userRoleDAO.insertUserRoles(roles, userId);
     }
 
     private void addExistingLibraryCards(User user) {
@@ -313,7 +374,7 @@ public class UserService {
 
         libraryCards
                 .forEach(lc -> {
-                    lc.setUserId(user.getDacUserId());
+                    lc.setUserId(user.getUserId());
 
                     if (!Objects.isNull(lc.getInstitutionId())) {
                         user.setInstitutionId(lc.getInstitutionId());
@@ -326,11 +387,11 @@ public class UserService {
                             lc.getEraCommonsId(),
                             lc.getUserName(),
                             lc.getUserEmail(),
-                            user.getDacUserId(),
+                            user.getUserId(),
                             new Date());
                 });
 
-        userDAO.updateUser(user.getDisplayName(), user.getDacUserId(), user.getAdditionalEmail(), user.getInstitutionId());
+        userDAO.updateUser(user.getDisplayName(), user.getUserId(), user.getInstitutionId());
     }
 
     private Boolean checkForValidInstitution(Integer institutionId) {

@@ -190,7 +190,7 @@ abstract public class Resource {
                 collect(Collectors.toList());
         boolean authedUserHasRole = authedUser.getRoles().stream().
                 anyMatch(userRole -> authedRoleIds.contains(userRole.getRoleId()));
-        if (!authedUserHasRole && !authedUser.getDacUserId().equals(userId)) {
+        if (!authedUserHasRole && !authedUser.getUserId().equals(userId)) {
             throw new ForbiddenException("User does not have permission");
         }
     }

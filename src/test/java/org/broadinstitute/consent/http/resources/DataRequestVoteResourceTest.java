@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -67,7 +67,7 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
     @Mock
     private Election election;
     @Mock
-    private DataSet dataSet;
+    private Dataset dataSet;
 
     private DataRequestVoteResource resource;
 
@@ -82,7 +82,7 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
     private User createMockUser(UserRole role, Integer dacUserId) {
         User user = new User();
         user.setRoles(List.of(role));
-        user.setDacUserId(dacUserId);
+        user.setUserId(dacUserId);
         return user;
     }
 
@@ -97,7 +97,7 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
     private DataAccessRequest createMockDAR() {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData darData = new DataAccessRequestData();
-        darData.setDatasetIds(List.of(1));
+        dar.setDatasetIds(List.of(1));
         darData.setDarCode("");
         dar.setData(darData);
         dar.setReferenceId("");
@@ -113,7 +113,7 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
         }
         when(dataSet.getDataSetId()).thenReturn(1);
         when(datasetService.findNeedsApprovalDataSetByObjectId(any())).thenReturn(List.of(dataSet));
-        Map<User, List<DataSet>> dataOwnerDataSet = new HashMap<>();
+        Map<User, List<Dataset>> dataOwnerDataSet = new HashMap<>();
         dataOwnerDataSet.put(user, List.of(dataSet));
         when(datasetAssociationService.findDataOwnersWithAssociatedDataSets(any())).thenReturn(dataOwnerDataSet);
         when(electionService.createDataSetElections(any(), any())).thenReturn(List.of(election));

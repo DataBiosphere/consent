@@ -1,28 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-
 import com.google.gson.JsonObject;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -39,12 +16,37 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class UserServiceTest {
 
@@ -55,7 +57,7 @@ public class UserServiceTest {
     private UserPropertyDAO userPropertyDAO;
 
     @Mock
-    private UserRoleDAO roleDAO;
+    private UserRoleDAO userRoleDAO;
 
     @Mock
     private VoteDAO voteDAO;
@@ -74,7 +76,55 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, userPropertyDAO, roleDAO, voteDAO, institutionDAO, libraryCardDAO);
+        service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO);
+    }
+
+    @Test
+    public void testUpdateUserFieldsById() {
+        UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+        UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+
+        User user = new User();
+        user.setUserId(1);
+
+        // Note that we're starting out with 1 modifiable role (Admin) and 1 that is not (Chairperson)
+        // and one role that should never be removed, but can be added (Researcher)
+        // When we update this user, we'll ensure that the new roles are added, old roles are deleted,
+        // and the researcher & chairperson roles remain.
+        when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(List.of(admin, researcher, chair));
+        when(userDAO.findUserById(any())).thenReturn(user);
+        spy(userDAO);
+        spy(userPropertyDAO);
+        spy(userRoleDAO);
+        initService();
+        try {
+            UserUpdateFields fields = new UserUpdateFields();
+            // We're modifying this user to have an SO role. This should leave in place
+            // both the Researcher and Chairperson roles, but remove the Admin role.
+            fields.setUserRoleIds(List.of(so.getRoleId()));
+            fields.setDisplayName(RandomStringUtils.random(10, true, false));
+            fields.setInstitutionId(1);
+            fields.setEmailPreference(true);
+            fields.setEraCommonsId(RandomStringUtils.random(10, true, false));
+            fields.setSelectedSigningOfficialId(1);
+            fields.setSuggestedSigningOfficial(RandomStringUtils.random(10, true, false));
+            fields.setSuggestedInstitution(RandomStringUtils.random(10, true, false));
+            assertEquals(3, fields.buildUserProperties(user.getUserId()).size());
+            service.updateUserFieldsById(fields, user.getUserId());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        // We added 3 user property values, we should have props for them:
+        verify(userDAO, times(1)).updateDisplayName(any(), any());
+        verify(userDAO, times(1)).updateInstitutionId(any(), any());
+        verify(userDAO, times(1)).updateEmailPreference(any(), any());
+        verify(userDAO, times(1)).updateEraCommonsId(any(), any());
+        verify(userPropertyDAO, times(1)).insertAll(any());
+        // Verify role additions/deletions.
+        verify(userRoleDAO, times(1)).insertUserRoles(List.of(so), 1);
+        verify(userRoleDAO, times(1)).removeUserRoles( 1, List.of(admin.getRoleId()));
     }
 
     @Test
@@ -83,7 +133,7 @@ public class UserServiceTest {
         List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
         when(userDAO.findUserById(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(roles);
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(roles);
         when(libraryCardDAO.findAllLibraryCardsByUserEmail(any())).thenReturn(Collections.emptyList());
         initService();
         try {
@@ -101,7 +151,7 @@ public class UserServiceTest {
         List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
         when(userDAO.findUserById(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(roles);
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(roles);
         when(libraryCardDAO.findAllLibraryCardsByUserEmail(u.getEmail())).thenReturn(List.of(libraryCard));
         initService();
 
@@ -112,7 +162,7 @@ public class UserServiceTest {
         }
 
         assertEquals(institutionId, u.getInstitutionId());
-        assertEquals(u.getDacUserId(), libraryCard.getUserId());
+        assertEquals(u.getUserId(), libraryCard.getUserId());
     }
 
     @Test(expected = BadRequestException.class)
@@ -139,7 +189,7 @@ public class UserServiceTest {
     public void testCreateUserNoRoles() {
         User u = generateUser();
         when(userDAO.findUserById(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
         initService();
         User user = service.createUser(u);
         assertFalse(user.getRoles().isEmpty());
@@ -182,7 +232,7 @@ public class UserServiceTest {
         when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(cards);
         initService();
 
-        User user = service.findUserById(u.getDacUserId());
+        User user = service.findUserById(u.getUserId());
         assertNotNull(user);
         assertNotNull(user.getLibraryCards());
         assertEquals(user.getLibraryCards().size(), 2);
@@ -194,10 +244,10 @@ public class UserServiceTest {
     public void testFindUserByIdNoRoles() {
         User u = generateUser();
         when(userDAO.findUserById(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
         initService();
 
-        User user = service.findUserById(u.getDacUserId());
+        User user = service.findUserById(u.getUserId());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
         assertNull(u.getRoles());
@@ -214,7 +264,7 @@ public class UserServiceTest {
         when(userDAO.findUserById(any())).thenReturn(u);
         initService();
 
-        User user = service.findUserById(u.getDacUserId());
+        User user = service.findUserById(u.getUserId());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
         assertFalse(u.getRoles().isEmpty());
@@ -227,14 +277,14 @@ public class UserServiceTest {
         when(userDAO.findUserById(any())).thenReturn(null);
         initService();
 
-        service.findUserById(u.getDacUserId());
+        service.findUserById(u.getUserId());
     }
 
     @Test
     public void testFindUserByEmailNoRoles() {
         User u = generateUser();
         when(userDAO.findUserByEmail(any())).thenReturn(u);
-        when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
         initService();
 
         User user = service.findUserByEmail(u.getEmail());
@@ -295,27 +345,27 @@ public class UserServiceTest {
     @Test
     public void testUpdateDACUserById() {
         User u = generateUser();
-        when(userDAO.findUserById(u.getDacUserId()))
+        when(userDAO.findUserById(u.getUserId()))
                 .thenReturn(u);
         when(institutionDAO.checkForExistingInstitution(any()))
                 .thenReturn(u.getInstitutionId());
-        doNothing().when(userDAO).updateUser(any(), any(), any(), any());
+        doNothing().when(userDAO).updateUser(any(), any(), any());
         initService();
         Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
-        User user = service.updateDACUserById(dacUsers, u.getDacUserId());
+        User user = service.updateDACUserById(dacUsers, u.getUserId());
         assertNotNull(user);
-        assertEquals(u.getDacUserId(), user.getDacUserId());
+        assertEquals(u.getUserId(), user.getUserId());
     }
 
     @Test(expected = NotFoundException.class)
     public void testUpdateDACUserById_NonExisting() {
         User u = generateUser();
-        when(userDAO.findUserById(u.getDacUserId()))
+        when(userDAO.findUserById(u.getUserId()))
                 .thenReturn(null);
-        doNothing().when(userDAO).updateUser(any(), any(), any(), any());
+        doNothing().when(userDAO).updateUser(any(), any(), any());
         initService();
         Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
-        service.updateDACUserById(dacUsers, u.getDacUserId());
+        service.updateDACUserById(dacUsers, u.getUserId());
     }
 
     @Test
@@ -418,7 +468,7 @@ public class UserServiceTest {
         List<User> users = service.findUsersWithNoInstitution();
         assertNotNull(users);
         assertEquals(1, users.size());
-        assertEquals(user.getDacUserId(), users.get(0).getDacUserId());
+        assertEquals(user.getUserId(), users.get(0).getUserId());
     }
 
     @Test
@@ -434,10 +484,10 @@ public class UserServiceTest {
             .setUserStatusInfo(info);
         when(userDAO.findUserById(anyInt())).thenReturn(user);
         when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
-        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt())).thenReturn(List.of(new UserProperty()));
+        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt(), any())).thenReturn(List.of(new UserProperty()));
 
         initService();
-        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
+        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
         assertNotNull(userJson);
         assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
         assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
@@ -457,10 +507,10 @@ public class UserServiceTest {
             .setUserStatusInfo(info);
         when(userDAO.findUserById(anyInt())).thenReturn(user);
         when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
-        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt())).thenReturn(List.of(new UserProperty()));
+        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt(), any())).thenReturn(List.of(new UserProperty()));
 
         initService();
-        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getDacUserId());
+        JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
         assertNotNull(userJson);
         assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
         assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
@@ -482,7 +532,7 @@ public class UserServiceTest {
                 RandomStringUtils.randomAlphabetic(i2);
         u.setEmail(email);
         u.setDisplayName(displayName);
-        u.setDacUserId(RandomUtils.nextInt(1, 100));
+        u.setUserId(RandomUtils.nextInt(1, 100));
         u.setInstitutionId(RandomUtils.nextInt(1, 100));
         return u;
     }
@@ -499,7 +549,7 @@ public class UserServiceTest {
     private LibraryCard generateLibraryCard(User user) {
         LibraryCard libraryCard = new LibraryCard();
         libraryCard.setId(RandomUtils.nextInt(1, 10));
-        libraryCard.setUserId(user.getDacUserId());
+        libraryCard.setUserId(user.getUserId());
         libraryCard.setInstitutionId(RandomUtils.nextInt(1,10));
         return libraryCard;
     }

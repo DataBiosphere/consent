@@ -21,7 +21,7 @@ public class DarManualReviewTest {
   public void testManualReviewFalse() {
     assertFalse(dar.requiresManualReview());
     // There are many fields we could check, but this one is enough to prove our logic.
-    dar.getData().setDatasetIds(Collections.singletonList(1));
+    dar.addDatasetId(1);
     assertFalse(dar.requiresManualReview());
   }
 

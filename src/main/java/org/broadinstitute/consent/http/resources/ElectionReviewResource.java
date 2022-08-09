@@ -39,6 +39,7 @@ public class ElectionReviewResource extends Resource {
         this.darService = darService;
     }
 
+    @Deprecated
     @GET
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
@@ -54,6 +55,7 @@ public class ElectionReviewResource extends Resource {
         return ("{ \"open\" : " + service.openElections() + " }");
     }
 
+    @Deprecated
     @GET
     @Path("/{electionId}")
     @Produces("application/json")
@@ -72,7 +74,7 @@ public class ElectionReviewResource extends Resource {
         DataAccessRequest dar = darService.findByReferenceId(election.getReferenceId());
         List<Integer> dataSetId = new ArrayList<>();
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
-            dataSetId.addAll(dar.getData().getDatasetIds());
+            dataSetId.addAll(dar.getDatasetIds());
         }
         Consent consent = consentService.getConsentFromDatasetID(dataSetId.get(0));
         ElectionReview accessElectionReview = service.describeElectionReviewByElectionId(electionId);

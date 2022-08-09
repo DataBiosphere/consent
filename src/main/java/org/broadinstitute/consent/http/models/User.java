@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 
 import java.beans.Transient;
+import java.util.EnumSet;
 import java.util.stream.Collectors;
 
 import java.util.ArrayList;
@@ -22,16 +23,21 @@ import java.util.Objects;
 public class User {
 
   public static final String QUERY_FIELDS_WITH_U_PREFIX =
-          " u.dacuserid as u_dacuserid, " +
+          " u.user_id as u_user_id, " +
           " u.email as u_email, " +
-          " u.displayname as u_displayname, " +
-          " u.createdate as u_createdate, " +
-          " u.additional_email as u_additional_email, " +
+          " u.display_name as u_display_name, " +
+          " u.create_date as u_create_date, " +
           " u.email_preference as u_email_preference, " +
           " u.institution_id as u_institution_id," +
           " u.era_commons_id as u_era_commons_id ";
 
     @JsonProperty
+    private Integer userId;
+
+    // This will be removed in a future release.
+    // It is maintained here for backwards compatibility with the UI.
+    @JsonProperty
+    @Deprecated
     private Integer dacUserId;
 
     @JsonProperty
@@ -44,9 +50,6 @@ public class User {
     private Date createDate;
 
     @JsonProperty
-    private String additionalEmail;
-
-    @JsonProperty
     private List<UserRole> roles;
 
     @JsonProperty
@@ -55,6 +58,7 @@ public class User {
     @JsonProperty
     private Boolean emailPreference;
 
+    @Deprecated
     @JsonProperty
     private Boolean profileCompleted;
 
@@ -71,29 +75,30 @@ public class User {
     public User() {
     }
 
-    public User(Integer dacUserId, String email, String displayName, Date createDate) {
-        this.dacUserId = dacUserId;
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public User(Integer userId, String email, String displayName, Date createDate) {
+        this.userId = userId;
+        this.dacUserId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
     }
 
-    public User(Integer dacUserId, String email, String displayName, Date createDate, String additionalEmail) {
-        this.dacUserId = dacUserId;
-        this.email = email;
-        this.displayName = displayName;
-        this.createDate = createDate;
-        this.additionalEmail = additionalEmail;
-    }
-
-    public User(Integer dacUserId, String email, String displayName, Date createDate,
-                List<UserRole> roles, String additionalEmail) {
-        this.dacUserId = dacUserId;
+    public User(Integer userId, String email, String displayName, Date createDate,
+                List<UserRole> roles) {
+        this.userId = userId;
+        this.dacUserId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
         this.roles = roles;
-        this.additionalEmail = additionalEmail;
     }
 
     public User(GoogleUser googleUser) {
@@ -122,7 +127,6 @@ public class User {
         setUserId(u);
         setEmail(u);
         setDisplayName(u);
-        setAdditionalEmail(u);
         setEmailPreference(u);
         setRoles(u);
         setInstitutionId(u);
@@ -145,8 +149,8 @@ public class User {
     }
 
     private void setUserId(User u) {
-        if (Objects.nonNull(u.getDacUserId())) {
-            this.setDacUserId(u.getDacUserId());
+        if (Objects.nonNull(u.getUserId())) {
+            this.setUserId(u.getUserId());
         }
     }
 
@@ -159,12 +163,6 @@ public class User {
     private void setDisplayName(User u) {
         if (!StringUtils.isEmpty(u.getDisplayName())) {
             this.setDisplayName(u.getDisplayName());
-        }
-    }
-
-    private void setAdditionalEmail(User u) {
-        if (!StringUtils.isEmpty(u.getAdditionalEmail())) {
-            this.setAdditionalEmail(u.getAdditionalEmail());
         }
     }
 
@@ -186,12 +184,14 @@ public class User {
         }
     }
 
+    @Deprecated // Use getUserId(). This is maintained for backward compatibility with existing UI functionality.
     public Integer getDacUserId() {
-        return dacUserId;
+        return userId;
     }
 
-    public void setDacUserId(Integer dacUserId) {
-        this.dacUserId = dacUserId;
+    @Deprecated // This is maintained for backward compatibility with existing UI functionality.
+    public void setDacUserId() {
+        this.dacUserId = this.getUserId();
     }
 
     public String getEmail() {
@@ -234,14 +234,6 @@ public class User {
         this.createDate = createDate;
     }
 
-    public String getAdditionalEmail() {
-        return additionalEmail;
-    }
-
-    public void setAdditionalEmail(String additionalEmail) {
-        this.additionalEmail = additionalEmail;
-    }
-
     public Boolean getEmailPreference() {
         return emailPreference;
     }
@@ -250,10 +242,12 @@ public class User {
         this.emailPreference = emailPreference;
     }
 
+    @Deprecated
     public Boolean getProfileCompleted() {
         return profileCompleted;
     }
 
+    @Deprecated
     public void setProfileCompleted(Boolean profileCompleted) {
         this.profileCompleted = profileCompleted;
     }
@@ -323,7 +317,7 @@ public class User {
 
     @Override
     public int hashCode(){
-        return  dacUserId;
+        return  this.getUserId();
     }
 
     @Override
@@ -336,7 +330,7 @@ public class User {
             return false;
 
         User other = (User) obj;
-        return new EqualsBuilder().append(dacUserId, other.dacUserId).isEquals();
+        return new EqualsBuilder().append(getUserId(), other.getUserId()).isEquals();
     }
 
     @Override
@@ -361,6 +355,12 @@ public class User {
           .stream()
           .map(UserRole::getRoleId)
           .collect(Collectors.toList());
+    }
+
+    @Transient
+    public boolean doesUserHaveAnyRoleInSet(EnumSet<UserRoles> userRoles) {
+        List<Integer> queriedRoleIds = userRoles.stream().map(UserRoles::getRoleId).collect(Collectors.toList());
+        return getUserRoleIdsFromUser().stream().anyMatch(queriedRoleIds::contains);
     }
 
 }

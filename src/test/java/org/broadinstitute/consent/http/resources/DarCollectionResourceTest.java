@@ -6,9 +6,10 @@ import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
@@ -48,10 +49,10 @@ public class DarCollectionResourceTest {
   private final List<UserRole> researcherRole = List.of(
     new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())
   );
-  private final User researcher = new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRole, authUser.getEmail());
+  private final User researcher = new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRole);
   private final List<UserRole> signingOfficialRole = List.of(
           new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
-  private final User signingOfficial = new User(4, authUser.getEmail(), "Display Name", new Date(), signingOfficialRole, authUser.getEmail());
+  private final User signingOfficial = new User(4, authUser.getEmail(), "Display Name", new Date(), signingOfficialRole);
 
   private DarCollectionResource resource;
 
@@ -67,7 +68,7 @@ public class DarCollectionResourceTest {
   private DataAccessRequest mockDataAccessRequestWithDatasetIds() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setDatasetIds(List.of(RandomUtils.nextInt(1, 100)));
+    dar.addDatasetId(RandomUtils.nextInt(1, 100));
     dar.setData(data);
     return dar;
   }
@@ -80,10 +81,10 @@ public class DarCollectionResourceTest {
     return collection;
   }
 
-  private Set<DataSet> mockDatasetsForResearcherCollection() {
-    Set<DataSet> datasets = new HashSet<>();
+  private Set<Dataset> mockDatasetsForResearcherCollection() {
+    Set<Dataset> datasets = new HashSet<>();
     for(int i = 1; i < 3; i++) {
-      DataSet newDataset = new DataSet();
+      Dataset newDataset = new Dataset();
       newDataset.setDataSetId(i);
       datasets.add(newDataset);
     }
@@ -113,7 +114,7 @@ public class DarCollectionResourceTest {
   public void testGetCollectionsForUserByRoleAdmin() {
     List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
     UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole), authUser.getEmail());
+    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
 
     when(userService.findUserByEmail(anyString())).thenReturn(admin);
     when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
@@ -128,7 +129,7 @@ public class DarCollectionResourceTest {
     // Test that a user who has access cannot access as a role they do not have.
     List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
     UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole), authUser.getEmail());
+    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
 
     when(userService.findUserByEmail(anyString())).thenReturn(admin);
     when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
@@ -144,7 +145,7 @@ public class DarCollectionResourceTest {
     List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
     UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     UserRole soRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole, soRole), authUser.getEmail());
+    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole, soRole));
 
     when(userService.findUserByEmail(anyString())).thenReturn(admin);
     when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
@@ -158,7 +159,7 @@ public class DarCollectionResourceTest {
   public void testGetCollectionByIdResearcher() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     initResource();
@@ -171,7 +172,7 @@ public class DarCollectionResourceTest {
   public void testGetCollectionByIdResearcherNotFound() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getDacUserId() + 1);
+    collection.setCreateUserId(researcher.getUserId() + 1);
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     initResource();
@@ -184,9 +185,9 @@ public class DarCollectionResourceTest {
   public void testGetCollectionByIdAdmin() {
     DarCollection collection = mockDarCollection();
     UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole), authUser.getEmail());
+    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
     collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(admin);
@@ -202,7 +203,7 @@ public class DarCollectionResourceTest {
     signingOfficial.setInstitutionId(1);
     researcher.setInstitutionId(1);
     collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(signingOfficial);
@@ -218,7 +219,7 @@ public class DarCollectionResourceTest {
     signingOfficial.setInstitutionId(2);
     researcher.setInstitutionId(1);
     collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(signingOfficial);
@@ -233,7 +234,7 @@ public class DarCollectionResourceTest {
     DarCollection collection = mockDarCollection();
     researcher.setInstitutionId(1);
     collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(signingOfficial);
@@ -248,7 +249,7 @@ public class DarCollectionResourceTest {
     DarCollection collection = mockDarCollection();
     signingOfficial.setInstitutionId(1);
     collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(signingOfficial);
@@ -262,12 +263,12 @@ public class DarCollectionResourceTest {
   public void testGetCollectionByIdChair() {
     List<UserRole> chairRole = List.of(
             new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
 
-    DataSet dataSet = new DataSet();
+    Dataset dataSet = new Dataset();
     dataSet.setDataSetId(2);
     collection.addDataset(dataSet);
 
@@ -285,12 +286,12 @@ public class DarCollectionResourceTest {
   public void testGetCollectionByIdDacMember() {
     List<UserRole> chairRole = List.of(
             new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName()));
-    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
 
-    DataSet dataSet = new DataSet();
+    Dataset dataSet = new Dataset();
     dataSet.setDataSetId(2);
     collection.addDataset(dataSet);
 
@@ -308,12 +309,12 @@ public class DarCollectionResourceTest {
   public void testGetCollectionByIdDacMemberNoDatasetIdMatch() {
     List<UserRole> chairRole = List.of(
             new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
 
-    DataSet dataSet = new DataSet();
+    Dataset dataSet = new Dataset();
     dataSet.setDataSetId(3);
     collection.addDataset(dataSet);
 
@@ -333,9 +334,9 @@ public class DarCollectionResourceTest {
     researcher.addRole(chairRole);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
 
-    DataSet dataSet = new DataSet();
+    Dataset dataSet = new Dataset();
     dataSet.setDataSetId(3);
     collection.addDataset(dataSet);
 
@@ -353,7 +354,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testGetCollectionByReferenceId() {
     DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByReferenceId(any())).thenReturn(collection);
     initResource();
@@ -365,7 +366,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testGetCollectionByReferenceIdNotFound() {
     DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(researcher.getDacUserId() + 1);
+    collection.setCreateUserId(researcher.getUserId() + 1);
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByReferenceId(any())).thenReturn(collection);
     initResource();
@@ -377,7 +378,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_OKStatus() {
     DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByReferenceId(any())).thenReturn(collection);
     initResource();
@@ -389,7 +390,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_NotFoundStatus() {
     DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(null);
     initResource();
@@ -401,7 +402,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_BadRequestStatus() {
     DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
     when(darCollectionService.cancelDarCollectionAsResearcher(any(DarCollection.class))).thenThrow(new BadRequestException());
@@ -426,7 +427,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_InternalErrorStatus() {
     DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
     when(darCollectionService.cancelDarCollectionAsResearcher(any(DarCollection.class)))
@@ -440,10 +441,10 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_asAdmin() {
     List<UserRole> adminRole = List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRole, authUser.getEmail());
+    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRole);
 
     DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(admin.getDacUserId());
+    collection.setCreateUserId(admin.getUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(admin);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
     initResource();
@@ -455,10 +456,10 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_asChair() {
     List<UserRole> chairRole = List.of(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+    User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole);
 
     DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(chair.getDacUserId());
+    collection.setCreateUserId(chair.getUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(chair);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
     initResource();
@@ -470,10 +471,10 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_asChairAsAdmin() {
     List<UserRole> chairRole = List.of(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole, authUser.getEmail());
+    User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole);
 
     DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(chair.getDacUserId());
+    collection.setCreateUserId(chair.getUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(chair);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
     initResource();
@@ -485,7 +486,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_asResearcher() {
     DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
     initResource();
@@ -497,7 +498,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testCancelDarCollection_asResearcherAsAdmin() {
     DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(researcher.getDacUserId());
+    collection.setCreateUserId(researcher.getUserId());
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
     initResource();
@@ -570,7 +571,7 @@ public class DarCollectionResourceTest {
     int userId = 1;
     User user = mock(User.class);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(user.getDacUserId()).thenReturn(userId);
+    when(user.getUserId()).thenReturn(userId);
     DarCollection collection = mock(DarCollection.class);
     when(collection.getCreateUserId()).thenReturn(userId);
     DataAccessRequest dar = mock(DataAccessRequest.class);
@@ -593,7 +594,7 @@ public class DarCollectionResourceTest {
     int userId = 1;
     User user = mock(User.class);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(user.getDacUserId()).thenReturn(userId);
+    when(user.getUserId()).thenReturn(userId);
     DarCollection collection = mock(DarCollection.class);
     when(collection.getCreateUserId()).thenReturn(userId);
     DataAccessRequest dar = mock(DataAccessRequest.class);
@@ -633,5 +634,106 @@ public class DarCollectionResourceTest {
 
     Response response = resource.createElectionsForCollection(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummariesForUserByRole_Member() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
+    user.addRole(userRole);
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+      .thenReturn(List.of(mockSummary));
+    initResource();
+
+    Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.MEMBER.getRoleName());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummariesForUserByRole_Chair() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    user.addRole(userRole);
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+        .thenReturn(List.of(mockSummary));
+    initResource();
+
+    Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.CHAIRPERSON.getRoleName());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummariesForUserByRole_SO() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    user.addRole(userRole);
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+        .thenReturn(List.of(mockSummary));
+    initResource();
+
+    Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummariesForUserByRole_Researcher() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+    user.addRole(userRole);
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+        .thenReturn(List.of(mockSummary));
+    initResource();
+
+    Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.RESEARCHER.getRoleName());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummariesForUserByRole_Admin() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    user.addRole(userRole);
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+        .thenReturn(List.of(mockSummary));
+    initResource();
+
+    Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.ADMIN.getRoleName());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummariesForUserByRole_NoRoleFound() {
+    User user = new User();
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+        .thenReturn(List.of(mockSummary));
+    initResource();
+
+    Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName());
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummariesForUserByRole_InvalidRoleString() {
+    User user = new User();
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+        .thenReturn(List.of(mockSummary));
+    initResource();
+
+    Response response = resource.getCollectionSummariesForUserByRole(authUser, "invalid");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 }

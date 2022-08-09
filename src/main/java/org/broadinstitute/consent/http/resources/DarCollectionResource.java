@@ -7,8 +7,8 @@ import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DarCollectionSummary;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
@@ -20,6 +20,7 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -80,6 +81,21 @@ public class DarCollectionResource extends Resource {
   }
 
   @GET
+  @Path("role/{roleName}/summary")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
+  public Response getCollectionSummariesForUserByRole(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateUserHasRoleName(user, roleName);
+      List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRoleName(user, roleName);
+      return Response.ok().entity(summaries).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
   @Path("{collectionId}")
   @Produces("application/json")
   @PermitAll
@@ -101,6 +117,20 @@ public class DarCollectionResource extends Resource {
     }
   }
 
+  @DELETE
+  @Path("{collectionId}")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, RESEARCHER})
+  public Response deleteDarCollection(@Auth AuthUser authUser, @PathParam("collectionId") Integer collectionId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      darCollectionService.deleteByCollectionId(user, collectionId);
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   private boolean checkAdminPermissions(User user) {
     return user.hasUserRole(UserRoles.ADMIN);
   }
@@ -109,7 +139,7 @@ public class DarCollectionResource extends Resource {
     List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
 
     return collection.getDatasets().stream()
-            .map(DataSet::getDataSetId)
+            .map(Dataset::getDataSetId)
             .anyMatch(userDatasetIds::contains);
   }
 
@@ -192,7 +222,7 @@ public class DarCollectionResource extends Resource {
       isCollectionPresent(sourceCollection);
       validateUserIsCreator(user, sourceCollection);
       validateCollectionIsCanceled(sourceCollection);
-      DataAccessRequest draftDar = dataAccessRequestService.createDraftDarFromCanceledCollection(user, sourceCollection);
+      DarCollectionSummary draftDar = darCollectionService.updateCollectionToDraftStatus(sourceCollection);
       return Response.ok().entity(draftDar).build();
     } catch(Exception e) {
       return createExceptionResponse(e);

@@ -30,6 +30,18 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     @SqlQuery("SELECT * FROM match_entity WHERE matchid = :id ")
     Match  findMatchById(@Bind("id") Integer id);
 
+    @SqlQuery(
+        "SELECT match_entity.* FROM match_entity " +
+        "INNER JOIN (" +
+        "   SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.datasetid) AS latest " +
+        "   FROM election " +
+        "   WHERE LOWER(election.electiontype) = 'dataaccess' " +
+        ") AS e " +
+        "ON e.referenceid = match_entity.purpose " +
+        "WHERE match_entity.purpose IN (<purposeIds>) AND e.electionid = latest"
+    )
+    List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
+
     @SqlQuery("SELECT * FROM match_entity WHERE purpose IN (<purposeId>)")
     List<Match> findMatchesForPurposeIds(@BindList("purposeId") List<String> purposeId);
 
@@ -59,6 +71,10 @@ public interface MatchDAO extends Transactional<MatchDAO> {
 
     @SqlUpdate("DELETE FROM match_entity WHERE purpose = :purposeId")
     void deleteMatchesByPurposeId(@Bind("purposeId") String purposeId);
+
+    @SqlUpdate("DELETE FROM match_entity WHERE purpose IN (<purposeIds>)")
+    void deleteMatchesByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
+
 
     @SqlQuery("SELECT COUNT(*) FROM match_entity WHERE matchentity = :matchEntity AND failed = 'FALSE' ")
     Integer countMatchesByResult(@Bind("matchEntity") Boolean matchEntity);

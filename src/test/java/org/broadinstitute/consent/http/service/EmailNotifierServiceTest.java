@@ -1,17 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -21,7 +17,13 @@ import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.Assert.fail;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
  * This class can be used to functionally test email notifications as well as unit test.
@@ -34,10 +36,13 @@ public class EmailNotifierServiceTest {
     private EmailNotifierService service;
 
     @Mock
+    private DarCollectionDAO collectionDAO;
+
+    @Mock
     private ConsentDAO consentDAO;
 
     @Mock
-    private DataAccessRequestService dataAccessRequestService;
+    private DataAccessRequestDAO dataAccessRequestDAO;
 
     @Mock
     private VoteDAO voteDAO;
@@ -51,9 +56,6 @@ public class EmailNotifierServiceTest {
     @Mock
     private MailMessageDAO emailDAO;
 
-    @Mock
-    private UserPropertyDAO userPropertyDAO;
-
     private final String defaultAccount = "duos-dev@broadinstitute.org";
 
     @Before
@@ -64,7 +66,7 @@ public class EmailNotifierServiceTest {
         String serverUrl =  "http://localhost:8000/#/";
         boolean serviceActive = false;
 
-        MockitoAnnotations.initMocks(this.getClass());
+        openMocks(this.getClass());
         MailConfiguration mConfig = new MailConfiguration();
         mConfig.setActivateEmailNotifications(serviceActive);
         mConfig.setGoogleAccount("");
@@ -75,9 +77,8 @@ public class EmailNotifierServiceTest {
         fmConfig.setDefaultEncoding("UTF-8");
         fmConfig.setTemplateDirectory("/freemarker");
         FreeMarkerTemplateHelper helper = new FreeMarkerTemplateHelper(fmConfig);
-        service = new EmailNotifierService(consentDAO, dataAccessRequestService, voteDAO, electionDAO, userDAO,
-                emailDAO, mailService, helper, serverUrl, serviceActive,
-            userPropertyDAO);
+        service = new EmailNotifierService(collectionDAO, consentDAO, dataAccessRequestDAO, voteDAO, electionDAO, userDAO,
+                emailDAO, mailService, helper, serverUrl, serviceActive);
     }
 
     @Test

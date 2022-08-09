@@ -41,9 +41,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                            @Bind("referenceId") String referenceId,
                            @Bind("datasetId") Integer dataSetId);
 
-    @SqlUpdate("insert into election (electionType, status, createDate,referenceId, finalAccessVote, dataUseLetter, dulName, datasetId, version) values " +
-            "(:electionType, :status, :createDate,:referenceId, :finalAccessVote, :dataUseLetter, :dulName, :datasetId, " +
-            " (SELECT coalesce (MAX(version), 0) + 1 FROM election AS electionVersion  where referenceId = :referenceId))")
+    @SqlUpdate(
+            " INSERT INTO election (electiontype, status, createdate, referenceid, finalaccessvote, datauseletter, dulname, datasetid, version) " +
+            " VALUES (:electionType, :status, :createDate,:referenceId, :finalAccessVote, :dataUseLetter, :dulName, :datasetId, " +
+            "        (SELECT COALESCE (MAX(version), 0) + 1 FROM election WHERE referenceid = :referenceId AND electiontype = :electionType AND datasetid = :datasetId)) ")
     @GetGeneratedKeys
     Integer insertElection(@Bind("electionType") String electionType,
                            @Bind("status") String status,
@@ -52,10 +53,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                            @Bind("finalAccessVote") Boolean finalAccessVote,
                            @Bind("dataUseLetter") String dataUseLetter,
                            @Bind("dulName") String dulName,
-                           @Bind("datasetId") Integer dataSetId);
+                           @Bind("datasetId") Integer datasetId);
 
     @SqlUpdate("delete  from election where electionId = :electionId")
     void deleteElectionById(@Bind("electionId") Integer electionId);
+
+    @SqlUpdate("delete  from election where electionId in (<electionIds>)")
+    void deleteElectionsByIds(@BindList("electionIds") List<Integer> electionIds);
 
     @SqlUpdate("update election set status = :status, lastUpdate = :lastUpdate where electionId = :electionId ")
     void updateElectionById(@Bind("electionId") Integer electionId,
@@ -136,6 +140,15 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             " ORDER BY e.createdate ASC ")
     List<Election> findLastDataAccessElectionsWithFinalVoteByStatus(@Bind("status") String status);
 
+    @UseRowMapper(SimpleElectionMapper.class)
+    @SqlQuery(
+        "SELECT e.* FROM election e " +
+        "INNER JOIN data_access_request dar ON dar.reference_id = e.referenceid " +
+        "INNER JOIN users u ON u.user_id = dar.user_id " +
+        "INNER JOIN library_card lc ON lc.user_id = u.user_id " +
+        "WHERE e.electionid IN (<electionIds>) ")
+    List<Election> findElectionsWithCardHoldingUsersByElectionIds(@BindList("electionIds") List <Integer> electionIds);
+
     @SqlQuery("SELECT DISTINCT e.electionId, e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, " +
             "       v.rationale finalRationale, v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, " +
             "       e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version " +
@@ -160,6 +173,21 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("SELECT * FROM election WHERE referenceid = :referenceId")
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
+
+    @UseRowMapper(SimpleElectionMapper.class)
+    @SqlQuery("SELECT * FROM election WHERE referenceid in (<referenceIds>)")
+    List<Election> findElectionsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
+    @UseRowMapper(SimpleElectionMapper.class)
+    @SqlQuery("SELECT * FROM election e " +
+        "INNER JOIN vote v ON v.electionid = e.electionid " +
+        "WHERE LOWER(e.electiontype) = :electionType " +
+        "AND v.voteid IN (<voteIds>)")
+	List<Election> findElectionsByVoteIdsAndType(
+	    @BindList("voteIds") List<Integer> voteIds,
+	    @Bind("electionType") String electionType
+	);
+
 
     @SqlQuery(
       "SELECT * from ( "
@@ -190,6 +218,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findLastElectionsByReferenceIds(
       @BindList("referenceIds") List<String> referenceIds);
 
+    @SqlQuery(" SELECT distinct e.* " +
+        " FROM election e " +
+        " WHERE LOWER(e.status) = 'open' " +
+        " AND e.referenceid IN (<referenceIds>) ")
+    @UseRowMapper(ElectionMapper.class)
+    List<Election> findOpenElectionsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
     @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, " +
             "v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e " +
             "inner join (select referenceId, MAX(createDate) maxDate from election e where e.electionType = :type group by referenceId) " +
@@ -206,6 +241,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     List<Election> findLastElectionsByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
+    // TODO: Update for datasetid distinction. Method can return a list, so refactor usages.
     @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where lower(e.status) = lower(:status) group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
             "AND e.referenceId = :referenceId ")
@@ -234,6 +270,19 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     Election findLastElectionByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
+    @SqlQuery(
+        " SELECT e.* " +
+        " FROM election e " +
+        " INNER JOIN (SELECT referenceid, datasetid, MAX(createdate) max_date FROM election WHERE LOWER(electiontype) = lower(:type) AND datasetid = :datasetId GROUP BY referenceid, datasetid) election_view " +
+        "    ON election_view.max_date = e.createdate " +
+        "    AND election_view.referenceid = e.referenceId " +
+        "    AND election_view.datasetid = e.datasetid " +
+        " WHERE LOWER(e.electiontype) = lower(:type) " +
+        " AND e.referenceid = :referenceId " +
+        " AND e.datasetid = :datasetId ")
+    @UseRowMapper(SimpleElectionMapper.class)
+    Election findLastElectionByReferenceIdDatasetIdAndType(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId, @Bind("type") String type);
+
     @SqlQuery("select electionRPId from access_rp arp where arp.electionAccessId = :electionAccessId ")
     Integer findRPElectionByElectionAccessId(@Bind("electionAccessId") Integer electionAccessId);
 
@@ -255,6 +304,12 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlUpdate("delete  from access_rp where electionAccessId = :electionAccessId")
     void deleteAccessRP(@Bind("electionAccessId") Integer electionAccessId);
 
+    @SqlUpdate("DELETE FROM access_rp WHERE electionrpid = :electionId OR electionaccessid = :electionId")
+    void deleteElectionFromAccessRP(@Bind("electionId") Integer electionId);
+
+    @SqlUpdate("DELETE FROM access_rp WHERE electionrpid IN (<electionIds>) OR electionaccessid IN (<electionIds>)")
+    void deleteElectionsFromAccessRPs(@BindList("electionIds") List<Integer> electionIds);
+
     @SqlQuery("select electionAccessId from access_rp arp where arp.electionRPId = :electionRPId ")
     Integer findAccessElectionByElectionRPId(@Bind("electionRPId") Integer electionRPId);
 
@@ -273,13 +328,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select electionId from election  where referenceId = :referenceId and lower(status) = 'open' and datasetId = :dataSetId")
     Integer getOpenElectionByReferenceIdAndDataSet(@Bind("referenceId") String referenceId, @Bind("dataSetId") Integer dataSetId);
-
-    @SqlQuery("select datasetId from election where electionId = :electionId ")
-    Integer getDatasetIdByElectionId(@Bind("electionId") Integer electionId);
-
-    @UseRowMapper(SimpleElectionMapper.class)
-    @SqlQuery("select distinct * from election where lower(status) = lower(:status) and lower(electionType) = lower(:electionType)")
-    List<Election> getElectionByTypeAndStatus(@Bind("electionType") String electionType, @Bind("status") String status);
 
     @SqlUpdate("update election set status = :status, lastUpdate = :lastUpdate, finalAccessVote = :finalAccessVote where electionId = :electionId ")
     void updateElectionById(@Bind("electionId") Integer electionId,

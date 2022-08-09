@@ -1,28 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
-import static java.util.stream.Collectors.toList;
-
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import javax.ws.rs.NotAcceptableException;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -37,24 +16,42 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.util.DarUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotFoundException;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
@@ -75,7 +72,6 @@ public class DataAccessRequestService {
 
     private final DacService dacService;
     private final DataAccessReportsParser dataAccessReportsParser;
-    private static final String SUFFIX = "-A-";
 
     @Inject
     public DataAccessRequestService(CounterService counterService, DAOContainer container,
@@ -146,7 +142,7 @@ public class DataAccessRequestService {
                             + "is not associated with an Institution.");
                 }
             case RESEARCHER:
-                List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getDacUserId());
+                List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
                 return createAccessRequestManageV2(dars);
             default:
                 //case for Admin, Chairperson, and Member
@@ -193,16 +189,24 @@ public class DataAccessRequestService {
         return dataAccessRequestDAO.findByReferenceIds(referenceIds);
     }
 
-    public void deleteByReferenceId(String referenceId) throws NotAcceptableException {
+    public void deleteByReferenceId(User user, String referenceId) throws NotAcceptableException {
         List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
-        if (Objects.isNull(elections) || elections.isEmpty()) {
-            matchDAO.deleteMatchesByPurposeId(referenceId);
-            dataAccessRequestDAO.deleteByReferenceId(referenceId);
-        } else {
-            String message = String.format("Unable to delete DAR: '%s', there are existing elections that reference it.", referenceId);
-            logger.warn(message);
-            throw new NotAcceptableException(message);
+        if (!elections.isEmpty()) {
+            // If the user is an admin, delete all votes and elections
+            if (user.hasUserRole(UserRoles.ADMIN)) {
+                voteDAO.deleteVotesByReferenceId(referenceId);
+                List<Integer> electionIds = elections.stream().map(Election::getElectionId).collect(toList());
+                electionDAO.deleteElectionsFromAccessRPs(electionIds);
+                electionDAO.deleteElectionsByIds(electionIds);
+            } else {
+                String message = String.format("Unable to delete DAR: '%s', there are existing elections that reference it.", referenceId);
+                logger.warn(message);
+                throw new NotAcceptableException(message);
+            }
         }
+        matchDAO.deleteMatchesByPurposeId(referenceId);
+        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(referenceId);
+        dataAccessRequestDAO.deleteByReferenceId(referenceId);
     }
 
     public DataAccessRequest findByReferenceId(String referencedId) {
@@ -213,30 +217,42 @@ public class DataAccessRequestService {
         return dar;
     }
 
-    @Deprecated // Use updateByReferenceIdVersion2
-    public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
-        darData.setSortDate(new Date().getTime());
-        dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData);
-        return findByReferenceId(referencedId);
-    }
-
     public DataAccessRequest insertDraftDataAccessRequest(User user, DataAccessRequest dar) {
         if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(dar.getReferenceId()) || Objects.isNull(dar.getData())) {
             throw new IllegalArgumentException("User and DataAccessRequest are required");
         }
         Date now = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        dar.getData().setPartialDarCode(DataAccessRequestData.partialDarCodePrefix + sdf.format(now));
         dataAccessRequestDAO.insertDraftDataAccessRequest(
             dar.getReferenceId(),
-            user.getDacUserId(),
+            user.getUserId(),
             now,
             now,
             null,
             now,
             dar.getData()
         );
+
+        syncDataAccessRequestDatasets(dar.getDatasetIds(), dar.getReferenceId());
+
         return findByReferenceId(dar.getReferenceId());
+    }
+
+    /**
+     * First delete any rows with the current reference id. This will allow us to keep (referenceId, dataset_id) unique
+     * Takes in a list of datasetIds and a referenceId and adds them to the dar_dataset collection
+     *
+     * @param datasetIds List of Integers that represent the datasetIds
+     * @param referenceId ReferenceId of the corresponding DAR
+     */
+    private void syncDataAccessRequestDatasets(List<Integer> datasetIds, String referenceId) {
+        List<DarDataset> darDatasets = datasetIds.stream()
+                .map(datasetId -> new DarDataset(referenceId, datasetId))
+                .collect(Collectors.toList());
+        dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(referenceId);
+
+        if (!darDatasets.isEmpty()) {
+            dataAccessRequestDAO.insertAllDarDatasets(darDatasets);
+        }
     }
 
     /**
@@ -259,21 +275,19 @@ public class DataAccessRequestService {
         // Find all dataset ids for canceled DARs in the collection
         List<Integer> datasetIds = sourceCollection
                 .getDars().values().stream()
-                .map(DataAccessRequest::getData)
-                .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getStatus()))
-                .map(DataAccessRequestData::getDatasetIds)
+                .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getData().getStatus()))
+                .map(DataAccessRequest::getDatasetIds)
                 .flatMap(Collection::stream)
-                .collect(Collectors.toUnmodifiableList());
+                .collect(Collectors.toList());
         if (datasetIds.isEmpty()) {
             throw new IllegalArgumentException("Source Collection must contain references to at least a single canceled DAR's dataset");
         }
 
         List<String> canceledReferenceIds = sourceCollection
                 .getDars().values().stream()
-                .map(DataAccessRequest::getData)
-                .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getStatus()))
-                .map(DataAccessRequestData::getReferenceId)
-                .collect(Collectors.toUnmodifiableList());
+                .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getData().getStatus()))
+                .map(DataAccessRequest::getReferenceId)
+                .collect(Collectors.toList());
         List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(canceledReferenceIds);
         if (!electionIds.isEmpty()) {
             String errorMessage = "Found 'Open' elections for canceled DARs in collection id: " + sourceCollection.getDarCollectionId();
@@ -294,20 +308,19 @@ public class DataAccessRequestService {
         newData.setDarCode(null);
         newData.setStatus(null);
         newData.setReferenceId(referenceId);
-        newData.setDatasetIds(datasetIds);
         newData.setCreateDate(now.getTime());
         newData.setSortDate(now.getTime());
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        newData.setPartialDarCode(DataAccessRequestData.partialDarCodePrefix + sdf.format(now));
         dataAccessRequestDAO.insertDraftDataAccessRequest(
             referenceId,
-            user.getDacUserId(),
+            user.getUserId(),
             now,
             now,
             null,
             now,
             newData
         );
+        syncDataAccessRequestDatasets(datasetIds, referenceId);
+
         return findByReferenceId(referenceId);
     }
 
@@ -327,7 +340,8 @@ public class DataAccessRequestService {
      * @param referenceId The DAR Reference Id
      * @return The updated DAR
      */
-    public DataAccessRequest cancelDataAccessRequest(String referenceId) {
+    public DataAccessRequest cancelDataAccessRequest(AuthUser authUser, String referenceId) {
+        User user = userDAO.findUserByEmail(authUser.getEmail());
         DataAccessRequest dar = findByReferenceId(referenceId);
         if (Objects.isNull(dar)) {
             throw new NotFoundException("Unable to find Data Access Request with the provided id: " + referenceId);
@@ -336,9 +350,8 @@ public class DataAccessRequestService {
         if (!electionIds.isEmpty()) {
             throw new UnsupportedOperationException("Cancelling this DAR is not allowed");
         }
-        DataAccessRequestData darData = dar.getData();
-        darData.setStatus(DarStatus.CANCELED.getValue());
-        updateByReferenceId(referenceId, darData);
+        dar.getData().setStatus(DarStatus.CANCELED.getValue());
+        updateByReferenceId(user, dar);
         return findByReferenceId(referenceId);
     }
 
@@ -367,15 +380,16 @@ public class DataAccessRequestService {
                     .collect(toList())
             ));
         List<Integer> datasetIds = dataAccessRequests.stream()
-            .map(DataAccessRequest::getData).collect(toList()).stream()
-            .map(DataAccessRequestData::getDatasetIds).flatMap(List::stream).collect(toList());
+            .map(DataAccessRequest::getDatasetIds)
+            .flatMap(List::stream)
+            .collect(toList());
         // Batch call 3
         Set<Dac> dacs = datasetIds.isEmpty() ? Collections.emptySet() : dacDAO.findDacsForDatasetIds(datasetIds);
         // Batch call 4
         List<Integer> userIds = dataAccessRequests.stream().map(DataAccessRequest::getUserId).collect(toList());
         Collection<User> researchers = userIds.isEmpty() ? Collections.emptyList() : userDAO.findUsers(userIds);
         Map<Integer, User> researcherMap = researchers.stream()
-                .collect(Collectors.toMap(User::getDacUserId, Function.identity()));
+                .collect(Collectors.toMap(User::getUserId, Function.identity()));
 
         return dataAccessRequests.stream()
             .filter(Objects::nonNull)
@@ -385,7 +399,7 @@ public class DataAccessRequestService {
                 darManage.setDar(dar);
                 darManage.setElection(referenceIdToElectionMap.get(dar.getReferenceId()));
                 darManage.setVotes(referenceIdToVoteMap.get(dar.getReferenceId()));
-                dar.getData().getDatasetIds().stream()
+                dar.getDatasetIds().stream()
                     .findFirst()
                     .flatMap(id -> dacs.stream()
                         .filter(dataset -> dataset.getDatasetIds().contains(id))
@@ -401,68 +415,61 @@ public class DataAccessRequestService {
     }
 
     /**
-     * Generate a list of DARs split by dataset id. Generate one DAR per dataset that is
-     * being requested. In the case of a single dataset DAR, update the existing value.
-     * In the case of multiple dataset DARs, update the first one and create new ones for each
-     * additional dataset past the first.
+     * Generate a DataAccessRequest from the provided DAR. The provided DAR may or may not exist in
+     * draft form, so it covers both cases of converting an existing draft to submitted and creating
+     * a brand new DAR from scratch.
      *
-     * @param user The User
+     * @param user The create User
      * @param dataAccessRequest DataAccessRequest with populated DAR data
-     * @return List of created DARs.
+     * @return The created DAR.
      */
-    public List<DataAccessRequest> createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
+    public DataAccessRequest createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
         if (Objects.isNull(user) || Objects.isNull(dataAccessRequest) || Objects.isNull(dataAccessRequest.getReferenceId()) || Objects.isNull(dataAccessRequest.getData())) {
             throw new IllegalArgumentException("User and DataAccessRequest are required");
         }
         Date now = new Date();
         long nowTime = now.getTime();
-        List<DataAccessRequest> newDARList = new ArrayList<>();
+        DataAccessRequest newDar;
         DataAccessRequestData darData = dataAccessRequest.getData();
-        darData.setPartialDarCode(null);
         if (Objects.isNull(darData.getCreateDate())) {
             darData.setCreateDate(nowTime);
         }
         darData.setSortDate(nowTime);
-        List<Integer> datasets = dataAccessRequest.getData().getDatasetIds();
-        if (CollectionUtils.isNotEmpty(datasets)) {
+        DataAccessRequest existingDar = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());
+        Integer collectionId;
+        // Only create a new DarCollection if we haven't done so already
+        if (Objects.nonNull(existingDar) && Objects.nonNull(existingDar.getCollectionId())) {
+            collectionId = existingDar.getCollectionId();
+        } else {
             String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
-            Integer collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getDacUserId(), now);
-            for (int idx = 0; idx < datasets.size(); idx++) {
-                String darCode = (datasets.size() == 1) ? darCodeSequence: darCodeSequence + SUFFIX + idx ;
-                darData.setDatasetIds(Collections.singletonList(datasets.get(idx)));
-                darData.setDarCode(darCode);
-                if (idx == 0) {
-                    DataAccessRequest alreadyExists = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());
-                    if (Objects.nonNull(alreadyExists)) {
-                        dataAccessRequestDAO.updateDraftForCollection(collectionId, dataAccessRequest.getReferenceId());
-                        dataAccessRequestDAO.updateDataByReferenceIdVersion2(
-                            dataAccessRequest.getReferenceId(),
-                            user.getDacUserId(),
-                            new Date(darData.getSortDate()),
-                            now,
-                            now,
-                            darData);
-                        newDARList.add(findByReferenceId(dataAccessRequest.getReferenceId()));
-                    } else {
-                        String referenceId = UUID.randomUUID().toString();
-                        DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
-                        newDARList.add(createdDar);
-                    }
-                } else {
-                    String referenceId = UUID.randomUUID().toString();
-                    DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
-                    newDARList.add(createdDar);
-                }
-            }
+            collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getUserId(), now);
+            darData.setDarCode(darCodeSequence);
         }
-        return newDARList;
+        List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
+        if (Objects.nonNull(existingDar)) {
+            dataAccessRequestDAO.updateDraftForCollection(collectionId, dataAccessRequest.getReferenceId());
+            dataAccessRequestDAO.updateDataByReferenceId(
+                dataAccessRequest.getReferenceId(),
+                user.getUserId(),
+                new Date(darData.getSortDate()),
+                now,
+                now,
+                darData);
+            newDar = findByReferenceId(dataAccessRequest.getReferenceId());
+            syncDataAccessRequestDatasets(datasetIds, dataAccessRequest.getReferenceId());
+        } else {
+            String referenceId = UUID.randomUUID().toString();
+            newDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
+            syncDataAccessRequestDatasets(datasetIds, referenceId);
+        }
+        return newDar;
     }
 
     public DataAccessRequest insertSubmittedDataAccessRequest(User user, String referencedId, DataAccessRequestData darData, Integer collectionId, Date now) {
-        dataAccessRequestDAO.insertVersion3(
+        dataAccessRequestDAO.insertDataAccessRequest(
             collectionId,
             referencedId,
-            user.getDacUserId(),
+            user.getUserId(),
             new Date(darData.getCreateDate()),
             new Date(darData.getSortDate()),
             now,
@@ -478,17 +485,20 @@ public class DataAccessRequestService {
      * @param dar The DataAccessRequest
      * @return The updated DataAccessRequest
      */
-    public DataAccessRequest updateByReferenceIdVersion2(User user, DataAccessRequest dar) {
+    public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
         Date now = new Date();
-        dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(),
-            user.getDacUserId(),
+        dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(),
+            user.getUserId(),
             now,
             dar.getSubmissionDate(),
             now,
             dar.getData());
         if (Objects.nonNull(dar.getCollectionId())) {
-            darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getDacUserId(), now);
+            darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getUserId(), now);
         }
+        // Update the dar_dataset collection
+        syncDataAccessRequestDatasets(dar.getDatasetIds(), dar.getReferenceId());
+
         return findByReferenceId(dar.getReferenceId());
     }
 
@@ -510,12 +520,12 @@ public class DataAccessRequestService {
                 User user = userDAO.findUserById(dataAccessRequest.getUserId());
                 try {
                     if (Objects.nonNull(dataAccessRequest) && Objects.nonNull(dataAccessRequest.getData()) && Objects.nonNull(user)) {
-                        Integer datasetId = !CollectionUtils.isEmpty(dataAccessRequest.getData().getDatasetIds()) ? dataAccessRequest.getData().getDatasetIds().get(0) : null;
-                        String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId) : null;
+                        Integer datasetId = !CollectionUtils.isEmpty(dataAccessRequest.getDatasetIds()) ? dataAccessRequest.getDatasetIds().get(0) : null;
+                        String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
                         Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
                         String profileName = user.getDisplayName();
                         if (Objects.isNull(user.getInstitutionId())) {
-                            logger.warn("No institution found for creator (user: " + user.getDisplayName() + ", " + user.getDacUserId() + ") "
+                            logger.warn("No institution found for creator (user: " + user.getDisplayName() + ", " + user.getUserId() + ") "
                               + "of this Data Access Request (DAR: " + dataAccessRequest.getReferenceId() + ")");
                         }
                         String institution = Objects.isNull(user.getInstitutionId()) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
@@ -543,8 +553,8 @@ public class DataAccessRequestService {
             for (Election election : elections) {
                 DataAccessRequest dar = findByReferenceId(election.getReferenceId());
                 if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
-                    Integer datasetId = !CollectionUtils.isEmpty(dar.getData().getDatasetIds()) ? dar.getData().getDatasetIds().get(0) : null;
-                    String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDataSetId(datasetId) : null;
+                    Integer datasetId = !CollectionUtils.isEmpty(dar.getDatasetIds()) ? dar.getDatasetIds().get(0) : null;
+                    String consentId = Objects.nonNull(datasetId) ? dataSetDAO.getAssociatedConsentIdByDatasetId(datasetId) : null;
                     Consent consent = Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
                     if (Objects.nonNull(consent)) {
                         dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar, consent.getName(), consent.getTranslatedUseRestriction());
@@ -558,11 +568,14 @@ public class DataAccessRequestService {
         return file;
     }
 
-    public File createDataSetApprovedUsersDocument(Integer dataSetId) throws IOException {
-        File file = File.createTempFile("DatasetApprovedUsers", ".tsv");
-        FileWriter darWriter = new FileWriter(file);
-        List<DataAccessRequest> darList = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(Integer.toString(dataSetId));
-        dataAccessReportsParser.setDataSetApprovedUsersHeader(darWriter);
+    public String getDatasetApprovedUsersContent(AuthUser authUser, Integer datasetId) {
+        User requestingUser = userDAO.findUserByEmail(authUser.getEmail());
+        if (Objects.isNull(requestingUser)) {
+            throw new NotFoundException("User not found: " + authUser.getEmail());
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append(dataAccessReportsParser.getDatasetApprovedUsersHeader(requestingUser));
+        List<DataAccessRequest> darList = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(Integer.toString(datasetId));
         if (CollectionUtils.isNotEmpty(darList)){
             for(DataAccessRequest dar: darList){
                 String referenceId = dar.getReferenceId();
@@ -573,59 +586,19 @@ public class DataAccessRequestService {
                     String name = researcher.getDisplayName();
                     String institution = (Objects.isNull(researcher.getInstitutionId())) ? "" : institutionDAO.findInstitutionById(researcher.getInstitutionId()).getName();
                     String darCode = dar.getData().getDarCode();
-                    dataAccessReportsParser.addDataSetApprovedUsersLine(darWriter, email, name, institution, darCode, approvalDate);
+                    builder.append(dataAccessReportsParser.getDataSetApprovedUsersLine(requestingUser, email, name, institution, darCode, approvalDate));
                 }
             }
         }
-        darWriter.flush();
-        return file;
+        return builder.toString();
     }
 
-    public DARModalDetailsDTO DARModalDetailsDTOBuilder(DataAccessRequest dataAccessRequest, User user, ElectionService electionService) {
-        DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
-        List<DataSet> datasets = populateDatasets(dataAccessRequest);
-        User researcher = userDAO.findUserById(dataAccessRequest.getUserId());
-        Boolean hasProps = Objects.nonNull(researcher) && Objects.nonNull(researcher.getProperties());
-        Optional<UserProperty> department = hasProps ? researcher.getProperties().stream().filter(
-            (UserProperty prop) -> prop.getPropertyKey() == UserFields.DEPARTMENT.getValue())
-            .findFirst()
-          : Optional.empty();
-        Optional<UserProperty> city = hasProps ? researcher.getProperties().stream().filter(
-            (UserProperty prop) -> prop.getPropertyKey() == UserFields.CITY.getValue())
-            .findFirst()
-          : Optional.empty();
-        Optional<UserProperty> country = hasProps ? researcher.getProperties().stream().filter(
-            (UserProperty prop) -> prop.getPropertyKey() == UserFields.COUNTRY.getValue())
-            .findFirst()
-          : Optional.empty();
-        return darModalDetailsDTO
-                .setNeedDOApproval(electionService.darDatasetElectionStatus(dataAccessRequest.getReferenceId()))
-                .setResearcherName(researcher.getDisplayName())
-                .setUserId(dataAccessRequest.getUserId())
-                .setDarCode(Objects.nonNull(dataAccessRequest.getData()) ? dataAccessRequest.getData().getDarCode() : "")
-                .setPrincipalInvestigator(DarUtil.findPI(researcher))
-                .setInstitutionName((researcher == null || researcher.getInstitutionId() == null) ?
-                   ""
-                   : institutionDAO.findInstitutionById(researcher.getInstitutionId()).getName())
-                .setProjectTitle(dataAccessRequest.getData().getProjectTitle())
-                .setDepartment((department.isPresent()) ? department.get().getPropertyValue() : "")
-                .setCity((city.isPresent()) ? city.get().getPropertyValue() : "")
-                .setCountry((country.isPresent()) ? country.get().getPropertyValue() : "")
-                .setIsThereDiseases(false)
-                .setIsTherePurposeStatements(false)
-                .setResearchType(dataAccessRequest)
-                .setDiseases(dataAccessRequest)
-                .setPurposeStatements(dataAccessRequest)
-                .setDatasets(datasets)
-                .setRus(Objects.nonNull(dataAccessRequest.getData()) ? dataAccessRequest.getData().getRus() : "");
-    }
-
-    private List<DataSet> populateDatasets(DataAccessRequest dar) {
-        List<Integer> datasetIds = Objects.nonNull(dar.getData()) ? dar.getData().getDatasetIds() : Collections.emptyList();
-        if (!datasetIds.isEmpty()) {
-            return dataSetDAO.findDataSetsByIdList(datasetIds);
+    public Collection<User> getUsersApprovedForDataset(Dataset dataset) {
+        List<Integer> userIds = this.dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset.getDataSetId());
+        if (userIds.isEmpty()) {
+            return List.of();
         }
-        return Collections.emptyList();
+        return this.userDAO.findUsers(userIds);
     }
 
     /**
@@ -639,11 +612,11 @@ public class DataAccessRequestService {
         if (dacService.isAuthUserAdmin(authUser)) {
             return activeDars;
         }
-        List<Integer> dataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getEmail()).stream().
-                map(DataSet::getDataSetId).
+        List<Integer> dataSetIds = dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).stream().
+                map(Dataset::getDataSetId).
                 collect(Collectors.toList());
         return activeDars.stream().
-                filter(d -> d.getData().getDatasetIds().stream().anyMatch(dataSetIds::contains)).
+                filter(d -> d.getDatasetIds().stream().anyMatch(dataSetIds::contains)).
                 collect(Collectors.toList());
     }
 

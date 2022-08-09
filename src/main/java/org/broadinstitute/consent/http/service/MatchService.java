@@ -10,11 +10,12 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
@@ -114,6 +115,10 @@ public class MatchService {
         return matchDAO.findMatchesByConsentId(consentId);
     }
 
+    public List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(List<String> purposeIds) {
+        return matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(purposeIds);
+    }
+
     public void reprocessMatchesForConsent(String consentId) {
         removeMatchesForConsent(consentId);
         if (!consentDAO.checkManualReview(consentId)) {
@@ -126,10 +131,9 @@ public class MatchService {
         removeMatchesForPurpose(purposeId);
         DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
         if (Objects.nonNull(dar)) {
-            Match match = createMatchesForPurpose(dar.getReferenceId());
-            createMatches(Collections.singletonList(match));
+            List<Match> matches = createMatchesForDataAccessRequest(dar);
+            createMatches(matches);
         }
-
     }
 
     public void removeMatchesForPurpose(String purposeId) {
@@ -155,29 +159,27 @@ public class MatchService {
         return match;
     }
 
-    public Match createMatchesForPurpose(String purposeId){
-        Match match = null;
-        DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
-        if (Objects.nonNull(dar)) {
-            List<Integer> dataSetIdList = dar.getData().getDatasetIds();
-            Consent consent = findRelatedConsent(dataSetIdList);
+    protected List<Match> createMatchesForDataAccessRequest(DataAccessRequest dar) {
+        List<Match> matches = new ArrayList<>();
+        dar.getDatasetIds().forEach(id -> {
+            Consent consent = findRelatedConsent(List.of(id));
             if (Objects.nonNull(consent)) {
                 try {
-                    match = singleEntitiesMatch(consent, dar);
+                    matches.add(singleEntitiesMatch(consent, dar));
                 } catch (Exception e) {
-                    logger.error("Error finding single match for purpose: " + purposeId);
-                    match = createMatch(consent.getConsentId(), purposeId, true, false);
+                    logger.error("Error finding single match for purpose: " + dar.getReferenceId());
+                    matches.add(createMatch(consent.getConsentId(), dar.getReferenceId(), true, false));
                 }
             }
-        }
-        return match;
+        });
+        return matches;
     }
 
     public List<Match> createMatchesForConsent(String consentId) {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
-        List<DataSet> dataSets = dataSetDAO.getDataSetsForConsent(consentId);
-        List<DataAccessRequest> dars = findRelatedDars(dataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList()));
+        List<Dataset> dataSets = dataSetDAO.getDatasetsForConsent(consentId);
+        List<DataAccessRequest> dars = findRelatedDars(dataSets.stream().map(Dataset::getDataSetId).collect(Collectors.toList()));
         if (consent != null && !dars.isEmpty()) {
             Match match;
             for (DataAccessRequest dar : dars) {
@@ -266,13 +268,13 @@ public class MatchService {
 
     private List<DataAccessRequest> findRelatedDars(List<Integer> dataSetIds) {
         return dataAccessRequestDAO.findAllDataAccessRequests().stream()
-                .filter(d -> !Collections.disjoint(dataSetIds, d.getData().getDatasetIds()))
+                .filter(d -> !Collections.disjoint(dataSetIds, d.getDatasetIds()))
                 .collect(Collectors.toList());
     }
 
     private RequestMatchingObject createRequestObject(Consent consent, DataAccessRequest dar) {
         DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
-        UseRestriction darUseRestriction = useRestrictionConverter.parseUseRestriction(dataUse);
+        UseRestriction darUseRestriction = useRestrictionConverter.parseUseRestriction(dataUse, DataUseTranslationType.PURPOSE);
         return new RequestMatchingObject(consent.getUseRestriction(), darUseRestriction);
     }
 
