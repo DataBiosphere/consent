@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -29,7 +29,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
               rowView.getColumn("dac_id", Integer.class), id -> rowView.getRow(Dac.class));
 
       if (Objects.nonNull(rowView.getColumn("datasetid", Integer.class))) {
-        DatasetDTO dto = rowView.getRow(DatasetDTO.class);
+        Dataset dataset = rowView.getRow(Dataset.class);
 
         try {
           //aliased columns must be set directly
@@ -37,7 +37,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
           if (Objects.nonNull(rowView.getColumn("dataset_alias", String.class))) {
             String dsAlias = rowView.getColumn("dataset_alias", String.class);
             try {
-              dto.setAlias(Integer.parseInt(dsAlias));
+              dataset.setAlias(Integer.parseInt(dsAlias));
             } catch (Exception e) {
               logger.error("Exception parsing dataset alias: " + dsAlias, e);
             }
@@ -45,12 +45,12 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
 
           if (Objects.nonNull(rowView.getColumn("dataset_create_date", Date.class))) {
             Date createDate = rowView.getColumn("dataset_create_date", Date.class);
-            dto.setCreateDate(createDate);
+            dataset.setCreateDate(createDate);
           }
 
           if (Objects.nonNull(rowView.getColumn("dataset_update_date", Timestamp.class))) {
             Timestamp updateDate = rowView.getColumn("dataset_update_date", Timestamp.class);
-            dto.setUpdateDate(updateDate);
+            dataset.setUpdateDate(updateDate);
           }
 
         } catch (Exception e) {
@@ -60,11 +60,11 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
         if (Objects.nonNull(rowView.getColumn("dataset_data_use", String.class))) {
           String duStr = rowView.getColumn("dataset_data_use", String.class);
           Optional<DataUse> du = DataUse.parseDataUse(duStr);
-          du.ifPresent(dto::setDataUse);
+          du.ifPresent(dataset::setDataUse);
         }
 
-        if (Objects.nonNull(dto)) {
-          dac.addDatasetDTO(dto);
+        if (Objects.nonNull(dataset)) {
+          dac.addDataset(dataset);
         }
 
       }
