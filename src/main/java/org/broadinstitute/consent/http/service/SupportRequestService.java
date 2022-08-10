@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportRequestComment;
 import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
+import org.broadinstitute.consent.http.models.support.SupportTicketFactory;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 import javax.ws.rs.ServerErrorException;
@@ -129,7 +130,8 @@ public class SupportRequestService {
             //only send ticket if an institution or signing official is provided; ignore otherwise
             if (updateFieldProvided) {
                 try {
-                    SupportTicket ticket = createInstitutionSOSupportTicket(userUpdateFields, user);
+                    SupportTicketFactory supportTicketFactory = new SupportTicketFactory(institutionDAO, userDAO);
+                    SupportTicket ticket = supportTicketFactory.createInstitutionSOSupportTicket(userUpdateFields, user, configuration.postSupportRequestUrl());
                     postTicketToSupport(ticket);
                 } catch (Exception e) {
                     logger.error("Exception sending suggested user fields support request: " + e.getMessage());
