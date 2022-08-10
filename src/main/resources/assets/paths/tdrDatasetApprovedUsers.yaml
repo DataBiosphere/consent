@@ -1,0 +1,25 @@
+get:
+  summary: Find approved users by dataset identifier
+  description: Finds all users who have been approved access to this dataset with an accepted DAR.
+  parameters:
+    - name: identifier
+      in: path
+      description: Dataset identifier, e.g. DUOS-123456
+      required: true
+      schema:
+        type: string
+  tags:
+    - TDR
+  responses:
+    200:
+      description: Returns a simplified view of all of the users.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ApprovedUsers.yaml'
+    400:
+      description: Invalid dataset identifier.
+    404:
+      description: Could not find dataset with given identifier.
+    500:
+      description: Server error.

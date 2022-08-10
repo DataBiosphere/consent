@@ -489,6 +489,28 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
+  public void testGetDarCollectionSummaryForResearcher_DraftedDarCollection() {
+    Dac dac = createDacForTest();
+    User user = createUserForTest();
+    Integer userId = user.getUserId(); //query should only pull collections made by this user
+
+    Institution institution = createInstitution(userId);
+    Integer institutionId = institution.getId();
+    user = assignInstitutionToUser(user, institutionId);
+    Dataset dataset = createDataset(userId);
+    Integer collectionId = createDarCollection(userId);
+    DataAccessRequest dar = createDataAccessRequest(collectionId, userId);
+
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
+    dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), true); // draft DAR
+
+    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+
+    assertEquals(0, summaries.size());
+
+  }
+
+  @Test
   public void testGetDarCollectionSummaryForAdmin() {
 
     Dac dac = createDacForTest();

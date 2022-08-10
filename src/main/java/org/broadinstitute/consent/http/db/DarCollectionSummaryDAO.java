@@ -22,8 +22,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @UseRowReducer(DarCollectionSummaryReducer.class)
   @SqlQuery
   (
-    "SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, u.display_name as researcher_name, " +
-      "i.institution_name, e.electionid, e.status, e.datasetid, e.referenceid, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid, " +
+    "SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name, " +
+      "i.institution_name, e.electionid, e.status, e.datasetid, e.referenceid, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid, " +      
       "v.dacuserid as v_dac_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, " +
       "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name " +
     "FROM dar_collection c " +
@@ -58,8 +58,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @UseRowReducer(DarCollectionSummaryReducer.class)
   @SqlQuery
   (
-    "SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, u.display_name as researcher_name, " +
-      "i.institution_name, e.electionid, e.status, e.datasetid, e.referenceid, dd.dataset_id as dd_datasetid, " +
+    "SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name, " +
+      "i.institution_name, e.electionid, e.status, e.datasetid, e.referenceid, dd.dataset_id as dd_datasetid, " +      
       "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name " +
     "FROM dar_collection c " +
     "INNER JOIN users u " +
@@ -89,8 +89,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @UseRowReducer(DarCollectionSummaryReducer.class)
   @SqlQuery
   (
-    "SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, u.display_name as researcher_name, " +
-      "i.institution_name, e.electionid, e.status, e.datasetid, e.referenceid, dd.dataset_id as dd_datasetid, " +
+    "SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name, " +
+      "i.institution_name, e.electionid, e.status, e.datasetid, e.referenceid, dd.dataset_id as dd_datasetid, " +      
+
       "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name " +
     "FROM dar_collection c " +
     "INNER JOIN users u " +
@@ -139,7 +140,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       "ON dar.reference_id = dd.reference_id " +
     "WHERE c.create_user_id = :userId " +
     	"AND (e.latest = e.electionid OR e.electionid IS NULL) " +
-        "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL ) "
+        "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL ) " +
+        "AND (EXISTS (SELECT 1 FROM data_access_request WHERE (collection_id = c.collection_id and draft = false)))"
   )
   List<DarCollectionSummary> getDarCollectionSummariesForResearcher(
       @Bind("userId") Integer userId);

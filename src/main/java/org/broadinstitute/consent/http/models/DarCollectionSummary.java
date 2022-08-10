@@ -15,9 +15,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class DarCollectionSummary {
-
   @JsonProperty
   private Integer darCollectionId;
+
+  @JsonProperty
+  private Set<String> referenceIds;
 
   @JsonProperty
   private String darCode;
@@ -55,6 +57,7 @@ public class DarCollectionSummary {
     this.actions = new HashSet<>();
     this.elections = new HashMap<>();
     this.datasetIds = new HashSet<>();
+    this.referenceIds = new HashSet<>();
     this.darStatuses = new HashMap<>();
     this.datasetCount = 0;
   }
@@ -65,6 +68,18 @@ public class DarCollectionSummary {
 
   public void setVotes(List<Vote> votes) {
     this.votes = votes;
+  }
+
+  public Set<String> getReferenceIds() {
+    return this.referenceIds;
+  }
+
+  public void addReferenceId(String id) {
+    this.referenceIds.add(id);
+  }
+
+  public void setReferenceIds(Set<String> referenceIds) {
+    this.referenceIds = referenceIds;
   }
 
   public void addVote(Vote vote) {
@@ -157,6 +172,7 @@ public class DarCollectionSummary {
 
   public void setDatasetIds(Set<Integer> datasetIds) {
     this.datasetIds = datasetIds;
+    this.datasetCount = this.datasetIds.size();
   }
 
   public void addDatasetId(Integer datasetId) {

@@ -39,6 +39,7 @@ public class ElectionReviewResource extends Resource {
         this.darService = darService;
     }
 
+    @Deprecated
     @GET
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
@@ -54,6 +55,7 @@ public class ElectionReviewResource extends Resource {
         return ("{ \"open\" : " + service.openElections() + " }");
     }
 
+    @Deprecated
     @GET
     @Path("/{electionId}")
     @Produces("application/json")
