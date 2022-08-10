@@ -160,8 +160,8 @@ public class DarCollectionService {
     //if an election exists, cancel does not appear
     //if there are no elections, review and cancel are present
     //if the collection is canceled, revise and review is present
-    Map<String, Integer> statusCount = new HashMap<>();
     summaries.forEach(s -> {
+      Map<String, Integer> statusCount = new HashMap<>();
       Map<Integer, Election> elections = s.getElections();
       int electionCount = elections.values().size();
       elections.values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
@@ -184,7 +184,7 @@ public class DarCollectionService {
     });
   }
 
-  private void processDarCollectionSumariesForMember(List<DarCollectionSummary> summaries) {
+  private void processDarCollectionSummariesForMember(List<DarCollectionSummary> summaries) {
     summaries.forEach(s -> {
       Collection<Election> elections = s.getElections().values();
         Integer electionCount = elections.size();
@@ -196,7 +196,7 @@ public class DarCollectionService {
           Boolean isVotable = elections
             .stream()
             .anyMatch(election -> election.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()));
-          
+
           if(isVotable) {
             s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
             s.addAction(DarCollectionActions.VOTE.getValue());
@@ -205,7 +205,7 @@ public class DarCollectionService {
               //all canceled (complete)
               //some datasets do not have elections (in process)
               //all voted on (complete)
-              //no elections 
+              //no elections
             if(electionCount < s.getDatasetCount()) {
               s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
             } else {
@@ -215,7 +215,7 @@ public class DarCollectionService {
         }
     });
   }
-  
+
 
   private void processDarCollectionSummariesForChair(List<DarCollectionSummary> summaries) {
     summaries.forEach(s -> {
@@ -305,7 +305,7 @@ public class DarCollectionService {
           .map(d -> d.getDataSetId())
           .collect(Collectors.toList());
           summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
-          processDarCollectionSumariesForMember(summaries);
+          processDarCollectionSummariesForMember(summaries);
         break;
       case RESEARCHER:
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
@@ -317,6 +317,56 @@ public class DarCollectionService {
         break;
     }
     return summaries;
+  }
+
+  /**
+   * Finds the DarCollectionSummary for a given darCollectionId, processed by the given role name.
+   *
+   * @param user     The user making the request
+   * @param userRole The role the user is making the request as
+   * @param collectionId The darCollectionId of the requested DarCollectionSummary
+   * @return A DarCollectionSummary object
+   */
+  public DarCollectionSummary getSummaryForRoleNameByCollectionId(User user, String userRole, Integer collectionId) {
+    DarCollectionSummary summary = null;
+    UserRoles role = UserRoles.getUserRoleFromName(userRole);
+    Integer userId = user.getUserId();;
+    List<Integer> datasetIds;
+    try {
+      switch (role) {
+        case ADMIN:
+          summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
+          processDarCollectionSummariesForAdmin(List.of(summary));
+          break;
+        case SIGNINGOFFICIAL:
+          summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
+          processDarCollectionSummariesForSO(List.of(summary));
+          break;
+        case CHAIRPERSON:
+          datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+          .map(d -> d.getDataSetId())
+          .collect(Collectors.toList());
+          summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, datasetIds, collectionId);
+          processDarCollectionSummariesForChair(List.of(summary));
+          break;
+        case MEMBER:
+          datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+          .map(d -> d.getDataSetId())
+          .collect(Collectors.toList());
+          summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, datasetIds, collectionId);
+          processDarCollectionSummariesForMember(List.of(summary));
+          break;
+        case RESEARCHER:
+          summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
+          processDarCollectionSummariesForResearcher(List.of(summary));
+          break;
+        default:
+          break;
+      }
+      return summary;
+    } catch (NullPointerException e) {
+      throw new NotFoundException("Collection summary with the collection id of " + collectionId + " was not found");
+    }
   }
 
   public DarCollectionSummary updateCollectionToDraftStatus(DarCollection sourceCollection) {
