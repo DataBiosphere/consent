@@ -7,11 +7,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -45,11 +43,9 @@ public class EmailNotifierService {
 
     private final DarCollectionDAO collectionDAO;
     private final ConsentDAO consentDAO;
-    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final UserDAO userDAO;
     private final ElectionDAO electionDAO;
     private final MailMessageDAO emailDAO;
-    private final UserPropertyDAO userPropertyDAO;
     private final VoteDAO voteDAO;
     private final FreeMarkerTemplateHelper templateHelper;
     private final MailService mailService;
@@ -90,13 +86,11 @@ public class EmailNotifierService {
 
     @Inject
     public EmailNotifierService(DarCollectionDAO collectionDAO, ConsentDAO consentDAO,
-                                DataAccessRequestDAO dataAccessRequestDAO, VoteDAO voteDAO, ElectionDAO electionDAO,
+                                VoteDAO voteDAO, ElectionDAO electionDAO,
                                 UserDAO userDAO, MailMessageDAO emailDAO, MailService mailService,
-                                FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive,
-                                UserPropertyDAO userPropertyDAO) {
+                                FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive) {
         this.collectionDAO = collectionDAO;
         this.consentDAO = consentDAO;
-        this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.userDAO = userDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
@@ -105,7 +99,6 @@ public class EmailNotifierService {
         this.mailService = mailService;
         this.SERVER_URL = serverUrl;
         this.isServiceActive = serviceActive;
-        this.userPropertyDAO = userPropertyDAO;
     }
 
     public void sendNewDARCollectionMessage(Integer collectionId) throws MessagingException, IOException, TemplateException {

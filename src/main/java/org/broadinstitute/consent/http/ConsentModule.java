@@ -300,7 +300,6 @@ public class ConsentModule extends AbstractModule {
         return new EmailNotifierService(
                 providesDARCollectionDAO(),
                 providesConsentDAO(),
-                providesDataAccessRequestDAO(),
                 providesVoteDAO(),
                 providesElectionDAO(),
                 providesUserDAO(),
@@ -308,8 +307,7 @@ public class ConsentModule extends AbstractModule {
                 providesMailService(),
                 providesFreeMarkerTemplateHelper(),
                 config.getServicesConfiguration().getLocalURL(),
-                config.getMailConfiguration().isActivateEmailNotifications(),
-                providesResearcherPropertyDAO()
+                config.getMailConfiguration().isActivateEmailNotifications()
         );
     }
 
