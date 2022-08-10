@@ -151,7 +151,7 @@ public class MatchService {
                 } catch (Exception e) {
                     String message = "Error finding single match for purpose: " + dar.getReferenceId();
                     logger.error(message);
-                    matches.add(createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of(message)));
+                    matches.add(new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of(message)));
                 }
             }
         });
@@ -171,7 +171,7 @@ public class MatchService {
                     matches.add(match);
                 } catch (Exception e) {
                     logger.error("Error finding  matches for consent: " + consentId);
-                    matches.add(createMatch(consentId, dar.getReferenceId(), true, false, MatchAlgorithm.V1, List.of()));
+                    matches.add(new Match(consentId, dar.getReferenceId(), true, false, MatchAlgorithm.V1, List.of()));
                 }
             }
         }
@@ -193,9 +193,9 @@ public class MatchService {
         Response res = matchServiceTargetV1.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
         if (res.getStatus() == Response.Status.OK.getStatusCode()) {
             ResponseMatchingObject entity = res.readEntity(rmo);
-            match = createMatch(consent.getConsentId(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V1, List.of());
+            match = new Match(consent.getConsentId(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V1, List.of());
         } else {
-            match = createMatch(consent.getConsentId(), dar.getReferenceId(), true, false, MatchAlgorithm.V1, List.of());
+            match = new Match(consent.getConsentId(), dar.getReferenceId(), true, false, MatchAlgorithm.V1, List.of());
         }
         return match;
     }
@@ -216,22 +216,10 @@ public class MatchService {
         if (res.getStatus() == Response.Status.OK.getStatusCode()) {
             GenericType<DataUseResponseMatchingObject> durmo = new GenericType<>(){};
             DataUseResponseMatchingObject entity = res.readEntity(durmo);
-            match = createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V2, entity.getFailureReasons());
+            match = new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V2, entity.getFailureReasons());
         } else {
-            match = createMatch(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of());
+            match = new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of());
         }
-        return match;
-    }
-
-    private Match createMatch(String consentId, String purposeId, boolean failed, boolean isMatch, MatchAlgorithm algorithm, List<String> failureReasons) {
-        Match match = new Match();
-        match.setConsent(consentId);
-        match.setPurpose(purposeId);
-        match.setFailed(failed);
-        match.setMatch(isMatch);
-        match.setCreateDate(new Date());
-        match.setAlgorithmVersion(algorithm.getVersion());
-        match.setFailureReasons(failureReasons);
         return match;
     }
 

@@ -47,6 +47,16 @@ public class Match {
         this.algorithmVersion = algorithmVersion;
     }
 
+    public Match(String consentId, String purposeId, boolean failed, boolean isMatch, MatchAlgorithm algorithm, List<String> failureReasons) {
+        this.setConsent(consentId);
+        this.setPurpose(purposeId);
+        this.setFailed(failed);
+        this.setMatch(isMatch);
+        this.setCreateDate(new Date());
+        this.setAlgorithmVersion(algorithm.getVersion());
+        this.setFailureReasons(failureReasons);
+    }
+
     public Match(){
     }
 
