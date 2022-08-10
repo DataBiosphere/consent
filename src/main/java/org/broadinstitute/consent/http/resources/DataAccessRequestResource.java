@@ -81,35 +81,25 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/manage/v2")
-    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
+    @RolesAllowed({SIGNINGOFFICIAL})
     public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser, @QueryParam("roleName") Optional<String> roleName) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            String roleNameValue = roleName.orElse(null);
+            String roleNameValue = roleName.orElse(SIGNINGOFFICIAL);
             UserRoles queriedUserRole = UserRoles.getUserRoleFromName(roleNameValue);
+            // if a roleName was passed in but it is not in the UserRoles enum throw exception
             if (roleName.isPresent()) {
-                //if a roleName was passed in but it is not in the UserRoles enum throw exception
                 if (Objects.isNull(queriedUserRole)) {
                     throw new BadRequestException("Invalid role name: " + roleNameValue);
-                } else {
-                    //if there is a valid roleName but it is not SO or Researcher then throw an exception
-                    if (queriedUserRole != UserRoles.RESEARCHER && queriedUserRole != UserRoles.SIGNINGOFFICIAL) {
-                        throw new BadRequestException("Unsupported role name: " +  queriedUserRole.getRoleName());
-                    }
-                    //if the user does not have the given roleName throw NotFoundException
-                    if (!user.hasUserRole(queriedUserRole)) {
-                        throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " +  queriedUserRole.getRoleName() + " role.");
-                    }
                 }
-            //if no roleName was passed in, find the user's role
-            } else {
-                if (user.hasUserRole(UserRoles.ADMIN)) {
-                    queriedUserRole = UserRoles.ADMIN;
-                } else if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
-                    queriedUserRole = UserRoles.CHAIRPERSON;
-                } else if (user.hasUserRole(UserRoles.MEMBER)) {
-                    queriedUserRole = UserRoles.MEMBER;
-                }
+            }
+            // if it is not SO, then throw an exception
+            if (!Objects.equals(queriedUserRole, UserRoles.SIGNINGOFFICIAL)) {
+                throw new BadRequestException("Unsupported role name: " +  queriedUserRole.getRoleName());
+            }
+            // if the user does not have the given roleName throw NotFoundException
+            if (!user.hasUserRole(queriedUserRole)) {
+                throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " +  queriedUserRole.getRoleName() + " role.");
             }
             List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(user, queriedUserRole);
             return Response.ok().entity(dars).build();

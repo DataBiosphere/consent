@@ -22,6 +22,7 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -126,13 +127,14 @@ public class DataAccessRequestResourceTest {
     }
 
     @Test
-    public void testDescribeManageDataAccessRequestsV2() {
-        User user = new User();
-        user.setRoles(Collections.singletonList(new UserRole(4, UserRoles.ADMIN.getRoleName())));
+    public void testDescribeManageDataAccessRequestsV2_NoRoleWithAccess() {
+        User so = new User();
+        so.setUserId(1);
+        so.setRoles(List.of(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
+        when(userService.findUserByEmail(any())).thenReturn(so);
         DataAccessRequest dar = generateDataAccessRequest();
         DataAccessRequestManage manage = new DataAccessRequestManage();
         manage.setDar(dar);
-        when(userService.findUserByEmail(any())).thenReturn(user);
         when(dataAccessRequestService.describeDataAccessRequestManageV2(any(), any()))
             .thenReturn(Collections.singletonList(manage));
         resource = new DataAccessRequestResource(
@@ -144,11 +146,24 @@ public class DataAccessRequestResourceTest {
     }
 
     @Test
+    public void testDescribeManageDataAccessRequestsV2_NoRoleNoAccess() {
+        User user = new User();
+        user.setRoles(Collections.singletonList(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        resource = new DataAccessRequestResource(
+            dataAccessRequestService,
+            userService,
+            consentService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+
+    @Test
     public void testDescribeManageDataAccessRequestsV2_WithRole() {
-        User researcher = new User();
-        researcher.setUserId(1);
-        researcher.setRoles(Arrays.asList(new UserRole(5, UserRoles.RESEARCHER.getRoleName())));
-        when(userService.findUserByEmail(any())).thenReturn(researcher);
+        User so = new User();
+        so.setUserId(1);
+        so.setRoles(List.of(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
+        when(userService.findUserByEmail(any())).thenReturn(so);
         DataAccessRequest dar = generateDataAccessRequest();
         DataAccessRequestManage manage = new DataAccessRequestManage();
         manage.setDar(dar);
@@ -158,8 +173,64 @@ public class DataAccessRequestResourceTest {
             dataAccessRequestService,
             userService,
             consentService);
-        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of("Researcher"));
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of(UserRoles.SIGNINGOFFICIAL.getRoleName()));
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeManageDataAccessRequestsV2_errorResearcher() {
+        User researcher = new User();
+        researcher.setUserId(1);
+        researcher.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+        when(userService.findUserByEmail(any())).thenReturn(researcher);
+        resource = new DataAccessRequestResource(
+            dataAccessRequestService,
+            userService,
+            consentService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of(UserRoles.RESEARCHER.getRoleName()));
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeManageDataAccessRequestsV2_errorAdmin() {
+        User admin = new User();
+        admin.setUserId(1);
+        admin.setRoles(List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
+        when(userService.findUserByEmail(any())).thenReturn(admin);
+        resource = new DataAccessRequestResource(
+            dataAccessRequestService,
+            userService,
+            consentService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of(UserRoles.ADMIN.getRoleName()));
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeManageDataAccessRequestsV2_errorChair() {
+        User chair = new User();
+        chair.setUserId(1);
+        chair.setRoles(List.of(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName())));
+        when(userService.findUserByEmail(any())).thenReturn(chair);
+        resource = new DataAccessRequestResource(
+            dataAccessRequestService,
+            userService,
+            consentService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of(UserRoles.CHAIRPERSON.getRoleName()));
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testDescribeManageDataAccessRequestsV2_errorMember() {
+        User member = new User();
+        member.setUserId(1);
+        member.setRoles(List.of(new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName())));
+        when(userService.findUserByEmail(any())).thenReturn(member);
+        resource = new DataAccessRequestResource(
+            dataAccessRequestService,
+            userService,
+            consentService);
+        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of(UserRoles.MEMBER.getRoleName()));
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
