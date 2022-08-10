@@ -8,24 +8,35 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 
 public enum DatasetPropertyType {
-    String,
-    Boolean,
-    Number,
-    Json,
-    Date;
+    String("string"),
+    Boolean("boolean"),
+    Number("number"),
+    Json("json"),
+    Date("date");
+
+    private final String value;
+
+    DatasetPropertyType(String value) {
+        this.value = value;
+    }
+
+    @Override
+    public String toString() {
+        return this.value;
+    }
 
     public static DatasetPropertyType parse(String type) {
         if (type == null) {
             return DatasetPropertyType.String;
         }
         switch (type) {
-            case "Boolean":
+            case "boolean":
                 return DatasetPropertyType.Boolean;
-            case "Json":
+            case "json":
                 return DatasetPropertyType.Json;
-            case "Date":
+            case "date":
                 return DatasetPropertyType.Date;
-            case "Number":
+            case "number":
                 return DatasetPropertyType.Number;
             default: // always default to string.
                 return DatasetPropertyType.String;

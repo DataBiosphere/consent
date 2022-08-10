@@ -4,12 +4,12 @@
     <changeSet id="86.0" author="connorlbark">
         <!--Add mapping and dataset property type columns -->
         <addColumn tableName="datasetproperty">
-            <column name="propertytype" type="varchar(255)"/>
-            <column name="schemaproperty" type="varchar(255)"/>
+            <column name="property_type" type="varchar(255)"/>
+            <column name="schema_property" type="varchar(255)"/>
         </addColumn>
 
         <sql>
-            UPDATE datasetproperty SET propertytype='Number' WHERE propertyKey=5
+            UPDATE datasetproperty SET property_type='number' WHERE propertyKey=5
         </sql>
     </changeSet>
 </databaseChangeLog>

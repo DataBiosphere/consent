@@ -19,8 +19,9 @@ public class DatasetProperty {
     public DatasetProperty(){
     }
 
+    @Deprecated
     public DatasetProperty(Integer propertyId,
-                           Integer  dataSetId,
+                           Integer dataSetId,
                            Integer propertyKey,
                            String propertyValue,
                            DatasetPropertyType type,
@@ -29,7 +30,8 @@ public class DatasetProperty {
         this.propertyId = propertyId;
     }
 
-    public DatasetProperty(Integer  dataSetId,
+    @Deprecated
+    public DatasetProperty(Integer dataSetId,
                            Integer propertyKey,
                            String propertyValue,
                            DatasetPropertyType type,
@@ -42,7 +44,7 @@ public class DatasetProperty {
     }
 
     public DatasetProperty(Integer propertyId,
-                           Integer  dataSetId,
+                           Integer dataSetId,
                            Integer propertyKey,
                            String schemaProperty,
                            String propertyValue,
@@ -52,7 +54,7 @@ public class DatasetProperty {
         this.propertyId = propertyId;
     }
 
-    public DatasetProperty(Integer  dataSetId,
+    public DatasetProperty(Integer dataSetId,
                            Integer propertyKey,
                            String schemaProperty,
                            String propertyValue,
@@ -127,7 +129,14 @@ public class DatasetProperty {
     }
 
     public DatasetPropertyType getPropertyType() {
+        if (java.util.Objects.isNull(this.propertyType)) {
+            return DatasetPropertyType.String;
+        }
+
         return this.propertyType;
+    }
+    public String getPropertyTypeAsString() {
+        return this.getPropertyType().toString();
     }
 
     public void setPropertyType(DatasetPropertyType propertyType) {
