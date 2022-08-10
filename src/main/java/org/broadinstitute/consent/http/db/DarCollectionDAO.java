@@ -414,7 +414,8 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(getCollectionAndDars
       + " WHERE c.create_user_id = :userId AND ("
-      + DarCollection.FILTER_TERMS_QUERY + ") " + archiveFilterQuery + orderStatement)
+      + DarCollection.FILTER_TERMS_QUERY + ") "
+      + archiveFilterQuery + orderStatement)
   List<DarCollection> getFilteredListForResearcher(
       @Define("sortField") String sortField,
       @Define("sortOrder") String sortOrder,

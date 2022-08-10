@@ -502,8 +502,7 @@ public class ConsentModule extends AbstractModule {
     ResearcherService providesResearcherService() {
         return new ResearcherService(
                 providesResearcherPropertyDAO(),
-                providesUserDAO(),
-                providesEmailNotifierService()
+                providesUserDAO()
         );
     }
 

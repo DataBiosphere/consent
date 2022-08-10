@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -221,18 +220,6 @@ public class EmailNotifierService {
         }
     }
 
-    public void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException {
-        User createdResearcher = userDAO.findUserById(researcherId);
-        List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
-        if(isServiceActive){
-            String researcherProfileURL = SERVER_URL + REVIEW_RESEARCHER_URL + "/" + createdResearcher.getUserId().toString();
-            for(User admin: admins){
-                Writer template = getNewResearcherCreatedTemplate(admin.getDisplayName(), createdResearcher.getDisplayName(), researcherProfileURL, action);
-                mailService.sendNewResearcherCreatedMessage(getEmails(Collections.singletonList(admin)), template);
-            }
-        }
-    }
-
     public void sendResearcherDarApproved(String darCode, Integer researcherId, List<DatasetMailDTO> datasets, String dataUseRestriction) throws Exception {
         if(isServiceActive){
             User user = userDAO.findUserById(researcherId);
@@ -267,10 +254,6 @@ public class EmailNotifierService {
             throw new NotFoundException("Could not find dacUser for specified id : " + id);
         }
         return user;
-    }
-
-    private Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String URL, String action) throws IOException, TemplateException {
-        return templateHelper.getNewResearcherCreatedTemplate(admin, researcherName, URL, action);
     }
 
     private void sendNewCaseMessage(Set<String> userAddress, String electionType, String entityId, Writer template) throws MessagingException {

@@ -15,9 +15,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class DarCollectionSummary {
-
   @JsonProperty
   private Integer darCollectionId;
+
+  @JsonProperty
+  private Set<String> referenceIds;
 
   @JsonProperty
   private String darCode;
@@ -43,6 +45,8 @@ public class DarCollectionSummary {
   @JsonProperty
   private int datasetCount;
 
+  private Integer researcherId;
+  private Integer institutionId;
   private Set<Integer> datasetIds;
   private List<Vote> votes;
   private Map<Integer, Election> elections;
@@ -53,6 +57,7 @@ public class DarCollectionSummary {
     this.actions = new HashSet<>();
     this.elections = new HashMap<>();
     this.datasetIds = new HashSet<>();
+    this.referenceIds = new HashSet<>();
     this.darStatuses = new HashMap<>();
     this.datasetCount = 0;
   }
@@ -65,6 +70,18 @@ public class DarCollectionSummary {
     this.votes = votes;
   }
 
+  public Set<String> getReferenceIds() {
+    return this.referenceIds;
+  }
+
+  public void addReferenceId(String id) {
+    this.referenceIds.add(id);
+  }
+
+  public void setReferenceIds(Set<String> referenceIds) {
+    this.referenceIds = referenceIds;
+  }
+
   public void addVote(Vote vote) {
     this.votes.add(vote);
   }
@@ -72,7 +89,7 @@ public class DarCollectionSummary {
   public void addElection(Election election) {
     this.elections.put(election.getElectionId(), election);
   }
- 
+
   public Map<Integer, Election> getElections() {
     return elections;
   }
@@ -125,6 +142,14 @@ public class DarCollectionSummary {
     this.researcherName = researcherName;
   }
 
+  public Integer getResearcherId() {
+    return researcherId;
+  }
+
+  public void setResearcherId(Integer researcherId) {
+    this.researcherId = researcherId;
+  }
+
   public String getInstitutionName() {
     return institutionName;
   }
@@ -133,12 +158,21 @@ public class DarCollectionSummary {
     this.institutionName = institutionName;
   }
 
+  public Integer getInstitutionId() {
+    return institutionId;
+  }
+
+  public void setInstitutionId(Integer institutionId) {
+    this.institutionId = institutionId;
+  }
+
   public Set<Integer> getDatasetIds() {
     return datasetIds;
   }
 
   public void setDatasetIds(Set<Integer> datasetIds) {
     this.datasetIds = datasetIds;
+    this.datasetCount = this.datasetIds.size();
   }
 
   public void addDatasetId(Integer datasetId) {

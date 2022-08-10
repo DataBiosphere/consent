@@ -1,0 +1,12 @@
+get:
+  summary: Liveness Endpoint
+  description: Liveness endpoint for conducting quick health checks on the application.
+  tags:
+    - Status
+  responses:
+    200:
+      description: Responds with 'Healthy' if endpoint is reachable.
+      content:
+        text/plain:
+          schema:
+            type: string

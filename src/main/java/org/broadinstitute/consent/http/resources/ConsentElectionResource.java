@@ -57,6 +57,7 @@ public class ConsentElectionResource extends Resource {
         this.electionService = electionService;
     }
 
+    @Deprecated
     @POST
     @Consumes("application/json")
     @Path("/dac/{dacId}")
@@ -90,6 +91,7 @@ public class ConsentElectionResource extends Resource {
         return Response.created(uri).build();
     }
 
+    @Deprecated
     @POST
     @Consumes("application/json")
     @RolesAllowed({ADMIN, CHAIRPERSON})
