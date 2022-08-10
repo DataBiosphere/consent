@@ -99,7 +99,8 @@ public class ElectionService {
                     electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()),
                     authUser);
             List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-            List<DarCollection> darCollections = darCollectionDAO.findDARCollectionsByReferenceIds(referenceIds);
+            List<DarCollection> darCollections = referenceIds.isEmpty() ? List.of() :
+                    darCollectionDAO.findDARCollectionsByReferenceIds(referenceIds);
             elections.forEach(election -> {
                 Optional<DarCollection> collection = darCollections.stream()
                         .filter(c -> c.getDars().containsKey(election.getReferenceId()))

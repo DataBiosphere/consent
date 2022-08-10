@@ -119,7 +119,8 @@ public class MetricsService {
   private List<DarDecisionMetrics> getDarMetrics(List<DataAccessRequest> dars,
                                                  List<Dataset> datasets, List<Election> elections, List<Match> matches, List<Dac> dacs) {
     List<Integer> darCollectionIds = dars.stream().map(DataAccessRequest::getCollectionId).collect(Collectors.toList());
-    List<DarCollection> darCollections = darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
+    List<DarCollection> darCollections = darCollectionIds.isEmpty() ? List.of() :
+            darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
     Map<Integer, DarCollection> collectionMap = darCollections.stream().collect(Collectors.toMap(DarCollection::getDarCollectionId, Function.identity()));
 
     return dars.stream()
@@ -237,7 +238,8 @@ public class MetricsService {
     //convert all dars into smaller objects that only contain the information needed
     List<DataAccessRequest> dars = darDAO.findAllDataAccessRequestsByDatasetId(Integer.toString(datasetId));
     List<Integer> darCollectionIds = dars.stream().map(DataAccessRequest::getCollectionId).collect(Collectors.toList());
-    List<DarCollection> darCollections = darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
+    List<DarCollection> darCollections = darCollectionIds.isEmpty() ? List.of() :
+            darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
     Map<Integer, DarCollection> collectionMap = darCollections.stream().collect(Collectors.toMap(DarCollection::getDarCollectionId, Function.identity()));
 
     List<DarMetricsSummary> darInfo = dars.stream().map(dar -> {

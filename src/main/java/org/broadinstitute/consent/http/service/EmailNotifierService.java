@@ -200,7 +200,8 @@ public class EmailNotifierService {
         if(isServiceActive){
             Map<String, List<Election>> reviewedDatasets = new HashMap<>();
             List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-            List<DarCollection> darCollections = collectionDAO.findDARCollectionsByReferenceIds(referenceIds);
+            List<DarCollection> darCollections = referenceIds.isEmpty() ? List.of() :
+                    collectionDAO.findDARCollectionsByReferenceIds(referenceIds);
             for(Election election: elections) {
                 List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
                 Optional<DarCollection> collection = darCollections.stream()
