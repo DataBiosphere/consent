@@ -4,12 +4,7 @@ import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
 import org.broadinstitute.dsp.consent.requests.Requests
 import org.broadinstitute.dsp.consent.TestConfig
-import spray.json._
-import DefaultJsonProtocol._
 import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
-import org.broadinstitute.dsp.consent.models.ElectionModels._
-import org.broadinstitute.dsp.consent.models.JsonProtocols
-import org.broadinstitute.dsp.consent.services._
 import io.netty.handler.codec.http.HttpResponseStatus._
 
 object AdminChains {
@@ -20,32 +15,6 @@ object AdminChains {
         .pause(TestConfig.defaultPause)
         .exec(
             Requests.Admin.initConsole(OK.code, additionalHeaders)
-        )
-    }
-
-    def manageAccess(additionalHeaders: Map[String, String]): ChainBuilder = {
-        exec(
-            Requests.Dar.manageDar(OK.code, additionalHeaders)
-        )
-        .exitBlockOnFail {
-            exec { session =>
-                implicit val darManageFormat: JsonProtocols.DataAccessRequestManageFormat.type = JsonProtocols.DataAccessRequestManageFormat
-                implicit val userFormat: JsonProtocols.userFormat.type = JsonProtocols.userFormat
-                implicit val dacFormat: JsonProtocols.dacFormat.type = JsonProtocols.dacFormat
-                implicit val electionStatusFormat: JsonProtocols.electionStatusFormat.type = JsonProtocols.electionStatusFormat
-
-                val manageDarStr: String = session(Requests.Dar.manageDarResponse).as[String]
-                val manageDars: Seq[DataAccessRequestManage] = manageDarStr.parseJson.convertTo[Seq[DataAccessRequestManage]]
-
-                val researcherDars: Seq[DataAccessRequestManage] = DarService.getPendingDARsByMostRecent(manageDars)
-                val electionStatus: ElectionStatus = ElectionStatus(status = Status.OPEN, finalAccessVote = false)
-
-                val newSession = session.set(Requests.Dar.manageDarResponse, researcherDars)
-                newSession.set("electionStatusBody", electionStatus.toJson.compactPrint)
-            }
-        }
-        .exec(
-            Requests.Dac.list(OK.code, additionalHeaders)
         )
     }
 
