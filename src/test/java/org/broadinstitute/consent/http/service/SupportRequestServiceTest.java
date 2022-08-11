@@ -6,15 +6,12 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.enumeration.SupportRequestType;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportRequestComment;
 import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
-import org.broadinstitute.consent.http.models.support.SupportTicketFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -36,9 +33,7 @@ import java.util.List;
 import static org.broadinstitute.consent.http.WithMockServer.IMAGE;
 import static org.eclipse.jetty.util.component.LifeCycle.stop;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -74,46 +69,6 @@ public class SupportRequestServiceTest {
     @After
     public void tearDown() {
         stop(container);
-    }
-
-    @Test
-    public void testCreateSupportTicket() {
-        String name = RandomStringUtils.randomAlphabetic(10);
-        SupportRequestType type = SupportRequestType.QUESTION;
-        String email = RandomStringUtils.randomAlphabetic(10);
-        String subject = RandomStringUtils.randomAlphabetic(10);
-        String description = RandomStringUtils.randomAlphabetic(10);
-        String url = RandomStringUtils.randomAlphabetic(10);
-        SupportTicket ticket = service.createSupportTicket(name, type, email, subject, description, url);
-
-        assertNotNull(ticket);
-        assertNotNull(ticket.getRequest());
-        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        assertEquals(name, supportRequest.getRequester().getName());
-        assertEquals(email, supportRequest.getRequester().getEmail());
-        assertEquals(subject, supportRequest.getSubject());
-        assertEquals(360000669472L, supportRequest.getTicketFormId());
-
-        List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        assertEquals(5, customFields.size());
-        assertTrue(customFields.contains(new CustomRequestField(360012744452L, type.getValue())));
-        assertTrue(customFields.contains(new CustomRequestField(360007369412L, description)));
-        assertTrue(customFields.contains(new CustomRequestField(360012744292L, name)));
-        assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
-        assertTrue(customFields.contains(new CustomRequestField(360018545031L, email)));
-
-        String commentBody = description + "\n\n------------------\nSubmitted from: " + url;
-        assertEquals(commentBody, supportRequest.getComment().getBody());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCreateSupportTicketMissingField() {
-        SupportRequestType type = SupportRequestType.QUESTION;
-        String email = RandomStringUtils.randomAlphabetic(10);
-        String subject = RandomStringUtils.randomAlphabetic(10);
-        String description = RandomStringUtils.randomAlphabetic(10);
-        String url = RandomStringUtils.randomAlphabetic(10);
-        service.createSupportTicket(null, type, email, subject, description, url);
     }
 
     @Test
@@ -179,7 +134,7 @@ public class SupportRequestServiceTest {
     }
 
     @Test
-    public void testHandleSuggestedUserFieldsSupportRequest() {
+    public void testHandleInstitutionSOSupportRequest() {
         String displayName = RandomStringUtils.randomAlphabetic(10);
         String email = RandomStringUtils.randomAlphabetic(10);
         User user = new User();
@@ -197,7 +152,7 @@ public class SupportRequestServiceTest {
     }
 
     @Test
-    public void testHandleSuggestedUserFieldsSupportRequest_NoUpdates() {
+    public void testHandleInstitutionSOSupportRequest_NoUpdates() {
         UserUpdateFields updateFields = new UserUpdateFields();
         // verify no requests sent if no suggested user fields are provided; fail if request attempted
         mockServerClient.when(request()).error(new HttpError());

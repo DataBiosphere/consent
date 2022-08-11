@@ -17,6 +17,16 @@ public class SupportTicket {
         this.request = new SupportRequest(requester, subject, customFields, comment);
     }
 
+    /**
+     * Constructs a ticket with the proper structure to request support via Zendesk
+     *
+     * @param name        The name of the user requesting support
+     * @param type        The type of request ("question", "incident", "problem", "task")
+     * @param email       The email of the user requesting support
+     * @param subject     Subject line of the request
+     * @param description Description of the task or question
+     * @param url         The API url of this request
+     */
     public SupportTicket(String name, SupportRequestType type, String email, String subject, String description, String url) {
         if (Objects.isNull(name) || Objects.isNull(email)) {
             throw new IllegalArgumentException("Name and email of user requesting support is required");
