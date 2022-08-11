@@ -30,10 +30,6 @@ public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
       user.setEmailPreference(r.getBoolean("email_preference"));
       user.setRoles(new ArrayList<>());
 
-      // populate for backwards compatibility
-      if (hasColumn(r, "completed")) {
-        user.setProfileCompleted(Boolean.valueOf(r.getString("completed")));
-      }
       if (hasColumn(r, "era_commons_id")) {
         user.setEraCommonsId(r.getString("era_commons_id"));
       }

@@ -1,19 +1,20 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -44,6 +45,8 @@ public class MetricsServiceTest {
 
   @Mock private DataAccessRequestDAO darDAO;
 
+  @Mock private DarCollectionDAO darCollectionDAO;
+
   @Mock private MatchDAO matchDAO;
 
   @Mock private ElectionDAO electionDAO;
@@ -56,7 +59,7 @@ public class MetricsServiceTest {
   }
 
   private void initService() {
-    service = new MetricsService(dacService, dataSetDAO, darDAO, matchDAO, electionDAO);
+    service = new MetricsService(dacService, dataSetDAO, darDAO, darCollectionDAO, matchDAO, electionDAO);
   }
 
   @Test
@@ -86,15 +89,19 @@ public class MetricsServiceTest {
     List<DataAccessRequest> dars = generateDars(1);
     List<Election> election = generateElection(dars.get(0).getReferenceId());
     Set<DatasetDTO> dataset = new HashSet<>(generateDatasetDTO(1));
+    DarCollection collection = new DarCollection();
+    collection.setDarCode("DAR-" + RandomUtils.nextInt(1, 999999999));
 
     when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(dataset);
     when(darDAO.findAllDataAccessRequestsByDatasetId(any())).thenReturn(dars);
+    when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(collection));
     when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), eq("DataAccess"))).thenReturn(election);
 
     initService();
     DatasetMetrics metrics = service.generateDatasetMetrics(1);
 
-    assertEquals(metrics.getDars().get(0).projectTitle, toSummaries(dars).get(0).projectTitle);
+    assertEquals(metrics.getDars().get(0).projectTitle, dars.get(0).getData().getProjectTitle());
+    assertEquals(metrics.getDars().get(0).darCode, collection.getDarCode());
     assertEquals(metrics.getElections(), election);
     assertEquals(metrics.getDataset(), dataset.iterator().next());
   }
@@ -178,10 +185,6 @@ public class MetricsServiceTest {
               return dar;
             })
         .collect(Collectors.toList());
-  }
-
-  private List<DarMetricsSummary> toSummaries(List<DataAccessRequest> dars) {
-    return dars.stream().map(dar -> service.new DarMetricsSummary(dar)).collect(Collectors.toList());
   }
 
   private List<Dataset> generateDatasets(int count) {

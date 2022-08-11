@@ -95,6 +95,48 @@ public class DarCollectionResource extends Resource {
     }
   }
 
+
+  @GET
+  @Path("role/{roleName}/summary/{collectionId}")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
+  public Response getCollectionSummaryForRoleById(@Auth AuthUser authUser, @PathParam("roleName") String roleName, @PathParam("collectionId") Integer collectionId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateUserHasRoleName(user, roleName); //throws BadRequestException if user does not have roleName
+      DarCollectionSummary summary = darCollectionService.getSummaryForRoleNameByCollectionId(user, roleName, collectionId);
+
+      boolean allowedAccess;
+      switch (roleName) {
+        case Resource.ADMIN:
+          allowedAccess = true;
+          break;
+        case Resource.CHAIRPERSON:
+        case Resource.MEMBER:
+          List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
+          allowedAccess = summary.getDatasetIds().stream().anyMatch(userDatasetIds::contains);
+          break;
+        case Resource.SIGNINGOFFICIAL:
+          allowedAccess = Objects.nonNull(user.getInstitutionId()) &&
+          user.getInstitutionId().equals(summary.getInstitutionId());
+          break;
+        case Resource.RESEARCHER:
+          allowedAccess = user.getUserId().equals(summary.getResearcherId());
+          break;
+        default:
+          throw new BadRequestException("Invalid role selection: " + roleName);
+      }
+      if (!allowedAccess) {
+        // user has role but is not allowed to view collection; throw NotFoundException to avoid leaking existence
+        throw new NotFoundException("Collection with the collection id of " + collectionId + " was not found");
+      }
+
+      return Response.ok().entity(summary).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @GET
   @Path("{collectionId}")
   @Produces("application/json")
@@ -106,7 +148,7 @@ public class DarCollectionResource extends Resource {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
       User user = userService.findUserByEmail(authUser.getEmail());
 
-      if (checkAdminPermissions(user) || checkSoPermissions(user, collection) || checkDacPermissions(user, collection)) {
+      if (user.hasUserRole(UserRoles.ADMIN) || checkSoPermissionsForCollection(user, collection) || checkDacPermissionsForCollection(user, collection)) {
         return Response.ok().entity(collection).build();
       }
       validateUserIsCreator(user, collection);
@@ -131,11 +173,8 @@ public class DarCollectionResource extends Resource {
     }
   }
 
-  private boolean checkAdminPermissions(User user) {
-    return user.hasUserRole(UserRoles.ADMIN);
-  }
-
-  private boolean checkDacPermissions(User user, DarCollection collection) {
+  private boolean checkDacPermissionsForCollection(User user, DarCollection collection) {
+    // finds datasetIds for user based on the DACs they belong to
     List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
 
     return collection.getDatasets().stream()
@@ -143,7 +182,7 @@ public class DarCollectionResource extends Resource {
             .anyMatch(userDatasetIds::contains);
   }
 
-  private boolean checkSoPermissions(User user, DarCollection collection) {
+  private boolean checkSoPermissionsForCollection(User user, DarCollection collection) {
     Integer creatorInstitutionId = collection.getCreateUser().getInstitutionId();
     boolean institutionsMatch = Objects.nonNull(creatorInstitutionId)
             && creatorInstitutionId.equals(user.getInstitutionId());
