@@ -505,10 +505,12 @@ public class DataAccessRequestData {
         this.datasets = datasets;
     }
 
+    @Deprecated
     public String getDarCode() {
         return darCode;
     }
 
+    @Deprecated
     public void setDarCode(String darCode) {
         this.darCode = darCode;
     }

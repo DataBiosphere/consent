@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -27,6 +29,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Association;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
@@ -55,6 +58,8 @@ public class SummaryServiceTest {
     @Mock
     private MatchDAO matchDAO;
     @Mock
+    private DarCollectionDAO darCollectionDAO;
+    @Mock
     private DataAccessRequestService dataAccessRequestService;
 
     private SummaryService summaryService;
@@ -63,12 +68,12 @@ public class SummaryServiceTest {
     public void setUp() throws Exception {
         openMocks(this);
         summaryService = Mockito.spy(new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO,
-            datasetDAO, matchDAO));
+            datasetDAO, matchDAO, darCollectionDAO));
     }
 
     private void initService() {
         summaryService = new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO,
-            datasetDAO, matchDAO);
+            datasetDAO, matchDAO, darCollectionDAO);
     }
 
     // Test that empty data will not throw errors
@@ -104,6 +109,8 @@ public class SummaryServiceTest {
         List<Match> matchList = List.of(createMatch(associatedConsentIds.get(0), dars.get(0).getReferenceId()));
         List<String> referenceIds = List.of(accessElections.get(0).getReferenceId());
         List<Integer> datasetIds = dars.get(0).getDatasetIds();
+        DarCollection collection = new DarCollection();
+        collection.setDarCode("DAR-" + RandomUtils.nextInt(100, 200));
 
         when(electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue())).thenReturn(accessElections);
         when(electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue())).thenReturn(rpElections);
@@ -116,6 +123,7 @@ public class SummaryServiceTest {
         when(matchDAO.findMatchesForPurposeIds(referenceIds)).thenReturn(matchList);
         when(userDAO.findUsers(List.of(voteUser.getUserId()))).thenReturn(List.of(voteUser));
         when(userDAO.findUsers(List.of(darUser.getUserId()))).thenReturn(List.of(darUser));
+        when(darCollectionDAO.findDARCollectionByCollectionId(anyInt())).thenReturn(collection);
 
         initService();
         List<DataAccessRequestSummaryDetail> details = summaryService.listDataAccessRequestSummaryDetails();

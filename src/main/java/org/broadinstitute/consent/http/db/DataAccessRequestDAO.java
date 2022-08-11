@@ -58,6 +58,18 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) ")
   List<DataAccessRequest> findAllDataAccessRequestsByDatasetId(@Bind("datasetId") String datasetId);
 
+
+  @SqlQuery(
+          " SELECT dar.user_id FROM data_access_request dar "
+          + "  LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId  "
+          + "  WHERE dar.draft = false"
+          + "  AND (EXISTS (SELECT 1 FROM election e"
+            + "  INNER JOIN vote v on v.electionId = e.electionId and lower(v.type) = 'final'"
+            + "  WHERE v.vote = true AND lower(e.electionType) = 'dataaccess'"
+            + "  AND e.referenceId = dar.reference_id))"
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) ")
+  List<Integer> findAllUserIdsWithApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
+
   /**
    * Find all draft/partial DataAccessRequests, sorted descending order
    *

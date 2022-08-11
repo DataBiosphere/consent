@@ -6,8 +6,10 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
 
 import java.sql.Timestamp;
@@ -372,6 +374,37 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
         List returnedDARs = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
         assertTrue(returnedDARs.isEmpty());
+    }
+
+    @Test
+    public void testFindAllApprovedDataAccessRequestsByDatasetId() {
+        String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Dataset dataset = createDataset();
+
+        List<Integer> users = dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset.getDataSetId());
+        assertTrue(users.isEmpty());
+
+        User user = createUserWithInstitution();
+        DataAccessRequest testDar = createDAR(user, dataset, darCode);
+        users = dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset.getDataSetId());
+        assertTrue(users.isEmpty());
+
+        Election e = createDataAccessElection(testDar.getReferenceId(), dataset.getDataSetId());
+        Vote v = createFinalVote(dataset.getCreateUserId(), e.getElectionId());
+        Date now = new Date();
+        voteDAO.updateVote(true,
+                "",
+                now,
+                v.getVoteId(),
+                false,
+                e.getElectionId(),
+                now,
+                false);
+
+        users = dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset.getDataSetId());
+        assertEquals(1, users.size());
+        assertEquals(testDar.getUserId(), users.get(0));
+
     }
 
     // findAllDraftDataAccessRequests should exclude archived DARs

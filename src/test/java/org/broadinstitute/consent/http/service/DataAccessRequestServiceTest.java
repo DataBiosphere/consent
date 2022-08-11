@@ -44,7 +44,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -240,6 +242,35 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
+    public void testGetUsersApprovedForDataset() {
+        Dataset d = new Dataset();
+        d.setDataSetId(10);
+
+        User user1 = new User();
+        user1.setUserId(10);
+        User user2 = new User();
+        user2.setUserId(20);
+
+        DataAccessRequest dar1 = new DataAccessRequest();
+        dar1.setUserId(10);
+        DataAccessRequest dar2 = new DataAccessRequest();
+        dar2.setUserId(20);
+
+
+        when(this.dataAccessRequestDAO
+                .findAllUserIdsWithApprovedDARsByDatasetId(d.getDataSetId()))
+                .thenReturn(List.of(dar1.getUserId(), dar2.getUserId()));
+
+        when(this.userDAO.findUsers(List.of(dar1.getUserId(), dar2.getUserId())))
+                .thenReturn(List.of(user1, user2));
+
+        initService();
+
+        assertEquals(List.of(user1, user2),
+                service.getUsersApprovedForDataset(d));
+    }
+
+    @Test
     public void testInsertDraftDataAccessRequest() {
         User user = new User();
         user.setUserId(1);
@@ -404,6 +435,10 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.singletonList(election));
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
+        DarCollection collection = new DarCollection();
+        Map<String, DataAccessRequest> dars = new HashMap<>();
+        dars.put(election.getReferenceId(), dar);
+        collection.setDars(dars);
         User user = new User();
         user.setUserId(1);
         user.setDisplayName("displayName");
@@ -411,6 +446,7 @@ public class DataAccessRequestServiceTest {
         Institution institution = new Institution();
         institution.setName("Institution");
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
         when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
                 .thenReturn("CONS-1");
 
@@ -438,7 +474,12 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.emptyList());
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
+        DarCollection collection = new DarCollection();
+        Map<String, DataAccessRequest> dars = new HashMap<>();
+        dars.put(election.getReferenceId(), dar);
+        collection.setDars(dars);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
         when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
                 .thenReturn("CONS-1");
 
@@ -474,6 +515,8 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.singletonList(dar));
         when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
                 .thenReturn(dar);
+        when(darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId()))
+                .thenReturn(new DarCollection());
         when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
                 .thenReturn(new Date());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
@@ -507,6 +550,8 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.singletonList(dar));
         when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
                 .thenReturn(dar);
+        when(darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId()))
+                .thenReturn(new DarCollection());
         when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
                 .thenReturn(new Date());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
