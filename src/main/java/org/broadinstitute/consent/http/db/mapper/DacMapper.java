@@ -25,7 +25,7 @@ public class DacMapper implements RowMapper<Dac>, RowMapperHelper {
     dac.setDescription(resultSet.getString("description"));
     dac.setCreateDate(resultSet.getDate("create_date"));
     dac.setUpdateDate(resultSet.getDate("update_date"));
-    if (hasColumn(resultSet, "electionId")) {
+    if (hasColumn(resultSet, "electionid")) {
       dac.addElectionId(resultSet.getInt("electionid"));
     }
     if (hasColumn(resultSet, "datasetid")) {

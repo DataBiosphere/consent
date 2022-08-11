@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import java.util.Objects;
+
+import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -173,10 +175,10 @@ abstract public class Resource {
      * If the user has one of the provided roles, then access is allowed.
      * If not, then the authenticated user must have the same identity as the
      * `userId` parameter they are requesting information for.
-     *
+     * <p>
      * Typically, we use this to ensure that a non-privileged user is the creator
      * of an entity. In those cases, pass in an empty list of privileged roles.
-     *
+     * <p>
      * Privileged users such as admins, chairpersons, and members, may be allowed
      * access to some resources even if they are not the creator/owner.
      *
@@ -199,7 +201,7 @@ abstract public class Resource {
      * Validate that the user has the actual role name provided. This is useful
      * for determining when a user hits an endpoint that is permitted to multiple
      * different roles and is requesting a role-specific view of a data entity.
-     *
+     * <p>
      * In these cases, we need to make sure that the role name provided is a real
      * one and that the user actually has that role to prevent escalated privilege
      * violations.
@@ -212,6 +214,17 @@ abstract public class Resource {
         if (Objects.isNull(thisRole) || !user.hasUserRole(thisRole)) {
             throw new BadRequestException("Invalid role selection: " + roleName);
         }
+    }
+
+    /**
+     * Unmarshal/serialize an object using `Gson`. In general, we should prefer Gson
+     * over Jackson for ease of use and the need for far less boilerplate code.
+     *
+     * @param o The object to unmarshal
+     * @return String version of the object
+     */
+    protected String unmarshal(Object o) {
+        return new Gson().toJson(o);
     }
 
 }

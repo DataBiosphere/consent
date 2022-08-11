@@ -1,10 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -13,36 +8,27 @@ import java.util.Objects;
 /**
  * Entity representing a Data Access Committee
  */
-@JsonInclude(Include.NON_NULL)
 public class Dac {
 
-    @JsonProperty
     private Integer dacId;
 
-    @JsonProperty
     private String name;
 
-    @JsonProperty
     private String description;
 
-    @JsonProperty
     private Date createDate;
 
-    @JsonProperty
     private Date updateDate;
 
-    @JsonProperty
     private List<User> chairpersons;
 
-    @JsonProperty
     private List<User> members;
 
-    @JsonProperty
-    private List<DatasetDTO> datasets;
+    private List<Dataset> datasets;
 
-    private List<Integer> electionIds = new ArrayList<>();
+    private final List<Integer> electionIds = new ArrayList<>();
 
-    private List<Integer> datasetIds = new ArrayList<>();
+    private final List<Integer> datasetIds = new ArrayList<>();
 
     public Dac() {
     }
@@ -119,10 +105,13 @@ public class Dac {
         this.datasetIds.add(datasetId);
     }
 
-    public void addDatasetDTO(DatasetDTO dto) {
-        if ( Objects.isNull(datasets)) {
+    public void addDataset(Dataset dataset) {
+        if (Objects.isNull(datasets)) {
             datasets = new ArrayList<>();
         }
-        datasets.add(dto);
+        datasets.add(dataset);
+        if (!datasetIds.contains(dataset.getDataSetId())) {
+            addDatasetId(dataset.getDataSetId());
+        }
     }
 }
