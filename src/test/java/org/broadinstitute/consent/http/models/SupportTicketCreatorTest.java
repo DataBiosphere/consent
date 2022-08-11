@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
-import org.broadinstitute.consent.http.models.support.SupportTicketFactory;
+import org.broadinstitute.consent.http.models.support.SupportTicketCreator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -19,9 +19,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-public class SupportTicketFactoryTest {
+public class SupportTicketCreatorTest {
 
-    private SupportTicketFactory supportTicketFactory;
+    private SupportTicketCreator supportTicketCreator;
 
     @Mock
     private InstitutionDAO institutionDAO;
@@ -32,7 +32,7 @@ public class SupportTicketFactoryTest {
     @Before
     public void setUp() {
         openMocks(this);
-        this.supportTicketFactory = new SupportTicketFactory(institutionDAO, userDAO);
+        this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO);
     }
 
     @Test
@@ -48,7 +48,7 @@ public class SupportTicketFactoryTest {
         UserUpdateFields updateFields = new UserUpdateFields();
         updateFields.setSuggestedInstitution(suggestedInstitution);
 
-        SupportTicket ticket = supportTicketFactory.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName, supportRequest.getRequester().getName());
         assertEquals(email, supportRequest.getRequester().getEmail());
@@ -84,7 +84,7 @@ public class SupportTicketFactoryTest {
         UserUpdateFields updateFields = new UserUpdateFields();
         updateFields.setSuggestedSigningOfficial(suggestedSigningOfficial);
 
-        SupportTicket ticket = supportTicketFactory.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: New Signing Official Request", supportRequest.getSubject());
 
@@ -113,7 +113,7 @@ public class SupportTicketFactoryTest {
 
         when(institutionDAO.findInstitutionById(1)).thenReturn(institution);
 
-        SupportTicket ticket = supportTicketFactory.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: Institution Selection", supportRequest.getSubject());
 
@@ -141,7 +141,7 @@ public class SupportTicketFactoryTest {
 
         when(institutionDAO.findInstitutionById(institutionId)).thenReturn(null);
 
-        SupportTicket ticket = supportTicketFactory.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: Institution Selection", supportRequest.getSubject());
 
@@ -171,7 +171,7 @@ public class SupportTicketFactoryTest {
 
         when(userDAO.findUserById(1)).thenReturn(signingOfficial);
 
-        SupportTicket ticket = supportTicketFactory.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: Signing Official Selection", supportRequest.getSubject());
 
@@ -201,7 +201,7 @@ public class SupportTicketFactoryTest {
 
         when(userDAO.findUserById(signingOfficialId)).thenReturn(null);
 
-        SupportTicket ticket = supportTicketFactory.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: Signing Official Selection", supportRequest.getSubject());
 
@@ -229,7 +229,7 @@ public class SupportTicketFactoryTest {
         String suggestedSigningOfficial = RandomStringUtils.randomAlphabetic(10);
         updateFields.setSuggestedSigningOfficial(suggestedSigningOfficial);
 
-        SupportTicket ticket = supportTicketFactory.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: New Institution Request, New Signing Official Request", supportRequest.getSubject());
 

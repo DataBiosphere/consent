@@ -14,7 +14,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
-import org.broadinstitute.consent.http.models.support.SupportTicketFactory;
+import org.broadinstitute.consent.http.models.support.SupportTicketCreator;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 import javax.ws.rs.ServerErrorException;
@@ -27,7 +27,7 @@ import java.util.Objects;
 
 public class SupportRequestService {
 
-    private final SupportTicketFactory supportTicketFactory;
+    private final SupportTicketCreator supportTicketCreator;
     private final HttpClientUtil clientUtil;
     private final ServicesConfiguration configuration;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -35,7 +35,7 @@ public class SupportRequestService {
 
     @Inject
     public SupportRequestService(ServicesConfiguration configuration, InstitutionDAO institutionDAO, UserDAO userDAO) {
-        this.supportTicketFactory = new SupportTicketFactory(institutionDAO, userDAO);
+        this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO);
         this.clientUtil = new HttpClientUtil();
         this.configuration = configuration;
     }
@@ -85,7 +85,7 @@ public class SupportRequestService {
             //only send ticket if an institution or signing official is provided; ignore otherwise
             if (updateFieldProvided) {
                 try {
-                    SupportTicket ticket = supportTicketFactory.createInstitutionSOSupportTicket(userUpdateFields, user, configuration.postSupportRequestUrl());
+                    SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(userUpdateFields, user, configuration.postSupportRequestUrl());
                     postTicketToSupport(ticket);
                 } catch (Exception e) {
                     logger.error("Exception sending suggested user fields support request: " + e.getMessage());

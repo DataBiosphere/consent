@@ -14,12 +14,12 @@ import java.util.Objects;
 /**
  * Creates types of SupportTickets with the proper structure to send requests via Zendesk
  */
-public class SupportTicketFactory {
+public class SupportTicketCreator {
 
     private final InstitutionDAO institutionDAO;
     private final UserDAO userDAO;
 
-    public SupportTicketFactory(InstitutionDAO institutionDAO, UserDAO userDAO) {
+    public SupportTicketCreator(InstitutionDAO institutionDAO, UserDAO userDAO) {
         this.institutionDAO = institutionDAO;
         this.userDAO = userDAO;
     }
