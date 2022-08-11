@@ -11,70 +11,74 @@ import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class DatasetPropertiesMapper implements RowMapper<DatasetDTO>, RowMapperHelper {
+public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, RowMapperHelper {
 
-  private final Map<Integer, DatasetDTO> dataSets = new LinkedHashMap<>();
+  private final Map<Integer, DatasetDTO> datasetDTOs = new LinkedHashMap<>();
   private static final String PROPERTY_KEY = "key";
   private static final String PROPERTY_PROPERTYVALUE = "propertyValue";
 
   public DatasetDTO map(ResultSet r, StatementContext ctx) throws SQLException {
 
-    DatasetDTO dataSetDTO;
+    DatasetDTO datasetDTO;
     Integer dataSetId = r.getInt("dataSetId");
     String consentId = r.getString("consentId");
     Integer alias = r.getInt("alias");
-    if (!dataSets.containsKey(dataSetId)) {
-      dataSetDTO = new DatasetDTO(new ArrayList<>());
+    if (!datasetDTOs.containsKey(dataSetId)) {
+      datasetDTO = new DatasetDTO(new ArrayList<>());
       if (hasColumn(r, "dac_id")) {
         int dacId = r.getInt("dac_id");
         if (dacId > 0) {
-          dataSetDTO.setDacId(dacId);
+          datasetDTO.setDacId(dacId);
         }
       }
-      dataSetDTO.setConsentId(consentId);
-      dataSetDTO.setAlias(alias);
-      dataSetDTO.setDataSetId(dataSetId);
-      dataSetDTO.setActive(r.getBoolean("active"));
-      dataSetDTO.setTranslatedUseRestriction(r.getString("translatedUseRestriction"));
+      datasetDTO.setConsentId(consentId);
+      datasetDTO.setAlias(alias);
+      datasetDTO.setDataSetId(dataSetId);
+      datasetDTO.setActive(r.getBoolean("active"));
+      datasetDTO.setTranslatedUseRestriction(r.getString("translatedUseRestriction"));
+      // Consents store DataUse in `datause` while Datasets store it in `data_use`. Capture both cases for safety.
       if (hasColumn(r, "datause")) {
-        dataSetDTO.setDataUse(DataUse.parseDataUse(r.getString("datause")).orElse(null));
+        datasetDTO.setDataUse(DataUse.parseDataUse(r.getString("datause")).orElse(null));
+      }
+      if (hasColumn(r, "data_use")) {
+        datasetDTO.setDataUse(DataUse.parseDataUse(r.getString("data_use")).orElse(null));
       }
       if (hasColumn(r, "createdate")) {
-          dataSetDTO.setCreateDate(r.getDate("createdate"));
+          datasetDTO.setCreateDate(r.getDate("createdate"));
       }
       if (hasColumn(r, "create_user_id")) {
           int userId = r.getInt("create_user_id");
           if (userId > 0) {
-              dataSetDTO.setCreateUserId(userId);
+              datasetDTO.setCreateUserId(userId);
           }
       }
       if (hasColumn(r, "update_date")) {
-          dataSetDTO.setUpdateDate(r.getTimestamp("update_date"));
+          datasetDTO.setUpdateDate(r.getTimestamp("update_date"));
       }
       if (hasColumn(r, "update_user_id")) {
           int userId = r.getInt("update_user_id");
           if (userId > 0) {
-              dataSetDTO.setUpdateUserId(userId);
+              datasetDTO.setUpdateUserId(userId);
           }
       }
       DatasetPropertyDTO property = new DatasetPropertyDTO("Dataset Name", r.getString("name"));
-      dataSetDTO.addProperty(property);
+      datasetDTO.addProperty(property);
       property =
           new DatasetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
       if (property.getPropertyName() != null) {
-        dataSetDTO.addProperty(property);
+        datasetDTO.addProperty(property);
       }
-      dataSetDTO.setNeedsApproval(r.getBoolean("needs_approval"));
-      dataSetDTO.setObjectId(r.getString("objectId"));
-      dataSets.put(dataSetId, dataSetDTO);
+      datasetDTO.setNeedsApproval(r.getBoolean("needs_approval"));
+      datasetDTO.setObjectId(r.getString("objectId"));
+      datasetDTOs.put(dataSetId, datasetDTO);
     } else {
-      dataSetDTO = dataSets.get(dataSetId);
+      datasetDTO = datasetDTOs.get(dataSetId);
       DatasetPropertyDTO property =
           new DatasetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
       if (property.getPropertyName() != null) {
-        dataSetDTO.addProperty(property);
+        datasetDTO.addProperty(property);
       }
     }
-    return dataSetDTO;
+    return datasetDTO;
   }
 }
