@@ -1191,7 +1191,7 @@ paths:
       parameters:
         - name: roleName
           in: query
-          description: An optional roleName that the user is making the request as. Currently supports the SO role.
+          description: An optional roleName that the user is making the request as. Currently supports the Signing Official role.
           required: false
           schema:
             type: string
