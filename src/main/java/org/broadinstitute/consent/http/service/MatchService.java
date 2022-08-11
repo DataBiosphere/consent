@@ -215,7 +215,8 @@ public class MatchService {
         Response res = matchServiceTargetV2.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
         if (res.getStatus() == Response.Status.OK.getStatusCode()) {
             GenericType<DataUseResponseMatchingObject> durmo = new GenericType<>(){};
-            DataUseResponseMatchingObject entity = res.readEntity(durmo);
+            String stringEntity = res.readEntity(String.class);
+            DataUseResponseMatchingObject entity = new Gson().fromJson(stringEntity, DataUseResponseMatchingObject.class);
             match = new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V2, entity.getFailureReasons());
         } else {
             match = new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of());
