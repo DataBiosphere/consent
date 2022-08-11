@@ -6,11 +6,11 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportRequestComment;
-import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.junit.After;
 import org.junit.Before;
@@ -75,7 +75,13 @@ public class SupportRequestServiceTest {
     public void testPostTicketToSupport() throws Exception {
         SupportTicket ticket = generateTicket();
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        CustomRequestField customField = supportRequest.getCustomFields().get(0);
+
+        //simplifying comment body and custom fields for testing request body
+        supportRequest.setComment(new SupportRequestComment(RandomStringUtils.randomAlphabetic(10)));
+        CustomRequestField customField = new CustomRequestField(RandomUtils.nextLong(),
+                RandomStringUtils.randomAlphabetic(10));
+        supportRequest.setCustomFields(List.of(customField));
+
         String expectedBody = String.format("{\n" +
                         "  \"request\" : {\n" +
                         "    \"requester\" : {\n" +
@@ -163,18 +169,12 @@ public class SupportRequestServiceTest {
 
     //creates support ticket with random values for testing postTicketToSupport
     private SupportTicket generateTicket() {
-        SupportRequester requester = new SupportRequester(
-                RandomStringUtils.randomAlphabetic(10),
-                RandomStringUtils.randomAlphabetic(10)
-        );
+        String requesterName = RandomStringUtils.randomAlphabetic(10);
+        String requesterEmail = RandomStringUtils.randomAlphabetic(10);
         String subject = RandomStringUtils.randomAlphabetic(10);
-        List<CustomRequestField> customFields = new ArrayList<>();
-        customFields.add(new CustomRequestField(
-                RandomUtils.nextLong(),
-                RandomStringUtils.randomAlphabetic(10)
-        ));
-        SupportRequestComment comment = new SupportRequestComment(RandomStringUtils.randomAlphabetic(10));
+        String description = RandomStringUtils.randomAlphabetic(10);
+        String url = RandomStringUtils.randomAlphabetic(10);
 
-        return new SupportTicket(requester, subject, customFields, comment);
+        return new SupportTicket(requesterName, SupportRequestType.TASK, requesterEmail, subject, description, url);
     }
 }

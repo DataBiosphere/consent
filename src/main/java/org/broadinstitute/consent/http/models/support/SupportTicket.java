@@ -13,10 +13,6 @@ public class SupportTicket {
 
     private SupportRequest request;
 
-    public SupportTicket(SupportRequester requester, String subject, List<CustomRequestField> customFields, SupportRequestComment comment) {
-        this.request = new SupportRequest(requester, subject, customFields, comment);
-    }
-
     /**
      * Constructs a ticket with the proper structure to request support via Zendesk
      *
@@ -64,14 +60,6 @@ public class SupportTicket {
         private List<CustomRequestField> customFields;
         private SupportRequestComment comment;
         private final long ticketFormId = 360000669472L;
-
-
-        public SupportRequest(SupportRequester requester, String subject, List<CustomRequestField> customFields, SupportRequestComment comment) {
-            this.requester = requester;
-            this.subject = subject;
-            this.customFields = customFields;
-            this.comment = comment;
-        }
 
         public SupportRequest(String name, SupportRequestType type, String email, String subject, String description, String url) {
             this.requester = new SupportRequester(name, email);
