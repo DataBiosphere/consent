@@ -243,6 +243,21 @@ public class Dataset {
         return PREFIX + StringUtils.leftPad(alias.toString(), 6, "0");
     }
 
+    public static Integer parseIdentifierToAlias(String identifier) throws IllegalArgumentException {
+        try {
+            String givenPrefix = identifier.substring(0, PREFIX.length());
+            if (!givenPrefix.equals(PREFIX)) {
+                throw new IllegalArgumentException("Invalid prefix.");
+            }
+
+            String aliasAsString = identifier.substring(PREFIX.length()); // cut off DUOS-
+            return Integer.parseInt(aliasAsString); // parse remaining as integer
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    "Could not parse identifier ("+identifier+"). Proper format: "+PREFIX+"XXXXXX");
+        }
+    }
+
     public Integer getDacId() {
         return dacId;
     }

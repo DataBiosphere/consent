@@ -52,7 +52,7 @@ public class DataAccessReportsParserTest {
         DataAccessRequest dar = createDAR(currentDate);
         FileWriter darWriter = new FileWriter(file);
         parser.setApprovedDARHeader(darWriter);
-        parser.addApprovedDARLine(darWriter, election, dar, REQUESTER, ORGANIZATION, CONSENT_NAME, sDUL);
+        parser.addApprovedDARLine(darWriter, election, dar, DAR_CODE, REQUESTER, ORGANIZATION, CONSENT_NAME, sDUL);
         darWriter.flush();
         Stream<String> stream = Files.lines(Paths.get(file.getPath()));
         Iterator<String> iterator = stream.iterator();
@@ -99,7 +99,7 @@ public class DataAccessReportsParserTest {
         DataAccessRequest dar = createDAR(currentDate);
         FileWriter darWriter = new FileWriter(file);
         parser.setReviewedDARHeader(darWriter);
-        parser.addReviewedDARLine(darWriter, election, dar, CONSENT_NAME, sDUL);
+        parser.addReviewedDARLine(darWriter, election, dar, DAR_CODE, CONSENT_NAME, sDUL);
         darWriter.flush();
         Stream<String> stream = Files.lines(Paths.get(file.getPath()));
         Iterator<String> iterator = stream.iterator();

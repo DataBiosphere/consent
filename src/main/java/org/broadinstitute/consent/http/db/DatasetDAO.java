@@ -36,7 +36,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     String CHAIRPERSON = Resource.CHAIRPERSON;
 
-    @SqlUpdate("INSERT INTO dataset (name, createdate, create_user_id, update_date, update_user_id, objectId, active, alias) (SELECT :name, :createDate, :createUserId, :createDate, :createUserId, :objectId, :active, MAX(alias)+1 FROM dataset)")
+    @SqlUpdate("INSERT INTO dataset (name, createdate, create_user_id, update_date, update_user_id, objectId, active, alias) (SELECT :name, :createDate, :createUserId, :createDate, :createUserId, :objectId, :active, COALESCE(MAX(alias),0)+1 FROM dataset)")
     @GetGeneratedKeys
     Integer insertDataset(@Bind("name") String name, @Bind("createDate") Timestamp createDate, @Bind("createUserId") Integer createUserId, @Bind("objectId") String objectId, @Bind("active") Boolean active);
 
@@ -50,6 +50,17 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         " LEFT JOIN consents c ON c.consentid = ca.consentid " +
         " WHERE d.datasetid = :datasetId")
     Dataset findDatasetById(@Bind("datasetId") Integer datasetId);
+
+    @UseRowReducer(DatasetReducer.class)
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, c.datause, dar_ds_ids.id as in_use " +
+            " FROM dataset d " +
+            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
+            " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
+            " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
+            " LEFT JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
+            " LEFT JOIN consents c ON c.consentid = ca.consentid " +
+            " WHERE d.alias = :alias")
+    Dataset findDatasetByAlias(@Bind("alias") Integer alias);
 
     @SqlQuery("SELECT datasetid FROM dataset WHERE objectid = :objectId")
     Integer findDatasetIdByObjectId(@Bind("objectId") String objectId);

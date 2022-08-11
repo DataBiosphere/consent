@@ -21,10 +21,6 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
     List<UserProperty> findResearcherPropertiesByUser(@Bind("userId") Integer userId,
                                                       @BindList("properties") List<String> properties);
 
-    @Deprecated
-    @SqlQuery("SELECT propertyvalue FROM USER_PROPERTY WHERE userid = :userId AND propertykey = 'completed'")
-    String isProfileCompleted(@Bind("userId") Integer userId);
-
     @SqlBatch("INSERT INTO user_property (userid, propertykey, propertyvalue) VALUES (:userId, :propertyKey, :propertyValue)")
     void insertAll(@BindBean Collection<UserProperty> researcherProperties);
 

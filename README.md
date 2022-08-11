@@ -6,7 +6,7 @@ Consent Web Services
 
 # Consent Web Services API
 
-The primary API layer for the Data Use Oversight System [DUOS](https://github.com/DataBiosphere/consent-ui)
+The primary API layer for the Data Use Oversight System [DUOS](https://github.com/databiosphere/duos-ui)
 
 ## Data Use Oversight System
 
