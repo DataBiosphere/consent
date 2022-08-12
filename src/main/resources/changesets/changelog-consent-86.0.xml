@@ -9,7 +9,8 @@
         </addColumn>
 
         <sql>
-            UPDATE datasetproperty SET property_type='number' WHERE propertyKey=5
+            UPDATE datasetproperty SET property_type=(CASE WHEN propertyKey = 5 THEN 'number' ELSE 'string' END)
         </sql>
+
     </changeSet>
 </databaseChangeLog>

@@ -167,7 +167,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     Set<DatasetDTO> findAllDatasets();
 
     @Deprecated
-
     @UseRowMapper(DatasetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
