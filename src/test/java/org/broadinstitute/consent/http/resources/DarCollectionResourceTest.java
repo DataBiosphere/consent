@@ -24,6 +24,7 @@ import org.mockito.Mock;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 
 
@@ -735,5 +736,231 @@ public class DarCollectionResourceTest {
 
     Response response = resource.getCollectionSummariesForUserByRole(authUser, "invalid");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+
+  @Test
+  public void getCollectionSummaryForRoleById_Member() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
+    user.addRole(userRole);
+
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    mockSummary.setDatasetIds(Set.of(1));
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(1, 2));
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenReturn(mockSummary);
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.MEMBER.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_MemberNoDatasetsInCollection() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
+    user.addRole(userRole);
+
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    mockSummary.setDatasetIds(Set.of(1));
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(2));
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenReturn(mockSummary);
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.MEMBER.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_Chair() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    user.addRole(userRole);
+
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    mockSummary.setDatasetIds(Set.of(1));
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(1, 2));
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenReturn(mockSummary);
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.CHAIRPERSON.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_ChairNoDatasetsInCollection() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    user.addRole(userRole);
+
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    mockSummary.setDatasetIds(Set.of(1));
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(2));
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenReturn(mockSummary);
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.CHAIRPERSON.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_SO() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    user.addRole(userRole);
+    Integer institutionId = RandomUtils.nextInt(1, 100);
+    user.setInstitutionId(institutionId);
+
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    mockSummary.setInstitutionId(institutionId);
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenReturn(mockSummary);
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_SODifferentInstitution() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    user.addRole(userRole);
+    user.setInstitutionId(1);
+
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    mockSummary.setInstitutionId(2);
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenReturn(mockSummary);
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_Researcher() {
+    User user = new User();
+    Integer userId = RandomUtils.nextInt(1, 100);
+    user.setUserId(userId);
+    UserRole userRole = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+    user.addRole(userRole);
+
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    mockSummary.setResearcherId(userId);
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenReturn(mockSummary);
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.RESEARCHER.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_ResearcherNotCreateUser() {
+    User user = new User();
+    user.setUserId(1);
+    UserRole userRole = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+    user.addRole(userRole);
+
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    mockSummary.setResearcherId(2);
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenReturn(mockSummary);
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.RESEARCHER.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_Admin() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    user.addRole(userRole);
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenReturn(mockSummary);
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.ADMIN.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_NoRoleFound() {
+    User user = new User();
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenReturn(mockSummary);
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_InvalidRoleString() {
+    User user = new User();
+    DarCollectionSummary mockSummary = new DarCollectionSummary();
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenReturn(mockSummary);
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, "invalid", collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void getCollectionSummaryForRoleById_CollectionNotFound() {
+    User user = new User();
+    UserRole userRole = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+    user.addRole(userRole);
+    Integer collectionId = RandomUtils.nextInt(1, 100);
+
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(), anyInt()))
+            .thenThrow(new NotFoundException());
+    initResource();
+
+    Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.RESEARCHER.getRoleName(), collectionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 }
