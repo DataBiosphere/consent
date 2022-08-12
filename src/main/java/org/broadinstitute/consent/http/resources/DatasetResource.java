@@ -370,8 +370,8 @@ public class DatasetResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
         try{
-            Dataset dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, needsApproval);
-            return Response.ok().entity(dataSet).build();
+            Dataset dataset = datasetService.updateNeedsReviewDatasets(dataSetId, needsApproval);
+            return Response.ok().entity(unmarshal(dataset)).build();
         }catch (Exception e){
             return createExceptionResponse(e);
         }

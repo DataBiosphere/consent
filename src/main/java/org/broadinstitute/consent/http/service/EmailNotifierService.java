@@ -7,7 +7,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -36,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,7 +43,6 @@ public class EmailNotifierService {
 
     private final DarCollectionDAO collectionDAO;
     private final ConsentDAO consentDAO;
-    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final UserDAO userDAO;
     private final ElectionDAO electionDAO;
     private final MailMessageDAO emailDAO;
@@ -87,12 +86,11 @@ public class EmailNotifierService {
 
     @Inject
     public EmailNotifierService(DarCollectionDAO collectionDAO, ConsentDAO consentDAO,
-                                DataAccessRequestDAO dataAccessRequestDAO, VoteDAO voteDAO, ElectionDAO electionDAO,
+                                VoteDAO voteDAO, ElectionDAO electionDAO,
                                 UserDAO userDAO, MailMessageDAO emailDAO, MailService mailService,
                                 FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive) {
         this.collectionDAO = collectionDAO;
         this.consentDAO = consentDAO;
-        this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.userDAO = userDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
@@ -194,11 +192,16 @@ public class EmailNotifierService {
     public void sendClosedDataSetElectionsMessage(List<Election> elections) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             Map<String, List<Election>> reviewedDatasets = new HashMap<>();
+            List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
+            List<DarCollection> darCollections = referenceIds.isEmpty() ? List.of() :
+                    collectionDAO.findDARCollectionsByReferenceIds(referenceIds);
             for(Election election: elections) {
                 List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
-                DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(election.getReferenceId());
-                String dar_code = Objects.nonNull(dar) && Objects.nonNull(dar.getData()) ? dar.getData().getDarCode() : "";
-                reviewedDatasets.put(dar_code, dsElections);
+                Optional<DarCollection> collection = darCollections.stream()
+                        .filter(c -> c.getDars().containsKey(election.getReferenceId()))
+                        .findFirst();
+                String darCode = collection.map(DarCollection::getDarCode).orElse("");
+                reviewedDatasets.put(darCode, dsElections);
             }
             List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
             if(CollectionUtils.isNotEmpty(users)) {
@@ -354,8 +357,8 @@ public class EmailNotifierService {
             Consent consent = consentDAO.findConsentById(referenceId);
             return Objects.nonNull(consent) ? consent.getName() : " ";
         } else {
-            DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
-            return (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) ? dar.getData().getDarCode() : " ";
+            DarCollection collection = collectionDAO.findDARCollectionByReferenceId(referenceId);
+            return Objects.nonNull(collection) ? collection.getDarCode() : " ";
         }
     }
 

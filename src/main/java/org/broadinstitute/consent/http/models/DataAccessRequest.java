@@ -270,6 +270,9 @@ public class DataAccessRequest {
     if (Objects.nonNull(dar.getSubmissionDate())) copy.put("submissionDate", dar.getSubmissionDate().getTime());
     if (Objects.nonNull(dar.getUpdateDate())) copy.put("updateDate", dar.getUpdateDate().getTime());
     if (Objects.nonNull(dar.getUserId())) copy.put("userId", dar.getUserId());
+    if (Objects.nonNull(dar.getCollectionId())) copy.put("collectionId", dar.getCollectionId());
+    if (Objects.nonNull(dar.getDatasetIds())) copy.put("datasetIds", dar.getDatasetIds());
+    if (Objects.nonNull(dar.getParentId())) copy.put("parentId", dar.getParentId());
     return copy;
   }
 }

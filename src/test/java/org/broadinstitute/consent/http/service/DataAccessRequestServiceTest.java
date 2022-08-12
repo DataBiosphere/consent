@@ -44,7 +44,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -433,6 +435,10 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.singletonList(election));
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
+        DarCollection collection = new DarCollection();
+        Map<String, DataAccessRequest> dars = new HashMap<>();
+        dars.put(election.getReferenceId(), dar);
+        collection.setDars(dars);
         User user = new User();
         user.setUserId(1);
         user.setDisplayName("displayName");
@@ -440,6 +446,7 @@ public class DataAccessRequestServiceTest {
         Institution institution = new Institution();
         institution.setName("Institution");
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
         when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
                 .thenReturn("CONS-1");
 
@@ -467,7 +474,12 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.emptyList());
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setUserId(1);
+        DarCollection collection = new DarCollection();
+        Map<String, DataAccessRequest> dars = new HashMap<>();
+        dars.put(election.getReferenceId(), dar);
+        collection.setDars(dars);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
         when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
                 .thenReturn("CONS-1");
 
@@ -503,6 +515,8 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.singletonList(dar));
         when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
                 .thenReturn(dar);
+        when(darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId()))
+                .thenReturn(new DarCollection());
         when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
                 .thenReturn(new Date());
         when(userDAO.findUserByEmail(any())).thenReturn(user);
@@ -536,6 +550,8 @@ public class DataAccessRequestServiceTest {
                 .thenReturn(Collections.singletonList(dar));
         when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
                 .thenReturn(dar);
+        when(darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId()))
+                .thenReturn(new DarCollection());
         when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
                 .thenReturn(new Date());
         when(userDAO.findUserByEmail(any())).thenReturn(user);

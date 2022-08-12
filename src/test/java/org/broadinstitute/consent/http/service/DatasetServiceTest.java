@@ -86,7 +86,7 @@ public class DatasetServiceTest {
     public void testCreateDataset() throws Exception {
         DatasetDTO test = getDatasetDTO();
         Dataset mockDataset = getDatasets().get(0);
-        when(datasetDAO.insertDataset(anyString(), any(), anyInt(), anyString(), anyBoolean())).thenReturn(mockDataset.getDataSetId());
+        when(datasetDAO.insertDataset(anyString(), any(), anyInt(), anyString(), anyBoolean(), any())).thenReturn(mockDataset.getDataSetId());
         when(datasetDAO.findDatasetById(any())).thenReturn(mockDataset);
         when(datasetDAO.findDatasetPropertiesByDatasetId(any())).thenReturn(getDatasetProperties());
         when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(Collections.singleton(test));
@@ -185,7 +185,7 @@ public class DatasetServiceTest {
         doNothing().when(datasetDAO).updateDatasetNeedsApproval(any(), any());
         initService();
 
-        Dataset dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, true);
+        Dataset dataSet = datasetService.updateNeedsReviewDatasets(dataSetId, true);
         assertNotNull(dataSet);
     }
 

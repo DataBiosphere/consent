@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.enumeration.VoteStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
@@ -35,10 +36,11 @@ public class PendingCaseService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ConsentDAO consentDAO;
-    private final DataAccessRequestService dataAccessRequestService;
     private final ElectionDAO electionDAO;
-
     private final VoteDAO voteDAO;
+
+    private final DataAccessRequestService dataAccessRequestService;
+    private final DarCollectionService darCollectionService;
     private final DacService dacService;
     private final UserService userService;
     private final VoteService voteService;
@@ -46,7 +48,7 @@ public class PendingCaseService {
     @Inject
     public PendingCaseService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
                               ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
-                              UserService userService, VoteService voteService) {
+                              UserService userService, VoteService voteService, DarCollectionService darCollectionService) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestService = dataAccessRequestService;
         this.electionDAO = electionDAO;
@@ -54,6 +56,7 @@ public class PendingCaseService {
         this.dacService = dacService;
         this.userService = userService;
         this.voteService = voteService;
+        this.darCollectionService = darCollectionService;
     }
 
     public List<PendingCase> describeConsentPendingCases(AuthUser authUser) throws NotFoundException {
@@ -143,9 +146,10 @@ public class PendingCaseService {
         pendingCase.setVotesLogged(votes.size() - pendingVotes.size());
         pendingCase.setReferenceId(election.getReferenceId());
         if (election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())) {
-            DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(election.getReferenceId());
-            if (dataAccessRequest != null) {
-                pendingCase.setFrontEndId(dataAccessRequest.getData().getDarCode());
+            DarCollection collection = darCollectionService.getByReferenceId(election.getReferenceId());
+            if (collection != null) {
+                pendingCase.setFrontEndId(collection.getDarCode());
+                DataAccessRequest dataAccessRequest = collection.getDars().get(election.getReferenceId());
                 pendingCase.setProjectTitle(dataAccessRequest.getData().getProjectTitle());
             }
         } else {
