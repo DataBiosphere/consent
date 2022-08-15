@@ -36,6 +36,10 @@ public class ServicesConfiguration {
     return getOntologyURL() + "match";
   }
 
+  public String getMatchURL_v2() {
+    return getOntologyURL() + "match/v2";
+  }
+
   public String getValidateUseRestrictionURL() {
     return getOntologyURL() + "validate/userestriction";
   }

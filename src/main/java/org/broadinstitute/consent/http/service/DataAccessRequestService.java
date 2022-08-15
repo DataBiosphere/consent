@@ -168,6 +168,7 @@ public class DataAccessRequestService {
                 throw new NotAcceptableException(message);
             }
         }
+        matchDAO.deleteFailureReasonsByPurposeIds(List.of(referenceId));
         matchDAO.deleteMatchesByPurposeId(referenceId);
         dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(referenceId);
         dataAccessRequestDAO.deleteByReferenceId(referenceId);
