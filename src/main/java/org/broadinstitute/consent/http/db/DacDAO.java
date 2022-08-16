@@ -41,8 +41,8 @@ public interface DacDAO extends Transactional<DacDAO> {
     @RegisterBeanMapper(value = Dataset.class)
     @UseRowReducer(DacWithDatasetsReducer.class)
     @SqlQuery(
-        "SELECT dac.dac_id, dac.name, dac.description, d.datasetid, d.name AS dataset_name, DATE(d.createdate) AS dataset_create_date, "
-            + " d.objectid, d.active, d.needs_approval, d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, "
+        "SELECT dac.dac_id, dac.name, dac.description, d.dataset_id, d.name AS dataset_name, DATE(d.create_date) AS dataset_create_date, "
+            + " d.object_id, d.active, d.needs_approval, d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, "
             + " d.update_user_id, d.data_use AS dataset_data_use, ca.consentid, c.translateduserestriction "
             + " FROM dac "
             + " LEFT OUTER JOIN consents c ON c.dac_id = dac.dac_id "
