@@ -120,27 +120,40 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlUpdate("DELETE FROM consentassociations WHERE datasetid = :datasetId")
     void deleteConsentAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
 
-    @SqlUpdate("UPDATE dataset_property SET property_value = :propertyValue WHERE dataset_id = :datasetId AND property_key = :propertyKey")
+    @SqlUpdate(
+        "UPDATE dataset_property "
+            + "SET property_value = :propertyValue "
+            + "WHERE dataset_id = :datasetId "
+                + "AND property_key = :propertyKey")
     void updateDatasetProperty(@Bind("datasetId") Integer datasetId, @Bind("propertyKey") Integer propertyKey, @Bind("propertyValue") String propertyValue);
 
-    @SqlUpdate("DELETE from dataset_property WHERE dataset_id = :datasetId AND property_key = :propertyKey")
+    @SqlUpdate(
+        "DELETE from dataset_property "
+            + "WHERE dataset_id = :datasetId "
+                + "AND property_key = :propertyKey")
     void deleteDatasetPropertyByKey(@Bind("datasetId") Integer datasetId, @Bind("propertyKey") Integer propertyKey);
 
     @SqlUpdate("DELETE FROM dataset WHERE dataset_id = :datasetId")
     void deleteDatasetById(@Bind("datasetId") Integer datasetId);
 
-    @SqlUpdate("UPDATE dataset SET active = :active WHERE dataset_id = :datasetId")
+    @SqlUpdate(
+        "UPDATE dataset "
+            + "SET active = :active "
+            + "WHERE dataset_id = :datasetId")
     void updateDatasetActive(@Bind("datasetId") Integer datasetId, @Bind("active") Boolean active);
 
-    @SqlUpdate("UPDATE dataset SET needs_approval = :needsApproval WHERE dataset_id = :datasetId")
+    @SqlUpdate(
+        "UPDATE dataset "
+            + "SET needs_approval = :needsApproval "
+            + "WHERE dataset_id = :datasetId")
     void updateDatasetNeedsApproval(@Bind("datasetId") Integer datasetId, @Bind("needsApproval") Boolean needsApproval);
 
     @SqlUpdate(
             "UPDATE dataset " +
                 " SET name = :datasetName," +
-                " update_date = :updateDate, " +
-                " update_user_id = :updateUserId, " +
-                " needs_approval = :needsApproval " +
+                    " update_date = :updateDate, " +
+                    " update_user_id = :updateUserId, " +
+                    " needs_approval = :needsApproval " +
                 " WHERE dataset_id = :datasetId")
     void updateDataset(@Bind("datasetId") Integer datasetId, @Bind("datasetName") String datasetName, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId, @Bind("needsApproval") Boolean needsApproval);
 
