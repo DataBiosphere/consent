@@ -47,7 +47,7 @@ public interface DacDAO extends Transactional<DacDAO> {
             + " FROM dac "
             + " LEFT OUTER JOIN consents c ON c.dac_id = dac.dac_id "
             + " LEFT OUTER JOIN consentassociations ca ON ca.consentid = c.consentid "
-            + " LEFT OUTER JOIN dataset d ON ca.datasetid = d.datasetid")
+            + " LEFT OUTER JOIN dataset d ON ca.datasetid = d.dataset_id")
     List<Dac> findAll();
 
     /**

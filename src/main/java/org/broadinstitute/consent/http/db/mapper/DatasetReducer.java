@@ -17,7 +17,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
   public void accumulate(Map<Integer, Dataset> map, RowView rowView) {
     Dataset dataset =
         map.computeIfAbsent(
-            rowView.getColumn("datasetid", Integer.class), id -> rowView.getRow(Dataset.class));
+            rowView.getColumn("dataset_id", Integer.class), id -> rowView.getRow(Dataset.class));
     if (hasColumn(rowView, "dac_id", Integer.class)) {
       dataset.setDacId(rowView.getColumn("dac_id", Integer.class));
     }
@@ -37,9 +37,9 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       dataset.setDeletable(Objects.isNull(dsIdInUse));
     }
     if (hasColumn(rowView, "key", String.class)
-        && hasColumn(rowView, "propertyvalue", String.class)) {
+        && hasColumn(rowView, "property_value", String.class)) {
       String keyName = rowView.getColumn("key", String.class);
-      String propVal = rowView.getColumn("propertyvalue", String.class);
+      String propVal = rowView.getColumn("property_value", String.class);
       if (Objects.nonNull(keyName) && Objects.nonNull(propVal)) {
         DatasetProperty prop = new DatasetProperty();
         prop.setDataSetId(dataset.getDataSetId());

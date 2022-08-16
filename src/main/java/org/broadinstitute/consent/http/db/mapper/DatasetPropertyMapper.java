@@ -10,11 +10,11 @@ public class DatasetPropertyMapper implements RowMapper<DatasetProperty> {
 
     public DatasetProperty map(ResultSet r, StatementContext ctx) throws SQLException {
       return new DatasetProperty(
-          r.getInt("propertyid"),
-          r.getInt("datasetid"),
-          r.getInt("propertykey"),
-          r.getString("propertyvalue"),
-          r.getTimestamp("createdate")
+          r.getInt("property_id"),
+          r.getInt("dataset_id"),
+          r.getInt("property_key"),
+          r.getString("property_value"),
+          r.getTimestamp("create_date")
       );
     }
 }
