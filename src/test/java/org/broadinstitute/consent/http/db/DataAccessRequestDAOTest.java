@@ -367,13 +367,13 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     public void testFindAllByDatasetIdArchived() {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Dataset dataset = createDataset();
-        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId());
         assertTrue(dars.isEmpty());
 
         User user = createUserWithInstitution();
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-        List returnedDARs = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
+        List returnedDARs = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId());
         assertTrue(returnedDARs.isEmpty());
     }
 

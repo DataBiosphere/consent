@@ -40,7 +40,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
         + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
         + "  WHERE dar.draft != true "
-          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL ) ")
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
   List<DataAccessRequest> findAllDataAccessRequests();
 
 
@@ -53,10 +53,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       " SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
         + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar "
-        + "  LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId::int  "
+        + "  LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId  "
         + "  WHERE dar.draft = false"
-          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) ")
-  List<DataAccessRequest> findAllDataAccessRequestsByDatasetId(@Bind("datasetId") String datasetId);
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
+  List<DataAccessRequest> findAllDataAccessRequestsByDatasetId(@Bind("datasetId") Integer datasetId);
 
 
   @SqlQuery(
@@ -67,7 +67,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + "  INNER JOIN vote v on v.electionId = e.electionId and lower(v.type) = 'final'"
           + "  WHERE v.vote = true AND lower(e.electionType) = 'dataaccess'"
             + "  AND e.referenceId = dar.reference_id))"
-            + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) ")
+            + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
   List<Integer> findAllUserIdsWithApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
@@ -130,7 +130,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
         + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
         + "  WHERE dar.reference_id = :referenceId "
-          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) ")
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
   DataAccessRequest findByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
@@ -145,7 +145,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
         + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
         + "  WHERE dar.reference_id IN (<referenceIds>) "
-          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) ")
+          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
   List<DataAccessRequest> findByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
   /**
@@ -215,7 +215,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       "INSERT INTO data_access_request "
         + "(reference_id, user_id, create_date, sort_date, submission_date, update_date, data, draft) "
         + "VALUES (:referenceId, :userId, :createDate, :sortDate, "
-                + ":submissionDate, :updateDate, to_jsonb(:data), true) ")
+                + ":submissionDate, :updateDate, to_jsonb(:data), true)")
   void insertDraftDataAccessRequest(
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
@@ -243,7 +243,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
     "INSERT INTO data_access_request "
       + "(collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data) "
       + "VALUES (:collectionId, :referenceId, :userId, :createDate, :sortDate, " +
-                ":submissionDate, :updateDate, to_jsonb(:data)) ")
+                ":submissionDate, :updateDate, to_jsonb(:data))")
   void insertDataAccessRequest(
     @Bind("collectionId") Integer collectionId,
     @Bind("referenceId") String referenceId,
@@ -262,13 +262,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
           "UPDATE data_access_request "
             + "SET draft = :draft "
-            + "WHERE reference_id = :referenceId ")
+            + "WHERE reference_id = :referenceId")
   void updateDraftByReferenceId(@Bind("referenceId") String referenceId, @Bind("draft") Boolean draft);
 
   @SqlUpdate(
           "UPDATE data_access_request "
             + "SET draft = :draft "
-            + "WHERE collection_id = :collectionId ")
+            + "WHERE collection_id = :collectionId")
   void updateDraftByCollectionId(@Bind("collectionId") Integer collectionId, @Bind("draft") Boolean draft);
 
   @SqlUpdate(
@@ -282,7 +282,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           "SELECT (data #>> '{}')::jsonb AS data "
             + "FROM data_access_request "
             + "WHERE (LOWER(data->>'status') != 'archived' "
-              + "OR data->>'status' IS NULL) ")
+              + "OR data->>'status' IS NULL)")
   List<DataAccessRequestData> findAllDataAccessRequestDatas();
 
   /**
@@ -291,12 +291,12 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List<DataAccessRequest>
    */
   @UseRowReducer(DataAccessRequestReducer.class)
-  @SqlQuery("SELECT dd.dataset_id, dar.id, dar.reference_id,dar. collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, (dar.data #>> '{}')::jsonb AS data "
+  @SqlQuery("SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, (dar.data #>> '{}')::jsonb AS data "
       + " FROM data_access_request dar "
       + " INNER JOIN users u ON u.user_id = dar.user_id AND u.institution_id = :institutionId "
       + " LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
       + " WHERE dar.draft != true "
-        + " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ")
+        + " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)")
   List<DataAccessRequest> findAllDataAccessRequestsForInstitution(@Bind("institutionId") Integer institutionId);
 
   @SqlUpdate(
@@ -315,13 +315,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
           "INSERT INTO dar_dataset (reference_id, dataset_id) "
             + "VALUES (:referenceId, :datasetId) "
-            + "ON CONFLICT DO NOTHING ")
+            + "ON CONFLICT DO NOTHING")
   void insertDARDatasetRelation(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId);
 
   @SqlBatch(
           "INSERT INTO dar_dataset (reference_id, dataset_id) "
             + "VALUES (:referenceId, :datasetId) "
-            + "ON CONFLICT DO NOTHING ")
+            + "ON CONFLICT DO NOTHING")
   void insertAllDarDatasets(@BindBean List<DarDataset> darDatasets);
 
   /**
@@ -345,7 +345,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    *
    * @param referenceId String
    */
-  @SqlQuery("SELECT distinct dataset_id FROM dar_dataset WHERE reference_id = :referenceId ")
+  @SqlQuery("SELECT distinct dataset_id FROM dar_dataset WHERE reference_id = :referenceId")
   List<Integer> findDARDatasetRelations(@Bind("referenceId") String referenceId);
 
   /**
@@ -356,7 +356,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery("SELECT distinct dataset_id FROM dar_dataset WHERE reference_id IN (<referenceIds>)")
   List<Integer> findAllDARDatasetRelations(@BindList("referenceIds") List<String> referenceIds);
 
-  @SqlQuery("SELECT distinct dataset_id FROM dar_dataset ")
+  @SqlQuery("SELECT distinct dataset_id FROM dar_dataset")
   List<Integer> findAllDARDatasetRelationDatasetIds();
 
 }
