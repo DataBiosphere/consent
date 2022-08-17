@@ -5,13 +5,13 @@ properties:
     description: The id of the stored match result
   consent:
     type: string
-    description: The Consent ID
+    description: The Consent ID or Dataset Identifier
   purpose:
     type: string
     description: The Data Access Request ID
   match:
     type: boolean
-    description: The match condition between the Consent and Data Access Request
+    description: The match condition between the Consent/Dataset and Data Access Request
   failed:
     type: boolean
     description: Indicates a system failure or not. If true, the system was not able to
@@ -19,3 +19,6 @@ properties:
   createDate:
     type: string
     description: A string representation of the date that this match result was created.
+  algorithmVersion:
+    type: string
+    description: The version of the algorithm used to generate the match.

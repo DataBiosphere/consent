@@ -1,16 +1,38 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-    <changeSet id="87.0" author="connorlbark">
-        <!--Add mapping and dataset property type columns -->
-        <addColumn tableName="datasetproperty">
-            <column name="property_type" type="varchar(255)"/>
-            <column name="schema_property" type="varchar(255)"/>
+    <changeSet id="87.0" author="grushton">
+        <!-- Capture failure reasons for all V2 algorithm results -->
+        <createTable tableName="match_failure_reason">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="match_entity_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="failure_reason" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="match_entity_id" baseTableName="match_failure_reason" constraintName="fk_match_failure_entity_id"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="matchid" referencedTableName="match_entity"/>
+
+        <!-- Add a version to the match table to capture which algorithm version it applies to -->
+        <addColumn tableName="match_entity">
+            <column name="algorithm_version" type="varchar(255)" defaultValue="v1">
+                <constraints nullable="true"/>
+            </column>
         </addColumn>
-
-        <sql>
-            UPDATE datasetproperty SET property_type=(CASE WHEN propertyKey = 5 THEN 'number' ELSE 'string' END)
-        </sql>
-
+        <dropForeignKeyConstraint baseTableName="match_entity" constraintName="fkmatchconsent"/>
+        <rollback>
+            <dropTable tableName="match_failure_reason" cascadeConstraints="true"/>
+            <dropColumn tableName="match_entity" columnName="algorithm_version"/>
+            <!-- This is the original creation of the constraint modified for postgres -->
+            <addForeignKeyConstraint baseColumnNames="consent" baseTableName="match_entity"
+                                     constraintName="fkmatchconsent" deferrable="false" initiallyDeferred="false"
+                                     onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="consentid"
+                                     referencedTableName="consents" referencesUniqueColumn="false"/>
+        </rollback>
     </changeSet>
 </databaseChangeLog>

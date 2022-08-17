@@ -574,6 +574,7 @@ public class DarCollectionService {
     // no elections left & user has perms => safe to delete collection
 
     // delete DARs
+    matchDAO.deleteFailureReasonsByPurposeIds(referenceIds);
     matchDAO.deleteMatchesByPurposeIds(referenceIds);
     dataAccessRequestDAO.deleteDARDatasetRelationByReferenceIds(referenceIds);
     dataAccessRequestDAO.deleteByReferenceIds(referenceIds);

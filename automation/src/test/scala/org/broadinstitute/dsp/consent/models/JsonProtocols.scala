@@ -52,43 +52,6 @@ object JsonProtocols extends DefaultJsonProtocol {
         }
     }
 
-    implicit object DataAccessRequestManageFormat extends JsonFormat[DataAccessRequestManage] {
-        def write(darm: DataAccessRequestManage): JsObject = {
-            val map = collection.mutable.Map[String, JsValue]()
-            val manualList = List("errors")
-            darm.getClass.getDeclaredFields
-                .filterNot(f => manualList.contains(f.getName))
-                .foreach { f =>
-                    f.setAccessible(true)
-                    f.get(darm) match {
-                        case Some(x: Boolean) => map += f.getName -> x.toJson
-                        case Some(y: String) => map += f.getName -> y.toJson
-                        case Some(l: Long) => map += f.getName -> l.toJson
-                        case Some(i: Int) => map += f.getName -> i.toJson
-                        case Some(u: User) => map += f.getName -> u.toJson
-                        case Some(d: Dac) => map += f.getName -> d.toJson
-                        case _ => map += f.getName -> JsNull
-                    }
-                }
-
-            if (darm.errors.isDefined)
-                map += ("errors" -> darm.errors.toJson)
-
-            JsObject(map.toMap)
-        }
-
-        def read(value: JsValue): DataAccessRequestManage = {
-            val fields = value.asJsObject.fields
-            DataAccessRequestManage(
-                dar = optionalEntryReader("dar", fields, _.convertTo[Option[DataAccessRequest]], None),
-                election = optionalEntryReader("election", fields, _.convertTo[Option[ElectionModels.Election]], None),
-                votes = optionalEntryReader("votes", fields, _.convertTo[Option[Seq[Vote]]], None),
-                researcher = optionalEntryReader("researcher", fields, _.convertTo[Option[User]], None),
-                errors = optionalEntryReader("errors", fields, _.convertTo[Option[Seq[String]]], None)
-            )
-        }
-    }
-
     implicit object ResearcherInfoFormat extends JsonFormat[ResearcherInfo] {
         def write(ri: ResearcherInfo): JsObject = {
             val map = collection.mutable.Map[String, JsValue]()
