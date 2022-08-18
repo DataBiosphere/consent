@@ -46,6 +46,8 @@ public class Dataset {
 
     private Boolean deletable;
 
+    private String sharingPlanDocument;
+
     private Set<DatasetProperty> properties;
 
     public Dataset() {
@@ -265,6 +267,14 @@ public class Dataset {
 
     public void setDeletable(Boolean deletable) {
         this.deletable = deletable;
+    }
+
+    public String getSharingPlanDocument() {
+        return sharingPlanDocument;
+    }
+
+    public void setSharingPlanDocument(String sharingPlanDocument) {
+        this.sharingPlanDocument = sharingPlanDocument;
     }
 
     @Override
