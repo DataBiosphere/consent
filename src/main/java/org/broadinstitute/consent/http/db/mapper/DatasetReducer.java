@@ -76,6 +76,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       name.setPropertyName(DatasetService.DATASET_NAME_KEY);
       name.setPropertyValue(dataset.getName());
       name.setDataSetId(dataset.getDataSetId());
+      name.setPropertyType(DatasetPropertyType.String);
       dataset.addProperty(name);
     }
     dataset.setDatasetName(dataset.getName());
