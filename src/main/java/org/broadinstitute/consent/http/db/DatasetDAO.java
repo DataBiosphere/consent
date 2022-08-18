@@ -231,8 +231,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
     @SqlQuery(
         "SELECT d.*, k.key, dp.property_value, ca.consentid, c.dac_id, c.translateduserestriction " +
-            " FROM dataset d INNER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id INNER JOIN dictionary k ON k.key_id = dp.property_key " +
-            " INNER JOIN consentassociations ca ON ca.datasetid = d.dataset_id INNER JOIN consents c ON c.consentid = ca.consentid " +
+            " FROM dataset d INNER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
+            " INNER JOIN dictionary k ON k.key_id = dp.property_key " +
+            " INNER JOIN consentassociations ca ON ca.datasetid = d.dataset_id " +
+            " INNER JOIN consents c ON c.consentid = ca.consentid " +
             " WHERE d.dataset_id IN (<dataSetIdList>) ORDER BY d.dataset_id, k.receive_order ")
     Set<DatasetDTO> findDatasetsByReceiveOrder(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
