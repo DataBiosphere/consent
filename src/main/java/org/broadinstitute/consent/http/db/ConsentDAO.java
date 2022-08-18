@@ -49,8 +49,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Consent findConsentByName(@Bind("name") String name);
 
     @SqlUpdate("insert into consents " +
-            "(consentId, requiresManualReview, useRestriction, dataUse, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction, groupName, dac_id) values " +
-            "(:consentId, :requiresManualReview, :useRestriction, :dataUse, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName, :dacId)")
+            "(consentId, requiresManualReview, useRestriction, dataUse, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction, groupName) values " +
+            "(:consentId, :requiresManualReview, :useRestriction, :dataUse, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName)")
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
@@ -61,8 +61,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("createDate") Date createDate,
                        @Bind("sortDate") Date sortDate,
                        @Bind("translatedUseRestriction") String translatedUseRestriction,
-                       @Bind("groupName") String groupName,
-                       @Bind("dacId") Integer dacId);
+                       @Bind("groupName") String groupName);
 
     @SqlUpdate("delete from consents where consentId = :consentId")
     void deleteConsent(@Bind("consentId") String consentId);
@@ -79,7 +78,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
             " translatedUseRestriction = :translatedUseRestriction, " +
             " groupName = :groupName, " +
             " updated = :updated, " +
-            " dac_id = :dacId " +
             " where consentId = :consentId " +
             " and active = true ")
     void updateConsent(@Bind("consentId") String consentId,
@@ -93,8 +91,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("sortDate") Date sortDate,
                        @Bind("translatedUseRestriction") String translatedUseRestriction,
                        @Bind("groupName") String groupName,
-                       @Bind("updated") Boolean updateStatus,
-                       @Bind("dacId") Integer dacId);
+                       @Bind("updated") Boolean updateStatus);
 
     @SqlUpdate(" UPDATE consents " +
             " SET translateduserestriction = :translatedUseRestriction " +

@@ -238,7 +238,7 @@ public class DAOTestHelper {
     }
 
     @SuppressWarnings("SameParameterValue")
-    protected Consent createConsent(Integer dacId) {
+    protected Consent createConsent() {
         String consentId = UUID.randomUUID().toString();
         consentDAO.insertConsent(consentId,
                 false,
@@ -250,8 +250,7 @@ public class DAOTestHelper {
                 new Date(),
                 new Date(),
                 "Everything",
-                "Group",
-                dacId);
+                "Group");
         return consentDAO.findConsentById(consentId);
     }
 

@@ -151,7 +151,7 @@ public class DatasetService {
             String translatedUseRestriction = converter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET);
             consentDAO.useTransaction(h -> {
                 try {
-                    h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, translatedUseRestriction, groupName, dataset.getDacId());
+                    h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, translatedUseRestriction, groupName);
                     if (Objects.nonNull(dataset.getDacId())) {
                         h.updateConsentDac(consentId, dataset.getDacId());
                     }

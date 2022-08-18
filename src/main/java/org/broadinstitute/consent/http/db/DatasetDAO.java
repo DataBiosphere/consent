@@ -37,7 +37,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     String CHAIRPERSON = Resource.CHAIRPERSON;
 
-    @SqlUpdate("INSERT INTO dataset (name, createdate, create_user_id, update_date, update_user_id, objectId, active, alias, data_use) (SELECT :name, :createDate, :createUserId, :createDate, :createUserId, :objectId, :active, COALESCE(MAX(alias),0)+1, :dataUse FROM dataset)")
+    @SqlUpdate("INSERT INTO dataset (name, createdate, create_user_id, update_date, update_user_id, objectId, active, alias, data_use, dac_id) (SELECT :name, :createDate, :createUserId, :createDate, :createUserId, :objectId, :active, COALESCE(MAX(alias),0)+1, :dataUse FROM dataset, :dacId)")
     @GetGeneratedKeys
     Integer insertDataset(
         @Bind("name") String name,
@@ -45,10 +45,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         @Bind("createUserId") Integer createUserId,
         @Bind("objectId") String objectId,
         @Bind("active") Boolean active,
-        @Bind("dataUse") String dataUse);
+        @Bind("dataUse") String dataUse,
+        @Bind("dacId") Integer dacId);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, c.translateduserestriction, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
         " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
@@ -59,7 +60,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     Dataset findDatasetById(@Bind("datasetId") Integer datasetId);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.propertyid, ca.consentid, d.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
             " FROM dataset d " +
             " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
             " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
@@ -73,7 +74,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     Integer findDatasetIdByObjectId(@Bind("objectId") String objectId);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, d.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
         " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
@@ -128,11 +129,12 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " update_date = :updateDate, " +
             " update_user_id = :updateUserId, " +
             " needs_approval = :needsApproval " +
+            " dac_id = :dacId " +
             " WHERE datasetid = :datasetId")
-    void updateDataset(@Bind("datasetId") Integer datasetId, @Bind("datasetName") String datasetName, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId, @Bind("needsApproval") Boolean needsApproval);
+    void updateDataset(@Bind("datasetId") Integer datasetId, @Bind("datasetName") String datasetName, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId, @Bind("needsApproval") Boolean needsApproval, @Bind("dacId") Integer dacId);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, d.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
         " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
@@ -146,13 +148,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @Deprecated
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
     @SqlQuery(
-        " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction "
+        " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, d.dac_id, c.translateduserestriction "
             + " FROM dataset d "
             + " LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid "
             + " LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey "
             + " INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid "
             + " INNER JOIN consents c ON c.consentid = ca.consentid "
-            + " INNER JOIN user_role ur ON ur.dac_id = c.dac_id "
+            + " INNER JOIN user_role ur ON ur.dac_id = d.dac_id "
             + " WHERE ur.user_id = :userId "
             + " AND d.name IS NOT NULL "
             + " ORDER BY d.datasetid ")
@@ -161,7 +163,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @Deprecated
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
     @SqlQuery(
-        " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction "
+        " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, d.dac_id, c.translateduserestriction "
             + " FROM dataset d "
             + " LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid "
             + " LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey "
@@ -174,7 +176,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @Deprecated
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
     @SqlQuery(
-        " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction "
+        " SELECT d.*, k.key, dp.propertyvalue, ca.consentid, d.dac_id, c.translateduserestriction "
             + " FROM dataset d "
             + " LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid "
             + " LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey "
@@ -185,7 +187,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     @Deprecated
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction " +
+    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, d.dac_id, c.translateduserestriction " +
           "FROM dataset d " +
           "LEFT OUTER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
           "LEFT OUTER JOIN dictionary k ON k.keyid = dp.propertykey " +
@@ -200,7 +202,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     @Deprecated
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, ca.consentid, d.dac_id, c.translateduserestriction " +
             " FROM dataset d INNER JOIN datasetproperty dp ON dp.datasetid = d.datasetid INNER JOIN dictionary k ON k.keyid = dp.propertykey " +
             " INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid INNER JOIN consents c ON c.consentid = ca.consentid " +
             " WHERE d.datasetid IN (<dataSetIdList>) ORDER BY d.datasetid, k.receiveorder ")
@@ -215,7 +217,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     List<Dictionary> getMappedFieldsOrderByDisplayOrder();
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, d.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
         " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
@@ -226,7 +228,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     List<Dataset> getDatasetsForObjectIdList(@BindList("objectIdList") List<String> objectIdList);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, d.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
         " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
@@ -236,7 +238,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     List<Dataset> getAllDatasets();
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, d.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
         " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
@@ -256,7 +258,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     Dataset getDatasetByName(@Bind("name") String name);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, d.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
         " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
@@ -277,14 +279,14 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      * @return List of datasets that are visible to the user via DACs.
      */
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, d.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
         " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
         " LEFT JOIN dictionary k ON k.keyid = dp.propertykey " +
         " LEFT JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
         " LEFT JOIN consents c ON c.consentid = ca.consentid " +
-        " INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
+        " INNER JOIN user_role ur ON ur.dac_id = d.dac_id " +
         " INNER JOIN users u ON ur.user_id = u.user_id AND u.email = :email ")
     List<Dataset> findDatasetsByAuthUserEmail(@Bind("email") String email);
 
@@ -296,7 +298,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlQuery(" SELECT d.* from dataset d " +
             " INNER JOIN consentassociations a ON d.datasetid = a.datasetid " +
             " INNER JOIN consents c ON a.consentId = c.consentId " +
-            " WHERE c.dac_id IS NULL ")
+            " WHERE d.dac_id IS NULL ")
     List<Dataset> findNonDACDatasets();
 
     /**
@@ -307,7 +309,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      */
     @Deprecated
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-    @SqlQuery("SELECT d.*, k.key, p.propertyValue, c.consentId, c.dac_id, c.translatedUseRestriction " +
+    @SqlQuery("SELECT d.*, k.key, p.propertyValue, c.consentId, d.dac_id, c.translatedUseRestriction " +
             " FROM dataset d " +
             " LEFT OUTER JOIN datasetproperty p ON p.datasetid = d.datasetid " +
             " LEFT OUTER JOIN dictionary k ON k.keyid = p.propertykey " +
@@ -324,13 +326,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      */
     @Deprecated
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-    @SqlQuery("SELECT d.*, k.key, p.propertyvalue, c.consentid, c.dac_id, c.translateduserestriction " +
+    @SqlQuery("SELECT d.*, k.key, p.propertyvalue, c.consentid, d.dac_id, c.translateduserestriction " +
             " FROM dataset d " +
             " LEFT OUTER JOIN datasetproperty p ON p.datasetid = d.datasetid " +
             " LEFT OUTER JOIN dictionary k ON k.keyid = p.propertykey " +
             " INNER JOIN consentassociations a ON a.datasetid = d.datasetid " +
             " INNER JOIN consents c ON c.consentid = a.consentid " +
-            " WHERE c.dac_id IN (<dacIds>) ")
+            " WHERE d.dac_id IN (<dacIds>) ")
     Set<DatasetDTO> findDatasetsByDacIds(@BindList("dacIds") List<Integer> dacIds);
 
     /**
@@ -341,13 +343,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      */
     @Deprecated
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-    @SqlQuery("SELECT d.*, k.key, p.propertyvalue, c.consentid, c.dac_id, c.translateduserestriction " +
+    @SqlQuery("SELECT d.*, k.key, p.propertyvalue, c.consentid, d.dac_id, c.translateduserestriction " +
             " FROM dataset d " +
             " LEFT OUTER JOIN datasetproperty p ON p.datasetid = d.datasetid " +
             " LEFT OUTER JOIN dictionary k ON k.keyid = p.propertykey " +
             " INNER JOIN consentassociations a ON a.datasetid = d.datasetid " +
             " INNER JOIN consents c ON c.consentid = a.consentid " +
-            " WHERE c.dac_id IS NOT NULL ")
+            " WHERE d.dac_id IS NOT NULL ")
     Set<DatasetDTO> findDatasetsWithDacs();
 
     /**
@@ -356,14 +358,14 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      * @return List of dataset id and its associated dac id
      */
     @RegisterRowMapper(ImmutablePairOfIntsMapper.class)
-    @SqlQuery("SELECT DISTINCT d.datasetid, c.dac_id FROM dataset d " +
+    @SqlQuery("SELECT DISTINCT d.datasetid, d.dac_id FROM dataset d " +
             " INNER JOIN consentassociations a ON d.datasetid = a.datasetid " +
             " INNER JOIN consents c ON a.consentId = c.consentId " +
-            " WHERE c.dac_id IS NOT NULL ")
+            " WHERE d.dac_id IS NOT NULL ")
     List<Pair<Integer, Integer>> findDatasetAndDacIds();
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, c.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
+    @SqlQuery(" SELECT d.*, k.key, dp.propertyvalue, dp.propertykey, dp.property_type, dp.schema_property, dp.propertyid, ca.consentid, d.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
         " FROM dataset d " +
         " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.datasetid " +
         " LEFT JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
