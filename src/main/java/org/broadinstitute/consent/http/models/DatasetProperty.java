@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.common.base.Objects;
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 
 import java.util.Date;
 
@@ -10,24 +11,61 @@ public class DatasetProperty {
     private Integer dataSetId;
     private Integer propertyKey;
     private String propertyName;
-    private String propertyValue;
+    private Object propertyValue;
     private Date createDate;
+    private String schemaProperty;
+    private DatasetPropertyType propertyType;
 
     public DatasetProperty(){
     }
 
-    public DatasetProperty(Integer propertyId, Integer  dataSetId, Integer propertyKey, String propertyValue,
+    @Deprecated
+    public DatasetProperty(Integer propertyId,
+                           Integer dataSetId,
+                           Integer propertyKey,
+                           String propertyValue,
+                           DatasetPropertyType type,
                            Date createDate) {
-        this(dataSetId, propertyKey, propertyValue, createDate);
+        this(dataSetId, propertyKey, propertyValue, type, createDate);
         this.propertyId = propertyId;
     }
 
-    public DatasetProperty(Integer  dataSetId, Integer propertyKey, String propertyValue,
+    @Deprecated
+    public DatasetProperty(Integer dataSetId,
+                           Integer propertyKey,
+                           String propertyValue,
+                           DatasetPropertyType type,
                            Date createDate){
         this.dataSetId = dataSetId;
         this.propertyKey = propertyKey;
-        this.propertyValue = propertyValue;
+        this.propertyValue = type.coerce(propertyValue);
+        this.propertyType = type;
         this.createDate = createDate;
+    }
+
+    public DatasetProperty(Integer propertyId,
+                           Integer dataSetId,
+                           Integer propertyKey,
+                           String schemaProperty,
+                           String propertyValue,
+                           DatasetPropertyType type,
+                           Date createDate) {
+        this(dataSetId, propertyKey, schemaProperty, propertyValue, type, createDate);
+        this.propertyId = propertyId;
+    }
+
+    public DatasetProperty(Integer dataSetId,
+                           Integer propertyKey,
+                           String schemaProperty,
+                           String propertyValue,
+                           DatasetPropertyType type,
+                           Date createDate){
+        this.dataSetId = dataSetId;
+        this.propertyKey = propertyKey;
+        this.propertyValue = type.coerce(propertyValue);
+        this.propertyType = type;
+        this.createDate = createDate;
+        this.schemaProperty = schemaProperty;
     }
 
     public Integer getPropertyId() {
@@ -62,11 +100,23 @@ public class DatasetProperty {
         this.propertyName = propertyName;
     }
 
-    public String getPropertyValue() {
+    public String getSchemaProperty() {
+        return this.schemaProperty;
+    }
+
+    public void setSchemaProperty(String schemaProperty) {
+        this.schemaProperty = schemaProperty;
+    }
+
+    public Object getPropertyValue() {
         return propertyValue;
     }
 
-    public void setPropertyValue(String propertyValue) {
+    public String getPropertyValueAsString() {
+        return this.propertyValue.toString();
+    }
+
+    public void setPropertyValue(Object propertyValue) {
         this.propertyValue = propertyValue;
     }
 
@@ -76,6 +126,21 @@ public class DatasetProperty {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    public DatasetPropertyType getPropertyType() {
+        if (java.util.Objects.isNull(this.propertyType)) {
+            return DatasetPropertyType.String;
+        }
+
+        return this.propertyType;
+    }
+    public String getPropertyTypeAsString() {
+        return this.getPropertyType().toString();
+    }
+
+    public void setPropertyType(DatasetPropertyType propertyType) {
+        this.propertyType = propertyType;
     }
 
     @Override
