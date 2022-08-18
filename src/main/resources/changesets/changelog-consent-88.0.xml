@@ -63,5 +63,6 @@
 
         <renameTable oldTableName="datasetproperty"
                      newTableName="dataset_property" />
+
     </changeSet>
 </databaseChangeLog>

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -40,12 +41,25 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
         && hasColumn(rowView, "property_value", String.class)) {
       String keyName = rowView.getColumn("key", String.class);
       String propVal = rowView.getColumn("property_value", String.class);
+      DatasetPropertyType propType = DatasetPropertyType.String;
+      if (hasColumn(rowView, "property_type", String.class)) {
+          propType = DatasetPropertyType.parse(rowView.getColumn("property_type", String.class));
+      }
+
       if (Objects.nonNull(keyName) && Objects.nonNull(propVal)) {
-        DatasetProperty prop = new DatasetProperty();
-        prop.setDataSetId(dataset.getDataSetId());
-        prop.setPropertyValue(propVal);
-        prop.setPropertyName(keyName);
-        dataset.addProperty(prop);
+        try {
+          DatasetProperty prop = new DatasetProperty();
+          prop.setDataSetId(dataset.getDataSetId());
+          prop.setPropertyValue(propType.coerce(propVal));
+          prop.setPropertyName(keyName);
+          prop.setPropertyType(propType);
+          if (hasColumn(rowView, "schema_property", String.class)) {
+            prop.setSchemaProperty(rowView.getColumn("schema_property", String.class));
+          }
+          dataset.addProperty(prop);
+        } catch (Exception e) {
+          // do nothing.
+        }
       }
     }
     // The name property doesn't always come through, add it manually:
@@ -62,6 +76,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       name.setPropertyName(DatasetService.DATASET_NAME_KEY);
       name.setPropertyValue(dataset.getName());
       name.setDataSetId(dataset.getDataSetId());
+      name.setPropertyType(DatasetPropertyType.String);
       dataset.addProperty(name);
     }
     dataset.setDatasetName(dataset.getName());
