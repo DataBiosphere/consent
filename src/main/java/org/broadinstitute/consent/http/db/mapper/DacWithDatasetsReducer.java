@@ -28,7 +28,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
           container.computeIfAbsent(
               rowView.getColumn("dac_id", Integer.class), id -> rowView.getRow(Dac.class));
 
-      if (Objects.nonNull(rowView.getColumn("datasetid", Integer.class))) {
+      if (Objects.nonNull(rowView.getColumn("dataset_id", Integer.class))) {
         Dataset dataset = rowView.getRow(Dataset.class);
 
         try {

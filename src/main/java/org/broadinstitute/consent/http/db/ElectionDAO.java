@@ -384,9 +384,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
         + "INNER JOIN consentassociations ca "
         + "ON ca.consentid = consents.consentid "
         + "INNER JOIN dataset data "
-        + "ON data.datasetid = ca.datasetid "
+        + "ON data.dataset_id = ca.datasetid "
         + "INNER JOIN election e "
-        + "ON e.datasetid = data.datasetid "
+        + "ON e.datasetid = data.dataset_id "
         + "WHERE e.electionId IN (<electionIds>)"
     )
     @UseRowMapper(DacMapper.class)
