@@ -14,6 +14,9 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
       dataset.setDataSetId(r.getInt("datasetid"));
       dataset.setObjectId(r.getString("objectid"));
       dataset.setName(r.getString("name"));
+      if(hasColumn(r, "dac_approval")) {
+        dataset.setDacApproval(r.getBoolean("dac_approval"));
+      }
       if (hasColumn(r, "createdate")) {
           dataset.setCreateDate(r.getDate("createdate"));
       }

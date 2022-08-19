@@ -48,6 +48,8 @@ public class Dataset {
 
     private Set<DatasetProperty> properties;
 
+    private Boolean dacApproval;
+
     public Dataset() {
     }
 
@@ -72,6 +74,7 @@ public class Dataset {
         this.createDate = createDate;
         this.active = active;
         this.alias = alias;
+        this.dacApproval = false;
     }
 
     public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Boolean active) {
@@ -81,6 +84,7 @@ public class Dataset {
         this.datasetName = name;
         this.createDate = createDate;
         this.active = active;
+        this.dacApproval = false;
     }
 
     private static String PREFIX = "DUOS-";
@@ -182,6 +186,14 @@ public class Dataset {
 
     public void setNeedsApproval(Boolean needsApproval) {
         this.needsApproval = needsApproval;
+    }
+
+    public Boolean getDacApproval() {
+        return dacApproval;
+    }
+
+    public void setDacApproval(Boolean dacApproval) {
+        this.dacApproval = dacApproval;
     }
 
     public String getConsentName() {

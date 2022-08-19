@@ -19,6 +19,10 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
     Dataset dataset =
         map.computeIfAbsent(
             rowView.getColumn("datasetid", Integer.class), id -> rowView.getRow(Dataset.class));
+
+    if(hasColumn(rowView, "dac_approval", Boolean.class)) {
+      dataset.setDacApproval(rowView.getColumn("dac_approval", Boolean.class));
+    }
     if (hasColumn(rowView, "dac_id", Integer.class)) {
       dataset.setDacId(rowView.getColumn("dac_id", Integer.class));
     }
