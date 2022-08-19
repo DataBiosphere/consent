@@ -74,7 +74,6 @@ public class Dataset {
         this.createDate = createDate;
         this.active = active;
         this.alias = alias;
-        this.dacApproval = false;
     }
 
     public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Boolean active) {
@@ -84,7 +83,6 @@ public class Dataset {
         this.datasetName = name;
         this.createDate = createDate;
         this.active = active;
-        this.dacApproval = false;
     }
 
     private static String PREFIX = "DUOS-";
