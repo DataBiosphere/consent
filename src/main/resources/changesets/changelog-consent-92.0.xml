@@ -8,9 +8,9 @@
 
     <sql>
         UPDATE dataset SET dac_approval = TRUE 
-        WHERE dataset.datasetid IN (
+        WHERE dataset.dataset_id IN (
           SELECT ca.datasetid FROM dataset d
-          INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid
+          INNER JOIN consentassociations ca ON ca.datasetid = d.dataset_id
           INNER JOIN consents c ON ca.consentid = c.consentid
           WHERE c.dac_id IS NOT NULL
         ) 
