@@ -12,13 +12,13 @@ public class DatasetPropertyMapper implements RowMapper<DatasetProperty> {
 
     public DatasetProperty map(ResultSet r, StatementContext ctx) throws SQLException {
       return new DatasetProperty(
-          r.getInt("propertyid"),
-          r.getInt("datasetid"),
-          r.getInt("propertykey"),
+          r.getInt("property_id"),
+          r.getInt("dataset_id"),
+          r.getInt("property_key"),
           r.getString("schema_property"),
-          r.getString("propertyvalue"),
+          r.getString("property_value"),
           DatasetPropertyType.parse(r.getString("property_type")),
-          r.getTimestamp("createdate")
+          r.getTimestamp("create_date")
       );
     }
 }
