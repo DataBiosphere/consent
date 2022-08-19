@@ -33,7 +33,7 @@ public interface TestingDAO extends Transactional<TestingDAO> {
   @SqlUpdate("DELETE FROM election")
   void deleteAllElections();
 
-  @SqlUpdate("DELETE FROM datasetproperty")
+  @SqlUpdate("DELETE FROM dataset_property")
   void deleteAllDatasetProperties();
 
   @SqlUpdate("DELETE FROM dataset")
