@@ -59,8 +59,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     return darCollectionDAO.insertDarCollection(darCode, createUserId, new Date());
   }
 
-  private Dataset createDataset(Integer userId) {
-    Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(20), new Timestamp(System.currentTimeMillis()), userId, null, true, new DataUseBuilder().setGeneralUse(true).build().toString());
+  private Dataset createDatasetForUser(Integer userId) {
+    Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(20), new Timestamp(System.currentTimeMillis()), userId, null, true, new DataUseBuilder().setGeneralUse(true).build().toString(), null);
     return datasetDAO.findDatasetById(datasetId);
   }
 
@@ -94,9 +94,9 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     userOne = assignInstitutionToUser(userOne, institutionId);
     userTwo = assignInstitutionToUser(userTwo, institutionId);
     userChair = assignInstitutionToUser(userChair, institutionId);
-    Dataset dataset = createDataset(userOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
-    Dataset excludedDataset = createDataset(userOneId); //represents dataset that does not fall under user DAC's purview
+    Dataset dataset = createDatasetForUser(userOneId);
+    Dataset datasetTwo = createDatasetForUser(userTwoId);
+    Dataset excludedDataset = createDatasetForUser(userOneId); //represents dataset that does not fall under user DAC's purview
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     Integer excludedDarCollectionId = createDarCollection(userOneId);
@@ -183,8 +183,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
     userChair = assignInstitutionToUser(userChair, institutionId);
-    Dataset dataset = createDataset(userOneId);
-    Dataset excludedDataset = createDataset(userOneId);
+    Dataset dataset = createDatasetForUser(userOneId);
+    Dataset excludedDataset = createDatasetForUser(userOneId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer excludedDarCollectionId = createDarCollection(userOneId);
     DataAccessRequest excludedDar = createDataAccessRequest(excludedDarCollectionId, userOneId);
@@ -230,7 +230,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
     userChair = assignInstitutionToUser(userChair, institutionId);
-    Dataset dataset = createDataset(userOneId);
+    Dataset dataset = createDatasetForUser(userOneId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer archivedCollectionId = createDarCollection(userOneId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -263,8 +263,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId(); // query should only pull in collections that were created by users with this instituion_id
     userOne = assignInstitutionToUser(userOne, institutionId);
     userTwo = assignInstitutionToUser(userTwo, institutionTwo.getId());
-    Dataset dataset = createDataset(userOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
+    Dataset dataset = createDatasetForUser(userOneId);
+    Dataset datasetTwo = createDatasetForUser(userTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -317,7 +317,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
     userTwo = assignInstitutionToUser(userTwo, institutionTwo.getId());
-    Dataset dataset = createDataset(userOneId);
+    Dataset dataset = createDatasetForUser(userOneId);
     Integer collectionOneId = createDarCollection(userOneId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
     dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDataSetId());
@@ -346,7 +346,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Institution institution = createInstitution(userOneId);
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
-    Dataset dataset = createDataset(userOneId);
+    Dataset dataset = createDatasetForUser(userOneId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer archivedCollectionId = createDarCollection(userOneId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -378,8 +378,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
     userTwo = assignInstitutionToUser(userTwo, institutionTwo.getId());
-    Dataset dataset = createDataset(userOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
+    Dataset dataset = createDatasetForUser(userOneId);
+    Dataset datasetTwo = createDatasetForUser(userTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -434,8 +434,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
     userTwo = assignInstitutionToUser(userTwo, institutionTwo.getId());
-    Dataset dataset = createDataset(userOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
+    Dataset dataset = createDatasetForUser(userOneId);
+    Dataset datasetTwo = createDatasetForUser(userTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -471,7 +471,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Institution institution = createInstitution(userOneId);
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
-    Dataset dataset = createDataset(userOneId);
+    Dataset dataset = createDatasetForUser(userOneId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer archivedCollectionId = createDarCollection(userOneId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -498,7 +498,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Institution institution = createInstitution(userId);
     Integer institutionId = institution.getId();
     user = assignInstitutionToUser(user, institutionId);
-    Dataset dataset = createDataset(userId);
+    Dataset dataset = createDatasetForUser(userId);
     Integer collectionId = createDarCollection(userId);
     DataAccessRequest dar = createDataAccessRequest(collectionId, userId);
 
@@ -525,8 +525,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
     userTwo = assignInstitutionToUser(userTwo, institutionTwo.getId());
-    Dataset dataset = createDataset(userOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
+    Dataset dataset = createDatasetForUser(userOneId);
+    Dataset datasetTwo = createDatasetForUser(userTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -585,8 +585,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
     userTwo = assignInstitutionToUser(userTwo, institutionTwo.getId());
-    Dataset dataset = createDataset(userOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
+    Dataset dataset = createDatasetForUser(userOneId);
+    Dataset datasetTwo = createDatasetForUser(userTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -618,7 +618,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Institution institution = createInstitution(userOneId);
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
-    Dataset dataset = createDataset(userOneId);
+    Dataset dataset = createDatasetForUser(userOneId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer archivedCollectionId = createDarCollection(userOneId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -649,8 +649,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
     userTwo = assignInstitutionToUser(userTwo, institutionTwo.getId());
-    Dataset dataset = createDataset(userOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
+    Dataset dataset = createDatasetForUser(userOneId);
+    Dataset datasetTwo = createDatasetForUser(userTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -700,8 +700,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
     userTwo = assignInstitutionToUser(userTwo, institutionTwo.getId());
-    Dataset dataset = createDataset(userOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
+    Dataset dataset = createDatasetForUser(userOneId);
+    Dataset datasetTwo = createDatasetForUser(userTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -741,8 +741,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     userOne = assignInstitutionToUser(userOne, institutionId);
     userTwo = assignInstitutionToUser(userTwo, institutionId);
     userChair = assignInstitutionToUser(userChair, institutionId);
-    Dataset dataset = createDataset(userOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
+    Dataset dataset = createDatasetForUser(userOneId);
+    Dataset datasetTwo = createDatasetForUser(userTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer excludedCollectionId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -806,8 +806,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
     userChair = assignInstitutionToUser(userChair, institutionId);
-    Dataset dataset = createDataset(userOneId);
-    Dataset excludedDataset = createDataset(userOneId);
+    Dataset dataset = createDatasetForUser(userOneId);
+    Dataset excludedDataset = createDatasetForUser(userOneId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer excludedDarCollectionId = createDarCollection(userOneId);
     DataAccessRequest excludedDar = createDataAccessRequest(excludedDarCollectionId, userOneId);
@@ -851,7 +851,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
     userChair = assignInstitutionToUser(userChair, institutionId);
-    Dataset dataset = createDataset(userOneId);
+    Dataset dataset = createDatasetForUser(userOneId);
     Integer archivedCollectionId = createDarCollection(userOneId);
     DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
     dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
@@ -874,7 +874,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Institution institution = createInstitution(userOneId);
     Integer institutionId = institution.getId();
     userOne = assignInstitutionToUser(userOne, institutionId);
-    Dataset dataset = createDataset(userOneId);
+    Dataset dataset = createDatasetForUser(userOneId);
     Integer archivedCollectionId = createDarCollection(userOneId);
     DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
     dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));

@@ -24,7 +24,7 @@
                 FROM consents c
                          INNER JOIN consentassociations ca
                                     ON ca.consentid = c.consentid
-                WHERE ca.datasetid = d.datasetid
+                WHERE ca.datasetid = d.dataset_id
             )
         </sql>
 

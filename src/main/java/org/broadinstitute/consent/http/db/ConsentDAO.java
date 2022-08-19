@@ -18,7 +18,8 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(ConsentMapper.class)
 public interface ConsentDAO extends Transactional<ConsentDAO> {
 
-    @SqlQuery("select * from consents where consentId = :consentId and active=true")
+    @SqlQuery(
+        "SELECT * FROM consents WHERE consentId = :consentId and c.active=true")
     Consent findConsentById(@Bind("consentId") String consentId);
 
     @SqlQuery(
@@ -142,10 +143,17 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select * from consents where consentId not in (select c.consentId from consents c  inner join election e on e.referenceId = c.consentId )")
     List<Consent> findUnreviewedConsents();
 
+    @SqlQuery("SELECT d.dac_id " +
+            " FROM dataset d " +
+            " LEFT JOIN consentassociations ca ON ca.datasetid = d.dataset_id " +
+            " LEFT JOIN consents c ON c.consentid = ca.consentid " +
+            " WHERE c.consentid = :consentId")
+    Integer getDacIdForConsent(String consentId);
+
     @SqlQuery("select requiresManualReview from consents where consentId = :consentId")
     Boolean checkManualReview(@Bind("consentId") String consentId);
 
-    @SqlQuery("select c.consentId, c.dac_id, c.name, c.createDate, c.sortDate, c.groupName, c.updated, e.electionId, e.status, e.version, e.archived  " +
+    @SqlQuery("select c.consentId, c.name, c.createDate, c.sortDate, c.groupName, c.updated, e.electionId, e.status, e.version, e.archived  " +
             "from consents c inner join election e ON e.referenceId = c.consentId inner join ( "+
             "select referenceId, MAX(createDate) maxDate from election e group by referenceId) electionView "+
             "ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId AND e.status = :status")
@@ -158,9 +166,5 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlUpdate("update consents set updated = :updated where consentId = :referenceId")
     void updateConsentUpdateStatus(@Bind("referenceId") String referenceId,
                                    @Bind("updated") Boolean updated);
-
-    @SqlUpdate("update consents set dac_id = :dacId where consentId = :consentId")
-    void updateConsentDac(@Bind("consentId") String consentId,
-                                @Bind("dacId") Integer dacId);
 
 }

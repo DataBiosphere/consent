@@ -152,9 +152,6 @@ public class DatasetService {
             consentDAO.useTransaction(h -> {
                 try {
                     h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, translatedUseRestriction, groupName);
-                    if (Objects.nonNull(dataset.getDacId())) {
-                        h.updateConsentDac(consentId, dataset.getDacId());
-                    }
                     String associationType = AssociationType.SAMPLE_SET.getValue();
                     h.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
                 } catch (Exception e) {
@@ -253,13 +250,6 @@ public class DatasetService {
         }
         if (Objects.isNull(dataset.getNeedsApproval())) {
             throw new IllegalArgumentException("Dataset 'Needs Approval' field cannot be null");
-        }
-
-        if (Objects.nonNull(dataset.getDacId())) {
-            Consent consent = consentDAO.findConsentFromDatasetID(datasetId);
-            if (Objects.nonNull(consent)) {
-                consentDAO.updateConsentDac(consent.getConsentId(), dataset.getDacId());
-            }
         }
 
         Dataset old = getDatasetWithPropertiesById(datasetId);

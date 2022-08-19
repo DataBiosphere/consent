@@ -365,7 +365,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-    Consent consent = createConsent(dac.getDacId());
+    Consent consent = createConsent();
     Dataset dataset = createDataset();
     consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
@@ -390,7 +390,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-    Consent consent = createConsent(dac.getDacId());
+    Consent consent = createConsent();
     Dataset dataset = createDataset();
     consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 

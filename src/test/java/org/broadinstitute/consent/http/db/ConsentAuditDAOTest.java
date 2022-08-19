@@ -43,9 +43,8 @@ public class ConsentAuditDAOTest extends DAOTestHelper {
   }
 
   private ConsentAudit createConsentAudit() {
-    Dac dac = createDac();
     User user = createUser();
-    Consent consent = createConsent(dac.getDacId());
+    Consent consent = createConsent();
     return new ConsentAudit(
         consent.getConsentId(),
         AuditTable.CONSENT.getValue(),

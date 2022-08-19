@@ -39,9 +39,6 @@ public class ConsentMapper implements RowMapper<Consent> {
     consent.setTranslatedUseRestriction(r.getString("translatedUseRestriction"));
     consent.setGroupName(r.getString("groupName"));
     consent.setUpdated(r.getBoolean("updated"));
-    if (r.getObject("dac_id") != null) {
-      consent.setDacId(r.getInt("dac_id"));
-    }
     consentMap.put(consent.getConsentId(), consent);
     return consent;
   }

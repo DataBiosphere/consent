@@ -96,18 +96,6 @@ public class ConsentServiceTest {
         Assert.assertFalse(consent.getLastElectionArchived());
     }
 
-    @Test
-    public void testUpdateConsentDac() {
-        doNothing().when(consentDAO).updateConsentDac(anyString(), anyInt());
-        initService();
-
-        try {
-            service.updateConsentDac(UUID.randomUUID().toString(), RandomUtils.nextInt(1, 10));
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
-    }
-
     @SuppressWarnings("unchecked")
     @Test
     public void testDescribeConsentManage() {
@@ -136,7 +124,7 @@ public class ConsentServiceTest {
                 .thenReturn(null);
         when(consentDAO.checkConsentById("test consent"))
                 .thenReturn("test consent");
-        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         when(consentDAO.findConsentById(any()))
                 .thenReturn(testConsent);
         initService();
@@ -159,8 +147,7 @@ public class ConsentServiceTest {
         doNothing().when(consentDAO).updateConsent("test consent", testConsent.getRequiresManualReview(),
                 testConsent.getUseRestriction().toString(), testConsent.getDataUse().toString(),
                 testConsent.getDataUseLetter(), testConsent.getName(), testConsent.getDulName(), testConsent.getLastUpdate(),
-                testConsent.getSortDate(), testConsent.getTranslatedUseRestriction(), testConsent.getGroupName(), true,
-                testConsent.getDacId());
+                testConsent.getSortDate(), testConsent.getTranslatedUseRestriction(), testConsent.getGroupName(), true);
         when(consentDAO.checkConsentById("test consent"))
                 .thenReturn("test consent");
         when(consentDAO.findConsentById("test consent"))
@@ -336,7 +323,7 @@ public class ConsentServiceTest {
         testConsent.setSortDate(prevTimestamp);
 
         doNothing().when(consentDAO).updateConsent(any(), any(), any(), any(), any(), any(), any(), any(),
-                any(), any(), any(), any(), any());
+                any(), any(), any(), any());
 
         initService();
 

@@ -136,10 +136,6 @@ public class ConsentService {
         return getAllAssociationsForConsent(consentId);
     }
 
-    public void updateConsentDac(String consentId, Integer dacId) {
-        consentDAO.updateConsentDac(consentId, dacId);
-    }
-
     public Consent update(String id, Consent rec) throws NotFoundException {
         rec = updateConsentDates(rec);
         if (StringUtils.isEmpty(consentDAO.checkConsentById(id))) {

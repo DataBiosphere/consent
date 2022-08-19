@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+
+import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -43,17 +45,19 @@ public class DacService {
     private final DatasetDAO dataSetDAO;
     private final ElectionDAO electionDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
+    private final ConsentDAO consentDAO;
     private final VoteService voteService;
 
     @Inject
     public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
-                      ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
+                      ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, ConsentDAO consentDAO,
                       VoteService voteService) {
         this.dacDAO = dacDAO;
         this.userDAO = userDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
+        this.consentDAO = consentDAO;
         this.voteService = voteService;
     }
 
@@ -320,7 +324,10 @@ public class DacService {
 
         return consents.
                 stream().
-                filter(c -> Objects.isNull(c.getDacId()) || dacIds.contains(c.getDacId())).
+                filter(consent -> {
+                    Integer dacId = consentDAO.getDacIdForConsent(consent.getConsentId());
+                    return Objects.isNull(dacId) || dacIds.contains(dacId);
+                }).
                 collect(Collectors.toList());
     }
 
