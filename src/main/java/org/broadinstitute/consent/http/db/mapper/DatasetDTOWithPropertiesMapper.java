@@ -15,12 +15,12 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
 
   private final Map<Integer, DatasetDTO> datasetDTOs = new LinkedHashMap<>();
   private static final String PROPERTY_KEY = "key";
-  private static final String PROPERTY_PROPERTYVALUE = "propertyValue";
+  private static final String PROPERTY_PROPERTYVALUE = "property_value";
 
   public DatasetDTO map(ResultSet r, StatementContext ctx) throws SQLException {
 
     DatasetDTO datasetDTO;
-    Integer dataSetId = r.getInt("dataSetId");
+    Integer dataSetId = r.getInt("dataset_id");
     String consentId = r.getString("consentId");
     Integer alias = r.getInt("alias");
     if (!datasetDTOs.containsKey(dataSetId)) {
@@ -43,8 +43,8 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
       if (hasColumn(r, "data_use")) {
         datasetDTO.setDataUse(DataUse.parseDataUse(r.getString("data_use")).orElse(null));
       }
-      if (hasColumn(r, "createdate")) {
-          datasetDTO.setCreateDate(r.getDate("createdate"));
+      if (hasColumn(r, "create_date")) {
+          datasetDTO.setCreateDate(r.getDate("create_date"));
       }
       if (hasColumn(r, "create_user_id")) {
           int userId = r.getInt("create_user_id");
@@ -69,7 +69,7 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
         datasetDTO.addProperty(property);
       }
       datasetDTO.setNeedsApproval(r.getBoolean("needs_approval"));
-      datasetDTO.setObjectId(r.getString("objectId"));
+      datasetDTO.setObjectId(r.getString("object_id"));
       datasetDTOs.put(dataSetId, datasetDTO);
     } else {
       datasetDTO = datasetDTOs.get(dataSetId);

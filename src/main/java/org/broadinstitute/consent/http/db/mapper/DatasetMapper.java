@@ -11,14 +11,11 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
 
   public Dataset map(ResultSet r, StatementContext ctx) throws SQLException {
       Dataset dataset = new Dataset();
-      dataset.setDataSetId(r.getInt("datasetid"));
-      dataset.setObjectId(r.getString("objectid"));
+      dataset.setDataSetId(r.getInt("dataset_id"));
+      dataset.setObjectId(r.getString("object_id"));
       dataset.setName(r.getString("name"));
-      if(hasColumn(r, "dac_approval")) {
-        dataset.setDacApproval(r.getBoolean("dac_approval"));
-      }
-      if (hasColumn(r, "createdate")) {
-          dataset.setCreateDate(r.getDate("createdate"));
+      if (hasColumn(r, "create_date")) {
+          dataset.setCreateDate(r.getDate("create_date"));
       }
       if (hasColumn(r, "create_user_id")) {
           int userId = r.getInt("create_user_id");
@@ -28,6 +25,9 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
       }
       if (hasColumn(r, "update_date")) {
           dataset.setUpdateDate(r.getTimestamp("update_date"));
+      }
+      if (hasColumn(r, "dac_approval")) {
+          dataset.setDacApproval(r.getBoolean("dac_approval"));
       }
       if (hasColumn(r, "update_user_id")) {
           int userId = r.getInt("update_user_id");

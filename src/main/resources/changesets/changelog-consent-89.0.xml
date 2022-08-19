@@ -1,19 +1,65 @@
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-  <changeSet id="89.0" author="JVThomas">
-    <!--Add mapping and dataset property type columns -->
-    <addColumn tableName="dataset">
-      <column name="dac_approval" type="boolean"/>
-    </addColumn>
+    <changeSet author="connorlbark" id="89.0">
+        <renameColumn tableName="datasetproperty"
+                      oldColumnName="propertyvalue"
+                      newColumnName="property_value"/>
 
-    <sql>
-        UPDATE dataset SET dac_approval = TRUE 
-        WHERE dataset.datasetid IN (
-          SELECT ca.datasetid FROM dataset d
-          INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid
-          INNER JOIN consents c ON ca.consentid = c.consentid
-          WHERE c.dac_id IS NOT NULL
-        ) 
-      </sql>
-  </changeSet>
+        <renameColumn tableName="datasetproperty"
+                      oldColumnName="propertykey"
+                      newColumnName="property_key"/>
+
+        <renameColumn tableName="datasetproperty"
+                      oldColumnName="propertyid"
+                      newColumnName="property_id"/>
+
+        <renameColumn tableName="datasetproperty"
+                      oldColumnName="datasetid"
+                      newColumnName="dataset_id"/>
+
+        <renameColumn tableName="dictionary"
+                      oldColumnName="keyid"
+                      newColumnName="key_id"/>
+
+        <renameColumn tableName="dictionary"
+                      oldColumnName="displayorder"
+                      newColumnName="display_order"/>
+
+        <renameColumn tableName="dictionary"
+                      oldColumnName="receiveorder"
+                      newColumnName="receive_order"/>
+
+        <renameColumn tableName="dataset"
+                      oldColumnName="datasetid"
+                      newColumnName="dataset_id"/>
+
+        <renameColumn tableName="dataset"
+                      oldColumnName="createdate"
+                      newColumnName="create_date"/>
+
+        <renameColumn tableName="dataset_audit"
+                      oldColumnName="changeaction"
+                      newColumnName="change_action"/>
+
+        <renameColumn tableName="dataset_audit"
+                      oldColumnName="modifiedbyuser"
+                      newColumnName="modified_by_user"/>
+
+        <renameColumn tableName="dataset_audit"
+                      oldColumnName="modificationdate"
+                      newColumnName="modification_date"/>
+
+        <renameColumn tableName="datasetproperty"
+                      oldColumnName="createdate"
+                      newColumnName="create_date"/>
+
+        <renameColumn tableName="dataset"
+                      oldColumnName="objectid"
+                      newColumnName="object_id"/>
+
+        <renameTable oldTableName="datasetproperty"
+                     newTableName="dataset_property" />
+
+    </changeSet>
 </databaseChangeLog>
