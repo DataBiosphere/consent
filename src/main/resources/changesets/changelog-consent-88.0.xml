@@ -13,7 +13,7 @@
         </addColumn>
 
         <sql>
-            UPDATE datasetproperty SET property_type=(CASE WHEN property_key = 5 THEN 'number' ELSE 'string' END)
+            UPDATE datasetproperty SET property_type=(CASE WHEN propertykey = 5 THEN 'number' ELSE 'string' END)
         </sql>
     </changeSet>
 
