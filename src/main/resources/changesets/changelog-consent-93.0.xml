@@ -1,0 +1,83 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="qhoque" id="93.0">
+        <renameColumn tableName="consents"
+                      oldColumnName="consentid"
+                      newColumnName="consent_id"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="requiresManualReview"
+                      newColumnName="requires_manual_review"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="useRestriction"
+                      newColumnName="use_restriction"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="dataUse"
+                      newColumnName="data_use"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="dataUseLetter"
+                      newColumnName="data_use_letter"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="dulName"
+                      newColumnName="dul_name"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="createDate"
+                      newColumnName="create_date"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="sortDate"
+                      newColumnName="sort_date"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="translatedUseRestriction"
+                      newColumnName="translated_use_restriction"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="groupName"
+                      newColumnName="group_name"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="lastUpdate"
+                      newColumnName="last_update"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="groupName"
+                      newColumnName="group_name"/>
+
+        <renameColumn tableName="consentassociations"
+                      oldColumnName="associationid"
+                      newColumnName="association_id"/>
+
+        <renameColumn tableName="consentassociations"
+                      oldColumnName="consentid"
+                      newColumnName="consent_id"/>
+
+        <renameColumn tableName="consentassociations"
+                      oldColumnName="associationType"
+                      newColumnName="association_type"/>
+
+        <renameColumn tableName="consentassociations"
+                      oldColumnName="objectId"
+                      newColumnName="object_id"/>
+
+        <renameColumn tableName="consentassociations"
+                      oldColumnName="dataSetId"
+                      newColumnName="dataset_id"/>
+
+        <renameColumn tableName="consentassociations"
+                      oldColumnName="associationId"
+                      newColumnName="association_id"/>
+
+        <renameTable oldTableName="consentassociations"
+                     newTableName="consent_associations"/>
+    </changeSet>
+</databaseChangeLog>

@@ -22,16 +22,16 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
     if (hasColumn(rowView, "dac_id", Integer.class)) {
       dataset.setDacId(rowView.getColumn("dac_id", Integer.class));
     }
-    if (hasColumn(rowView, "consentid", String.class)) {
-      dataset.setConsentId(rowView.getColumn("consentid", String.class));
+    if (hasColumn(rowView, "consent_id", String.class)) {
+      dataset.setConsentId(rowView.getColumn("consent_id", String.class));
     }
     if (hasColumn(rowView, "data_use", String.class)) {
       dataset.setDataUse(
           DataUse.parseDataUse(rowView.getColumn("data_use", String.class)).orElse(null));
     }
-    if (hasColumn(rowView, "translateduserestriction", String.class)) {
+    if (hasColumn(rowView, "translated_use_restriction", String.class)) {
       dataset.setTranslatedUseRestriction(
-          rowView.getColumn("translateduserestriction", String.class));
+          rowView.getColumn("translated_use_restriction", String.class));
     }
     if (hasColumn(rowView, "in_use", Integer.class)) {
       Integer dsIdInUse = rowView.getColumn("in_use", Integer.class);
