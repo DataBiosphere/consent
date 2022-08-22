@@ -81,23 +81,24 @@ public class SupportRequestServiceTest {
                 RandomStringUtils.randomAlphabetic(10));
         supportRequest.setCustomFields(List.of(customField));
 
-        String expectedBody = String.format("{\n" +
-                        "  \"request\" : {\n" +
-                        "    \"requester\" : {\n" +
-                        "      \"name\" : \"%s\",\n" +
-                        "      \"email\" : \"%s\"\n" +
-                        "    },\n" +
-                        "    \"subject\" : \"%s\",\n" +
-                        "    \"custom_fields\" : [ {\n" +
-                        "      \"id\" : %d,\n" +
-                        "      \"value\" : \"%s\"\n" +
-                        "    } ],\n" +
-                        "    \"comment\" : {\n" +
-                        "      \"body\" : \"%s\"\n" +
-                        "    },\n" +
-                        "    \"ticket_form_id\" : 360000669472\n" +
-                        "  }\n" +
-                        "}",
+        String expectedBody = String.format("""
+                        {
+                          "request" : {
+                            "requester" : {
+                              "name" : "%s",
+                              "email" : "%s"
+                            },
+                            "subject" : "%s",
+                            "custom_fields" : [ {
+                              "id" : %d,
+                              "value" : "%s"
+                            } ],
+                            "comment" : {
+                              "body" : "%s"
+                            },
+                            "ticket_form_id" : 360000669472
+                          }
+                        }""",
                 supportRequest.getRequester().getName(),
                 supportRequest.getRequester().getEmail(),
                 supportRequest.getSubject(),
