@@ -1191,14 +1191,13 @@ paths:
       parameters:
         - name: roleName
           in: query
-          description: An optional roleName that the user is making the request as. A user can have multiple roles, so adding this parameter will filter the list accordingly.
+          description: An optional roleName that the user is making the request as. Currently supports the Signing Official role.
           required: false
           schema:
-            type: String
+            type: string
             nullable: true
             enum:
               - SigningOfficial
-              - Researcher
       tags:
         - Data Access Request
       responses:
@@ -2659,9 +2658,18 @@ paths:
             RESEARCHER: 5
             DATAOWNER: 6
             SIGNINGOFFICIAL: 7
+            DATASUBMITTER: 8
           required: true
           schema:
             type: number
+            nullable: false
+            enum:
+              - 3
+              - 4
+              - 5
+              - 6
+              - 7
+              - 8
       tags:
         - User
       responses:
@@ -2699,6 +2707,7 @@ paths:
             RESEARCHER: 5
             DATAOWNER: 6
             SIGNINGOFFICIAL: 7
+            DATASUBMITTER: 8
           required: true
           schema:
             type: number
@@ -2709,6 +2718,7 @@ paths:
               - 5
               - 6
               - 7
+              - 8
       tags:
         - User
       responses:

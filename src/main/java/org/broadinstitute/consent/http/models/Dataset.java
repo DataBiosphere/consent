@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
@@ -10,65 +7,47 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonInclude(Include.NON_NULL)
 public class Dataset {
 
-    @JsonProperty
     private Integer dataSetId;
 
-    @JsonProperty
     private String objectId;
 
-    @JsonProperty
     private String name;
 
     // For backwards compatibility with DatasetDTO, this is an alias to the name property.
-    @JsonProperty
     private String datasetName;
 
-    @JsonProperty
     private Date createDate;
 
-    @JsonProperty
     private Integer createUserId;
 
-    @JsonProperty
     private Date updateDate;
 
-    @JsonProperty
     private Integer updateUserId;
 
-    @JsonProperty
     private Boolean active;
 
-    @JsonProperty
     private String consentName;
 
-    @JsonProperty
     private Boolean needsApproval;
 
-    @JsonProperty
     private Integer alias;
 
-    @JsonProperty
     private String datasetIdentifier;
 
-    @JsonProperty
     public DataUse dataUse;
 
-    @JsonProperty
     private Integer dacId;
 
-    @JsonProperty
     private String consentId;
 
-    @JsonProperty
     private String translatedUseRestriction;
 
-    @JsonProperty
     private Boolean deletable;
 
-    @JsonProperty
+    private String sharingPlanDocument;
+
     private Set<DatasetProperty> properties;
 
     public Dataset() {
@@ -288,6 +267,14 @@ public class Dataset {
 
     public void setDeletable(Boolean deletable) {
         this.deletable = deletable;
+    }
+
+    public String getSharingPlanDocument() {
+        return sharingPlanDocument;
+    }
+
+    public void setSharingPlanDocument(String sharingPlanDocument) {
+        this.sharingPlanDocument = sharingPlanDocument;
     }
 
     @Override

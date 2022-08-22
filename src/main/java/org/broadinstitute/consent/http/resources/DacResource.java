@@ -50,7 +50,7 @@ public class DacResource extends Resource {
     public Response findAll(@Auth AuthUser authUser, @QueryParam("withUsers") Optional<Boolean> withUsers) {
         final Boolean includeUsers = withUsers.orElse(true);
         List<Dac> dacs = dacService.findDacsWithMembersOption(includeUsers);
-        return Response.ok().entity(dacs).build();
+        return Response.ok().entity(unmarshal(dacs)).build();
     }
 
     @POST
@@ -72,7 +72,7 @@ public class DacResource extends Resource {
             throw new Exception("Unable to create DAC with name: " + dac.getName() + " and description: " + dac.getDescription());
         }
         Dac savedDac = dacService.findById(dacId);
-        return Response.ok().entity(savedDac).build();
+        return Response.ok().entity(unmarshal(savedDac)).build();
     }
 
     @PUT
@@ -94,7 +94,7 @@ public class DacResource extends Resource {
         }
         dacService.updateDac(dac.getName(), dac.getDescription(), dac.getDacId());
         Dac savedDac = dacService.findById(dac.getDacId());
-        return Response.ok().entity(savedDac).build();
+        return Response.ok().entity(unmarshal(savedDac)).build();
     }
 
     @GET
@@ -103,7 +103,7 @@ public class DacResource extends Resource {
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
     public Response findById(@PathParam("dacId") Integer dacId) {
         Dac dac = findDacById(dacId);
-        return Response.ok().entity(dac).build();
+        return Response.ok().entity(unmarshal(dac)).build();
     }
 
     @DELETE
@@ -194,7 +194,7 @@ public class DacResource extends Resource {
     public Response findAllDacDatasets(@Auth AuthUser user, @PathParam("dacId") Integer dacId) {
         findDacById(dacId);
         Set<DatasetDTO> datasets = dacService.findDatasetsByDacId(user, dacId);
-        return Response.ok().entity(datasets).build();
+        return Response.ok().entity(unmarshal(datasets)).build();
     }
 
     @GET

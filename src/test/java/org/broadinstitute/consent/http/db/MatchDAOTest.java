@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -15,6 +17,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class MatchDAOTest extends DAOTestHelper {
@@ -68,22 +71,8 @@ public class MatchDAOTest extends DAOTestHelper {
     match.setFailed(false);
     match.setCreateDate(new Date());
     match.setMatch(RandomUtils.nextBoolean());
+    match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     return match;
-  }
-
-  @Test
-  public void testUpdateMatch() {
-    Match m = createMatch();
-
-    matchDAO.updateMatch(
-            m.getId(),
-            true,
-            m.getConsent(),
-            m.getPurpose(),
-            false);
-    Match found = matchDAO.findMatchById(m.getId());
-    assertTrue(found.getMatch());
-    assertFalse(found.getFailed());
   }
 
   @Test
@@ -175,4 +164,87 @@ public class MatchDAOTest extends DAOTestHelper {
     List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertTrue(matchResults.isEmpty());
   }
+
+  @Test
+  public void testFindMatchByPurposeIdAndConsentId() {
+    Match match = makeMockMatch(UUID.randomUUID().toString());
+    matchDAO.insertAll(List.of(match));
+    Match foundMatch = matchDAO.findMatchByPurposeIdAndConsentId(match.getPurpose(), match.getConsent());
+    assertNotNull(foundMatch);
+  }
+  @Test
+  public void testFindMatchById() {
+    Match match = makeMockMatch(UUID.randomUUID().toString());
+    Integer matchId = matchDAO.insertMatch(
+      match.getConsent(),
+      match.getPurpose(),
+      match.getMatch(),
+      match.getFailed(),
+      match.getCreateDate(),
+      match.getAlgorithmVersion());
+    Match foundMatch = matchDAO.findMatchById(matchId);
+    assertNotNull(foundMatch);
+  }
+  @Test
+  public void testInsertFailureReason() {
+    Match match = makeMockMatch(UUID.randomUUID().toString());
+    match.setMatch(false);
+    match.setAlgorithmVersion(MatchAlgorithm.V2.getVersion());
+    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
+    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
+    Integer matchId = matchDAO.insertMatch(
+      match.getConsent(),
+      match.getPurpose(),
+      match.getMatch(),
+      match.getFailed(),
+      match.getCreateDate(),
+      match.getAlgorithmVersion());
+    match.getFailureReasons().forEach(f -> matchDAO.insertFailureReason(matchId, f));
+    Match foundMatch = matchDAO.findMatchById(matchId);
+    assertNotNull(foundMatch);
+    assertEquals(match.getFailureReasons().size(), foundMatch.getFailureReasons().size());
+  }
+
+  @Test
+  public void testDeleteFailureReasonsByConsentIds() {
+    Match match = makeMockMatch(UUID.randomUUID().toString());
+    match.setMatch(false);
+    match.setAlgorithmVersion(MatchAlgorithm.V2.getVersion());
+    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
+    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
+    Integer matchId = matchDAO.insertMatch(
+      match.getConsent(),
+      match.getPurpose(),
+      match.getMatch(),
+      match.getFailed(),
+      match.getCreateDate(),
+      match.getAlgorithmVersion());
+    match.getFailureReasons().forEach(f -> matchDAO.insertFailureReason(matchId, f));
+    matchDAO.deleteFailureReasonsByConsentIds(List.of(match.getConsent()));
+    Match foundMatch = matchDAO.findMatchById(matchId);
+    assertNotNull(foundMatch);
+    assertEquals(0, foundMatch.getFailureReasons().size());
+  }
+
+  @Test
+  public void testDeleteFailureReasonsByPurposeIds() {
+    Match match = makeMockMatch(UUID.randomUUID().toString());
+    match.setMatch(false);
+    match.setAlgorithmVersion(MatchAlgorithm.V2.getVersion());
+    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
+    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
+    Integer matchId = matchDAO.insertMatch(
+      match.getConsent(),
+      match.getPurpose(),
+      match.getMatch(),
+      match.getFailed(),
+      match.getCreateDate(),
+      match.getAlgorithmVersion());
+    match.getFailureReasons().forEach(f -> matchDAO.insertFailureReason(matchId, f));
+    matchDAO.deleteFailureReasonsByPurposeIds(List.of(match.getPurpose()));
+    Match foundMatch = matchDAO.findMatchById(matchId);
+    assertNotNull(foundMatch);
+    assertEquals(0, foundMatch.getFailureReasons().size());
+  }
+
 }

@@ -20,8 +20,8 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
@@ -40,9 +40,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -131,50 +129,16 @@ public class DataAccessRequestService {
         if (Objects.isNull(userRoles)) {
             throw new IllegalArgumentException("UserRoles is required");
         }
-        switch (userRoles) {
-            case SIGNINGOFFICIAL:
-                if (Objects.nonNull(user.getInstitutionId())) {
-                    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
-                    List<DataAccessRequest> openDars = filterOutCanceledDars(dars);
-                    return createAccessRequestManageV2(openDars);
-                } else {
-                    throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") "
-                            + "is not associated with an Institution.");
-                }
-            case RESEARCHER:
-                List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
-                return createAccessRequestManageV2(dars);
-            default:
-                //case for Admin, Chairperson, and Member
-                List<DataAccessRequest> allDars = findAllDataAccessRequests();
-                List<DataAccessRequest> filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, user);
-                List<DataAccessRequest> openDarList = filterOutCanceledDars(filteredAccessList);
-                openDarList.sort(sortTimeComparator());
-                return createAccessRequestManageV2(openDarList);
+        if (!Objects.equals(userRoles, UserRoles.SIGNINGOFFICIAL)) {
+            throw new IllegalArgumentException("Only the Signing Official role is supported");
         }
-    }
-
-    /**
-     * Compare DataAccessRequest sort time long values, descending order.
-     *
-     * @return Comparator
-     */
-    private Comparator<DataAccessRequest> sortTimeComparator() {
-        return (a, b) -> {
-            Long aTime = a.getData().getSortDate();
-            Long bTime = b.getData().getSortDate();
-            if (aTime == null) {
-                aTime = new Date().getTime();
-            }
-            if (bTime == null) {
-                bTime = new Date().getTime();
-            }
-            return bTime.compareTo(aTime);
-        };
-    }
-
-    public List<DataAccessRequest> findAllDataAccessRequests() {
-        return dataAccessRequestDAO.findAllDataAccessRequests();
+        if (Objects.isNull(user.getInstitutionId())) {
+            throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") "
+                    + "is not associated with an Institution.");
+        }
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
+        List<DataAccessRequest> openDars = filterOutCanceledDars(dars);
+        return createAccessRequestManageV2(openDars);
     }
 
     public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -204,6 +168,7 @@ public class DataAccessRequestService {
                 throw new NotAcceptableException(message);
             }
         }
+        matchDAO.deleteFailureReasonsByPurposeIds(List.of(referenceId));
         matchDAO.deleteMatchesByPurposeId(referenceId);
         dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(referenceId);
         dataAccessRequestDAO.deleteByReferenceId(referenceId);
@@ -577,7 +542,7 @@ public class DataAccessRequestService {
         }
         StringBuilder builder = new StringBuilder();
         builder.append(dataAccessReportsParser.getDatasetApprovedUsersHeader(requestingUser));
-        List<DataAccessRequest> darList = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(Integer.toString(datasetId));
+        List<DataAccessRequest> darList = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(datasetId);
         if (CollectionUtils.isNotEmpty(darList)){
             for(DataAccessRequest dar: darList){
                 String referenceId = dar.getReferenceId();

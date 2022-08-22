@@ -15,6 +15,9 @@ public interface TestingDAO extends Transactional<TestingDAO> {
   @SqlUpdate("DELETE FROM consent_audit")
   void deleteAllConsentAudits();
 
+  @SqlUpdate("DELETE FROM match_failure_reason")
+  void deleteAllMatchEntityFailureReasons();
+
   @SqlUpdate("DELETE FROM match_entity")
   void deleteAllMatchEntities();
 
@@ -30,7 +33,7 @@ public interface TestingDAO extends Transactional<TestingDAO> {
   @SqlUpdate("DELETE FROM election")
   void deleteAllElections();
 
-  @SqlUpdate("DELETE FROM datasetproperty")
+  @SqlUpdate("DELETE FROM dataset_property")
   void deleteAllDatasetProperties();
 
   @SqlUpdate("DELETE FROM dataset")

@@ -636,7 +636,7 @@ public class DatasetResourceTest {
     @Test
     public void testUpdateNeedsReviewDataSetsSuccess() {
         Dataset dataSet = new Dataset();
-        when(datasetService.updateNeedsReviewDataSets(any(), any())).thenReturn(dataSet);
+        when(datasetService.updateNeedsReviewDatasets(any(), any())).thenReturn(dataSet);
 
         initResource();
         Response response = resource.updateNeedsReviewDataSets(1, true);
@@ -645,7 +645,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testUpdateNeedsReviewDataSetsError() {
-        doThrow(new RuntimeException()).when(datasetService).updateNeedsReviewDataSets(any(), any());
+        doThrow(new RuntimeException()).when(datasetService).updateNeedsReviewDatasets(any(), any());
 
         initResource();
         Response response = resource.updateNeedsReviewDataSets(1, true);

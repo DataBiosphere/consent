@@ -11,11 +11,11 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
 
   public Dataset map(ResultSet r, StatementContext ctx) throws SQLException {
       Dataset dataset = new Dataset();
-      dataset.setDataSetId(r.getInt("dataSetId"));
-      dataset.setObjectId(r.getString("objectId"));
+      dataset.setDataSetId(r.getInt("dataset_id"));
+      dataset.setObjectId(r.getString("object_id"));
       dataset.setName(r.getString("name"));
-      if (hasColumn(r, "createdate")) {
-          dataset.setCreateDate(r.getDate("createdate"));
+      if (hasColumn(r, "create_date")) {
+          dataset.setCreateDate(r.getDate("create_date"));
       }
       if (hasColumn(r, "create_user_id")) {
           int userId = r.getInt("create_user_id");
@@ -32,8 +32,11 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
               dataset.setUpdateUserId(userId);
           }
       }
-      if(hasColumn(r, "dataUse")) {
-        dataset.setDataUse(DataUse.parseDataUse(r.getString("datause")).orElse(null));
+      if (hasColumn(r, "data_use")) {
+        dataset.setDataUse(DataUse.parseDataUse(r.getString("data_use")).orElse(null));
+      }
+      if (hasColumn(r, "sharing_plan_document")) {
+          dataset.setSharingPlanDocument(r.getString("sharing_plan_document"));
       }
       dataset.setActive(r.getBoolean("active"));
       dataset.setAlias(r.getInt("alias"));

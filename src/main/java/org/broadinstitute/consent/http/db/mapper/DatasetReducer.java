@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -17,16 +18,16 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
   public void accumulate(Map<Integer, Dataset> map, RowView rowView) {
     Dataset dataset =
         map.computeIfAbsent(
-            rowView.getColumn("datasetid", Integer.class), id -> rowView.getRow(Dataset.class));
+            rowView.getColumn("dataset_id", Integer.class), id -> rowView.getRow(Dataset.class));
     if (hasColumn(rowView, "dac_id", Integer.class)) {
       dataset.setDacId(rowView.getColumn("dac_id", Integer.class));
     }
     if (hasColumn(rowView, "consentid", String.class)) {
       dataset.setConsentId(rowView.getColumn("consentid", String.class));
     }
-    if (hasColumn(rowView, "datause", String.class)) {
+    if (hasColumn(rowView, "data_use", String.class)) {
       dataset.setDataUse(
-          DataUse.parseDataUse(rowView.getColumn("datause", String.class)).orElse(null));
+          DataUse.parseDataUse(rowView.getColumn("data_use", String.class)).orElse(null));
     }
     if (hasColumn(rowView, "translateduserestriction", String.class)) {
       dataset.setTranslatedUseRestriction(
@@ -37,15 +38,28 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       dataset.setDeletable(Objects.isNull(dsIdInUse));
     }
     if (hasColumn(rowView, "key", String.class)
-        && hasColumn(rowView, "propertyvalue", String.class)) {
+        && hasColumn(rowView, "property_value", String.class)) {
       String keyName = rowView.getColumn("key", String.class);
-      String propVal = rowView.getColumn("propertyvalue", String.class);
+      String propVal = rowView.getColumn("property_value", String.class);
+      DatasetPropertyType propType = DatasetPropertyType.String;
+      if (hasColumn(rowView, "property_type", String.class)) {
+          propType = DatasetPropertyType.parse(rowView.getColumn("property_type", String.class));
+      }
+
       if (Objects.nonNull(keyName) && Objects.nonNull(propVal)) {
-        DatasetProperty prop = new DatasetProperty();
-        prop.setDataSetId(dataset.getDataSetId());
-        prop.setPropertyValue(propVal);
-        prop.setPropertyName(keyName);
-        dataset.addProperty(prop);
+        try {
+          DatasetProperty prop = new DatasetProperty();
+          prop.setDataSetId(dataset.getDataSetId());
+          prop.setPropertyValue(propType.coerce(propVal));
+          prop.setPropertyName(keyName);
+          prop.setPropertyType(propType);
+          if (hasColumn(rowView, "schema_property", String.class)) {
+            prop.setSchemaProperty(rowView.getColumn("schema_property", String.class));
+          }
+          dataset.addProperty(prop);
+        } catch (Exception e) {
+          // do nothing.
+        }
       }
     }
     // The name property doesn't always come through, add it manually:
@@ -62,6 +76,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       name.setPropertyName(DatasetService.DATASET_NAME_KEY);
       name.setPropertyValue(dataset.getName());
       name.setDataSetId(dataset.getDataSetId());
+      name.setPropertyType(DatasetPropertyType.String);
       dataset.addProperty(name);
     }
     dataset.setDatasetName(dataset.getName());

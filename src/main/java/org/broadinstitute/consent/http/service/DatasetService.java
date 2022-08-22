@@ -7,10 +7,9 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -87,16 +86,16 @@ public class DatasetService {
         }
     }
 
-    public Dataset updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval) {
-        if (datasetDAO.findDatasetById(dataSetId) == null) {
+    public Dataset updateNeedsReviewDatasets(Integer datasetId, Boolean needsApproval) {
+        if (datasetDAO.findDatasetById(datasetId) == null) {
             throw new NotFoundException("DataSet doesn't exist");
         }
-        datasetDAO.updateDatasetNeedsApproval(dataSetId, needsApproval);
-        return datasetDAO.findDatasetById(dataSetId);
+        datasetDAO.updateDatasetNeedsApproval(datasetId, needsApproval);
+        return datasetDAO.findDatasetById(datasetId);
     }
 
-    public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
-        return datasetDAO.findNeedsApprovalDatasetByDatasetId(dataSetIdList);
+    public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> datasetIdList) {
+        return datasetDAO.findNeedsApprovalDatasetByDatasetId(datasetIdList);
     }
 
     public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
@@ -198,7 +197,7 @@ public class DatasetService {
         Timestamp now = new Timestamp(new Date().getTime());
         Integer createdDatasetId = datasetDAO.inTransaction(h -> {
             try {
-                Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(), dataset.getActive());
+                Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(), dataset.getActive(), dataset.getDataUse().toString());
                 List<DatasetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
                 h.insertDatasetProperties(propertyList);
                 h.updateDatasetNeedsApproval(id, dataset.getNeedsApproval());
@@ -299,7 +298,7 @@ public class DatasetService {
     private void updateDatasetProperties(List<DatasetProperty> updateProperties,
                                          List<DatasetProperty> deleteProperties, List<DatasetProperty> addProperties) {
         updateProperties.forEach(p -> datasetDAO
-              .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue()));
+              .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue().toString()));
         deleteProperties.forEach(
               p -> datasetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
         datasetDAO.insertDatasetProperties(addProperties);
@@ -329,8 +328,10 @@ public class DatasetService {
               .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals(DATASET_NAME_KEY))
               .map(p ->
                     new DatasetProperty(datasetId,
-                          dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
-                          p.getPropertyValue(), now)
+                            dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
+                            p.getPropertyValue(),
+                            DatasetPropertyType.String,
+                            now)
               )
               .collect(Collectors.toList());
     }

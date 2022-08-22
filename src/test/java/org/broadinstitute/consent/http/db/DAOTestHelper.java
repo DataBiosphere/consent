@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -19,6 +20,8 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -42,7 +45,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -148,6 +150,7 @@ public class DAOTestHelper {
         testingDAO.deleteAllApprovalTimes();
         testingDAO.deleteAllVotes();
         testingDAO.deleteAllConsentAudits();
+        testingDAO.deleteAllMatchEntityFailureReasons();
         testingDAO.deleteAllMatchEntities();
         testingDAO.deleteAllConsentAssociations();
         testingDAO.deleteAllConsents();
@@ -255,14 +258,15 @@ public class DAOTestHelper {
     protected Match createMatch() {
         DataAccessRequest dar = createDataAccessRequestV3();
         Dac dac = createDac();
-        Consent consent = createConsent(dac.getDacId());
+        Dataset dataset = createDataset();
         Integer matchId =
         matchDAO.insertMatch(
-            consent.getConsentId(),
+            dataset.getDatasetIdentifier(),
             dar.getReferenceId(),
             RandomUtils.nextBoolean(),
             false,
-            new Date());
+            new Date(),
+            MatchAlgorithm.V2.getVersion());
         return matchDAO.findMatchById(matchId);
     }
 
@@ -373,7 +377,8 @@ public class DAOTestHelper {
         String name = "Name_" + RandomStringUtils.random(20, true, true);
         Timestamp now = new Timestamp(new Date().getTime());
         String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
-        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true);
+        DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, dataUse.toString());
         createDatasetProperties(id);
         return datasetDAO.findDatasetById(id);
     }

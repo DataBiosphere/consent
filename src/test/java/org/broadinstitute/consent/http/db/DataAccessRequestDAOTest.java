@@ -5,6 +5,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -366,13 +367,13 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     public void testFindAllByDatasetIdArchived() {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Dataset dataset = createDataset();
-        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId());
         assertTrue(dars.isEmpty());
 
         User user = createUserWithInstitution();
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-        List returnedDARs = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId().toString());
+        List returnedDARs = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId());
         assertTrue(returnedDARs.isEmpty());
     }
 
@@ -590,7 +591,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         String name = "Name_" + RandomStringUtils.random(20, true, true);
         Timestamp now = new Timestamp(new Date().getTime());
         String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
-        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true);
+        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, new DataUseBuilder().setGeneralUse(true).build().toString());
         createDatasetPropertiesLocal(id);
         return datasetDAO.findDatasetById(id);
     }

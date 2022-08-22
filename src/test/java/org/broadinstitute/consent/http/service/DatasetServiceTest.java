@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -85,7 +86,7 @@ public class DatasetServiceTest {
     public void testCreateDataset() throws Exception {
         DatasetDTO test = getDatasetDTO();
         Dataset mockDataset = getDatasets().get(0);
-        when(datasetDAO.insertDataset(anyString(), any(), anyInt(), anyString(), anyBoolean())).thenReturn(mockDataset.getDataSetId());
+        when(datasetDAO.insertDataset(anyString(), any(), anyInt(), anyString(), anyBoolean(), any())).thenReturn(mockDataset.getDataSetId());
         when(datasetDAO.findDatasetById(any())).thenReturn(mockDataset);
         when(datasetDAO.findDatasetPropertiesByDatasetId(any())).thenReturn(getDatasetProperties());
         when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(Collections.singleton(test));
@@ -184,7 +185,7 @@ public class DatasetServiceTest {
         doNothing().when(datasetDAO).updateDatasetNeedsApproval(any(), any());
         initService();
 
-        Dataset dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, true);
+        Dataset dataSet = datasetService.updateNeedsReviewDatasets(dataSetId, true);
         assertNotNull(dataSet);
     }
 
@@ -323,7 +324,7 @@ public class DatasetServiceTest {
         dataSetDTO.setDatasetName(dataset.getName());
         Set<DatasetProperty> datasetProps = getDatasetProperties();
         List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-            new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue())
+            new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
         ).collect(Collectors.toList());
         dataSetDTO.setProperties(dtoProps);
         dataset.setProperties(datasetProps);
@@ -417,7 +418,7 @@ public class DatasetServiceTest {
         //dataset properties are the same between the existing dataset and the update datasetDTO - no modification
         Set<DatasetProperty> datasetProps = getDatasetProperties();
         List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-                new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue())
+                new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
         ).collect(Collectors.toList());
         datasetDTO.setProperties(dtoProps);
         dataset.setProperties(datasetProps);
@@ -608,7 +609,11 @@ public class DatasetServiceTest {
     private Set<DatasetProperty> getDatasetProperties() {
         return IntStream.range(1, 11)
             .mapToObj(i ->
-                new DatasetProperty(1, i, "Test Value" + RandomStringUtils.randomAlphanumeric(25), new Date())
+                new DatasetProperty(1,
+                        i,
+                        "Test Value" + RandomStringUtils.randomAlphanumeric(25),
+                        DatasetPropertyType.String,
+                        new Date())
             ).collect(Collectors.toSet());
     }
 
