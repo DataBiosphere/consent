@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -425,5 +426,4 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " WHERE c.consentid = :consentId " +
             " AND d.active = true ")
     Set<Dataset> findDatasetsForConsentId(@Bind("consentId") String consentId);
-
 }

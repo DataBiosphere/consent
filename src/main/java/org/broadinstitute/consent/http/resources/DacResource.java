@@ -11,8 +11,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -25,10 +27,13 @@ import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/dac")
@@ -36,12 +41,14 @@ public class DacResource extends Resource {
 
     private final DacService dacService;
     private final UserService userService;
+    private final DatasetService datasetService;
     private static final Logger logger = Logger.getLogger(DacResource.class.getName());
 
     @Inject
-    public DacResource(DacService dacService, UserService userService) {
+    public DacResource(DacService dacService, UserService userService, DatasetService datasetService) {
         this.dacService = dacService;
         this.userService = userService;
+        this.datasetService = datasetService;
     }
 
     @GET
@@ -204,6 +211,32 @@ public class DacResource extends Resource {
     public Response filterUsers(@PathParam("term") String term) {
         List<User> users = dacService.findAllDACUsersBySearchString(term);
         return Response.ok().entity(users).build();
+    }
+
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("{dacId/dataset/{datasetId")
+    @RolesAllowed({CHAIRPERSON})
+    public Response approveDataset(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("datasetId") Integer datasetId, String json) {
+        //get dataset, observe dac
+        //get user roles, see if user has chair role in observed dac
+            //if true, perform service call
+            //if false, throw exception
+        //return response
+        try{
+            User user = userService.findUserByEmail(authUser.getEmail());
+            Dataset dataset = datasetService.findDatasetById(datasetId);
+            if(dataset.getDacId() != dacId) { 
+                //Vague message is intentional, don't want to reveal too much info
+                throw new BadRequestException("Payload dacId invalid");
+            }
+            userService.checkIfUserHasRole(UserRoles.ADMIN.getRoleName(), user, dacId);
+            datasetService.approveDataset(dataset, user, json);
+        } catch(Exception e) {
+            return createExceptionResponse(e);
+        }
+
     }
 
     private User findDacUser(Integer userId) {

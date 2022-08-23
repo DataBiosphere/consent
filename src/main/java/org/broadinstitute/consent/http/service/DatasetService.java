@@ -24,9 +24,11 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -433,6 +435,13 @@ public class DatasetService {
                   return map;
               }
         ).collect(Collectors.toList());
+    }
+
+    public Dataset approveDataset(Dataset dataset, User user, Boolean approvalBool) {
+        if(dataset.getDacApproval()) {
+            throw new NotAllowedException("Dataset is already approved");
+        }
+        datasetDAO.updateDatasetApproval(approvalBool, updateDate, updateUserId, datasetId);
     }
 
     private boolean filterDatasetOnProperties(DatasetDTO dataset, String term) {

@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -363,6 +364,20 @@ public class UserService {
             }
         });
         userRoleDAO.insertUserRoles(roles, userId);
+    }
+
+    public void checkIfUserHasRole(String roleName, User user, Integer dacId) {
+        UserRoles role = UserRoles.getUserRoleFromName(roleName);
+        List<UserRole> roles = user.getRoles();
+        List<UserRole> targetRoles = roles.stream()
+            .filter((r) -> {
+                return r.getName() == role.getRoleName()
+                && r.getDacId() == dacId;
+            })
+            .collect(Collectors.toList());
+        if(targetRoles.isEmpty()) {
+            throw new ForbiddenException("User does not have required permissions");
+        }
     }
 
     private void addExistingLibraryCards(User user) {
