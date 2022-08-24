@@ -438,7 +438,8 @@ public class DatasetService {
     }
 
     public Dataset approveDataset(Dataset dataset, User user, Boolean approvalBool) {
-        if(dataset.getDacApproval()) {
+        Boolean currentApprovalState = dataset.getDacApproval();
+        if(Objects.nonNull(currentApprovalState) && dataset.getDacApproval()) {
             throw new NotAllowedException("Dataset is already approved");
         }
         Integer datasetId = dataset.getDataSetId();

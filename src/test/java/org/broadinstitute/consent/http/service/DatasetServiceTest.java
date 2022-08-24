@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -575,6 +576,35 @@ public class DatasetServiceTest {
         verify(datasetDAO, times(0)).getAllDatasets();
         verify(datasetDAO, times(1)).getActiveDatasets();
         verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
+    }
+
+    @Test(expected = NotAllowedException.class)
+    public void testApproveDataset_AlreadyApproved() {
+        Dataset dataset = new Dataset();
+        dataset.setDacApproval(true);
+        User user = new User();
+        Boolean payloadBool = false;
+        initService();
+        datasetService.approveDataset(dataset, user, payloadBool);
+    }
+
+    @Test
+    public void testApproveDataset() {
+        Dataset dataset = new Dataset();
+        dataset.setDataSetId(1);
+        User user = new User();
+        user.setUserId(1);
+        Boolean payloadBool = true;
+        Dataset updatedDataset = new Dataset();
+        updatedDataset.setDataSetId(1);
+        updatedDataset.setDacApproval(payloadBool);
+        
+        when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
+        initService();
+
+        Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
+        assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
+        assertTrue(returnedDataset.getDacApproval());
     }
 
     /* Helper functions */
