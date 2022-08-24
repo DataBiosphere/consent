@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
@@ -29,15 +30,19 @@ public class SupportTicketCreatorTest {
     @Mock
     private UserDAO userDAO;
 
+    @Mock
+    private ServicesConfiguration configuration;
+
     @Before
     public void setUp() {
         openMocks(this);
-        this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO);
+        this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO, configuration);
+        String supportRequestUrl =  RandomStringUtils.randomAlphabetic(10);
+        when(configuration.postSupportRequestUrl()).thenReturn(supportRequestUrl);
     }
 
     @Test
     public void testCreateInstitutionSOSupportTicket_SuggestedInstitution() {
-        String url =  RandomStringUtils.randomAlphabetic(10);
         String displayName = RandomStringUtils.randomAlphabetic(10);
         String email = RandomStringUtils.randomAlphabetic(10);
         User user = new User();
@@ -48,7 +53,7 @@ public class SupportTicketCreatorTest {
         UserUpdateFields updateFields = new UserUpdateFields();
         updateFields.setSuggestedInstitution(suggestedInstitution);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName, supportRequest.getRequester().getName());
         assertEquals(email, supportRequest.getRequester().getEmail());
@@ -67,13 +72,12 @@ public class SupportTicketCreatorTest {
         assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
         assertTrue(customFields.contains(new CustomRequestField(360018545031L, email)));
 
-        String commentBody = expectedDescription + "\n\n------------------\nSubmitted from: " + url;
+        String commentBody = expectedDescription + "\n\n------------------\nSubmitted from: " + configuration.postSupportRequestUrl();
         assertEquals(commentBody, supportRequest.getComment().getBody());
     }
 
     @Test
     public void testCreateInstitutionSOSupportTicket_SuggestedSigningOfficial() {
-        String url =  RandomStringUtils.randomAlphabetic(10);
         String displayName = RandomStringUtils.randomAlphabetic(10);
         String email = RandomStringUtils.randomAlphabetic(10);
         User user = new User();
@@ -84,7 +88,7 @@ public class SupportTicketCreatorTest {
         UserUpdateFields updateFields = new UserUpdateFields();
         updateFields.setSuggestedSigningOfficial(suggestedSigningOfficial);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: New Signing Official Request", supportRequest.getSubject());
 
@@ -98,7 +102,6 @@ public class SupportTicketCreatorTest {
 
     @Test
     public void testCreateInstitutionSOSupportTicket_SelectedInstitution() {
-        String url =  RandomStringUtils.randomAlphabetic(10);
         String displayName = RandomStringUtils.randomAlphabetic(10);
         String email = RandomStringUtils.randomAlphabetic(10);
         User user = new User();
@@ -113,7 +116,7 @@ public class SupportTicketCreatorTest {
 
         when(institutionDAO.findInstitutionById(1)).thenReturn(institution);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: Institution Selection", supportRequest.getSubject());
 
@@ -128,7 +131,6 @@ public class SupportTicketCreatorTest {
 
     @Test
     public void testCreateInstitutionSOSupportTicket_SelectedInstitutionNotFound() {
-        String url =  RandomStringUtils.randomAlphabetic(10);
         String displayName = RandomStringUtils.randomAlphabetic(10);
         String email = RandomStringUtils.randomAlphabetic(10);
         User user = new User();
@@ -141,7 +143,7 @@ public class SupportTicketCreatorTest {
 
         when(institutionDAO.findInstitutionById(institutionId)).thenReturn(null);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: Institution Selection", supportRequest.getSubject());
 
@@ -156,7 +158,6 @@ public class SupportTicketCreatorTest {
 
     @Test
     public void testCreateInstitutionSOSupportTicket_SelectedSigningOfficial() {
-        String url =  RandomStringUtils.randomAlphabetic(10);
         String displayName = RandomStringUtils.randomAlphabetic(10);
         String email = RandomStringUtils.randomAlphabetic(10);
         User user = new User();
@@ -171,7 +172,7 @@ public class SupportTicketCreatorTest {
 
         when(userDAO.findUserById(1)).thenReturn(signingOfficial);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: Signing Official Selection", supportRequest.getSubject());
 
@@ -188,7 +189,6 @@ public class SupportTicketCreatorTest {
 
     @Test
     public void testCreateInstitutionSOSupportTicket_SelectedSigningOfficialNotFound() {
-        String url =  RandomStringUtils.randomAlphabetic(10);
         String displayName = RandomStringUtils.randomAlphabetic(10);
         String email = RandomStringUtils.randomAlphabetic(10);
         User user = new User();
@@ -201,7 +201,7 @@ public class SupportTicketCreatorTest {
 
         when(userDAO.findUserById(signingOfficialId)).thenReturn(null);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: Signing Official Selection", supportRequest.getSubject());
 
@@ -216,7 +216,6 @@ public class SupportTicketCreatorTest {
 
     @Test
     public void testCreateInstitutionSOSupportTicket_MultipleFields() {
-        String url =  RandomStringUtils.randomAlphabetic(10);
         String displayName = RandomStringUtils.randomAlphabetic(10);
         String email = RandomStringUtils.randomAlphabetic(10);
         User user = new User();
@@ -229,13 +228,14 @@ public class SupportTicketCreatorTest {
         String suggestedSigningOfficial = RandomStringUtils.randomAlphabetic(10);
         updateFields.setSuggestedSigningOfficial(suggestedSigningOfficial);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user, url);
+        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
         assertEquals(displayName + " user updates: New Institution Request, New Signing Official Request", supportRequest.getSubject());
 
-        String expectedDescription = String.format("User %s [%s] has:\n" +
-                        "- requested a new institution: %s\n" +
-                        "- requested a new signing official: %s",
+        String expectedDescription = String.format("""
+                        User %s [%s] has:
+                        - requested a new institution: %s
+                        - requested a new signing official: %s""",
                 user.getDisplayName(),
                 user.getEmail(),
                 suggestedInstitution,

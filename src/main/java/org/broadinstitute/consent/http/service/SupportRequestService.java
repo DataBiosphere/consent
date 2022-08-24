@@ -35,7 +35,7 @@ public class SupportRequestService {
 
     @Inject
     public SupportRequestService(ServicesConfiguration configuration, InstitutionDAO institutionDAO, UserDAO userDAO) {
-        this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO);
+        this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO, configuration);
         this.clientUtil = new HttpClientUtil();
         this.configuration = configuration;
     }
@@ -85,7 +85,7 @@ public class SupportRequestService {
             //only send ticket if an institution or signing official is provided; ignore otherwise
             if (updateFieldProvided) {
                 try {
-                    SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(userUpdateFields, user, configuration.postSupportRequestUrl());
+                    SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(userUpdateFields, user);
                     postTicketToSupport(ticket);
                 } catch (Exception e) {
                     logger.error("Exception sending suggested user fields support request: " + e.getMessage());

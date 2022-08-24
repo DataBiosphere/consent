@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.support;
 
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
@@ -18,10 +19,12 @@ public class SupportTicketCreator {
 
     private final InstitutionDAO institutionDAO;
     private final UserDAO userDAO;
+    private final ServicesConfiguration configuration;
 
-    public SupportTicketCreator(InstitutionDAO institutionDAO, UserDAO userDAO) {
+    public SupportTicketCreator(InstitutionDAO institutionDAO, UserDAO userDAO, ServicesConfiguration configuration) {
         this.institutionDAO = institutionDAO;
         this.userDAO = userDAO;
+        this.configuration = configuration;
     }
 
     /**
@@ -31,7 +34,7 @@ public class SupportTicketCreator {
      * @param user             The user requesting the institution and/or signing official
      * @return A support ticket detailing the requested user fields
      */
-    public SupportTicket createInstitutionSOSupportTicket(UserUpdateFields userUpdateFields, User user, String url) {
+    public SupportTicket createInstitutionSOSupportTicket(UserUpdateFields userUpdateFields, User user) {
         String suggestedInstitution = userUpdateFields.getSuggestedInstitution();
         Integer selectedInstitutionId = userUpdateFields.getInstitutionId();
         String suggestedSigningOfficial = userUpdateFields.getSuggestedSigningOfficial();
@@ -68,7 +71,7 @@ public class SupportTicketCreator {
                 user.getEmail(),
                 subject,
                 description,
-                url);
+                configuration.postSupportRequestUrl());
     }
 
     private void addSuggestedInstitutionMessages(List<String> subjectItems, List<String> descriptionItems, String suggestedInstitution) {
