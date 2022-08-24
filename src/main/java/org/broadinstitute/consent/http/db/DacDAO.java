@@ -189,7 +189,7 @@ public interface DacDAO extends Transactional<DacDAO> {
      */
     @RegisterRowMapper(DacMapper.class)
     @SqlQuery(
-        "SELECT d.*, a.datasetid FROM dac d "
+        "SELECT d.*, ca.dataset_id FROM dac d "
             + " INNER JOIN consents c ON d.dac_id = c.dac_id "
             + " INNER JOIN consent_associations ca ON ca.consent_id = c.consent_id "
             + " WHERE ca.dataset_id IN (<datasetIds>) ")

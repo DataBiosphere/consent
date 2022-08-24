@@ -360,7 +360,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "   select d1.*, e1.electionId from dac d1 " +
             "     inner join consents c1 on d1.dac_id = c1.dac_id " +
             "     inner join consent_associations a1 on a1.consent_id = c1.consent_id " +
-            "     inner join election e1 on e1.datasetId = a1.dataSetId and e1.electionId = :electionId " +
+            "     inner join election e1 on e1.datasetId = a1.dataset_id and e1.electionId = :electionId " +
             " union " +
             "   select d2.*, e2.electionId from dac d2 " +
             "     inner join consents c2 on d2.dac_id = c2.dac_id " +
