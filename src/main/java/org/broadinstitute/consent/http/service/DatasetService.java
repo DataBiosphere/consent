@@ -441,7 +441,9 @@ public class DatasetService {
         if(dataset.getDacApproval()) {
             throw new NotAllowedException("Dataset is already approved");
         }
-        datasetDAO.updateDatasetApproval(approvalBool, updateDate, updateUserId, datasetId);
+        Integer datasetId = dataset.getDataSetId();
+        datasetDAO.updateDatasetApproval(approvalBool, Instant.now(), user.getUserId(), datasetId);
+        return datasetDAO.findDatasetById(datasetId);
     }
 
     private boolean filterDatasetOnProperties(DatasetDTO dataset, String term) {

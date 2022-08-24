@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.List;
@@ -14,7 +15,6 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -30,7 +30,6 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -232,11 +231,13 @@ public class DacResource extends Resource {
                 throw new BadRequestException("Payload dacId invalid");
             }
             userService.checkIfUserHasRole(UserRoles.ADMIN.getRoleName(), user, dacId);
-            datasetService.approveDataset(dataset, user, json);
+            JsonObject payload = new Gson().fromJson(json, JsonObject.class);
+            Boolean isApproved = payload.get("approved").getAsBoolean();
+            Dataset updatedDataset = datasetService.approveDataset(dataset, user, isApproved);
+            return Response.ok().entity(updatedDataset).build();
         } catch(Exception e) {
             return createExceptionResponse(e);
         }
-
     }
 
     private User findDacUser(Integer userId) {
