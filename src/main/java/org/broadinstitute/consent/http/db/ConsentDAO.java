@@ -122,16 +122,16 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                                   @Bind("dataSetId") Integer dataSetId);
 
 
-    @SqlQuery("SELECT ds.objectId FROM consent_associations ca INNER JOIN dataset ds ON ds.dataSetId = ca.dataset_id " +
-            " WHERE ca.consent_id = :consentId AND ca.association_type = :associationType AND ds.objectId IS NOT NULL")
+    @SqlQuery("SELECT ds.object_id FROM consent_associations ca INNER JOIN dataset ds ON ds.dataSetId = ca.dataset_id " +
+            " WHERE ca.consent_id = :consentId AND ca.association_type = :associationType AND ds.object_id IS NOT NULL")
     List<String> findAssociationsByType(@Bind("consentId") String consentId,
                                         @Bind("associationType") String associationType);
 
     @SqlQuery("SELECT association_id FROM consent_associations WHERE dataset_id = :datasetId")
     Integer findAssociationsByDataSetId(@Bind("datasetId") Integer datasetId);
 
-    @SqlQuery("SELECT ds.objectId FROM consent_associations ca INNER JOIN dataset ds ON ds.dataSetId = ca.dataset_id " +
-            " WHERE ca.consent_id = :consentId AND ca.association_type = :associationType AND ds.objectId = :objectId")
+    @SqlQuery("SELECT ds.object_id FROM consent_associations ca INNER JOIN dataset ds ON ds.dataSetId = ca.dataset_id " +
+            " WHERE ca.consent_id = :consentId AND ca.association_type = :associationType AND ds.object_id = :objectId")
     String findAssociationByTypeAndId(@Bind("consentId") String consentId,
                                       @Bind("associationType") String associationType,
                                       @Bind("objectId") String objectId);

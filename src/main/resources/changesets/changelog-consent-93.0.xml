@@ -10,47 +10,43 @@
                       newColumnName="consent_id"/>
 
         <renameColumn tableName="consents"
-                      oldColumnName="requiresManualReview"
+                      oldColumnName="requiresmanualreview"
                       newColumnName="requires_manual_review"/>
 
         <renameColumn tableName="consents"
-                      oldColumnName="useRestriction"
+                      oldColumnName="userestriction"
                       newColumnName="use_restriction"/>
 
         <renameColumn tableName="consents"
-                      oldColumnName="dataUse"
-                      newColumnName="data_use"/>
-
-        <renameColumn tableName="consents"
-                      oldColumnName="dataUseLetter"
+                      oldColumnName="datauseletter"
                       newColumnName="data_use_letter"/>
 
         <renameColumn tableName="consents"
-                      oldColumnName="dulName"
+                      oldColumnName="dulname"
                       newColumnName="dul_name"/>
 
         <renameColumn tableName="consents"
-                      oldColumnName="createDate"
+                      oldColumnName="createdate"
                       newColumnName="create_date"/>
 
         <renameColumn tableName="consents"
-                      oldColumnName="sortDate"
-                      newColumnName="sort_date"/>
-
-        <renameColumn tableName="consents"
-                      oldColumnName="translatedUseRestriction"
-                      newColumnName="translated_use_restriction"/>
-
-        <renameColumn tableName="consents"
-                      oldColumnName="groupName"
-                      newColumnName="group_name"/>
-
-        <renameColumn tableName="consents"
-                      oldColumnName="lastUpdate"
+                      oldColumnName="lastupdate"
                       newColumnName="last_update"/>
 
         <renameColumn tableName="consents"
-                      oldColumnName="groupName"
+                      oldColumnName="sortdate"
+                      newColumnName="sort_date"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="translateduserestriction"
+                      newColumnName="translated_use_restriction"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="datause"
+                      newColumnName="data_use"/>
+
+        <renameColumn tableName="consents"
+                      oldColumnName="groupname"
                       newColumnName="group_name"/>
 
         <renameColumn tableName="consentassociations"
@@ -62,20 +58,12 @@
                       newColumnName="consent_id"/>
 
         <renameColumn tableName="consentassociations"
-                      oldColumnName="associationType"
+                      oldColumnName="associationtype"
                       newColumnName="association_type"/>
 
         <renameColumn tableName="consentassociations"
-                      oldColumnName="objectId"
-                      newColumnName="object_id"/>
-
-        <renameColumn tableName="consentassociations"
-                      oldColumnName="dataSetId"
+                      oldColumnName="datasetid"
                       newColumnName="dataset_id"/>
-
-        <renameColumn tableName="consentassociations"
-                      oldColumnName="associationId"
-                      newColumnName="association_id"/>
 
         <renameTable oldTableName="consentassociations"
                      newTableName="consent_associations"/>
