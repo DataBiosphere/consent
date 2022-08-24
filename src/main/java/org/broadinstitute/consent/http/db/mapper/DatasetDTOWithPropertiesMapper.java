@@ -36,10 +36,7 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
       datasetDTO.setDataSetId(dataSetId);
       datasetDTO.setActive(r.getBoolean("active"));
       datasetDTO.setTranslatedUseRestriction(r.getString("translated_use_restriction"));
-      // Consents store DataUse in `data_use` while Datasets store it in `data_use`. Capture both cases for safety.
-      if (hasColumn(r, "data_use")) {
-        datasetDTO.setDataUse(DataUse.parseDataUse(r.getString("datause")).orElse(null));
-      }
+      // Both Consents and Datasets store DataUse in `data_use`.
       if (hasColumn(r, "data_use")) {
         datasetDTO.setDataUse(DataUse.parseDataUse(r.getString("data_use")).orElse(null));
       }
