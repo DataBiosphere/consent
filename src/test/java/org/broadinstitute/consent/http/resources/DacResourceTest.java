@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -34,6 +35,9 @@ public class DacResourceTest {
 
     @Mock
     private DacService dacService;
+
+    @Mock
+    private DatasetService datasetService;
 
     @Mock
     private UserService userService;
@@ -47,7 +51,7 @@ public class DacResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        dacResource = new DacResource(dacService, userService);
+        dacResource = new DacResource(dacService, userService, datasetService);
     }
 
     @Test

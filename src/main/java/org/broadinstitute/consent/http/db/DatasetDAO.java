@@ -427,15 +427,15 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " AND d.active = true ")
     Set<Dataset> findDatasetsForConsentId(@Bind("consentId") String consentId);
 
-    @SqlQuery(
+    @SqlUpdate(
         "UPDATE dataset " +
-        "SET dac_approved = :dacApproved, " +
-        "update_date = :updateDate, " +
-        "update_user_id = :updateUserId, " +
-        "dataset_id = :datasetId"
+        "SET dac_approval = :dacApproval, " +
+            "update_date = :updateDate, " +
+            "update_user_id = :updateUserId " +
+        "WHERE dataset_id = :datasetId"
     )
-    Set<Dataset> updateDatasetApproval(
-        @Bind("dacApproved") Boolean dacApproved,
+    void updateDatasetApproval(
+        @Bind("dacApproval") Boolean dacApproved,
         @Bind("updateDate") Instant updateDate,
         @Bind("updateUserId") Integer updateUserId,
         @Bind("datasetId") Integer datasetId

@@ -215,7 +215,7 @@ public class DacResource extends Resource {
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
-    @Path("{dacId/dataset/{datasetId")
+    @Path("{dacId}/dataset/{datasetId}")
     @RolesAllowed({CHAIRPERSON})
     public Response approveDataset(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("datasetId") Integer datasetId, String json) {
         //get dataset, observe dac
