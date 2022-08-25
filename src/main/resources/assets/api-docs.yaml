@@ -690,6 +690,8 @@ paths:
           description: No DAC found with the given ID
         500:
           description: Internal Server Error
+  /api/dac/{dacId}/dataset/{datasetId}:
+    $ref: './paths/approveDataset.yaml'
   /api/dac/{dacId}/member/{userId}:
     post:
       summary: Add DAC Member

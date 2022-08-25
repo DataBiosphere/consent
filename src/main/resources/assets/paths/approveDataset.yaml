@@ -1,0 +1,48 @@
+put:
+  summary: DAC Chair updates dataset approval status
+  operationId: approveDatset
+  description: DAC Chair submits their approval/disapporval regarding their DAC ownership of target dataset
+  parameters: 
+    - name: dacId
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: datasetId
+      in: path
+      required: true
+      schema:
+        type: integer
+  requestBody:
+      description: 'Payload that should contain the key-value pair of {"approval": Boolean}'
+      required: true
+      content: 
+          application/json:
+            schema:
+              type: object
+              properties:
+                approval: 
+                  type: boolean
+                  descrption: DAC chair approval decision
+  responses:
+    200:
+      description: Returns the updated dataset
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Dataset'
+    400:
+      description: Bad Request (missing or invalid request body)
+    403:
+      description: Forbidden (User cannot un-approve an already approved dataset)
+    404:
+      description: Not Found
+    500: 
+      description: Internal Server Error
+    
+    
+              
+
+      
+
+  

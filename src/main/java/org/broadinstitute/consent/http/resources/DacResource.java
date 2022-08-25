@@ -227,6 +227,9 @@ public class DacResource extends Resource {
             }
             userService.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), user, dacId);
             JsonObject payload = new Gson().fromJson(json, JsonObject.class);
+            if(payload.size() == 0) {
+                throw new BadRequestException("Missing key 'approved' from JSON object");
+            }
             Boolean isApproved = payload.get("approved").getAsBoolean();
             Dataset updatedDataset = datasetService.approveDataset(dataset, user, isApproved);
             return Response.ok().entity(updatedDataset).build();

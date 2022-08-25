@@ -418,8 +418,8 @@ public class DacResourceTest {
         dataset.setDacId(1);
         when(userService.findUserByEmail(anyString())).thenReturn(user);
         when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
-        Response response = dacResource.approveDataset(authUser, 1, 1, "");
-        assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+        Response response = dacResource.approveDataset(authUser, 1, 1, "{}");
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
