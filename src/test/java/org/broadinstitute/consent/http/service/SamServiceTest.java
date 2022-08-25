@@ -14,11 +14,11 @@ import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.mockserver.model.MediaType;
@@ -35,6 +35,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -47,13 +48,23 @@ public class SamServiceTest implements WithMockServer {
   @Mock
   private AuthUser authUser;
 
-  @Rule
-  public MockServerContainer container = new MockServerContainer(IMAGE);
+  private static final MockServerContainer container = new MockServerContainer(IMAGE);
+
+  @BeforeClass
+  public static void setUp() {
+    container.start();
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    container.stop();
+  }
 
   @Before
-  public void setUp() throws Exception {
-    MockitoAnnotations.openMocks(this);
+  public void init() {
+    openMocks(this);
     mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
+    mockServerClient.reset();
     ServicesConfiguration config = new ServicesConfiguration();
     config.setSamUrl("http://" + container.getHost() + ":" + container.getServerPort() + "/");
     service = new SamService(config);
@@ -118,6 +129,7 @@ public class SamServiceTest implements WithMockServer {
 
   @Test (expected = NotFoundException.class)
   public void testNotFound() throws Exception {
+    setDebugLogging();
     mockServerClient.when(request())
             .respond(response()
                     .withHeader(Header.header("Content-Type", "application/json"))
