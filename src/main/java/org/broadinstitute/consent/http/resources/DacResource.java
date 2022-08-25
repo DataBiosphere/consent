@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
@@ -228,10 +229,14 @@ public class DacResource extends Resource {
             userService.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), user, dacId);
             JsonObject payload = new Gson().fromJson(json, JsonObject.class);
             if(payload.size() == 0) {
-                throw new BadRequestException("Missing key 'approved' from JSON object");
+                throw new BadRequestException("Request body is empty");
             }
-            Boolean isApproved = payload.get("approved").getAsBoolean();
-            Dataset updatedDataset = datasetService.approveDataset(dataset, user, isApproved);
+            JsonElement approvalElement = payload.get("approval");
+            if(Objects.isNull(approvalElement)) {
+                throw new BadRequestException("Missing key 'approval' from request body");
+            }
+            Boolean approvalBool = approvalElement.getAsBoolean();
+            Dataset updatedDataset = datasetService.approveDataset(dataset, user, approvalBool);
             return Response.ok().entity(updatedDataset).build();
         } catch(Exception e) {
             return createExceptionResponse(e);

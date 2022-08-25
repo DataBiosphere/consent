@@ -1,7 +1,8 @@
 put:
   summary: DAC Chair updates dataset approval status
-  operationId: approveDatset
-  description: DAC Chair submits their approval/disapporval regarding their DAC ownership of target dataset
+  description: Endpoint allows DAC Chairs to submit approval decisions for datasets under their purview (or requested purview)
+  tags:
+    - DAC
   parameters: 
     - name: dacId
       in: path
@@ -30,7 +31,7 @@ put:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Dataset'
+            $ref: '../schemas/Dataset.yaml'
     400:
       description: Bad Request (missing or invalid request body)
     403:

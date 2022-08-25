@@ -369,9 +369,9 @@ public class UserService {
         List<UserRole> roles = user.getRoles();
         List<UserRole> targetRoles = roles.stream()
             .filter((r) -> {
-                return r.getName() == role.getRoleName()
-                && r.getRoleId() == role.getRoleId()
-                && r.getDacId() == dacId;
+                return r.getName().equals(role.getRoleName())
+                && r.getRoleId().equals(role.getRoleId())
+                && r.getDacId().equals(dacId);
             })
             .collect(Collectors.toList());
         if(targetRoles.isEmpty()) {

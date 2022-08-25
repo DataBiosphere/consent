@@ -66,3 +66,6 @@ properties:
   dataUse:
     type: object
     description: The Data Use question/answer set for this dataset (used for the associated consent).
+  dacApproval:
+    type: Boolean
+    description: DAC approval/disapproval for this dataset 
