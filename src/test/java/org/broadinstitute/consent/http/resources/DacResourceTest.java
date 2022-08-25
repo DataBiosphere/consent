@@ -432,7 +432,7 @@ public class DacResourceTest {
         when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
         when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
             .thenReturn(dataset);
-        Response response = dacResource.approveDataset(authUser, 1, 1, "{approved: true}");
+        Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
@@ -446,7 +446,7 @@ public class DacResourceTest {
         when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
         when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
                 .thenThrow(ForbiddenException.class);
-        Response response = dacResource.approveDataset(authUser, 1, 1, "{approved: false}");
+        Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: false}");
         assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
 
