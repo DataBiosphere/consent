@@ -85,20 +85,22 @@ public class DAOTestHelper {
     // of all records between test runs.
     private static TestingDAO testingDAO;
 
+    @SuppressWarnings("rawtypes")
+    private static PostgreSQLContainer postgresContainer;
+
     public String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
 
     @BeforeClass
     public static void startUp() throws Exception {
         // Start the database
-        @SuppressWarnings("rawtypes")
-        PostgreSQLContainer postgres = new PostgreSQLContainer<>(POSTGRES_IMAGE).
+        postgresContainer = new PostgreSQLContainer<>(POSTGRES_IMAGE).
                 withCommand("postgres -c max_connections=" + maxConnections);
-        postgres.start();
-        ConfigOverride driverOverride = ConfigOverride.config("database.driverClass", postgres.getDriverClassName());
-        ConfigOverride urlOverride = ConfigOverride.config("database.url", postgres.getJdbcUrl());
-        ConfigOverride userOverride = ConfigOverride.config("database.user", postgres.getUsername());
-        ConfigOverride passwordOverride = ConfigOverride.config("database.password", postgres.getPassword());
-        ConfigOverride validationQueryOverride = ConfigOverride.config("database.validationQuery", postgres.getTestQueryString());
+        postgresContainer.start();
+        ConfigOverride driverOverride = ConfigOverride.config("database.driverClass", postgresContainer.getDriverClassName());
+        ConfigOverride urlOverride = ConfigOverride.config("database.url", postgresContainer.getJdbcUrl());
+        ConfigOverride userOverride = ConfigOverride.config("database.user", postgresContainer.getUsername());
+        ConfigOverride passwordOverride = ConfigOverride.config("database.password", postgresContainer.getPassword());
+        ConfigOverride validationQueryOverride = ConfigOverride.config("database.validationQuery", postgresContainer.getTestQueryString());
 
         // Start the app
         testApp = new DropwizardTestSupport<>(
@@ -141,6 +143,7 @@ public class DAOTestHelper {
     @AfterClass
     public static void shutDown() {
         testApp.after();
+        postgresContainer.stop();
     }
 
     @After
