@@ -30,7 +30,7 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
       }
       if (hasColumn(r, "dac_approval")) {
         String boolString = r.getString("dac_approval");
-        Boolean value = Objects.isNull(boolString) ? null : Boolean.getBoolean(boolString);
+        Boolean value = Objects.isNull(boolString) ? null : r.getBoolean("dac_approval");
         dataset.setDacApproval(value);
       }
       if (hasColumn(r, "update_user_id")) {
