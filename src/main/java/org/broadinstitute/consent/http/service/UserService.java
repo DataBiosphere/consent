@@ -29,10 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -372,11 +370,13 @@ public class UserService {
         List<UserRole> targetRoles = roles.stream()
             .filter((r) -> {
                 return r.getName() == role.getRoleName()
+                && r.getRoleId() == role.getRoleId()
                 && r.getDacId() == dacId;
             })
             .collect(Collectors.toList());
         if(targetRoles.isEmpty()) {
-            throw new ForbiddenException("User does not have required permissions");
+            //Intentionally giving 404 to avoid giving permissions insights
+            throw new NotFoundException("User role not found");
         }
     }
 

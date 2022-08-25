@@ -24,7 +24,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotAllowedException;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -578,14 +578,42 @@ public class DatasetServiceTest {
         verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
     }
 
-    @Test(expected = NotAllowedException.class)
-    public void testApproveDataset_AlreadyApproved() {
+    @Test
+    public void testApproveDataset_AlreadyApproved_TrueSubmission() {
         Dataset dataset = new Dataset();
-        dataset.setDacApproval(true);
         User user = new User();
-        Boolean payloadBool = false;
+        dataset.setDacApproval(true);
+        dataset.setDataSetId(1);
+        dataset.setUpdateDate(new Date());
+        dataset.setUpdateUserId(4);
         initService();
-        datasetService.approveDataset(dataset, user, payloadBool);
+
+        Dataset datasetResult = datasetService.approveDataset(dataset, user, true);
+        assertNotNull(datasetResult);
+        assertEquals(dataset.getDataSetId(), datasetResult.getDataSetId());
+        assertEquals(dataset.getUpdateUserId(), datasetResult.getUpdateUserId());
+        assertEquals(dataset.getDacApproval(), datasetResult.getDacApproval());
+        assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void testApprovedDataset_AlreadyApproved_FalseSubmission() {
+        Dataset dataset = new Dataset();
+        User user = new User();
+        dataset.setDacApproval(true);
+        initService();
+
+        datasetService.approveDataset(dataset, user, false);
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void testApprovedDataset_AlreadyApproved_NullSubmission() {
+        Dataset dataset = new Dataset();
+        User user = new User();
+        dataset.setDacApproval(true);
+        initService();
+
+        datasetService.approveDataset(dataset, user, null);
     }
 
     @Test

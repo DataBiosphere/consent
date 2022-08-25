@@ -517,6 +517,37 @@ public class UserServiceTest {
         assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
     }
 
+    @Test(expected = NotFoundException.class)
+    public void testCheckIfUserHasRole_RoleNotFound(){
+        User user = new User();
+        UserRole adminRole = generateRole(UserRoles.ADMIN.getRoleId());
+        user.setRoles(List.of(adminRole));
+        initService();
+        service.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), user, 2);
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testCheckIfUserHasRole_RoleTypeFoundDifferentDacId() {
+        User user = new User();
+        UserRole chairRole = generateRole(UserRoles.CHAIRPERSON.getRoleId());
+        chairRole.setDacId(1);
+        user.setRoles(List.of(chairRole));
+        initService();
+        service.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), user, 2);
+    }
+    
+    @Test
+    public void testCheckIfUserHasRole() {
+        User user = new User();
+        UserRole chairRole = generateRole(UserRoles.CHAIRPERSON.getRoleId());
+        chairRole.setDacId(1);
+        UserRole adminRole = generateRole(UserRoles.ADMIN.getRoleId());
+        user.setRoles(List.of(chairRole, adminRole));
+        initService();
+        service.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), user, 1);
+        service.checkIfUserHasRole(UserRoles.ADMIN.getRoleName(), user, null);
+    }
+
     private User generateUser() {
         User u = new User();
         int i1 = RandomUtils.nextInt(10, 50);

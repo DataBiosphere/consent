@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotAllowedException;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 
 import java.sql.Timestamp;
@@ -439,12 +439,19 @@ public class DatasetService {
 
     public Dataset approveDataset(Dataset dataset, User user, Boolean approvalBool) {
         Boolean currentApprovalState = dataset.getDacApproval();
-        if(Objects.nonNull(currentApprovalState) && dataset.getDacApproval()) {
-            throw new NotAllowedException("Dataset is already approved");
-        }
         Integer datasetId = dataset.getDataSetId();
-        datasetDAO.updateDatasetApproval(approvalBool, Instant.now(), user.getUserId(), datasetId);
-        return datasetDAO.findDatasetById(datasetId);
+        Dataset datasetReturn = dataset;
+        //Only update and fetch the dataset if it hasn't already been approved
+        //If it has, simply returned the dataset in the argument (which was already queried for in the resource)
+        if(Objects.isNull(currentApprovalState) || !currentApprovalState) {
+            datasetDAO.updateDatasetApproval(approvalBool, Instant.now(), user.getUserId(), datasetId);
+            datasetReturn = datasetDAO.findDatasetById(datasetId);
+        } else {
+            if(Objects.isNull(approvalBool) || !approvalBool) {
+                throw new ForbiddenException("Dataset is already approved");
+            }
+        }
+        return datasetReturn;
     }
 
     private boolean filterDatasetOnProperties(DatasetDTO dataset, String term) {

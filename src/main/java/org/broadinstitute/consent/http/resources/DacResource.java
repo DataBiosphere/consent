@@ -218,19 +218,14 @@ public class DacResource extends Resource {
     @Path("{dacId}/dataset/{datasetId}")
     @RolesAllowed({CHAIRPERSON})
     public Response approveDataset(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("datasetId") Integer datasetId, String json) {
-        //get dataset, observe dac
-        //get user roles, see if user has chair role in observed dac
-            //if true, perform service call
-            //if false, throw exception
-        //return response
         try{
             User user = userService.findUserByEmail(authUser.getEmail());
             Dataset dataset = datasetService.findDatasetById(datasetId);
             if(dataset.getDacId() != dacId) { 
                 //Vague message is intentional, don't want to reveal too much info
-                throw new BadRequestException("Payload dacId invalid");
+                throw new NotFoundException("Dataset not found");
             }
-            userService.checkIfUserHasRole(UserRoles.ADMIN.getRoleName(), user, dacId);
+            userService.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), user, dacId);
             JsonObject payload = new Gson().fromJson(json, JsonObject.class);
             Boolean isApproved = payload.get("approved").getAsBoolean();
             Dataset updatedDataset = datasetService.approveDataset(dataset, user, isApproved);

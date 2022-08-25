@@ -2,17 +2,23 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -21,6 +27,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacBuilder;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DacService;
@@ -371,6 +378,76 @@ public class DacResourceTest {
         when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
         dacResource.removeDacChair(authUser, dac.getDacId(), member.getUserId());
+    }
+
+    @Test
+    public void testApproveDataset_UserNotFound() {
+      when(userService.findUserByEmail(anyString())).thenThrow(NotFoundException.class);
+      Response response = dacResource.approveDataset(authUser, 1, 1, "test");
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+
+    @Test
+    public void testApproveDataset_DacIdMismatch() {
+        User user = new User();
+        Dataset dataset = new Dataset();
+        dataset.setDacId(2);
+        when(userService.findUserByEmail(anyString())).thenReturn(user);
+        when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+
+        Response response = dacResource.approveDataset(authUser, 1, 1, "test");
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+
+    @Test
+    public void testApproveDataset_UserDifferentChair() {
+        User user = new User();
+        Dataset dataset = new Dataset();
+        dataset.setDacId(1);
+        when(userService.findUserByEmail(anyString())).thenReturn(user);
+        when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+        doThrow(NotFoundException.class).when(userService).checkIfUserHasRole(anyString(), any(User.class), anyInt());
+        Response response = dacResource.approveDataset(authUser, 1, 1, "test");
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+
+    @Test
+    public void testApproveDataset_EmptyPayload() {
+        User user = new User();
+        Dataset dataset = new Dataset();
+        dataset.setDacId(1);
+        when(userService.findUserByEmail(anyString())).thenReturn(user);
+        when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+        Response response = dacResource.approveDataset(authUser, 1, 1, "");
+        assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    }
+
+    @Test
+    public void testApproveDataset_AlreadyApproved_TrueSubmission() {
+        User user = new User();
+        Dataset dataset = new Dataset();
+        dataset.setDacId(1);
+        dataset.setDacApproval(true);
+        when(userService.findUserByEmail(anyString())).thenReturn(user);
+        when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+        when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
+            .thenReturn(dataset);
+        Response response = dacResource.approveDataset(authUser, 1, 1, "{approved: true}");
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+
+    @Test
+    public void testApproveDataset_AlreadyApproved_NonTrueSubmission() {
+        User user = new User();
+        Dataset dataset = new Dataset();
+        dataset.setDacId(1);
+        dataset.setDacApproval(true);
+        when(userService.findUserByEmail(anyString())).thenReturn(user);
+        when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+        when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
+                .thenThrow(ForbiddenException.class);
+        Response response = dacResource.approveDataset(authUser, 1, 1, "{approved: false}");
+        assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
 
     private JsonArray getListFromEntityString(String str) {
