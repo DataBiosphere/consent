@@ -54,7 +54,6 @@ public class SupportRequestService {
                     .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                     .create()
                     .toJson(ticket);
-            //GsonFactory doesn't do more work on the ticket but an HttpContent object is needed for buildPostRequest
             ByteArrayContent content = new ByteArrayContent("application/json", ticketJson.getBytes(StandardCharsets.UTF_8));
             HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, content);
             HttpResponse response = clientUtil.handleHttpRequest(request);
