@@ -65,7 +65,7 @@ public enum UserRoles {
 
     public static boolean isValidNonDACRoleId(Integer roleId) {
         List<Integer> listOfNonDacRoleIds = Arrays.asList(
-          ALUMNI.getRoleId(), ADMIN.getRoleId(), RESEARCHER.getRoleId(), DATAOWNER.getRoleId(), SIGNINGOFFICIAL.getRoleId());
+          ALUMNI.getRoleId(), ADMIN.getRoleId(), RESEARCHER.getRoleId(), DATAOWNER.getRoleId(), SIGNINGOFFICIAL.getRoleId(), DATASUBMITTER.getRoleId());
         return !Objects.isNull(roleId) && listOfNonDacRoleIds.contains(roleId);
     }
 
