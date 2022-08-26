@@ -479,7 +479,7 @@ public class UserResourceTest {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
     initResource();
-    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), 8);
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), 9);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
