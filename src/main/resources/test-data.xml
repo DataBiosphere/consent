@@ -148,7 +148,7 @@
     <!--insert datasetproperties-->
     <changeSet author="rfricke" id="test-datasetproperty">
         <sql>
-            INSERT INTO datasetproperty (datasetid, propertykey, propertyvalue, createdate)
+            INSERT INTO datasetproperty (dataset_id, property_id, property_value, create_date)
             SELECT
                 datasetid,
                 keyid,
