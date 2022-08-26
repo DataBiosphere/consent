@@ -162,7 +162,7 @@
     <!--insert consent-->
     <changeSet author="rfricke" id="test-consent">
         <sql>
-            INSERT INTO consents(consentid, requiresmanualreview, userestriction, active, name, datause, dac_id)
+            INSERT INTO consents(consent_id, requires_manual_review, use_restriction, active, name, data_use, dac_id)
             SELECT
                 concat('9e5a4135-e635-41a4-8663-042667ef4a7f', dataset.datasetid),
                 'f',
@@ -175,12 +175,12 @@
         </sql>
     </changeSet>
 
-    <!--insert consentassociations-->
+    <!--insert consent_associations-->
     <changeSet author="rfricke" id="test-consentassociations">
         <sql>
-            INSERT INTO consentassociations (consentid, associationtype, datasetid)
+            INSERT INTO consent_associations (consent_id, association_type, dataset_id)
             SELECT
-                consentid,
+                consent_id,
                 'Sample',
                 dac_id
             FROM consents
