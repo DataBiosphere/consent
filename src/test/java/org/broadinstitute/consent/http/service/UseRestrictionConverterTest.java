@@ -7,9 +7,9 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
@@ -30,21 +30,25 @@ public class UseRestrictionConverterTest implements WithMockServer {
 
     private MockServerClient client;
 
-    @Rule
-    public MockServerContainer container = new MockServerContainer(IMAGE);
+    private static final MockServerContainer container = new MockServerContainer(IMAGE);
+
+    @BeforeClass
+    public static void setUp() {
+        container.start();
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        container.stop();
+    }
 
     @Before
     public void startUp() {
         client = new MockServerClient(container.getHost(), container.getServerPort());
-    }
-
-    @After
-    public void tearDown() {
-        stop(container);
+        client.reset();
     }
 
     private void mockDataUseTranslateSuccess() {
-        client.reset();
         client
             .when(request().withMethod("POST").withPath("/translate"))
             .respond(
@@ -60,7 +64,6 @@ public class UseRestrictionConverterTest implements WithMockServer {
     }
 
     private void mockDataUseTranslateFailure() {
-        client.reset();
         client
             .when(request().withMethod("POST").withPath("/translate"))
             .respond(
@@ -73,7 +76,6 @@ public class UseRestrictionConverterTest implements WithMockServer {
 
 
     private void mockDarTranslateSuccess() {
-        client.reset();
         client.when(
             request()
                 .withMethod("POST")
@@ -87,7 +89,6 @@ public class UseRestrictionConverterTest implements WithMockServer {
     }
 
     private void mockDarTranslateFailure() {
-        client.reset();
         client.when(
             request()
                 .withMethod("POST")
