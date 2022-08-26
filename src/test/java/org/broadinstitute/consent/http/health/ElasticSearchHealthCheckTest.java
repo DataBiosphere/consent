@@ -4,9 +4,9 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.testcontainers.containers.MockServerContainer;
@@ -25,11 +25,20 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
     private ElasticSearchConfiguration config;
     private MockServerClient mockServerClient;
 
-    @Rule
-    public MockServerContainer container = new MockServerContainer(IMAGE);
+    private static final MockServerContainer container = new MockServerContainer(IMAGE);
+
+    @BeforeClass
+    public static void setUp() {
+        container.start();
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        container.stop();
+    }
 
     @Before
-    public void setUp() {
+    public void init() {
         openMocks(this);
 
         config = new ElasticSearchConfiguration();
@@ -37,11 +46,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         config.setPort(container.getServerPort());
 
         mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-    }
-
-    @After
-    public void tearDown() {
-        stop(container);
+        mockServerClient.reset();
     }
 
     private void initHealthCheck(String status, Integer statusCode) {
