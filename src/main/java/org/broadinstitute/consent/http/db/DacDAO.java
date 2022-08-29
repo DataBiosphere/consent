@@ -44,9 +44,9 @@ public interface DacDAO extends Transactional<DacDAO> {
             + " d.object_id, d.active, d.needs_approval, d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, "
             + " d.update_user_id, d.data_use AS dataset_data_use, d.sharing_plan_document, ca.consentid, c.translateduserestriction "
             + " FROM dac "
-            + " LEFT OUTER JOIN consents c ON c.dac_id = dac.dac_id "
-            + " LEFT OUTER JOIN consentassociations ca ON ca.consentid = c.consentid "
-            + " LEFT OUTER JOIN dataset d ON ca.datasetid = d.dataset_id")
+            + " LEFT OUTER JOIN dataset d ON dac.dac_id = d.dac_id"
+            + " LEFT OUTER JOIN consentassociations ca ON ca.datasetid = d.dataset_id "
+            + " LEFT OUTER JOIN consents c ON c.consentid = ca.consentid ")
     List<Dac> findAll();
 
     /**
@@ -61,6 +61,16 @@ public interface DacDAO extends Transactional<DacDAO> {
             + " INNER JOIN users u ON ur.user_id = u.user_id "
             + " WHERE u.email = :email ")
     List<Dac> findDacsForEmail(@Bind("email") String email);
+
+    @SqlQuery(
+            "SELECT distinct c.consentid FROM consent c "
+                    + " INNER JOIN consentassociations ca ON ca.consentid = c.consentid "
+                    + " INNER JOIN dataset d ON d.dataset_id = ca.datasetid "
+                    + " INNER JOIN user_role ur ON ur.dac_id = d.dac_id "
+                    + " INNER JOIN users u ON ur.user_id = u.user_id "
+                    + " WHERE d.dac_id IN (<dacIds>) ")
+    List<String> findConsentIdsGovernedByDacs(@BindList("dacIds") List<Integer> dacId);
+
 
     /**
      * Find all Users associated with a DAC
@@ -189,10 +199,9 @@ public interface DacDAO extends Transactional<DacDAO> {
      */
     @RegisterRowMapper(DacMapper.class)
     @SqlQuery(
-        "SELECT d.*, a.datasetid FROM dac d "
-            + " INNER JOIN consents c ON d.dac_id = c.dac_id "
-            + " INNER JOIN consentassociations a ON a.consentid = c.consentid "
-            + " WHERE a.datasetid IN (<datasetIds>) ")
+        "SELECT d.*, ds.dataset_id FROM dac d "
+            + " INNER JOIN dataset ds ON d.dac_id = ds.dac_id "
+            + " WHERE ds.dataset_id IN (<datasetIds>) ")
     Set<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
 
 }

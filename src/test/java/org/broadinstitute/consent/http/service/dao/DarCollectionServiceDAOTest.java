@@ -356,7 +356,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
     Consent consent = createConsent();
-    Dataset dataset = createDataset();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
     consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     createDarForCollection(user, collectionId, dataset);

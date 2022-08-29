@@ -40,9 +40,9 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlUpdate(
             "INSERT INTO dataset "
             + "(name, create_date, create_user_id, update_date, "
-                + "update_user_id, object_id, active, alias, data_use) "
+                + "update_user_id, object_id, active, dac_id, alias, data_use) "
             + "(SELECT :name, :createDate, :createUserId, :createDate, "
-                + ":createUserId, :objectId, :active, COALESCE(MAX(alias),0)+1, :dataUse FROM dataset)")
+                + ":createUserId, :objectId, :active, :dacId, COALESCE(MAX(alias),0)+1, :dataUse FROM dataset)")
     @GetGeneratedKeys
     Integer insertDataset(
         @Bind("name") String name,
@@ -55,7 +55,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(
-        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consentid, d.dac_id, c.translateduserestriction, dar_ds_ids.id as in_use " +
+        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consentid, c.translateduserestriction, dar_ds_ids.id as in_use " +
             " FROM dataset d " +
             " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
             " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +

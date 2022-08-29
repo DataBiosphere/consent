@@ -19,7 +19,7 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery(
-        "SELECT * FROM consents WHERE consentId = :consentId and c.active=true")
+        "SELECT * FROM consents WHERE consentId = :consentId and active=true")
     Consent findConsentById(@Bind("consentId") String consentId);
 
     @SqlQuery(
@@ -78,7 +78,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
             " sortDate = :sortDate, " +
             " translatedUseRestriction = :translatedUseRestriction, " +
             " groupName = :groupName, " +
-            " updated = :updated, " +
+            " updated = :updated " +
             " where consentId = :consentId " +
             " and active = true ")
     void updateConsent(@Bind("consentId") String consentId,
