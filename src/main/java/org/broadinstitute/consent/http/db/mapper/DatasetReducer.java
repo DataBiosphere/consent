@@ -37,6 +37,9 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       Integer dsIdInUse = rowView.getColumn("in_use", Integer.class);
       dataset.setDeletable(Objects.isNull(dsIdInUse));
     }
+    if (hasColumn(rowView, "dac_approval", Boolean.class)) {
+      dataset.setDacApproval(rowView.getColumn("dac_approval", Boolean.class));
+    }
     if (hasColumn(rowView, "key", String.class)
         && hasColumn(rowView, "property_value", String.class)) {
       String keyName = rowView.getColumn("key", String.class);
