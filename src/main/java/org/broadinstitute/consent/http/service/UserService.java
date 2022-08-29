@@ -364,22 +364,6 @@ public class UserService {
         userRoleDAO.insertUserRoles(roles, userId);
     }
 
-    public void checkIfUserHasRole(String roleName, User user, Integer dacId) {
-        UserRoles role = UserRoles.getUserRoleFromName(roleName);
-        List<UserRole> roles = user.getRoles();
-        List<UserRole> targetRoles = roles.stream()
-            .filter((r) -> {
-                return r.getName().equals(role.getRoleName())
-                && r.getRoleId().equals(role.getRoleId())
-                && r.getDacId().equals(dacId);
-            })
-            .collect(Collectors.toList());
-        if(targetRoles.isEmpty()) {
-            //Intentionally giving 404 to avoid giving permissions insights
-            throw new NotFoundException("User role not found");
-        }
-    }
-
     private void addExistingLibraryCards(User user) {
         List<LibraryCard> libraryCards = libraryCardDAO.findAllLibraryCardsByUserEmail(user.getEmail());
 

@@ -226,7 +226,7 @@ public class DacResource extends Resource {
                 //Vague message is intentional, don't want to reveal too much info
                 throw new NotFoundException("Dataset not found");
             }
-            userService.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), user, dacId);
+            user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
             JsonObject payload = new Gson().fromJson(json, JsonObject.class);
             if(payload.size() == 0) {
                 throw new BadRequestException("Request body is empty");
