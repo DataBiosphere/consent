@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
+
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -25,6 +27,11 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
       }
       if (hasColumn(r, "update_date")) {
           dataset.setUpdateDate(r.getTimestamp("update_date"));
+      }
+      if (hasColumn(r, "dac_approval")) {
+        String boolString = r.getString("dac_approval");
+        Boolean value = Objects.isNull(boolString) ? null : r.getBoolean("dac_approval");
+        dataset.setDacApproval(value);
       }
       if (hasColumn(r, "update_user_id")) {
           int userId = r.getInt("update_user_id");

@@ -50,6 +50,8 @@ public class Dataset {
 
     private Set<DatasetProperty> properties;
 
+    private Boolean dacApproval;
+
     public Dataset() {
     }
 
@@ -184,6 +186,14 @@ public class Dataset {
 
     public void setNeedsApproval(Boolean needsApproval) {
         this.needsApproval = needsApproval;
+    }
+
+    public Boolean getDacApproval() {
+        return dacApproval;
+    }
+
+    public void setDacApproval(Boolean dacApproval) {
+        this.dacApproval = dacApproval;
     }
 
     public String getConsentName() {
