@@ -116,28 +116,6 @@ public class ConsentElectionResourceTest {
         resource = new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService);
     }
 
-    private Consent getConsent(Integer dacId) {
-        Consent consent = new Consent();
-        consent.setConsentId(UUID.randomUUID().toString());
-        consent.setCreateDate(new Timestamp(new Date().getTime()));
-        consent.setDacId(dacId);
-        consent.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
-        consent.setRequiresManualReview(false);
-        consent.setDataUseLetter("");
-        consent.setUseRestriction(new Everything());
-        consent.setName("Name");
-        return consent;
-    }
-
-    private Dac getDac() {
-        Dac dac = new Dac();
-        dac.setDacId(RandomUtils.nextInt(1, 100));
-        dac.setName("Name");
-        dac.setDescription("Description");
-        dac.setCreateDate(new Date());
-        return dac;
-    }
-
     private Election getElection() {
         Election election = new Election();
         election.setCreateDate(new Date());

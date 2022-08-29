@@ -307,8 +307,12 @@ public class DacService {
         }
         List<Integer> dacIds = getDacIdsForUser(authUser);
 
-        return consentManages.stream().
-                filter(c -> Objects.isNull(c.getDacId()) || dacIds.contains(c.getDacId())).
+        return consentManages.
+                stream().
+                filter(consent -> {
+                    Integer dacId = consentDAO.getDacIdForConsent(consent.getConsentId());
+                    return Objects.isNull(dacId) || dacIds.contains(dacId);
+                }).
                 collect(Collectors.toList());
     }
 

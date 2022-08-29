@@ -63,7 +63,6 @@ public class ConsentManage {
         this.editable = null;
         this.groupName = consent.getGroupName();
         this.updateStatus = consent.getUpdated();
-        this.dacId = consent.getDacId();
     }
 
     public Timestamp getCreateDate() {
@@ -96,14 +95,6 @@ public class ConsentManage {
 
     public void setConsentName(String consentName) {
         this.consentName = consentName;
-    }
-
-    public Integer getDacId() {
-        return dacId;
-    }
-
-    public void setDacId(Integer dacId) {
-        this.dacId = dacId;
     }
 
     public Boolean getEditable() {

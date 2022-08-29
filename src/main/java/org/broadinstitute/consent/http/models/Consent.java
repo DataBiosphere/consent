@@ -230,11 +230,5 @@ public class Consent {
     public void setUpdated(boolean updateStatus) {
         this.updateStatus = updateStatus;
     }
-
-    @JsonProperty
-    public Integer getDacId() {
-        return dacId;
-    }
-
 }
 
