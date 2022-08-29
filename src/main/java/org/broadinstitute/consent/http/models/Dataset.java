@@ -46,7 +46,11 @@ public class Dataset {
 
     private Boolean deletable;
 
+    private String sharingPlanDocument;
+
     private Set<DatasetProperty> properties;
+
+    private Boolean dacApproval;
 
     public Dataset() {
     }
@@ -184,6 +188,14 @@ public class Dataset {
         this.needsApproval = needsApproval;
     }
 
+    public Boolean getDacApproval() {
+        return dacApproval;
+    }
+
+    public void setDacApproval(Boolean dacApproval) {
+        this.dacApproval = dacApproval;
+    }
+
     public String getConsentName() {
         return consentName;
     }
@@ -265,6 +277,14 @@ public class Dataset {
 
     public void setDeletable(Boolean deletable) {
         this.deletable = deletable;
+    }
+
+    public String getSharingPlanDocument() {
+        return sharingPlanDocument;
+    }
+
+    public void setSharingPlanDocument(String sharingPlanDocument) {
+        this.sharingPlanDocument = sharingPlanDocument;
     }
 
     @Override

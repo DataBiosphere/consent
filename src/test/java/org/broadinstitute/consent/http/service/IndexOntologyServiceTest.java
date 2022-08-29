@@ -9,10 +9,10 @@ import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontology.IndexerUtils;
 import org.elasticsearch.client.RestClient;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -43,11 +43,20 @@ public class IndexOntologyServiceTest implements WithMockServer {
     private final IndexerUtils indexUtils = new IndexerUtils();
     private RestClient client;
 
-    @Rule
-    public MockServerContainer container = new MockServerContainer(IMAGE);
+    private static final MockServerContainer container = new MockServerContainer(IMAGE);
+
+    @BeforeClass
+    public static void setUp() {
+        container.start();
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        container.stop();
+    }
 
     @Before
-    public void setUp() throws Exception {
+    public void init() {
         ElasticSearchConfiguration configuration = new ElasticSearchConfiguration();
         configuration.setIndexName(INDEX_NAME);
         configuration.setServers(Collections.singletonList("localhost"));
@@ -55,12 +64,8 @@ public class IndexOntologyServiceTest implements WithMockServer {
         client = ElasticSearchSupport.createRestClient(configuration);
         this.ontologyService = new IndexOntologyService(configuration);
         MockServerClient mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
+        mockServerClient.reset();
         mockServerClient.when(request()).respond(response().withStatusCode(200));
-    }
-
-    @After
-    public void tearDown() {
-        stop(container);
     }
 
     @Test

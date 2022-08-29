@@ -30,6 +30,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class DatasetDAOTest extends DAOTestHelper {
@@ -181,6 +182,10 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
+        // adding this here to ensure mapper does not return a false in place of a null for dacApproval
+        datasets.forEach(d -> {
+            assertTrue(d.getDacApproval() == null);
+        });
     }
 
     @Test
@@ -488,6 +493,26 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
+    }
+
+    @Test
+    public void testGetDatasetsForConsent() {
+        Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null, 
+            null, RandomStringUtils.randomAlphabetic(10), true, null, null);
+        //negative record, make sure this isn't pulled in
+        datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null, null,
+            RandomStringUtils.randomAlphabetic(10), true, null, null);
+        String consentId = RandomStringUtils.randomAlphabetic(10);
+        consentDAO.insertConsent(consentId, false, "", null, 
+            null, RandomStringUtils.randomAlphabetic(10), null, new Date(), new Date(), 
+            null, RandomStringUtils.randomAlphabetic(10));
+        consentDAO.insertConsentAssociation(consentId, RandomStringUtils.randomAlphabetic(10), datasetId);
+
+        List<Dataset> datasets = datasetDAO.getDatasetsForConsent(consentId);
+        assertEquals(1, datasets.size());
+        Dataset targetDataset = datasets.get(0);
+        assertEquals(datasetId, targetDataset.getDataSetId());
+        assertNull(targetDataset.getDacApproval());
     }
 
     private DarCollection createDarCollectionWithDatasets(int dacId, User user, List<Dataset> datasets) {
