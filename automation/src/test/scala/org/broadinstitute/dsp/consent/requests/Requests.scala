@@ -261,6 +261,7 @@ object Requests {
   }
 
   object Admin {
+    val unreviewedDarResponse: String = "unreviewedDarResponse"
 
     def unreviewedDar(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get Unreviewed DARs")
