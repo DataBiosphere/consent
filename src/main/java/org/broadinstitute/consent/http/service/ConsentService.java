@@ -238,14 +238,6 @@ public class ConsentService {
         return consentDAO.findUnreviewedConsentsForDacs(dacIds).size();
     }
 
-    private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents) {
-        String UNREVIEWED = "un-reviewed"; // TODO: Fix this in https://broadinstitute.atlassian.net/browse/DUOS-469
-        List<ConsentManage> consentManageList = consents.stream().map(ConsentManage::new).collect(Collectors.toList());
-        consentManageList.forEach(c -> c.setElectionStatus(UNREVIEWED));
-        consentManageList.forEach(c -> c.setEditable(true));
-        return consentManageList;
-    }
-
     public void delete(String id) throws IllegalArgumentException {
         checkConsentExists(id);
         List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(id);

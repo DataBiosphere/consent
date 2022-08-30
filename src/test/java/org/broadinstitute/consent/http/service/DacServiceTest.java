@@ -526,14 +526,6 @@ public class DacServiceTest {
     }
 
     /**
-     * @return A list of 5 consentManages
-     */
-    private List<ConsentManage> getConsentManages() {
-        return IntStream.range(1, 5).
-                mapToObj(i -> new ConsentManage()).collect(Collectors.toList());
-    }
-
-    /**
      * @return A list of 5 DataAccessRequest with DataSet ids and Reference ids
      */
     private List<DataAccessRequest> getDataAccessRequests() {
