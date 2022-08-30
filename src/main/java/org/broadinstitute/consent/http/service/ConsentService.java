@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -36,6 +37,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.generic.GenericType;
@@ -185,50 +187,6 @@ public class ConsentService {
         return getAllAssociationsForConsent(consentId);
     }
 
-    public List<ConsentManage> describeConsentManage(AuthUser authUser) {
-        List<ConsentManage> consentManageList = new ArrayList<>();
-        consentManageList.addAll(collectUnreviewedConsents(consentDAO.findUnreviewedConsents()));
-        consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.OPEN.getValue()));
-        consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CANCELED.getValue()));
-        List<ConsentManage> closedElections = consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue());
-        closedElections.forEach(consentManage -> {
-            Boolean vote = voteDAO.findChairPersonVoteByElectionId(consentManage.getElectionId());
-            consentManage.setVote(vote != null && vote ? "Approved" : "Denied");
-        });
-        consentManageList.addAll(closedElections);
-        consentManageList.sort((c1, c2) -> c2.getSortDate().compareTo(c1.getSortDate()));
-        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
-        if (!openElections.isEmpty()) {
-            List<String> referenceIds = openElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-            List<DataAccessRequest> dataAccessRequests = dataAccessRequestDAO.findByReferenceIds(referenceIds);
-            List<String> datasetIds =
-                dataAccessRequests.stream()
-                    .filter(Objects::nonNull)
-                    .map(DataAccessRequest::getData)
-                    .filter(Objects::nonNull)
-                    .map(DataAccessRequestData::getDatasetDetail)
-                    .filter(Objects::nonNull)
-                    .flatMap(List::stream)
-                    .map(DatasetDetailEntry::getDatasetId)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-            List<String> consentIds = new ArrayList<>();
-            if (CollectionUtils.isNotEmpty(datasetIds)) {
-                List<Integer> datasetIdIntValues = datasetIds.stream().map(Integer::valueOf).collect(Collectors.toList());
-                consentIds.addAll(consentDAO.getAssociationConsentIdsFromDatasetIds(datasetIdIntValues));
-            }
-
-            for (ConsentManage consentManage : consentManageList) {
-                if (consentIds.stream().anyMatch(cm -> cm.equals(consentManage.getConsentId()))) {
-                    consentManage.setEditable(false);
-                } else {
-                    consentManage.setEditable(true);
-                }
-            }
-        }
-        return dacService.filterConsentManageByDAC(consentManageList, authUser);
-    }
-
     public List<ConsentAssociation> getAssociation(String consentId, String associationType, String objectId) {
         logger.trace(String.format("getAssociation consentId='%s' associationType='%s', objectId='%s'",
                 consentId, associationType, objectId));
@@ -271,8 +229,13 @@ public class ConsentService {
     }
 
     public Integer getUnReviewedConsents(AuthUser authUser) {
-        Collection<Consent> consents = consentDAO.findUnreviewedConsents();
-        return dacService.filterConsentsByDAC(consents, authUser).size();
+        if (dacService.isAuthUserAdmin(authUser)) {
+            return consentDAO.findUnreviewedConsents().size();
+        }
+        List<Integer> dacIds = dacService.getDacIdsForUser(authUser);
+
+
+        return consentDAO.findUnreviewedConsentsForDacs(dacIds).size();
     }
 
     private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents) {

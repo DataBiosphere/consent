@@ -270,6 +270,7 @@ public class DacService {
                 .distinct()
                 .collect(Collectors.toList());
     }
+
     /**
      * Filter data access requests by the DAC they are associated with.
      */
@@ -295,42 +296,6 @@ public class DacService {
             }
         }
         return Collections.emptyList();
-    }
-
-    /**
-     * Filter consent manages by the DAC they are associated with.
-     */
-    List<ConsentManage> filterConsentManageByDAC(List<ConsentManage> consentManages,
-                                                 AuthUser authUser) {
-        if (isAuthUserAdmin(authUser)) {
-            return consentManages;
-        }
-        List<Integer> dacIds = getDacIdsForUser(authUser);
-        List<String> consentIds = dacDAO.findConsentIdsGovernedByDacs(dacIds);
-
-        return consentManages.
-                stream().
-                filter(consent -> consentIds.contains(consent.getConsentId())).
-                collect(Collectors.toList());
-    }
-
-    /**
-     * Filter consents by the DAC they are associated with.
-     */
-    Collection<Consent> filterConsentsByDAC(Collection<Consent> consents,
-                                            AuthUser authUser) {
-        if (isAuthUserAdmin(authUser)) {
-            return consents;
-        }
-        List<Integer> dacIds = getDacIdsForUser(authUser);
-
-        return consents.
-                stream().
-                filter(consent -> {
-                    Integer dacId = consentDAO.getDacIdForConsent(consent.getConsentId());
-                    return Objects.isNull(dacId) || dacIds.contains(dacId);
-                }).
-                collect(Collectors.toList());
     }
 
     /**

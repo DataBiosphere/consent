@@ -26,10 +26,6 @@ public class ConsentManageResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        Mockito.when(consentService.describeConsentManage(notNull())).
-                thenReturn(Collections.emptyList());
-        Mockito.when(consentService.getUnReviewedConsents(notNull())).
-                thenReturn(1);
         authUser = new AuthUser("Test@gmail.com");
         resource = new ConsentManageResource(consentService);
     }
@@ -37,12 +33,6 @@ public class ConsentManageResourceTest {
     @After
     public void tearDown() {
         Mockito.reset(consentService);
-    }
-
-    @Test
-    public void testGetConsentManage() {
-        Response response = resource.getConsentManage(authUser);
-        Assert.assertEquals(200, response.getStatus());
     }
 
     @Test

@@ -96,25 +96,6 @@ public class ConsentServiceTest {
         Assert.assertFalse(consent.getLastElectionArchived());
     }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testDescribeConsentManage() {
-        AuthUser user = new AuthUser("user@test.com");
-        when(consentDAO.findUnreviewedConsents()).thenReturn(Collections.emptyList());
-        when(consentDAO.findConsentManageByStatus(anyString())).thenReturn(Collections.emptyList());
-        when(voteDAO.findChairPersonVoteByElectionId(anyInt())).thenReturn(true);
-        when(electionDAO.findElectionsWithFinalVoteByTypeAndStatus(anyString(), anyString())).thenReturn(Collections.emptyList());
-        when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(Collections.emptyList());
-        when(dacService.filterConsentManageByDAC(anyList(), any(AuthUser.class))).thenReturn(Collections.emptyList());
-        initService();
-
-        try {
-            service.describeConsentManage(user);
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
-    }
-
     @Test
     public void testCreate() {
         Consent testConsent = this.getTestConsent();

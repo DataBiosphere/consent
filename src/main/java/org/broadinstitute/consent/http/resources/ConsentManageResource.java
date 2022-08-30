@@ -25,16 +25,6 @@ public class ConsentManageResource extends Resource {
         this.consentService = consentService;
     }
 
-    @Deprecated
-    @GET
-    @Path("/manage")
-    @RolesAllowed(ADMIN)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getConsentManage(@Auth AuthUser authUser) {
-        List<ConsentManage> consentManages = consentService.describeConsentManage(authUser);
-        return Response.ok().entity(consentManages).build();
-    }
-
     @GET
     @Path("/unreviewed")
     @RolesAllowed(ADMIN)

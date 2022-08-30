@@ -62,16 +62,6 @@ public interface DacDAO extends Transactional<DacDAO> {
             + " WHERE u.email = :email ")
     List<Dac> findDacsForEmail(@Bind("email") String email);
 
-    @SqlQuery(
-            "SELECT distinct c.consentid FROM consent c "
-                    + " INNER JOIN consentassociations ca ON ca.consentid = c.consentid "
-                    + " INNER JOIN dataset d ON d.dataset_id = ca.datasetid "
-                    + " INNER JOIN user_role ur ON ur.dac_id = d.dac_id "
-                    + " INNER JOIN users u ON ur.user_id = u.user_id "
-                    + " WHERE d.dac_id IN (<dacIds>) ")
-    List<String> findConsentIdsGovernedByDacs(@BindList("dacIds") List<Integer> dacId);
-
-
     /**
      * Find all Users associated with a DAC
      *
