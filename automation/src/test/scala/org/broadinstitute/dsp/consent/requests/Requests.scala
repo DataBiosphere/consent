@@ -261,17 +261,6 @@ object Requests {
   }
 
   object Admin {
-    val unreviewedConsentResponse: String = "unreviewedConsentResponse"
-    val unreviewedDarResponse: String = "unreviewedDarResponse"
-
-    def unreviewedConsent(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
-      http("Get Unreviewed Consent")
-        .get("/api/consent/unreviewed")
-        .headers(TestConfig.jsonHeader)
-        .headers(additionalHeaders)
-        .check(bodyString.saveAs(unreviewedConsentResponse))
-        .check(status.is(expectedStatus))
-    }
 
     def unreviewedDar(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get Unreviewed DARs")
@@ -286,7 +275,6 @@ object Requests {
       http("Init Admin Console")
         .get("/")
         .resources(
-          unreviewedConsent(expectedStatus, additionalHeaders),
           unreviewedDar(expectedStatus, additionalHeaders)
         )
     }
