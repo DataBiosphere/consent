@@ -220,16 +220,6 @@ public class ConsentService {
         return consentDAO.findConsentFromDatasetID(datasetId);
     }
 
-    public Integer getUnReviewedConsents(AuthUser authUser) {
-        if (dacService.isAuthUserAdmin(authUser)) {
-            return consentDAO.findUnreviewedConsents().size();
-        }
-        List<Integer> dacIds = dacService.getDacIdsForUser(authUser);
-
-
-        return consentDAO.findUnreviewedConsentsForDacs(dacIds).size();
-    }
-
     public void delete(String id) throws IllegalArgumentException {
         checkConsentExists(id);
         List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(id);

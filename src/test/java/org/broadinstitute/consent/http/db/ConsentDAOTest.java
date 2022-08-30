@@ -270,57 +270,6 @@ public class ConsentDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindUnreviewedConsents() {
-        Consent consent = createConsent();
-
-        List<Consent> consents = consentDAO.findUnreviewedConsents();
-        List<String> consentIds = consents.stream().map(Consent::getConsentId).collect(Collectors.toList());
-        assertTrue(consentIds.contains(consent.getConsentId()));
-    }
-
-    @Test
-    public void testFindUnreviewedConsentsForDacs() {
-        Dac dac1 = createDac();
-        Dataset dataset1 = createDatasetWithDac(dac1.getDacId());
-        Consent consent1 = createConsent();
-        consentDAO.insertConsentAssociation(consent1.getConsentId(), ASSOCIATION_TYPE_TEST, dataset1.getDataSetId());
-
-        Dac dac2 = createDac();
-        Dataset dataset2 = createDatasetWithDac(dac2.getDacId());
-        Consent consent2 = createConsent();
-        consentDAO.insertConsentAssociation(consent2.getConsentId(), ASSOCIATION_TYPE_TEST, dataset2.getDataSetId());
-
-
-        Dac dac3 = createDac();
-        Dataset dataset3 = createDatasetWithDac(dac3.getDacId());
-        Consent consent3 = createConsent();
-        consentDAO.insertConsentAssociation(consent3.getConsentId(), ASSOCIATION_TYPE_TEST, dataset3.getDataSetId());
-
-        createConsent();
-        createConsent();
-
-        List<Consent> consents = consentDAO.findUnreviewedConsentsForDacs(List.of(dac1.getDacId(), dac2.getDacId()));
-        List<String> consentIds = consents.stream().map(c->c.getConsentId()).collect(Collectors.toList());
-
-
-        assertEquals(2, consents.size());
-        assertTrue(consentIds.contains(consent1.getConsentId()));
-        assertTrue(consentIds.contains(consent2.getConsentId()));
-    }
-
-    @Test
-    public void testFindUnreviewedConsentsForDacs_WithElection() {
-        Dac dac1 = createDac();
-        Dataset dataset1 = createDatasetWithDac(dac1.getDacId());
-        Consent consent1 = createConsent();
-        consentDAO.insertConsentAssociation(consent1.getConsentId(), ASSOCIATION_TYPE_TEST, dataset1.getDataSetId());
-        createDataAccessElection(consent1.getConsentId(), dataset1.getDataSetId());
-
-        List<Consent> consents = consentDAO.findUnreviewedConsentsForDacs(List.of(dac1.getDacId()));
-        assertEquals(0, consents.size());
-    }
-
-    @Test
     public void testCheckManualReview() {
         Consent consent = createConsent();
         Consent consent2 = createConsent();

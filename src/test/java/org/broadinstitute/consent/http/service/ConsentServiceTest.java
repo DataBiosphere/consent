@@ -225,19 +225,6 @@ public class ConsentServiceTest {
     }
 
     @Test
-    public void testGetUnReviewedConsents() {
-        when(consentDAO.findUnreviewedConsents())
-                .thenReturn(Arrays.asList(this.getTestConsent()));
-        when(dacDAO.findDacsForEmail(any()))
-                .thenReturn(Arrays.asList(this.getTestDac()));
-
-        initService();
-
-        Integer unreviewed = service.getUnReviewedConsents(this.getUser());
-        Assert.assertEquals(Integer.valueOf(0), unreviewed);
-    }
-
-    @Test
     public void testDeleteAssociation_NoAssociationType() {
         when(consentDAO.checkConsentById("test consent"))
                 .thenReturn("test consent");
