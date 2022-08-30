@@ -25,7 +25,8 @@
                          INNER JOIN consentassociations ca
                                     ON ca.consentid = c.consentid
                 WHERE ca.datasetid = d.dataset_id
-            )
+                LIMIT 1
+                )
         </sql>
 
         <dropColumn tableName="consents" columnName="dac_id"/>
