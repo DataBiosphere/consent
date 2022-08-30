@@ -3,16 +3,13 @@ package org.broadinstitute.consent.http.db;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import org.broadinstitute.consent.http.db.mapper.ConsentManageMapper;
 import org.broadinstitute.consent.http.db.mapper.ConsentMapper;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentManage;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 @RegisterRowMapper(ConsentMapper.class)
@@ -154,13 +151,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select requiresManualReview from consents where consentId = :consentId")
     Boolean checkManualReview(@Bind("consentId") String consentId);
-
-    @SqlQuery("select c.consentId, c.name, c.createDate, c.sortDate, c.groupName, c.updated, e.electionId, e.status, e.version, e.archived  " +
-            "from consents c inner join election e ON e.referenceId = c.consentId inner join ( "+
-            "select referenceId, MAX(createDate) maxDate from election e group by referenceId) electionView "+
-            "ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId AND e.status = :status")
-    @UseRowMapper(ConsentManageMapper.class)
-    List<ConsentManage> findConsentManageByStatus(@Bind("status") String status);
 
     @SqlQuery("select ca.consentId from consentassociations ca  where ca.dataSetId IN (<dataSetIdList>) ")
     List<String> getAssociationConsentIdsFromDatasetIds(@BindList("dataSetIdList") List<Integer> dataSetIdList);

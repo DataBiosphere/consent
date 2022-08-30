@@ -17,10 +17,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
 import org.junit.Test;
 
 public class ConsentDAOTest extends DAOTestHelper {
@@ -342,18 +340,6 @@ public class ConsentDAOTest extends DAOTestHelper {
 
         assertFalse(consentDAO.checkManualReview(consent.getConsentId()));
         assertTrue(consentDAO.checkManualReview(consent2.getConsentId()));
-    }
-
-    @Test
-    public void testFindConsentManageByStatus() {
-        Consent consent = createConsent();
-        Dataset dataset = createDataset();
-        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
-        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
-
-        List<ConsentManage> consentManages = consentDAO.findConsentManageByStatus(election.getStatus());
-        List<String> consentIds = consentManages.stream().map(ConsentManage::getConsentId).collect(Collectors.toList());
-        assertTrue(consentIds.contains(consent.getConsentId()));
     }
 
     @Test
