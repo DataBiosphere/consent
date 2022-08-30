@@ -204,7 +204,6 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   @Test
   public void testGetDarCollectionSummaryForDAC_ArchivedCollection() {
     User userOne = createUserForTest();
-    createUserForTest();
     Integer userOneId = userOne.getUserId();
 
     Dataset dataset = createDataset(userOneId);
