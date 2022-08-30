@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 
 import java.sql.Timestamp;
@@ -437,18 +436,18 @@ public class DatasetService {
         ).collect(Collectors.toList());
     }
 
-    public Dataset approveDataset(Dataset dataset, User user, Boolean approvalBool) {
+    public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {
         Boolean currentApprovalState = dataset.getDacApproval();
         Integer datasetId = dataset.getDataSetId();
         Dataset datasetReturn = dataset;
         //Only update and fetch the dataset if it hasn't already been approved
         //If it has, simply returned the dataset in the argument (which was already queried for in the resource)
         if(Objects.isNull(currentApprovalState) || !currentApprovalState) {
-            datasetDAO.updateDatasetApproval(approvalBool, Instant.now(), user.getUserId(), datasetId);
+            datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
             datasetReturn = datasetDAO.findDatasetById(datasetId);
         } else {
-            if(Objects.isNull(approvalBool) || !approvalBool) {
-                throw new ForbiddenException("Dataset is already approved");
+            if(Objects.isNull(approval) || !approval) {
+                throw new IllegalArgumentException("Dataset is already approved");
             }
         }
         return datasetReturn;

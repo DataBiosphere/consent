@@ -24,7 +24,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -596,7 +595,7 @@ public class DatasetServiceTest {
         assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
     }
 
-    @Test(expected = ForbiddenException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testApprovedDataset_AlreadyApproved_FalseSubmission() {
         Dataset dataset = new Dataset();
         User user = new User();
@@ -606,7 +605,7 @@ public class DatasetServiceTest {
         datasetService.approveDataset(dataset, user, false);
     }
 
-    @Test(expected = ForbiddenException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testApprovedDataset_AlreadyApproved_NullSubmission() {
         Dataset dataset = new Dataset();
         User user = new User();

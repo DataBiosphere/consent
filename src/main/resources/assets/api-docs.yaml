@@ -3018,6 +3018,8 @@ components:
       $ref: './schemas/DataAccessRequest.yaml'
     Dataset:
       $ref: './schemas/Dataset.yaml'
+    DatasetApproval:
+      $ref: './schemas/DatasetApproval.yaml'
     DatasetProperty:
       $ref: './schemas/DatasetProperty.yaml'
     Election:

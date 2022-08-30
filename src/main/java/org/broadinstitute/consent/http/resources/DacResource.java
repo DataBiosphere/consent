@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.List;
@@ -29,6 +27,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetApproval;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
@@ -226,17 +225,18 @@ public class DacResource extends Resource {
                 //Vague message is intentional, don't want to reveal too much info
                 throw new NotFoundException("Dataset not found");
             }
-            user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
-            JsonObject payload = new Gson().fromJson(json, JsonObject.class);
-            if(payload.size() == 0) {
+            Boolean userHasRole = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
+            if(!userHasRole) {
+                throw new NotFoundException("User role not found");
+            }
+            if(Objects.isNull(json) || json.isBlank()) {
                 throw new BadRequestException("Request body is empty");
             }
-            JsonElement approvalElement = payload.get("approval");
-            if(Objects.isNull(approvalElement)) {
-                throw new BadRequestException("Missing key 'approval' from request body");
+            DatasetApproval payload = new Gson().fromJson(json, DatasetApproval.class);
+            if(Objects.isNull(payload.getApproval())) {
+                throw new BadRequestException("Invalid request payload");
             }
-            Boolean approvalBool = approvalElement.getAsBoolean();
-            Dataset updatedDataset = datasetService.approveDataset(dataset, user, approvalBool);
+            Dataset updatedDataset = datasetService.approveDataset(dataset, user, payload.getApproval());
             return Response.ok().entity(updatedDataset).build();
         } catch(Exception e) {
             return createExceptionResponse(e);

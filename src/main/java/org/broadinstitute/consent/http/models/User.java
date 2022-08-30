@@ -14,8 +14,6 @@ import java.beans.Transient;
 import java.util.EnumSet;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.NotFoundException;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -352,7 +350,7 @@ public class User {
     }
 
     @Transient
-    public void checkIfUserHasRole(String roleName, Integer dacId) {
+    public Boolean checkIfUserHasRole(String roleName, Integer dacId) {
         UserRoles role = UserRoles.getUserRoleFromName(roleName);
         List<UserRole> roles = getRoles();
         List<UserRole> targetRoles = roles.stream()
@@ -362,10 +360,8 @@ public class User {
                             && Objects.equals(r.getDacId(), dacId);
                 })
                 .collect(Collectors.toList());
-        if (targetRoles.isEmpty()) {
-            // Intentionally giving 404 to avoid giving permissions insights
-            throw new NotFoundException("User role not found");
-        } 
+        return !targetRoles.isEmpty();
+        
     }
 
 }
