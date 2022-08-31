@@ -221,7 +221,7 @@ public class DacResource extends Resource {
         try{
             User user = userService.findUserByEmail(authUser.getEmail());
             Dataset dataset = datasetService.findDatasetById(datasetId);
-            if(dataset.getDacId() != dacId) { 
+            if(Objects.isNull(dataset) || !Objects.equals(dataset.getDacId(), dacId)) { 
                 //Vague message is intentional, don't want to reveal too much info
                 throw new NotFoundException("Dataset not found");
             }
