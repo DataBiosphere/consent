@@ -339,7 +339,7 @@ public class ConsentService {
      **/
     private List<String> updateAssociations(String consentId, String associationType, List<String> ids) {
         Handle h = jdbi.open();
-        PreparedBatch insertBatch = h.prepareBatch("insert into consent_associations (consent_id, association_type, data_set_id) values (?, ?, ?)");
+        PreparedBatch insertBatch = h.prepareBatch("INSERT INTO consent_associations (consent_id, association_type, data_set_id) VALUES (?, ?, ?)");
         for (String id : ids) {
             insertBatch.add(consentId, associationType, dataSetDAO.findDatasetIdByObjectId(id));
         }
