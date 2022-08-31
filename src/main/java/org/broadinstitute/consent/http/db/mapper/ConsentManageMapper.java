@@ -11,13 +11,13 @@ public class ConsentManageMapper implements RowMapper<ConsentManage> {
 
   public ConsentManage map(ResultSet r, StatementContext ctx) throws SQLException {
     ConsentManage consentManage = new ConsentManage();
-    consentManage.setConsentId(r.getString("consentId"));
+    consentManage.setConsentId(r.getString("consent_id"));
     consentManage.setConsentName(r.getString("name"));
-    consentManage.setCreateDate(r.getTimestamp("createDate"));
+    consentManage.setCreateDate(r.getTimestamp("create_date"));
     if (r.getObject("dac_id") != null) {
       consentManage.setDacId(r.getInt("dac_id"));
     }
-    consentManage.setSortDate(r.getTimestamp("sortDate"));
+    consentManage.setSortDate(r.getTimestamp("sort_date"));
     consentManage.setElectionId(r.getInt(ElectionFields.ID.getValue()));
     consentManage.setElectionStatus(r.getString(ElectionFields.STATUS.getValue()));
     consentManage.setVersion(
@@ -26,7 +26,7 @@ public class ConsentManageMapper implements RowMapper<ConsentManage> {
             : String.valueOf(r.getInt(ElectionFields.VERSION.getValue())));
     consentManage.setArchived(r.getBoolean(ElectionFields.ARCHIVED.getValue()));
     consentManage.setEditable(true);
-    consentManage.setGroupName(r.getString("groupName"));
+    consentManage.setGroupName(r.getString("group_name"));
     consentManage.setUpdateStatus(r.getBoolean("updated"));
     return consentManage;
   }

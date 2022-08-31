@@ -17,27 +17,27 @@ public class ConsentMapper implements RowMapper<Consent> {
 
   public Consent map(ResultSet r, StatementContext ctx) throws SQLException {
     Consent consent;
-    if (!consentMap.containsKey(r.getString("consentId"))) {
+    if (!consentMap.containsKey(r.getString("consent_id"))) {
       consent = new Consent();
-      consent.setConsentId(r.getString("consentId"));
+      consent.setConsentId(r.getString("consent_id"));
     } else {
-      consent = consentMap.get(r.getString("consentId"));
+      consent = consentMap.get(r.getString("consent_id"));
     }
-    consent.setRequiresManualReview(r.getBoolean("requiresManualReview"));
-    consent.setDataUseLetter(r.getString("dataUseLetter"));
-    consent.setDulName(r.getString("dulName"));
+    consent.setRequiresManualReview(r.getBoolean("requires_manual_review"));
+    consent.setDataUseLetter(r.getString("data_use_letter"));
+    consent.setDulName(r.getString("dul_name"));
     try {
-      consent.setUseRestriction(UseRestriction.parse(r.getString("useRestriction")));
+      consent.setUseRestriction(UseRestriction.parse(r.getString("use_restriction")));
     } catch (IOException e) {
       throw new SQLException(e);
     }
-    consent.setDataUse(DataUse.parseDataUse(r.getString("dataUse")).orElse(null));
+    consent.setDataUse(DataUse.parseDataUse(r.getString("data_use")).orElse(null));
     consent.setName(r.getString("name"));
-    consent.setCreateDate(r.getTimestamp("createDate"));
-    consent.setSortDate(r.getTimestamp("sortDate"));
-    consent.setLastUpdate(r.getTimestamp("lastUpdate"));
-    consent.setTranslatedUseRestriction(r.getString("translatedUseRestriction"));
-    consent.setGroupName(r.getString("groupName"));
+    consent.setCreateDate(r.getTimestamp("create_date"));
+    consent.setSortDate(r.getTimestamp("sort_date"));
+    consent.setLastUpdate(r.getTimestamp("last_update"));
+    consent.setTranslatedUseRestriction(r.getString("translated_use_restriction"));
+    consent.setGroupName(r.getString("group_name"));
     consent.setUpdated(r.getBoolean("updated"));
     if (r.getObject("dac_id") != null) {
       consent.setDacId(r.getInt("dac_id"));
