@@ -41,17 +41,6 @@ public class ConsentDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindConsentNameFromDatasetID() {
-        Dataset dataset = createDataset();
-        Consent consent = createConsent(null);
-        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
-
-        String name = consentDAO.findConsentNameFromDatasetID(dataset.getDataSetId());
-        assertNotNull(name);
-        assertEquals(consent.getName(), name);
-    }
-
-    @Test
     public void testFindConsentsFromConsentsIDs() {
         Consent consent1 = createConsent(null);
         Consent consent2 = createConsent(null);
@@ -65,22 +54,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         assertEquals(2, consents.size());
         assertTrue(ids.contains(consent1.getConsentId()));
         assertTrue(ids.contains(consent2.getConsentId()));
-    }
-
-    @Test
-    public void testFindConsentsFromConsentNames() {
-        Consent consent1 = createConsent(null);
-        Consent consent2 = createConsent(null);
-
-        Collection<Consent> consents = consentDAO.findConsentsFromConsentNames(Arrays.asList(
-                consent1.getName(),
-                consent2.getName()));
-        Collection<String> names = consents.stream().map(Consent::getName).collect(Collectors.toList());
-        assertNotNull(consents);
-        assertFalse(consents.isEmpty());
-        assertEquals(2, consents.size());
-        assertTrue(names.contains(consent1.getName()));
-        assertTrue(names.contains(consent2.getName()));
     }
 
     @Test
@@ -115,7 +88,13 @@ public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testDeleteConsent() {
-        // no-op ... tested in `tearDown()`
+        Consent consent = createConsent(null);
+        String consentId = consent.getConsentId();
+        Consent foundConsent = consentDAO.findConsentById(consentId);
+        assertNotNull(foundConsent);
+        consentDAO.deleteConsent(consentId);
+        Consent deletedConsent = consentDAO.findConsentById(consentId);
+        assertNull(deletedConsent);
     }
 
     @Test
@@ -235,7 +214,18 @@ public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testDeleteAllAssociationsForConsent() {
-        // no-op ... tested in `tearDown()`
+        Dataset dataset = createDataset();
+        Dataset dataset2 = createDataset();
+        Consent consent = createConsent(null);
+        String consentId = consent.getConsentId();
+        consentDAO.insertConsentAssociation(consentId, ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
+        consentDAO.insertConsentAssociation(consentId, ASSOCIATION_TYPE_TEST, dataset2.getDataSetId());
+
+        consentDAO.deleteAllAssociationsForConsent(consentId);
+        Integer deletedAssociationId1 = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
+        assertNull(deletedAssociationId1);
+        Integer deletedAssociationId2 = consentDAO.findAssociationsByDataSetId(dataset2.getDataSetId());
+        assertNull(deletedAssociationId2);
     }
 
     @Test
@@ -335,7 +325,7 @@ public class ConsentDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testUpdateConsentUpdateStatus() {
+    public void testConsentUpdateStatus() {
         Consent consent1 = createConsent(null);
         consentDAO.updateConsent(
                 consent1.getConsentId(),
@@ -371,6 +361,14 @@ public class ConsentDAOTest extends DAOTestHelper {
         assertTrue(consent1Found.getUpdated());
         Consent consent2Found = consentDAO.findConsentById(consent2.getConsentId());
         assertFalse(consent2Found.getUpdated());
+    }
+
+    @Test
+    public void testUpdateConsentUpdateStatus() {
+        Consent consent = createConsent(null);
+        consentDAO.updateConsentUpdateStatus(consent.getConsentId(), true);
+        Consent consentFound = consentDAO.findConsentById(consent.getConsentId());
+        assertTrue(consentFound.getUpdated());
     }
 
     @Test
