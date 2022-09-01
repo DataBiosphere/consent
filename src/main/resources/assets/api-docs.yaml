@@ -2552,62 +2552,6 @@ paths:
           description: Server error.
   /api/user/{userId}:
     $ref: './paths/userByIdv2.yaml'
-  /api/user/profile:
-    post:
-      deprecated: true
-      summary: Create user properties.
-      description: Create properties for the current user.
-      requestBody:
-        description: Map<String, String> for user properties.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserProperties'
-      tags:
-        - User
-      responses:
-        201:
-          description: The user properties were created.
-        400:
-          description: Malformed entity.
-        409:
-          description: Unsupported operation.
-        500:
-          description: Server error.
-    put:
-      deprecated: true
-      summary: Update user properties
-      description: Updates a user.
-      requestBody:
-        description: Map<String, String> for user properties.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserProperties'
-      parameters:
-        - name: validate
-          in: query
-          description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
-          required: true
-          schema:
-            type: boolean
-      tags:
-        - User
-      responses:
-        200:
-          description: The user was updated, and returns the properties.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        400:
-          description: Malformed researcher entity.
-        404:
-          description: The requested user doesn't exist in the system.
-        500:
-          description: Server error.
   /api/user/role/{roleName}:
     get:
       summary: Get a list of users that you have access to based on your role
@@ -2754,107 +2698,6 @@ paths:
             application/json:
               schema:
                 type: string
-  /api/researcher:
-    post:
-      deprecated: true
-      summary: Create researcher properties.
-      description: |
-        Deprecated - use POST /api/user/{userId}
-        Create researcher properties for the current user.
-      parameters:
-        - name: researcherProperties
-          in: body
-          required: true
-          description: Map<String, String> for user properties.
-          schema:
-            $ref: '#/components/schemas/UserProperties'
-      tags:
-        - Researcher
-      responses:
-        201:
-          description: The researcher properties were created.
-        400:
-          description: Malformed researcher entity.
-        409:
-          description: Unsupported operation.
-        500:
-          description: Server error.
-    put:
-      deprecated: true
-      summary: Update researcher.
-      description: |
-        Deprecated - use PUT /api/user/{userId}
-        Updates a researcher user.
-      parameters:
-        - name: validate
-          in: query
-          description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
-          required: true
-          schema:
-            type: boolean
-        - name: researcherProperties
-          in: body
-          required: true
-          description: Map<String, String> for user properties.
-          schema:
-            $ref: '#/components/schemas/UserProperties'
-      tags:
-        - Researcher
-      responses:
-        200:
-          description: The researcher was updated, and returns the properties.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserProperties'
-        400:
-          description: Malformed researcher entity.
-        404:
-          description: The requested user doesn't exist in the system.
-        500:
-          description: Server error.
-  /api/researcher/{userId}:
-    get:
-      deprecated: true
-      summary: Return researcher properties.
-      description: |
-        DEPRECATED: Use /api/user/me or /api/user/{id}
-        Describes all the properties for a reseacher user.
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-      tags:
-        - User
-        - Researcher
-      responses:
-        200:
-          description: Returns the user properties. Map<String, Object> format.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserProperties'
-        404:
-          description: The requested user doesn't exist in the system.
-    delete:
-      summary: Delete Researcher properties
-      description: Deletes all the properties for the related user.
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-      tags:
-        - User
-        - Researcher
-      responses:
-        200:
-          description: The properties were deleted. No response object, just 200 response.
-        404:
-          description: The requested user doesn't exist in the system
   /api/nih:
     delete:
       summary: Delete Era Commons Account
@@ -2878,7 +2721,6 @@ paths:
             $ref: '#/components/schemas/NIHUserAccount'
       tags:
         - User
-        - Researcher
         - eRA Commons
         - Nih
       responses:

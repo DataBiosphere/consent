@@ -16,7 +16,6 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
-import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
@@ -36,9 +35,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -61,8 +58,6 @@ public class UserResourceTest {
   @Mock private UserService userService;
 
   @Mock private LibraryCardService libraryCardService;
-
-  @Mock private ResearcherService researcherService;
 
   @Mock private SamService samService;
 
@@ -97,7 +92,7 @@ public class UserResourceTest {
   }
 
   private void initResource() {
-    userResource = new UserResource(researcherService, samService, userService, datasetService, supportRequestService);
+    userResource = new UserResource(samService, userService, datasetService, supportRequestService);
   }
 
   @Test
@@ -503,32 +498,6 @@ public class UserResourceTest {
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, 1, UserRoles.ADMIN.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-  }
-
-  @Test
-  public void testRegisterProperties() {
-    User user = createUserWithRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(researcherService.setProperties(any(), any())).thenReturn(Collections.emptyList());
-    when(userService.findUserById(any())).thenReturn(user);
-    initResource();
-
-    Map<String, String> propMap = new HashMap<>();
-    Response response = userResource.registerProperties(authUser, uriInfo, propMap);
-    assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
-  }
-
-  @Test
-  public void testUpdateProperties() {
-    User user = createUserWithRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(researcherService.updateProperties(any(), any(), any())).thenReturn(Collections.emptyList());
-    when(userService.findUserById(any())).thenReturn(user);
-    initResource();
-
-    Map<String, String> propMap = new HashMap<>();
-    Response response = userResource.updateProperties(authUser, false, propMap);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
