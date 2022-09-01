@@ -80,6 +80,7 @@ public class DAOTestHelper {
     protected static LibraryCardDAO libraryCardDAO;
     protected static DarCollectionDAO darCollectionDAO;
     protected static DarCollectionSummaryDAO darCollectionSummaryDAO;
+    protected static DatasetAssociationDAO datasetAssociationDAO;
 
     // This is a test-only DAO class where we manage the deletion
     // of all records between test runs.
@@ -137,6 +138,7 @@ public class DAOTestHelper {
         libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
         darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
         darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
+        datasetAssociationDAO = jdbi.onDemand(DatasetAssociationDAO.class);
         testingDAO = jdbi.onDemand(TestingDAO.class);
     }
 
@@ -160,6 +162,7 @@ public class DAOTestHelper {
         testingDAO.deleteAllAccessRps();
         testingDAO.deleteAllElections();
         testingDAO.deleteAllDatasetProperties();
+        testingDAO.deleteAllDatasetAssociations();
         testingDAO.deleteAllDatasets();
         testingDAO.deleteAllDacUserRoles();
         testingDAO.deleteAllDacs();

@@ -363,7 +363,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             " union " +
             "   select d2.*, e2.electionId from dac d2 " +
             "     inner join dataset ds2 on d2.dac_id = ds2.dac_id " +
-            "     inner join consentassociations a2 on a2.datasetid = ds2.dataset_id " +
+            "     inner join consent_associations a2 on a2.dataset_id = ds2.dataset_id " +
             "     inner join election e2 on e2.referenceId = a2.consentId and e2.electionId = :electionId " +
             " ) as d0 limit 1 ") // `select * from (...) limit 1` syntax is an hsqldb limitation
     Dac findDacForElection(@Bind("electionId") Integer electionId);
@@ -373,8 +373,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
         + "FROM election e "
         + "INNER JOIN accesselection_consentelection a ON a.access_election_id = e.electionid "
         + "INNER JOIN election consentElection ON a.consent_election_id = consentElection.electionid "
-        + "INNER JOIN consentassociations ca ON consentElection.referenceId = ca.consentid "
-        + "INNER JOIN dataset ds ON ds.dataset_id = ca.datasetid "
+        + "INNER JOIN consent_associations ca ON consentElection.referenceId = ca.consent_id "
+        + "INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id "
         + "INNER JOIN dac d on d.dac_id = ds.dac_id "
         + "WHERE e.electionId IN (<electionIds>) "
         + "UNION "
@@ -400,7 +400,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "   where lower(e1.status) = 'open' " +
             " union " +
             " select e2.* from election e2 " +
-            "   inner join consentassociations ca2 on ca2.consentId = e2.referenceId " +
+            "   inner join consent_associations ca2 on ca2.consent_id = e2.referenceId " +
             "   inner join dataset ds1 on ds1.dac_id = :dacId " +
             "   where lower(e2.status) = 'open' ")
     List<Election> findOpenElectionsByDacId(@Bind("dacId") Integer dacId);
