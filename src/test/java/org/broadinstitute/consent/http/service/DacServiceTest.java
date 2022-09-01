@@ -24,7 +24,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.ws.rs.BadRequestException;
 
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;

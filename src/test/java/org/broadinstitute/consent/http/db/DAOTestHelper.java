@@ -163,8 +163,8 @@ public class DAOTestHelper {
         testingDAO.deleteAllElections();
         testingDAO.deleteAllDatasetProperties();
         testingDAO.deleteAllDatasetAssociations();
-        testingDAO.deleteAllDacs();
         testingDAO.deleteAllDatasets();
+        testingDAO.deleteAllDacs();
         testingDAO.deleteAllDacUserRoles();
         testingDAO.deleteAllLibraryCards();
         testingDAO.deleteAllInstitutions();
