@@ -52,7 +52,7 @@ public class TDRResource extends Resource {
     @Produces("application/json")
     @PermitAll
     @Path("/{identifier}")
-    public Response getDataset(@Auth AuthUser authUser, @PathParam("identifier") String identifier) {
+    public Response getDatasetByIdentifier(@Auth AuthUser authUser, @PathParam("identifier") String identifier) {
         try {
             Dataset dataset = this.datasetService.findDatasetByIdentifier(identifier);
             if (Objects.isNull(dataset)) {

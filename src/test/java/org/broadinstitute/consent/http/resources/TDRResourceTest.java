@@ -56,7 +56,23 @@ public class TDRResourceTest {
 
         assertEquals(200, r.getStatus());
         assertEquals(approvedUsers, r.getEntity());
+    }
 
+    @Test
+    public void testGetDatasetByIdentifier() {
+
+        Dataset d = new Dataset();
+        d.setName("test");
+
+
+        when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(d);
+
+        initResource();
+
+        Response r = resource.getDatasetByIdentifier(new AuthUser(), "DUOS-00003");
+
+        assertEquals(200, r.getStatus());
+        assertEquals(d, r.getEntity());
     }
 
 }
