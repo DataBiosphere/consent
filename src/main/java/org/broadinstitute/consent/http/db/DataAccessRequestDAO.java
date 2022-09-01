@@ -64,9 +64,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + "  LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId  "
           + "  WHERE dar.draft = false"
             + "  AND (EXISTS (SELECT 1 FROM election e"
-          + "  INNER JOIN vote v on v.electionId = e.electionId and lower(v.type) = 'final'"
-          + "  WHERE v.vote = true AND lower(e.electionType) = 'dataaccess'"
-            + "  AND e.referenceId = dar.reference_id))"
+          + "  INNER JOIN vote v on v.electionId = e.election_id AND LOWER(v.type) = 'final'"
+          + "  WHERE v.vote = true AND LOWER(e.election_type) = 'dataaccess'"
+            + "  AND e.reference_id = dar.reference_id))"
             + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
   List<Integer> findAllUserIdsWithApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 

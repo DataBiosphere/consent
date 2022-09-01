@@ -1,18 +1,14 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
 
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -55,7 +51,7 @@ public class VoteServiceDAO {
               h -> {
                 final String updateVoteWithRationale = "UPDATE vote SET vote = :vote, updatedate = :updateDate, rationale = :rationale WHERE voteid = :voteId";
                 final String updateVoteWithoutRationale = "UPDATE vote SET vote = :vote, updatedate = :updateDate WHERE voteid = :voteId";
-                final String updateElectionStatus = "UPDATE election SET status = :status WHERE electionid = :electionId";
+                final String updateElectionStatus = "UPDATE election SET status = :status WHERE election_id = :electionId";
                 final Date now = new Date();
                 votes.forEach(
                     vote -> {

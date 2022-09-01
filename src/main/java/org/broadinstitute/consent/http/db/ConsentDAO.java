@@ -142,16 +142,23 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select distinct(associationType) from consentassociations where consentId = :consentId")
     List<String> findAssociationTypesForConsent(@Bind("consentId") String consentId);
 
-    @SqlQuery("select * from consents where consentId not in (select c.consentId from consents c  inner join election e on e.referenceId = c.consentId )")
+    @SqlQuery("SELECT * FROM consents WHERE consentId NOT IN (SELECT c.consentId FROM consents c INNER JOIN election e on e.reference_id = c.consentId )")
     List<Consent> findUnreviewedConsents();
 
     @SqlQuery("select requiresManualReview from consents where consentId = :consentId")
     Boolean checkManualReview(@Bind("consentId") String consentId);
 
-    @SqlQuery("select c.consentId, c.dac_id, c.name, c.createDate, c.sortDate, c.groupName, c.updated, e.electionId, e.status, e.version, e.archived  " +
-            "from consents c inner join election e ON e.referenceId = c.consentId inner join ( "+
-            "select referenceId, MAX(createDate) maxDate from election e group by referenceId) electionView "+
-            "ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId AND e.status = :status")
+    @SqlQuery(
+        "SELECT c.consentId, c.dac_id, c.name, c.createDate, c.sortDate, c.groupName, c.updated, e.election_id, e.status, e.version, e.archived  " +
+            "FROM consents c " +
+            "INNER JOIN election e ON e.reference_id = c.consentId " +
+            "INNER JOIN ( "+
+                "SELECT reference_id, MAX(create_date) max_date " +
+                "FROM election e " +
+                "GROUP BY reference_id) election_view "+
+                    "ON election_view.max_date = e.create_date " +
+                    "AND election_view.reference_id = e.reference_id " +
+                    "AND e.status = :status")
     @UseRowMapper(ConsentManageMapper.class)
     List<ConsentManage> findConsentManageByStatus(@Bind("status") String status);
 
