@@ -10,6 +10,6 @@ public class DateMapper implements RowMapper<Date> {
 
   @Override
   public Date map(ResultSet r, StatementContext statementContext) throws SQLException {
-    return r.getDate("createDate");
+    return r.getDate("create_date");
   }
 }
