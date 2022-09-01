@@ -18,39 +18,38 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(ConsentMapper.class)
 public interface ConsentDAO extends Transactional<ConsentDAO> {
 
-    @SqlQuery("select * from consents where consentId = :consentId and active=true")
+    /**
+     * Find consent by id
+     *
+     * @return Consent
+     */
+    @SqlQuery("SELECT * FROM consents WHERE consent_id = :consentId AND active=true")
     Consent findConsentById(@Bind("consentId") String consentId);
 
     @SqlQuery(
-        " SELECT c.* "
-            + " FROM consents c "
-            + " INNER JOIN consentassociations cs ON c.consentid = cs.consentid "
-            + " WHERE cs.datasetid = :datasetId")
+            " SELECT c.* "
+                    + " FROM consents c "
+                    + " INNER JOIN consent_associations ca ON c.consent_id = ca.consent_id "
+                    + " WHERE ca.dataset_id = :datasetId")
     Consent findConsentFromDatasetID(@Bind("datasetId") Integer datasetId);
 
-    @SqlQuery("SELECT c.name " +
-            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId "+
-            "WHERE cs.dataSetId = :datasetId")
-    String findConsentNameFromDatasetID(@Bind("datasetId") Integer datasetId);
-
-    @SqlQuery("select * from consents  where consentId in (<consentIds>)")
+    @SqlQuery("SELECT * FROM consents WHERE consent_id IN (<consentIds>)")
     Collection<Consent> findConsentsFromConsentsIDs(@BindList("consentIds") List<String> consentIds);
 
-    @SqlQuery("select * from consents  where name in (<names>)")
-    List<Consent> findConsentsFromConsentNames(@BindList("names") List<String> names);
-
-    @SqlQuery("select consentId from consents where consentId = :consentId and active=true")
+    @SqlQuery("SELECT consent_id FROM consents WHERE consent_id = :consentId AND active=true")
     String checkConsentById(@Bind("consentId") String consentId);
 
-    @SqlQuery("select consentId from consents where name = :name")
+    @SqlQuery("SELECT consent_id FROM consents WHERE name = :name")
     String getIdByName(@Bind("name") String name);
 
-    @SqlQuery("select * from consents where name = :name and active=true")
+    @SqlQuery("SELECT * FROM consents WHERE name = :name AND active=true")
     Consent findConsentByName(@Bind("name") String name);
 
-    @SqlUpdate("insert into consents " +
-            "(consentId, requiresManualReview, useRestriction, dataUse, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction, groupName, dac_id) values " +
-            "(:consentId, :requiresManualReview, :useRestriction, :dataUse, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName, :dacId)")
+    @SqlUpdate("INSERT INTO consents " +
+            "(consent_id, requires_manual_review, use_restriction, data_use, data_use_letter, active, name, dul_name," +
+            " create_date, sort_date, translated_use_restriction, group_name, dac_id)" +
+            " VALUES (:consentId, :requiresManualReview, :useRestriction, :dataUse, :dataUseLetter, true, :name," +
+            " :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName, :dacId)")
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
@@ -67,21 +66,21 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlUpdate("delete from consents where consentId = :consentId")
     void deleteConsent(@Bind("consentId") String consentId);
 
-    @SqlUpdate(" update consents set " +
-            " requiresManualReview = :requiresManualReview, " +
-            " useRestriction = :useRestriction, " +
-            " dataUse = :dataUse, " +
-            " dataUseLetter = :dataUseLetter, " +
+    @SqlUpdate("UPDATE consents SET " +
+            " requires_manual_review = :requiresManualReview, " +
+            " use_restriction = :useRestriction, " +
+            " data_use = :dataUse, " +
+            " data_use_letter = :dataUseLetter, " +
             " name = :name, " +
-            " dulName = :dulName, " +
-            " lastUpdate = :lastUpdate, " +
-            " sortDate = :sortDate, " +
-            " translatedUseRestriction = :translatedUseRestriction, " +
-            " groupName = :groupName, " +
+            " dul_name = :dulName, " +
+            " last_update = :lastUpdate, " +
+            " sort_date = :sortDate, " +
+            " translated_use_restriction = :translatedUseRestriction, " +
+            " group_name = :groupName, " +
             " updated = :updated, " +
             " dac_id = :dacId " +
-            " where consentId = :consentId " +
-            " and active = true ")
+            " WHERE consent_id = :consentId " +
+            " AND active = true ")
     void updateConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
@@ -96,62 +95,64 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("updated") Boolean updateStatus,
                        @Bind("dacId") Integer dacId);
 
-    @SqlUpdate(" UPDATE consents " +
-            " SET translateduserestriction = :translatedUseRestriction " +
-            " WHERE consentid = :consentId ")
+    @SqlUpdate("UPDATE consents " +
+            " SET translated_use_restriction = :translatedUseRestriction " +
+            " WHERE consent_id = :consentId ")
     void updateConsentTranslatedUseRestriction(
             @Bind("consentId") String consentId,
             @Bind("translatedUseRestriction") String translatedUseRestriction);
 
-    @SqlUpdate("update consents set sortDate = :sortDate " +
-            "where consentId = :consentId and active = true")
+    @SqlUpdate("UPDATE consents SET sort_date = :sortDate " +
+            "WHERE consent_id = :consentId AND active = true")
     void updateConsentSortDate(@Bind("consentId") String consentId, @Bind("sortDate") Date sortDate);
 
     // Consent Association Access Methods
 
-    @SqlUpdate("insert into consentassociations (consentId, associationType, dataSetId) values (:consentId, :associationType, :dataSetId)")
+    @SqlUpdate("INSERT INTO consent_associations (consent_id, association_type, dataset_id) VALUES (:consentId, :associationType, :dataSetId)")
     void insertConsentAssociation(@Bind("consentId") String consentId,
-                       @Bind("associationType") String associationType,
-                       @Bind("dataSetId") Integer dataSetId);
+                                  @Bind("associationType") String associationType,
+                                  @Bind("dataSetId") Integer dataSetId);
 
 
-    @SqlQuery("select ds.object_id from consentassociations ca inner join dataset ds on ds.dataset_id = ca.dataSetId where ca.consentId = :consentId and ca.associationType = :associationType and ds.object_id is not null")
+    @SqlQuery("SELECT ds.object_id FROM consent_associations ca INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id " +
+            " WHERE ca.consent_id = :consentId AND ca.association_type = :associationType AND ds.object_id IS NOT NULL")
     List<String> findAssociationsByType(@Bind("consentId") String consentId,
                                         @Bind("associationType") String associationType);
 
-    @SqlQuery("select associationId from consentassociations where dataSetId = :datasetId")
+    @SqlQuery("SELECT association_id FROM consent_associations WHERE dataset_id = :datasetId")
     Integer findAssociationsByDataSetId(@Bind("datasetId") Integer datasetId);
 
-    @SqlQuery("select  ds.object_id from consentassociations ca inner join dataset ds on ds.dataset_id = ca.dataSetId where ca.consentId = :consentId and ca.associationType = :associationType and ds.object_id = :objectId")
+    @SqlQuery("SELECT ds.object_id FROM consent_associations ca INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id " +
+            " WHERE ca.consent_id = :consentId AND ca.association_type = :associationType AND ds.object_id = :objectId")
     String findAssociationByTypeAndId(@Bind("consentId") String consentId,
                                       @Bind("associationType") String associationType,
                                       @Bind("objectId") String objectId);
 
-    @SqlUpdate("delete from consentassociations where consentId = :consentId and associationType = :associationType and dataSetId = :dataSetId")
+    @SqlUpdate("DELETE FROM consent_associations WHERE consent_id = :consentId AND association_type = :associationType AND dataset_id = :dataSetId")
     void deleteOneAssociation(@Bind("consentId") String consentId,
                               @Bind("associationType") String associationType,
                               @Bind("dataSetId") Integer dataSetId);
 
-    @SqlUpdate("delete from consentassociations where consentId = :consentId and associationType = :associationType")
+    @SqlUpdate("DELETE FROM consent_associations WHERE consent_id = :consentId AND association_type = :associationType")
     void deleteAllAssociationsForType(@Bind("consentId") String consentId,
                                       @Bind("associationType") String associationType);
 
-    @SqlUpdate("delete from consentassociations where consentId = :consentId")
+    @SqlUpdate("DELETE FROM consent_associations WHERE consent_id = :consentId")
     void deleteAllAssociationsForConsent(@Bind("consentId") String consentId);
 
-    @SqlQuery("select distinct(associationType) from consentassociations where consentId = :consentId")
+    @SqlQuery("SELECT DISTINCT (association_type) FROM consent_associations WHERE consent_id = :consentId")
     List<String> findAssociationTypesForConsent(@Bind("consentId") String consentId);
 
-    @SqlQuery("SELECT * FROM consents WHERE consentId NOT IN (SELECT c.consentId FROM consents c INNER JOIN election e on e.reference_id = c.consentId )")
+    @SqlQuery("SELECT * FROM consents WHERE consent_id NOT IN (SELECT c.consent_id FROM consents c INNER JOIN election e ON e.reference_id = c.consent_id )")
     List<Consent> findUnreviewedConsents();
 
-    @SqlQuery("select requiresManualReview from consents where consentId = :consentId")
+    @SqlQuery("SELECT requires_manual_review FROM consents WHERE consent_id = :consentId")
     Boolean checkManualReview(@Bind("consentId") String consentId);
 
     @SqlQuery(
-        "SELECT c.consentId, c.dac_id, c.name, c.createDate, c.sortDate, c.groupName, c.updated, e.election_id, e.status, e.version, e.archived  " +
+        "SELECT c.consent_id, c.dac_id, c.name, c.create_date, c.sort_date, c.group_name, c.updated, e.election_id, e.status, e.version, e.archived " +
             "FROM consents c " +
-            "INNER JOIN election e ON e.reference_id = c.consentId " +
+            "INNER JOIN election e ON e.reference_id = c.consent_id " +
             "INNER JOIN ( "+
                 "SELECT reference_id, MAX(create_date) max_date " +
                 "FROM election e " +
@@ -162,15 +163,15 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @UseRowMapper(ConsentManageMapper.class)
     List<ConsentManage> findConsentManageByStatus(@Bind("status") String status);
 
-    @SqlQuery("select ca.consentId from consentassociations ca  where ca.dataSetId IN (<dataSetIdList>) ")
+    @SqlQuery("SELECT ca.consent_id FROM consent_associations ca WHERE ca.dataset_id IN (<dataSetIdList>)")
     List<String> getAssociationConsentIdsFromDatasetIds(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
-    @SqlUpdate("update consents set updated = :updated where consentId = :referenceId")
+    @SqlUpdate("UPDATE consents SET updated = :updated WHERE consent_id = :referenceId")
     void updateConsentUpdateStatus(@Bind("referenceId") String referenceId,
                                    @Bind("updated") Boolean updated);
 
-    @SqlUpdate("update consents set dac_id = :dacId where consentId = :consentId")
+    @SqlUpdate("UPDATE consents SET dac_id = :dacId WHERE consent_id = :consentId")
     void updateConsentDac(@Bind("consentId") String consentId,
-                                @Bind("dacId") Integer dacId);
+                          @Bind("dacId") Integer dacId);
 
 }

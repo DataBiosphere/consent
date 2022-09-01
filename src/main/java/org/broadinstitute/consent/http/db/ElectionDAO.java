@@ -43,10 +43,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "WHERE reference_id = :referenceId")
     List<Election> findElectionsWithFinalVoteByReferenceId(@Bind("referenceId") String referenceId);
 
-    @SqlUpdate(
-        "INSERT INTO election " +
-            "(election_type, status, create_date, reference_id, dataset_id) VALUES " +
-            "(:electionType, :status, :createDate, :referenceId, :datasetId)")
+    @SqlUpdate("insert into election (electionType, status, createDate, referenceId, datasetId) values " +
+            "( :electionType, :status, :createDate,:referenceId, :datasetId)")
     @GetGeneratedKeys
     Integer insertElection(@Bind("electionType") String electionType,
                            @Bind("status") String status,
@@ -55,16 +53,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                            @Bind("datasetId") Integer dataSetId);
 
     @SqlUpdate(
-            "INSERT INTO election " +
-                "(election_type, status, create_date, reference_id, final_access_vote, data_use_letter, dul_name, dataset_id, version) VALUES " +
-                "(:electionType, :status, :createDate, :referenceId, :finalAccessVote, :dataUseLetter, :dulName, :datasetId, " +
-                    "(SELECT COALESCE (MAX(version), 0) + 1 " +
-                        "FROM election " +
-                        "WHERE reference_id = :referenceId " +
-                            "AND election_type = :electionType " +
-                            "AND dataset_id = :datasetId" +
-                    ")" +
-                ")")
+            " INSERT INTO election (electiontype, status, createdate, referenceid, finalaccessvote, datauseletter, dulname, datasetid, version) " +
+            " VALUES (:electionType, :status, :createDate,:referenceId, :finalAccessVote, :dataUseLetter, :dulName, :datasetId, " +
+            "        (SELECT COALESCE (MAX(version), 0) + 1 FROM election WHERE referenceid = :referenceId AND electiontype = :electionType AND datasetid = :datasetId)) ")
     @GetGeneratedKeys
     Integer insertElection(@Bind("electionType") String electionType,
                            @Bind("status") String status,
@@ -494,12 +485,12 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("SELECT d0.* FROM ( " +
             "   SELECT d1.*, e1.election_id FROM dac d1 " +
             "     INNER JOIN consents c1 ON d1.dac_id = c1.dac_id " +
-            "     INNER JOIN consentassociations a1 ON a1.consentId = c1.consentId " +
-            "     INNER JOIN election e1 ON e1.dataset_id = a1.dataSetId AND e1.election_id = :electionId " +
+            "     INNER JOIN consent_associations a1 ON a1.consent_id = c1.consent_id " +
+            "     INNER JOIN election e1 ON e1.dataset_id = a1.dataset_id AND e1.election_id = :electionId " +
             " UNION " +
             "   select d2.*, e2.election_id FROM dac d2 " +
             "     INNER JOIN consents c2 ON d2.dac_id = c2.dac_id " +
-            "     INNER JOIN election e2 ON e2.reference_id = c2.consentId and e2.election_id = :electionId " +
+            "     INNER JOIN election e2 ON e2.reference_id = c2.consent_id and e2.election_id = :electionId " +
             " ) as d0 limit 1 ") // `select * from (...) limit 1` syntax is an hsqldb limitation
     Dac findDacForElection(@Bind("electionId") Integer electionId);
 
@@ -508,7 +499,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
         + "FROM election e "
         + "INNER JOIN accesselection_consentelection a ON a.access_election_id = e.election_id "
         + "INNER JOIN election consent_election ON a.consent_election_id = consent_election.election_id "
-        + "INNER JOIN consents c ON consent_election.reference_id = c.consentid "
+        + "INNER JOIN consents c ON consent_election.reference_id = c.consent_id "
         + "INNER JOIN dac d on d.dac_id = c.dac_id "
         + "WHERE e.election_id IN (<electionIds>) "
         + "UNION "
@@ -516,10 +507,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
         + "FROM dac d "
         + "INNER JOIN consents "
         + "ON d.dac_id = consents.dac_id "
-        + "INNER JOIN consentassociations ca "
-        + "ON ca.consentid = consents.consentid "
+        + "INNER JOIN consent_associations ca "
+        + "ON ca.consent_id = consents.consent_id "
         + "INNER JOIN dataset data "
-        + "ON data.dataset_id = ca.datasetid "
+        + "ON data.dataset_id = ca.dataset_id "
         + "INNER JOIN election e "
         + "ON e.dataset_id = data.dataset_id "
         + "WHERE e.election_id IN (<electionIds>)"
@@ -535,12 +526,12 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
      */
     @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("SELECT e1.* FROM election e1 " +
-            "   INNER JOIN consentassociations a1 ON a1.dataSetId = e1.dataset_id " +
-            "   INNER JOIN consents c1 ON c1.consentId = a1.consentId AND c1.dac_id = :dacId " +
+            "   INNER JOIN consent_associations a1 ON a1.dataset_id = e1.dataset_id " +
+            "   INNER JOIN consents c1 ON c1.consent_id = a1.consent_id AND c1.dac_id = :dacId " +
             "   WHERE LOWER(e1.status) = 'open' " +
             " UNION " +
             " SELECT e2.* from election e2 " +
-            "   INNER JOIN consents c2 on c2.consentId = e2.reference_id and c2.dac_id = :dacId " +
+            "   INNER JOIN consents c2 on c2.consent_id = e2.reference_id and c2.dac_id = :dacId " +
             "   where lower(e2.status) = 'open' ")
     List<Election> findOpenElectionsByDacId(@Bind("dacId") Integer dacId);
 
