@@ -344,8 +344,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      */
     @SqlQuery(
         "SELECT d.* from dataset d " +
-            " INNER JOIN consent_associations a ON d.dataset_id = a.dataset_id " +
-            " INNER JOIN consents c ON a.consent_id = c.consent_id " +
             " WHERE d.dac_id IS NULL ")
     List<Dataset> findNonDACDatasets();
 
@@ -411,8 +409,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @RegisterRowMapper(ImmutablePairOfIntsMapper.class)
     @SqlQuery(
         "SELECT DISTINCT d.dataset_id, d.dac_id FROM dataset d " +
-            " INNER JOIN consent_associations a ON d.dataset_id = a.dataset_id " +
-            " INNER JOIN consents c ON a.consent_id = c.consent_id " +
             " WHERE d.dac_id IS NOT NULL ")
     List<Pair<Integer, Integer>> findDatasetAndDacIds();
 

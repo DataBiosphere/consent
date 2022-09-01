@@ -66,10 +66,6 @@ public class DacServiceTest {
     private ElectionDAO electionDAO;
 
     @Mock
-    private ConsentDAO consentDAO;
-
-
-    @Mock
     DataAccessRequestDAO dataAccessRequestDAO;
 
     @Mock
@@ -81,7 +77,7 @@ public class DacServiceTest {
     }
 
     private void initService() {
-        service = new DacService(dacDAO, userDAO, dataSetDAO, electionDAO, dataAccessRequestDAO, consentDAO, voteService);
+        service = new DacService(dacDAO, userDAO, dataSetDAO, electionDAO, dataAccessRequestDAO, voteService);
     }
 
     @Test

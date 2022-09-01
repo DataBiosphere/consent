@@ -42,19 +42,17 @@ public class DacService {
     private final DatasetDAO dataSetDAO;
     private final ElectionDAO electionDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
-    private final ConsentDAO consentDAO;
     private final VoteService voteService;
 
     @Inject
     public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
-                      ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, ConsentDAO consentDAO,
+                      ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
                       VoteService voteService) {
         this.dacDAO = dacDAO;
         this.userDAO = userDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
-        this.consentDAO = consentDAO;
         this.voteService = voteService;
     }
 
