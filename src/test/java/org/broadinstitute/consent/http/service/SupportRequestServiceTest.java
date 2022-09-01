@@ -12,12 +12,11 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportRequestComment;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.mockserver.model.HttpError;
@@ -30,10 +29,10 @@ import javax.ws.rs.ServerErrorException;
 import java.util.List;
 
 import static org.broadinstitute.consent.http.WithMockServer.IMAGE;
-import static org.eclipse.jetty.util.component.LifeCycle.stop;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -53,21 +52,26 @@ public class SupportRequestServiceTest {
     @Mock
     private ServicesConfiguration config;
 
-    @Rule
-    public MockServerContainer container = new MockServerContainer(IMAGE);
+    private static final MockServerContainer container = new MockServerContainer(IMAGE);
+
+    @BeforeClass
+    public static void setUp() {
+        container.start();
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        container.stop();
+    }
 
     @Before
-    public void setUp() throws Exception {
-        MockitoAnnotations.openMocks(this);
+    public void init() {
+        openMocks(this);
         mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
         when(config.isActivateSupportNotifications()).thenReturn(true);
         when(config.postSupportRequestUrl()).thenReturn("http://" + container.getHost() + ":" + container.getServerPort() + "/");
+        mockServerClient.reset();
         service = new SupportRequestService(config, institutionDAO, userDAO);
-    }
-
-    @After
-    public void tearDown() {
-        stop(container);
     }
 
     @Test
