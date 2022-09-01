@@ -74,7 +74,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
             " sort_date = :sortDate, " +
             " translated_use_restriction = :translatedUseRestriction, " +
             " group_name = :groupName, " +
-            " updated = :updated, " +
+            " updated = :updated " +
             " WHERE consent_id = :consentId " +
             " AND active = true ")
     void updateConsent(@Bind("consentId") String consentId,

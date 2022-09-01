@@ -5,13 +5,13 @@
         <!--Add mapping and dataset property type columns -->
         <addColumn tableName="dataset">
             <column name="dac_id" type="bigint">
-                <constraints foreignKeyName="fkDacId" nullable="true"/>
+                <constraints foreignKeyName="fk_dac_id" nullable="true"/>
             </column>
         </addColumn>
 
         <addForeignKeyConstraint baseColumnNames="dac_id"
                                  baseTableName="dataset"
-                                 constraintName="fkDacId"
+                                 constraintName="fk_dac_id"
                                  onDelete="NO ACTION"
                                  onUpdate="NO ACTION"
                                  referencedColumnNames="dac_id"
@@ -22,9 +22,9 @@
             SET dac_id = (
                 SELECT c.dac_id
                 FROM consents c
-                         INNER JOIN consentassociations ca
-                                    ON ca.consentid = c.consentid
-                WHERE ca.datasetid = d.dataset_id
+                         INNER JOIN consent_associations ca
+                                    ON ca.consent_id = c.consent_id
+                WHERE ca.dataset_id = d.dataset_id
                 LIMIT 1
                 )
         </sql>

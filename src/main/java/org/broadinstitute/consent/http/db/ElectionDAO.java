@@ -364,7 +364,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "   select d2.*, e2.electionId from dac d2 " +
             "     inner join dataset ds2 on d2.dac_id = ds2.dac_id " +
             "     inner join consent_associations a2 on a2.dataset_id = ds2.dataset_id " +
-            "     inner join election e2 on e2.referenceId = a2.consentId and e2.electionId = :electionId " +
+            "     inner join election e2 on e2.referenceId = a2.consent_id and e2.electionId = :electionId " +
             " ) as d0 limit 1 ") // `select * from (...) limit 1` syntax is an hsqldb limitation
     Dac findDacForElection(@Bind("electionId") Integer electionId);
 

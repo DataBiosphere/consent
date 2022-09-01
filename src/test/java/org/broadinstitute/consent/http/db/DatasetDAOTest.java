@@ -435,10 +435,6 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Consent consent = createConsent();
 
-        System.out.println("asdf");
-        System.out.println(consent);
-        System.out.println(dataset);
-        System.out.println(consentDAO);
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<DatasetDTO> datasets = datasetDAO.findActiveDatasets();
