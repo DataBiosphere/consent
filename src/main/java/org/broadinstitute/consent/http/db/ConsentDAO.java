@@ -63,7 +63,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("groupName") String groupName,
                        @Bind("dacId") Integer dacId);
 
-    @SqlUpdate("delete from consents where consentId = :consentId")
+    @SqlUpdate("delete from consents where consent_id = :consentId")
     void deleteConsent(@Bind("consentId") String consentId);
 
     @SqlUpdate("UPDATE consents SET " +
