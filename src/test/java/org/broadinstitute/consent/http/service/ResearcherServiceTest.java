@@ -8,13 +8,16 @@ import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
@@ -56,6 +59,7 @@ public class ResearcherServiceTest {
     public void testUpdateProperties() {
         when(userDAO.findUserById(any())).thenReturn(user);
         when(userDAO.findUserByEmail(any())).thenReturn(user);
+        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(List.of());
         doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(anyInt());
         doNothing().when(userPropertyDAO).insertAll(any());
         initService();
@@ -65,7 +69,8 @@ public class ResearcherServiceTest {
         props.put(UserFields.SELECTED_SIGNING_OFFICIAL_ID.getValue(), "suggestion");
         props.put(UserFields.ERA_STATUS.getValue(), "suggestion");
         props.put(UserFields.ERA_EXPIRATION_DATE.getValue(), "suggestion");
-        service.updateProperties(props, authUser, true);
+        List<UserProperty> userProps = service.updateProperties(props, authUser, true);
+        assertTrue(userProps.isEmpty());
     }
 
 }
