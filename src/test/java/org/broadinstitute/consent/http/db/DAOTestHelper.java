@@ -244,7 +244,7 @@ public class DAOTestHelper {
     }
 
     @SuppressWarnings("SameParameterValue")
-    protected Consent createConsent(Integer dacId) {
+    protected Consent createConsent() {
         String consentId = UUID.randomUUID().toString();
         consentDAO.insertConsent(consentId,
                 false,
@@ -256,8 +256,7 @@ public class DAOTestHelper {
                 new Date(),
                 new Date(),
                 "Everything",
-                "Group",
-                dacId);
+                "Group");
         return consentDAO.findConsentById(consentId);
     }
 
@@ -379,12 +378,16 @@ public class DAOTestHelper {
     }
 
     protected Dataset createDataset() {
+        return createDatasetWithDac(null);
+    }
+
+    protected Dataset createDatasetWithDac(Integer dacId) {
         User user = createUser();
         String name = "Name_" + RandomStringUtils.random(20, true, true);
         Timestamp now = new Timestamp(new Date().getTime());
         String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, dataUse.toString());
+        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, dataUse.toString(), dacId);
         createDatasetProperties(id);
         return datasetDAO.findDatasetById(id);
     }
@@ -528,12 +531,12 @@ public class DAOTestHelper {
         return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
     }
 
-    protected void createConsentAndAssociationWithDatasetIdAndDACId(int datasetId, int dacId ) {
-        Consent consent = createConsent(dacId);
+    protected void createConsentAndAssociationWithDatasetId(int datasetId ) {
+        Consent consent = createConsent();
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, datasetId);
     }
 
-    protected DarCollection createDarCollectionWithDatasetsAndConsentAssociation(int dacId, User user, List<Dataset> datasets) {
+    protected DarCollection createDarCollectionWithDatasetsAndConsentAssociation(User user, List<Dataset> datasets) {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
         datasets.stream()
@@ -543,7 +546,7 @@ public class DAOTestHelper {
                     Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
                     createFinalVote(user.getUserId(), cancelled.getElectionId());
                     createFinalVote(user.getUserId(), access.getElectionId());
-                    createConsentAndAssociationWithDatasetIdAndDACId(dataset.getDataSetId(), dacId);
+                    createConsentAndAssociationWithDatasetId(dataset.getDataSetId());
                 });
         return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     }

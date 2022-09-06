@@ -427,8 +427,9 @@ public class DatasetResourceTest {
     public void testDeleteSuccessChairperson() {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
+        dataSet.setDacId(1);
+
         Consent consent = new Consent();
-        consent.setDacId(1);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
@@ -484,8 +485,9 @@ public class DatasetResourceTest {
     public void testDeleteErrorMismatch() {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
+        dataSet.setDacId(2);
+
         Consent consent = new Consent();
-        consent.setDacId(2);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
@@ -518,8 +520,8 @@ public class DatasetResourceTest {
     public void testDisableDataSetSuccessChairperson() {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
+        dataSet.setDacId(1);
         Consent consent = new Consent();
-        consent.setDacId(1);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
@@ -575,8 +577,8 @@ public class DatasetResourceTest {
     public void testDisableDataSetErrorMismatch() {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
+        dataSet.setDacId(2);
         Consent consent = new Consent();
-        consent.setDacId(2);
         when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);

@@ -97,37 +97,6 @@ public class ConsentServiceTest {
     }
 
     @Test
-    public void testUpdateConsentDac() {
-        doNothing().when(consentDAO).updateConsentDac(anyString(), anyInt());
-        initService();
-
-        try {
-            service.updateConsentDac(UUID.randomUUID().toString(), RandomUtils.nextInt(1, 10));
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testDescribeConsentManage() {
-        AuthUser user = new AuthUser("user@test.com");
-        when(consentDAO.findUnreviewedConsents()).thenReturn(Collections.emptyList());
-        when(consentDAO.findConsentManageByStatus(anyString())).thenReturn(Collections.emptyList());
-        when(voteDAO.findChairPersonVoteByElectionId(anyInt())).thenReturn(true);
-        when(electionDAO.findElectionsWithFinalVoteByTypeAndStatus(anyString(), anyString())).thenReturn(Collections.emptyList());
-        when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(Collections.emptyList());
-        when(dacService.filterConsentManageByDAC(anyList(), any(AuthUser.class))).thenReturn(Collections.emptyList());
-        initService();
-
-        try {
-            service.describeConsentManage(user);
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    @Test
     public void testCreate() {
         Consent testConsent = this.getTestConsent();
         when(consentDAO.checkConsentById(any()))
@@ -136,7 +105,7 @@ public class ConsentServiceTest {
                 .thenReturn(null);
         when(consentDAO.checkConsentById("test consent"))
                 .thenReturn("test consent");
-        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         when(consentDAO.findConsentById(any()))
                 .thenReturn(testConsent);
         initService();
@@ -159,8 +128,7 @@ public class ConsentServiceTest {
         doNothing().when(consentDAO).updateConsent("test consent", testConsent.getRequiresManualReview(),
                 testConsent.getUseRestriction().toString(), testConsent.getDataUse().toString(),
                 testConsent.getDataUseLetter(), testConsent.getName(), testConsent.getDulName(), testConsent.getLastUpdate(),
-                testConsent.getSortDate(), testConsent.getTranslatedUseRestriction(), testConsent.getGroupName(), true,
-                testConsent.getDacId());
+                testConsent.getSortDate(), testConsent.getTranslatedUseRestriction(), testConsent.getGroupName(), true);
         when(consentDAO.checkConsentById("test consent"))
                 .thenReturn("test consent");
         when(consentDAO.findConsentById("test consent"))
@@ -257,19 +225,6 @@ public class ConsentServiceTest {
     }
 
     @Test
-    public void testGetUnReviewedConsents() {
-        when(consentDAO.findUnreviewedConsents())
-                .thenReturn(Arrays.asList(this.getTestConsent()));
-        when(dacDAO.findDacsForEmail(any()))
-                .thenReturn(Arrays.asList(this.getTestDac()));
-
-        initService();
-
-        Integer unreviewed = service.getUnReviewedConsents(this.getUser());
-        Assert.assertEquals(Integer.valueOf(0), unreviewed);
-    }
-
-    @Test
     public void testDeleteAssociation_NoAssociationType() {
         when(consentDAO.checkConsentById("test consent"))
                 .thenReturn("test consent");
@@ -336,7 +291,7 @@ public class ConsentServiceTest {
         testConsent.setSortDate(prevTimestamp);
 
         doNothing().when(consentDAO).updateConsent(any(), any(), any(), any(), any(), any(), any(), any(),
-                any(), any(), any(), any(), any());
+                any(), any(), any(), any());
 
         initService();
 

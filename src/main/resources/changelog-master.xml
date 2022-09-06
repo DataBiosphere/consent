@@ -97,4 +97,6 @@
     <include file="changesets/changelog-consent-92.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-93.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-94.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-95.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-96.0.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
