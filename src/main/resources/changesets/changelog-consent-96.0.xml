@@ -1,56 +1,34 @@
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-  <changeSet id="96.0" author="smarks">
-      <renameColumn tableName="election"
-                    oldColumnName="electionid"
-                    newColumnName="election_id"/>
+    <changeSet id="96.0" author="connorlbark">
+        <!--Add mapping and dataset property type columns -->
+        <addColumn tableName="dataset">
+            <column name="dac_id" type="bigint">
+                <constraints foreignKeyName="fk_dac_id" nullable="true"/>
+            </column>
+        </addColumn>
 
-      <renameColumn tableName="election"
-                    oldColumnName="createdate"
-                    newColumnName="create_date"/>
+        <addForeignKeyConstraint baseColumnNames="dac_id"
+                                 baseTableName="dataset"
+                                 constraintName="fk_dac_id"
+                                 onDelete="NO ACTION"
+                                 onUpdate="NO ACTION"
+                                 referencedColumnNames="dac_id"
+                                 referencedTableName="dac"/>
 
-      <renameColumn tableName="election"
-                    oldColumnName="referenceid"
-                    newColumnName="reference_id"/>
+        <sql>
+            UPDATE dataset d
+            SET dac_id = (
+                SELECT c.dac_id
+                FROM consents c
+                         INNER JOIN consent_associations ca
+                                    ON ca.consent_id = c.consent_id
+                WHERE ca.dataset_id = d.dataset_id
+                LIMIT 1
+                )
+        </sql>
 
-      <renameColumn tableName="election"
-                    oldColumnName="lastupdate"
-                    newColumnName="last_update"/>
-
-      <renameColumn tableName="election"
-                    oldColumnName="finalaccessvote"
-                    newColumnName="final_access_vote"/>
-
-      <renameColumn tableName="election"
-                    oldColumnName="userestriction"
-                    newColumnName="use_restriction"/>
-
-      <renameColumn tableName="election"
-                    oldColumnName="translateduserestriction"
-                    newColumnName="translated_use_restriction"/>
-
-      <renameColumn tableName="election"
-                    oldColumnName="datasetid"
-                    newColumnName="dataset_id"/>
-
-      <renameColumn tableName="election"
-                    oldColumnName="electiontype"
-                    newColumnName="election_type"/>
-
-      <renameColumn tableName="election"
-                    oldColumnName="datauseletter"
-                    newColumnName="data_use_letter"/>
-
-      <renameColumn tableName="election"
-                    oldColumnName="dulname"
-                    newColumnName="dul_name"/>
-
-      <renameColumn tableName="access_rp"
-                    oldColumnName="electionaccessid"
-                    newColumnName="election_access_id"/>
-
-      <renameColumn tableName="access_rp"
-                    oldColumnName="electionrpid"
-                    newColumnName="election_rp_id"/>
-  </changeSet>
+        <dropColumn tableName="consents" columnName="dac_id"/>
+    </changeSet>
 </databaseChangeLog>

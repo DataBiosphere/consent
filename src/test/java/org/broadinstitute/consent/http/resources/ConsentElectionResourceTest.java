@@ -103,101 +103,6 @@ public class ConsentElectionResourceTest {
     }
 
     @Test
-    public void testCreateConsentElectionForDac() throws UnknownIdentifierException {
-        Election election = getElection();
-        Dac dac = getDac();
-        Consent consent = getConsent(dac.getDacId());
-        when(consentService.getById(anyString())).thenReturn(consent);
-        when(dacService.findById(anyInt())).thenReturn(dac);
-        initResource();
-
-        Response response = resource.createConsentElectionForDac(
-                user,
-                info,
-                consent.getConsentId(),
-                dac.getDacId(),
-                election);
-        Assert.assertNotNull(response);
-        Assert.assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
-    }
-
-    @Test
-    public void testCreateConsentElectionForDac_noConsent() throws UnknownIdentifierException {
-        Election election = getElection();
-        Dac dac = getDac();
-        Consent consent = getConsent(dac.getDacId());
-        when(consentService.getById(anyString())).thenThrow(new UnknownIdentifierException(""));
-        initResource();
-
-        Response response = resource.createConsentElectionForDac(
-                user,
-                info,
-                consent.getConsentId(),
-                dac.getDacId(),
-                election);
-        Assert.assertNotNull(response);
-        Assert.assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
-    }
-
-    @Test
-    public void testCreateConsentElectionForDac_noDac() throws UnknownIdentifierException {
-        Election election = getElection();
-        Dac dac = getDac();
-        Consent consent = getConsent(dac.getDacId());
-        when(consentService.getById(anyString())).thenReturn(consent);
-        when(dacService.findById(anyInt())).thenReturn(null);
-        initResource();
-
-        Response response = resource.createConsentElectionForDac(
-                user,
-                info,
-                consent.getConsentId(),
-                dac.getDacId(),
-                election);
-        Assert.assertNotNull(response);
-        Assert.assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
-    }
-
-    @Test
-    public void testCreateConsentElectionForDac_consentDacMismatch() throws UnknownIdentifierException {
-        Election election = getElection();
-        Dac dac = getDac();
-        Consent consent = getConsent(dac.getDacId() + 1);
-        when(consentService.getById(anyString())).thenReturn(consent);
-        when(dacService.findById(anyInt())).thenReturn(dac);
-        initResource();
-
-        Response response = resource.createConsentElectionForDac(
-                user,
-                info,
-                consent.getConsentId(),
-                dac.getDacId(),
-                election);
-        Assert.assertNotNull(response);
-        Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    }
-
-    @Test
-    public void testCreateConsentElectionForDac_consentUpdateError() throws UnknownIdentifierException {
-        Election election = getElection();
-        Dac dac = getDac();
-        Consent consent = getConsent(dac.getDacId());
-        when(consentService.getById(anyString())).thenReturn(consent);
-        when(dacService.findById(anyInt())).thenReturn(dac);
-        doThrow(new RuntimeException()).when(consentService).updateConsentDac(anyString(), anyInt());
-        initResource();
-
-        Response response = resource.createConsentElectionForDac(
-                user,
-                info,
-                consent.getConsentId(),
-                dac.getDacId(),
-                election);
-        Assert.assertNotNull(response);
-        Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
-    }
-
-    @Test
     public void testDeleteElection() {
         doNothing().when(electionService).deleteElection(anyInt());
         initResource();
@@ -209,28 +114,6 @@ public class ConsentElectionResourceTest {
 
     private void initResource() {
         resource = new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService);
-    }
-
-    private Consent getConsent(Integer dacId) {
-        Consent consent = new Consent();
-        consent.setConsentId(UUID.randomUUID().toString());
-        consent.setCreateDate(new Timestamp(new Date().getTime()));
-        consent.setDacId(dacId);
-        consent.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
-        consent.setRequiresManualReview(false);
-        consent.setDataUseLetter("");
-        consent.setUseRestriction(new Everything());
-        consent.setName("Name");
-        return consent;
-    }
-
-    private Dac getDac() {
-        Dac dac = new Dac();
-        dac.setDacId(RandomUtils.nextInt(1, 100));
-        dac.setName("Name");
-        dac.setDescription("Description");
-        dac.setCreateDate(new Date());
-        return dac;
     }
 
     private Election getElection() {

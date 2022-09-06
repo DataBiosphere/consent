@@ -52,7 +52,7 @@ public class MatchDAOTest extends DAOTestHelper {
 
   @Test
   public void testInsertAll() {
-    String consentId = createConsent(createDac().getDacId()).getConsentId();
+    String consentId = createConsent().getConsentId();
     List<Match> matches = new ArrayList<>();
     IntStream
             .range(1, RandomUtils.nextInt(5, 10))
@@ -119,8 +119,7 @@ public class MatchDAOTest extends DAOTestHelper {
 
     //Generate RP election to test that the query only references DataAccess elections
     Election rpElection = createRPElection(UUID.randomUUID().toString(), dataset.getDataSetId());
-    Dac dac = createDac();
-    String consentId = createConsent(dac.getDacId()).getConsentId();
+    String consentId = createConsent().getConsentId();
 
     //This match represents the match record generated for the target election
     matchDAO.insertMatch(consentId, darReferenceId, true, false, new Date());
@@ -149,8 +148,7 @@ public class MatchDAOTest extends DAOTestHelper {
 
     //Generate RP election for test
     Election rpElection = createRPElection(darReferenceId, dataset.getDataSetId());
-    Dac dac = createDac();
-    String consentId = createConsent(dac.getDacId()).getConsentId();
+    String consentId = createConsent().getConsentId();
 
     // This match represents the match record generated for the access election
     matchDAO.insertMatch(consentId, accessElection.getReferenceId(), true, false, new Date());

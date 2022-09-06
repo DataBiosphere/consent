@@ -59,7 +59,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   private Dataset createDataset(Integer userId) {
-    Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(20), new Timestamp(System.currentTimeMillis()), userId, null, true, new DataUseBuilder().setGeneralUse(true).build().toString());
+    Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(20), new Timestamp(System.currentTimeMillis()), userId, null, true, new DataUseBuilder().setGeneralUse(true).build().toString(), null);
     return datasetDAO.findDatasetById(datasetId);
   }
 

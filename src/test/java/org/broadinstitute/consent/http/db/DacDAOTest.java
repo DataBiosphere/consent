@@ -28,8 +28,8 @@ public class DacDAOTest extends DAOTestHelper {
         int count = 4;
         for (int i = 1; i <= count; i++) {
             Dac d = createDac();
-            Dataset ds = createDataset();
-            Consent c = createConsent(d.getDacId());
+            Dataset ds = createDatasetWithDac(d.getDacId());
+            Consent c = createConsent();
             consentDAO.insertConsentAssociation(c.getConsentId(), ASSOCIATION_TYPE_TEST, ds.getDataSetId());
         }
         List<Dac> dacList = dacDAO.findAll();
@@ -257,12 +257,12 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testFindDacsForDatasetIds() {
         Dac dac = createDac();
-        Consent consent1 = createConsent(dac.getDacId());
-        Dataset dataset1 = createDataset();
+        Consent consent1 = createConsent();
+        Dataset dataset1 = createDatasetWithDac(dac.getDacId());
         consentDAO.insertConsentAssociation(consent1.getConsentId(), ASSOCIATION_TYPE_TEST, dataset1.getDataSetId());
 
-        Consent consent2 = createConsent(dac.getDacId());
-        Dataset dataset2 = createDataset();
+        Consent consent2 = createConsent();
+        Dataset dataset2 = createDatasetWithDac(dac.getDacId());
         consentDAO.insertConsentAssociation(consent2.getConsentId(), ASSOCIATION_TYPE_TEST, dataset2.getDataSetId());
         Set<Dac> dacs = dacDAO.findDacsForDatasetIds(Arrays.asList(dataset1.getDataSetId(), dataset2.getDataSetId()));
         assertFalse(dacs.isEmpty());

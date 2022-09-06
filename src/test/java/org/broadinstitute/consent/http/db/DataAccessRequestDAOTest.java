@@ -591,7 +591,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         String name = "Name_" + RandomStringUtils.random(20, true, true);
         Timestamp now = new Timestamp(new Date().getTime());
         String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
-        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, new DataUseBuilder().setGeneralUse(true).build().toString());
+        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, new DataUseBuilder().setGeneralUse(true).build().toString(), null);
         createDatasetPropertiesLocal(id);
         return datasetDAO.findDatasetById(id);
     }
