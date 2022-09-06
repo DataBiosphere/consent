@@ -141,6 +141,26 @@ public class DacResourceTest {
         assertEquals(List.of(ds), response.getEntity());
     }
 
+    @Test(expected = NotAuthorizedException.class)
+    public void testFindDatasetsAssociatedWithDac_NotAuthorized() {
+        Dataset ds = new Dataset();
+        ds.setName("test");
+
+        User user = new User();
+        user.setUserId(10);
+        user.setRoles(List.of());
+
+        Dac dac = new Dac();
+        dac.setChairpersons(List.of());
+
+        when(dacService.findById(1)).thenReturn(dac);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+        when(dacService.findDatasetsByDacId(1)).thenReturn(List.of(ds));
+
+        Response response = dacResource.findAllDacDatasets(authUser, 1);
+    }
+
+
 
     @Test
     public void testCreateDac_success() throws Exception {
