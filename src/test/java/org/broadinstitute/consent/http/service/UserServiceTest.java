@@ -111,7 +111,8 @@ public class UserServiceTest {
             fields.setSelectedSigningOfficialId(1);
             fields.setSuggestedSigningOfficial(RandomStringUtils.random(10, true, false));
             fields.setSuggestedInstitution(RandomStringUtils.random(10, true, false));
-            assertEquals(3, fields.buildUserProperties(user.getUserId()).size());
+            fields.setDaaAcceptance(true);
+            assertEquals(4, fields.buildUserProperties(user.getUserId()).size());
             service.updateUserFieldsById(fields, user.getUserId());
         } catch (Exception e) {
             fail(e.getMessage());

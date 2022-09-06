@@ -52,6 +52,8 @@ put:
             suggestedSigningOfficial:
               description: The suggested signing official for the user
               type: string
+            daaAcceptance:
+              type: string
   responses:
     200:
       description: The user, along with researcher properties and library cards
