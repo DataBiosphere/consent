@@ -8,8 +8,10 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.ws.rs.BadRequestException;
@@ -21,6 +23,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacBuilder;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DacService;
@@ -83,6 +86,61 @@ public class DacResourceTest {
         JsonArray dacs = getListFromEntityString(response.getEntity().toString());
         assertEquals(0, dacs.size());
     }
+
+    @Test
+    public void testFindDatasetsAssociatedWithDac_Success_Admin() {
+        Dataset ds = new Dataset();
+        ds.setName("test");
+
+        User user = new User();
+        user.setRoles(List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
+
+        when(dacService.findById(1)).thenReturn(new Dac());
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+        when(dacService.findDatasetsByDacId(1)).thenReturn(List.of(ds));
+
+        Response response = dacResource.findAllDacDatasets(authUser, 1);
+        assertEquals(200, response.getStatus());
+        assertEquals(List.of(ds), response.getEntity());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testFindDatasetsAssociatedWithDac_NoDac() {
+        Dataset ds = new Dataset();
+        ds.setName("test");
+
+        User user = new User();
+        user.setRoles(List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
+
+        when(dacService.findById(1)).thenReturn(null);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+        when(dacService.findDatasetsByDacId(1)).thenReturn(List.of(ds));
+
+        Response response = dacResource.findAllDacDatasets(authUser, 1);
+        assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    public void testFindDatasetsAssociatedWithDac_Success_Chairperson() {
+        Dataset ds = new Dataset();
+        ds.setName("test");
+
+        User user = new User();
+        user.setUserId(10);
+        user.setRoles(List.of(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName())));
+
+        Dac dac = new Dac();
+        dac.setChairpersons(List.of(user));
+
+        when(dacService.findById(1)).thenReturn(dac);
+        when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+        when(dacService.findDatasetsByDacId(1)).thenReturn(List.of(ds));
+
+        Response response = dacResource.findAllDacDatasets(authUser, 1);
+        assertEquals(200, response.getStatus());
+        assertEquals(List.of(ds), response.getEntity());
+    }
+
 
     @Test
     public void testCreateDac_success() throws Exception {
