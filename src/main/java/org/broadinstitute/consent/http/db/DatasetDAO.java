@@ -373,13 +373,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      * @return all datasets associated with DAC
      */
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery("SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consentid, c.translateduserestriction, dar_ds_ids.id as in_use " +
+    @SqlQuery("SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consent_id, c.translated_use_restriction, dar_ds_ids.id as in_use " +
             " FROM dataset d " +
             " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
             " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
             " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-            " LEFT JOIN consentassociations ca ON ca.datasetid = d.dataset_id " +
-            " LEFT JOIN consents c ON c.consentid = ca.consentid " +
+            " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
+            " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
             " WHERE d.dac_id = :dacId " +
             " OR (dp.schema_property = 'dataAccessCommitteeId' AND dp.property_value = :dacId::text)")
     List<Dataset> findDatasetsAssociatedWithDac(@Bind("dacId") Integer dacId);
