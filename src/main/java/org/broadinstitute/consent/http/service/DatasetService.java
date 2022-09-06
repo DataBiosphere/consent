@@ -151,10 +151,7 @@ public class DatasetService {
             String translatedUseRestriction = converter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET);
             consentDAO.useTransaction(h -> {
                 try {
-                    h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, translatedUseRestriction, groupName, dataset.getDacId());
-                    if (Objects.nonNull(dataset.getDacId())) {
-                        h.updateConsentDac(consentId, dataset.getDacId());
-                    }
+                    h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, translatedUseRestriction, groupName);
                     String associationType = AssociationType.SAMPLE_SET.getValue();
                     h.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
                 } catch (Exception e) {
@@ -197,7 +194,7 @@ public class DatasetService {
         Timestamp now = new Timestamp(new Date().getTime());
         Integer createdDatasetId = datasetDAO.inTransaction(h -> {
             try {
-                Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(), dataset.getActive(), dataset.getDataUse().toString());
+                Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(), dataset.getActive(), dataset.getDataUse().toString(), dataset.getDacId());
                 List<DatasetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
                 h.insertDatasetProperties(propertyList);
                 h.updateDatasetNeedsApproval(id, dataset.getNeedsApproval());
@@ -253,13 +250,6 @@ public class DatasetService {
         }
         if (Objects.isNull(dataset.getNeedsApproval())) {
             throw new IllegalArgumentException("Dataset 'Needs Approval' field cannot be null");
-        }
-
-        if (Objects.nonNull(dataset.getDacId())) {
-            Consent consent = consentDAO.findConsentFromDatasetID(datasetId);
-            if (Objects.nonNull(consent)) {
-                consentDAO.updateConsentDac(consent.getConsentId(), dataset.getDacId());
-            }
         }
 
         Dataset old = getDatasetWithPropertiesById(datasetId);

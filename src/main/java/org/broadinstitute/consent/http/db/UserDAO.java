@@ -168,9 +168,8 @@ public interface UserDAO extends Transactional<UserDAO> {
             " inner join user_role ur on ur.user_id = du.user_id " +
             " inner join roles r on r.roleId = ur.role_id and r.name in (<roleNames>) " +
             " inner join dac d on d.dac_id = ur.dac_id " +
-            " inner join consents c on c.dac_id = d.dac_id " +
-            " inner join consent_associations ca on ca.consent_id = c.consent_id " +
-            " where ca.dataset_id in (<datasetIds>) "
+            " inner join dataset ds on ds.dac_id = d.dac_id " +
+            " where ds.dataset_id in (<datasetIds>) "
     )
     Set<User> findUsersForDatasetsByRole(
             @BindList("datasetIds") List<Integer> datasetIds,

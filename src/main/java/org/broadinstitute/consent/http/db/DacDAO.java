@@ -44,9 +44,9 @@ public interface DacDAO extends Transactional<DacDAO> {
             + " d.object_id, d.active, d.needs_approval, d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, "
             + " d.update_user_id, d.data_use AS dataset_data_use, d.sharing_plan_document, ca.consent_id, c.translated_use_restriction "
             + " FROM dac "
-            + " LEFT OUTER JOIN consents c ON c.dac_id = dac.dac_id "
-            + " LEFT OUTER JOIN consent_associations ca ON ca.consent_id = c.consent_id "
-            + " LEFT OUTER JOIN dataset d ON ca.dataset_id = d.dataset_id")
+            + " LEFT OUTER JOIN dataset d ON dac.dac_id = d.dac_id"
+            + " LEFT OUTER JOIN consent_associations ca ON ca.dataset_id = d.dataset_id "
+            + " LEFT OUTER JOIN consents c ON c.consent_id = ca.consent_id ")
     List<Dac> findAll();
 
     /**
@@ -189,10 +189,9 @@ public interface DacDAO extends Transactional<DacDAO> {
      */
     @RegisterRowMapper(DacMapper.class)
     @SqlQuery(
-        "SELECT d.*, ca.dataset_id FROM dac d "
-            + " INNER JOIN consents c ON d.dac_id = c.dac_id "
-            + " INNER JOIN consent_associations ca ON ca.consent_id = c.consent_id "
-            + " WHERE ca.dataset_id IN (<datasetIds>) ")
+        "SELECT d.*, ds.dataset_id FROM dac d "
+            + " INNER JOIN dataset ds ON d.dac_id = ds.dac_id "
+            + " WHERE ds.dataset_id IN (<datasetIds>) ")
     Set<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
 
 }

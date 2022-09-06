@@ -3,16 +3,13 @@ package org.broadinstitute.consent.http.db;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import org.broadinstitute.consent.http.db.mapper.ConsentManageMapper;
 import org.broadinstitute.consent.http.db.mapper.ConsentMapper;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentManage;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 @RegisterRowMapper(ConsentMapper.class)
@@ -45,11 +42,12 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("SELECT * FROM consents WHERE name = :name AND active=true")
     Consent findConsentByName(@Bind("name") String name);
 
+
     @SqlUpdate("INSERT INTO consents " +
             "(consent_id, requires_manual_review, use_restriction, data_use, data_use_letter, active, name, dul_name," +
-            " create_date, sort_date, translated_use_restriction, group_name, dac_id)" +
+            " create_date, sort_date, translated_use_restriction, group_name)" +
             " VALUES (:consentId, :requiresManualReview, :useRestriction, :dataUse, :dataUseLetter, true, :name," +
-            " :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName, :dacId)")
+            " :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName)")
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
@@ -60,8 +58,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("createDate") Date createDate,
                        @Bind("sortDate") Date sortDate,
                        @Bind("translatedUseRestriction") String translatedUseRestriction,
-                       @Bind("groupName") String groupName,
-                       @Bind("dacId") Integer dacId);
+                       @Bind("groupName") String groupName);
 
     @SqlUpdate("DELETE FROM consents WHERE consent_id = :consentId")
     void deleteConsent(@Bind("consentId") String consentId);
@@ -77,8 +74,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
             " sort_date = :sortDate, " +
             " translated_use_restriction = :translatedUseRestriction, " +
             " group_name = :groupName, " +
-            " updated = :updated, " +
-            " dac_id = :dacId " +
+            " updated = :updated " +
             " WHERE consent_id = :consentId " +
             " AND active = true ")
     void updateConsent(@Bind("consentId") String consentId,
@@ -92,8 +88,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("sortDate") Date sortDate,
                        @Bind("translatedUseRestriction") String translatedUseRestriction,
                        @Bind("groupName") String groupName,
-                       @Bind("updated") Boolean updateStatus,
-                       @Bind("dacId") Integer dacId);
+                       @Bind("updated") Boolean updateStatus);
 
     @SqlUpdate("UPDATE consents " +
             " SET translated_use_restriction = :translatedUseRestriction " +
@@ -143,18 +138,9 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("SELECT DISTINCT (association_type) FROM consent_associations WHERE consent_id = :consentId")
     List<String> findAssociationTypesForConsent(@Bind("consentId") String consentId);
 
-    @SqlQuery("SELECT * FROM consents WHERE consent_id NOT IN (SELECT c.consent_id FROM consents c INNER JOIN election e ON e.referenceId = c.consent_id )")
-    List<Consent> findUnreviewedConsents();
 
     @SqlQuery("SELECT requires_manual_review FROM consents WHERE consent_id = :consentId")
     Boolean checkManualReview(@Bind("consentId") String consentId);
-
-    @SqlQuery("SELECT c.consent_id, c.dac_id, c.name, c.create_date, c.sort_date, c.group_name, c.updated, e.electionId, e.status, e.version, e.archived" +
-            " FROM consents c INNER JOIN election e ON e.referenceId = c.consent_id" +
-            " INNER JOIN (SELECT referenceId, MAX(createDate) maxDate FROM election e GROUP BY referenceId) electionView"+
-            " ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId AND e.status = :status")
-    @UseRowMapper(ConsentManageMapper.class)
-    List<ConsentManage> findConsentManageByStatus(@Bind("status") String status);
 
     @SqlQuery("SELECT ca.consent_id FROM consent_associations ca WHERE ca.dataset_id IN (<dataSetIdList>)")
     List<String> getAssociationConsentIdsFromDatasetIds(@BindList("dataSetIdList") List<Integer> dataSetIdList);
@@ -162,9 +148,4 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlUpdate("UPDATE consents SET updated = :updated WHERE consent_id = :referenceId")
     void updateConsentUpdateStatus(@Bind("referenceId") String referenceId,
                                    @Bind("updated") Boolean updated);
-
-    @SqlUpdate("UPDATE consents SET dac_id = :dacId WHERE consent_id = :consentId")
-    void updateConsentDac(@Bind("consentId") String consentId,
-                          @Bind("dacId") Integer dacId);
-
 }

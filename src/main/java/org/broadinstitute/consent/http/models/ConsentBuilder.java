@@ -78,9 +78,4 @@ public class ConsentBuilder {
         return this;
     }
 
-    public ConsentBuilder setDacId(Integer dacId) {
-        this.consent.setDacId(dacId);
-        return this;
-    }
-
 }

@@ -254,7 +254,8 @@ public class UserDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-        Consent consent = createConsent(dac.getDacId());
+        Consent consent = createConsent();
+    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
         Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getUserId(), election.getElectionId());
 
@@ -271,7 +272,8 @@ public class UserDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-        Consent consent = createConsent(dac.getDacId());
+        Consent consent = createConsent();
+    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
         Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getUserId(), election.getElectionId());
 
@@ -287,7 +289,8 @@ public class UserDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-        Consent consent = createConsent(dac.getDacId());
+        Consent consent = createConsent();
+    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<User> users = userDAO.findUsersForDatasetsByRole(
@@ -305,7 +308,8 @@ public class UserDAOTest extends DAOTestHelper {
         Dataset dataset = createDataset();
         Dac dac = createDac();
         createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-        Consent consent = createConsent(dac.getDacId());
+        Consent consent = createConsent();
+    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<User> users = userDAO.findUsersForDatasetsByRole(

@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -24,17 +23,12 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.ConsentManage;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -108,8 +102,7 @@ public class ConsentService {
         consentDAO.insertConsent(id, rec.getRequiresManualReview(),
                 rec.getUseRestriction().toString(), rec.getDataUse().toString(),
                 rec.getDataUseLetter(), rec.getName(), rec.getDulName(), createDate, createDate,
-                rec.getTranslatedUseRestriction(), rec.getGroupName(),
-                rec.getDacId());
+                rec.getTranslatedUseRestriction(), rec.getGroupName());
         return consentDAO.findConsentById(id);
     }
 
@@ -137,10 +130,6 @@ public class ConsentService {
         return getAllAssociationsForConsent(consentId);
     }
 
-    public void updateConsentDac(String consentId, Integer dacId) {
-        consentDAO.updateConsentDac(consentId, dacId);
-    }
-
     public Consent update(String id, Consent rec) throws NotFoundException {
         rec = updateConsentDates(rec);
         if (StringUtils.isEmpty(consentDAO.checkConsentById(id))) {
@@ -152,8 +141,7 @@ public class ConsentService {
         consentDAO.updateConsent(id, rec.getRequiresManualReview(),
                 rec.getUseRestriction().toString(), rec.getDataUse().toString(),
                 rec.getDataUseLetter(), rec.getName(), rec.getDulName(), rec.getLastUpdate(),
-                rec.getSortDate(), rec.getTranslatedUseRestriction(), rec.getGroupName(), true,
-                rec.getDacId());
+                rec.getSortDate(), rec.getTranslatedUseRestriction(), rec.getGroupName(), true);
         return consentDAO.findConsentById(id);
     }
 
@@ -189,50 +177,6 @@ public class ConsentService {
 
         }
         return getAllAssociationsForConsent(consentId);
-    }
-
-    public List<ConsentManage> describeConsentManage(AuthUser authUser) {
-        List<ConsentManage> consentManageList = new ArrayList<>();
-        consentManageList.addAll(collectUnreviewedConsents(consentDAO.findUnreviewedConsents()));
-        consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.OPEN.getValue()));
-        consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CANCELED.getValue()));
-        List<ConsentManage> closedElections = consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue());
-        closedElections.forEach(consentManage -> {
-            Boolean vote = voteDAO.findChairPersonVoteByElectionId(consentManage.getElectionId());
-            consentManage.setVote(vote != null && vote ? "Approved" : "Denied");
-        });
-        consentManageList.addAll(closedElections);
-        consentManageList.sort((c1, c2) -> c2.getSortDate().compareTo(c1.getSortDate()));
-        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
-        if (!openElections.isEmpty()) {
-            List<String> referenceIds = openElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-            List<DataAccessRequest> dataAccessRequests = dataAccessRequestDAO.findByReferenceIds(referenceIds);
-            List<String> datasetIds =
-                dataAccessRequests.stream()
-                    .filter(Objects::nonNull)
-                    .map(DataAccessRequest::getData)
-                    .filter(Objects::nonNull)
-                    .map(DataAccessRequestData::getDatasetDetail)
-                    .filter(Objects::nonNull)
-                    .flatMap(List::stream)
-                    .map(DatasetDetailEntry::getDatasetId)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-            List<String> consentIds = new ArrayList<>();
-            if (CollectionUtils.isNotEmpty(datasetIds)) {
-                List<Integer> datasetIdIntValues = datasetIds.stream().map(Integer::valueOf).collect(Collectors.toList());
-                consentIds.addAll(consentDAO.getAssociationConsentIdsFromDatasetIds(datasetIdIntValues));
-            }
-
-            for (ConsentManage consentManage : consentManageList) {
-                if (consentIds.stream().anyMatch(cm -> cm.equals(consentManage.getConsentId()))) {
-                    consentManage.setEditable(false);
-                } else {
-                    consentManage.setEditable(true);
-                }
-            }
-        }
-        return dacService.filterConsentManageByDAC(consentManageList, authUser);
     }
 
     public List<ConsentAssociation> getAssociation(String consentId, String associationType, String objectId) {
@@ -274,19 +218,6 @@ public class ConsentService {
 
     public Consent getConsentFromDatasetID(Integer datasetId) {
         return consentDAO.findConsentFromDatasetID(datasetId);
-    }
-
-    public Integer getUnReviewedConsents(AuthUser authUser) {
-        Collection<Consent> consents = consentDAO.findUnreviewedConsents();
-        return dacService.filterConsentsByDAC(consents, authUser).size();
-    }
-
-    private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents) {
-        String UNREVIEWED = "un-reviewed"; // TODO: Fix this in https://broadinstitute.atlassian.net/browse/DUOS-469
-        List<ConsentManage> consentManageList = consents.stream().map(ConsentManage::new).collect(Collectors.toList());
-        consentManageList.forEach(c -> c.setElectionStatus(UNREVIEWED));
-        consentManageList.forEach(c -> c.setEditable(true));
-        return consentManageList;
     }
 
     public void delete(String id) throws IllegalArgumentException {
