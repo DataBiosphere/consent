@@ -96,9 +96,10 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + "   INNER JOIN data_access_request dar ON dar.collection_id = c.collection_id " +
            "      AND (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL) "
           + "   INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id "
-          + "   INNER JOIN consentassociations ca ON ca.datasetid = dd.dataset_id "
-          + "   INNER JOIN consents consent ON consent.consentid = ca.consentid " +
-           "      AND consent.dac_id IN (<dacIds>) ")
+          + "   INNER JOIN consent_associations ca ON ca.dataset_id = dd.dataset_id "
+          + "   INNER JOIN consents consent ON consent.consent_id = ca.consent_id "
+          + "   INNER JOIN dataset ds ON ca.dataset_id = ds.dataset_id "
+          + "      AND ds.dac_id IN (<dacIds>) ")
   List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds);
 
   @SqlQuery(

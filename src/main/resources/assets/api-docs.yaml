@@ -316,31 +316,6 @@ paths:
           description: The election was deleted.
         404:
           description: "The Election/Consent doesn't exist."
-  /api/consent/manage:
-    get:
-      deprecated: true
-      summary: Manage Consents
-      description: Returns the list of consents available to be managed.
-      tags:
-        - Consent
-      responses:
-        200:
-          description: The list of consents available to be managed.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ConsentManage'
-  /api/consent/unreviewed:
-    get:
-      summary: Get total unreviewed DULs
-      description: Retrieves the amount of unreviewed DUL elections.
-      tags:
-        - Consent
-      responses:
-        200:
-          description: 'Returns an integer corresponding to the amount of unreviewed DULs'
   /api/consent:
     $ref: './paths/consent.yaml'
   /api/consent/{id}:
@@ -3152,35 +3127,6 @@ components:
           type: integer
           format: int32
           description: Describes the number of cases that are opened and have to be reviewed.
-    ConsentManage:
-      type: object
-      properties:
-        consentId:
-          type: string
-          description: The consent ID of the case.
-        consentName:
-          type: string
-          description: The consent name of the case.
-        editable:
-          type: boolean
-          description: If the consent manage is editable.
-        electionStatus:
-          type: string
-          description: The status of the election related to the consent.
-        electionId:
-          type: integer
-          description: The electionId of the election related to the consent.
-        createDate:
-          type: string
-          format: date-time
-          description: The datetime the election was created.
-        sortDate:
-          type: string
-          format: date-time
-          description: The datetime the election was created/updated (the last updated).
-        updateStatus:
-          type: boolean
-          description: Indicates if a consent has been updated from orsp
     DataAccessRequestManage:
       type: object
       properties:

@@ -11,12 +11,12 @@ public class MailMessageMapper implements RowMapper<MailMessage> {
   public MailMessage map(ResultSet r, StatementContext ctx) throws SQLException {
 
     return new MailMessage(
-        r.getInt("emailEntityId"),
-        r.getInt("voteId"),
-        r.getInt("electionId"),
-        r.getInt("dacUserId"),
-        r.getString("type"),
-        r.getDate("dateSent"),
-        r.getString("emailText"));
+        r.getInt("email_entity_id"),
+        r.getInt("vote_id"),
+        r.getInt("election_id"),
+        r.getInt("user_id"),
+        r.getString("email_type"),
+        r.getDate("date_sent"),
+        r.getString("email_text"));
   }
 }

@@ -200,7 +200,8 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
     dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getUserId(), new Date(), new Date(), new Date(), dar.getData());
     Dac dac = createDac();
-    Consent consent = createConsent(dac.getDacId());
+    Consent consent = createConsent();
+    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
     consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
     List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(List.of(dac.getDacId()));
@@ -662,8 +663,8 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
    public void testGetFilteredListForDacByCollectionIdsOnDarCode() {
      Dac dac = createDac();
      User user = createUser();
-     Dataset dataset = createDataset();
-     DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(dac.getDacId(), user, Collections.singletonList(dataset));
+     Dataset dataset = createDatasetWithDac(dac.getDacId());
+     DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(user, Collections.singletonList(dataset));
      createDarCollection();
      String testTerm = generateTestTerm(collection.getDarCode());
      List<Integer> collectionIds = Collections.singletonList(collection.getDarCollectionId());
@@ -677,10 +678,10 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
   public void testGetFilteredListForDacByCollectionIdsOnProjectTitle() {
     Dac dac = createDac();
     User user = createUser();
-    Dataset dataset = createDataset();
-    Dataset secondDataset = createDataset();
-    DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(dac.getDacId(), user, Collections.singletonList(dataset));
-    DarCollection negativeCollection = createDarCollectionWithDatasetsAndConsentAssociation(dac.getDacId(), user, Collections.singletonList(secondDataset));
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    Dataset secondDataset = createDatasetWithDac(dac.getDacId());
+    DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(user, Collections.singletonList(dataset));
+    DarCollection negativeCollection = createDarCollectionWithDatasetsAndConsentAssociation(user, Collections.singletonList(secondDataset));
     assertTrue(collection.getDars().values().stream().findAny().isPresent());
     DataAccessRequest targetDar = collection.getDars().values().stream().findAny().get();
     assertTrue(negativeCollection.getDars().values().stream().findAny().isPresent());
@@ -698,8 +699,8 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
   public void testGetFilteredListForDacByCollectionIdsOnResearcher() {
     Dac dac = createDac();
     User user = createUser();
-    Dataset dataset = createDataset();
-    DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(dac.getDacId(), user, Collections.singletonList(dataset));
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(user, Collections.singletonList(dataset));
     createDarCollection();
     String testTerm = generateTestTerm(user.getDisplayName());
     List<Integer> collectionIds = Collections.singletonList(collection.getDarCollectionId());
@@ -846,7 +847,8 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
 
     // create a DAC
     Dac dac = createDAC();
-    Consent consent = createConsent(dac.getDacId());
+    Consent consent = createConsent();
+    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
     consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
     DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);

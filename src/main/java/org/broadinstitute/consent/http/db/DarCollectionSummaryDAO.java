@@ -29,7 +29,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     "FROM dar_collection c " +
     "INNER JOIN users u " +
       "ON u.user_id = c.create_user_id " +
-    "INNER JOIN institution i " +
+    "LEFT JOIN institution i " +
       "ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar " +
       "ON dar.collection_id = c.collection_id " +
@@ -64,7 +64,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     "FROM dar_collection c " +
     "INNER JOIN users u " +
       "ON u.user_id = c.create_user_id " +
-    "INNER JOIN institution i " +
+    "LEFT JOIN institution i " +
       "ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar " +
       "ON dar.collection_id = c.collection_id " +
@@ -96,7 +96,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     "FROM dar_collection c " +
     "INNER JOIN users u " +
       "ON u.user_id = c.create_user_id " +
-    "INNER JOIN institution i " +
+    "LEFT JOIN institution i " +
       "ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar " +
       "ON dar.collection_id = c.collection_id " +
@@ -126,7 +126,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     "FROM dar_collection c " +
     "INNER JOIN users u " +
       "ON u.user_id = c.create_user_id " +
-    "INNER JOIN institution i " +
+    "LEFT JOIN institution i " +
       "ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar " +
       "ON dar.collection_id = c.collection_id " +
@@ -161,7 +161,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     "FROM dar_collection c " +
     "INNER JOIN users u " +
       "ON u.user_id = c.create_user_id " +
-    "INNER JOIN institution i " +
+    "LEFT JOIN institution i " +
       "ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar " +
       "ON dar.collection_id = c.collection_id " +
@@ -200,7 +200,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     "FROM dar_collection c " +
     "INNER JOIN users u " +
       "ON u.user_id = c.create_user_id " +
-    "INNER JOIN institution i " +
+    "LEFT JOIN institution i " +
       "ON i.institution_id = u.institution_id " +
     "INNER JOIN data_access_request dar " +
       "ON dar.collection_id = c.collection_id " +

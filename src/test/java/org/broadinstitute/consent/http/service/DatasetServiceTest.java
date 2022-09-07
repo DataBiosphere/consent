@@ -86,7 +86,7 @@ public class DatasetServiceTest {
     public void testCreateDataset() throws Exception {
         DatasetDTO test = getDatasetDTO();
         Dataset mockDataset = getDatasets().get(0);
-        when(datasetDAO.insertDataset(anyString(), any(), anyInt(), anyString(), anyBoolean(), any())).thenReturn(mockDataset.getDataSetId());
+        when(datasetDAO.insertDataset(anyString(), any(), anyInt(), anyString(), anyBoolean(), any(), any())).thenReturn(mockDataset.getDataSetId());
         when(datasetDAO.findDatasetById(any())).thenReturn(mockDataset);
         when(datasetDAO.findDatasetPropertiesByDatasetId(any())).thenReturn(getDatasetProperties());
         when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(Collections.singleton(test));
@@ -448,7 +448,7 @@ public class DatasetServiceTest {
         Consent consent = new Consent();
         when(consentDAO.findConsentById(anyString())).thenReturn(consent);
         when(useRestrictionConverter.parseUseRestriction(any(), any())).thenReturn(useRestriction);
-        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         doNothing().when(consentDAO).insertConsentAssociation(any(), any(), any());
         initService();
 
