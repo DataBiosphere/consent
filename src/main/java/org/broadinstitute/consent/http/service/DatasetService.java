@@ -27,6 +27,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -423,6 +424,23 @@ public class DatasetService {
                   return map;
               }
         ).collect(Collectors.toList());
+    }
+
+    public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {
+        Boolean currentApprovalState = dataset.getDacApproval();
+        Integer datasetId = dataset.getDataSetId();
+        Dataset datasetReturn = dataset;
+        //Only update and fetch the dataset if it hasn't already been approved
+        //If it has, simply returned the dataset in the argument (which was already queried for in the resource)
+        if(Objects.isNull(currentApprovalState) || !currentApprovalState) {
+            datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
+            datasetReturn = datasetDAO.findDatasetById(datasetId);
+        } else {
+            if(Objects.isNull(approval) || !approval) {
+                throw new IllegalArgumentException("Dataset is already approved");
+            }
+        }
+        return datasetReturn;
     }
 
     private boolean filterDatasetOnProperties(DatasetDTO dataset, String term) {

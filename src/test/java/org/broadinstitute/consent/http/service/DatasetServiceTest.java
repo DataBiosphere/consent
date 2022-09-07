@@ -577,6 +577,63 @@ public class DatasetServiceTest {
         verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
     }
 
+    @Test
+    public void testApproveDataset_AlreadyApproved_TrueSubmission() {
+        Dataset dataset = new Dataset();
+        User user = new User();
+        dataset.setDacApproval(true);
+        dataset.setDataSetId(1);
+        dataset.setUpdateDate(new Date());
+        dataset.setUpdateUserId(4);
+        initService();
+
+        Dataset datasetResult = datasetService.approveDataset(dataset, user, true);
+        assertNotNull(datasetResult);
+        assertEquals(dataset.getDataSetId(), datasetResult.getDataSetId());
+        assertEquals(dataset.getUpdateUserId(), datasetResult.getUpdateUserId());
+        assertEquals(dataset.getDacApproval(), datasetResult.getDacApproval());
+        assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testApprovedDataset_AlreadyApproved_FalseSubmission() {
+        Dataset dataset = new Dataset();
+        User user = new User();
+        dataset.setDacApproval(true);
+        initService();
+
+        datasetService.approveDataset(dataset, user, false);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testApprovedDataset_AlreadyApproved_NullSubmission() {
+        Dataset dataset = new Dataset();
+        User user = new User();
+        dataset.setDacApproval(true);
+        initService();
+
+        datasetService.approveDataset(dataset, user, null);
+    }
+
+    @Test
+    public void testApproveDataset() {
+        Dataset dataset = new Dataset();
+        dataset.setDataSetId(1);
+        User user = new User();
+        user.setUserId(1);
+        Boolean payloadBool = true;
+        Dataset updatedDataset = new Dataset();
+        updatedDataset.setDataSetId(1);
+        updatedDataset.setDacApproval(payloadBool);
+        
+        when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
+        initService();
+
+        Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
+        assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
+        assertTrue(returnedDataset.getDacApproval());
+    }
+
     /* Helper functions */
 
     private List<Dataset> getDatasets() {

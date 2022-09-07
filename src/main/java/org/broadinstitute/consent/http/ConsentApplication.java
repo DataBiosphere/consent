@@ -164,7 +164,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             LOGGER.error("Exception initializing liquibase: " + e);
         }
 
-        // TODO: Update all services to use an injector.
         // Previously, this code was working around a dropwizard+Guice issue with singletons and JDBI.
         final Injector injector = Guice.createInjector(new ConsentModule(config, env));
 
@@ -236,7 +235,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService));
         env.jersey().register(new ConsentVoteResource(emailNotifierService, electionService, voteService));
         env.jersey().register(new ConsentCasesResource(electionService, pendingCaseService, summaryService));
-        env.jersey().register(new DacResource(dacService, userService));
+        env.jersey().register(new DacResource(dacService, userService, datasetService));
         env.jersey().register(new DACUserResource(userService));
         env.jersey().register(new DarCollectionResource(dataAccessRequestService, darCollectionService, userService));
         env.jersey().register(new DataRequestElectionResource(dataAccessRequestService, emailNotifierService, voteService, electionService));

@@ -349,4 +349,19 @@ public class User {
         return getUserRoleIdsFromUser().stream().anyMatch(queriedRoleIds::contains);
     }
 
+    @Transient
+    public Boolean checkIfUserHasRole(String roleName, Integer dacId) {
+        UserRoles role = UserRoles.getUserRoleFromName(roleName);
+        List<UserRole> roles = getRoles();
+        List<UserRole> targetRoles = roles.stream()
+                .filter((r) -> {
+                    return r.getName().equals(role.getRoleName())
+                            && r.getRoleId().equals(role.getRoleId())
+                            && Objects.equals(r.getDacId(), dacId);
+                })
+                .collect(Collectors.toList());
+        return !targetRoles.isEmpty();
+        
+    }
+
 }
