@@ -30,6 +30,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.grammar.Everything;
+import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -92,6 +93,8 @@ public class DataAccessRequestServiceTest {
     private InstitutionDAO institutionDAO;
     @Mock
     private MatchDAO matchDAO;
+    @Mock
+    private DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
 
     private DataAccessRequestService service;
 
@@ -117,7 +120,7 @@ public class DataAccessRequestServiceTest {
         container.setElectionDAO(electionDAO);
         container.setVoteDAO(voteDAO);
         container.setMatchDAO(matchDAO);
-        service = new DataAccessRequestService(counterService, container, dacService);
+        service = new DataAccessRequestService(counterService, container, dacService, dataAccessRequestServiceDAO);
     }
 
     @Test
@@ -214,28 +217,23 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void testUpdateByReferenceIdVersion2() {
+    public void testUpdateByReferenceIdVersion2() throws Exception {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setCollectionId(RandomUtils.nextInt(0, 100));
         User user = new User(1, "email@test.org", "Display Name", new Date());
         dar.addDatasetIds(Arrays.asList(1, 2, 3));
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(),
-            any(), any(), any(), any());
-        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any())).thenReturn(dar);
         initService();
         DataAccessRequest newDar = service.updateByReferenceId(user, dar);
         assertNotNull(newDar);
     }
 
     @Test
-    public void testUpdateByReferenceIdVersion2_WithCollection() {
+    public void testUpdateByReferenceIdVersion2_WithCollection() throws Exception {
         DataAccessRequest dar = generateDataAccessRequest();
         User user = new User(1, "email@test.org", "Display Name", new Date());
         dar.addDatasetIds(Arrays.asList(1, 2, 3));
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(),
-          any(), any(), any(), any());
-        doNothing().when(darCollectionDAO).updateDarCollection(any(), any(), any());
-        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        when(dataAccessRequestServiceDAO.updateByReferenceId(user, dar)).thenReturn(dar);
         initService();
         DataAccessRequest newDar = service.updateByReferenceId(user, dar);
         assertNotNull(newDar);

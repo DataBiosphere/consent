@@ -29,6 +29,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,7 @@ import javax.ws.rs.NotFoundException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,13 +69,14 @@ public class DataAccessRequestService {
     private final UserDAO userDAO;
     private final VoteDAO voteDAO;
     private final InstitutionDAO institutionDAO;
+    private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
 
     private final DacService dacService;
     private final DataAccessReportsParser dataAccessReportsParser;
 
     @Inject
     public DataAccessRequestService(CounterService counterService, DAOContainer container,
-            DacService dacService) {
+            DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO) {
         this.consentDAO = container.getConsentDAO();
         this.counterService = counterService;
         this.dacDAO = container.getDacDAO();
@@ -87,6 +90,7 @@ public class DataAccessRequestService {
         this.institutionDAO = container.getInstitutionDAO();
         this.dacService = dacService;
         this.dataAccessReportsParser = new DataAccessReportsParser();
+        this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
     }
 
     /**
@@ -182,6 +186,7 @@ public class DataAccessRequestService {
         return dar;
     }
 
+    //NOTE: rewrite method into new servicedao method on another ticket
     public DataAccessRequest insertDraftDataAccessRequest(User user, DataAccessRequest dar) {
         if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(dar.getReferenceId()) || Objects.isNull(dar.getData())) {
             throw new IllegalArgumentException("User and DataAccessRequest are required");
@@ -196,7 +201,6 @@ public class DataAccessRequestService {
             now,
             dar.getData()
         );
-
         syncDataAccessRequestDatasets(dar.getDatasetIds(), dar.getReferenceId());
 
         return findByReferenceId(dar.getReferenceId());
@@ -451,20 +455,11 @@ public class DataAccessRequestService {
      * @return The updated DataAccessRequest
      */
     public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
-        Date now = new Date();
-        dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(),
-            user.getUserId(),
-            now,
-            dar.getSubmissionDate(),
-            now,
-            dar.getData());
-        if (Objects.nonNull(dar.getCollectionId())) {
-            darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getUserId(), now);
-        }
-        // Update the dar_dataset collection
-        syncDataAccessRequestDatasets(dar.getDatasetIds(), dar.getReferenceId());
-
-        return findByReferenceId(dar.getReferenceId());
+      try {
+        return dataAccessRequestServiceDAO.updateByReferenceId(user, dar);
+      } catch(SQLException e) {
+        throw new IllegalArgumentException("Update failed due to invalid parameters");
+      }
     }
 
     public List<DataAccessRequestManage> getDraftDataAccessRequestManage(Integer userId) {
