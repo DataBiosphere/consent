@@ -52,6 +52,7 @@ public class DarCollectionResource extends Resource {
     this.userService = userService;
   }
 
+  @Deprecated
   @GET
   @Produces("application/json")
   @RolesAllowed(RESEARCHER)
@@ -65,6 +66,7 @@ public class DarCollectionResource extends Resource {
     }
   }
 
+  @Deprecated
   @GET
   @Path("role/{roleName}")
   @Produces("application/json")
