@@ -29,8 +29,6 @@ public class DataAccessRequestServiceDAOTest extends DAOTestHelper {
 
     @Test
     public void testUpdateByReferenceId() throws Exception {
-      //create a dar with datasetOne connection and insert into table
-      //also means inserting DarDataset record with datasetOne tied to referenceId
 
       Dataset datasetOne = createDataset();
       Dataset datasetTwo = createDataset();
