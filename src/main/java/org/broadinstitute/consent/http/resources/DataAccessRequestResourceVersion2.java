@@ -209,6 +209,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
   }
 
+  @Deprecated
   @GET
   @Produces("application/json")
   @Path("/draft/manage")
