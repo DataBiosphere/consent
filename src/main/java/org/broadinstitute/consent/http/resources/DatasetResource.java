@@ -6,14 +6,12 @@ import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -40,6 +38,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -55,7 +54,6 @@ import java.util.stream.Collectors;
 public class DatasetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
-    private final ConsentService consentService;
     private final DatasetService datasetService;
     private final UserService userService;
     private final DataAccessRequestService darService;
@@ -76,8 +74,7 @@ public class DatasetResource extends Resource {
     }
 
     @Inject
-    public DatasetResource(ConsentService consentService, DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
-        this.consentService = consentService;
+    public DatasetResource(DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
         this.datasetService = datasetService;
         this.userService = userService;
         this.darService = darService;
@@ -128,6 +125,32 @@ public class DatasetResource extends Resource {
             DatasetDTO createdDatasetWithConsent = datasetService.createDatasetWithConsent(inputDataset, name, userId);
             URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDatasetWithConsent.getDataSetId());
             return Response.created(uri).entity(createdDatasetWithConsent).build();
+        }
+        catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @POST
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/v3")
+    @RolesAllowed({ADMIN, DATASUBMITTER})
+    /*
+     * This endpoint accepts a json object that needs to be a valid representation
+     * of a dataset-registration-schema_v1.json object. With that object, we can fully
+     * create any number of datasets from the provided values.
+     */
+    public Response createDatasetRegistration(@Auth AuthUser authUser, String json) {
+        // TODO
+        //  * Validate input json against schema
+        //  * Read input files if provided
+        //  * Build new dataset from schema
+        //  * Save any uploaded files
+        //  * Return generated dataset entity
+        try {
+            URI uri = UriBuilder.fromPath("").build();
+            return Response.created(uri).entity("").build();
         }
         catch (Exception e) {
             return createExceptionResponse(e);

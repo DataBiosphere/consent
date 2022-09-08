@@ -13,7 +13,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -44,9 +43,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DatasetResourceTest {
-
-    @Mock
-    private ConsentService consentService;
 
     @Mock
     private DataAccessRequestService darService;
@@ -83,7 +79,7 @@ public class DatasetResourceTest {
     }
 
     private void initResource() {
-        resource = new DatasetResource(consentService, datasetService, userService, darService);
+        resource = new DatasetResource(datasetService, userService, darService);
     }
 
     private String createPropertiesJson(List<DatasetPropertyDTO> properties) {
@@ -429,9 +425,6 @@ public class DatasetResourceTest {
         dataSet.setDataSetId(1);
         dataSet.setDacId(1);
 
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
-
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         role.setDacId(1);
@@ -465,8 +458,6 @@ public class DatasetResourceTest {
     public void testDeleteErrorNullConsent() {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -486,9 +477,6 @@ public class DatasetResourceTest {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         dataSet.setDacId(2);
-
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -521,8 +509,6 @@ public class DatasetResourceTest {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         dataSet.setDacId(1);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -557,8 +543,6 @@ public class DatasetResourceTest {
     public void testDisableDataSetErrorNullConsent() {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -578,8 +562,6 @@ public class DatasetResourceTest {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         dataSet.setDacId(2);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());

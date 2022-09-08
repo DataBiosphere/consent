@@ -1759,6 +1759,8 @@ paths:
 
   /api/dataset/v2:
     $ref: './paths/datasetV2.yaml'
+  /api/dataset/v3:
+    $ref: './paths/datasetV3.yaml'
   /api/dataset/validate:
     get:
       summary: validateDatasetName
