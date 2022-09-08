@@ -1952,6 +1952,8 @@ paths:
                   $ref: '#/components/schemas/DatasetAssociation'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
+  /api/tdr/{identifier}:
+    $ref: './paths/tdrDataset.yaml'
   /api/election/{id}:
     get:
       summary: describeElectionById
