@@ -163,7 +163,7 @@ public class DatasetResource extends Resource {
         //  * Build new dataset from schema
         //  * Save any uploaded files
         //  * Return a list of generated dataset entities
-        if (!jsonSchemaUtil.isValidDataSubmitterObject_v1(json)) {
+        if (!jsonSchemaUtil.isValidSchema_v1(json)) {
             throw new BadRequestException("Invalid schema");
         }
         JSONObject datasetRegistrationInstance = new JSONObject(json);
