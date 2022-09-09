@@ -30,6 +30,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -458,7 +459,12 @@ public class DataAccessRequestService {
       try {
         return dataAccessRequestServiceDAO.updateByReferenceId(user, dar);
       } catch(SQLException e) {
-        throw new IllegalArgumentException("Update failed due to invalid parameters");
+        // If I simply rethrow the error then I'll have to redefine any method that
+        // calls this function to "throw SQLException"
+        //Instead I'm going to throw an UnableToExecuteStatementException
+        //Response class will catch it, log it, and throw a 500 through the "unableToExecuteExceptionHandler"
+        //on the Resource class, just like it would with a SQLException
+        throw new UnableToExecuteStatementException(e.getMessage());
       }
     }
 
