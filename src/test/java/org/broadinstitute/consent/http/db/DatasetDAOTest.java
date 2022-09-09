@@ -42,6 +42,8 @@ public class DatasetDAOTest extends DAOTestHelper {
         User user = createUser();
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         Dac dac = createDac();
+        String doc = "Sharing Plan Document";
+        String docName = "Sharing Plan Document Name";
 
         Integer id = datasetDAO.insertDataset(
             "Name",
@@ -51,13 +53,16 @@ public class DatasetDAOTest extends DAOTestHelper {
             true,
             dataUse.toString(),
             dac.getDacId(),
-            "Sharing Plan Document",
-            "Sharing Plan Document Name"
+            doc,
+            docName
         );
 
         Dataset dataset = datasetDAO.findDatasetById(id);
         assertNotNull(dataset);
         assertEquals(user.getUserId(), dataset.getCreateUserId());
+        assertEquals(dac.getDacId(), dataset.getDacId());
+        assertEquals(doc, dataset.getSharingPlanDocument());
+        assertEquals(docName, dataset.getSharingPlanDocumentName());
     }
 
     @Test
