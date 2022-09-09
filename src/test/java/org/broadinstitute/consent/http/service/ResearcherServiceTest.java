@@ -13,7 +13,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.NotFoundException;
 import java.util.Collections;
@@ -23,6 +22,7 @@ import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ResearcherServiceTest {
 
@@ -47,9 +47,9 @@ public class ResearcherServiceTest {
         user = new User();
         user.setEmail(authUser.getEmail());
         user.setUserId(RandomUtils.nextInt(1, 10));
-        user.setDisplayName(RandomStringUtils.random(10));
+        user.setDisplayName(RandomStringUtils.randomAlphabetic(10));
 
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     private void initService() {
