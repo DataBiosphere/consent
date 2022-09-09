@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -15,6 +17,9 @@ import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +46,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
@@ -48,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Path("api/dataset")
@@ -55,6 +62,7 @@ public class DatasetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
     private final DatasetService datasetService;
+    private final GCSService gcsService;
     private final UserService userService;
     private final DataAccessRequestService darService;
 
@@ -74,8 +82,9 @@ public class DatasetResource extends Resource {
     }
 
     @Inject
-    public DatasetResource(DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
+    public DatasetResource(DatasetService datasetService, GCSService gcsService, UserService userService, DataAccessRequestService darService) {
         this.datasetService = datasetService;
+        this.gcsService = gcsService;
         this.userService = userService;
         this.darService = darService;
         resetDataSetSampleFileName();
@@ -132,8 +141,8 @@ public class DatasetResource extends Resource {
     }
 
     @POST
-    @Consumes("application/json")
-    @Produces("application/json")
+    @Consumes({MediaType.MULTIPART_FORM_DATA})
+    @Produces({MediaType.APPLICATION_JSON})
     @Path("/v3")
     @RolesAllowed({ADMIN, DATASUBMITTER})
     /*
@@ -141,15 +150,36 @@ public class DatasetResource extends Resource {
      * of a dataset-registration-schema_v1.json object. With that object, we can fully
      * create any number of datasets from the provided values.
      */
-    public Response createDatasetRegistration(@Auth AuthUser authUser, String json) {
+    public Response createDatasetRegistration(
+        @Auth AuthUser authUser,
+        @FormDataParam("file") FormDataMultiPart multiPart,
+        @FormDataParam("dataset") String json) {
         // TODO
         //  * Validate input json against schema
         //  * Read input files if provided
         //  * Build new dataset from schema
         //  * Save any uploaded files
-        //  * Return generated dataset entity
+        //  * Return a list of generated dataset entities
         User user = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
+        List<FormDataBodyPart> bodyParts = multiPart.getFields("file");
+        // process each part as separate files
+        for (FormDataBodyPart bodyPart : bodyParts) {
+            // validate file name
+            validateFileDetails(bodyPart.getFormDataContentDisposition());
+            // store contents
+            String fileName = bodyPart.getName();
+            String fileType = bodyPart.getContentDisposition().getType();
+            InputStream fileStream = bodyPart.getValueAs(InputStream.class);
+            String blobFileName =  UUID.randomUUID().toString();
+            try {
+                BlobId blobId = gcsService.storeDocument(fileStream, fileType, blobFileName);
+            } catch (IOException e) {
+                // do something here
+            }
+        }
+
         try {
+            // TODO: Generate a real uri
             URI uri = UriBuilder.fromPath("").build();
             return Response.created(uri).entity("").build();
         }
