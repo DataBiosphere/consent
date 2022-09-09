@@ -47,4 +47,21 @@ public class TDRResource extends Resource {
             return createExceptionResponse(e);
         }
     }
+
+    @GET
+    @Produces("application/json")
+    @PermitAll
+    @Path("/{identifier}")
+    public Response getDatasetByIdentifier(@Auth AuthUser authUser, @PathParam("identifier") String identifier) {
+        try {
+            Dataset dataset = this.datasetService.findDatasetByIdentifier(identifier);
+            if (Objects.isNull(dataset)) {
+                throw new NotFoundException("Could not find dataset " + identifier);
+            }
+
+            return Response.ok(dataset).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
 }

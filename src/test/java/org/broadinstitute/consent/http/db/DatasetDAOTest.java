@@ -511,6 +511,19 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertNull(targetDataset.getDacApproval());
     }
 
+    @Test
+    public void testUpdateDatasetApproval() {
+        User user = createUser();
+        Integer userId = user.getUserId();
+        Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null,
+            null, RandomStringUtils.randomAlphabetic(10), true, null, null);
+        datasetDAO.updateDatasetApproval(true, Instant.now(), userId, datasetId);
+        Dataset updatedDataset = datasetDAO.findDatasetById(datasetId);
+        assertNotNull(updatedDataset);
+        assertEquals(datasetId, updatedDataset.getDataSetId());
+        assertTrue(updatedDataset.getDacApproval());
+    }
+
     private DarCollection createDarCollectionWithDatasets(int dacId, User user, List<Dataset> datasets) {
         String darCode = "DAR-" + RandomUtils.nextInt(1, 999999);
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());

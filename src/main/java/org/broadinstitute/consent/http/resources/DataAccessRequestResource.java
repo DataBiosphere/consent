@@ -108,6 +108,7 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
+    @Deprecated
     @GET
     @Path("cases/unreviewed")
     @Produces("application/json")
@@ -120,6 +121,7 @@ public class DataAccessRequestResource extends Resource {
 
     // Partial Data Access Requests Methods
 
+    @Deprecated
     @PUT
     @Consumes("application/json")
     @Produces("application/json")

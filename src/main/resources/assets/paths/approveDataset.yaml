@@ -1,0 +1,39 @@
+put:
+  summary: DAC Chair updates dataset approval status
+  description: |
+    Endpoint allows DAC Chairs to submit approval decisions for datasets under their purview (or requested purview).
+    The request will succeed if dataset has not yet been approved and the user has access to the dataset as a Chairperson.
+    The request will fail if the dataset is already approved, the request body (payload) is invalid, or if the user does not have access to the dataset as a Chairperson.
+  tags:
+    - DAC
+  parameters: 
+    - name: dacId
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: datasetId
+      in: path
+      required: true
+      schema:
+        type: integer
+  requestBody:
+      description: 'Payload that should contain the key-value pair of {"approval": true|false}'
+      required: true
+      content: 
+        application/json:
+          schema:
+            $ref: '../schemas/DatasetApproval.yaml'
+  responses:
+    200:
+      description: Returns the updated dataset
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dataset.yaml'
+    400:
+      description: Bad Request (missing or invalid request body)
+    404:
+      description: Not Found
+    500: 
+      description: Internal Server Error

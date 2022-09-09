@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -444,6 +445,19 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " AND d.active = true ")
     Set<Dataset> findDatasetsForConsentId(@Bind("consentId") String consentId);
 
+    @SqlUpdate(
+        "UPDATE dataset " +
+        "SET dac_approval = :dacApproval, " +
+            "update_date = :updateDate, " +
+            "update_user_id = :updateUserId " +
+        "WHERE dataset_id = :datasetId"
+    )
+    void updateDatasetApproval(
+        @Bind("dacApproval") Boolean dacApproved,
+        @Bind("updateDate") Instant updateDate,
+        @Bind("updateUserId") Integer updateUserId,
+        @Bind("datasetId") Integer datasetId
+    );
     @SqlUpdate("DELETE FROM consent_associations WHERE dataset_id = :datasetId")
     void deleteConsentAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
 }

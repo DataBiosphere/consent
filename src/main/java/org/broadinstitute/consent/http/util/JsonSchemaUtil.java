@@ -16,17 +16,17 @@ public class JsonSchemaUtil {
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   /**
-   * Compares an instance of a data submitter object to the data submitter schema
+   * Compares an instance of a dataset registration object to the dataset registration schema
    *
-   * @param dataSubmitterInstance The string instance of a data submitter object
+   * @param datasetRegistrationInstance The string instance of a dataset registration object
    * @return True if the instance validates, false otherwise
    */
-  public boolean isValidDataSubmitterObject_v1(String dataSubmitterInstance) {
+  public boolean isValidSchema_v1(String datasetRegistrationInstance) {
     try {
       String schemaString =
-          IOUtils.resourceToString("/data-submitter-schema_v1.json", Charset.defaultCharset());
+          IOUtils.resourceToString("/dataset-registration-schema_v1.json", Charset.defaultCharset());
       JSONObject jsonSchema = new JSONObject(schemaString);
-      JSONObject jsonSubject = new JSONObject(dataSubmitterInstance);
+      JSONObject jsonSubject = new JSONObject(datasetRegistrationInstance);
       Schema schema = SchemaLoader.load(jsonSchema);
       schema.validate(jsonSubject);
       return true;

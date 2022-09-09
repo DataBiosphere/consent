@@ -665,6 +665,8 @@ paths:
           description: No DAC found with the given ID
         500:
           description: Internal Server Error
+  /api/dac/{dacId}/dataset/{datasetId}:
+    $ref: 'paths/approveDataset.yaml'
   /api/dac/{dacId}/member/{userId}:
     post:
       summary: Add DAC Member
@@ -833,6 +835,7 @@ paths:
           description: Malformed user entity.
   /api/dacuser/{email}:
     get:
+      deprecated: true
       summary: describe
       description: Returns the user identified by the email.
       parameters:
@@ -940,6 +943,7 @@ paths:
           description: Internal Server Error.
   /api/dar/v2/draft/manage:
     get:
+      deprecated: true
       summary: Get all Draft Data Access Request Manage Objects
       description: Returns a list of information (Dar Manage Objects) on Draft DARs
       tags:
@@ -1086,6 +1090,7 @@ paths:
           description: Internal Server Error.
   /api/dar/cancel/{id}:
     put:
+      deprecated: true
       summary: Cancel a Data Access Request
       description: Cancel a Data Access Request
       parameters:
@@ -1163,6 +1168,7 @@ paths:
           description: Server error.
   /api/dar/cases/unreviewed:
       get:
+        deprecated: true
         summary: getTotalUnReviewedDAR
         description: Retrieves the amount of unreviewed DAR.
         tags:
@@ -1238,6 +1244,7 @@ paths:
           description: Internal Server Error.
   /api/dataRequest/cases/pending:
     get:
+      deprecated: true
       summary: Get Data Access Request Pending Cases
       description: Retrieves the pending cases for open/final elections the user has access to
       tags:
@@ -1925,6 +1932,8 @@ paths:
                   $ref: '#/components/schemas/DatasetAssociation'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
+  /api/tdr/{identifier}:
+    $ref: './paths/tdrDataset.yaml'
   /api/election/{id}:
     get:
       summary: describeElectionById
@@ -2966,6 +2975,8 @@ components:
       $ref: './schemas/DataAccessRequest.yaml'
     Dataset:
       $ref: './schemas/Dataset.yaml'
+    DatasetApproval:
+      $ref: './schemas/DatasetApproval.yaml'
     DatasetProperty:
       $ref: './schemas/DatasetProperty.yaml'
     Election:
