@@ -17,9 +17,11 @@ import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +67,8 @@ public class DatasetResource extends Resource {
     private final GCSService gcsService;
     private final UserService userService;
     private final DataAccessRequestService darService;
+
+    private final JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
 
     private final String defaultDataSetSampleFileName = "DataSetSample.tsv";
     private final String defaultDataSetSampleContent = "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
@@ -155,26 +159,36 @@ public class DatasetResource extends Resource {
         @FormDataParam("file") FormDataMultiPart multiPart,
         @FormDataParam("dataset") String json) {
         // TODO
-        //  * Validate input json against schema
         //  * Read input files if provided
         //  * Build new dataset from schema
         //  * Save any uploaded files
         //  * Return a list of generated dataset entities
+        if (!jsonSchemaUtil.isValidDataSubmitterObject_v1(json)) {
+            throw new BadRequestException("Invalid schema");
+        }
+        JSONObject datasetRegistrationInstance = new JSONObject(json);
         User user = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
         List<FormDataBodyPart> bodyParts = multiPart.getFields("file");
         // process each part as separate files
         for (FormDataBodyPart bodyPart : bodyParts) {
-            // validate file name
-            validateFileDetails(bodyPart.getFormDataContentDisposition());
-            // store contents
             String fileName = bodyPart.getName();
-            String fileType = bodyPart.getContentDisposition().getType();
-            InputStream fileStream = bodyPart.getValueAs(InputStream.class);
-            String blobFileName =  UUID.randomUUID().toString();
             try {
-                BlobId blobId = gcsService.storeDocument(fileStream, fileType, blobFileName);
-            } catch (IOException e) {
-                // do something here
+                // validate file name
+                validateFileDetails(bodyPart.getFormDataContentDisposition());
+                String sharingPlanFileName = datasetRegistrationInstance.getString("alternativeDataSharingPlanFileName");
+                if (sharingPlanFileName.equals(fileName)) {
+                    // store contents
+                    String fileType = bodyPart.getContentDisposition().getType();
+                    InputStream fileStream = bodyPart.getValueAs(InputStream.class);
+                    String blobFileName =  UUID.randomUUID().toString();
+                    try {
+                        BlobId blobId = gcsService.storeDocument(fileStream, fileType, blobFileName);
+                    } catch (IOException e) {
+                        // do something here
+                    }
+                }
+            } catch (JSONException e) {
+                // do something
             }
         }
 
