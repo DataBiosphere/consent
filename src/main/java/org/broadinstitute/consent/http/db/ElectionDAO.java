@@ -39,7 +39,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
         "SELECT e.election_id, e.dataset_id, v.vote final_vote , e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
             " e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
             "FROM election e " +
-            "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'chairperson' " +
+            "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
             "WHERE reference_id = :referenceId")
     List<Election> findElectionsWithFinalVoteByReferenceId(@Bind("referenceId") String referenceId);
 
@@ -91,7 +91,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
         "SELECT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
             "e.last_update, e.final_access_vote, e.election_type,  e.data_use_letter, e.dul_name, e.archived, e.version " +
             "FROM election e " +
-            "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'chairperson' " +
+            "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
             "WHERE e.reference_id = :referenceId " +
                 "AND LOWER(e.status) = 'open' " +
                 "AND LOWER(e.election_type) = LOWER(:type)")
@@ -101,7 +101,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
         "SELECT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
             "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
             "FROM election e " +
-            "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'chairperson' " +
+            "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
             "WHERE e.reference_id = :referenceId " +
                 "AND LOWER(e.election_type) = LOWER(:type) " +
             "ORDER BY create_date DESC LIMIT 1")
@@ -393,10 +393,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("SELECT election_rp_id FROM access_rp arp WHERE arp.election_access_id = :electionAccessId ")
     Integer findRPElectionByElectionAccessId(@Bind("electionAccessId") Integer electionAccessId);
-
-    @RegisterRowMapper(ImmutablePairOfIntsMapper.class)
-    @SqlQuery("SELECT election_rp_id, election_access_id FROM access_rp arp WHERE arp.election_access_id IN (<electionAccessIds>) ")
-    List<Pair<Integer, Integer>> findRpAccessElectionIdPairs(@BindList("electionAccessIds") List<Integer> electionAccessIds);
 
     @SqlUpdate("INSERT INTO access_rp (election_access_id, election_rp_id ) values (:electionAccessId, :electionRPId)")
     void insertAccessRP(@Bind("electionAccessId") Integer electionAccessId,
