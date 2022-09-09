@@ -148,6 +148,7 @@ public class DatasetResource extends Resource {
         //  * Build new dataset from schema
         //  * Save any uploaded files
         //  * Return generated dataset entity
+        User user = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
         try {
             URI uri = UriBuilder.fromPath("").build();
             return Response.created(uri).entity("").build();
