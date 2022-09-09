@@ -274,47 +274,39 @@ public class DacDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindDatasetsAssociatedWithDac_AssignedDacId() {
-        Dataset datasetNonDac = createDataset();
+    public void testFindDatasetsAssociatedWithDac_NoAssociated() {
         Dac dac = createDac();
 
         List<Dataset> results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
         assertEquals(0, results.size());
+    }
 
+    @Test
+    public void testFindDatasetsAssociatedWithDac_AssignedDacId() {
+        Dac dac = createDac();
         Dataset datasetAssignedDac = createDatasetWithDac(dac.getDacId());
 
-        results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
+        List<Dataset> results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
         assertEquals(1, results.size());
         assertTrue(results.contains(datasetAssignedDac));
     }
 
     @Test
     public void testFindDatasetsAssociatedWithDac_SuggestedDacId() {
-        Dataset dataset = createDataset();
         Dac dac = createDac();
-
-        List<Dataset> results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
-        assertEquals(0, results.size());
-
-        Dataset datasetAssignedDac = createDatasetWithDac(dac.getDacId());
-
-        results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
-        assertEquals(1, results.size());
-        assertTrue(results.contains(datasetAssignedDac));
-
-
+        
+        Dataset datasetSuggestedDac = createDataset();
         datasetDAO.insertDatasetProperties(List.of(new DatasetProperty(
                 1,
-                dataset.getDataSetId(),
+                datasetSuggestedDac.getDataSetId(),
                 1,
                 "dataAccessCommitteeId",
                 dac.getDacId().toString(),
                 DatasetPropertyType.Number,
                 Date.from(Instant.now()))));
 
-        results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
-        assertEquals(2, results.size());
-        assertTrue(results.contains(datasetAssignedDac));
-        assertTrue(results.contains(dataset));
+        List<Dataset> results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
+        assertEquals(1, results.size());
+        assertTrue(results.contains(datasetSuggestedDac));
     }
 }
