@@ -470,7 +470,7 @@ public class VoteDAOTest extends DAOTestHelper {
         boolean voteValue = true;
         voteDAO.updateVote(
                 voteValue,
-                RandomStringUtils.random(10),
+                RandomStringUtils.randomAlphabetic(10),
                 new Date(),
                 v.getVoteId(),
                 false,
@@ -644,7 +644,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote vote = createChairpersonVote(user.getUserId(), election.getElectionId());
         voteDAO.updateVote(
                 true,
-                RandomStringUtils.random(10),
+                RandomStringUtils.randomAlphabetic(10),
                 new Date(),
                 vote.getVoteId(),
                 false,

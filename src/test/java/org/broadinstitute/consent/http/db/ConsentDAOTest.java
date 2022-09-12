@@ -129,7 +129,7 @@ public class ConsentDAOTest extends DAOTestHelper {
     public void testUpdateConsentTranslatedUseRestriction() {
         Consent consent = createConsent();
 
-        String randomString = RandomStringUtils.random(10);
+        String randomString = RandomStringUtils.randomAlphabetic(10);
         consentDAO.updateConsentTranslatedUseRestriction(consent.getConsentId(), randomString);
         Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
         assertEquals(randomString, foundConsent.getTranslatedUseRestriction());

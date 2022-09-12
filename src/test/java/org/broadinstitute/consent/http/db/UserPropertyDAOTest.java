@@ -18,17 +18,17 @@ public class UserPropertyDAOTest extends DAOTestHelper {
 
         UserProperty suggestedInstitution = new UserProperty();
         suggestedInstitution.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
-        suggestedInstitution.setPropertyValue(RandomStringUtils.random(10));
+        suggestedInstitution.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
         suggestedInstitution.setUserId(user.getUserId());
 
         UserProperty suggestedSigningOfficial = new UserProperty();
         suggestedSigningOfficial.setPropertyKey(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
-        suggestedSigningOfficial.setPropertyValue(RandomStringUtils.random(10));
+        suggestedSigningOfficial.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
         suggestedSigningOfficial.setUserId(user.getUserId());
 
         UserProperty notPresent = new UserProperty();
         notPresent.setPropertyKey("nonExistentKey");
-        notPresent.setPropertyValue(RandomStringUtils.random(10));
+        notPresent.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
         notPresent.setUserId(user.getUserId());
 
         List<UserProperty> props = userPropertyDAO.findResearcherPropertiesByUser(
