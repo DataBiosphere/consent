@@ -1,16 +1,19 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class DacDAOTest extends DAOTestHelper {
 
@@ -77,7 +81,7 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testFindAllDACUsersBySearchString_case2() {
         Set<User> users = dacDAO.findAllDACUsersBySearchString("random");
-        Assert.assertTrue(users.isEmpty());
+        assertTrue(users.isEmpty());
     }
 
     @Test
@@ -122,7 +126,7 @@ public class DacDAOTest extends DAOTestHelper {
 
         dacDAO.deleteDacMembers(dac.getDacId());
         List<User> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
-        Assert.assertTrue(dacMembers.isEmpty());
+        assertTrue(dacMembers.isEmpty());
     }
 
     @Test
@@ -218,7 +222,7 @@ public class DacDAOTest extends DAOTestHelper {
         List<UserRole> userRoles = dacDAO.findUserRolesForUser(user2.getUserId());
         userRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
         List<UserRole> userRolesRemoved = dacDAO.findUserRolesForUser(user2.getUserId());
-        Assert.assertTrue(userRolesRemoved.isEmpty());
+        assertTrue(userRolesRemoved.isEmpty());
     }
 
     @Test
@@ -267,5 +271,42 @@ public class DacDAOTest extends DAOTestHelper {
         Set<Dac> dacs = dacDAO.findDacsForDatasetIds(Arrays.asList(dataset1.getDataSetId(), dataset2.getDataSetId()));
         assertFalse(dacs.isEmpty());
         assertEquals(1, dacs.size());
+    }
+
+    @Test
+    public void testFindDatasetsAssociatedWithDac_NoAssociated() {
+        Dac dac = createDac();
+
+        List<Dataset> results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
+        assertEquals(0, results.size());
+    }
+
+    @Test
+    public void testFindDatasetsAssociatedWithDac_AssignedDacId() {
+        Dac dac = createDac();
+        Dataset datasetAssignedDac = createDatasetWithDac(dac.getDacId());
+
+        List<Dataset> results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
+        assertEquals(1, results.size());
+        assertTrue(results.contains(datasetAssignedDac));
+    }
+
+    @Test
+    public void testFindDatasetsAssociatedWithDac_SuggestedDacId() {
+        Dac dac = createDac();
+        
+        Dataset datasetSuggestedDac = createDataset();
+        datasetDAO.insertDatasetProperties(List.of(new DatasetProperty(
+                1,
+                datasetSuggestedDac.getDataSetId(),
+                1,
+                "dataAccessCommitteeId",
+                dac.getDacId().toString(),
+                DatasetPropertyType.Number,
+                Date.from(Instant.now()))));
+
+        List<Dataset> results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
+        assertEquals(1, results.size());
+        assertTrue(results.contains(datasetSuggestedDac));
     }
 }
