@@ -64,7 +64,8 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       EmailNotifierService emailNotifierService,
       GCSService gcsService,
       UserService userService,
-      MatchService matchService) {
+      MatchService matchService
+    ) {
     this.dataAccessRequestService = dataAccessRequestService;
     this.emailNotifierService = emailNotifierService;
     this.gcsService = gcsService;
@@ -240,7 +241,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       // it in dar data.
       data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
-      originalDar.addDatasetIds(data.getDatasetIds());
+      originalDar.setDatasetIds(data.getDatasetIds());
       DataAccessRequest updatedDar =
           dataAccessRequestService.updateByReferenceId(user, originalDar);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
