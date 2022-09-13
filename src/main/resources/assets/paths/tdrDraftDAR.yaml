@@ -4,7 +4,7 @@ post:
   parameters:
     - name: identifiers
       in: query
-      description: Dataset identifiers to be included in the Data Access Request (comma separated).
+      description: Dataset identifiers to be included in the Data Access Request (comma separated). e.g. DUOS-123456, DUOS-123457
       required: true
       schema:
         type: string
