@@ -10,7 +10,8 @@ public enum UserFields {
   ERA_STATUS("eraAuthorized", false),
   SELECTED_SIGNING_OFFICIAL_ID("selectedSigningOfficialId", false),
   SUGGESTED_SIGNING_OFFICIAL("suggestedSigningOfficial", false),
-  SUGGESTED_INSTITUTION("suggestedInstitution", false);
+  SUGGESTED_INSTITUTION("suggestedInstitution", false),
+  DAA_ACCEPTANCE("daaAcceptance", false);
 
   public static final String LIBRARY_CARDS = "libraryCards";
   public static final String LIBRARY_CARD_ENTRIES = "libraryCardEntries";

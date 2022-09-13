@@ -10,3 +10,5 @@ properties:
     type: string
   selectedSigningOfficial:
     type: string
+  daaAcceptance:
+    type: string
