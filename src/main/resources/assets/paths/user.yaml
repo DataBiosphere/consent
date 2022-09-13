@@ -53,6 +53,7 @@ put:
               description: The suggested signing official for the user
               type: string
             daaAcceptance:
+              description: Will be "true" if the user has accepted the Broad and NIH's Data Access Agreement.
               type: string
   responses:
     200:
