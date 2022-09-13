@@ -214,7 +214,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "FROM election e " +
             "INNER JOIN vote v " +
                 "ON v.electionId = e.election_id " +
-                "AND LOWER(v.type) = 'chairperson' " +
+                "AND LOWER(v.type) = 'final' " +
             "WHERE LOWER(e.election_type) = LOWER(:type) " +
             "AND LOWER(e.status) = LOWER(:status) " +
             "AND v.vote = :finalVote ")
@@ -359,7 +359,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                 "AND e.reference_id IN (<referenceIds>) " +
         "LEFT JOIN vote v " +
             "ON v.electionId = e.election_id " +
-            "AND LOWER(v.type) = 'chairperson' ")
+            "AND LOWER(v.type) = 'final' ")
      List<Election> findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(@BindList("referenceIds") List<String> referenceIds, @Bind("status") String status);
 
     @SqlQuery(

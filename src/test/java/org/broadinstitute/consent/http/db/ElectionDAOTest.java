@@ -636,7 +636,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();
 
-    // create elections with final vote
     Election accessElection = createDataAccessElection(referenceId, datasetId);
     Election rpElection = createRPElection(referenceId, datasetId);
     createFinalVote(user.getUserId(), accessElection.getElectionId());
@@ -781,7 +780,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();
 
-    // create elections with final vote
     Election accessElection = createDataAccessElection(referenceId, datasetId);
     Election rpElection = createRPElection(referenceId, datasetId);
     createFinalVote(user.getUserId(), accessElection.getElectionId());
@@ -826,7 +824,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();
 
-    // create elections with final vote
     Election accessElection = createDataAccessElection(referenceId, datasetId);
     Election rpElection = createRPElection(referenceId, datasetId);
     createFinalVote(user.getUserId(), accessElection.getElectionId());
@@ -923,7 +920,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();
 
-    // create elections with final vote
     Election accessElection = createDataAccessElection(referenceId, datasetId);
     Election rpElection = createRPElection(referenceId, datasetId);
     createFinalVote(user.getUserId(), accessElection.getElectionId());
@@ -954,7 +950,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();
 
-    // create elections with final vote
     Election rpElection = createRPElection(referenceId, datasetId);
     createFinalVote(user.getUserId(), rpElection.getElectionId());
 
@@ -979,7 +974,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();
 
-    // create elections with final vote
     Election openElection = createDataAccessElection(referenceId, datasetId);
     createFinalVote(user.getUserId(), openElection.getElectionId());
     electionDAO.updateElectionById(
@@ -1013,7 +1007,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId2 = dar2.getReferenceId();
     Integer datasetId2 = ds2.getDataSetId();
 
-    // create elections with final vote
     Election ds1FirstElection = createDataAccessElection(referenceId1, datasetId1);
     Election ds1SecondElection = createDataAccessElection(referenceId1, datasetId1);
     createFinalVote(user.getUserId(), ds1FirstElection.getElectionId());
@@ -1054,7 +1047,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();
 
-    // create elections with final vote
     Election dataAccessElection = createDataAccessElection(referenceId, datasetId);
     createFinalVote(user.getUserId(), dataAccessElection.getElectionId());
     electionDAO.updateElectionById(
@@ -1085,7 +1077,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId2 = dar2.getReferenceId();
     Integer datasetId2 = ds2.getDataSetId();
 
-    // create elections with final vote
     Election ds1FirstElection = createDataAccessElection(referenceId1, datasetId1);
     Election ds1SecondElection = createDataAccessElection(referenceId1, datasetId1);
     createChairpersonVote(user.getUserId(), ds1FirstElection.getElectionId());
@@ -1127,7 +1118,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();
 
-    // create elections with final vote
     Election first = createDataAccessElection(referenceId, datasetId);
     Election second = createDataAccessElection(referenceId, datasetId);
     createFinalVote(user.getUserId(), first.getElectionId());
@@ -1153,7 +1143,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();
 
-    // create elections with final vote
     Election rpElection = createRPElection(referenceId, datasetId);
     createFinalVote(user.getUserId(), rpElection.getElectionId());
 
@@ -1179,7 +1168,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId2 = dar2.getReferenceId();
     Integer datasetId2 = ds2.getDataSetId();
 
-    // create elections with final vote
     Election ds1FirstElection = createDataAccessElection(referenceId1, datasetId1);
     Election ds1SecondElection = createDataAccessElection(referenceId1, datasetId1);
     createChairpersonVote(user.getUserId(), ds1FirstElection.getElectionId());
@@ -1222,7 +1210,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = ds.getDataSetId();
 
-    // create elections with final vote
     Election dsFirstElection = createDataAccessElection(referenceId, datasetId);
     Election dsSecondElection = createDataAccessElection(referenceId, datasetId);
     createChairpersonVote(user.getUserId(), dsFirstElection.getElectionId());
@@ -1247,113 +1234,703 @@ public class ElectionDAOTest extends DAOTestHelper {
 
   @Test
   public void testFindTotalElectionsByTypeStatusAndVote() {
+    Dac dac = createDac();
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
 
+    Dataset ds = createDatasetWithDac(dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = ds.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), e.getElectionId());
+    electionDAO.updateElectionById(
+            e.getElectionId(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            false
+    );
+
+    // TODO: should be 1?
+//    assertEquals(1, (long)electionDAO.findTotalElectionsByTypeStatusAndVote(
+//            ElectionType.DATA_ACCESS.getValue(),
+//            ElectionStatus.OPEN.getValue(),
+//            false
+//    ));
+
+    assertEquals(0, (long)electionDAO.findTotalElectionsByTypeStatusAndVote(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            true
+    ));
+
+    assertEquals(0, (long)electionDAO.findTotalElectionsByTypeStatusAndVote(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.CANCELED.getValue(),
+            false
+    ));
+
+    assertEquals(0, (long)electionDAO.findTotalElectionsByTypeStatusAndVote(
+            ElectionType.RP.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            false
+    ));
   }
 
   @Test
-  public void testVerifyOpenElections() {
+  public void testVerifyOpenElections_NoElections() {
+    assertEquals(0,(long) electionDAO.verifyOpenElections());
+  }
 
+  @Test
+  public void testVerifyOpenElections_Elections() {
+    Dac dac = createDac();
+
+    Dataset ds = createDatasetWithDac(dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = ds.getDataSetId();
+
+    createDataAccessElection(referenceId, datasetId);
+    createRPElection(referenceId, datasetId);
+
+    assertEquals(2,(long) electionDAO.verifyOpenElections());
   }
 
   @Test
   public void testFindLastElectionsWithFinalVoteByReferenceIdsAndType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
 
+    Election dataAccessElection = createDataAccessElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), dataAccessElection.getElectionId());
+    electionDAO.updateElectionById(
+            dataAccessElection.getElectionId(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            true
+    );
+
+    List<Election> returned =
+            electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(
+                    List.of(referenceId),
+                    ElectionType.DATA_ACCESS.getValue());
+
+    assertEquals(1, returned.size());
+    assertEquals(dataAccessElection.getElectionId(), returned.get(0).getElectionId());
   }
 
   @Test
-  public void testFindLastElectionsByReferenceIdAndType() {
+  public void testFindLastElectionsWithFinalVoteByReferenceIdsAndType_WrongType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
 
+    Election dataAccessElection = createDataAccessElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), dataAccessElection.getElectionId());
+    electionDAO.updateElectionById(
+            dataAccessElection.getElectionId(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            true
+    );
+
+    List<Election> returned =
+            electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(
+                    List.of(referenceId),
+                    ElectionType.RP.getValue());
+
+    assertEquals(0, returned.size());
+  }
+
+
+  @Test
+  public void testFindLastElectionsByReferenceIdAndType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election dataAccessElection = createDataAccessElection(referenceId, datasetId);
+
+    List<Election> returned =
+            electionDAO.findLastElectionsByReferenceIdAndType(
+                    referenceId,
+                    ElectionType.DATA_ACCESS.getValue());
+
+    assertEquals(1, returned.size());
+    assertEquals(dataAccessElection.getElectionId(), returned.get(0).getElectionId());
+  }
+
+  @Test
+  public void testFindLastElectionsByReferenceIdAndType_WrongType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    createDataAccessElection(referenceId, datasetId);
+
+    List<Election> returned =
+            electionDAO.findLastElectionsByReferenceIdAndType(
+                    referenceId,
+                    ElectionType.RP.getValue());
+
+    assertEquals(0, returned.size());
   }
 
   @Test
   public void testFindLastElectionByReferenceIdAndStatus() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
 
+    Election dataAccessElection = createDataAccessElection(referenceId, datasetId);
+
+    Election returned =
+            electionDAO.findLastElectionByReferenceIdAndStatus(
+                    referenceId,
+                    ElectionStatus.OPEN.getValue());
+
+    assertEquals(dataAccessElection.getElectionId(), returned.getElectionId());
+  }
+
+  @Test
+  public void testFindLastElectionByReferenceIdAndStatus_WrongType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    createDataAccessElection(referenceId, datasetId);
+
+    Election returned =
+            electionDAO.findLastElectionByReferenceIdAndStatus(
+                    referenceId,
+                    ElectionStatus.CLOSED.getValue());
+
+    assertNull(returned);
   }
 
   @Test
   public void testFindLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
 
+    Election dataAccessElection = createDataAccessElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), dataAccessElection.getElectionId());
+    electionDAO.updateElectionById(
+            dataAccessElection.getElectionId(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            true
+    );
+
+    List<Election> returned =
+            electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(
+                    List.of(referenceId),
+                    ElectionStatus.OPEN.getValue());
+
+    assertEquals(1, returned.size());
+    assertEquals(dataAccessElection.getElectionId(), returned.get(0).getElectionId());
+  }
+
+  @Test
+  public void testFindLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus_WrongType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election dataAccessElection = createDataAccessElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), dataAccessElection.getElectionId());
+    electionDAO.updateElectionById(
+            dataAccessElection.getElectionId(),
+            ElectionStatus.CLOSED.getValue(),
+            new Date(),
+            true
+    );
+
+    List<Election> returned =
+            electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(
+                    List.of(referenceId),
+                    ElectionStatus.OPEN.getValue());
+
+    assertEquals(0, returned.size());
   }
 
   @Test
   public void testFindLastElectionByReferenceIdAndType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
 
+    Election dataAccessElection = createDataAccessElection(referenceId, datasetId);
+
+    Election returned =
+            electionDAO.findLastElectionByReferenceIdAndType(
+                    referenceId,
+                    ElectionType.DATA_ACCESS.getValue());
+
+    assertEquals(dataAccessElection.getElectionId(), returned.getElectionId());
   }
 
   @Test
-  public void testFindRPElectionByElectionAccessId() {
+  public void testFindLastElectionByReferenceIdAndType_WrongType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
 
+    createRPElection(referenceId, datasetId);
+
+    Election returned =
+            electionDAO.findLastElectionByReferenceIdAndType(
+                    referenceId,
+                    ElectionType.DATA_ACCESS.getValue());
+
+    assertNull(returned);
   }
 
   @Test
-  public void testInsertAccessRp() {
+  public void testFindElectionByAccessRPAssociation() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
 
-  }
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
 
-  @Test
-  public void testInsertAccessAndConsentElection() {
+    Election datasetAccessElection = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
 
+    electionDAO.insertAccessRP(
+            datasetAccessElection.getElectionId(),
+            rpElection.getElectionId());
+
+    assertEquals(
+            datasetAccessElection.getElectionId(),
+            electionDAO.findAccessElectionByElectionRPId(
+                    rpElection.getElectionId()));
+
+    assertEquals(
+            rpElection.getElectionId(),
+            electionDAO.findRPElectionByElectionAccessId(
+                    datasetAccessElection.getElectionId()));
   }
 
   @Test
   public void testGetElectionConsentIdByDARElectionId() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
 
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    String consentId = UUID.randomUUID().toString();
+    Election datasetAccessElection = createDataAccessElection(referenceId, datasetId);
+    Integer consentElectionId = electionDAO.insertElection(
+            ElectionType.TRANSLATE_DUL.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            consentId,
+            datasetId);
+
+    electionDAO.insertAccessAndConsentElection(datasetAccessElection.getElectionId(), consentElectionId);
+
+    assertEquals(consentElectionId,
+            electionDAO.getElectionConsentIdByDARElectionId(
+                    datasetAccessElection.getElectionId()));
   }
 
   @Test
   public void testDeleteAccessRP() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election datasetAccessElection = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+
+    electionDAO.insertAccessRP(
+            datasetAccessElection.getElectionId(),
+            rpElection.getElectionId());
+
+    assertEquals(
+            datasetAccessElection.getElectionId(),
+            electionDAO.findAccessElectionByElectionRPId(
+                    rpElection.getElectionId()));
+
+    electionDAO.deleteAccessRP(datasetAccessElection.getElectionId());
+
+    assertNull(
+            electionDAO.findAccessElectionByElectionRPId(
+                    rpElection.getElectionId()));
 
   }
 
   @Test
-  public void testDeleteElectionsFromAccessRPs() {
+  public void testDeleteElectionsFromAccessRPs_Access() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
 
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election datasetAccessElection = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+
+    electionDAO.insertAccessRP(
+            datasetAccessElection.getElectionId(),
+            rpElection.getElectionId());
+
+    assertEquals(
+            datasetAccessElection.getElectionId(),
+            electionDAO.findAccessElectionByElectionRPId(
+                    rpElection.getElectionId()));
+
+    electionDAO.deleteElectionFromAccessRP(datasetAccessElection.getElectionId());
+
+    assertNull(
+            electionDAO.findAccessElectionByElectionRPId(
+                    rpElection.getElectionId()));
   }
 
   @Test
-  public void testFindAccessElectionByElectionRPId() {
+  public void testDeleteElectionsFromAccessRPs_RP() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
 
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election datasetAccessElection = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+
+    electionDAO.insertAccessRP(
+            datasetAccessElection.getElectionId(),
+            rpElection.getElectionId());
+
+    assertEquals(
+            datasetAccessElection.getElectionId(),
+            electionDAO.findAccessElectionByElectionRPId(
+                    rpElection.getElectionId()));
+
+    electionDAO.deleteElectionFromAccessRP(rpElection.getElectionId());
+
+    assertNull(
+            electionDAO.findAccessElectionByElectionRPId(
+                    rpElection.getElectionId()));
   }
 
   @Test
   public void testFindElectionsByIds() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
 
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election datasetAccessElection = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+
+    List<Election> found = electionDAO.findElectionsByIds(List.of(datasetAccessElection.getElectionId(), rpElection.getElectionId()));
+
+    assertEquals(2, found.size());
+
+    assertTrue(found.contains(datasetAccessElection));
+    assertTrue(found.contains(rpElection));
   }
 
   @Test
   public void testFindElectionById() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
 
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
+
+    Election found = electionDAO.findElectionById(e.getElectionId());
+
+    assertEquals(e, found);
+  }
+
+  @Test
+  public void testGetOpenElectionByReferenceId_NoElection() {
+
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+
+    Integer found = electionDAO.getOpenElectionIdByReferenceId(referenceId);
+
+    assertNull(found);
+  }
+
+  @Test
+  public void testGetOpenElectionByReferenceId() {
+
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
+
+    Integer found = electionDAO.getOpenElectionIdByReferenceId(referenceId);
+
+    assertEquals(e.getElectionId(), found);
+  }
+
+  @Test
+  public void testGetOpenElectionByReferenceIdAndDataSet_NoElection() {
+
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Integer found = electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, datasetId);
+
+    assertNull(found);
   }
 
   @Test
   public void testGetOpenElectionByReferenceIdAndDataSet() {
 
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
+
+    Integer found = electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, datasetId);
+
+    assertEquals(e.getElectionId(), found);
   }
 
 
   @Test
   public void testArchiveElectionById() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
 
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
+
+    assertEquals(false, e.getArchived());
+    assertNull(e.getLastUpdate());
+
+    electionDAO.archiveElectionById(e.getElectionId(), new Date());
+    e = electionDAO.findElectionById(e.getElectionId());
+
+    assertEquals(true, e.getArchived());
+    assertNotNull(e.getLastUpdate());
   }
 
   @Test
-  public void testFindDataAccessClosedElectionsByFinalResult() {
+  public void testFindDataAccessClosedElectionsByFinalResult_Success() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
 
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
+    Vote v = createFinalVote(user.getUserId(), e.getElectionId());
+    voteDAO.updateVote(false,
+            "",
+            new Date(),
+            v.getVoteId(),
+            false,
+            e.getElectionId(),
+            new Date(),
+            null);
+
+    List<Election> found = electionDAO.findDataAccessClosedElectionsByFinalResult(false);
+    assertEquals(1, found.size());
+    assertEquals(e, found.get(0));
+  }
+
+  @Test
+  public void testFindDataAccessClosedElectionsByFinalResult_None() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
+    Vote v = createFinalVote(user.getUserId(), e.getElectionId());
+    voteDAO.updateVote(false,
+            "",
+            new Date(),
+            v.getVoteId(),
+            false,
+            e.getElectionId(),
+            new Date(),
+            null);
+
+    List<Election> found = electionDAO.findDataAccessClosedElectionsByFinalResult(true);
+    assertEquals(0, found.size());
+  }
+
+  @Test
+  public void testFindDataAccessClosedElectionsByFinalResult_NotDataAccess() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createRPElection(referenceId, datasetId);
+    Vote v = createFinalVote(user.getUserId(), e.getElectionId());
+    voteDAO.updateVote(false,
+            "",
+            new Date(),
+            v.getVoteId(),
+            false,
+            e.getElectionId(),
+            new Date(),
+            null);
+
+    List<Election> found = electionDAO.findDataAccessClosedElectionsByFinalResult(false);
+    assertEquals(0, found.size());
   }
 
   @Test
   public void testFindApprovalAccessElectionDate() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
 
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
+    Vote v = createFinalVote(user.getUserId(), e.getElectionId());
+    voteDAO.updateVote(true,
+            "",
+            new Date(),
+            v.getVoteId(),
+            false,
+            e.getElectionId(),
+            new Date(),
+            null);
+    electionDAO.updateElectionById(
+            e.getElectionId(),
+            ElectionStatus.FINAL.getValue(),
+            new Date(),
+            true);
+
+    assertEquals(e.getCreateDate(), electionDAO.findApprovalAccessElectionDate(referenceId));
+  }
+
+  @Test
+  public void testFindApprovalAccessElectionDate_NotApproced() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
+    Vote v = createFinalVote(user.getUserId(), e.getElectionId());
+
+    assertNull(electionDAO.findApprovalAccessElectionDate(referenceId));
   }
 
   @Test
   public void testFindDacForElection() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
 
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
+
+    assertEquals(dac.getDacId(), electionDAO.findDacForElection(e.getElectionId()).getDacId());
   }
 
   @Test
   public void testFindOpenElectionsByDacId() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
 
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e1 = createDataAccessElection(referenceId, datasetId);
+    Election e2 = createRPElection(referenceId, datasetId);
+    Election e3 = createDataAccessElection(referenceId, datasetId);
+    Election closed = createDataAccessElection(referenceId, datasetId);
+    electionDAO.updateElectionById(
+            closed.getElectionId(),
+            ElectionStatus.CLOSED.getValue(),
+            new Date()
+    );
+
+    List<Election> found = electionDAO.findOpenElectionsByDacId(dac.getDacId());
+
+    assertEquals(3, found.size());
+    assertTrue(found.contains(e1));
+    assertTrue(found.contains(e2));
+    assertTrue(found.contains(e3));
   }
 
 
