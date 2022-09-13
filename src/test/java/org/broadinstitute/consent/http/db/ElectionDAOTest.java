@@ -393,6 +393,7 @@ public class ElectionDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     Consent c = createConsent();
     Dataset d = createDataset();
+    User u = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     datasetDAO.updateDatasetDacId(d.getDataSetId(), dac.getDacId());
 
     consentDAO.insertConsentAssociation(c.getConsentId(), ASSOCIATION_TYPE_TEST, d.getDataSetId());
@@ -406,6 +407,7 @@ public class ElectionDAOTest extends DAOTestHelper {
       "dulName",
       d.getDataSetId());
     Election e = electionDAO.findElectionById(electionId);
+    createFinalVote(u.getUserId(), e.getElectionId());
     Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
     assertNotNull(election);
     assertEquals(e.getElectionId(), election.getElectionId());
@@ -859,10 +861,9 @@ public class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindElectionWithFinalVoteById() {
+  public void testFindElectionWithFinalVoteById_NotFinal() {
     Dac dac = createDac();
     Dataset dataset = createDatasetWithDac(dac.getDacId());
-    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     DataAccessRequest dar = createDataAccessRequestV3();
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDataSetId();
@@ -874,10 +875,21 @@ public class ElectionDAOTest extends DAOTestHelper {
                     e.getElectionId());
 
     assertNull(returned);
+  }
 
+  @Test
+  public void testFindElectionWithFinalVoteById_Success() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
     createFinalVote(user.getUserId(), e.getElectionId());
 
-    returned =
+    Election returned =
             electionDAO.findElectionWithFinalVoteById(
                     e.getElectionId());
 
@@ -903,23 +915,229 @@ public class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindElectionsWithFinalVoteByTypeAndStatus() {
+  public void testFindElectionsWithFinalVoteByTypeAndStatus_NoMatching() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
 
+    // create elections with final vote
+    Election accessElection = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), accessElection.getElectionId());
+    createFinalVote(user.getUserId(), rpElection.getElectionId());
+    electionDAO.updateElectionStatus(
+            List.of(accessElection.getElectionId()),
+            ElectionStatus.CANCELED.getValue());
+
+
+    // create irrelevant elections that should not be returned
+    createDataAccessElection(referenceId, datasetId);
+    createRPElection(referenceId, datasetId);
+
+    List<Election> returned =
+            electionDAO.findElectionsWithFinalVoteByTypeAndStatus(
+                    ElectionType.DATA_ACCESS.getValue(),
+                    ElectionStatus.OPEN.getValue());
+
+    assertEquals(0, returned.size());
   }
 
   @Test
-  public void testFindLastElectionsWithFinalVoteByType() {
+  public void testFindElectionsWithFinalVoteByTypeAndStatus_SelectsOnType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
 
+    // create elections with final vote
+    Election accessElection = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), accessElection.getElectionId());
+    createFinalVote(user.getUserId(), rpElection.getElectionId());
+
+
+    createDataAccessElection(referenceId, datasetId);
+    createRPElection(referenceId, datasetId);
+
+    List<Election> returned =
+            electionDAO.findElectionsWithFinalVoteByTypeAndStatus(
+                    ElectionType.DATA_ACCESS.getValue(),
+                    ElectionStatus.OPEN.getValue());
+
+    assertEquals(1, returned.size());
+    assertTrue(returned.contains(accessElection));
+  }
+
+  @Test
+  public void testFindElectionsWithFinalVoteByTypeAndStatus_SelectsOnStatus() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    // create elections with final vote
+    Election openElection = createDataAccessElection(referenceId, datasetId);
+    Election canceledElection = createDataAccessElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), openElection.getElectionId());
+    createFinalVote(user.getUserId(), canceledElection.getElectionId());
+    electionDAO.updateElectionStatus(
+            List.of(canceledElection.getElectionId()),
+            ElectionStatus.CANCELED.getValue());
+
+    // create irrelevant elections that should not be returned
+    createDataAccessElection(referenceId, datasetId);
+    createRPElection(referenceId, datasetId);
+
+    List<Election> returned =
+            electionDAO.findElectionsWithFinalVoteByTypeAndStatus(
+                    ElectionType.DATA_ACCESS.getValue(),
+                    ElectionStatus.CANCELED.getValue());
+
+    assertEquals(1, returned.size());
+    assertTrue(returned.contains(canceledElection));
+  }
+
+  @Test
+  public void testFindLastElectionsWithFinalVoteByType_Ordered() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    // create elections with final vote
+    Election first = createDataAccessElection(referenceId, datasetId);
+    Election second = createDataAccessElection(referenceId, datasetId);
+    Election third = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), first.getElectionId());
+    createFinalVote(user.getUserId(), second.getElectionId());
+    createFinalVote(user.getUserId(), third.getElectionId());
+    createFinalVote(user.getUserId(), rpElection.getElectionId());
+
+    List<Election> returned =
+            electionDAO.findLastElectionsWithFinalVoteByType(
+                    ElectionType.DATA_ACCESS.getValue());
+
+    assertEquals(3, returned.size());
+    assertEquals(third, returned.get(0));
+    assertEquals(second, returned.get(1));
+    assertEquals(first, returned.get(2));
+  }
+
+  @Test
+  public void testFindLastElectionsWithFinalVoteByType_SelectsOnType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    // create elections with final vote
+    Election dataAccessElection = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), dataAccessElection.getElectionId());
+    createFinalVote(user.getUserId(), rpElection.getElectionId());
+
+    List<Election> returned =
+            electionDAO.findLastElectionsWithFinalVoteByType(
+                    ElectionType.RP.getValue());
+
+    assertEquals(1, returned.size());
+    assertEquals(rpElection, returned.get(0));
   }
 
   @Test
   public void testFindLastDataAccessElectionsWithFinalVoteByStatus() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
 
+    // create elections with final vote
+    Election first = createDataAccessElection(referenceId, datasetId);
+    Election second = createDataAccessElection(referenceId, datasetId);
+    Election third = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), first.getElectionId());
+    createFinalVote(user.getUserId(), second.getElectionId());
+    createFinalVote(user.getUserId(), third.getElectionId());
+    createFinalVote(user.getUserId(), rpElection.getElectionId());
+
+    List<Election> returned =
+            electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(
+                    ElectionStatus.OPEN.getValue());
+
+    assertEquals(3, returned.size());
+    assertEquals(third, returned.get(0));
+    assertEquals(second, returned.get(1));
+    assertEquals(first, returned.get(2));
   }
 
   @Test
-  public void testFindOpenLastElectionsByTypeAndFinalAccessVoteForChairPerson() {
+  public void testFindLastDataAccessElectionsWithFinalVoteByStatus_FiltersByStatus() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
 
+    // create elections with final vote
+    Election first = createDataAccessElection(referenceId, datasetId);
+    Election wrongStatus = createDataAccessElection(referenceId, datasetId);
+    Election second = createDataAccessElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), first.getElectionId());
+    createFinalVote(user.getUserId(), second.getElectionId());
+    createFinalVote(user.getUserId(), wrongStatus.getElectionId());
+
+    electionDAO.updateElectionStatus(
+            List.of(wrongStatus.getElectionId()),
+            ElectionStatus.CANCELED.getValue());
+
+    List<Election> returned =
+            electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(
+                    ElectionStatus.OPEN.getValue());
+
+    assertEquals(2, returned.size());
+    assertEquals(second, returned.get(0));
+    assertEquals(first, returned.get(1));
+  }
+
+  @Test
+  public void testFindLastDataAccessElectionsWithFinalVoteByStatus_WrongType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    // create elections with final vote
+    Election rpElection = createRPElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), rpElection.getElectionId());
+
+    List<Election> returned =
+            electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(
+                    ElectionStatus.OPEN.getValue());
+
+    assertEquals(0, returned.size());
+  }
+
+  @Test
+  public void testFindOpenLastElectionsByTypeAndFinalAccessChairPersonVote() {
+    
   }
 
   @Test

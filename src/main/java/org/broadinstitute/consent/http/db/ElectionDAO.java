@@ -113,7 +113,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
           + "    e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, "
           + "    e.archived, e.version "
           + "FROM election e "
-          + "LEFT JOIN vote v ON v.electionid = e.election_id AND "
+          + "INNER JOIN vote v ON v.electionid = e.election_id AND "
           + "    CASE "
           + "        WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final' "
           + "        WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner' "
@@ -136,7 +136,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
             "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
         "FROM election e " +
-        "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'chairperson' " +
+        "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
         "WHERE LOWER(e.election_type) = LOWER(:type) " +
             "AND LOWER(e.status) = LOWER(:status) " +
             "AND v.vote IS NOT NULL " +
@@ -148,14 +148,14 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
             "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
         "FROM election e " +
-        "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'chairperson' " +
+        "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
         "INNER JOIN " +
             "(SELECT reference_id, MAX(create_date) max_date " +
             "FROM election e " +
             "WHERE e.election_type = :type " +
             "GROUP BY reference_id) election_view " +
                 "ON election_view.max_date = e.create_date " +
-                "AND electionView.reference_id = e.reference_id " +
+                "AND election_view.reference_id = e.reference_id " +
                 "AND LOWER(e.election_type) = LOWER(:type) " +
         "ORDER BY create_date ASC")
     List<Election> findLastElectionsWithFinalVoteByType(@Bind("type") String type);
@@ -207,7 +207,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                 "AND e.final_access_vote = :vote " +
                 "AND LOWER(e.status) NOT IN ('canceled', 'closed') " +
         "ORDER BY create_date ASC")
-    List<Election> findOpenLastElectionsByTypeAndFinalAccessVoteForChairPerson(@Bind("type") String type, @Bind("vote") Boolean finalAccessVote);
+    List<Election> findOpenLastElectionsByTypeAndFinalAccessChairPersonVote(@Bind("type") String type, @Bind("vote") Boolean finalAccessVote);
 
     @SqlQuery(
         "SELECT count(*) " +

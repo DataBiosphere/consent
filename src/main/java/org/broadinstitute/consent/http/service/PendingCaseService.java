@@ -98,7 +98,7 @@ public class PendingCaseService {
         Integer dacUserId = user.getUserId();
         boolean isChair = dacService.isAuthUserChair(authUser);
         List<Election> unfilteredElections = isChair ?
-                electionDAO.findOpenLastElectionsByTypeAndFinalAccessVoteForChairPerson(ElectionType.DATA_ACCESS.getValue(), false) :
+                electionDAO.findOpenLastElectionsByTypeAndFinalAccessChairPersonVote(ElectionType.DATA_ACCESS.getValue(), false) :
                 electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
         List<Election> elections = dacService.filterElectionsByDAC(unfilteredElections, authUser);
         List<PendingCase> pendingCases = new ArrayList<>();
