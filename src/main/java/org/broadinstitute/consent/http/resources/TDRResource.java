@@ -17,17 +17,12 @@ import org.broadinstitute.consent.http.service.UserService;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -91,17 +86,25 @@ public class TDRResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/dar/draft")
-    @RolesAllowed(ADMIN)
+    @RolesAllowed({ADMIN})
     public Response createDraftDataAccessRequest(
-        @Auth AuthUser authUser, @Context UriInfo info, List<String> datasetIdentifiers, String projectTitle) {
+        @Auth AuthUser authUser,
+        @Context UriInfo info,
+        @QueryParam("identifiers") String identifiers,
+        @QueryParam("projectTitle") String projectTitle) {
       try {
         // Ensure that the user is a registered DUOS and SAM user
         User user = findOrCreateUser(authUser);
-        List<Integer> datasetIds = datasetIdentifiers.stream()
-                .map(identifier -> this.datasetService.findDatasetByIdentifier(identifier).getDataSetId())
-                .collect(Collectors.toList());
+        if (Objects.isNull(identifiers) || identifiers.isBlank()) {
+          throw new BadRequestException("No dataset identifiers were provided");
+        } else {
+          List<Integer> datasetIds = Arrays.asList(identifiers.split(","))
+              .stream()
+              .filter(identifier -> !identifier.isBlank())
+              .map(identifier -> this.datasetService.findDatasetByIdentifier(identifier).getDataSetId())
+              .collect(Collectors.toList());
         if (datasetIds.isEmpty()) {
-            throw new IllegalArgumentException("The dataset identifiers provided must be associated with an existing dataset");
+            throw new BadRequestException("No datasets associated with identifiers: " + identifiers);
         }
         DataAccessRequest newDar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
@@ -114,6 +117,7 @@ public class TDRResource extends Resource {
         DataAccessRequest result = this.darService.insertDraftDataAccessRequest(user, newDar);
         URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
         return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
+        }
       } catch (Exception e) {
           return createExceptionResponse(e);
       }

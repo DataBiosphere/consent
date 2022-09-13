@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.HttpStatusCodes;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
@@ -117,7 +118,7 @@ public class TDRResourceTest {
     @Test
     public void testCreateDraftDataAccessRequest() {
 
-        List<String> datasetIdentifiers = List.of("DUOS-00001", "DUOS-00002");
+        String datasetIdentifiers = "DUOS-00001, DUOS-00002";
 
         Dataset d1 = new Dataset();
         Dataset d2 = new Dataset();
@@ -135,7 +136,7 @@ public class TDRResourceTest {
 
     @Test
     public void testCreateDraftDataAccessRequest404() {
-        List<String> datasetIdentifiers = List.of("DUOS-00001", "DUOS-00002");
+        String datasetIdentifiers = "DUOS-00001, DUOS-00002";
 
         when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(null);
         when(datasetService.findDatasetByIdentifier("DUOS-00002")).thenReturn(null);
@@ -144,7 +145,7 @@ public class TDRResourceTest {
 
         Response r = resource.createDraftDataAccessRequest(new AuthUser(), uriInfo, datasetIdentifiers, "New Project");
 
-        assertEquals(404, r.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, r.getStatus());
     }
 
     @Test
