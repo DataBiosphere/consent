@@ -118,34 +118,37 @@ public class TDRResourceTest {
     @Test
     public void testCreateDraftDataAccessRequest() {
 
-        String datasetIdentifiers = "DUOS-00001, DUOS-00002";
+        String identifiers = "DUOS-00001, DUOS-00002";
 
         Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+
         Dataset d2 = new Dataset();
+        d2.setDataSetId(2);
 
         when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(d1);
         when(datasetService.findDatasetByIdentifier("DUOS-00002")).thenReturn(d2);
 
         initResource();
 
-        Response r = resource.createDraftDataAccessRequest(new AuthUser(), uriInfo, datasetIdentifiers, "New Project");
+        Response r = resource.createDraftDataAccessRequest(new AuthUser(), uriInfo, identifiers, "New Project");
 
         assertEquals(201, r.getStatus());
     }
 
 
     @Test
-    public void testCreateDraftDataAccessRequest404() {
-        String datasetIdentifiers = "DUOS-00001, DUOS-00002";
+    public void testCreateDraftDataAccessRequest500() {
+        String identifiers = "DUOS-00001, DUOS-00002";
 
         when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(null);
         when(datasetService.findDatasetByIdentifier("DUOS-00002")).thenReturn(null);
 
         initResource();
 
-        Response r = resource.createDraftDataAccessRequest(new AuthUser(), uriInfo, datasetIdentifiers, "New Project");
+        Response r = resource.createDraftDataAccessRequest(new AuthUser(), uriInfo, identifiers, "New Project");
 
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, r.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, r.getStatus());
     }
 
     @Test
