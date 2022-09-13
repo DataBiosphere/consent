@@ -159,9 +159,9 @@ public class DatasetResource extends Resource {
         @FormDataParam("file") FormDataMultiPart multiPart,
         @FormDataParam("dataset") String json) {
         // TODO
-        //  * Read input files if provided
+        //  * Read input file if provided
         //  * Build new dataset from schema
-        //  * Save any uploaded files
+        //  * Save uploaded file
         //  * Return a list of generated dataset entities
         if (!jsonSchemaUtil.isValidSchema_v1(json)) {
             throw new BadRequestException("Invalid schema");
@@ -184,11 +184,11 @@ public class DatasetResource extends Resource {
                     try {
                         BlobId blobId = gcsService.storeDocument(fileStream, fileType, blobFileName);
                     } catch (IOException e) {
-                        // do something here
+                        return createExceptionResponse(e);
                     }
                 }
             } catch (JSONException e) {
-                // do something
+                return createExceptionResponse(e);
             }
         }
 
