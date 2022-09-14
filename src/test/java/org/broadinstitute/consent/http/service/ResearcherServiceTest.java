@@ -47,7 +47,6 @@ public class ResearcherServiceTest {
         user = new User();
         user.setEmail(authUser.getEmail());
         user.setUserId(RandomUtils.nextInt(1, 10));
-        user.setDisplayName(RandomStringUtils.random(10));
         user.setDisplayName(RandomStringUtils.randomAlphabetic(10));
         openMocks(this);
     }
