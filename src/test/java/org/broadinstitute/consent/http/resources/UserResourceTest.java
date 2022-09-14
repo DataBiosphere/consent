@@ -252,7 +252,7 @@ public class UserResourceTest {
   public void testDeleteUser() {
     doNothing().when(userService).deleteUserByEmail(any());
     initResource();
-    Response response = userResource.delete(RandomStringUtils.random(10), uriInfo);
+    Response response = userResource.delete(RandomStringUtils.randomAlphabetic(10), uriInfo);
     assertEquals(200, response.getStatus());
   }
 

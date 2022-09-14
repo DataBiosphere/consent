@@ -461,7 +461,7 @@ public class DAOTestHelper {
 
     protected DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId, int datasetId, int userId, String darCode) {
         DataAccessRequestData data = new DataAccessRequestData();
-        data.setProjectTitle(RandomStringUtils.random(10));
+        data.setProjectTitle(RandomStringUtils.randomAlphabetic(10));
         String referenceId = RandomStringUtils.randomAlphanumeric(20);
         dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(), new Date(), new Date(), new Date(), data);
         dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);

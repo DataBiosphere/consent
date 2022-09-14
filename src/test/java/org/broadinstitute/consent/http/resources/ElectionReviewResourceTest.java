@@ -50,7 +50,7 @@ public class ElectionReviewResourceTest {
     public void testGetCollectElectionReview() {
         when(reviewResultsService.describeLastElectionReviewByReferenceIdAndType(any(), any())).thenReturn(new ElectionReview());
         initResource();
-        ElectionReview response = resource.getCollectElectionReview(RandomStringUtils.random(10), RandomStringUtils.random(10));
+        ElectionReview response = resource.getCollectElectionReview(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10));
         assertNotNull(response);
     }
 

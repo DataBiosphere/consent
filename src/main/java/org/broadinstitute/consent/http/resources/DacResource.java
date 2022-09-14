@@ -6,7 +6,6 @@ import io.dropwizard.auth.Auth;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.security.RolesAllowed;
@@ -30,7 +29,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetApproval;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -198,9 +196,10 @@ public class DacResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
     public Response findAllDacDatasets(@Auth AuthUser user, @PathParam("dacId") Integer dacId) {
-        findDacById(dacId);
-        Set<DatasetDTO> datasets = dacService.findDatasetsByDacId(user, dacId);
-        return Response.ok().entity(unmarshal(datasets)).build();
+        Dac dac = findDacById(dacId);
+        checkUserRoleInDac(dac, user);
+        List<Dataset> datasets = dacService.findDatasetsByDacId(dacId);
+        return Response.ok().entity(datasets).build();
     }
 
     @GET
