@@ -36,7 +36,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Integer> getElectionIdsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
     @SqlQuery(
-        "SELECT e.election_id, e.dataset_id, v.vote final_vote , e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
+        "SELECT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
             " e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
             "FROM election e " +
             "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
