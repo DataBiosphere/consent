@@ -552,6 +552,7 @@ public class ConsentModule extends AbstractModule {
         return new SamService(providesSamDAO());
     }
 
+    @Provides
     SamDAO providesSamDAO() {
         return new SamDAO(config.getServicesConfiguration());
     }
