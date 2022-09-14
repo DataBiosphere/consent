@@ -20,6 +20,7 @@ public class Election {
           + " e.last_update AS e_last_update, "
           + " e.dataset_id AS e_dataset_id, "
           + " e.election_type AS e_election_type, "
+          + " e.archived AS e_archived, "
           + " e.latest AS e_latest ";
 
     @JsonProperty
