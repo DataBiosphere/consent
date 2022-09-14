@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -359,7 +360,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DataAccessRequestServiceDAO providesDataAccessRequestServiceDAO() {
       return new DataAccessRequestServiceDAO(
-        providesDataAccessRequestDAO(), 
+        providesDataAccessRequestDAO(),
         providesJdbi(),
         providesDARCollectionDAO()
       );
@@ -548,7 +549,11 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     SamService providesSamService() {
-        return new SamService(config.getServicesConfiguration());
+        return new SamService(providesSamDAO());
+    }
+
+    SamDAO providesSamDAO() {
+        return new SamDAO(config.getServicesConfiguration());
     }
 
     @Provides
