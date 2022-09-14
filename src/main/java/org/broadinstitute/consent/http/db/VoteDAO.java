@@ -151,13 +151,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select * from vote v where v.electionId = :electionId and (v.vote is null and (v.has_concerns = false OR v.has_concerns is null)) and lower(v.type) = lower(:type)")
     List<Vote> findDataOwnerPendingVotesByElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
-    @SqlQuery(
-        "SELECT * FROM vote v " +
-            "WHERE v.dacUserId = :dacUserId " +
-                "AND v.electionId IN (SELECT e.election_id FROM election e WHERE LOWER(e.election_type) != 'dataset' " +
-                "AND (LOWER(e.status) = 'open' OR LOWER(e.status) = 'final'))")
-    List<Vote> findVotesOnOpenElections(@Bind("dacUserId") Integer dacUserId);
-
     @SqlUpdate("delete from vote where voteId IN (<voteIds>)")
     void removeVotesByIds(@BindList("voteIds") List<Integer> voteIds);
 

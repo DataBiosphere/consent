@@ -568,22 +568,6 @@ public class VoteDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindVotesOnOpenElections() {
-        User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        Dac dac = createDac();
-        Dataset dataset = createDatasetWithDac(dac.getDacId());
-        Consent consent = createConsent();
-        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
-        Vote vote = createDacVote(user.getUserId(), election.getElectionId());
-
-        List<Vote> votes = voteDAO.findVotesOnOpenElections(user.getUserId());
-        assertNotNull(votes);
-        assertFalse(votes.isEmpty());
-        assertEquals(1, votes.size());
-        assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
-    }
-
-    @Test
     public void testRemoveVotesByIds() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dataset dataset = createDataset();
