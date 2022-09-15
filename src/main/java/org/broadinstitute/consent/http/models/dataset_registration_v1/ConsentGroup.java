@@ -25,6 +25,7 @@ import java.util.List;
     "irb",
     "gs",
     "mor",
+    "morDate",
     "npu",
     "otherSecondary",
     "dataLocation",
@@ -125,6 +126,13 @@ public class ConsentGroup {
     @JsonProperty("mor")
     @JsonPropertyDescription("Publication Moratorium (MOR)")
     private Boolean mor;
+    /**
+     * Publication Moratorium Date (MOR)
+     *
+     */
+    @JsonProperty("morDate")
+    @JsonPropertyDescription("Publication Moratorium Date (MOR)")
+    private String morDate;
     /**
      * Non-profit Use Only (NPU)
      *
@@ -388,6 +396,24 @@ public class ConsentGroup {
     @JsonProperty("mor")
     public void setMor(Boolean mor) {
         this.mor = mor;
+    }
+
+    /**
+     * Publication Moratorium Date (MOR)
+     *
+     */
+    @JsonProperty("morDate")
+    public String getMorDate() {
+        return morDate;
+    }
+
+    /**
+     * Publication Moratorium Date (MOR)
+     *
+     */
+    @JsonProperty("morDate")
+    public void setMorDate(String morDate) {
+        this.morDate = morDate;
     }
 
     /**

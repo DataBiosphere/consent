@@ -12,11 +12,13 @@ import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -490,8 +492,7 @@ public class DatasetService {
         registration.getConsentGroups().forEach(cg -> {
             Integer datasetId;
             Timestamp now = new Timestamp(new Date().getTime());
-            // TODO: Populate data use from registration
-            DataUse dataUse = new DataUse();
+            DataUse dataUse = createDataUseFromRegistration(cg);
             if (registration.getAlternativeDataSharingPlan() && Objects.nonNull(registration.getAlternativeDataSharingPlanFileName()) && Objects.nonNull(blobId)) {
                 datasetId = datasetDAO.insertDataset(
                     registration.getStudyName(),
@@ -522,5 +523,56 @@ public class DatasetService {
             return datasetDAO.findDatasetsByIdList(createdDatasetIds);
         }
         return List.of();
+    }
+
+    private DataUse createDataUseFromRegistration(ConsentGroup consentGroup) {
+        DataUseBuilder builder = new DataUseBuilder();
+        // Primary Terms
+        if (consentGroup.getGeneralResearchUse()) {
+            builder.setGeneralUse(true);
+        }
+        if (consentGroup.getHmb()) {
+            builder.setHmbResearch(true);
+        }
+        if (!consentGroup.getDiseaseSpecificUse().isEmpty()) {
+            builder.setDiseaseRestrictions(consentGroup.getDiseaseSpecificUse());
+        }
+        if (consentGroup.getPoa()) {
+            builder.setPopulationOriginsAncestry(true);
+        }
+        if (Objects.nonNull(consentGroup.getOtherPrimary()) && !consentGroup.getOtherPrimary().isBlank()) {
+            builder.setOther(consentGroup.getOtherPrimary());
+        }
+        // Secondary Terms
+            // NMDS is No Methods Development or validation studies
+        if (consentGroup.getNmds()) {
+            // TODO: Ensure that this is the right thing
+            builder.setMethodsResearch(false);
+        }
+        if (consentGroup.getGso()) {
+            builder.setGeneticStudiesOnly(true);
+        }
+        if (consentGroup.getPub()) {
+            builder.setPublicationResults(true);
+        }
+        if (consentGroup.getCol()) {
+            builder.setCollaboratorRequired(true);
+        }
+        if (consentGroup.getIrb()) {
+            builder.setEthicsApprovalRequired(true);
+        }
+        if (Objects.nonNull(consentGroup.getGs()) && !consentGroup.getGs().isBlank()) {
+            builder.setGeographicalRestrictions(consentGroup.getGs());
+        }
+        if (consentGroup.getMor() && Objects.nonNull(consentGroup.getMorDate())) {
+            builder.setPublicationMoratorium(consentGroup.getMorDate());
+        }
+        if (consentGroup.getNpu()) {
+            builder.setCommercialUse(false);
+        }
+        if (Objects.nonNull(consentGroup.getOtherSecondary()) && !consentGroup.getOtherSecondary().isBlank()) {
+            builder.setSecondaryOther(consentGroup.getOtherSecondary());
+        }
+        return builder.build();
     }
 }
