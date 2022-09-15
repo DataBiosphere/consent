@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service;
+package org.broadinstitute.consent.http.service.dao;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
@@ -6,6 +6,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
@@ -13,7 +14,6 @@ import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
-import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -39,9 +39,9 @@ import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class SamServiceTest implements WithMockServer {
+public class SamDAOTest implements WithMockServer {
 
-  private SamService service;
+  private SamDAO service;
 
   private MockServerClient mockServerClient;
 
@@ -67,7 +67,7 @@ public class SamServiceTest implements WithMockServer {
     mockServerClient.reset();
     ServicesConfiguration config = new ServicesConfiguration();
     config.setSamUrl("http://" + container.getHost() + ":" + container.getServerPort() + "/");
-    service = new SamService(config);
+    service = new SamDAO(config);
   }
 
   @Test
