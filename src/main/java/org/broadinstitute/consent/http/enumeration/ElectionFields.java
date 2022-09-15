@@ -2,21 +2,21 @@ package org.broadinstitute.consent.http.enumeration;
 
 public enum ElectionFields {
 
-    ID("electionId"),
-    TYPE("electionType"),
+    ID("election_id"),
+    TYPE("election_type"),
     STATUS("status"),
-    CREATE_DATE("createDate"),
-    REFERENCE_ID("referenceId"),
-    LAST_UPDATE("lastUpdate"),
-    FINAL_ACCESS_VOTE("finalAccessVote"),
-    FINAL_VOTE("finalVote"),
-    FINAL_RATIONALE("finalRationale"),
-    FINAL_VOTE_DATE("finalVoteDate"),
-    DATA_USE_LETTER("dataUseLetter"),
-    DATASET_ID("datasetId"),
+    CREATE_DATE("create_date"),
+    REFERENCE_ID("reference_id"),
+    LAST_UPDATE("last_update"),
+    FINAL_ACCESS_VOTE("final_access_vote"),
+    FINAL_VOTE("final_vote"),
+    FINAL_RATIONALE("final_rationale"),
+    FINAL_VOTE_DATE("final_vote_date"),
+    DATA_USE_LETTER("data_use_letter"),
+    DATASET_ID("dataset_id"),
     VERSION("version"),
     ARCHIVED("archived"),
-    DUL_NAME("dulName");
+    DUL_NAME("dul_name");
 
     private final String value;
 

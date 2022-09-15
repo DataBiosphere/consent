@@ -1,0 +1,56 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="97.0" author="smarks">
+      <renameColumn tableName="election"
+                    oldColumnName="electionid"
+                    newColumnName="election_id"/>
+
+      <renameColumn tableName="election"
+                    oldColumnName="createdate"
+                    newColumnName="create_date"/>
+
+      <renameColumn tableName="election"
+                    oldColumnName="referenceid"
+                    newColumnName="reference_id"/>
+
+      <renameColumn tableName="election"
+                    oldColumnName="lastupdate"
+                    newColumnName="last_update"/>
+
+      <renameColumn tableName="election"
+                    oldColumnName="finalaccessvote"
+                    newColumnName="final_access_vote"/>
+
+      <renameColumn tableName="election"
+                    oldColumnName="userestriction"
+                    newColumnName="use_restriction"/>
+
+      <renameColumn tableName="election"
+                    oldColumnName="translateduserestriction"
+                    newColumnName="translated_use_restriction"/>
+
+      <renameColumn tableName="election"
+                    oldColumnName="datasetid"
+                    newColumnName="dataset_id"/>
+
+      <renameColumn tableName="election"
+                    oldColumnName="electiontype"
+                    newColumnName="election_type"/>
+
+      <renameColumn tableName="election"
+                    oldColumnName="datauseletter"
+                    newColumnName="data_use_letter"/>
+
+      <renameColumn tableName="election"
+                    oldColumnName="dulname"
+                    newColumnName="dul_name"/>
+
+      <renameColumn tableName="access_rp"
+                    oldColumnName="electionaccessid"
+                    newColumnName="election_access_id"/>
+
+      <renameColumn tableName="access_rp"
+                    oldColumnName="electionrpid"
+                    newColumnName="election_rp_id"/>
+  </changeSet>
+</databaseChangeLog>

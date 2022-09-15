@@ -33,16 +33,6 @@ public class ResearcherService {
     }
 
     @Deprecated
-    public List<UserProperty> setProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser) throws NotFoundException, IllegalArgumentException {
-        User user = validateAuthUser(authUser);
-        researcherPropertiesMap.values().removeAll(Collections.singleton(null));
-        Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
-        List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getUserId());
-        saveProperties(properties);
-        return describeResearcherProperties(user.getUserId());
-    }
-
-    @Deprecated
     public List<UserProperty> updateProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser, Boolean validate) throws NotFoundException, IllegalArgumentException {
         User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));

@@ -23,8 +23,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import static org.broadinstitute.consent.http.db.DarCollectionDAO.QUERY_FIELD_SEPARATOR;
-
 public interface UserDAO extends Transactional<UserDAO> {
 
     String QUERY_FIELD_SEPARATOR = ", ";

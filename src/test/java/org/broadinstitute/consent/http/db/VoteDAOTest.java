@@ -568,22 +568,6 @@ public class VoteDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindVotesOnOpenElections() {
-        User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        Dac dac = createDac();
-        Dataset dataset = createDatasetWithDac(dac.getDacId());
-        Consent consent = createConsent();
-        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
-        Vote vote = createDacVote(user.getUserId(), election.getElectionId());
-
-        List<Vote> votes = voteDAO.findVotesOnOpenElections(user.getUserId());
-        assertNotNull(votes);
-        assertFalse(votes.isEmpty());
-        assertEquals(1, votes.size());
-        assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
-    }
-
-    @Test
     public void testRemoveVotesByIds() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dataset dataset = createDataset();
@@ -701,5 +685,70 @@ public class VoteDAOTest extends DAOTestHelper {
         assertFalse(voteUsers.isEmpty());
         assertEquals(1, voteUsers.size());
         assertEquals(chair.getUserId(), voteUsers.get(0).getUserId());
+    }
+
+    @Test
+    public void testFindAllElectionReviewVotesByElectionId() {
+        Dac dac = createDac();
+        Dataset dataset = createDatasetWithDac(dac.getDacId());
+        DataAccessRequest dar = createDataAccessRequestV3();
+        User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+        String referenceId = dar.getReferenceId();
+        Integer datasetId = dataset.getDataSetId();
+        Election e = createDataAccessElection(referenceId, datasetId);
+
+        Vote v1 = createFinalVote(user.getUserId(), e.getElectionId());
+        Vote v2 = createDacVote(user.getUserId(), e.getElectionId());
+        Vote v3 = createChairpersonVote(user.getUserId(), e.getElectionId());
+
+        List<ElectionReviewVote> found = voteDAO.findAllElectionReviewVotesByElectionId(e.getElectionId());
+        List<Integer> foundVoteIds = found.stream().map((v) -> v.getVote().getVoteId()).collect(Collectors.toList());
+
+        assertEquals(3, found.size());
+        assertTrue(foundVoteIds.contains(v1.getVoteId()));
+        assertTrue(foundVoteIds.contains(v2.getVoteId()));
+        assertTrue(foundVoteIds.contains(v3.getVoteId()));
+    }
+
+    @Test
+    public void testFindAllElectionReviewVotesByElectionId_NoVotesOnElection() {
+        Dac dac = createDac();
+        Dataset dataset = createDatasetWithDac(dac.getDacId());
+        DataAccessRequest dar = createDataAccessRequestV3();
+        User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+        String referenceId = dar.getReferenceId();
+        Integer datasetId = dataset.getDataSetId();
+        Election e = createDataAccessElection(referenceId, datasetId);
+        Election otherElection = createDataAccessElection(referenceId, datasetId);
+
+        createFinalVote(user.getUserId(), otherElection.getElectionId());
+        createDacVote(user.getUserId(), otherElection.getElectionId());
+        createChairpersonVote(user.getUserId(), otherElection.getElectionId());
+
+        List<ElectionReviewVote> found = voteDAO.findAllElectionReviewVotesByElectionId(e.getElectionId());
+        assertEquals(0, found.size());
+    }
+
+    @Test
+    public void testFindElectionReviewVotesByElectionId_FilterByType() {
+        Dac dac = createDac();
+        Dataset dataset = createDatasetWithDac(dac.getDacId());
+        DataAccessRequest dar = createDataAccessRequestV3();
+        User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+        String referenceId = dar.getReferenceId();
+        Integer datasetId = dataset.getDataSetId();
+        Election e = createDataAccessElection(referenceId, datasetId);
+
+        Vote v1 = createFinalVote(user.getUserId(), e.getElectionId());
+        Vote v2 = createDacVote(user.getUserId(), e.getElectionId());
+        Vote v3 = createChairpersonVote(user.getUserId(), e.getElectionId());
+
+        List<ElectionReviewVote> found = voteDAO.findElectionReviewVotesByElectionId(
+                e.getElectionId(),
+                VoteType.FINAL.getValue());
+        List<Integer> foundVoteIds = found.stream().map((v) -> v.getVote().getVoteId()).collect(Collectors.toList());
+
+        assertEquals(1, found.size());
+        assertTrue(foundVoteIds.contains(v1.getVoteId()));
     }
 }
