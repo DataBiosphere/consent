@@ -140,7 +140,7 @@ public class DatasetRegistrationSchemaV1 {
      */
     @JsonProperty("dataSubmitterUserId")
     @JsonPropertyDescription("The user creating the dataset submission")
-    private Double dataSubmitterUserId;
+    private Integer dataSubmitterUserId;
     /**
      * Data Custodian Email
      * (Required)
@@ -207,7 +207,7 @@ public class DatasetRegistrationSchemaV1 {
      */
     @JsonProperty("piInstitution")
     @JsonPropertyDescription("Principal Investigator Institution")
-    private Double piInstitution;
+    private Integer piInstitution;
     /**
      * NIH Grant or Contract Number
      *
@@ -341,7 +341,7 @@ public class DatasetRegistrationSchemaV1 {
      */
     @JsonProperty("dataAccessCommitteeId")
     @JsonPropertyDescription("Data Access Committee ID")
-    private Double dataAccessCommitteeId;
+    private Integer dataAccessCommitteeId;
     /**
      * Consent Groups
      * (Required)
@@ -517,7 +517,7 @@ public class DatasetRegistrationSchemaV1 {
      *
      */
     @JsonProperty("dataSubmitterUserId")
-    public Double getDataSubmitterUserId() {
+    public Integer getDataSubmitterUserId() {
         return dataSubmitterUserId;
     }
 
@@ -527,7 +527,7 @@ public class DatasetRegistrationSchemaV1 {
      *
      */
     @JsonProperty("dataSubmitterUserId")
-    public void setDataSubmitterUserId(Double dataSubmitterUserId) {
+    public void setDataSubmitterUserId(Integer dataSubmitterUserId) {
         this.dataSubmitterUserId = dataSubmitterUserId;
     }
 
@@ -694,7 +694,7 @@ public class DatasetRegistrationSchemaV1 {
      *
      */
     @JsonProperty("piInstitution")
-    public Double getPiInstitution() {
+    public Integer getPiInstitution() {
         return piInstitution;
     }
 
@@ -703,7 +703,7 @@ public class DatasetRegistrationSchemaV1 {
      *
      */
     @JsonProperty("piInstitution")
-    public void setPiInstitution(Double piInstitution) {
+    public void setPiInstitution(Integer piInstitution) {
         this.piInstitution = piInstitution;
     }
 
@@ -1037,7 +1037,7 @@ public class DatasetRegistrationSchemaV1 {
      *
      */
     @JsonProperty("dataAccessCommitteeId")
-    public Double getDataAccessCommitteeId() {
+    public Integer getDataAccessCommitteeId() {
         return dataAccessCommitteeId;
     }
 
@@ -1047,7 +1047,7 @@ public class DatasetRegistrationSchemaV1 {
      *
      */
     @JsonProperty("dataAccessCommitteeId")
-    public void setDataAccessCommitteeId(Double dataAccessCommitteeId) {
+    public void setDataAccessCommitteeId(Integer dataAccessCommitteeId) {
         this.dataAccessCommitteeId = dataAccessCommitteeId;
     }
 

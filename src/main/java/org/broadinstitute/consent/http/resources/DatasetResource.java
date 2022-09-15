@@ -158,22 +158,20 @@ public class DatasetResource extends Resource {
             @FormDataParam("file") InputStream uploadInputStream,
             @FormDataParam("file") FormDataContentDisposition fileDetail,
             @FormDataParam("dataset") String json) {
-        // TODO
-        //  * Return a list of generated dataset entities
         if (!jsonSchemaUtil.isValidSchema_v1(json)) {
             throw new BadRequestException("Invalid schema");
         }
-        DatasetRegistrationSchemaV1 instance = jsonSchemaUtil.deserialize(json);
+        DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserialize(json);
         User user = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
-        BlobId blobId;
-        // Only parse an upload file if there is a data sharing plan provided
-        if (Objects.nonNull(uploadInputStream) && Objects.nonNull(fileDetail) && Objects.nonNull(instance.getAlternativeDataSharingPlanFileName())) {
+        BlobId blobId = null;
+        // Parse upload file if there is a data sharing plan provided
+        if (Objects.nonNull(uploadInputStream) && Objects.nonNull(fileDetail) && Objects.nonNull(registration.getAlternativeDataSharingPlanFileName())) {
             // validate file
             validateFileDetails(fileDetail);
             String fileName = fileDetail.getFileName();
-            String sharingPlanFileName = instance.getAlternativeDataSharingPlanFileName();
+            String sharingPlanFileName = registration.getAlternativeDataSharingPlanFileName();
             if (sharingPlanFileName.equals(fileName)) {
-                // store contents
+                // store file contents
                 String blobFileName =  UUID.randomUUID().toString();
                 try {
                     blobId = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), blobFileName);
@@ -183,14 +181,12 @@ public class DatasetResource extends Resource {
             }
         }
 
-        // TODO: Generate a list of Datasets from a DatasetRegistrationSchemaV1, a User, and a BlobId.
-
         try {
             // TODO: Generate a real uri
+            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, blobId);
             URI uri = UriBuilder.fromPath("").build();
-            return Response.created(uri).entity("").build();
-        }
-        catch (Exception e) {
+            return Response.created(uri).entity(datasets).build();
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }

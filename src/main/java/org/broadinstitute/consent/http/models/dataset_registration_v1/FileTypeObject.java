@@ -43,7 +43,7 @@ public class FileTypeObject {
      */
     @JsonProperty("numberOfParticipants")
     @JsonPropertyDescription("# of Participants")
-    private Double numberOfParticipants;
+    private Integer numberOfParticipants;
 
     /**
      * File Type
@@ -91,7 +91,7 @@ public class FileTypeObject {
      *
      */
     @JsonProperty("numberOfParticipants")
-    public Double getNumberOfParticipants() {
+    public Integer getNumberOfParticipants() {
         return numberOfParticipants;
     }
 
@@ -101,7 +101,7 @@ public class FileTypeObject {
      *
      */
     @JsonProperty("numberOfParticipants")
-    public void setNumberOfParticipants(Double numberOfParticipants) {
+    public void setNumberOfParticipants(Integer numberOfParticipants) {
         this.numberOfParticipants = numberOfParticipants;
     }
 

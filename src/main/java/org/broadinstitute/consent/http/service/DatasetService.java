@@ -1,21 +1,23 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.cloud.storage.BlobId;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -25,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
-
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -473,5 +474,59 @@ public class DatasetService {
             }
             return datasets;
         }
+    }
+
+    /**
+     *         @Bind("name") String name,
+     *         @Bind("createDate") Timestamp createDate,
+     *         @Bind("createUserId") Integer createUserId,
+     *         @Bind("objectId") String objectId,
+     *         @Bind("active") Boolean active,
+     *         @Bind("dataUse") String dataUse,
+     *         @Bind("dacId") Integer dacId,
+     *         @Bind("sharingPlanDocument") String sharingPlanDocument,
+     *         @Bind("sharingPlanDocumentName") String sharingPlanDocumentName);
+     * @param registration
+     * @param user
+     * @param blobId
+     * @return
+     */
+    public List<Dataset> createDatasetsFromRegistration(DatasetRegistrationSchemaV1 registration, User user, BlobId blobId) {
+        List<Integer> createdDatasetIds = new ArrayList<>();
+        registration.getConsentGroups().forEach(cg -> {
+            Integer datasetId;
+            Timestamp now = new Timestamp(new Date().getTime());
+            // TODO: Populate data use from registration
+            DataUse dataUse = new DataUse();
+            if (registration.getAlternativeDataSharingPlan() && Objects.nonNull(registration.getAlternativeDataSharingPlanFileName()) && Objects.nonNull(blobId)) {
+                datasetId = datasetDAO.insertDataset(
+                    registration.getStudyName(),
+                    now,
+                    user.getUserId(),
+                    null,
+                    true,
+                    dataUse.toString(),
+                    registration.getDataAccessCommitteeId(),
+                    blobId.getName(),
+                    registration.getAlternativeDataSharingPlanFileName()
+                );
+                createdDatasetIds.add(datasetId);
+            } else {
+                datasetId = datasetDAO.insertDataset(
+                    registration.getStudyName(),
+                    now,
+                    user.getUserId(),
+                    null,
+                    true,
+                    dataUse.toString(),
+                    registration.getDataAccessCommitteeId());
+                createdDatasetIds.add(datasetId);
+            }
+            // TODO: additional dataset properties
+        });
+        if (!createdDatasetIds.isEmpty()) {
+            return datasetDAO.findDatasetsByIdList(createdDatasetIds);
+        }
+        return List.of();
     }
 }
