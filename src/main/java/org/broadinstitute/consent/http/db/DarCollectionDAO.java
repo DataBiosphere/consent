@@ -40,12 +40,12 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
       " LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id " +
       " LEFT JOIN (" +
-      "   SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype, election.datasetid) AS latest " +
+      "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest " +
       "   FROM election " +
-      "   WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp'" +
+      "   WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp'" +
       " ) AS e " +
-      "   ON (dar.reference_id = e.referenceid AND dd.dataset_id = e.datasetid) AND (e.latest = e.electionid OR e.latest IS NULL) " +
-      " LEFT JOIN vote v ON v.electionid = e.electionid ";
+      "   ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) " +
+      " LEFT JOIN vote v ON v.electionid = e.election_id ";
 
   String filterQuery =
     " WHERE c.create_user_id = :userId " +
@@ -172,10 +172,10 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
         "LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id " +
         "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
         "LEFT JOIN (" +
-        "   SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype, election.datasetid) AS latest FROM election " +
-        "   WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp' " +
+        "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest FROM election " +
+        "   WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp' " +
         ") AS e " +
-        "   ON (dar.reference_id = e.referenceid AND dd.dataset_id = e.datasetid) AND (e.latest = e.electionid OR e.latest IS NULL) " +
+        "   ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) " +
         "WHERE (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) "
   )
   List<DarCollection> findAllDARCollections();
@@ -195,8 +195,8 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       + "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, "
       + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
       + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, "
-      + "e.electionid AS e_election_id, e.referenceid AS e_reference_id, e.status AS e_status, e.createdate AS e_create_date, "
-      + "e.lastupdate AS e_last_update, e.datasetid AS e_dataset_id, e.electiontype AS e_election_type, e.latest "
+      + "e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date, "
+      + "e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type, e.latest "
       + "FROM dar_collection c "
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id "
@@ -204,11 +204,11 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       + "LEFT JOIN user_property up ON u.user_id = up.userid "
       + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
       + "LEFT JOIN ("
-      + "  SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype, election.datasetid) AS latest "
+      + "  SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest "
       + "   FROM election "
-      + "   WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp'"
+      + "   WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp'"
       + ") AS e "
-      + "ON (dar.reference_id = e.referenceid AND dd.dataset_id = e.datasetid) AND (e.latest = e.electionid OR e.latest IS NULL) "
+      + "ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
       + "WHERE c.create_user_id = :userId "
       + " AND (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) "
   )
@@ -300,8 +300,8 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       + "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, "
       + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
       + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, "
-      + "e.electionid AS e_election_id, e.referenceid AS e_reference_id, e.status AS e_status, e.createdate AS e_create_date, "
-      + "e.lastupdate AS e_last_update, e.datasetid AS e_dataset_id, e.electiontype AS e_election_type, e.latest, "
+      + "e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date, "
+      + "e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type, e.latest, "
       + "v.voteid as v_vote_id, v.vote as v_vote, v.dacuserid as v_dac_user_id, v.rationale as v_rationale, v.electionid as v_election_id, "
       + "v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.display_name as v_display_name "
       + "FROM dar_collection c "
@@ -312,13 +312,13 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
       + "LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
       + "LEFT JOIN ("
-          + "SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.electiontype, election.datasetid) AS latest "
+          + "SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest "
           + "FROM election "
-          + "WHERE LOWER(election.electiontype) = 'dataaccess' OR LOWER(election.electiontype) = 'rp'"
+          + "WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp'"
       + ") AS e "
-      + "ON (dar.reference_id = e.referenceid AND dd.dataset_id = e.datasetid) AND (e.latest = e.electionid OR e.latest IS NULL) "
+      + "ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
       + "LEFT JOIN vote v "
-      + "ON v.electionid = e.electionid "
+      + "ON v.electionid = e.election_id "
       + "LEFT JOIN users du "
       + "ON du.user_id = v.dacuserid "
       + "WHERE c.collection_id = :collectionId "

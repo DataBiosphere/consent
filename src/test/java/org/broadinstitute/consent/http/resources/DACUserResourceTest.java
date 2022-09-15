@@ -166,7 +166,7 @@ public class DACUserResourceTest {
     public void testRetrieveDACUserWithInvalidEmail() {
         when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
         initResource();
-        resource.describe(authUser, RandomStringUtils.random(10));
+        resource.describe(authUser, RandomStringUtils.randomAlphabetic(10));
     }
 
     @Test

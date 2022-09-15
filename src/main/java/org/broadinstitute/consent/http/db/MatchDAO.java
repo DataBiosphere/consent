@@ -53,12 +53,12 @@ public interface MatchDAO extends Transactional<MatchDAO> {
         " SELECT match_entity.*, r.* FROM match_entity " +
         " LEFT JOIN match_failure_reason r on r.match_entity_id = match_entity.matchid " +
         " INNER JOIN (" +
-        "   SELECT election.*, MAX(election.electionid) OVER (PARTITION BY election.referenceid, election.datasetid) AS latest " +
+        "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.dataset_id) AS latest " +
         "   FROM election " +
-        "   WHERE LOWER(election.electiontype) = 'dataaccess' " +
+        "   WHERE LOWER(election.election_type) = 'dataaccess' " +
         " ) AS e " +
-        " ON e.referenceid = match_entity.purpose " +
-        " WHERE match_entity.purpose IN (<purposeIds>) AND e.electionid = latest")
+        " ON e.reference_id = match_entity.purpose " +
+        " WHERE match_entity.purpose IN (<purposeIds>) AND e.election_id = latest")
     List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
 
     @UseRowReducer(MatchReducer.class)

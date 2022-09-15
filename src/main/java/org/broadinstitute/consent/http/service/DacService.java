@@ -32,7 +32,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 
 public class DacService {
 
@@ -157,16 +156,8 @@ public class DacService {
         return userDAO.findUserById(id);
     }
 
-    public Set<DatasetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
-        Set<DatasetDTO> datasets = dataSetDAO.findDatasetsByDac(dacId);
-        if (isAuthUserAdmin(authUser)) {
-            return datasets;
-        }
-        List<Integer> dacIds = getDacIdsForUser(authUser);
-        if (dacIds.contains(dacId)) {
-            return datasets;
-        }
-        return Collections.emptySet();
+    public List<Dataset> findDatasetsByDacId(Integer dacId) {
+        return dataSetDAO.findDatasetsAssociatedWithDac(dacId);
     }
 
     public Set<Dataset> findDatasetsByConsentId(String consentId) {

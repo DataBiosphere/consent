@@ -26,6 +26,7 @@ public class UserUpdateFields {
   private Integer selectedSigningOfficialId;
   private String suggestedInstitution;
   private String suggestedSigningOfficial;
+  private Boolean daaAcceptance;
 
   public UserUpdateFields() {}
 
@@ -93,6 +94,14 @@ public class UserUpdateFields {
     this.suggestedSigningOfficial = suggestedSigningOfficial;
   }
 
+  public Boolean getDaaAcceptance() {
+    return daaAcceptance;
+  }
+
+  public void setDaaAcceptance(Boolean daaAcceptance) {
+    this.daaAcceptance = daaAcceptance;
+  }
+
   public List<UserProperty> buildUserProperties(Integer userId) {
     List<UserProperty> userProps = new ArrayList<>();
     if (Objects.nonNull(this.getSelectedSigningOfficialId())) {
@@ -114,6 +123,13 @@ public class UserUpdateFields {
       prop.setUserId(userId);
       prop.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
       prop.setPropertyValue(this.getSuggestedInstitution());
+      userProps.add(prop);
+    }
+    if (Objects.nonNull(this.getDaaAcceptance())) {
+      UserProperty prop = new UserProperty();
+      prop.setUserId(userId);
+      prop.setPropertyKey(UserFields.DAA_ACCEPTANCE.getValue());
+      prop.setPropertyValue(this.getDaaAcceptance().toString());
       userProps.add(prop);
     }
     return userProps;

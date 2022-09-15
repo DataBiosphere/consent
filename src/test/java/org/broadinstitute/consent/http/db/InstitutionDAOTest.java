@@ -126,7 +126,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
 
   @Test
   public void testFindInstitutionsByName_Missing() {
-    List<Institution> found = institutionDAO.findInstitutionsByName(RandomStringUtils.random(10));
+    List<Institution> found = institutionDAO.findInstitutionsByName(RandomStringUtils.randomAlphabetic(10));
     assertTrue(found.isEmpty());
   }
 }

@@ -44,7 +44,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   private User createUserForTest() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.random(10), RandomStringUtils.randomAlphabetic(10), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date());
     return userDAO.findUserById(userId);
   }
 
