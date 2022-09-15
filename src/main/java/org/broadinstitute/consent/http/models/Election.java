@@ -13,13 +13,14 @@ import java.util.Map;
 public class Election {
 
   public static final String QUERY_FIELDS_WITH_E_PREFIX =
-      " e.electionid AS e_election_id, "
-          + " e.referenceid AS e_reference_id, "
+      " e.election_id AS e_election_id, "
+          + " e.reference_id AS e_reference_id, "
           + " e.status AS e_status, "
-          + " e.createdate AS e_create_date, "
-          + " e.lastupdate AS e_last_update, "
-          + " e.datasetid AS e_dataset_id, "
-          + " e.electiontype AS e_election_type, "
+          + " e.create_date AS e_create_date, "
+          + " e.last_update AS e_last_update, "
+          + " e.dataset_id AS e_dataset_id, "
+          + " e.election_type AS e_election_type, "
+          + " e.archived AS e_archived, "
           + " e.latest AS e_latest ";
 
     @JsonProperty
