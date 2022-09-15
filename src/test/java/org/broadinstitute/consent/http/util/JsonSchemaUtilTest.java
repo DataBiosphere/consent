@@ -35,7 +35,7 @@ public class JsonSchemaUtilTest {
           """;
 
   @Test
-  public void testIsValidDataSubmitterObject_v1_case0() {
+  public void testIsValidDatasetRegistrationObject_v1_case0() {
     String instance = "{}";
     JsonSchemaUtil util = new JsonSchemaUtil();
     boolean valid = util.isValidSchema_v1(instance);
@@ -43,14 +43,14 @@ public class JsonSchemaUtilTest {
   }
 
   @Test
-  public void testIsValidDataSubmitterObject_v1_case1() {
+  public void testIsValidDatasetRegistrationObject_v1_case1() {
     JsonSchemaUtil util = new JsonSchemaUtil();
     boolean valid = util.isValidSchema_v1(datasetRegistrationInstance);
     assertTrue(valid);
   }
 
   @Test
-  public void testParseDataSubmitterObject_v1() {
+  public void testParseDatasetRegistrationObject_v1() {
     JsonSchemaUtil util = new JsonSchemaUtil();
     DatasetRegistrationSchemaV1 instance = util.deserialize(datasetRegistrationInstance);
     assertNotNull(instance);
