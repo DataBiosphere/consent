@@ -477,19 +477,13 @@ public class DatasetService {
     }
 
     /**
-     *         @Bind("name") String name,
-     *         @Bind("createDate") Timestamp createDate,
-     *         @Bind("createUserId") Integer createUserId,
-     *         @Bind("objectId") String objectId,
-     *         @Bind("active") Boolean active,
-     *         @Bind("dataUse") String dataUse,
-     *         @Bind("dacId") Integer dacId,
-     *         @Bind("sharingPlanDocument") String sharingPlanDocument,
-     *         @Bind("sharingPlanDocumentName") String sharingPlanDocumentName);
-     * @param registration
-     * @param user
-     * @param blobId
-     * @return
+     * This method take an instance of a dataset registration schema and creates datasets from it.
+     * There will be one dataset per ConsentGroup in the dataset.
+     *
+     * @param registration The DatasetRegistrationSchemaV1
+     * @param user The creating User
+     * @param blobId BlobId (nullable in the case that there is no alternative data sharing plan)
+     * @return List of created Datasets from the provided registration schema
      */
     public List<Dataset> createDatasetsFromRegistration(DatasetRegistrationSchemaV1 registration, User user, BlobId blobId) {
         List<Integer> createdDatasetIds = new ArrayList<>();
@@ -504,7 +498,7 @@ public class DatasetService {
                     now,
                     user.getUserId(),
                     null,
-                    true,
+                    registration.getPublicVisibility(),
                     dataUse.toString(),
                     registration.getDataAccessCommitteeId(),
                     blobId.getName(),
@@ -517,7 +511,7 @@ public class DatasetService {
                     now,
                     user.getUserId(),
                     null,
-                    true,
+                    registration.getPublicVisibility(),
                     dataUse.toString(),
                     registration.getDataAccessCommitteeId());
                 createdDatasetIds.add(datasetId);
