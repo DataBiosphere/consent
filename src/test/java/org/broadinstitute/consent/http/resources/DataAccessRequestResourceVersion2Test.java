@@ -197,8 +197,8 @@ public class DataAccessRequestResourceVersion2Test {
   public void testGetIrbDocument() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
-    dar.getData().setIrbDocumentLocation(RandomStringUtils.random(10));
-    dar.getData().setIrbDocumentName(RandomStringUtils.random(10) + ".txt");
+    dar.getData().setIrbDocumentLocation(RandomStringUtils.randomAlphabetic(10));
+    dar.getData().setIrbDocumentName(RandomStringUtils.randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     initResource();
 
@@ -264,8 +264,8 @@ public class DataAccessRequestResourceVersion2Test {
   public void testUploadIrbDocumentWithPreviousIrbDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
-    dar.getData().setIrbDocumentLocation(RandomStringUtils.random(10));
-    dar.getData().setIrbDocumentName(RandomStringUtils.random(10) + ".txt");
+    dar.getData().setIrbDocumentLocation(RandomStringUtils.randomAlphabetic(10));
+    dar.getData().setIrbDocumentName(RandomStringUtils.randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
@@ -285,8 +285,8 @@ public class DataAccessRequestResourceVersion2Test {
   public void testGetCollaborationDocument() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
-    dar.getData().setCollaborationLetterLocation(RandomStringUtils.random(10));
-    dar.getData().setCollaborationLetterName(RandomStringUtils.random(10) + ".txt");
+    dar.getData().setCollaborationLetterLocation(RandomStringUtils.randomAlphabetic(10));
+    dar.getData().setCollaborationLetterName(RandomStringUtils.randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     initResource();
 
@@ -352,8 +352,8 @@ public class DataAccessRequestResourceVersion2Test {
   public void testUploadCollaborationDocumentWithPreviousDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
-    dar.getData().setCollaborationLetterLocation(RandomStringUtils.random(10));
-    dar.getData().setCollaborationLetterName(RandomStringUtils.random(10) + ".txt");
+    dar.getData().setCollaborationLetterLocation(RandomStringUtils.randomAlphabetic(10));
+    dar.getData().setCollaborationLetterName(RandomStringUtils.randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());

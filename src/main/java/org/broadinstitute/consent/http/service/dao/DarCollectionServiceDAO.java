@@ -130,12 +130,12 @@ public class DarCollectionServiceDAO {
   private Update createVoteInsert(Handle handle, String voteType, String electionType, String referenceId, Integer datasetId, Date now, Integer userId) {
     final String sql =
         " INSERT INTO vote (createdate, dacuserid, electionid, type, remindersent) "
-            + " (SELECT :createDate, :userId, electionid, :voteType, false "
+            + " (SELECT :createDate, :userId, election_id, :voteType, false "
             + "  FROM election "
-            + "  WHERE electiontype = :electionType "
-            + "  AND referenceid = :referenceId "
-            + "  AND datasetid = :datasetId "
-            + "  ORDER BY createdate desc "
+            + "  WHERE election_type = :electionType "
+            + "  AND reference_id = :referenceId "
+            + "  AND dataset_id = :datasetId "
+            + "  ORDER BY create_date desc "
             + "  LIMIT 1) ";
     Update insert = handle.createUpdate(sql);
     insert.bind("createDate", now);
@@ -160,14 +160,14 @@ public class DarCollectionServiceDAO {
   private Update createElectionInsert(
       Handle handle, String electionType, String referenceId, Date now, Integer datasetId) {
     final String sql =
-        " INSERT INTO ELECTION "
-            + "        (electiontype, status, createDate, referenceid, datasetid, version) "
+        " INSERT INTO election "
+            + "        (election_type, status, create_date, reference_id, dataset_id, version) "
             + " VALUES (:electionType, :status, :createDate, :referenceId, :datasetId, "
             + "         (SELECT coalesce (MAX(version), 0) + 1 "
-            + "          FROM election AS electionVersion "
-            + "          WHERE referenceid = :referenceId "
-            + "          AND electiontype = :electionType "
-            + "          AND datasetid = :datasetId) "
+            + "          FROM election AS election_version "
+            + "          WHERE reference_id = :referenceId "
+            + "          AND election_type = :electionType "
+            + "          AND dataset_id = :datasetId) "
             + "        )";
     Update insert = handle.createUpdate(sql);
     insert.bind("electionType", electionType);

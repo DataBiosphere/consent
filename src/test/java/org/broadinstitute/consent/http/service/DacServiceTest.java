@@ -164,13 +164,14 @@ public class DacServiceTest {
 
     @Test
     public void testFindDatasetsByDacId() {
-        when(dataSetDAO.findDatasetsByDac(anyInt())).thenReturn(Collections.singleton(getDatasetDTOs().get(0)));
-        when(dacDAO.findDacsForEmail(anyString())).thenReturn(getDacs());
+
+        List<Dataset> datasets = getDatasets();
+        when(dataSetDAO.findDatasetsAssociatedWithDac(1)).thenReturn(datasets);
         initService();
 
-        Set<DatasetDTO> dataSets = service.findDatasetsByDacId(getUser(), 1);
-        Assert.assertNotNull(dataSets);
-        Assert.assertEquals(1, dataSets.size());
+        List<Dataset> returned = service.findDatasetsByDacId( 1);
+        Assert.assertNotNull(returned);
+        Assert.assertEquals(datasets, returned);
     }
 
     @Test

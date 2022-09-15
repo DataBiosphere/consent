@@ -9,20 +9,20 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
-import javax.ws.rs.NotFoundException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ResearcherServiceTest {
 
@@ -47,9 +47,8 @@ public class ResearcherServiceTest {
         user = new User();
         user.setEmail(authUser.getEmail());
         user.setUserId(RandomUtils.nextInt(1, 10));
-        user.setDisplayName(RandomStringUtils.random(10));
-
-        MockitoAnnotations.initMocks(this);
+        user.setDisplayName(RandomStringUtils.randomAlphabetic(10));
+        openMocks(this);
     }
 
     private void initService() {
@@ -57,29 +56,21 @@ public class ResearcherServiceTest {
     }
 
     @Test
-    public void testSetProperties() {
-        UserProperty prop = new UserProperty(
-                user.getUserId(),
-                UserFields.SUGGESTED_INSTITUTION.getValue(),
-                RandomStringUtils.random(10, true, false));
-        Map<String, String> propMap = new HashMap<>();
-        propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
-        when(userDAO.findUserByEmail(any())).thenReturn(user);
+    public void testUpdateProperties() {
         when(userDAO.findUserById(any())).thenReturn(user);
-        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(Collections.singletonList(prop));
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(List.of());
+        doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(anyInt());
+        doNothing().when(userPropertyDAO).insertAll(any());
         initService();
-
-        List<UserProperty> props = service.setProperties(propMap, authUser);
-        Assert.assertFalse(props.isEmpty());
-        Assert.assertEquals(propMap.size(), props.size());
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void testSetPropertiesNotFound() {
-        when(userDAO.findUserByEmail(any())).thenThrow(new NotFoundException("User Not Found"));
-        initService();
-
-        service.setProperties(new HashMap<>(), authUser);
+        Map<String, String> props = new HashMap<>();
+        props.put(UserFields.SUGGESTED_INSTITUTION.getValue(), "suggestion");
+        props.put(UserFields.SUGGESTED_INSTITUTION.getValue(), "suggestion");
+        props.put(UserFields.SELECTED_SIGNING_OFFICIAL_ID.getValue(), "suggestion");
+        props.put(UserFields.ERA_STATUS.getValue(), "suggestion");
+        props.put(UserFields.ERA_EXPIRATION_DATE.getValue(), "suggestion");
+        List<UserProperty> userProps = service.updateProperties(props, authUser, true);
+        assertTrue(userProps.isEmpty());
     }
 
 }

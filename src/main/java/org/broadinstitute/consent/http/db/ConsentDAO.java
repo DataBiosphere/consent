@@ -138,7 +138,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("SELECT DISTINCT (association_type) FROM consent_associations WHERE consent_id = :consentId")
     List<String> findAssociationTypesForConsent(@Bind("consentId") String consentId);
 
-
     @SqlQuery("SELECT requires_manual_review FROM consents WHERE consent_id = :consentId")
     Boolean checkManualReview(@Bind("consentId") String consentId);
 
