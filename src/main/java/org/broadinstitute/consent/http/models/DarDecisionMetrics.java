@@ -56,8 +56,9 @@ public class DarDecisionMetrics implements DecisionMetrics {
     Dataset dataset,
     Election accessElection,
     Election rpElection,
-    Match match) {
-    this.setDarId(dar);
+    Match match,
+    String darCode) {
+    this.setDarId(darCode);
     this.setDacName(dac);
     this.setDatasetId(dataset);
     this.setCountUniqueUser(dar);
@@ -93,9 +94,8 @@ public class DarDecisionMetrics implements DecisionMetrics {
     return darId;
   }
 
-  private void setDarId(DataAccessRequest dar) {
-    if (Objects.nonNull(dar) && Objects.nonNull(dar.getData()))
-      this.darId = dar.getData().getDarCode();
+  private void setDarId(String darCode) {
+    this.darId = darCode;
   }
 
   public String getDacName() {

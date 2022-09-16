@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -85,7 +86,7 @@ public class DatasetServiceTest {
     public void testCreateDataset() throws Exception {
         DatasetDTO test = getDatasetDTO();
         Dataset mockDataset = getDatasets().get(0);
-        when(datasetDAO.insertDataset(anyString(), any(), anyInt(), anyString(), anyBoolean())).thenReturn(mockDataset.getDataSetId());
+        when(datasetDAO.insertDataset(anyString(), any(), anyInt(), anyString(), anyBoolean(), any(), any())).thenReturn(mockDataset.getDataSetId());
         when(datasetDAO.findDatasetById(any())).thenReturn(mockDataset);
         when(datasetDAO.findDatasetPropertiesByDatasetId(any())).thenReturn(getDatasetProperties());
         when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(Collections.singleton(test));
@@ -184,7 +185,7 @@ public class DatasetServiceTest {
         doNothing().when(datasetDAO).updateDatasetNeedsApproval(any(), any());
         initService();
 
-        Dataset dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, true);
+        Dataset dataSet = datasetService.updateNeedsReviewDatasets(dataSetId, true);
         assertNotNull(dataSet);
     }
 
@@ -323,7 +324,7 @@ public class DatasetServiceTest {
         dataSetDTO.setDatasetName(dataset.getName());
         Set<DatasetProperty> datasetProps = getDatasetProperties();
         List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-            new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue())
+            new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
         ).collect(Collectors.toList());
         dataSetDTO.setProperties(dtoProps);
         dataset.setProperties(datasetProps);
@@ -417,7 +418,7 @@ public class DatasetServiceTest {
         //dataset properties are the same between the existing dataset and the update datasetDTO - no modification
         Set<DatasetProperty> datasetProps = getDatasetProperties();
         List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-                new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue())
+                new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
         ).collect(Collectors.toList());
         datasetDTO.setProperties(dtoProps);
         dataset.setProperties(datasetProps);
@@ -447,7 +448,7 @@ public class DatasetServiceTest {
         Consent consent = new Consent();
         when(consentDAO.findConsentById(anyString())).thenReturn(consent);
         when(useRestrictionConverter.parseUseRestriction(any(), any())).thenReturn(useRestriction);
-        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         doNothing().when(consentDAO).insertConsentAssociation(any(), any(), any());
         initService();
 
@@ -576,6 +577,63 @@ public class DatasetServiceTest {
         verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
     }
 
+    @Test
+    public void testApproveDataset_AlreadyApproved_TrueSubmission() {
+        Dataset dataset = new Dataset();
+        User user = new User();
+        dataset.setDacApproval(true);
+        dataset.setDataSetId(1);
+        dataset.setUpdateDate(new Date());
+        dataset.setUpdateUserId(4);
+        initService();
+
+        Dataset datasetResult = datasetService.approveDataset(dataset, user, true);
+        assertNotNull(datasetResult);
+        assertEquals(dataset.getDataSetId(), datasetResult.getDataSetId());
+        assertEquals(dataset.getUpdateUserId(), datasetResult.getUpdateUserId());
+        assertEquals(dataset.getDacApproval(), datasetResult.getDacApproval());
+        assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testApprovedDataset_AlreadyApproved_FalseSubmission() {
+        Dataset dataset = new Dataset();
+        User user = new User();
+        dataset.setDacApproval(true);
+        initService();
+
+        datasetService.approveDataset(dataset, user, false);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testApprovedDataset_AlreadyApproved_NullSubmission() {
+        Dataset dataset = new Dataset();
+        User user = new User();
+        dataset.setDacApproval(true);
+        initService();
+
+        datasetService.approveDataset(dataset, user, null);
+    }
+
+    @Test
+    public void testApproveDataset() {
+        Dataset dataset = new Dataset();
+        dataset.setDataSetId(1);
+        User user = new User();
+        user.setUserId(1);
+        Boolean payloadBool = true;
+        Dataset updatedDataset = new Dataset();
+        updatedDataset.setDataSetId(1);
+        updatedDataset.setDacApproval(payloadBool);
+        
+        when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
+        initService();
+
+        Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
+        assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
+        assertTrue(returnedDataset.getDacApproval());
+    }
+
     /* Helper functions */
 
     private List<Dataset> getDatasets() {
@@ -608,7 +666,11 @@ public class DatasetServiceTest {
     private Set<DatasetProperty> getDatasetProperties() {
         return IntStream.range(1, 11)
             .mapToObj(i ->
-                new DatasetProperty(1, i, "Test Value" + RandomStringUtils.randomAlphanumeric(25), new Date())
+                new DatasetProperty(1,
+                        i,
+                        "Test Value" + RandomStringUtils.randomAlphanumeric(25),
+                        DatasetPropertyType.String,
+                        new Date())
             ).collect(Collectors.toSet());
     }
 

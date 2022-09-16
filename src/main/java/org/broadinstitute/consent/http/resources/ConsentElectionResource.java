@@ -60,40 +60,6 @@ public class ConsentElectionResource extends Resource {
     @Deprecated
     @POST
     @Consumes("application/json")
-    @Path("/dac/{dacId}")
-    @RolesAllowed({ADMIN, CHAIRPERSON})
-    public Response createConsentElectionForDac(
-            @Auth AuthUser authUser,
-            @Context UriInfo info,
-            @PathParam("consentId") String consentId,
-            @PathParam("dacId") Integer dacId,
-            Election election) {
-        URI uri;
-        try {
-            Consent consent = consentService.getById(consentId);
-            Dac dac = dacService.findById(dacId);
-            if (dac == null) {
-                throw new NotFoundException("Cannot find DAC with the provided id: " + dacId);
-            }
-            if (consent.getDacId() != null && !consent.getDacId().equals(dacId)) {
-                throw new BadRequestException("Consent is already associated to a DAC.");
-            }
-            try {
-                consentService.updateConsentDac(consentId, dacId);
-            } catch (Exception e) {
-                logger().error("Exception updating consent id: '" + consentId + "', with dac id: '" + dacId + "'");
-                throw new InternalServerErrorException("Unable to associate consent to dac.");
-            }
-            uri = createElectionURI(info, election, consentId);
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-        return Response.created(uri).build();
-    }
-
-    @Deprecated
-    @POST
-    @Consumes("application/json")
     @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response createConsentElection(
             @Auth AuthUser authUser,

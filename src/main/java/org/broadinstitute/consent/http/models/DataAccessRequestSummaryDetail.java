@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 public class DataAccessRequestSummaryDetail implements SummaryDetail {
 
   private DataAccessRequest dar;
+  private String darCode;
   private Election accessElection;
   private List<Vote> accessVotes;
   private List<Vote> rpVotes;
@@ -23,6 +24,7 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
 
   public DataAccessRequestSummaryDetail(
       DataAccessRequest dar,
+      String darCode,
       Election accessElection,
       List<Vote> accessVotes,
       List<Vote> rpVotes,
@@ -33,6 +35,7 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
       Integer maxNumberOfDACMembers) {
 
     setDar(dar);
+    setDarCode(darCode);
     setAccessElection(accessElection);
     setAccessVotes(accessVotes);
     setRpVotes(rpVotes);
@@ -130,7 +133,7 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
             : null;
 
     StringBuilder builder = new StringBuilder();
-    builder.append(getDar().getData().getDarCode()).append(TAB);
+    builder.append(getDarCode()).append(TAB);
     builder.append(formatLongToDate(getAccessElection().getCreateDate().getTime())).append(TAB);
     if (chairpersonUser.isPresent()) {
       builder.append(chairpersonUser.get().getDisplayName()).append(TAB);
@@ -184,6 +187,14 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
 
   private void setDar(DataAccessRequest dar) {
     this.dar = dar;
+  }
+
+  private String getDarCode() {
+    return darCode;
+  }
+
+  private void setDarCode(String darCode) {
+    this.darCode = darCode;
   }
 
   private Election getAccessElection() {

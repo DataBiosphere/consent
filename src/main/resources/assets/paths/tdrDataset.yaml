@@ -1,0 +1,25 @@
+get:
+  summary: Find dataset by dataset identifier.
+  description: Find dataset by dataset identifier.
+  parameters:
+    - name: identifier
+      in: path
+      description: Dataset identifier, e.g. DUOS-123456
+      required: true
+      schema:
+        type: string
+  tags:
+    - TDR
+  responses:
+    200:
+      description: Dataset associated with identifier.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dataset.yaml'
+    400:
+      description: Invalid dataset identifier.
+    404:
+      description: Could not find dataset with given identifier.
+    500:
+      description: Server error.

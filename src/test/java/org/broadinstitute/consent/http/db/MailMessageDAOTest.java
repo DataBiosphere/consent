@@ -31,8 +31,8 @@ public class MailMessageDAOTest extends DAOTestHelper {
     public void testInsertEmail() {
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac d = createDac();
-        Dataset dataset = createDataset();
-        Consent c = createConsent(d.getDacId());
+        Dataset dataset = createDatasetWithDac(d.getDacId());
+        Consent c = createConsent();
         consentDAO.insertConsentAssociation(c.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
         Election e = createDataAccessElection(c.getConsentId(), dataset.getDataSetId());
         Vote vote = createChairpersonVote(chair.getUserId(), e.getElectionId());
@@ -53,8 +53,8 @@ public class MailMessageDAOTest extends DAOTestHelper {
     public void testInsertBulkEmailNoVotes() {
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac d = createDac();
-        Dataset dataset = createDataset();
-        Consent c = createConsent(d.getDacId());
+        Dataset dataset = createDatasetWithDac(d.getDacId());
+        Consent c = createConsent();
         consentDAO.insertConsentAssociation(c.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
         Election e = createDataAccessElection(c.getConsentId(), dataset.getDataSetId());
         mailMessageDAO.insertBulkEmailNoVotes(

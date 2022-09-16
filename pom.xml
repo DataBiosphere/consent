@@ -10,15 +10,17 @@
   <name>Consent Management Services</name>
 
   <properties>
-    <java.version>11</java.version>
-    <liquibase.version>4.14.0</liquibase.version>
+    <java.version>17</java.version>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <liquibase.version>4.15.0</liquibase.version>
     <dropwizard.version>2.1.1</dropwizard.version>
     <owl.version>5.1.20</owl.version>
-    <postgres.version>42.4.0</postgres.version>
+    <postgres.version>42.5.0</postgres.version>
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
     <swagger.ui.version>4.5.2</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
-    <mockserver.version>5.13.2</mockserver.version>
+    <mockserver.version>5.14.0</mockserver.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -164,7 +166,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.10.1</version>
         <configuration>
-          <release>11</release>
+          <release>17</release>
         </configuration>
       </plugin>
 
@@ -250,7 +252,7 @@
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
-        <version>7.1.1</version>
+        <version>7.1.2</version>
         <configuration>
           <skipProvidedScope>true</skipProvidedScope>
           <skipRuntimeScope>true</skipRuntimeScope>
@@ -281,6 +283,12 @@
   </dependencyManagement>
 
   <dependencies>
+
+    <dependency>
+      <groupId>org.everit.json</groupId>
+      <artifactId>org.everit.json.schema</artifactId>
+      <version>1.5.1</version>
+    </dependency>
 
     <dependency>
       <groupId>net.gcardone.junidecode</groupId>
@@ -319,14 +327,14 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.13.3</version>
+      <version>2.13.4</version>
     </dependency>
 
     <!-- Addressing OWASP warning: https://nvd.nist.gov/vuln/detail/CVE-2020-25649 -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>2.13.3</version>
+      <version>2.13.4</version>
     </dependency>
 
     <dependency>
@@ -484,7 +492,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>4.6.1</version>
+      <version>4.8.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -509,7 +517,7 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-      <version>1.15.2</version>
+      <version>1.15.3</version>
       <scope>test</scope>
     </dependency>
 
@@ -582,13 +590,13 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-storage</artifactId>
-      <version>v1-rev20220705-1.32.1</version>
+      <version>v1-rev20220705-2.0.0</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.10.0</version>
+      <version>2.11.3</version>
     </dependency>
 
     <dependency>
@@ -606,7 +614,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-oauth2</artifactId>
-      <version>v2-rev20200213-1.32.1</version>
+      <version>v2-rev20200213-2.0.0</version>
     </dependency>
 
     <dependency>
@@ -618,7 +626,7 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.9.0</version>
+      <version>2.9.1</version>
     </dependency>
 
     <dependency>
@@ -638,7 +646,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.3.2</version>
+      <version>8.4.1</version>
     </dependency>
 
     <!-- See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/11441966 -->
@@ -739,20 +747,6 @@
       <groupId>org.webjars</groupId>
       <artifactId>swagger-ui</artifactId>
       <version>${swagger.ui.version}</version>
-    </dependency>
-
-    <!-- java 11 requirement -->
-    <dependency>
-      <groupId>org.javassist</groupId>
-      <artifactId>javassist</artifactId>
-      <version>3.29.0-GA</version>
-    </dependency>
-
-    <!-- java 11 requirement -->
-    <dependency>
-      <groupId>cglib</groupId>
-      <artifactId>cglib-nodep</artifactId>
-      <version>3.3.0</version>
     </dependency>
 
   </dependencies>

@@ -35,6 +35,7 @@ public class ConsentCasesResource extends Resource {
         this.summaryService = summaryService;
     }
 
+    @Deprecated
     @GET
     @Path("/pending/{dacUserId}")
     @RolesAllowed({MEMBER, CHAIRPERSON})

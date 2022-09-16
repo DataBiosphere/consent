@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -16,6 +17,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -74,9 +76,13 @@ public class ElectionServiceTest {
     @Mock
     private DatasetAssociationDAO datasetAssociationDAO;
     @Mock
+    private DacService dacService;
+    @Mock
     private DataAccessRequestService dataAccessRequestService;
     @Mock
     private DataAccessRequestDAO dataAccessRequestDAO;
+    @Mock
+    private DarCollectionDAO darCollectionDAO;
     @Mock
     private EmailNotifierService emailNotifierService;
 
@@ -294,13 +300,33 @@ public class ElectionServiceTest {
     }
 
     private void initService() {
-        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, dataAccessRequestDAO, mailMessageDAO, emailNotifierService, dataAccessRequestService, useRestrictionConverter);
+        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, dataAccessRequestDAO, darCollectionDAO, mailMessageDAO, dacService, emailNotifierService, dataAccessRequestService, useRestrictionConverter);
+    }
+
+    @Test
+    public void testDescribeClosedElectionsByType_DataAccess() {
+        when(dacService.filterElectionsByDAC(any(), any()))
+                .thenReturn(Arrays.asList(sampleElection2));
+        initService();
+        List<Election> elections = service.describeClosedElectionsByType(ElectionType.DATA_ACCESS.getValue(), authUser);
+        assertNotNull(elections);
+        assertEquals(1, elections.size());
+    }
+
+    @Test
+    public void testDescribeClosedElectionsByType_Other() {
+        when(dacService.filterElectionsByDAC(any(), any()))
+                .thenReturn(Arrays.asList(sampleElection2));
+        initService();
+        List<Election> elections = service.describeClosedElectionsByType(ElectionType.DATA_SET.getValue(), authUser);
+        assertNotNull(elections);
+        assertEquals(1, elections.size());
     }
 
     @Test
     public void testCreateElection() throws Exception {
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any())).thenReturn(null);
-        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(sampleDataAccessRequest1);
+        when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(new DarCollection());
         initService();
         Election election = service.createElection(sampleElection1, sampleElection1.getReferenceId(), ElectionType.DATA_ACCESS);
         assertNotNull(election);

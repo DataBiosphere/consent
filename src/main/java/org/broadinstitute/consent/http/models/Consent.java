@@ -58,9 +58,6 @@ public class Consent {
     @JsonProperty
     public boolean updateStatus;
 
-    @JsonProperty
-    public Integer dacId;
-
     public Consent() {
     }
 
@@ -233,16 +230,5 @@ public class Consent {
     public void setUpdated(boolean updateStatus) {
         this.updateStatus = updateStatus;
     }
-
-    @JsonProperty
-    public Integer getDacId() {
-        return dacId;
-    }
-
-    @JsonProperty
-    public void setDacId(Integer dacId) {
-        this.dacId = dacId;
-    }
-
 }
 

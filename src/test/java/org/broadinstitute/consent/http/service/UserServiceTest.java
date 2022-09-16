@@ -111,7 +111,8 @@ public class UserServiceTest {
             fields.setSelectedSigningOfficialId(1);
             fields.setSuggestedSigningOfficial(RandomStringUtils.random(10, true, false));
             fields.setSuggestedInstitution(RandomStringUtils.random(10, true, false));
-            assertEquals(3, fields.buildUserProperties(user.getUserId()).size());
+            fields.setDaaAcceptance(true);
+            assertEquals(4, fields.buildUserProperties(user.getUserId()).size());
             service.updateUserFieldsById(fields, user.getUserId());
         } catch (Exception e) {
             fail(e.getMessage());
@@ -423,8 +424,7 @@ public class UserServiceTest {
     public void testGetUsersByUserRole_SO() {
         User u = generateUser();
         u.setInstitutionId(1);
-        when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(List.of(new User()));
-        when(userDAO.getCardsForUnregisteredUsers(anyInt())).thenReturn(List.of(new User()));
+        when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(List.of(new User(), new User()));
         initService();
 
         List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
@@ -437,7 +437,7 @@ public class UserServiceTest {
         User u = generateUser();
         u.setInstitutionId(null);
         initService();
-    service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
+        service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
     }
 
     @Test

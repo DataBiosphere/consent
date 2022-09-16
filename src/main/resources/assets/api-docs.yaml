@@ -39,6 +39,8 @@ paths:
     $ref: './paths/collectionsByRoleName.yaml'
   /api/collections/role/{roleName}/summary:
     $ref: './paths/collectionsByRoleNameSummary.yaml'
+  /api/collections/role/{roleName}/summary/{collectionId}:
+    $ref: './paths/collectionsForRoleNameByIdSummary.yaml'
   /api/collections/{collectionId}/cancel:
     $ref: './paths/cancelCollectionByCollectionId.yaml'
   /api/collections/{collectionId}/election:
@@ -292,35 +294,11 @@ paths:
           description: The election was deleted.
         404:
           description: "The Election/Consent doesn't exist."
-  /api/consent/manage:
-    get:
-      deprecated: true
-      summary: Manage Consents
-      description: Returns the list of consents available to be managed.
-      tags:
-        - Consent
-      responses:
-        200:
-          description: The list of consents available to be managed.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ConsentManage'
-  /api/consent/unreviewed:
-    get:
-      summary: Get total unreviewed DULs
-      description: Retrieves the amount of unreviewed DUL elections.
-      tags:
-        - Consent
-      responses:
-        200:
-          description: 'Returns an integer corresponding to the amount of unreviewed DULs'
   /api/consent:
     $ref: './paths/consent.yaml'
   /api/consent/{id}:
     get:
+      deprecated: true
       summary: Get Consent by ID
       description: Returns the consent identified by the ID.
       parameters:
@@ -402,6 +380,7 @@ paths:
           description: The consent for the id couldn't be found.
   /api/consent/{consentId}/vote/{id}:
     post:
+      deprecated: true
       summary: firstVoteUpdate
       description: Returns the created vote.
       parameters:
@@ -436,6 +415,7 @@ paths:
         404:
           description: The association type wasn't send, or the application couldn't find any consents that matched the search criteria.
     put:
+      deprecated: true
       summary: updateConsentVote
       description: Returns the updated vote.
       parameters:
@@ -468,6 +448,7 @@ paths:
         400:
           description: Bad Request, malformed entity, etc.
     get:
+      deprecated: true
       summary: describe
       description: Returns the required vote.
       parameters:
@@ -662,6 +643,8 @@ paths:
           description: No DAC found with the given ID
         500:
           description: Internal Server Error
+  /api/dac/{dacId}/dataset/{datasetId}:
+    $ref: 'paths/approveDataset.yaml'
   /api/dac/{dacId}/member/{userId}:
     post:
       summary: Add DAC Member
@@ -781,32 +764,7 @@ paths:
         500:
           description: Internal Server Error
   /api/dac/{dacId}/datasets:
-    get:
-      summary: Get All Datasets for DAC
-      operationId: getDacDatasets
-      description: List all Datasets of a DAC
-      parameters:
-        - name: dacId
-          in: path
-          description: The DAC ID
-          required: true
-          schema:
-            type: integer
-      tags:
-        - DAC
-      responses:
-        200:
-          description: The list of datasets
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: './schemas/Dataset.yaml'
-        404:
-          description: No DAC found with the provided ID
-        500:
-          description: Internal Server Error
+    $ref: './paths/datasetsByDacId.yaml'
   /api/dac/users/{term}:
     get:
       summary: Find Users by Search Term
@@ -855,6 +813,7 @@ paths:
           description: Malformed user entity.
   /api/dacuser/{email}:
     get:
+      deprecated: true
       summary: describe
       description: Returns the user identified by the email.
       parameters:
@@ -962,6 +921,7 @@ paths:
           description: Internal Server Error.
   /api/dar/v2/draft/manage:
     get:
+      deprecated: true
       summary: Get all Draft Data Access Request Manage Objects
       description: Returns a list of information (Dar Manage Objects) on Draft DARs
       tags:
@@ -1108,6 +1068,7 @@ paths:
           description: Internal Server Error.
   /api/dar/cancel/{id}:
     put:
+      deprecated: true
       summary: Cancel a Data Access Request
       description: Cancel a Data Access Request
       parameters:
@@ -1163,14 +1124,13 @@ paths:
       parameters:
         - name: roleName
           in: query
-          description: An optional roleName that the user is making the request as. A user can have multiple roles, so adding this parameter will filter the list accordingly.
+          description: An optional roleName that the user is making the request as. Currently supports the Signing Official role.
           required: false
           schema:
-            type: String
+            type: string
             nullable: true
             enum:
               - SigningOfficial
-              - Researcher
       tags:
         - Data Access Request
       responses:
@@ -1186,6 +1146,7 @@ paths:
           description: Server error.
   /api/dar/cases/unreviewed:
       get:
+        deprecated: true
         summary: getTotalUnReviewedDAR
         description: Retrieves the amount of unreviewed DAR.
         tags:
@@ -1261,6 +1222,7 @@ paths:
           description: Internal Server Error.
   /api/dataRequest/cases/pending:
     get:
+      deprecated: true
       summary: Get Data Access Request Pending Cases
       description: Retrieves the pending cases for open/final elections the user has access to
       tags:
@@ -1416,6 +1378,7 @@ paths:
                 format: binary
   /api/consent/{id}/dul:
     get:
+      deprecated: true
       summary: getDUL
       description: Returns Data Use Letter file specified by consentId.
       parameters:
@@ -1927,6 +1890,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/DatasetAssociation'
+  /api/tdr/{identifier}/approved/users:
+    $ref: './paths/tdrDatasetApprovedUsers.yaml'
+  /api/tdr/{identifier}:
+    $ref: './paths/tdrDataset.yaml'
   /api/election/{id}:
     get:
       summary: describeElectionById
@@ -2030,6 +1997,7 @@ paths:
           description: Server error.
   /api/electionReview:
     get:
+      deprecated: true
       summary: getCollectElectionReview
       description: Returns the ElectionReview from an Open Election identified by reference Id.
       parameters:
@@ -2074,6 +2042,7 @@ paths:
                 type: string
   /api/electionReview/{electionId}:
     get:
+      deprecated: true
       summary: describeElectionReviewByElectionId
       description: "Returns the ElectionReview from an Election identified by ElectionId. This endpoint doesn't filter votes by isFinalAccess attribute so the reviewVote array of the retrieved ElectionReview will contain the isFinalAccess = TRUE Vote."
       parameters:
@@ -2502,62 +2471,6 @@ paths:
           description: Server error.
   /api/user/{userId}:
     $ref: './paths/userByIdv2.yaml'
-  /api/user/profile:
-    post:
-      deprecated: true
-      summary: Create user properties.
-      description: Create properties for the current user.
-      requestBody:
-        description: Map<String, String> for user properties.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserProperties'
-      tags:
-        - User
-      responses:
-        201:
-          description: The user properties were created.
-        400:
-          description: Malformed entity.
-        409:
-          description: Unsupported operation.
-        500:
-          description: Server error.
-    put:
-      deprecated: true
-      summary: Update user properties
-      description: Updates a user.
-      requestBody:
-        description: Map<String, String> for user properties.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserProperties'
-      parameters:
-        - name: validate
-          in: query
-          description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
-          required: true
-          schema:
-            type: boolean
-      tags:
-        - User
-      responses:
-        200:
-          description: The user was updated, and returns the properties.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        400:
-          description: Malformed researcher entity.
-        404:
-          description: The requested user doesn't exist in the system.
-        500:
-          description: Server error.
   /api/user/role/{roleName}:
     get:
       summary: Get a list of users that you have access to based on your role
@@ -2608,9 +2521,18 @@ paths:
             RESEARCHER: 5
             DATAOWNER: 6
             SIGNINGOFFICIAL: 7
+            DATASUBMITTER: 8
           required: true
           schema:
             type: number
+            nullable: false
+            enum:
+              - 3
+              - 4
+              - 5
+              - 6
+              - 7
+              - 8
       tags:
         - User
       responses:
@@ -2648,6 +2570,7 @@ paths:
             RESEARCHER: 5
             DATAOWNER: 6
             SIGNINGOFFICIAL: 7
+            DATASUBMITTER: 8
           required: true
           schema:
             type: number
@@ -2658,6 +2581,7 @@ paths:
               - 5
               - 6
               - 7
+              - 8
       tags:
         - User
       responses:
@@ -2693,107 +2617,6 @@ paths:
             application/json:
               schema:
                 type: string
-  /api/researcher:
-    post:
-      deprecated: true
-      summary: Create researcher properties.
-      description: |
-        Deprecated - use POST /api/user/{userId}
-        Create researcher properties for the current user.
-      parameters:
-        - name: researcherProperties
-          in: body
-          required: true
-          description: Map<String, String> for user properties.
-          schema:
-            $ref: '#/components/schemas/UserProperties'
-      tags:
-        - Researcher
-      responses:
-        201:
-          description: The researcher properties were created.
-        400:
-          description: Malformed researcher entity.
-        409:
-          description: Unsupported operation.
-        500:
-          description: Server error.
-    put:
-      deprecated: true
-      summary: Update researcher.
-      description: |
-        Deprecated - use PUT /api/user/{userId}
-        Updates a researcher user.
-      parameters:
-        - name: validate
-          in: query
-          description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
-          required: true
-          schema:
-            type: boolean
-        - name: researcherProperties
-          in: body
-          required: true
-          description: Map<String, String> for user properties.
-          schema:
-            $ref: '#/components/schemas/UserProperties'
-      tags:
-        - Researcher
-      responses:
-        200:
-          description: The researcher was updated, and returns the properties.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserProperties'
-        400:
-          description: Malformed researcher entity.
-        404:
-          description: The requested user doesn't exist in the system.
-        500:
-          description: Server error.
-  /api/researcher/{userId}:
-    get:
-      deprecated: true
-      summary: Return researcher properties.
-      description: |
-        DEPRECATED: Use /api/user/me or /api/user/{id}
-        Describes all the properties for a reseacher user.
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-      tags:
-        - User
-        - Researcher
-      responses:
-        200:
-          description: Returns the user properties. Map<String, Object> format.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserProperties'
-        404:
-          description: The requested user doesn't exist in the system.
-    delete:
-      summary: Delete Researcher properties
-      description: Deletes all the properties for the related user.
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-      tags:
-        - User
-        - Researcher
-      responses:
-        200:
-          description: The properties were deleted. No response object, just 200 response.
-        404:
-          description: The requested user doesn't exist in the system
   /api/nih:
     delete:
       summary: Delete Era Commons Account
@@ -2817,7 +2640,6 @@ paths:
             $ref: '#/components/schemas/NIHUserAccount'
       tags:
         - User
-        - Researcher
         - eRA Commons
         - Nih
       responses:
@@ -2955,6 +2777,8 @@ components:
       $ref: './schemas/DataAccessRequest.yaml'
     Dataset:
       $ref: './schemas/Dataset.yaml'
+    DatasetApproval:
+      $ref: './schemas/DatasetApproval.yaml'
     DatasetProperty:
       $ref: './schemas/DatasetProperty.yaml'
     Election:
@@ -3087,35 +2911,6 @@ components:
           type: integer
           format: int32
           description: Describes the number of cases that are opened and have to be reviewed.
-    ConsentManage:
-      type: object
-      properties:
-        consentId:
-          type: string
-          description: The consent ID of the case.
-        consentName:
-          type: string
-          description: The consent name of the case.
-        editable:
-          type: boolean
-          description: If the consent manage is editable.
-        electionStatus:
-          type: string
-          description: The status of the election related to the consent.
-        electionId:
-          type: integer
-          description: The electionId of the election related to the consent.
-        createDate:
-          type: string
-          format: date-time
-          description: The datetime the election was created.
-        sortDate:
-          type: string
-          format: date-time
-          description: The datetime the election was created/updated (the last updated).
-        updateStatus:
-          type: boolean
-          description: Indicates if a consent has been updated from orsp
     DataAccessRequestManage:
       type: object
       properties:

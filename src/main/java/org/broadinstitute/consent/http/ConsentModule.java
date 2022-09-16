@@ -57,6 +57,7 @@ import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.jdbi.v3.core.Jdbi;
@@ -248,7 +249,9 @@ public class ConsentModule extends AbstractModule {
         return new DataAccessRequestService(
                 providesCounterService(),
                 providesDAOContainer(),
-                providesDacService());
+                providesDacService(),
+                providesDataAccessRequestServiceDAO()
+        );
     }
 
     @Provides
@@ -282,6 +285,7 @@ public class ConsentModule extends AbstractModule {
                 providesLibraryCardDAO(),
                 providesDatasetAssociationDAO(),
                 providesDataAccessRequestDAO(),
+                providesDARCollectionDAO(),
                 providesMailMessageDAO(),
                 providesEmailNotifierService(),
                 providesDataAccessRequestService(),
@@ -298,7 +302,6 @@ public class ConsentModule extends AbstractModule {
         return new EmailNotifierService(
                 providesDARCollectionDAO(),
                 providesConsentDAO(),
-                providesDataAccessRequestDAO(),
                 providesVoteDAO(),
                 providesElectionDAO(),
                 providesUserDAO(),
@@ -324,7 +327,8 @@ public class ConsentModule extends AbstractModule {
                 providesVoteDAO(),
                 providesDacService(),
                 providesUserService(),
-                providesVoteService());
+                providesVoteService(),
+                providesDarCollectionService());
     }
 
     @Provides
@@ -349,6 +353,15 @@ public class ConsentModule extends AbstractModule {
             providesElectionDAO(),
             providesJdbi(),
             providesUserDAO());
+    }
+
+    @Provides
+    DataAccessRequestServiceDAO providesDataAccessRequestServiceDAO() {
+      return new DataAccessRequestServiceDAO(
+        providesDataAccessRequestDAO(), 
+        providesJdbi(),
+        providesDARCollectionDAO()
+      );
     }
 
     @Provides
@@ -448,6 +461,7 @@ public class ConsentModule extends AbstractModule {
                 providesDacService(),
                 providesDatasetDAO(),
                 providesDataAccessRequestDAO(),
+                providesDARCollectionDAO(),
                 providesMatchDAO(),
                 providesElectionDAO()
         );
@@ -526,7 +540,8 @@ public class ConsentModule extends AbstractModule {
             providesUserDAO(),
             providesConsentDAO(),
             providesDatasetDAO(),
-            providesMatchDAO()
+            providesMatchDAO(),
+            providesDARCollectionDAO()
         );
     }
 
@@ -537,6 +552,6 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     SupportRequestService providesSupportRequestService() {
-        return new SupportRequestService(config.getServicesConfiguration());
+        return new SupportRequestService(config.getServicesConfiguration(), providesInstitutionDAO(), providesUserDAO());
     }
 }

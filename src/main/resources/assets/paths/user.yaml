@@ -20,7 +20,7 @@ put:
   summary: Update limited user fields
   description: |
     Updates a limited number of the current user's fields 
-    and sends a support request if suggestedInstitution or suggestedSigningOfficial are populated
+    and sends a support request if institutions or signing official updates are provided
   tags:
     - User
   requestBody:
@@ -51,6 +51,9 @@ put:
               type: string
             suggestedSigningOfficial:
               description: The suggested signing official for the user
+              type: string
+            daaAcceptance:
+              description: Will be "true" if the user has accepted the Broad and NIH's Data Access Agreement.
               type: string
   responses:
     200:

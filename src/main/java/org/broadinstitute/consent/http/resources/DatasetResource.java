@@ -370,8 +370,8 @@ public class DatasetResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
         try{
-            Dataset dataSet = datasetService.updateNeedsReviewDataSets(dataSetId, needsApproval);
-            return Response.ok().entity(dataSet).build();
+            Dataset dataset = datasetService.updateNeedsReviewDatasets(dataSetId, needsApproval);
+            return Response.ok().entity(unmarshal(dataset)).build();
         }catch (Exception e){
             return createExceptionResponse(e);
         }
@@ -410,12 +410,11 @@ public class DatasetResource extends Resource {
             logger().error("Unable to find dac ids for chairperson user: " + user.getEmail());
             throw new NotFoundException();
         } else {
-            Consent consent = consentService.getConsentFromDatasetID(dataset.getDataSetId());
-            if (Objects.isNull(consent) || Objects.isNull(consent.getDacId())) {
+            if (Objects.isNull(dataset) || Objects.isNull(dataset.getDacId())) {
                 logger().warn("Cannot find a valid dac id for dataset: " + dataset.getDataSetId());
                 throw new NotFoundException();
             } else {
-                if (!dacIds.contains(consent.getDacId())) {
+                if (!dacIds.contains(dataset.getDacId())) {
                     throw new NotFoundException();
                 }
             }

@@ -31,8 +31,6 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -208,13 +206,7 @@ public class UserService {
             case Resource.SIGNINGOFFICIAL :
                 Integer institutionId = user.getInstitutionId();
                 if (Objects.nonNull(user.getInstitutionId())) {
-                    List<User> institutionUsers = userDAO.getUsersFromInstitutionWithCards(institutionId);
-                    List<User> unregisteredUsers = userDAO.getCardsForUnregisteredUsers(institutionId);
-                    return Stream.of(
-                        institutionUsers,
-                        unregisteredUsers
-                    ).flatMap(Collection::stream)
-                    .collect(Collectors.toList());
+                    return userDAO.getUsersFromInstitutionWithCards(institutionId);
                 } else {
                     throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") is not associated with an Institution.");
                 }

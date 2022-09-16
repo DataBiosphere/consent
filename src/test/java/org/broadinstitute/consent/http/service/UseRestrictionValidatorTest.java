@@ -3,9 +3,9 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
@@ -23,18 +23,23 @@ public class UseRestrictionValidatorTest implements WithMockServer {
     private MockServerClient client;
     private UseRestrictionValidator validator;
 
-    @Rule
-    public MockServerContainer container = new MockServerContainer(IMAGE);
+    private static final MockServerContainer container = new MockServerContainer(IMAGE);
+
+    @BeforeClass
+    public static void setUp() {
+        container.start();
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        container.stop();
+    }
 
     @Before
     public void startUp() {
         client = new MockServerClient(container.getHost(), container.getServerPort());
+        client.reset();
         validator = new UseRestrictionValidator(ClientBuilder.newClient(), config());
-    }
-
-    @After
-    public void tearDown() {
-        stop(container);
     }
 
     public ServicesConfiguration config() {

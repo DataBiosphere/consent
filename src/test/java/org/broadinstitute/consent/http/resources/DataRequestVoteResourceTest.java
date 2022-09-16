@@ -4,6 +4,7 @@ import org.broadinstitute.consent.http.WithLogHandler;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -11,6 +12,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -53,6 +55,8 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
     @Mock
     private DataAccessRequestService dataAccessRequestService;
     @Mock
+    private DarCollectionService darCollectionService;
+    @Mock
     private DatasetAssociationService datasetAssociationService;
     @Mock
     private ElectionService electionService;
@@ -73,7 +77,7 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
 
     private void initResource() {
         resource = new DataRequestVoteResource(
-                dataAccessRequestService, datasetAssociationService,
+                dataAccessRequestService, darCollectionService, datasetAssociationService,
                 emailNotifierService, voteService,
                 datasetService, electionService, userService
         );
@@ -272,8 +276,9 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
 
         when(electionService.submitFinalAccessVoteDataRequestElection(any(), any())).thenReturn(election);
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
-        DataAccessRequest dar = createMockDAR();
-        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+        DarCollection collection = new DarCollection();
+        collection.addDar(createMockDAR());
+        when(darCollectionService.getByReferenceId(any())).thenReturn(collection);
 
         initResource();
         String json = "{\"electionId\":1,\"vote\":true}";
@@ -292,8 +297,9 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
 
         when(electionService.submitFinalAccessVoteDataRequestElection(any(), any())).thenReturn(election);
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
-        DataAccessRequest dar = createMockDAR();
-        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+        DarCollection collection = new DarCollection();
+        collection.addDar(createMockDAR());
+        when(darCollectionService.getByReferenceId(any())).thenReturn(collection);
 
         initResource();
         String json = "{\"electionId\":1,\"vote\":true}";
@@ -312,8 +318,9 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
 
         when(electionService.submitFinalAccessVoteDataRequestElection(any(), any())).thenReturn(election);
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
-        DataAccessRequest dar = createMockDAR();
-        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+        DarCollection collection = new DarCollection();
+        collection.addDar(createMockDAR());
+        when(darCollectionService.getByReferenceId(any())).thenReturn(collection);
 
         enableCreateDataOwnerElection(vote, user, true);
 
@@ -334,8 +341,9 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
 
         when(electionService.submitFinalAccessVoteDataRequestElection(any(), any())).thenReturn(election);
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
-        DataAccessRequest dar = createMockDAR();
-        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+        DarCollection collection = new DarCollection();
+        collection.addDar(createMockDAR());
+        when(darCollectionService.getByReferenceId(any())).thenReturn(collection);
 
         enableCreateDataOwnerElection(vote, user, false);
 

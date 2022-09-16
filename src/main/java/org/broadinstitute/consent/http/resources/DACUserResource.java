@@ -68,6 +68,7 @@ public class DACUserResource extends Resource {
         }
     }
 
+    @Deprecated
     @GET
     @Path("/{email}")
     @Produces("application/json")

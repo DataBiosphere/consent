@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Date;
@@ -31,7 +32,8 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
 
   private DarCollectionServiceDAO serviceDAO;
 
-  private void initService() {
+  @Before
+  public void initService() {
     serviceDAO = new DarCollectionServiceDAO(datasetDAO, electionDAO, jdbi, userDAO);
   }
 
@@ -43,8 +45,6 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    */
   @Test
   public void testCreateElectionsForDarCollectionAdmin() throws Exception {
-    initService();
-
     User user = new User();
     user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
     DarCollection collection = setUpDarCollectionWithDacDataset();
@@ -112,8 +112,6 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    */
   @Test
   public void testCreateElectionsForDarCollectionWithMultipleDatasetsForAdmin() throws Exception {
-    initService();
-
     User user = new User();
     user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
     DarCollection collection = setUpDarCollectionWithDacDataset();
@@ -160,8 +158,6 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    */
   @Test
   public void testCreateElectionsForDarCollectionChair() throws Exception {
-    initService();
-
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
     assertTrue(dar.isPresent());
@@ -203,8 +199,6 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    */
   @Test
   public void testCreateElectionsForDarCollectionWithMultipleDatasetsForChair() throws Exception {
-    initService();
-
     // Start off with a collection and a single DAR
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
@@ -263,8 +257,6 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    */
   @Test
   public void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsAdmin() throws Exception {
-    initService();
-
     User user = new User();
     user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
     DarCollection collection = setUpDarCollectionWithDacDataset();
@@ -305,8 +297,6 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    */
   @Test
   public void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsChair() throws Exception {
-    initService();
-
     // Start off with a collection and a single DAR
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
@@ -365,8 +355,8 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-    Consent consent = createConsent(dac.getDacId());
-    Dataset dataset = createDataset();
+    Consent consent = createConsent();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
     consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     createDarForCollection(user, collectionId, dataset);
@@ -390,7 +380,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-    Consent consent = createConsent(dac.getDacId());
+    Consent consent = createConsent();
     Dataset dataset = createDataset();
     consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 

@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.groupingBy;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -17,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -25,8 +25,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -34,7 +32,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 
 public class DacService {
 
@@ -159,16 +156,8 @@ public class DacService {
         return userDAO.findUserById(id);
     }
 
-    public Set<DatasetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
-        Set<DatasetDTO> datasets = dataSetDAO.findDatasetsByDac(dacId);
-        if (isAuthUserAdmin(authUser)) {
-            return datasets;
-        }
-        List<Integer> dacIds = getDacIdsForUser(authUser);
-        if (dacIds.contains(dacId)) {
-            return datasets;
-        }
-        return Collections.emptySet();
+    public List<Dataset> findDatasetsByDacId(Integer dacId) {
+        return dataSetDAO.findDatasetsAssociatedWithDac(dacId);
     }
 
     public Set<Dataset> findDatasetsByConsentId(String consentId) {
@@ -266,6 +255,7 @@ public class DacService {
                 .distinct()
                 .collect(Collectors.toList());
     }
+
     /**
      * Filter data access requests by the DAC they are associated with.
      */
@@ -291,37 +281,6 @@ public class DacService {
             }
         }
         return Collections.emptyList();
-    }
-
-    /**
-     * Filter consent manages by the DAC they are associated with.
-     */
-    List<ConsentManage> filterConsentManageByDAC(List<ConsentManage> consentManages,
-                                                 AuthUser authUser) {
-        if (isAuthUserAdmin(authUser)) {
-            return consentManages;
-        }
-        List<Integer> dacIds = getDacIdsForUser(authUser);
-
-        return consentManages.stream().
-                filter(c -> Objects.isNull(c.getDacId()) || dacIds.contains(c.getDacId())).
-                collect(Collectors.toList());
-    }
-
-    /**
-     * Filter consents by the DAC they are associated with.
-     */
-    Collection<Consent> filterConsentsByDAC(Collection<Consent> consents,
-                                            AuthUser authUser) {
-        if (isAuthUserAdmin(authUser)) {
-            return consents;
-        }
-        List<Integer> dacIds = getDacIdsForUser(authUser);
-
-        return consents.
-                stream().
-                filter(c -> Objects.isNull(c.getDacId()) || dacIds.contains(c.getDacId())).
-                collect(Collectors.toList());
     }
 
     /**

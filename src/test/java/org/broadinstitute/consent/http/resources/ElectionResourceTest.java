@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -57,7 +58,7 @@ public class ElectionResourceTest {
 
     @Test
     public void testAdvanceElection() {
-        String referenceId = RandomStringUtils.random(10);
+        String referenceId = UUID.randomUUID().toString();
         Response response = electionResource.advanceElection(referenceId, "Yes");
         Assert.assertEquals(OK, response.getStatus());
     }
@@ -66,7 +67,7 @@ public class ElectionResourceTest {
     public void testAdvanceElectionError() {
         when(voteService.findVotesByReferenceId(anyString())).thenThrow(new NotFoundException());
         electionResource = new ElectionResource(voteService, electionService);
-        String referenceId = RandomStringUtils.random(10);
+        String referenceId = UUID.randomUUID().toString();
         Response response = electionResource.advanceElection(referenceId, "Yes");
         Assert.assertEquals(NOT_FOUND, response.getStatus());
     }

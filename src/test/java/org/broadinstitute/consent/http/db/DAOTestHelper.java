@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -19,6 +20,8 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -42,7 +45,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -78,25 +80,28 @@ public class DAOTestHelper {
     protected static LibraryCardDAO libraryCardDAO;
     protected static DarCollectionDAO darCollectionDAO;
     protected static DarCollectionSummaryDAO darCollectionSummaryDAO;
+    protected static DatasetAssociationDAO datasetAssociationDAO;
 
     // This is a test-only DAO class where we manage the deletion
     // of all records between test runs.
     private static TestingDAO testingDAO;
+
+    @SuppressWarnings("rawtypes")
+    private static PostgreSQLContainer postgresContainer;
 
     public String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
 
     @BeforeClass
     public static void startUp() throws Exception {
         // Start the database
-        @SuppressWarnings("rawtypes")
-        PostgreSQLContainer postgres = new PostgreSQLContainer<>(POSTGRES_IMAGE).
+        postgresContainer = new PostgreSQLContainer<>(POSTGRES_IMAGE).
                 withCommand("postgres -c max_connections=" + maxConnections);
-        postgres.start();
-        ConfigOverride driverOverride = ConfigOverride.config("database.driverClass", postgres.getDriverClassName());
-        ConfigOverride urlOverride = ConfigOverride.config("database.url", postgres.getJdbcUrl());
-        ConfigOverride userOverride = ConfigOverride.config("database.user", postgres.getUsername());
-        ConfigOverride passwordOverride = ConfigOverride.config("database.password", postgres.getPassword());
-        ConfigOverride validationQueryOverride = ConfigOverride.config("database.validationQuery", postgres.getTestQueryString());
+        postgresContainer.start();
+        ConfigOverride driverOverride = ConfigOverride.config("database.driverClass", postgresContainer.getDriverClassName());
+        ConfigOverride urlOverride = ConfigOverride.config("database.url", postgresContainer.getJdbcUrl());
+        ConfigOverride userOverride = ConfigOverride.config("database.user", postgresContainer.getUsername());
+        ConfigOverride passwordOverride = ConfigOverride.config("database.password", postgresContainer.getPassword());
+        ConfigOverride validationQueryOverride = ConfigOverride.config("database.validationQuery", postgresContainer.getTestQueryString());
 
         // Start the app
         testApp = new DropwizardTestSupport<>(
@@ -133,12 +138,14 @@ public class DAOTestHelper {
         libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
         darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
         darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
+        datasetAssociationDAO = jdbi.onDemand(DatasetAssociationDAO.class);
         testingDAO = jdbi.onDemand(TestingDAO.class);
     }
 
     @AfterClass
     public static void shutDown() {
         testApp.after();
+        postgresContainer.stop();
     }
 
     @After
@@ -148,12 +155,14 @@ public class DAOTestHelper {
         testingDAO.deleteAllApprovalTimes();
         testingDAO.deleteAllVotes();
         testingDAO.deleteAllConsentAudits();
+        testingDAO.deleteAllMatchEntityFailureReasons();
         testingDAO.deleteAllMatchEntities();
         testingDAO.deleteAllConsentAssociations();
         testingDAO.deleteAllConsents();
         testingDAO.deleteAllAccessRps();
         testingDAO.deleteAllElections();
         testingDAO.deleteAllDatasetProperties();
+        testingDAO.deleteAllDatasetAssociations();
         testingDAO.deleteAllDatasets();
         testingDAO.deleteAllDacUserRoles();
         testingDAO.deleteAllDacs();
@@ -235,7 +244,7 @@ public class DAOTestHelper {
     }
 
     @SuppressWarnings("SameParameterValue")
-    protected Consent createConsent(Integer dacId) {
+    protected Consent createConsent() {
         String consentId = UUID.randomUUID().toString();
         consentDAO.insertConsent(consentId,
                 false,
@@ -247,22 +256,22 @@ public class DAOTestHelper {
                 new Date(),
                 new Date(),
                 "Everything",
-                "Group",
-                dacId);
+                "Group");
         return consentDAO.findConsentById(consentId);
     }
 
     protected Match createMatch() {
         DataAccessRequest dar = createDataAccessRequestV3();
         Dac dac = createDac();
-        Consent consent = createConsent(dac.getDacId());
+        Dataset dataset = createDataset();
         Integer matchId =
         matchDAO.insertMatch(
-            consent.getConsentId(),
+            dataset.getDatasetIdentifier(),
             dar.getReferenceId(),
             RandomUtils.nextBoolean(),
             false,
-            new Date());
+            new Date(),
+            MatchAlgorithm.V2.getVersion());
         return matchDAO.findMatchById(matchId);
     }
 
@@ -369,11 +378,16 @@ public class DAOTestHelper {
     }
 
     protected Dataset createDataset() {
+        return createDatasetWithDac(null);
+    }
+
+    protected Dataset createDatasetWithDac(Integer dacId) {
         User user = createUser();
         String name = "Name_" + RandomStringUtils.random(20, true, true);
         Timestamp now = new Timestamp(new Date().getTime());
         String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
-        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true);
+        DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, dataUse.toString(), dacId);
         createDatasetProperties(id);
         return datasetDAO.findDatasetById(id);
     }
@@ -447,7 +461,7 @@ public class DAOTestHelper {
 
     protected DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId, int datasetId, int userId, String darCode) {
         DataAccessRequestData data = new DataAccessRequestData();
-        data.setProjectTitle(RandomStringUtils.random(10));
+        data.setProjectTitle(RandomStringUtils.randomAlphabetic(10));
         String referenceId = RandomStringUtils.randomAlphanumeric(20);
         dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(), new Date(), new Date(), new Date(), data);
         dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
@@ -517,12 +531,12 @@ public class DAOTestHelper {
         return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
     }
 
-    protected void createConsentAndAssociationWithDatasetIdAndDACId(int datasetId, int dacId ) {
-        Consent consent = createConsent(dacId);
+    protected void createConsentAndAssociationWithDatasetId(int datasetId ) {
+        Consent consent = createConsent();
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, datasetId);
     }
 
-    protected DarCollection createDarCollectionWithDatasetsAndConsentAssociation(int dacId, User user, List<Dataset> datasets) {
+    protected DarCollection createDarCollectionWithDatasetsAndConsentAssociation(User user, List<Dataset> datasets) {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
         datasets.stream()
@@ -532,7 +546,7 @@ public class DAOTestHelper {
                     Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
                     createFinalVote(user.getUserId(), cancelled.getElectionId());
                     createFinalVote(user.getUserId(), access.getElectionId());
-                    createConsentAndAssociationWithDatasetIdAndDACId(dataset.getDataSetId(), dacId);
+                    createConsentAndAssociationWithDatasetId(dataset.getDataSetId());
                 });
         return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     }

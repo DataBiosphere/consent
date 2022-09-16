@@ -6,12 +6,15 @@ import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
+
+import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -19,9 +22,9 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacDecisionMetrics;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.DecisionMetrics;
@@ -35,14 +38,16 @@ public class MetricsService {
   private final DacService dacService;
   private final DatasetDAO dataSetDAO;
   private final DataAccessRequestDAO darDAO;
+  private final DarCollectionDAO darCollectionDAO;
   private final MatchDAO matchDAO;
   private final ElectionDAO electionDAO;
 
   @Inject
-  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO, MatchDAO matchDAO, ElectionDAO electionDAO) {
+  public MetricsService(DacService dacService, DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO, DarCollectionDAO darCollectionDAO, MatchDAO matchDAO, ElectionDAO electionDAO) {
     this.dacService = dacService;
     this.dataSetDAO = dataSetDAO;
     this.darDAO = darDAO;
+    this.darCollectionDAO = darCollectionDAO;
     this.matchDAO = matchDAO;
     this.electionDAO = electionDAO;
   }
@@ -54,11 +59,11 @@ public class MetricsService {
     @JsonProperty final String nonTechRus;
     @JsonProperty final String referenceId;
 
-    public DarMetricsSummary(DataAccessRequest dar) {
+    public DarMetricsSummary(DataAccessRequest dar, String darCode) {
       if (dar != null && dar.data != null) {
         this.updateDate = dar.getUpdateDate();
         this.projectTitle = dar.data.getProjectTitle();
-        this.darCode =  dar.data.getDarCode();
+        this.darCode =  darCode;
         this.nonTechRus =  dar.data.getNonTechRus();
         this.referenceId = dar.getReferenceId();
       } else {
@@ -113,6 +118,11 @@ public class MetricsService {
 
   private List<DarDecisionMetrics> getDarMetrics(List<DataAccessRequest> dars,
                                                  List<Dataset> datasets, List<Election> elections, List<Match> matches, List<Dac> dacs) {
+    List<Integer> darCollectionIds = dars.stream().map(DataAccessRequest::getCollectionId).collect(Collectors.toList());
+    List<DarCollection> darCollections = darCollectionIds.isEmpty() ? List.of() :
+            darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
+    Map<Integer, DarCollection> collectionMap = darCollections.stream().collect(Collectors.toMap(DarCollection::getDarCollectionId, Function.identity()));
+
     return dars.stream()
       .map(
         dataAccessRequest -> {
@@ -163,13 +173,17 @@ public class MetricsService {
                     .findFirst())
               .flatMap(Function.identity());
 
+          DarCollection collection = collectionMap.get(dataAccessRequest.collectionId);
+          String darCode = Objects.nonNull(collection) ? collection.getDarCode() : null;
+
           return new DarDecisionMetrics(
             dataAccessRequest,
             dac.orElse(null),
             dataset,
             accessElection.orElse(null),
             rpElection.orElse(null),
-            match.orElse(null));
+            match.orElse(null),
+            darCode);
         })
       .collect(Collectors.toList());
   }
@@ -222,10 +236,17 @@ public class MetricsService {
 
     //find dars with the given datasetId in their list of datasetIds, datasetId is a String so it can be converted to jsonb in query
     //convert all dars into smaller objects that only contain the information needed
-    List<DataAccessRequest> dars = darDAO.findAllDataAccessRequestsByDatasetId(Integer.toString(datasetId));
-    List<DarMetricsSummary> darInfo = dars.stream().map(dar ->
-      new DarMetricsSummary(dar))
-      .collect(Collectors.toList());
+    List<DataAccessRequest> dars = darDAO.findAllDataAccessRequestsByDatasetId(datasetId);
+    List<Integer> darCollectionIds = dars.stream().map(DataAccessRequest::getCollectionId).collect(Collectors.toList());
+    List<DarCollection> darCollections = darCollectionIds.isEmpty() ? List.of() :
+            darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
+    Map<Integer, DarCollection> collectionMap = darCollections.stream().collect(Collectors.toMap(DarCollection::getDarCollectionId, Function.identity()));
+
+    List<DarMetricsSummary> darInfo = dars.stream().map(dar -> {
+      DarCollection collection = collectionMap.get(dar.getCollectionId());
+      String darCode = Objects.nonNull(collection) ? collection.getDarCode() : null;
+      return new DarMetricsSummary(dar, darCode);
+    }).collect(Collectors.toList());
 
     //if there are associated dars, find associated access elections so we know how many and which dars are approved/denied
     List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId)).collect(Collectors.toList());

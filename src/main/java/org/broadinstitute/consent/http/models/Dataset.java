@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
@@ -10,66 +7,52 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonInclude(Include.NON_NULL)
 public class Dataset {
 
-    @JsonProperty
     private Integer dataSetId;
 
-    @JsonProperty
     private String objectId;
 
-    @JsonProperty
     private String name;
 
     // For backwards compatibility with DatasetDTO, this is an alias to the name property.
-    @JsonProperty
     private String datasetName;
 
-    @JsonProperty
     private Date createDate;
 
-    @JsonProperty
     private Integer createUserId;
 
-    @JsonProperty
     private Date updateDate;
 
-    @JsonProperty
     private Integer updateUserId;
 
-    @JsonProperty
     private Boolean active;
 
-    @JsonProperty
     private String consentName;
 
-    @JsonProperty
     private Boolean needsApproval;
 
-    @JsonProperty
     private Integer alias;
 
-    @JsonProperty
     private String datasetIdentifier;
 
-    @JsonProperty
     public DataUse dataUse;
 
-    @JsonProperty
     private Integer dacId;
 
-    @JsonProperty
     private String consentId;
 
-    @JsonProperty
     private String translatedUseRestriction;
 
-    @JsonProperty
     private Boolean deletable;
 
-    @JsonProperty
+    private String sharingPlanDocument;
+
+    private String sharingPlanDocumentName;
+
     private Set<DatasetProperty> properties;
+
+    private Boolean dacApproval;
 
     public Dataset() {
     }
@@ -207,6 +190,14 @@ public class Dataset {
         this.needsApproval = needsApproval;
     }
 
+    public Boolean getDacApproval() {
+        return dacApproval;
+    }
+
+    public void setDacApproval(Boolean dacApproval) {
+        this.dacApproval = dacApproval;
+    }
+
     public String getConsentName() {
         return consentName;
     }
@@ -243,6 +234,21 @@ public class Dataset {
         return PREFIX + StringUtils.leftPad(alias.toString(), 6, "0");
     }
 
+    public static Integer parseIdentifierToAlias(String identifier) throws IllegalArgumentException {
+        try {
+            String givenPrefix = identifier.substring(0, PREFIX.length());
+            if (!givenPrefix.equals(PREFIX)) {
+                throw new IllegalArgumentException("Invalid prefix.");
+            }
+
+            String aliasAsString = identifier.substring(PREFIX.length()); // cut off DUOS-
+            return Integer.parseInt(aliasAsString); // parse remaining as integer
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    "Could not parse identifier ("+identifier+"). Proper format: "+PREFIX+"XXXXXX");
+        }
+    }
+
     public Integer getDacId() {
         return dacId;
     }
@@ -273,6 +279,22 @@ public class Dataset {
 
     public void setDeletable(Boolean deletable) {
         this.deletable = deletable;
+    }
+
+    public String getSharingPlanDocument() {
+        return sharingPlanDocument;
+    }
+
+    public void setSharingPlanDocument(String sharingPlanDocument) {
+        this.sharingPlanDocument = sharingPlanDocument;
+    }
+
+    public String getSharingPlanDocumentName() {
+        return sharingPlanDocumentName;
+    }
+
+    public void setSharingPlanDocumentName(String sharingPlanDocumentName) {
+        this.sharingPlanDocumentName = sharingPlanDocumentName;
     }
 
     @Override

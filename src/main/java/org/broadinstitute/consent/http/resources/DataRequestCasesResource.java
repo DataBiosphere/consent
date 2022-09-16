@@ -29,6 +29,7 @@ public class DataRequestCasesResource extends Resource {
         this.summaryService = summaryService;
     }
 
+    @Deprecated
     @GET
     @Path("/pending")
     @RolesAllowed({CHAIRPERSON, MEMBER})

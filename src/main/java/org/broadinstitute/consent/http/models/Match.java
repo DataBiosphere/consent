@@ -1,31 +1,32 @@
 package org.broadinstitute.consent.http.models;
 
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 public class Match {
 
-    @JsonProperty
     private Integer id;
 
-    @JsonProperty
     private String consent;
 
-    @JsonProperty
     private String purpose;
 
-    @JsonProperty
     private Boolean match;
 
-    @JsonProperty
     private Boolean failed;
 
-    @JsonProperty
     private Date createDate;
 
+    private String algorithmVersion;
 
+    private List<String> failureReasons;
+
+    @Deprecated
     public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate){
         this.id = id;
         this.consent = consent;
@@ -33,6 +34,27 @@ public class Match {
         this.match = match;
         this.failed = failed;
         this.createDate = createDate;
+        this.algorithmVersion = MatchAlgorithm.V1.getVersion();
+    }
+
+    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate, String algorithmVersion){
+        this.id = id;
+        this.consent = consent;
+        this.purpose = purpose;
+        this.match = match;
+        this.failed = failed;
+        this.createDate = createDate;
+        this.algorithmVersion = algorithmVersion;
+    }
+
+    public Match(String consentId, String purposeId, boolean failed, boolean isMatch, MatchAlgorithm algorithm, List<String> failureReasons) {
+        this.setConsent(consentId);
+        this.setPurpose(purposeId);
+        this.setFailed(failed);
+        this.setMatch(isMatch);
+        this.setCreateDate(new Date());
+        this.setAlgorithmVersion(algorithm.getVersion());
+        this.setFailureReasons(failureReasons);
     }
 
     public Match(){
@@ -84,5 +106,33 @@ public class Match {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    public String getAlgorithmVersion() {
+        return algorithmVersion;
+    }
+
+    public void setAlgorithmVersion(String algorithmVersion) {
+        this.algorithmVersion = algorithmVersion;
+    }
+
+    public List<String> getFailureReasons() {
+        if (Objects.isNull(this.failureReasons)) {
+            return List.of();
+        }
+        return failureReasons;
+    }
+
+    public void setFailureReasons(List<String> failureReasons) {
+        this.failureReasons = failureReasons;
+    }
+
+    public void addFailureReason(String reason) {
+        if (Objects.isNull(this.failureReasons)) {
+            this.failureReasons = new ArrayList<>();
+        }
+        if (!this.failureReasons.contains(reason) && !reason.isBlank()) {
+            this.failureReasons.add(reason);
+        }
     }
 }

@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Date;
@@ -25,7 +26,8 @@ public class VoteServiceDAOTest extends DAOTestHelper {
 
   private VoteServiceDAO serviceDAO;
 
-  private void initService() {
+  @Before
+  public void initService() {
     serviceDAO = new VoteServiceDAO(jdbi, voteDAO);
   }
 
@@ -37,7 +39,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote = createFinalVote(user.getUserId(), election.getElectionId());
     String rationale = "rationale";
-    initService();
+
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
     assertNotNull(votes);
@@ -56,7 +58,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote = createFinalVote(user.getUserId(), election.getElectionId());
-    initService();
+
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, null);
     assertNotNull(votes);
@@ -74,7 +76,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
     Vote vote = createDacVote(user.getUserId(), election.getElectionId());
     String rationale = "rationale";
-    initService();
+
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
     assertNotNull(votes);
@@ -96,7 +98,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     Vote vote2 = createDacVote(user.getUserId(), election.getElectionId());
     Vote vote3 = createDacVote(user.getUserId(), election.getElectionId());
     String rationale = "rationale";
-    initService();
+
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
 
@@ -130,7 +132,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     Vote vote2 = createDacVote(user.getUserId(), rpElection2.getElectionId());
     Vote vote3 = createDacVote(user.getUserId(), accessElection.getElectionId());
     String rationale = "rationale";
-    initService();
+
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
 

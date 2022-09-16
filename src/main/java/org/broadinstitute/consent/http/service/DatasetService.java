@@ -7,10 +7,9 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -28,6 +27,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -87,16 +87,16 @@ public class DatasetService {
         }
     }
 
-    public Dataset updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval) {
-        if (datasetDAO.findDatasetById(dataSetId) == null) {
+    public Dataset updateNeedsReviewDatasets(Integer datasetId, Boolean needsApproval) {
+        if (datasetDAO.findDatasetById(datasetId) == null) {
             throw new NotFoundException("DataSet doesn't exist");
         }
-        datasetDAO.updateDatasetNeedsApproval(dataSetId, needsApproval);
-        return datasetDAO.findDatasetById(dataSetId);
+        datasetDAO.updateDatasetNeedsApproval(datasetId, needsApproval);
+        return datasetDAO.findDatasetById(datasetId);
     }
 
-    public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
-        return datasetDAO.findNeedsApprovalDatasetByDatasetId(dataSetIdList);
+    public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> datasetIdList) {
+        return datasetDAO.findNeedsApprovalDatasetByDatasetId(datasetIdList);
     }
 
     public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
@@ -104,6 +104,24 @@ public class DatasetService {
             throw new BadRequestException("No dataset IDs provided");
         }
         return datasetDAO.findDatasetsByDacIds(dacIds);
+    }
+
+    /**
+     * Finds a Dataset by a formatted dataset identifier.
+     *
+     * @param datasetIdentifier The formatted identifier, e.g. DUOS-123456
+     * @return the Dataset with the given identifier, if found.
+     * @throws IllegalArgumentException if datasetIdentifier is invalid
+     */
+    public Dataset findDatasetByIdentifier(String datasetIdentifier) throws IllegalArgumentException {
+        Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
+        Dataset d = datasetDAO.findDatasetByAlias(alias);
+        // technically, it is possible to have two dataset identifiers which
+        // have the same alias but are not the same: e.g., DUOS-5 and DUOS-00005
+        if (!Objects.equals(d.getDatasetIdentifier(), datasetIdentifier)) {
+            return null;
+        }
+        return d;
     }
 
     /**
@@ -134,10 +152,7 @@ public class DatasetService {
             String translatedUseRestriction = converter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET);
             consentDAO.useTransaction(h -> {
                 try {
-                    h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, translatedUseRestriction, groupName, dataset.getDacId());
-                    if (Objects.nonNull(dataset.getDacId())) {
-                        h.updateConsentDac(consentId, dataset.getDacId());
-                    }
+                    h.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(), null, name, null, createDate, createDate, translatedUseRestriction, groupName);
                     String associationType = AssociationType.SAMPLE_SET.getValue();
                     h.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
                 } catch (Exception e) {
@@ -180,7 +195,7 @@ public class DatasetService {
         Timestamp now = new Timestamp(new Date().getTime());
         Integer createdDatasetId = datasetDAO.inTransaction(h -> {
             try {
-                Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(), dataset.getActive());
+                Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(), dataset.getActive(), dataset.getDataUse().toString(), dataset.getDacId());
                 List<DatasetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
                 h.insertDatasetProperties(propertyList);
                 h.updateDatasetNeedsApproval(id, dataset.getNeedsApproval());
@@ -238,13 +253,6 @@ public class DatasetService {
             throw new IllegalArgumentException("Dataset 'Needs Approval' field cannot be null");
         }
 
-        if (Objects.nonNull(dataset.getDacId())) {
-            Consent consent = consentDAO.findConsentFromDatasetID(datasetId);
-            if (Objects.nonNull(consent)) {
-                consentDAO.updateConsentDac(consent.getConsentId(), dataset.getDacId());
-            }
-        }
-
         Dataset old = getDatasetWithPropertiesById(datasetId);
         Set<DatasetProperty> oldProperties = old.getProperties();
 
@@ -281,7 +289,7 @@ public class DatasetService {
     private void updateDatasetProperties(List<DatasetProperty> updateProperties,
                                          List<DatasetProperty> deleteProperties, List<DatasetProperty> addProperties) {
         updateProperties.forEach(p -> datasetDAO
-              .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue()));
+              .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue().toString()));
         deleteProperties.forEach(
               p -> datasetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
         datasetDAO.insertDatasetProperties(addProperties);
@@ -311,8 +319,10 @@ public class DatasetService {
               .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals(DATASET_NAME_KEY))
               .map(p ->
                     new DatasetProperty(datasetId,
-                          dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
-                          p.getPropertyValue(), now)
+                            dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
+                            p.getPropertyValue(),
+                            DatasetPropertyType.String,
+                            now)
               )
               .collect(Collectors.toList());
     }
@@ -414,6 +424,23 @@ public class DatasetService {
                   return map;
               }
         ).collect(Collectors.toList());
+    }
+
+    public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {
+        Boolean currentApprovalState = dataset.getDacApproval();
+        Integer datasetId = dataset.getDataSetId();
+        Dataset datasetReturn = dataset;
+        //Only update and fetch the dataset if it hasn't already been approved
+        //If it has, simply returned the dataset in the argument (which was already queried for in the resource)
+        if(Objects.isNull(currentApprovalState) || !currentApprovalState) {
+            datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
+            datasetReturn = datasetDAO.findDatasetById(datasetId);
+        } else {
+            if(Objects.isNull(approval) || !approval) {
+                throw new IllegalArgumentException("Dataset is already approved");
+            }
+        }
+        return datasetReturn;
     }
 
     private boolean filterDatasetOnProperties(DatasetDTO dataset, String term) {

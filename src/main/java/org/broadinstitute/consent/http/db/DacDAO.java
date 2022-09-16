@@ -7,10 +7,10 @@ import org.broadinstitute.consent.http.db.mapper.UserRoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -37,16 +37,16 @@ public interface DacDAO extends Transactional<DacDAO> {
      * @return List<Dac>
      */
     @RegisterBeanMapper(value = Dac.class)
-    @RegisterBeanMapper(value = DatasetDTO.class)
+    @RegisterBeanMapper(value = Dataset.class)
     @UseRowReducer(DacWithDatasetsReducer.class)
     @SqlQuery(
-        "SELECT dac.dac_id, dac.name, dac.description, d.datasetid, d.name AS dataset_name, DATE(d.createdate) AS dataset_create_date, "
-            + " d.objectid, d.active, d.needs_approval, d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, "
-            + " d.update_user_id, ca.consentid, c.translateduserestriction, c.datause AS consent_data_use "
+        "SELECT dac.dac_id, dac.name, dac.description, d.dataset_id, d.name AS dataset_name, DATE(d.create_date) AS dataset_create_date, "
+            + " d.object_id, d.active, d.needs_approval, d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, "
+            + " d.update_user_id, d.data_use AS dataset_data_use, d.sharing_plan_document, d.sharing_plan_document_name, ca.consent_id, c.translated_use_restriction "
             + " FROM dac "
-            + " LEFT OUTER JOIN consents c ON c.dac_id = dac.dac_id "
-            + " LEFT OUTER JOIN consentassociations ca ON ca.consentid = c.consentid "
-            + " LEFT OUTER JOIN dataset d ON ca.datasetid = d.datasetid")
+            + " LEFT OUTER JOIN dataset d ON dac.dac_id = d.dac_id"
+            + " LEFT OUTER JOIN consent_associations ca ON ca.dataset_id = d.dataset_id "
+            + " LEFT OUTER JOIN consents c ON c.consent_id = ca.consent_id ")
     List<Dac> findAll();
 
     /**
@@ -189,10 +189,9 @@ public interface DacDAO extends Transactional<DacDAO> {
      */
     @RegisterRowMapper(DacMapper.class)
     @SqlQuery(
-        "SELECT d.*, a.datasetid FROM dac d "
-            + " INNER JOIN consents c ON d.dac_id = c.dac_id "
-            + " INNER JOIN consentassociations a ON a.consentid = c.consentid "
-            + " WHERE a.datasetid IN (<datasetIds>) ")
+        "SELECT d.*, ds.dataset_id FROM dac d "
+            + " INNER JOIN dataset ds ON d.dac_id = ds.dac_id "
+            + " WHERE ds.dataset_id IN (<datasetIds>) ")
     Set<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
 
 }

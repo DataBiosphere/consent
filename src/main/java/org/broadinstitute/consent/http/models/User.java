@@ -58,10 +58,6 @@ public class User {
     @JsonProperty
     private Boolean emailPreference;
 
-    @Deprecated
-    @JsonProperty
-    private Boolean profileCompleted;
-
     @JsonProperty
     private Integer institutionId;
 
@@ -242,16 +238,6 @@ public class User {
         this.emailPreference = emailPreference;
     }
 
-    @Deprecated
-    public Boolean getProfileCompleted() {
-        return profileCompleted;
-    }
-
-    @Deprecated
-    public void setProfileCompleted(Boolean profileCompleted) {
-        this.profileCompleted = profileCompleted;
-    }
-
     public Integer getInstitutionId() {
         return institutionId;
     }
@@ -361,6 +347,21 @@ public class User {
     public boolean doesUserHaveAnyRoleInSet(EnumSet<UserRoles> userRoles) {
         List<Integer> queriedRoleIds = userRoles.stream().map(UserRoles::getRoleId).collect(Collectors.toList());
         return getUserRoleIdsFromUser().stream().anyMatch(queriedRoleIds::contains);
+    }
+
+    @Transient
+    public Boolean checkIfUserHasRole(String roleName, Integer dacId) {
+        UserRoles role = UserRoles.getUserRoleFromName(roleName);
+        List<UserRole> roles = getRoles();
+        List<UserRole> targetRoles = roles.stream()
+                .filter((r) -> {
+                    return r.getName().equals(role.getRoleName())
+                            && r.getRoleId().equals(role.getRoleId())
+                            && Objects.equals(r.getDacId(), dacId);
+                })
+                .collect(Collectors.toList());
+        return !targetRoles.isEmpty();
+        
     }
 
 }

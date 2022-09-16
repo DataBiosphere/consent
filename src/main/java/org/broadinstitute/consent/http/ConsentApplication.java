@@ -42,7 +42,6 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
 import org.broadinstitute.consent.http.resources.ConsentCasesResource;
 import org.broadinstitute.consent.http.resources.ConsentElectionResource;
-import org.broadinstitute.consent.http.resources.ConsentManageResource;
 import org.broadinstitute.consent.http.resources.ConsentResource;
 import org.broadinstitute.consent.http.resources.ConsentVoteResource;
 import org.broadinstitute.consent.http.resources.DACUserResource;
@@ -68,10 +67,10 @@ import org.broadinstitute.consent.http.resources.LivenessResource;
 import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
 import org.broadinstitute.consent.http.resources.NihAccountResource;
-import org.broadinstitute.consent.http.resources.ResearcherResource;
 import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.resources.SwaggerResource;
+import org.broadinstitute.consent.http.resources.TDRResource;
 import org.broadinstitute.consent.http.resources.TosResource;
 import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
@@ -95,6 +94,7 @@ import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.ReviewResultsService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
+import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -163,7 +163,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             LOGGER.error("Exception initializing liquibase: " + e);
         }
 
-        // TODO: Update all services to use an injector.
         // Previously, this code was working around a dropwizard+Guice issue with singletons and JDBI.
         final Injector injector = Guice.createInjector(new ConsentModule(config, env));
 
@@ -195,6 +194,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class).get();
         final SamService samService = injector.getProvider(SamService.class).get();
         final SupportRequestService supportRequestService = injector.getProvider(SupportRequestService.class).get();
+        final TDRService tdrService = injector.getProvider(TDRService.class).get();
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
@@ -232,15 +232,14 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService, useRestrictionValidator));
         env.jersey().register(new ConsentAssociationResource(consentService, userService));
         env.jersey().register(new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService));
-        env.jersey().register(new ConsentManageResource(consentService));
         env.jersey().register(new ConsentVoteResource(emailNotifierService, electionService, voteService));
-        env.jersey().register(new ConsentCasesResource(pendingCaseService, summaryService));
-        env.jersey().register(new DacResource(dacService, userService));
+        env.jersey().register(new ConsentCasesResource(electionService, pendingCaseService, summaryService));
+        env.jersey().register(new DacResource(dacService, userService, datasetService));
         env.jersey().register(new DACUserResource(userService));
         env.jersey().register(new DarCollectionResource(dataAccessRequestService, darCollectionService, userService));
         env.jersey().register(new DataRequestElectionResource(dataAccessRequestService, emailNotifierService, voteService, electionService));
-        env.jersey().register(new DataRequestVoteResource(dataAccessRequestService, datasetAssociationService, emailNotifierService, voteService, datasetService, electionService, userService));
-        env.jersey().register(new DataRequestCasesResource(pendingCaseService, summaryService));
+        env.jersey().register(new DataRequestVoteResource(dataAccessRequestService, darCollectionService, datasetAssociationService, emailNotifierService, voteService, datasetService, electionService, userService));
+        env.jersey().register(new DataRequestCasesResource(electionService, pendingCaseService, summaryService));
         env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
         env.jersey().register(new DataUseLetterResource(auditService, googleStore, userService, consentService));
         env.jersey().register(new ElectionResource(voteService, electionService));
@@ -252,15 +251,15 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new MatchResource(matchService));
         env.jersey().register(new MetricsResource(metricsService));
         env.jersey().register(new NihAccountResource(nihService, userService));
-        env.jersey().register(new ResearcherResource(researcherService));
         env.jersey().register(new SamResource(samService, userService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
         env.jersey().register(new StatusResource(env.healthChecks()));
-        env.jersey().register(new UserResource(researcherService, samService, userService, datasetService, supportRequestService));
+        env.jersey().register(new UserResource(samService, userService, datasetService, supportRequestService));
         env.jersey().register(new TosResource(samService));
         env.jersey().register(injector.getInstance(VersionResource.class));
         env.jersey().register(new VoteResource(userService, voteService, electionService));
         env.jersey().register(new LivenessResource());
+        env.jersey().register(new TDRResource(tdrService, datasetService));
 
         // Authentication filters
         final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
