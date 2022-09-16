@@ -50,6 +50,9 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
       if (hasColumn(r, "sharing_plan_document")) {
           dataset.setSharingPlanDocument(r.getString("sharing_plan_document"));
       }
+      if (hasColumn(r, "sharing_plan_document_name")) {
+          dataset.setSharingPlanDocumentName(r.getString("sharing_plan_document_name"));
+      }
       dataset.setActive(r.getBoolean("active"));
       dataset.setAlias(r.getInt("alias"));
 

@@ -42,7 +42,7 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlQuery(
         "SELECT dac.dac_id, dac.name, dac.description, d.dataset_id, d.name AS dataset_name, DATE(d.create_date) AS dataset_create_date, "
             + " d.object_id, d.active, d.needs_approval, d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, "
-            + " d.update_user_id, d.data_use AS dataset_data_use, d.sharing_plan_document, ca.consent_id, c.translated_use_restriction "
+            + " d.update_user_id, d.data_use AS dataset_data_use, d.sharing_plan_document, d.sharing_plan_document_name, ca.consent_id, c.translated_use_restriction "
             + " FROM dac "
             + " LEFT OUTER JOIN dataset d ON dac.dac_id = d.dac_id"
             + " LEFT OUTER JOIN consent_associations ca ON ca.dataset_id = d.dataset_id "
