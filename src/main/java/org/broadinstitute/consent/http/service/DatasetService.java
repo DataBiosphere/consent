@@ -488,36 +488,43 @@ public class DatasetService {
      * @return List of created Datasets from the provided registration schema
      */
     public List<Dataset> createDatasetsFromRegistration(DatasetRegistrationSchemaV1 registration, User user, BlobId blobId) {
-        List<Integer> createdDatasetIds = new ArrayList<>();
-        registration.getConsentGroups().forEach(cg -> {
-            Integer datasetId;
+        List<Integer> createdDatasetIds = datasetDAO.inTransaction(h -> {
             Timestamp now = new Timestamp(new Date().getTime());
-            DataUse dataUse = createDataUseFromRegistration(cg);
-            if (registration.getAlternativeDataSharingPlan() && Objects.nonNull(registration.getAlternativeDataSharingPlanFileName()) && Objects.nonNull(blobId)) {
-                datasetId = datasetDAO.insertDataset(
-                    registration.getStudyName(),
-                    now,
-                    user.getUserId(),
-                    null,
-                    registration.getPublicVisibility(),
-                    dataUse.toString(),
-                    registration.getDataAccessCommitteeId(),
-                    blobId.getName(),
-                    registration.getAlternativeDataSharingPlanFileName()
-                );
-                createdDatasetIds.add(datasetId);
-            } else {
-                datasetId = datasetDAO.insertDataset(
-                    registration.getStudyName(),
-                    now,
-                    user.getUserId(),
-                    null,
-                    registration.getPublicVisibility(),
-                    dataUse.toString(),
-                    registration.getDataAccessCommitteeId());
-                createdDatasetIds.add(datasetId);
-            }
-            // TODO: additional dataset properties
+            List<Integer> ids = new ArrayList<>();
+            registration.getConsentGroups().forEach(cg -> {
+                DataUse dataUse = createDataUseFromRegistration(cg);
+                try {
+                    Integer id = (registration.getAlternativeDataSharingPlan() && Objects.nonNull(registration.getAlternativeDataSharingPlanFileName()) && Objects.nonNull(blobId))
+                        ? datasetDAO.insertDataset(
+                                registration.getStudyName(),
+                                now,
+                                user.getUserId(),
+                                null,
+                                registration.getPublicVisibility(),
+                                dataUse.toString(),
+                                registration.getDataAccessCommitteeId(),
+                                blobId.getName(),
+                                registration.getAlternativeDataSharingPlanFileName())
+                        : datasetDAO.insertDataset(
+                                registration.getStudyName(),
+                                now,
+                                user.getUserId(),
+                                null,
+                                registration.getPublicVisibility(),
+                                dataUse.toString(),
+                                registration.getDataAccessCommitteeId());
+                    List<DatasetProperty> propertyList = createPropertiesFromRegistration(registration);
+                    h.insertDatasetProperties(propertyList);
+                    ids.add(id);
+                } catch (Exception e) {
+                    if (Objects.nonNull(h)) {
+                        h.rollback();
+                    }
+                    logger.error("Exception creating dataset from registration: " + e.getMessage());
+                    throw e;
+                }
+            });
+            return ids;
         });
         if (!createdDatasetIds.isEmpty()) {
             return datasetDAO.findDatasetsByIdList(createdDatasetIds);
@@ -574,5 +581,10 @@ public class DatasetService {
             builder.setSecondaryOther(consentGroup.getOtherSecondary());
         }
         return builder.build();
+    }
+
+    private List<DatasetProperty> createPropertiesFromRegistration(DatasetRegistrationSchemaV1 registration) {
+
+        return List.of();
     }
 }
