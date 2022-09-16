@@ -2562,6 +2562,7 @@ paths:
             DATAOWNER: 6
             SIGNINGOFFICIAL: 7
             DATASUBMITTER: 8
+            ITDIRECTOR: 9
           required: true
           schema:
             type: number
@@ -2611,6 +2612,7 @@ paths:
             DATAOWNER: 6
             SIGNINGOFFICIAL: 7
             DATASUBMITTER: 8
+            ITDIRECTOR: 9
           required: true
           schema:
             type: number
