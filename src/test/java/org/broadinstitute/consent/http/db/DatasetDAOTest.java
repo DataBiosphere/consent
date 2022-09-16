@@ -9,6 +9,8 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -34,6 +36,34 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class DatasetDAOTest extends DAOTestHelper {
+
+    @Test
+    public void testInsertWithSharingPlan() {
+        User user = createUser();
+        DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        Dac dac = createDac();
+        String doc = "Sharing Plan Document";
+        String docName = "Sharing Plan Document Name";
+
+        Integer id = datasetDAO.insertDataset(
+            "Name",
+            new Timestamp(new Date().getTime()),
+            user.getUserId(),
+            "Object Id",
+            true,
+            dataUse.toString(),
+            dac.getDacId(),
+            doc,
+            docName
+        );
+
+        Dataset dataset = datasetDAO.findDatasetById(id);
+        assertNotNull(dataset);
+        assertEquals(user.getUserId(), dataset.getCreateUserId());
+        assertEquals(dac.getDacId(), dataset.getDacId());
+        assertEquals(doc, dataset.getSharingPlanDocument());
+        assertEquals(docName, dataset.getSharingPlanDocumentName());
+    }
 
     @Test
     public void testFindDatasetByIdWithDacAndConsent() {
@@ -493,14 +523,14 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     @Test
     public void testGetDatasetsForConsent() {
-        Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null, 
+        Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null,
             null, RandomStringUtils.randomAlphabetic(10), true, null, null);
         //negative record, make sure this isn't pulled in
         datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null, null,
             RandomStringUtils.randomAlphabetic(10), true, null, null);
         String consentId = RandomStringUtils.randomAlphabetic(10);
-        consentDAO.insertConsent(consentId, false, "", null, 
-            null, RandomStringUtils.randomAlphabetic(10), null, new Date(), new Date(), 
+        consentDAO.insertConsent(consentId, false, "", null,
+            null, RandomStringUtils.randomAlphabetic(10), null, new Date(), new Date(),
             null, RandomStringUtils.randomAlphabetic(10));
         consentDAO.insertConsentAssociation(consentId, RandomStringUtils.randomAlphabetic(10), datasetId);
 
