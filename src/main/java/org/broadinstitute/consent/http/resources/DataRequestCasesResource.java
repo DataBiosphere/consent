@@ -5,7 +5,6 @@ import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
 

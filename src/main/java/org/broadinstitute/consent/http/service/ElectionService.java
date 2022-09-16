@@ -61,7 +61,6 @@ public class ElectionService {
     private final DatasetAssociationDAO datasetAssociationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DarCollectionDAO darCollectionDAO;
-    private final DacService dacService;
     private final DataAccessRequestService dataAccessRequestService;
     private final EmailNotifierService emailNotifierService;
     private final UseRestrictionConverter useRestrictionConverter;
@@ -72,7 +71,7 @@ public class ElectionService {
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
                            DatasetDAO datasetDAO, LibraryCardDAO libraryCardDAO, DatasetAssociationDAO datasetAssociationDAO,
                            DataAccessRequestDAO dataAccessRequestDAO, DarCollectionDAO darCollectionDAO,
-                           MailMessageDAO mailMessageDAO, DacService dacService, EmailNotifierService emailNotifierService,
+                           MailMessageDAO mailMessageDAO, EmailNotifierService emailNotifierService,
                            DataAccessRequestService dataAccessRequestService, UseRestrictionConverter useRestrictionConverter) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
@@ -87,48 +86,6 @@ public class ElectionService {
         this.emailNotifierService = emailNotifierService;
         this.dataAccessRequestService = dataAccessRequestService;
         this.useRestrictionConverter = useRestrictionConverter;
-    }
-
-    public List<Election> describeClosedElectionsByType(String type, AuthUser authUser) {
-        List<Election> elections;
-        if (type.equals(ElectionType.DATA_ACCESS.getValue())) {
-            elections = dacService.filterElectionsByDAC(
-                    electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()),
-                    authUser);
-            List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-            List<DarCollection> darCollections = referenceIds.isEmpty() ? List.of() :
-                    darCollectionDAO.findDARCollectionsByReferenceIds(referenceIds);
-            elections.forEach(election -> {
-                Optional<DarCollection> collection = darCollections.stream()
-                        .filter(c -> c.getDars().containsKey(election.getReferenceId()))
-                        .findFirst();
-                if (collection.isPresent()) {
-                    DataAccessRequest dar = collection.get().getDars().get(election.getReferenceId());
-                    election.setDisplayId(collection.get().getDarCode());
-                    election.setProjectTitle(dar.getData().getProjectTitle());
-                }
-            });
-        } else {
-            elections = dacService.filterElectionsByDAC(
-                    electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, ElectionStatus.CLOSED.getValue()),
-                    authUser
-            );
-            if (!elections.isEmpty()) {
-                List<String> consentIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-                Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
-                elections.forEach(election -> {
-                    List<Consent> c = consents.stream().filter(cs -> cs.getConsentId().equals(election.getReferenceId())).
-                            collect(Collectors.toList());
-                    election.setDisplayId(c.get(0).getName());
-                    election.setConsentGroupName(c.get(0).getGroupName());
-                });
-            }
-        }
-
-        if (elections.isEmpty()) {
-            throw new NotFoundException("Couldn't find any closed elections");
-        }
-        return elections.stream().distinct().collect(Collectors.toList());
     }
 
     @Deprecated // Use election creation per entity, i.e. DarCollectionService.createElectionsForDarCollection()

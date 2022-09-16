@@ -76,8 +76,6 @@ public class ElectionServiceTest {
     @Mock
     private DatasetAssociationDAO datasetAssociationDAO;
     @Mock
-    private DacService dacService;
-    @Mock
     private DataAccessRequestService dataAccessRequestService;
     @Mock
     private DataAccessRequestDAO dataAccessRequestDAO;
@@ -300,27 +298,7 @@ public class ElectionServiceTest {
     }
 
     private void initService() {
-        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, dataAccessRequestDAO, darCollectionDAO, mailMessageDAO, dacService, emailNotifierService, dataAccessRequestService, useRestrictionConverter);
-    }
-
-    @Test
-    public void testDescribeClosedElectionsByType_DataAccess() {
-        when(dacService.filterElectionsByDAC(any(), any()))
-                .thenReturn(Arrays.asList(sampleElection2));
-        initService();
-        List<Election> elections = service.describeClosedElectionsByType(ElectionType.DATA_ACCESS.getValue(), authUser);
-        assertNotNull(elections);
-        assertEquals(1, elections.size());
-    }
-
-    @Test
-    public void testDescribeClosedElectionsByType_Other() {
-        when(dacService.filterElectionsByDAC(any(), any()))
-                .thenReturn(Arrays.asList(sampleElection2));
-        initService();
-        List<Election> elections = service.describeClosedElectionsByType(ElectionType.DATA_SET.getValue(), authUser);
-        assertNotNull(elections);
-        assertEquals(1, elections.size());
+        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, dataAccessRequestDAO, darCollectionDAO, mailMessageDAO, emailNotifierService, dataAccessRequestService, useRestrictionConverter);
     }
 
     @Test
