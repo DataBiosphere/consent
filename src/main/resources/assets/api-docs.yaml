@@ -2574,6 +2574,7 @@ paths:
               - 6
               - 7
               - 8
+              - 9
       tags:
         - User
       responses:
@@ -2624,6 +2625,7 @@ paths:
               - 6
               - 7
               - 8
+              - 9
       tags:
         - User
       responses:
