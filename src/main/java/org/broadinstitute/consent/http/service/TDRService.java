@@ -41,7 +41,7 @@ public class TDRService {
                 .stream()
                 .filter(identifier -> !identifier.isBlank())
                 .map(identifier -> datasetService.findDatasetByIdentifier(identifier).getDataSetId())
-                .collect(Collectors.toList());
+                .toList();
 
         return datasetIds;
     }
