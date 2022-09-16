@@ -19,7 +19,7 @@ post:
   responses:
     201:
       description: Returns the created draft Data Access Request
-    400:
-      description: Bad request, no valid dataset identifiers were provided
+    404:
+      description: Bad request invalid dataset identifiers were provided
     500:
       description: Server error

@@ -8,12 +8,14 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
+import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -51,16 +53,18 @@ public class UserService {
     private final VoteDAO voteDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
+    private final SamDAO samDAO;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
-    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO) {
+    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO, SamDAO samDAO) {
         this.userDAO = userDAO;
         this.userPropertyDAO = userPropertyDAO;
         this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
         this.institutionDAO = institutionDAO;
         this.libraryCardDAO = libraryCardDAO;
+        this.samDAO = samDAO;
     }
 
     /**
@@ -389,6 +393,28 @@ public class UserService {
     private Boolean checkForValidInstitution(Integer institutionId) {
         Integer existingId = institutionDAO.checkForExistingInstitution(institutionId);
         return Objects.nonNull(existingId) && existingId > 0;
+    }
+
+    public User findOrCreateUser(AuthUser authUser) {
+        User user;
+        // Ensure that the user is a registered DUOS user
+        try {
+            user = userDAO.findUserByEmail(authUser.getEmail());
+        } catch (NotFoundException nfe) {
+            User newUser = new User();
+            newUser.setEmail(authUser.getEmail());
+            newUser.setDisplayName(authUser.getName());
+            user = createUser(newUser);
+        }
+        // Ensure that the user is a registered SAM user
+        try {
+            samDAO.postRegistrationInfo(authUser);
+        } catch (ConsentConflictException cce) {
+          // no-op in the case of conflicts.
+        } catch (Exception e) {
+          throw new NotFoundException();
+        }
+        return user;
     }
 
 }

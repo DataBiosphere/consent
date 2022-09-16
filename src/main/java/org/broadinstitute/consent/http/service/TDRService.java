@@ -15,11 +15,13 @@ import java.util.stream.Collectors;
 
 public class TDRService {
     private final DataAccessRequestService dataAccessRequestService;
+    private final DatasetService datasetService;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
-    public TDRService(DataAccessRequestService dataAccessRequestService) {
+    public TDRService(DataAccessRequestService dataAccessRequestService, DatasetService datasetService) {
         this.dataAccessRequestService = dataAccessRequestService;
+        this.datasetService = datasetService;
     }
 
     public ApprovedUsers getApprovedUsersForDataset(Dataset dataset) {
@@ -32,5 +34,15 @@ public class TDRService {
                 .collect(Collectors.toList());
 
         return new ApprovedUsers(approvedUsers);
+    }
+
+    public List<Integer> getDatasetIdsByIdentifier(List<String> identifiers) {
+        List<Integer> datasetIds = identifiers
+                .stream()
+                .filter(identifier -> !identifier.isBlank())
+                .map(identifier -> datasetService.findDatasetByIdentifier(identifier).getDataSetId())
+                .collect(Collectors.toList());
+
+        return datasetIds;
     }
 }

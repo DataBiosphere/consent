@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -16,8 +15,15 @@ import org.broadinstitute.consent.http.service.UserService;
 
 
 import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -26,7 +32,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 
 @Path("api/tdr")
@@ -53,12 +58,12 @@ public class TDRResource extends Resource {
     @Path("/{identifier}/approved/users")
     public Response getApprovedUsers(@Auth AuthUser authUser, @PathParam("identifier") String identifier) {
         try {
-            Dataset dataset = this.datasetService.findDatasetByIdentifier(identifier);
+            Dataset dataset = datasetService.findDatasetByIdentifier(identifier);
             if (Objects.isNull(dataset)) {
                 throw new NotFoundException("Could not find dataset " + identifier);
             }
 
-            ApprovedUsers approvedUsers = this.tdrService.getApprovedUsersForDataset(dataset);
+            ApprovedUsers approvedUsers = tdrService.getApprovedUsersForDataset(dataset);
             return Response.ok(approvedUsers).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -71,7 +76,7 @@ public class TDRResource extends Resource {
     @Path("/{identifier}")
     public Response getDatasetByIdentifier(@Auth AuthUser authUser, @PathParam("identifier") String identifier) {
         try {
-            Dataset dataset = this.datasetService.findDatasetByIdentifier(identifier);
+            Dataset dataset = datasetService.findDatasetByIdentifier(identifier);
             if (Objects.isNull(dataset)) {
                 throw new NotFoundException("Could not find dataset " + identifier);
             }
@@ -86,7 +91,7 @@ public class TDRResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/dar/draft")
-    @RolesAllowed({ADMIN})
+    @PermitAll
     public Response createDraftDataAccessRequest(
         @Auth AuthUser authUser,
         @Context UriInfo info,
@@ -94,17 +99,15 @@ public class TDRResource extends Resource {
         @QueryParam("projectTitle") String projectTitle) {
       try {
         // Ensure that the user is a registered DUOS and SAM user
-        User user = findOrCreateUser(authUser);
+        User user = userService.findOrCreateUser(authUser);
         if (Objects.isNull(identifiers) || identifiers.isBlank()) {
           throw new BadRequestException("No dataset identifiers were provided");
         } else {
-          List<Integer> datasetIds = Arrays.asList(identifiers.split(","))
-              .stream()
-              .filter(identifier -> !identifier.isBlank())
-              .map(identifier -> this.datasetService.findDatasetByIdentifier(identifier).getDataSetId())
-              .collect(Collectors.toList());
-        if (datasetIds.isEmpty()) {
-            throw new BadRequestException("No datasets associated with identifiers: " + identifiers);
+          List<String> identifierList = Arrays.asList(identifiers.split(",").toString().trim());
+          List<Integer> datasetIds = tdrService.getDatasetIdsByIdentifier(identifierList);
+        // Check that we were able to find a dataset id for all identifiers provided
+        if (identifierList.size() != datasetIds.size()) {
+            throw new BadRequestException("Invalid dataset identifiers were provided.");
         }
         DataAccessRequest newDar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
@@ -114,27 +117,12 @@ public class TDRResource extends Resource {
         data.setProjectTitle(projectTitle);
         newDar.setData(data);
         newDar.setDatasetIds(datasetIds);
-        DataAccessRequest result = this.darService.insertDraftDataAccessRequest(user, newDar);
+        DataAccessRequest result = darService.insertDraftDataAccessRequest(user, newDar);
         URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
         return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
         }
       } catch (Exception e) {
           return createExceptionResponse(e);
       }
-    }
-
-    // should this be private? otherwise can't test
-    User findOrCreateUser(AuthUser authUser) {
-        // Ensure that the user is a registered DUOS and SAM user
-        User tdrUser;
-        try {
-            tdrUser = this.userService.findUserByEmail(authUser.getEmail());
-        } catch (NotFoundException nfe) {
-            User newTdrUser = new User();
-            newTdrUser.setEmail(authUser.getEmail());
-            newTdrUser.setDisplayName(authUser.getName());
-            tdrUser = this.userService.createUser(newTdrUser);
-        }
-        return tdrUser;
     }
 }
