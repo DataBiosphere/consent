@@ -135,6 +135,9 @@ public class TDRResourceTest {
         assertEquals(404, r.getStatus());
     }
 
+    // there are two service class methods you would need to mock out
+    // userService.findUserByEmail and userService.createUser
+    // To do that, look at usages of mockito spy and verify in the current codebase.
     @Test
     public void testCreateDraftDataAccessRequest() {
 
@@ -148,6 +151,7 @@ public class TDRResourceTest {
 
         DataAccessRequest newDar = generateDataAccessRequest();
 
+        when(userService.findOrCreateUser(any())).thenReturn(user);
         when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(d1);
         when(datasetService.findDatasetByIdentifier("DUOS-00002")).thenReturn(d2);
         when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
@@ -160,12 +164,15 @@ public class TDRResourceTest {
         assertEquals(201, r.getStatus());
     }
 
-
+    // todo: test case for partial list of identifiers
     @Test
-    public void testCreateDraftDataAccessRequest500() {
+    public void testCreateDraftDataAccessRequestInvalidIdentifiers() {
         String identifiers = "DUOS-00001,DUOS-00002";
 
-        when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(null);
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+
+        when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(d1);
         when(datasetService.findDatasetByIdentifier("DUOS-00002")).thenReturn(null);
 
         initResource();
@@ -174,9 +181,6 @@ public class TDRResourceTest {
 
         assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, r.getStatus());
     }
-
-    // todo: test case
-    // If the user passed in 3 identifiers, and we only found 2 of them, we should error out in some way with a useful error message.
 
     private DataAccessRequest generateDataAccessRequest() {
         Timestamp now = new Timestamp(new Date().getTime());

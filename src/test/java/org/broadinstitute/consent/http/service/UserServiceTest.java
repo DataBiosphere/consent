@@ -1,15 +1,18 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.JsonObject;
+import io.dropwizard.auth.Auth;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
+import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -17,12 +20,14 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
+import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Spy;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
@@ -68,6 +73,9 @@ public class UserServiceTest {
     @Mock
     private LibraryCardDAO libraryCardDAO;
 
+    @Mock
+    private SamDAO samDAO;
+
     private UserService service;
 
     @Before
@@ -76,7 +84,7 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO);
+        service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO, samDAO);
     }
 
     @Test
@@ -515,6 +523,66 @@ public class UserServiceTest {
         assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
         assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
         assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
+    }
+
+    @Test
+    public void testFindOrCreateUser() {
+
+        User user = generateUser();
+        UserStatus.UserInfo info = new UserStatus.UserInfo()
+                .setUserEmail(user.getEmail());
+        UserStatus.Enabled enabled = new UserStatus.Enabled()
+                .setAllUsersGroup(true)
+                .setGoogle(true)
+                .setLdap(true);
+        UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+        AuthUser authUser = new AuthUser()
+                .setEmail(user.getEmail())
+                .setAuthToken(RandomStringUtils.random(30, true, false));
+
+
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        try {
+            when(samDAO.postRegistrationInfo(any())).thenReturn(status);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        initService();
+        User existingUser = service.findOrCreateUser(authUser);
+        assertEquals(existingUser, user);
+    }
+
+    // todo: test case for when user doesn't exist
+    // Need to mock userService.findUserByEmail and userService.createUser
+    // To do that, look at usages of mockito spy and verify in the current codebase.
+    @Test
+    public void testFindOrCreateUserNotFound() {
+        User user = generateUser();
+        UserStatus.UserInfo info = new UserStatus.UserInfo()
+                .setUserEmail(user.getEmail());
+        UserStatus.Enabled enabled = new UserStatus.Enabled()
+                .setAllUsersGroup(true)
+                .setGoogle(true)
+                .setLdap(true);
+        UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+        AuthUser authUser = new AuthUser()
+                .setEmail(user.getEmail())
+                .setAuthToken(RandomStringUtils.random(30, true, false));
+
+
+        when(userDAO.findUserByEmail(any())).thenReturn(null);
+        try {
+            when(samDAO.postRegistrationInfo(any())).thenReturn(status);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        initService();
+
+        User newUser = service.findOrCreateUser(authUser);
+        assertEquals(user.getEmail(), newUser.getEmail());
+
     }
 
     private User generateUser() {
