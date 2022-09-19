@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Institution;
 import static org.junit.Assert.assertEquals;
@@ -32,6 +33,12 @@ public class InstitutionDAOTest extends DAOTestHelper {
         institution.getName(),
         institution.getItDirectorName(),
         institution.getItDirectorEmail(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
         userId,
         institution.getCreateDate()
       );
@@ -48,11 +55,17 @@ public class InstitutionDAOTest extends DAOTestHelper {
     Integer userId = createUser().getUserId();
     String newValue = "New Value";
     Institution institution = createInstitution();
-    institutionDAO.updateInstitutionById(institution.getId(), newValue, newValue, newValue, userId, new Date());
+    institutionDAO.updateInstitutionById(institution.getId(), newValue, newValue, newValue, newValue, 100, newValue, newValue, newValue, OrganizationType.FOR_PROFIT.getValue(), userId, new Date());
     Institution updated = institutionDAO.findInstitutionById(institution.getId());
-    assertEquals(updated.getName(), newValue);
-    assertEquals(updated.getItDirectorName(), newValue);
-    assertEquals(updated.getItDirectorEmail(), newValue);
+    assertEquals(newValue, updated.getName());
+    assertEquals(newValue, updated.getItDirectorName());
+    assertEquals(newValue, updated.getItDirectorEmail());
+    assertEquals(newValue, updated.getInstitutionUrl());
+    assertEquals(100, (long)updated.getDunsNumber());
+    assertEquals(newValue, updated.getOrgChartUrl());
+    assertEquals(newValue, updated.getVerificationUrl());
+    assertEquals(newValue, updated.getVerificationFilename());
+    assertEquals(OrganizationType.FOR_PROFIT.getValue(), updated.getOrganizationType().getValue());
   }
 
   @Test
@@ -60,7 +73,18 @@ public class InstitutionDAOTest extends DAOTestHelper {
     Institution institution = createInstitution();
     Institution secondInstitution = createInstitution();
     try{
-      institutionDAO.updateInstitutionById(secondInstitution.getId(), institution.getName(), secondInstitution.getItDirectorName(), secondInstitution.getItDirectorEmail(), secondInstitution.getUpdateUserId(), secondInstitution.getUpdateDate());
+      institutionDAO.updateInstitutionById(secondInstitution.getId(),
+              institution.getName(),
+              secondInstitution.getItDirectorName(),
+              secondInstitution.getItDirectorEmail(),
+              secondInstitution.getInstitutionUrl(),
+              secondInstitution.getDunsNumber(),
+              secondInstitution.getOrgChartUrl(),
+              secondInstitution.getVerificationUrl(),
+              secondInstitution.getVerificationFilename(),
+              secondInstitution.getOrganizationType().getValue(),
+              secondInstitution.getUpdateUserId(),
+              secondInstitution.getUpdateDate());
       Assert.fail("UPDATE should fail due to UNIQUE constraint violation (name)");
     }catch(Exception e) {
       assertEquals("23505", ((PSQLException) e.getCause()).getSQLState());

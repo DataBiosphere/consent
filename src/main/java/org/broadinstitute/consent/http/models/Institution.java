@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 public class Institution {
@@ -31,6 +32,12 @@ public class Institution {
   private String itDirectorName;
   private String itDirectorEmail;
   private List<SimplifiedUser> signingOfficials;
+  private String institutionUrl;
+  private Integer dunsNumber;
+  private String orgChartUrl;
+  private String verificationUrl;
+  private String verificationFilename;
+  private OrganizationType organizationType;
   private Date createDate;
   private Integer createUserId;
   private Date updateDate;
@@ -43,7 +50,18 @@ public class Institution {
     this.createDate = new Date();
   }
 
-  public Institution(Integer id, String name, String itDirectorName, String itDirectorEmail, Integer createUserId, Date createDate) {
+  public Institution(Integer id,
+                     String name,
+                     String itDirectorName,
+                     String itDirectorEmail,
+                     String institutionUrl,
+                     Integer dunsNumber,
+                     String orgChartUrl,
+                     String verificationUrl,
+                     String verificationFilename,
+                     OrganizationType organizationType,
+                     Integer createUserId,
+                     Date createDate) {
     this.id = id;
     this.name = name;
     this.itDirectorName = itDirectorName;
@@ -51,17 +69,41 @@ public class Institution {
     this.signingOfficials = new ArrayList<>();
     this.createDate = createDate;
     this.createUserId = createUserId;
+    this.institutionUrl = institutionUrl;
+    this.dunsNumber = dunsNumber;
+    this.orgChartUrl = orgChartUrl;
+    this.verificationUrl = verificationUrl;
+    this.verificationFilename = verificationFilename;
+    this.organizationType = organizationType;
     this.updateDate = this.createDate;
     this.updateUserId = this.createUserId;
   }
 
-  public Institution(Integer id, String name, String itDirectorName, String itDirectorEmail,
-                     Integer createUserId, Date createDate, Integer updateUserId, Date updateDate) {
+  public Institution(Integer id,
+                     String name,
+                     String itDirectorName,
+                     String itDirectorEmail,
+                     String institutionUrl,
+                     Integer dunsNumber,
+                     String orgChartUrl,
+                     String verificationUrl,
+                     String verificationFilename,
+                     OrganizationType organizationType,
+                     Integer createUserId,
+                     Date createDate,
+                     Integer updateUserId,
+                     Date updateDate) {
     this.id = id;
     this.name = name;
     this.itDirectorName = itDirectorName;
     this.itDirectorEmail = itDirectorEmail;
     this.signingOfficials = new ArrayList<>();
+    this.institutionUrl = institutionUrl;
+    this.dunsNumber = dunsNumber;
+    this.orgChartUrl = orgChartUrl;
+    this.verificationUrl = verificationUrl;
+    this.verificationFilename = verificationFilename;
+    this.organizationType = organizationType;
     this.createDate = createDate;
     this.createUserId = createUserId;
     this.updateDate = updateDate;
@@ -98,31 +140,6 @@ public class Institution {
     }
     signingOfficials.add(so);
 }
-
-  public void setCreateUserId(Integer createUserId) {
-    this.createUserId = createUserId;
-  }
-
-  public void setCreateDate(Date date) {
-    this.createDate = date;
-  }
-
-  public void setUpdateUserId(Integer updateUserId) {
-    this.updateUserId = updateUserId;
-  }
-
-  public void setUpdateDate(Date updateDate) {
-    this.updateDate = updateDate;
-  }
-
-  public void setCreateUser(User createUser) {
-    this.createUser = createUser;
-  }
-
-  public void setUpdateUser(User updateUser) {
-    this.updateUser = updateUser;
-  }
-
   public Integer getId() { return id; }
 
   public String getName() {
@@ -135,6 +152,54 @@ public class Institution {
 
   public String getItDirectorEmail() {
     return itDirectorEmail;
+  }
+
+  public String getInstitutionUrl() {
+    return institutionUrl;
+  }
+
+  public void setInstitutionUrl(String institutionUrl) {
+    this.institutionUrl = institutionUrl;
+  }
+
+  public Integer getDunsNumber() {
+    return dunsNumber;
+  }
+
+  public void setDunsNumber(Integer dunsNumber) {
+    this.dunsNumber = dunsNumber;
+  }
+
+  public String getOrgChartUrl() {
+    return orgChartUrl;
+  }
+
+  public void setOrgChartUrl(String orgChartUrl) {
+    this.orgChartUrl = orgChartUrl;
+  }
+
+  public String getVerificationUrl() {
+    return verificationUrl;
+  }
+
+  public void setVerificationUrl(String verificationUrl) {
+    this.verificationUrl = verificationUrl;
+  }
+
+  public String getVerificationFilename() {
+    return verificationFilename;
+  }
+
+  public void setVerificationFilename(String verificationFilename) {
+    this.verificationFilename = verificationFilename;
+  }
+
+  public OrganizationType getOrganizationType() {
+    return organizationType;
+  }
+
+  public void setOrganizationType(OrganizationType organizationType) {
+    this.organizationType = organizationType;
   }
 
   public Date getCreateDate() {
@@ -161,13 +226,38 @@ public class Institution {
     return updateUser;
   }
 
+  public void setCreateUserId(Integer createUserId) {
+    this.createUserId = createUserId;
+  }
+
+  public void setCreateDate(Date date) {
+    this.createDate = date;
+  }
+
+  public void setUpdateUserId(Integer updateUserId) {
+    this.updateUserId = updateUserId;
+  }
+
+  public void setUpdateDate(Date updateDate) {
+    this.updateDate = updateDate;
+  }
+
+  public void setCreateUser(User createUser) {
+    this.createUser = createUser;
+  }
+
+  public void setUpdateUser(User updateUser) {
+    this.updateUser = updateUser;
+  }
+
+
   @Override
   public boolean equals(Object institution) {
     if (institution == this) return true;
     if (institution == null || institution.getClass() != getClass()) return false;
     Institution other = (Institution) institution;
     return new EqualsBuilder()
-          .append(id, other.getId())
-          .isEquals();
+            .append(id, other.getId())
+            .isEquals();
   }
 }

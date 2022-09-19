@@ -33,6 +33,12 @@ public class InstitutionService {
         institution.getName(),
         institution.getItDirectorName(),
         institution.getItDirectorEmail(),
+        institution.getInstitutionUrl(),
+        institution.getDunsNumber(),
+        institution.getOrgChartUrl(),
+        institution.getVerificationUrl(),
+        institution.getVerificationFilename(),
+        institution.getOrganizationType().getValue(),
         userId,
         createTimestamp
       );
@@ -50,6 +56,12 @@ public class InstitutionService {
       institutionPayload.getName(),
       institutionPayload.getItDirectorEmail(),
       institutionPayload.getItDirectorName(),
+      institutionPayload.getInstitutionUrl(),
+      institutionPayload.getDunsNumber(),
+      institutionPayload.getOrgChartUrl(),
+      institutionPayload.getVerificationUrl(),
+      institutionPayload.getVerificationFilename(),
+      (Objects.nonNull(institutionPayload.getOrganizationType()) ? institutionPayload.getOrganizationType().getValue() : null),
       userId,
       updateDate
     );

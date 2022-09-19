@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.models.Institution;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -34,6 +35,24 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
     }
     if (hasColumn(resultSet, "it_director_email")) {
       institution.setItDirectorEmail(resultSet.getString("it_director_email"));
+    }
+    if (hasColumn(resultSet, "institution_url")) {
+      institution.setInstitutionUrl(resultSet.getString("institution_url"));
+    }
+    if (hasColumn(resultSet, "duns_number")) {
+      institution.setDunsNumber(resultSet.getInt("duns_number"));
+    }
+    if (hasColumn(resultSet, "org_chart_url")) {
+      institution.setOrgChartUrl(resultSet.getString("org_chart_url"));
+    }
+    if (hasColumn(resultSet, "verification_url")) {
+      institution.setVerificationUrl(resultSet.getString("verification_url"));
+    }
+    if (hasColumn(resultSet, "verification_filename")) {
+      institution.setVerificationFilename(resultSet.getString("verification_filename"));
+    }
+    if (hasColumn(resultSet, "organization_type")) {
+      institution.setOrganizationType(OrganizationType.getOrganizationTypeFromString(resultSet.getString("organization_type")));
     }
     if (hasColumn(resultSet, "create_user")) {
       institution.setCreateUserId(resultSet.getInt("create_user"));
