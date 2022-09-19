@@ -38,7 +38,7 @@ public class InstitutionService {
         institution.getOrgChartUrl(),
         institution.getVerificationUrl(),
         institution.getVerificationFilename(),
-        institution.getOrganizationType().getValue(),
+        (Objects.nonNull(institution.getOrganizationType()) ? institution.getOrganizationType().getValue() : null),
         userId,
         createTimestamp
       );
