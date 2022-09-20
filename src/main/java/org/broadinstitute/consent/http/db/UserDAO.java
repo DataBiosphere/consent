@@ -155,7 +155,7 @@ public interface UserDAO extends Transactional<UserDAO> {
                     " FROM users u " +
                     " LEFT JOIN user_role ur ON ur.user_id = u.user_id " +
                     " LEFT JOIN roles r ON r.roleid = ur.role_id " +
-                    " LEFT JOIN library_card lc ON lc.user_id = u.user_id AND lc.institution_id = :institutionId " +
+                    " LEFT JOIN library_card lc ON lc.user_id = u.user_id " +
                     " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id" +
                     " LEFT JOIN institution i ON u.institution_id = i.institution_id")
     Set<User> findUsersWithLCsAndInstitution();

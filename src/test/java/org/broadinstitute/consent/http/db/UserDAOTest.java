@@ -199,6 +199,21 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindUsersWithLCsAndInstitution() {
+        User user = createUserWithInstitution();
+        LibraryCard lc = createLibraryCard(user);
+
+        List<User> users = new ArrayList<>(userDAO.findUsers());
+        assertNotNull(users);
+        assertFalse(users.isEmpty());
+        assertEquals(1, users.size());
+        assertNotNull(users.get(0).getInstitution());
+        assertNotNull(users.get(0).getLibraryCards());
+        assertEquals(1, users.get(0).getLibraryCards().size());
+        assertEquals(lc.getId(), users.get(0).getLibraryCards().get(0).getId());
+    }
+
+    @Test
     public void testDescribeUsersByRoleAndEmailPreference() {
         User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
         userDAO.updateEmailPreference(researcher.getUserId(), true);
