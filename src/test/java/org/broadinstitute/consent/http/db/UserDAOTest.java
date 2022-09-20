@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -201,16 +202,17 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testFindUsersWithLCsAndInstitution() {
         User user = createUserWithInstitution();
-        LibraryCard lc = createLibraryCard(user);
+        Integer lcId = libraryCardDAO.insertLibraryCard(user.getUserId(), user.getInstitutionId(), "asdf", user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
 
-        List<User> users = new ArrayList<>(userDAO.findUsers());
+        List<User> users = new ArrayList<>(userDAO.findUsersWithLCsAndInstitution());
+        System.out.println(users.stream().map((u) -> u.getUserId()).collect(Collectors.toList()));
         assertNotNull(users);
         assertFalse(users.isEmpty());
         assertEquals(1, users.size());
         assertNotNull(users.get(0).getInstitution());
         assertNotNull(users.get(0).getLibraryCards());
         assertEquals(1, users.get(0).getLibraryCards().size());
-        assertEquals(lc.getId(), users.get(0).getLibraryCards().get(0).getId());
+        assertEquals(lcId, users.get(0).getLibraryCards().get(0).getId());
     }
 
     @Test

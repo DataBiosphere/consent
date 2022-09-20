@@ -143,7 +143,7 @@ public interface UserDAO extends Transactional<UserDAO> {
     @SqlQuery(
             //This will pull in users tied to the institution
             //Users will come with LCs issued by SOs institution (if any)
-            " SELECT " +
+            " SELECT DISTINCT " +
                     User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
                     " r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
                     " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, " +
