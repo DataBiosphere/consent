@@ -29,7 +29,7 @@ properties:
     description: Name of verification file
   organizationType:
     type: string
-    enum: [ for_profit, non_profit ]
+    enum: [ For-Profit, Nonprofit ]
     description: Organizational structure of institution
   createUser:
     type: integer

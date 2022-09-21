@@ -52,7 +52,8 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
       institution.setVerificationFilename(resultSet.getString("verification_filename"));
     }
     if (hasColumn(resultSet, "organization_type")) {
-      institution.setOrganizationType(OrganizationType.getOrganizationTypeFromString(resultSet.getString("organization_type")));
+      OrganizationType type = OrganizationType.getOrganizationTypeFromString(resultSet.getString("organization_type"));
+      institution.setOrganizationType(type);
     }
     if (hasColumn(resultSet, "create_user")) {
       institution.setCreateUserId(resultSet.getInt("create_user"));

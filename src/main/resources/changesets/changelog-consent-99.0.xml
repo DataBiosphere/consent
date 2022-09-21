@@ -10,13 +10,5 @@
             <column name="verification_filename" type="varchar(255)"/>
             <column name="organization_type" type="text"/>
         </addColumn>
-        <rollback>
-            <dropColumn tableName="institution" columnName="institution_url"/>
-            <dropColumn tableName="institution" columnName="duns_number"/>
-            <dropColumn tableName="institution" columnName="org_chart_url"/>
-            <dropColumn tableName="institution" columnName="verification_url"/>
-            <dropColumn tableName="institution" columnName="verification_filename"/>
-            <dropColumn tableName="institution" columnName="organization_type"/>
-        </rollback>
     </changeSet>
 </databaseChangeLog>

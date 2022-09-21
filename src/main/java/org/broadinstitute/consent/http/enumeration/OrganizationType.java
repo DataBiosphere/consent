@@ -3,8 +3,8 @@ package org.broadinstitute.consent.http.enumeration;
 import liquibase.hub.model.Organization;
 
 public enum OrganizationType {
-    FOR_PROFIT("for_profit"),
-    NON_PROFIT("non_profit");
+    FOR_PROFIT("For-Profit"),
+    NON_PROFIT("Nonprofit");
 
     final String value;
 
