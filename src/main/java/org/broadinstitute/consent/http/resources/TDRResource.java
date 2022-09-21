@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @Path("api/tdr")
@@ -103,7 +104,9 @@ public class TDRResource extends Resource {
         if (Objects.isNull(identifiers) || identifiers.isBlank()) {
           throw new BadRequestException("No dataset identifiers were provided");
         } else {
-          List<String> identifierList = List.of(Arrays.toString(identifiers.split(",")).trim());
+          List<String> identifierList = Arrays.stream(identifiers.split(","))
+                  .map(String::trim)
+                  .collect(Collectors.toList());
           List<Integer> datasetIds = tdrService.getDatasetIdsByIdentifier(identifierList);
         // Check that we were able to find a dataset id for all identifiers provided
         if (identifierList.size() != datasetIds.size()) {

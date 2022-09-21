@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.JsonObject;
-import io.dropwizard.auth.Auth;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -12,7 +11,6 @@ import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -27,7 +25,6 @@ import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Spy;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
@@ -527,7 +524,6 @@ public class UserServiceTest {
 
     @Test
     public void testFindOrCreateUser() {
-
         User user = generateUser();
         UserStatus.UserInfo info = new UserStatus.UserInfo()
                 .setUserEmail(user.getEmail());
@@ -553,12 +549,11 @@ public class UserServiceTest {
         assertEquals(existingUser, user);
     }
 
-    // todo: test case for when user doesn't exist
-    // Need to mock userService.findUserByEmail and userService.createUser
-    // To do that, look at usages of mockito spy and verify in the current codebase.
     @Test
-    public void testFindOrCreateUserNotFound() {
+    public void testFindOrCreateUserNewUser() {
         User user = generateUser();
+        List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
+        user.setRoles(roles);
         UserStatus.UserInfo info = new UserStatus.UserInfo()
                 .setUserEmail(user.getEmail());
         UserStatus.Enabled enabled = new UserStatus.Enabled()
@@ -567,22 +562,33 @@ public class UserServiceTest {
                 .setLdap(true);
         UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
         AuthUser authUser = new AuthUser()
+                .setName(user.getDisplayName())
                 .setEmail(user.getEmail())
                 .setAuthToken(RandomStringUtils.random(30, true, false));
 
+        // mock findUserByEmail to throw the NFE on the first call (findOrCreateUser) and then return null (createUser)
+        when(userDAO.findUserByEmail(authUser.getEmail())).thenThrow(new NotFoundException()).thenReturn(null);
+        when(userDAO.insertUser(any(), any(), any())).thenReturn(user.getUserId());
+        when(userRoleDAO.findRoleIdByName(any())).thenReturn(1);
+        when(userDAO.findUserById(any())).thenReturn(user);
 
-        when(userDAO.findUserByEmail(any())).thenReturn(null);
         try {
             when(samDAO.postRegistrationInfo(any())).thenReturn(status);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        spy(userRoleDAO);
+        spy(libraryCardDAO);
+        spy(userDAO);
+
         initService();
 
         User newUser = service.findOrCreateUser(authUser);
         assertEquals(user.getEmail(), newUser.getEmail());
-
+        verify(userRoleDAO, times(1)).insertUserRoles(any(), any());
+        verify(libraryCardDAO, times(1)).findAllLibraryCardsByUserEmail(any());
+        verify(userDAO, times(1)).insertUser(any(), any(), any());
     }
 
     private User generateUser() {

@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.HttpStatusCodes;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Spy;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -25,6 +26,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -52,6 +54,9 @@ public class TDRResourceTest {
 
     @Mock
     private UriBuilder builder;
+
+    @Spy
+    private DataAccessRequestDAO dataAccessRequestDAO;
 
     private final AuthUser authUser = new AuthUser("test@test.com");
     private final User user = new User(1, authUser.getEmail(), "Display Name", new Date());
@@ -135,13 +140,42 @@ public class TDRResourceTest {
         assertEquals(404, r.getStatus());
     }
 
-    // there are two service class methods you would need to mock out
-    // userService.findUserByEmail and userService.createUser
-    // To do that, look at usages of mockito spy and verify in the current codebase.
     @Test
     public void testCreateDraftDataAccessRequest() {
+        String identifiers = "DUOS-00001, DUOS-00002";
+        List<String> identifierList = Arrays.stream(identifiers.split(","))
+                .map(String::trim)
+                .collect(Collectors.toList());
 
-        String identifiers = "DUOS-00001,DUOS-00002";
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+
+        Dataset d2 = new Dataset();
+        d2.setDataSetId(2);
+
+        DataAccessRequest newDar = generateDataAccessRequest();
+
+        when(userService.findOrCreateUser(any())).thenReturn(user);
+        // todo: when I mock the services called within tdrService, it doesn't work
+//        when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(d1);
+//        when(datasetService.findDatasetByIdentifier("DUOS-00002")).thenReturn(d2);
+        when(tdrService.getDatasetIdsByIdentifier(identifierList)).thenReturn(List.of(1,2));
+        when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
+        //todo: mock or spy dataAccessRequestDAO?
+
+        // uriInfo for path and build are mocked in initResource
+        initResource();
+
+        Response r = resource.createDraftDataAccessRequest(authUser, uriInfo, identifiers, "New Project");
+        assertEquals(201, r.getStatus());
+    }
+
+    @Test
+    public void testCreateDraftDataAccessRequestInvalidIdentifiers() {
+        String identifiers = "DUOS-00001, DUOS-00002";
+        List<String> identifierList = Arrays.stream(identifiers.split(","))
+                .map(String::trim)
+                .collect(Collectors.toList());
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -153,33 +187,14 @@ public class TDRResourceTest {
 
         when(userService.findOrCreateUser(any())).thenReturn(user);
         when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(d1);
-        when(datasetService.findDatasetByIdentifier("DUOS-00002")).thenReturn(d2);
-        when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
+        when(datasetService.findDatasetByIdentifier("DUOS-00002")).thenReturn(null);
+        when(tdrService.getDatasetIdsByIdentifier(identifierList)).thenReturn(List.of(1));
 
         // uriInfo for path and build are mocked in initResource
         initResource();
 
         Response r = resource.createDraftDataAccessRequest(authUser, uriInfo, identifiers, "New Project");
-
-        assertEquals(201, r.getStatus());
-    }
-
-    // todo: test case for partial list of identifiers
-    @Test
-    public void testCreateDraftDataAccessRequestInvalidIdentifiers() {
-        String identifiers = "DUOS-00001,DUOS-00002";
-
-        Dataset d1 = new Dataset();
-        d1.setDataSetId(1);
-
-        when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(d1);
-        when(datasetService.findDatasetByIdentifier("DUOS-00002")).thenReturn(null);
-
-        initResource();
-
-        Response r = resource.createDraftDataAccessRequest(new AuthUser(), uriInfo, identifiers, "New Project");
-
-        assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, r.getStatus());
+        assertEquals(400, r.getStatus());
     }
 
     private DataAccessRequest generateDataAccessRequest() {
@@ -191,9 +206,6 @@ public class TDRResourceTest {
         dar.setDatasetIds(Arrays.asList(1, 2));
         dar.setData(data);
         dar.setUserId(user.getUserId());
-        dar.setCreateDate(now);
-        dar.setUpdateDate(now);
-        dar.setSortDate(now);
         return dar;
     }
 }

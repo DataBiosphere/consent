@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
@@ -16,12 +17,14 @@ import java.util.stream.Collectors;
 public class TDRService {
     private final DataAccessRequestService dataAccessRequestService;
     private final DatasetService datasetService;
+    private final DatasetDAO datasetDAO;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
-    public TDRService(DataAccessRequestService dataAccessRequestService, DatasetService datasetService) {
+    public TDRService(DataAccessRequestService dataAccessRequestService, DatasetService datasetService, DatasetDAO datasetDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.datasetService = datasetService;
+        this.datasetDAO = datasetDAO;
     }
 
     public ApprovedUsers getApprovedUsersForDataset(Dataset dataset) {
@@ -40,7 +43,11 @@ public class TDRService {
         List<Integer> datasetIds = identifiers
                 .stream()
                 .filter(identifier -> !identifier.isBlank())
-                .map(identifier -> datasetService.findDatasetByIdentifier(identifier).getDataSetId())
+                .map(identifier -> datasetDAO.findDatasetByAlias(Dataset.parseIdentifierToAlias(identifier)))
+                // technically, it is possible to have two dataset identifiers which
+                // have the same alias but are not the same: e.g., DUOS-5 and DUOS-00005
+                .filter(d -> !identifiers.contains(d.getDatasetIdentifier()))
+                .map(d -> d.getDataSetId())
                 .toList();
 
         return datasetIds;
