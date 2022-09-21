@@ -71,9 +71,6 @@ public class TDRServiceTest {
         dataset2.setDataSetId(2);
         dataset2.setAlias(00002);
 
-        // todo: should I use datasetService or datasetDAO within TDRService?
-//        when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(dataset1);
-//        when(datasetService.findDatasetByIdentifier("DUOS-00002")).thenReturn(dataset2);
         when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset1);
         when(datasetDAO.findDatasetByAlias(2)).thenReturn(dataset2);
 

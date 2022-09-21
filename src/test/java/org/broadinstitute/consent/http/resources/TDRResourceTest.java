@@ -156,12 +156,8 @@ public class TDRResourceTest {
         DataAccessRequest newDar = generateDataAccessRequest();
 
         when(userService.findOrCreateUser(any())).thenReturn(user);
-        // todo: when I mock the services called within tdrService, it doesn't work
-//        when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(d1);
-//        when(datasetService.findDatasetByIdentifier("DUOS-00002")).thenReturn(d2);
         when(tdrService.getDatasetIdsByIdentifier(identifierList)).thenReturn(List.of(1,2));
         when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
-        //todo: mock or spy dataAccessRequestDAO?
 
         // uriInfo for path and build are mocked in initResource
         initResource();
@@ -198,7 +194,6 @@ public class TDRResourceTest {
     }
 
     private DataAccessRequest generateDataAccessRequest() {
-        Timestamp now = new Timestamp(new Date().getTime());
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
         dar.setReferenceId(UUID.randomUUID().toString());

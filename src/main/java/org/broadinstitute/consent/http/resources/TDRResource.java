@@ -106,7 +106,7 @@ public class TDRResource extends Resource {
         } else {
           List<String> identifierList = Arrays.stream(identifiers.split(","))
                   .map(String::trim)
-                  .collect(Collectors.toList());
+                  .toList();
           List<Integer> datasetIds = tdrService.getDatasetIdsByIdentifier(identifierList);
         // Check that we were able to find a dataset id for all identifiers provided
         if (identifierList.size() != datasetIds.size()) {
