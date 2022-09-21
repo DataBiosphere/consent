@@ -40,6 +40,12 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
     if (hasColumn(rowView, "dac_approval", Boolean.class)) {
       dataset.setDacApproval(rowView.getColumn("dac_approval", Boolean.class));
     }
+    if (hasColumn(rowView, "sharing_plan_document", String.class)) {
+        dataset.setSharingPlanDocument(rowView.getColumn("sharing_plan_document", String.class));
+    }
+    if (hasColumn(rowView, "sharing_plan_document_name", String.class)) {
+        dataset.setSharingPlanDocumentName(rowView.getColumn("sharing_plan_document_name", String.class));
+    }
     if (hasColumn(rowView, "key", String.class)
         && hasColumn(rowView, "property_value", String.class)) {
       String keyName = rowView.getColumn("key", String.class);

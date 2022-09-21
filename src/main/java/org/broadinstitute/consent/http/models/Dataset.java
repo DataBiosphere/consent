@@ -48,6 +48,8 @@ public class Dataset {
 
     private String sharingPlanDocument;
 
+    private String sharingPlanDocumentName;
+
     private Set<DatasetProperty> properties;
 
     private Boolean dacApproval;
@@ -285,6 +287,14 @@ public class Dataset {
 
     public void setSharingPlanDocument(String sharingPlanDocument) {
         this.sharingPlanDocument = sharingPlanDocument;
+    }
+
+    public String getSharingPlanDocumentName() {
+        return sharingPlanDocumentName;
+    }
+
+    public void setSharingPlanDocumentName(String sharingPlanDocumentName) {
+        this.sharingPlanDocumentName = sharingPlanDocumentName;
     }
 
     @Override

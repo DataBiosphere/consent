@@ -51,7 +51,7 @@ public class VoteServiceDAO {
               h -> {
                 final String updateVoteWithRationale = "UPDATE vote SET vote = :vote, updatedate = :updateDate, rationale = :rationale WHERE voteid = :voteId";
                 final String updateVoteWithoutRationale = "UPDATE vote SET vote = :vote, updatedate = :updateDate WHERE voteid = :voteId";
-                final String updateElectionStatus = "UPDATE election SET status = :status WHERE electionid = :electionId";
+                final String updateElectionStatus = "UPDATE election SET status = :status WHERE election_id = :electionId";
                 final Date now = new Date();
                 votes.forEach(
                     vote -> {
