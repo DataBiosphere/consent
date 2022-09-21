@@ -21,7 +21,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -145,7 +144,7 @@ public class TDRResourceTest {
         String identifiers = "DUOS-00001, DUOS-00002";
         List<String> identifierList = Arrays.stream(identifiers.split(","))
                 .map(String::trim)
-                .collect(Collectors.toList());
+                .toList();
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -171,15 +170,13 @@ public class TDRResourceTest {
         String identifiers = "DUOS-00001, DUOS-00002";
         List<String> identifierList = Arrays.stream(identifiers.split(","))
                 .map(String::trim)
-                .collect(Collectors.toList());
+                .toList();
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
 
         Dataset d2 = new Dataset();
         d2.setDataSetId(2);
-
-        DataAccessRequest newDar = generateDataAccessRequest();
 
         when(userService.findOrCreateUser(any())).thenReturn(user);
         when(datasetService.findDatasetByIdentifier("DUOS-00001")).thenReturn(d1);
