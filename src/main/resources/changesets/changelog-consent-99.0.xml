@@ -1,7 +1,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-    <changeSet id="99.0" author="connorlbari=k">
+    <changeSet id="99.0" author="connorlbark">
         <addColumn tableName="institution">
             <column name="institution_url" type="text"/>
             <column name="duns_number" type="integer" defaultValue="null"/>

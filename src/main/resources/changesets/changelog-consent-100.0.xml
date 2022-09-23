@@ -1,0 +1,39 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="100.0" author="qhoque">
+        <addColumn tableName="email_entity">
+            <column name="sendgrid_response" type="text"/>
+            <column name="sendgrid_status" type="integer" defaultValue="null"/>
+            //todo: how do i do default values referencing existing columns
+            <column name="create_date" type="date" defaultValue="date_sent"??/>
+        </addColumn>
+<!--        <renameColumn tableName="email_entity"-->
+<!--                      oldColumnName="emailentityid"-->
+<!--                      newColumnName="email_entity_id"/>-->
+
+<!--        <renameColumn tableName="email_entity"-->
+<!--                      oldColumnName="entityreferenceid"-->
+<!--                      newColumnName="entity_reference_id"/>-->
+
+<!--        <renameColumn tableName="email_entity"-->
+<!--                      oldColumnName="emailtype"-->
+<!--                      newColumnName="email_type"/>-->
+
+<!--        <renameColumn tableName="email_entity"-->
+<!--                      oldColumnName="voteid"-->
+<!--                      newColumnName="vote_id"/>-->
+
+<!--        <renameColumn tableName="email_entity"-->
+<!--                      oldColumnName="dacuserid"-->
+<!--                      newColumnName="user_id"/>-->
+
+<!--        <renameColumn tableName="email_entity"-->
+<!--                      oldColumnName="datesent"-->
+<!--                      newColumnName="date_sent"/>-->
+
+<!--        <renameColumn tableName="email_entity"-->
+<!--                      oldColumnName="emailtext"-->
+<!--                      newColumnName="email_text"/>-->
+    </changeSet>
+</databaseChangeLog>

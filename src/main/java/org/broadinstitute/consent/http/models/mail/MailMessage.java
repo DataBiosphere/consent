@@ -12,8 +12,11 @@ public class MailMessage {
     private String emailType;
     private Date dateSent;
     private String emailText;
+    private String sendgridResponse;
+    private Integer sendgridStatus;
+    private Date createDate;
 
-    public MailMessage(Integer emailId, Integer voteId, Integer electionId, Integer dacUserId, String emailType, Date dateSent, String emailText) {
+    public MailMessage(Integer emailId, Integer voteId, Integer electionId, Integer dacUserId, String emailType, Date dateSent, String emailText, String sendgrid_response, Integer sendgrid_status, Date create_date) {
         this.emailId = emailId;
         this.voteId = voteId;
         this.electionId = electionId;
@@ -21,6 +24,9 @@ public class MailMessage {
         this.emailType = emailType;
         this.dateSent = dateSent;
         this.emailText = emailText;
+        this.sendgridResponse = sendgridResponse;
+        this.sendgridStatus = sendgridStatus;
+        this.createDate = createDate;
     }
 
     public Integer getEmailId() {
@@ -78,4 +84,30 @@ public class MailMessage {
     public void setEmailText(String emailText) {
         this.emailText = emailText;
     }
+
+    public String getSendgridResponse() {
+        return sendgridResponse;
+    }
+
+    public void setSendgridResponse(String sendgridResponse) {
+        this.sendgridResponse = sendgridResponse;
+    }
+
+    public String getSendgridStatus() {
+        return sendgridStatus;
+    }
+
+    public void setSendgridStatus(String sendgridStatus) {
+        this.sendgridStatus = sendgridStatus;
+    }
+
+    public String getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(String createDate) {
+        this.createDate = createDate;
+    }
+
+
 }
