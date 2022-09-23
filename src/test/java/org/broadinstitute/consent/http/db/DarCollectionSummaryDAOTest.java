@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -18,6 +19,7 @@ import org.junit.Test;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -39,7 +41,17 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   private Institution createInstitution(Integer userId) {
-    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20), "itDirectorName", "itDirectorEmail", userId, new Date());
+    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+            "itDirectorName",
+            "itDirectorEmail",
+            RandomStringUtils.randomAlphabetic(10),
+            new Random().nextInt(),
+            RandomStringUtils.randomAlphabetic(10),
+            RandomStringUtils.randomAlphabetic(10),
+            RandomStringUtils.randomAlphabetic(10),
+            OrganizationType.NON_PROFIT.getValue(),
+            userId,
+            new Date());
     return institutionDAO.findInstitutionById(institutionId);
   }
 
