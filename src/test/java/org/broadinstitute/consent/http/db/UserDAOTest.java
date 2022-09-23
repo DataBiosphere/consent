@@ -202,17 +202,23 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testFindUsersWithLCsAndInstitution() {
         User user = createUserWithInstitution();
-        Integer lcId = libraryCardDAO.insertLibraryCard(user.getUserId(), user.getInstitutionId(), "asdf", user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+        libraryCardDAO.insertLibraryCard(user.getUserId(), user.getInstitutionId(), "asdf", user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+
+        User user2 = createUserWithInstitution();
+        libraryCardDAO.insertLibraryCard(user2.getUserId(), user.getInstitutionId(), "asdf", user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
 
         List<User> users = new ArrayList<>(userDAO.findUsersWithLCsAndInstitution());
         System.out.println(users.stream().map((u) -> u.getUserId()).collect(Collectors.toList()));
         assertNotNull(users);
         assertFalse(users.isEmpty());
-        assertEquals(1, users.size());
+        assertEquals(2, users.size());
         assertNotNull(users.get(0).getInstitution());
         assertNotNull(users.get(0).getLibraryCards());
         assertEquals(1, users.get(0).getLibraryCards().size());
-        assertEquals(lcId, users.get(0).getLibraryCards().get(0).getId());
+        assertNotNull(users.get(1).getInstitution());
+        assertNotNull(users.get(1).getLibraryCards());
+        assertEquals(1, users.get(1).getLibraryCards().size());
+
     }
 
     @Test
