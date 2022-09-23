@@ -16,8 +16,8 @@ properties:
     type: string
     description: Link to main page of institution
   dunsNumber:
-    type: string
-    description: '?'
+    type: integer
+    description: Unique 9-digit identification number for businesses provided by Duns & Bradstreet
   orgChartUrl:
     type: string
     description: Link to institution's staff directory/chart
