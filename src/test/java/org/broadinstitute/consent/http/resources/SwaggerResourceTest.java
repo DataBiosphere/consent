@@ -1,14 +1,17 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_CSS;
-
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_CSS;
+import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_JS;
 
 public class SwaggerResourceTest {
 
@@ -24,11 +27,19 @@ public class SwaggerResourceTest {
     @Test
     public void testIndex() {
         Response response = swaggerResource.content("index.html");
-        Assert.assertTrue(checkStatusAndHeader(response, MediaType.TEXT_HTML));
+        Assert.assertTrue(checkStatusAndHeader(response, TEXT_HTML));
         String content = response.getEntity().toString()
                 .replaceFirst("<!--[^-]+-->", "").trim();
         Assert.assertTrue(content.startsWith("<!DOCTYPE html>"));
         Assert.assertTrue(content.endsWith("</html>"));
+    }
+
+    @Test
+    public void testInitializer() {
+        Response response = swaggerResource.content("swagger-initializer.js");
+        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_JS));
+        String content = response.getEntity().toString().trim();
+        Assert.assertTrue(content.startsWith("window.onload"));
     }
 
     @Test
@@ -53,7 +64,7 @@ public class SwaggerResourceTest {
 
     private boolean checkStatusAndHeader(Response response, String header) {
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        Object headerObject = response.getHeaders().get("Content-type");
+        Object headerObject = response.getHeaderString(HttpHeaders.CONTENT_TYPE);
         return headerObject.toString().contains(header);
     }
 
