@@ -100,7 +100,6 @@ public class SwaggerResource {
       case "js" -> MEDIA_TYPE_JS;
       case "png" -> MEDIA_TYPE_PNG;
       case "gif" -> MEDIA_TYPE_GIF;
-      case "yaml" -> MediaType.TEXT_PLAIN;
       default -> MediaType.TEXT_HTML;
     };
   }
