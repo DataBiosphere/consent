@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import java.util.Objects;
 
 import com.google.gson.Gson;
+import com.google.gson.stream.MalformedJsonException;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -121,6 +122,8 @@ abstract public class Resource {
         dispatch.put(IOException.class, e ->
                 Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
         dispatch.put(BadRequestException.class, e ->
+                Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
+        dispatch.put(MalformedJsonException.class, e ->
                 Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
         dispatch.put(NotAuthorizedException.class, e ->
                 Response.status(Response.Status.UNAUTHORIZED).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.UNAUTHORIZED.getStatusCode())).build());

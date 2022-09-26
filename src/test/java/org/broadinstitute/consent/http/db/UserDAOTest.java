@@ -225,7 +225,7 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateInstitutionId() {
         User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
-        Integer institutionId = institutionDAO.insertInstitution("Institution", "it director", "it director email", researcher.getUserId(), new Date());
+        Integer institutionId = institutionDAO.insertInstitution("Institution", "it director", "it director email", null, null, null, null, null, null, researcher.getUserId(), new Date());
         userDAO.updateInstitutionId(researcher.getUserId(), institutionId);
         User u1 = userDAO.findUserById(researcher.getUserId());
         assertEquals(institutionId, u1.getInstitutionId());

@@ -4,7 +4,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
 import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
 import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.junit.Assert;
@@ -20,15 +19,10 @@ import java.util.UUID;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ConsentCasesResourceTest {
-
-    @Mock
-    ElectionService electionService;
 
     @Mock
     PendingCaseService pendingCaseService;
@@ -105,18 +99,8 @@ public class ConsentCasesResourceTest {
         assertNull(summaryDetails);
     }
 
-    @Test
-    public void testDescribeClosedElections() {
-        when(electionService.describeClosedElectionsByType(anyString(), notNull())).thenReturn(Collections.emptyList());
-        initResource();
-        Response response = resource.describeClosedElections(null);
-        Assert.assertEquals(200, response.getStatus());
-        List elections = ((List) response.getEntity());
-        Assert.assertTrue(elections.isEmpty());
-    }
-
     private void initResource() {
-        resource = new ConsentCasesResource(electionService, pendingCaseService, summaryService);
+        resource = new ConsentCasesResource(pendingCaseService, summaryService);
     }
 
 }
