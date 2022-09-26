@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -47,6 +48,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
@@ -312,7 +314,17 @@ public class DAOTestHelper {
         String email = RandomStringUtils.randomAlphabetic(i1);
         String name = RandomStringUtils.randomAlphabetic(10);
         Integer userId = userDAO.insertUser(email, name, new Date());
-        Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphanumeric(10), "itdirectorName", "itDirectorEmail", userId, new Date());
+        Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+                "itDirectorName",
+                "itDirectorEmail",
+                RandomStringUtils.randomAlphabetic(10),
+                new Random().nextInt(),
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10),
+                OrganizationType.NON_PROFIT.getValue(),
+                userId,
+                new Date());
         userDAO.updateUser(name, userId, institutionId);
         userRoleDAO.insertSingleUserRole(7, userId);
         return userDAO.findUserById(userId);
@@ -348,21 +360,33 @@ public class DAOTestHelper {
 
     protected Institution createInstitution() {
         User createUser = createUser();
-        Integer id = institutionDAO.insertInstitution(
-          "Test_" + RandomStringUtils.random(20, true, true),
-          "Test_" + RandomStringUtils.random(20, true, true),
-          createUser.getEmail(),
-          createUser.getUserId(),
-          new Date());
+        Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+                "itDirectorName",
+                "itDirectorEmail",
+                RandomStringUtils.randomAlphabetic(10),
+                new Random().nextInt(),
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10),
+                OrganizationType.NON_PROFIT.getValue(),
+                createUser.getUserId(),
+                createUser.getCreateDate());
         Institution institution = institutionDAO.findInstitutionById(id);
         User updateUser = createUser();
         institutionDAO.updateInstitutionById(
-                institution.getId(),
+                id,
                 institution.getName(),
-                institution.getItDirectorName(),
                 institution.getItDirectorEmail(),
+                institution.getItDirectorName(),
+                institution.getInstitutionUrl(),
+                institution.getDunsNumber(),
+                institution.getOrgChartUrl(),
+                institution.getVerificationUrl(),
+                institution.getVerificationFilename(),
+                institution.getOrganizationType().getValue(),
                 updateUser.getUserId(),
-                new Date());
+                new Date()
+        );
         return institutionDAO.findInstitutionById(id);
     }
 

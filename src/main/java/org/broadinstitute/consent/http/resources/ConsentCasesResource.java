@@ -2,9 +2,14 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.PendingCase;
+import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.models.SummaryDetail;
+import org.broadinstitute.consent.http.service.PendingCaseService;
+import org.broadinstitute.consent.http.service.SummaryService;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
@@ -13,26 +18,18 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.PendingCase;
-import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.models.SummaryDetail;
-import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.PendingCaseService;
-import org.broadinstitute.consent.http.service.SummaryService;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Path("api/consent/cases")
 public class ConsentCasesResource extends Resource {
 
-    private final ElectionService electionService;
     private final PendingCaseService pendingCaseService;
     private final SummaryService summaryService;
 
     @Inject
-    public ConsentCasesResource(ElectionService electionService, PendingCaseService pendingCaseService, SummaryService summaryService) {
-        this.electionService = electionService;
+    public ConsentCasesResource(PendingCaseService pendingCaseService, SummaryService summaryService) {
         this.pendingCaseService = pendingCaseService;
         this.summaryService = summaryService;
     }
@@ -81,14 +78,5 @@ public class ConsentCasesResource extends Resource {
         }
     }
 
-
-    @GET
-    @Path("/closed")
-    @Produces("application/json")
-    @RolesAllowed({MEMBER, CHAIRPERSON, ALUMNI, ADMIN})
-    public Response describeClosedElections(@Auth AuthUser authUser) {
-        List<Election> elections = electionService.describeClosedElectionsByType(ElectionType.TRANSLATE_DUL.getValue(), authUser);
-        return Response.ok().entity(elections).build();
-    }
 
 }

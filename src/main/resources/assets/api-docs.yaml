@@ -169,28 +169,6 @@ paths:
                 $ref: '#/components/schemas/Summary'
   /api/consent/cases/summary/file:
     $ref: './paths/consentCasesSummaryFile.yaml'
-  /api/consent/cases/closed:
-    get:
-      summary: Describe Closed Elections
-      description: Returns number of denied, approved and pending cases.
-      tags:
-        - Election
-        - Consent
-      responses:
-        200:
-          description: Returns the list of closed consent cases.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Election'
-        404:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-               $ref: '#/components/schemas/ErrorResponse'
   /api/consent/{consentId}/election:
     post:
       deprecated: true
@@ -1287,24 +1265,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Summary'
-  /api/dataRequest/cases/closed:
-    get:
-      summary: describeClosedElections
-      description: Retrieves the closed DAR elections
-      tags:
-        - Data Access Request
-        - Election
-      responses:
-        200:
-          description: A list of closed DAR elections.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Election'
-        404:
-          description: Election was not found.
   /api/dataRequest/{requestId}/election:
     get:
       summary: describe
