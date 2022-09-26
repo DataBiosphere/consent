@@ -1,18 +1,19 @@
 package org.broadinstitute.consent.http.resources;
 
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Properties;
-import java.util.logging.Logger;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
+import org.parboiled.common.FileUtils;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
-import org.parboiled.common.FileUtils;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Properties;
+import java.util.logging.Logger;
 
 @Path("/")
 public class SwaggerResource {
@@ -71,8 +72,9 @@ public class SwaggerResource {
     String mediaType = getMediaTypeFromPath(path);
     if (path.isEmpty() || path.equals("index.html")) {
       response = Response.ok().entity(getIndex(swaggerResource)).type(mediaType).build();
+    } else if (path.contains("swagger-initializer.js")) {
+      response = Response.ok().entity(getInitializer()).type(MEDIA_TYPE_JS).build();
     } else {
-      mediaType = getMediaTypeFromPath(path);
       if (path.endsWith("png") || path.endsWith("gif")) {
         byte[] content = FileUtils.readAllBytesFromResource(swaggerResource + path);
         if (content != null) {
@@ -93,55 +95,54 @@ public class SwaggerResource {
   }
 
   private String getMediaTypeFromPath(String path) {
-    String mediaType;
-    switch (StringUtils.substringAfterLast(path, ".")) {
-      case "css":
-        mediaType = MEDIA_TYPE_CSS;
-        break;
-      case "js":
-        mediaType = MEDIA_TYPE_JS;
-        break;
-      case "png":
-        mediaType = MEDIA_TYPE_PNG;
-        break;
-      case "gif":
-        mediaType = MEDIA_TYPE_GIF;
-        break;
-      default:
-        mediaType = MediaType.TEXT_HTML;
-        break;
-    }
-    return mediaType;
+    return switch (StringUtils.substringAfterLast(path, ".")) {
+      case "css" -> MEDIA_TYPE_CSS;
+      case "js" -> MEDIA_TYPE_JS;
+      case "png" -> MEDIA_TYPE_PNG;
+      case "gif" -> MEDIA_TYPE_GIF;
+      case "yaml" -> MediaType.TEXT_PLAIN;
+      default -> MediaType.TEXT_HTML;
+    };
   }
 
   private String getIndex(String swaggerResource) {
-    String content = FileUtils.readAllTextFromResource(swaggerResource + "index.html");
-    return content
-        .replace(
-            "url: \"https://petstore.swagger.io/v2/swagger.json\",",
-            "   syntaxHighlight: {\n"
-                + "          activated: false,\n"
-                + "          theme: \"agate\"\n"
-                + "        },\n"
-                + "        docExpansion: 'none',\n"
-                + "        displayRequestDuration: true,\n"
-                + "        tryItOutEnabled: true,\n"
-                + "        operationsSorter: 'alpha',\n"
-                + "        apisSorter: 'alpha',\n"
-                + "        tagsSorter: 'alpha',\n"
-                + "        validatorUrl: null,\n"
-                + "        url: '/api-docs/api-docs.yaml',\n")
-        .replace(
-            "window.ui = ui",
-            "ui.initOAuth({\n"
-                + "        clientId: '" + config.getClientId() + "',\n"
-                + "        clientSecret: '',\n"
-                + "        realm: 'Broad Institute',\n"
-                + "        appName: 'Consent',\n"
-                + "        scopeSeparator: ' ',\n"
-                + "        scopes: 'profile email',\n"
-                + "        additionalQueryStringParams: {}\n"
-                + "      })\n"
-                + "      window.ui = ui\n");
+    return FileUtils.readAllTextFromResource(swaggerResource + "index.html");
+  }
+
+  private String getInitializer() {
+    String initString = """
+            window.onload = function() {
+              const ui = SwaggerUIBundle({
+                syntaxHighlight: false,
+                docExpansion: "none",
+                displayRequestDuration: true,
+                tryItOutEnabled: true,
+                operationsSorter: "alpha",
+                apisSorter: "alpha",
+                tagsSorter: "alpha",
+                url: "/api-docs/api-docs.yaml",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                  SwaggerUIBundle.presets.apis,
+                  SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                  SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout"
+              });
+              ui.initOAuth({
+                clientId: "OAUTH_CLIENT_ID",
+                clientSecret: "",
+                realm: "Broad Institute",
+                appName: "Consent",
+                scopeSeparator: " ",
+                scopes: "profile email",
+                additionalQueryStringParams: {}
+              });
+            };
+            """;
+    return initString.replace("OAUTH_CLIENT_ID", config.getClientId());
   }
 }
