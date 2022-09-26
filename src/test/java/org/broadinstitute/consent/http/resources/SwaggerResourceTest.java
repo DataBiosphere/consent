@@ -64,8 +64,8 @@ public class SwaggerResourceTest {
 
     private boolean checkStatusAndHeader(Response response, String header) {
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        Object headerObject = response.getHeaderString(HttpHeaders.CONTENT_TYPE);
-        return headerObject.toString().contains(header);
+        String headerObject = response.getHeaderString(HttpHeaders.CONTENT_TYPE);
+        return headerObject.contains(header);
     }
 
 }
