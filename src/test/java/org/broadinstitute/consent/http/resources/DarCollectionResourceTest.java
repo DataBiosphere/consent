@@ -47,9 +47,9 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DarCollectionResourceTest {
   private final AuthUser authUser = new AuthUser("test@test.com");
-  private final List<UserRole> researcherRole = List.of(
+  private final List<UserRole> researcherRole = new ArrayList(List.of(
     new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())
-  );
+  ));
   private final User researcher = new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRole);
   private final List<UserRole> signingOfficialRole = List.of(
           new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
