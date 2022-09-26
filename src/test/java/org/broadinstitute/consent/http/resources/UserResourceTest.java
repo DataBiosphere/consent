@@ -409,6 +409,100 @@ public class UserResourceTest {
   }
 
   @Test
+  public void testUpdateSelfInstitutionIdAsSO() {
+    User user = createUserWithRole();
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    user.addRole(so);
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    userUpdateFields.setInstitutionId(10);
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    spy(supportRequestService);
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateSelfInstitutionIdAsSO_ExistingInstitution() {
+    User user = createUserWithRole();
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    user.addRole(so);
+    user.setInstitutionId(10);
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    userUpdateFields.setInstitutionId(20);
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    spy(supportRequestService);
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateSelfInstitutionIdAsSO_SameInstitution() {
+    User user = createUserWithRole();
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    user.addRole(so);
+    user.setInstitutionId(10);
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    userUpdateFields.setInstitutionId(10);
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    spy(supportRequestService);
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateSelfInstitutionIdAsITDirector() {
+    User user = createUserWithRole();
+    UserRole itd = new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName());
+    user.addRole(itd);
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    userUpdateFields.setInstitutionId(10);
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    spy(supportRequestService);
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateSelfInstitutionIdAsITDirector_ExistingInstitution() {
+    User user = createUserWithRole();
+    UserRole itd = new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName());
+    user.addRole(itd);
+    user.setInstitutionId(10);
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    userUpdateFields.setInstitutionId(20);
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    spy(supportRequestService);
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+
+  @Test
   public void testUpdateSelfSupportRequestError() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
