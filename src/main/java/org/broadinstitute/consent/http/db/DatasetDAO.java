@@ -57,7 +57,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlUpdate(
             "INSERT INTO dataset "
             + "(name, create_date, create_user_id, update_date, "
-                + "update_user_id, object_id, active, dac_id, alias, data_use, sharing_plan_document, "
+                + " update_user_id, object_id, active, dac_id, alias, data_use, sharing_plan_document, "
                 + " sharing_plan_document_name) "
             + "(SELECT :name, :createDate, :createUserId, :createDate, "
                 + ":createUserId, :objectId, :active, :dacId, COALESCE(MAX(alias),0)+1, :dataUse, "

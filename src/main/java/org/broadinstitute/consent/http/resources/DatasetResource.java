@@ -1,11 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -47,7 +45,6 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
@@ -55,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Path("api/dataset")
@@ -63,7 +59,6 @@ public class DatasetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
     private final DatasetService datasetService;
-    private final GCSService gcsService;
     private final UserService userService;
     private final DataAccessRequestService darService;
 
@@ -85,9 +80,8 @@ public class DatasetResource extends Resource {
     }
 
     @Inject
-    public DatasetResource(DatasetService datasetService, GCSService gcsService, UserService userService, DataAccessRequestService darService) {
+    public DatasetResource(DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
         this.datasetService = datasetService;
-        this.gcsService = gcsService;
         this.userService = userService;
         this.darService = darService;
         resetDataSetSampleFileName();
@@ -163,28 +157,14 @@ public class DatasetResource extends Resource {
         }
         DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserialize(json);
         User user = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
-        BlobId blobId = null;
-        // Parse upload file if there is a data sharing plan provided
-        if (Objects.nonNull(uploadInputStream) && Objects.nonNull(fileDetail) && Objects.nonNull(registration.getAlternativeDataSharingPlanFileName())) {
-            // validate file
+        // validate file if exists
+        if (Objects.nonNull(fileDetail)) {
             validateFileDetails(fileDetail);
-            String fileName = fileDetail.getFileName();
-            String sharingPlanFileName = registration.getAlternativeDataSharingPlanFileName();
-            if (sharingPlanFileName.equals(fileName)) {
-                // store file contents
-                String blobFileName =  UUID.randomUUID().toString();
-                try {
-                    blobId = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), blobFileName);
-                } catch (IOException e) {
-                    return createExceptionResponse(e);
-                }
-            }
         }
-
         try {
-            // TODO: Generate a real uri
-            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, blobId);
-            URI uri = UriBuilder.fromPath("").build();
+            // Generate datasets from registration
+            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, uploadInputStream, fileDetail);
+            URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
             return Response.created(uri).entity(datasets).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

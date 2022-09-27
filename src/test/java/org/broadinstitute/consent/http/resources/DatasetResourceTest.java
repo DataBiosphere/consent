@@ -4,7 +4,6 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -12,8 +11,8 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -51,8 +50,6 @@ public class DatasetResourceTest {
     @Mock
     private DatasetService datasetService;
 
-    @Mock
-    private GCSService gcsService;
 
     @Mock
     private UserService userService;
@@ -83,7 +80,7 @@ public class DatasetResourceTest {
     }
 
     private void initResource() {
-        resource = new DatasetResource(datasetService, gcsService, userService, darService);
+        resource = new DatasetResource(datasetService, userService, darService);
     }
 
     private String createPropertiesJson(List<DatasetPropertyDTO> properties) {

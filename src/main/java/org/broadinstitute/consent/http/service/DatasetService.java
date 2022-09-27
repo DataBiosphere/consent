@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -23,12 +24,15 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -54,15 +58,17 @@ public class DatasetService {
     private final ConsentDAO consentDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DatasetDAO datasetDAO;
+    private final GCSService gcsService;
     private final UserRoleDAO userRoleDAO;
     private final UseRestrictionConverter converter;
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
-                          UserRoleDAO userRoleDAO, UseRestrictionConverter converter) {
+                          GCSService gcsService, UserRoleDAO userRoleDAO, UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.datasetDAO = dataSetDAO;
+        this.gcsService = gcsService;
         this.userRoleDAO = userRoleDAO;
         this.converter = converter;
     }
@@ -483,18 +489,20 @@ public class DatasetService {
      * There will be one dataset per ConsentGroup in the dataset.
      *
      * @param registration The DatasetRegistrationSchemaV1
-     * @param user The creating User
-     * @param blobId BlobId (nullable in the case that there is no alternative data sharing plan)
+     * @param user The User creating these datasets
+     * @param uploadInputStream InputStream nullable input stream representing file content for created datasets
+     * @param fileDetail FormDataContentDisposition nullable file details for created datasets
      * @return List of created Datasets from the provided registration schema
      */
-    public List<Dataset> createDatasetsFromRegistration(DatasetRegistrationSchemaV1 registration, User user, BlobId blobId) {
+    public List<Dataset> createDatasetsFromRegistration(DatasetRegistrationSchemaV1 registration, User user, InputStream uploadInputStream, FormDataContentDisposition fileDetail) throws IOException {
         List<Integer> createdDatasetIds = datasetDAO.inTransaction(h -> {
+            final BlobId blobId = createBlobIdFromRegistration(registration, uploadInputStream, fileDetail);
             Timestamp now = new Timestamp(new Date().getTime());
             List<Integer> ids = new ArrayList<>();
             registration.getConsentGroups().forEach(cg -> {
                 DataUse dataUse = createDataUseFromRegistration(cg);
                 try {
-                    Integer id = (registration.getAlternativeDataSharingPlan() && Objects.nonNull(registration.getAlternativeDataSharingPlanFileName()) && Objects.nonNull(blobId))
+                    Integer id = (Objects.nonNull(blobId))
                         ? datasetDAO.insertDataset(
                                 registration.getStudyName(),
                                 now,
@@ -520,6 +528,9 @@ public class DatasetService {
                     if (Objects.nonNull(h)) {
                         h.rollback();
                     }
+                    if (Objects.nonNull(blobId)) {
+                        gcsService.deleteDocument(blobId.getName());
+                    }
                     logger.error("Exception creating dataset from registration: " + e.getMessage());
                     throw e;
                 }
@@ -530,6 +541,18 @@ public class DatasetService {
             return datasetDAO.findDatasetsByIdList(createdDatasetIds);
         }
         return List.of();
+    }
+
+    private BlobId createBlobIdFromRegistration(DatasetRegistrationSchemaV1 registration, InputStream uploadInputStream, FormDataContentDisposition fileDetail) throws IOException {
+        if (Objects.nonNull(uploadInputStream) && Objects.nonNull(fileDetail)) {
+            String fileName = fileDetail.getFileName();
+            String sharingPlanFileName = registration.getAlternativeDataSharingPlanFileName();
+            if (sharingPlanFileName.equals(fileName)) {
+                String blobFileName =  UUID.randomUUID().toString();
+                return gcsService.storeDocument(uploadInputStream, fileDetail.getType(), blobFileName);
+            }
+        }
+        return null;
     }
 
     private DataUse createDataUseFromRegistration(ConsentGroup consentGroup) {
