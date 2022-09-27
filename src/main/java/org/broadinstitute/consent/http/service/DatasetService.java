@@ -116,6 +116,10 @@ public class DatasetService {
     public Dataset findDatasetByIdentifier(String datasetIdentifier) throws IllegalArgumentException {
         Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
         Dataset d = datasetDAO.findDatasetByAlias(alias);
+        if (Objects.isNull(d)) {
+            return null;
+        }
+
         // technically, it is possible to have two dataset identifiers which
         // have the same alias but are not the same: e.g., DUOS-5 and DUOS-00005
         if (!Objects.equals(d.getDatasetIdentifier(), datasetIdentifier)) {

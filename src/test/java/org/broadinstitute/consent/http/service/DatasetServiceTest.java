@@ -41,6 +41,7 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -314,6 +315,36 @@ public class DatasetServiceTest {
         when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(anyInt())).thenReturn(Collections.emptySet());
         initService();
         datasetService.getDatasetDTO(1);
+    }
+
+    @Test
+    public void testFindDatasetByIdentifier() {
+        Dataset d = new Dataset();
+        d.setAlias(3);
+        d.setDatasetIdentifier();
+        when(datasetDAO.findDatasetByAlias(3)).thenReturn(d);
+
+        initService();
+        assertEquals(d, datasetService.findDatasetByIdentifier("DUOS-000003"));
+    }
+
+    @Test
+    public void testFindDatasetByIdentifier_WrongIdentifier() {
+        Dataset d = new Dataset();
+        d.setAlias(3);
+        d.setDatasetIdentifier();
+        when(datasetDAO.findDatasetByAlias(3)).thenReturn(d);
+
+        initService();
+        assertNull(datasetService.findDatasetByIdentifier("DUOS-0003"));
+    }
+
+    @Test
+    public void testFindDatasetByIdentifier_NoDataset() {
+        when(datasetDAO.findDatasetByAlias(3)).thenReturn(null);
+
+        initService();
+        assertNull(datasetService.findDatasetByIdentifier("DUOS-00003"));
     }
 
     @Test
