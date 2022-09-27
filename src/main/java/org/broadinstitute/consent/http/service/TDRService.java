@@ -16,14 +16,12 @@ import java.util.stream.Collectors;
 
 public class TDRService {
     private final DataAccessRequestService dataAccessRequestService;
-    private final DatasetService datasetService;
     private final DatasetDAO datasetDAO;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
-    public TDRService(DataAccessRequestService dataAccessRequestService, DatasetService datasetService, DatasetDAO datasetDAO) {
+    public TDRService(DataAccessRequestService dataAccessRequestService, DatasetDAO datasetDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
-        this.datasetService = datasetService;
         this.datasetDAO = datasetDAO;
     }
 
@@ -39,17 +37,13 @@ public class TDRService {
         return new ApprovedUsers(approvedUsers);
     }
 
-    public List<Integer> getDatasetIdsByIdentifier(List<String> identifiers) {
-        List<Integer> datasetIds = identifiers
+    public List<Dataset> getDatasetsByIdentifier(List<Integer> identifiers) {
+        // reduce DB calls with new method that takes an ArrayList of identifiers as a parameter to perform a bulk fetch
+        return datasetDAO.findDatasetsByAlias(identifiers)
                 .stream()
-                .filter(identifier -> !identifier.isBlank())
-                .map(identifier -> datasetDAO.findDatasetByAlias(Dataset.parseIdentifierToAlias(identifier)))
                 // technically, it is possible to have two dataset identifiers which
                 // have the same alias but are not the same: e.g., DUOS-5 and DUOS-00005
-                .filter(d -> !identifiers.contains(d.getDatasetIdentifier()))
-                .map(d -> d.getDataSetId())
+                .filter(d -> identifiers.contains(d.getAlias()))
                 .toList();
-
-        return datasetIds;
     }
 }

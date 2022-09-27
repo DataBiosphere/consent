@@ -412,7 +412,7 @@ public class UserService {
         } catch (ConsentConflictException cce) {
           // no-op in the case of conflicts.
         } catch (Exception e) {
-          throw new NotFoundException();
+            logger.error("Error posting user registration information to Sam for user " + authUser.getName() + ". Error: " + e.getMessage());
         }
         return user;
     }

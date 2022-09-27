@@ -3,11 +3,13 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -22,9 +24,6 @@ public class TDRServiceTest {
     private DataAccessRequestService darService;
 
     @Mock
-    private DatasetService datasetService;
-
-    @Mock
     private DatasetDAO datasetDAO;
 
     private TDRService service;
@@ -35,7 +34,7 @@ public class TDRServiceTest {
     }
 
     private void initService() {
-        service = new TDRService(darService, datasetService, datasetDAO);
+        service = new TDRService(darService, datasetDAO);
     }
 
     @Test
@@ -54,15 +53,21 @@ public class TDRServiceTest {
 
         ApprovedUsers approvedUsers = service.getApprovedUsersForDataset(dataset);
         List<String> approvedUsersEmails = approvedUsers.getApprovedUsers().stream()
-                        .map(approvedUser -> approvedUser.getEmail())
+                        .map(ApprovedUser::getEmail)
                         .toList();
 
         assertTrue(approvedUsersEmails.containsAll(List.of(user1.getEmail(), user2.getEmail())));
     }
 
     @Test
-    public void testGetDatasetIdsByIdentifier() {
-        List<String> identifiers = List.of("DUOS-00001","DUOS-00002");
+    public void testGetDatasetsByIdentifier() {
+        String identifiers = "DUOS-00001, DUOS-00002";
+        List<Integer> identifierList = Arrays.stream(identifiers.split(","))
+                .map(String::trim)
+                .filter(identifier -> !identifier.isBlank())
+                .map(Dataset::parseIdentifierToAlias)
+                .toList();
+
         Dataset dataset1 = new Dataset();
         dataset1.setDataSetId(1);
         dataset1.setAlias(00001);
@@ -71,13 +76,12 @@ public class TDRServiceTest {
         dataset2.setDataSetId(2);
         dataset2.setAlias(00002);
 
-        when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset1);
-        when(datasetDAO.findDatasetByAlias(2)).thenReturn(dataset2);
+        when(datasetDAO.findDatasetsByAlias(identifierList)).thenReturn(List.of(dataset1,dataset2));
 
         initService();
-        List<Integer> datasetIds = service.getDatasetIdsByIdentifier(identifiers);
+        List<Dataset> datasetIds = service.getDatasetsByIdentifier(identifierList);
 
-        assertEquals(datasetIds.size(), identifiers.size());
-        assertTrue(datasetIds.containsAll(List.of(1,2)));
+        assertEquals(datasetIds.size(), identifierList.size());
+        assertTrue(datasetIds.containsAll(List.of(dataset1,dataset2)));
     }
 }
