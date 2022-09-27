@@ -21,12 +21,38 @@ import java.util.List;
 public interface InstitutionDAO extends Transactional<InstitutionDAO> {
 
   @SqlUpdate("INSERT INTO institution " +
-    " (institution_name, it_director_name, it_director_email, create_user, create_date) " +
-    " VALUES (:institutionName, :itDirectorName, :itDirectorEmail, :createUser, :createDate)")
+    " (institution_name, " +
+        "it_director_name, " +
+        "it_director_email, " +
+        "institution_url, " +
+        "duns_number, " +
+        "org_chart_url, " +
+        "verification_url, " +
+        "verification_filename, " +
+        "organization_type, " +
+        "create_user, " +
+        "create_date) " +
+    " VALUES (:institutionName, " +
+          ":itDirectorName, " +
+          ":itDirectorEmail, " +
+          ":institutionUrl, " +
+          ":dunsNumber, " +
+          ":orgChartUrl, " +
+          ":verificationUrl, " +
+          ":verificationFilename, " +
+          ":organizationType, " +
+          ":createUser, " +
+          ":createDate)")
   @GetGeneratedKeys
   Integer insertInstitution(@Bind("institutionName") String institutionName,
                             @Bind("itDirectorName") String itDirectorName,
                             @Bind("itDirectorEmail") String itDirectorEmail,
+                            @Bind("institutionUrl") String institutionUrl,
+                            @Bind("dunsNumber") Integer dunsNumber,
+                            @Bind("orgChartUrl") String orgChartUrl,
+                            @Bind("verificationUrl") String verificationUrl,
+                            @Bind("verificationFilename") String verificationFilename,
+                            @Bind("organizationType") String organizationType,
                             @Bind("createUser") Integer createUser,
                             @Bind("createDate") Date createDate);
 
@@ -35,6 +61,12 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
     " institution_name = :institutionName, " +
     " it_director_name = :itDirectorName, " +
     " it_director_email = :itDirectorEmail, " +
+    " institution_url = :institutionUrl, " +
+    " duns_number = :dunsNumber, " +
+    " org_chart_url = :orgChartUrl, " +
+    " verification_url = :verificationUrl, " +
+    " verification_filename = :verificationFilename, " +
+    " organization_type = :organizationType, " +
     " update_user = :updateUser, " +
     " update_date = :updateDate " +
     " WHERE institution_id = :institutionId")
@@ -42,6 +74,12 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
                          @Bind("institutionName") String institutionName,
                          @Bind("itDirectorName") String itDirectorName,
                          @Bind("itDirectorEmail") String itDirectorEmail,
+                         @Bind("institutionUrl") String institutionUrl,
+                         @Bind("dunsNumber") Integer dunsNumber,
+                         @Bind("orgChartUrl") String orgChartUrl,
+                         @Bind("verificationUrl") String verificationUrl,
+                         @Bind("verificationFilename") String verificationFilename,
+                         @Bind("organizationType") String organizationType,
                          @Bind("updateUser") Integer updateUser,
                          @Bind("updateDate") Date updateDate);
 
