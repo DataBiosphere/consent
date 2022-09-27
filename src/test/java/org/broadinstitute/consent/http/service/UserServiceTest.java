@@ -453,7 +453,7 @@ public class UserServiceTest {
         if (!returnedUsers.contains(u3)) {
             returnedUsers.add(u3);
         }
-        when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(new HashSet<>(returnedUsers));
+        when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(returnedUsers);
         initService();
         List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
         assertNotNull(users);

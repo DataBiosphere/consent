@@ -207,7 +207,7 @@ public class UserDAOTest extends DAOTestHelper {
         User user2 = createUserWithInstitution();
         libraryCardDAO.insertLibraryCard(user2.getUserId(), user.getInstitutionId(), "asdf", user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
 
-        List<User> users = new ArrayList<>(userDAO.findUsersWithLCsAndInstitution());
+        List<User> users = userDAO.findUsersWithLCsAndInstitution();
         System.out.println(users.stream().map((u) -> u.getUserId()).collect(Collectors.toList()));
         assertNotNull(users);
         assertFalse(users.isEmpty());

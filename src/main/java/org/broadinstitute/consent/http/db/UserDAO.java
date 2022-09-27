@@ -150,7 +150,7 @@ public interface UserDAO extends Transactional<UserDAO> {
                     " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
                     " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, " +
                     " lc.update_user_id AS lc_update_user_id, " +
-                    Institution.QUERY_FIELDS_WITH_LCI_PREFIX + ", " +
+                    Institution.QUERY_FIELDS_WITH_LCI_PREFIX + QUERY_FIELD_SEPARATOR +
                     Institution.QUERY_FIELDS_WITH_I_PREFIX +
                     " FROM users u " +
                     " LEFT JOIN user_role ur ON ur.user_id = u.user_id " +
@@ -158,7 +158,7 @@ public interface UserDAO extends Transactional<UserDAO> {
                     " LEFT JOIN library_card lc ON lc.user_id = u.user_id " +
                     " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id" +
                     " LEFT JOIN institution i ON u.institution_id = i.institution_id")
-    Set<User> findUsersWithLCsAndInstitution();
+    List<User> findUsersWithLCsAndInstitution();
 
     @UseRowMapper(UserWithRolesMapper.class)
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.roleId = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
