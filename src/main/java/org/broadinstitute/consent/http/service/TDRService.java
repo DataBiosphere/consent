@@ -37,13 +37,13 @@ public class TDRService {
         return new ApprovedUsers(approvedUsers);
     }
 
-    public List<Dataset> getDatasetsByIdentifier(List<Integer> identifiers) {
+    public List<Dataset> getDatasetsByIdentifier(List<Integer> aliases) {
         // reduce DB calls with new method that takes an ArrayList of identifiers as a parameter to perform a bulk fetch
-        return datasetDAO.findDatasetsByAlias(identifiers)
+        return datasetDAO.findDatasetsByAlias(aliases)
                 .stream()
                 // technically, it is possible to have two dataset identifiers which
                 // have the same alias but are not the same: e.g., DUOS-5 and DUOS-00005
-                .filter(d -> identifiers.contains(d.getAlias()))
+                .filter(d -> aliases.contains(d.getAlias()))
                 .toList();
     }
 }

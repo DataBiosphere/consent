@@ -395,7 +395,7 @@ public class UserService {
         return Objects.nonNull(existingId) && existingId > 0;
     }
 
-    public User findOrCreateUser(AuthUser authUser) {
+    public User findOrCreateUser(AuthUser authUser) throws Exception {
         User user;
         // Ensure that the user is a registered DUOS user
         try {
@@ -411,8 +411,6 @@ public class UserService {
             samDAO.postRegistrationInfo(authUser);
         } catch (ConsentConflictException cce) {
           // no-op in the case of conflicts.
-        } catch (Exception e) {
-            logger.error("Error posting user registration information to Sam for user " + authUser.getName() + ". Error: " + e.getMessage());
         }
         return user;
     }

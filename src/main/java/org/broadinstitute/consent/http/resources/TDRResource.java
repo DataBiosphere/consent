@@ -26,6 +26,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Arrays;
@@ -103,22 +104,26 @@ public class TDRResource extends Resource {
         if (Objects.isNull(identifiers) || identifiers.isBlank()) {
           throw new BadRequestException("No dataset identifiers were provided");
         } else {
-          List<Integer> identifierList = Arrays.stream(identifiers.split(","))
+          List<String> identifierList = Arrays.stream(identifiers.split(","))
                   .map(String::trim)
                   .filter(identifier -> !identifier.isBlank())
-                  .map(Dataset::parseIdentifierToAlias)
+                  // this will filter duplicate identifier strings, ex. "DUOS-000594, DUOS-000594"
+                  .distinct()
                   .toList();
-          List<Dataset> datasets = tdrService.getDatasetsByIdentifier(identifierList);
-          List<Integer> datasetAliases = datasets
+          List<Integer> aliasList = identifierList
                   .stream()
-                  .map(Dataset::getAlias)
+                  .map(Dataset::parseIdentifierToAlias)
+                  // this will filter duplicate aliases, ex. "DUOS-00593, DUOS-000593"
+                  .distinct()
                   .toList();
+          List<Dataset> datasets = tdrService.getDatasetsByIdentifier(aliasList);
+          List<Integer> datasetAliases = datasets.stream().map(Dataset::getAlias).toList();
         // Check that we were able to find a dataset id for all identifiers provided
-        if (identifierList.size() != datasets.size()) {
-            // isolate a list of identifiers that were NOT found
-            List<Integer> notFoundIdentifiers = identifierList
+        if (aliasList.size() != datasets.size()) {
+            // isolate a list of identifier strings that were not matched to datasets
+            List<String> notFoundIdentifiers = identifierList
                     .stream()
-                    .filter(identifier -> !datasetAliases.contains(identifier))
+                    .filter(identifier -> !datasetAliases.contains(Dataset.parseIdentifierToAlias(identifier)))
                     .toList();
             // throw a NFE to let the client know which identifiers were NOT found so they can rectify their request
             throw new NotFoundException("Invalid dataset identifiers were provided: " + notFoundIdentifiers);

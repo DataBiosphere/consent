@@ -21,6 +21,7 @@ import org.mockito.Spy;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -137,7 +138,7 @@ public class TDRResourceTest {
 
     // Created response when a new DAR draft is successful
     @Test
-    public void testCreateDraftDataAccessRequest() {
+    public void testCreateDraftDataAccessRequest() throws Exception {
         String identifiers = "DUOS-00001, DUOS-00002";
         List<Integer> identifierList = Arrays.stream(identifiers.split(","))
                 .map(String::trim)
@@ -175,7 +176,7 @@ public class TDRResourceTest {
 
     // Bad Request response (400) when no identifiers are provided
     @Test
-    public void testCreateDraftDataAccessRequestNoIdentifiers() {
+    public void testCreateDraftDataAccessRequestNoIdentifiers() throws Exception {
         when(userService.findOrCreateUser(any())).thenReturn(user);
 
         initResource();
@@ -186,7 +187,7 @@ public class TDRResourceTest {
 
     // Not Found response (404) with list of invalid identifiers if any do not match to a dataset
     @Test
-    public void testCreateDraftDataAccessRequestInvalidIdentifiers() {
+    public void testCreateDraftDataAccessRequestInvalidIdentifiers() throws Exception {
         String identifiers = "DUOS-00001, DUOS-00002";
         List<Integer> identifierList = Arrays.stream(identifiers.split(","))
                 .map(String::trim)
@@ -210,7 +211,7 @@ public class TDRResourceTest {
         Response r = resource.createDraftDataAccessRequest(authUser, uriInfo, identifiers, "New Project");
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), r.getStatus());
         Error notFoundError = (Error) r.getEntity();
-        assertEquals("Invalid dataset identifiers were provided: [2]", notFoundError.getMessage());
+        assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]", notFoundError.getMessage());
     }
 
     private DataAccessRequest generateDataAccessRequest() {

@@ -523,7 +523,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testFindOrCreateUser() {
+    public void testFindOrCreateUser() throws Exception {
         User user = generateUser();
         UserStatus.UserInfo info = new UserStatus.UserInfo()
                 .setUserEmail(user.getEmail());
@@ -550,7 +550,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testFindOrCreateUserNewUser() {
+    public void testFindOrCreateUserNewUser() throws Exception {
         User user = generateUser();
         List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
         user.setRoles(roles);
