@@ -118,8 +118,8 @@ public class TDRResource extends Resource {
                   .toList();
           List<Dataset> datasets = tdrService.getDatasetsByIdentifier(aliasList);
           List<Integer> datasetAliases = datasets.stream().map(Dataset::getAlias).toList();
-        // Check that we were able to find a dataset id for all identifiers provided
-        if (aliasList.size() != datasets.size()) {
+          // Check that we were able to find a dataset id for all identifiers provided
+          if (aliasList.size() != datasets.size()) {
             // isolate a list of identifier strings that were not matched to datasets
             List<String> notFoundIdentifiers = identifierList
                     .stream()
@@ -127,25 +127,25 @@ public class TDRResource extends Resource {
                     .toList();
             // throw a NFE to let the client know which identifiers were NOT found so they can rectify their request
             throw new NotFoundException("Invalid dataset identifiers were provided: " + notFoundIdentifiers);
-        }
-        List<Integer> datasetIds = datasets
-                .stream()
-                .map(Dataset::getDataSetId)
-                .toList();
-        DataAccessRequest newDar = new DataAccessRequest();
-        DataAccessRequestData data = new DataAccessRequestData();
-        String referenceId = UUID.randomUUID().toString();
-        newDar.setReferenceId(referenceId);
-        data.setReferenceId(referenceId);
-        if (!Objects.isNull(projectTitle) && !projectTitle.isBlank()) {
-          data.setProjectTitle(projectTitle);
-        }
-        newDar.setData(data);
-        newDar.setDatasetIds(datasetIds);
-        DataAccessRequest result = darService.insertDraftDataAccessRequest(user, newDar);
-        // URI should return the new DAR url
-        URI uri = info.getRequestUriBuilder().replacePath("").replacePath("api/dar/v2/" + result.getReferenceId()).replaceQuery(null).build();
-        return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
+          }
+          List<Integer> datasetIds = datasets
+                  .stream()
+                  .map(Dataset::getDataSetId)
+                  .toList();
+          DataAccessRequest newDar = new DataAccessRequest();
+          DataAccessRequestData data = new DataAccessRequestData();
+          String referenceId = UUID.randomUUID().toString();
+          newDar.setReferenceId(referenceId);
+          data.setReferenceId(referenceId);
+          if (!Objects.isNull(projectTitle) && !projectTitle.isBlank()) {
+            data.setProjectTitle(projectTitle);
+          }
+          newDar.setData(data);
+          newDar.setDatasetIds(datasetIds);
+          DataAccessRequest result = darService.insertDraftDataAccessRequest(user, newDar);
+          // URI should return the new DAR url
+          URI uri = info.getRequestUriBuilder().replacePath("").replacePath("api/dar/v2/" + result.getReferenceId()).replaceQuery(null).build();
+          return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
         }
       } catch (Exception e) {
           return createExceptionResponse(e);
