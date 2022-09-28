@@ -28,32 +28,54 @@ public class DataAccessRequestData {
             "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
             "createDate", "sortDate", "additionalEmail", "checkNotifications", "partialDarCode" );
 
+    @Deprecated
     private String referenceId;
+    @Deprecated
     private String investigator;
+    @Deprecated
     private String institution;
+    @Deprecated
     private String department;
+    @Deprecated
     private String division;
+    @Deprecated
     private String address1;
+    @Deprecated
     private String address2;
+    @Deprecated
     private String city;
     @SerializedName(value = "zipCode", alternate = "zipcode")
+    @Deprecated
     private String zipCode;
+    @Deprecated
     private String state;
+    @Deprecated
     private String country;
     private String projectTitle;
     private Boolean checkCollaborator;
     private Boolean checkNihDataOnly;
+    @Deprecated
     private String researcher;
+    @Deprecated
     private String isThePi;
+    @Deprecated
     private String havePi;
+    @Deprecated
     private String piEmail;
+    @Deprecated
     private String pubmedId;
+    @Deprecated
     private String scientificUrl;
     private Boolean eraExpiration;
+    @Deprecated
     private Boolean eraAuthorized;
+    @Deprecated
     private String nihUsername;
+    @Deprecated
     private String linkedIn;
+    @Deprecated
     private String orcid;
+    @Deprecated
     private String researcherGate;
 
     private String rus;
@@ -96,11 +118,14 @@ public class DataAccessRequestData {
     @SerializedName(value = "validRestriction", alternate = "valid_restriction")
     private Boolean validRestriction;
     private String translatedUseRestriction;
+    @Deprecated
     private Long createDate;
+    @Deprecated
     private Long sortDate;
     @Deprecated
     @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
     private List<Integer> datasetIds;
+    @Deprecated
     private List<DatasetDetailEntry> datasetDetail;
 
     private Boolean anvilUse;
