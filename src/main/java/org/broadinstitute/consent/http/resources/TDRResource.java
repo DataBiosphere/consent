@@ -113,7 +113,7 @@ public class TDRResource extends Resource {
           List<Integer> aliasList = identifierList
                   .stream()
                   .map(Dataset::parseIdentifierToAlias)
-                  // this will filter duplicate aliases, ex. "DUOS-00593, DUOS-000593"
+                  // this will filter duplicate aliases, ex. "593, 593"
                   .distinct()
                   .toList();
           List<Dataset> datasets = tdrService.getDatasetsByIdentifier(aliasList);
