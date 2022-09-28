@@ -24,10 +24,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.util.Arrays;
@@ -97,7 +95,6 @@ public class TDRResource extends Resource {
     @PermitAll
     public Response createDraftDataAccessRequest(
         @Auth AuthUser authUser,
-        @Context UriInfo info,
         @QueryParam("identifiers") String identifiers,
         @QueryParam("projectTitle") String projectTitle) {
       try {
@@ -148,7 +145,7 @@ public class TDRResource extends Resource {
           newDar.setDatasetIds(datasetIds);
           DataAccessRequest result = darService.insertDraftDataAccessRequest(user, newDar);
           // URI should return the new DAR url
-          URI uri = info.getRequestUriBuilder().replacePath("").replacePath("api/dar/v2/" + result.getReferenceId()).replaceQuery(null).build();
+          URI uri = UriBuilder.fromPath("api/dar/v2/" + result.getReferenceId()).build();
           return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
         }
       } catch (Exception e) {

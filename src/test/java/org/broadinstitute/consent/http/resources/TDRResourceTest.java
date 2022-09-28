@@ -21,7 +21,6 @@ import org.mockito.Spy;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -30,7 +29,6 @@ import java.util.UUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -47,12 +45,6 @@ public class TDRResourceTest {
 
     @Mock
     private DataAccessRequestService darService;
-
-    @Mock
-    private UriInfo uriInfo;
-
-    @Mock
-    private UriBuilder uriBuilder;
 
     @Spy
     private DataAccessRequestDAO dataAccessRequestDAO;
@@ -160,16 +152,11 @@ public class TDRResourceTest {
         when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1,d2));
         when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
 
-        // Mock out uriInfo since we're using that in the response
-        when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
-        when(uriInfo.getRequestUriBuilder()).thenReturn(UriBuilder.fromUri("https://test.domain.org/some/path"));
-        when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
-
         initResource();
 
-        String expectedUri = "https://test.domain.org/api/dar/v2/" + newDar.getReferenceId();
+        String expectedUri = "api/dar/v2/" + newDar.getReferenceId();
 
-        Response r = resource.createDraftDataAccessRequest(authUser, uriInfo, identifiers, "New Project");
+        Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
         assertEquals(Response.Status.CREATED.getStatusCode(), r.getStatus());
         assertEquals(r.getLocation().toString(), expectedUri);
     }
@@ -181,7 +168,7 @@ public class TDRResourceTest {
 
         initResource();
 
-        Response r = resource.createDraftDataAccessRequest(authUser, uriInfo, null, null);
+        Response r = resource.createDraftDataAccessRequest(authUser, null, null);
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), r.getStatus());
     }
 
@@ -208,7 +195,7 @@ public class TDRResourceTest {
 
         initResource();
 
-        Response r = resource.createDraftDataAccessRequest(authUser, uriInfo, identifiers, "New Project");
+        Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), r.getStatus());
         Error notFoundError = (Error) r.getEntity();
         assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]", notFoundError.getMessage());
