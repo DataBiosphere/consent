@@ -19,7 +19,7 @@ public class MailMessageMapper implements RowMapper<MailMessage> {
         r.getDate("date_sent"),
         r.getString("email_text"),
         r.getString("sendgrid_response"),
-        r.getString("sendgrid_status"),
-        r.getString("create_date"));
+        r.getInt("sendgrid_status"),
+        r.getDate("create_date"));
   }
 }
