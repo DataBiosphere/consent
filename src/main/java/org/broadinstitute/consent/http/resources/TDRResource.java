@@ -29,7 +29,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -133,10 +135,12 @@ public class TDRResource extends Resource {
                   .map(Dataset::getDataSetId)
                   .toList();
           DataAccessRequest newDar = new DataAccessRequest();
+          newDar.setCreateDate(new Timestamp(new Date().getTime()));
           DataAccessRequestData data = new DataAccessRequestData();
           String referenceId = UUID.randomUUID().toString();
           newDar.setReferenceId(referenceId);
           data.setReferenceId(referenceId);
+          data.setCreateDate(newDar.getCreateDate().getTime());
           if (!Objects.isNull(projectTitle) && !projectTitle.isBlank()) {
             data.setProjectTitle(projectTitle);
           }
