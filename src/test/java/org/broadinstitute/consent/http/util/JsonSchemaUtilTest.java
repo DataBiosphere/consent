@@ -52,7 +52,7 @@ public class JsonSchemaUtilTest {
   @Test
   public void testParseDatasetRegistrationObject_v1() {
     JsonSchemaUtil util = new JsonSchemaUtil();
-    DatasetRegistrationSchemaV1 instance = util.deserialize(datasetRegistrationInstance);
+    DatasetRegistrationSchemaV1 instance = util.deserializeDatasetRegistration(datasetRegistrationInstance);
     assertNotNull(instance);
     assertNotNull(instance.getStudyType());
     assertNotNull(instance.getStudyName());

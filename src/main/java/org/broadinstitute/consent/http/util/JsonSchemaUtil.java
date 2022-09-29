@@ -48,7 +48,7 @@ public class JsonSchemaUtil {
     }
   }
 
-  public DatasetRegistrationSchemaV1 deserialize(String datasetRegistrationInstance) {
+  public DatasetRegistrationSchemaV1 deserializeDatasetRegistration(String datasetRegistrationInstance) {
     try {
       String schemaString = IOUtils.resourceToString("/dataset-registration-schema_v1.json", Charset.defaultCharset());
       JSONObject jsonSchema = new JSONObject(schemaString);

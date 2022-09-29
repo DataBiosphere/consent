@@ -6,7 +6,6 @@ import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
@@ -14,7 +13,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -161,7 +159,7 @@ public class DatasetResource extends Resource {
             } catch (Exception e) {
                 throw new BadRequestException("Invalid schema");
             }
-            DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserialize(json);
+            DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
             User user = userService.findUserByEmail(authUser.getEmail());
             // validate file if exists.
             if (Objects.nonNull(fileDetail)) {
