@@ -692,6 +692,34 @@ public class DatasetResourceTest {
     public void testCreateDatasetRegistration_validSchema() {
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(datasetService.createDatasetsFromRegistration(any(), any(), any(), any())).thenReturn(List.of());
+        DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
+        String schemaString = new Gson().toJson(schemaV1);
+        initResource();
+        Response response = resource.createDatasetRegistration(authUser,null, null, schemaString);
+        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
+
+//    @Test
+//    public void testCreateDatasetRegistration_withFile() throws Exception {
+//        Date now = new Date();
+//        String fileContent = "test";
+//        InputStream stream = IOUtils.toInputStream(fileContent, Charset.defaultCharset());
+//        File temp = new File();
+//
+//        FileDataBodyPart bodyPart = new FileDataBodyPart();
+//
+//
+//        FormDataContentDisposition content = new FormDataContentDisposition("form-data");
+//        when(userService.findUserByEmail(any())).thenReturn(user);
+//        when(datasetService.createDatasetsFromRegistration(any(), any(), any(), any())).thenReturn(List.of());
+//        DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
+//        String schemaString = new Gson().toJson(schemaV1);
+//        initResource();
+//        Response response = resource.createDatasetRegistration(authUser, stream, content, schemaString);
+//        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+//    }
+
+    private DatasetRegistrationSchemaV1 creatDatasetRegistrationMock(User user) {
         DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
         schemaV1.setStudyName("Name");
         schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.Observational);
@@ -714,10 +742,6 @@ public class DatasetResourceTest {
         consentGroup.setConsentGroupName("Name");
         consentGroup.setGeneralResearchUse(true);
         schemaV1.setConsentGroups(List.of(consentGroup));
-        String schemaString = new Gson().toJson(schemaV1);
-        initResource();
-        Response response = resource.createDatasetRegistration(authUser,null, null, schemaString);
-        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+        return schemaV1;
     }
-
 }

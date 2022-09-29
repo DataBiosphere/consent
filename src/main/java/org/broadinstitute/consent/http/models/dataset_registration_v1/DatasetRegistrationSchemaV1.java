@@ -305,7 +305,7 @@ public class DatasetRegistrationSchemaV1 {
      */
     @JsonProperty("alternativeDataSharingPlanDataSubmitted")
     @JsonPropertyDescription("Upload your alternative sharing plan (file upload)")
-    private List<AlternativeDataSharingPlanDataSubmitted> alternativeDataSharingPlanDataSubmitted = new ArrayList<AlternativeDataSharingPlanDataSubmitted>();
+    private DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted alternativeDataSharingPlanDataSubmitted;
     /**
      * Data to be released will meet the timeframes specified in the NHGRI Guidance for Data Submission and Data Release
      *
@@ -946,7 +946,7 @@ public class DatasetRegistrationSchemaV1 {
      *
      */
     @JsonProperty("alternativeDataSharingPlanDataSubmitted")
-    public List<AlternativeDataSharingPlanDataSubmitted> getAlternativeDataSharingPlanDataSubmitted() {
+    public DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted getAlternativeDataSharingPlanDataSubmitted() {
         return alternativeDataSharingPlanDataSubmitted;
     }
 
@@ -955,7 +955,7 @@ public class DatasetRegistrationSchemaV1 {
      *
      */
     @JsonProperty("alternativeDataSharingPlanDataSubmitted")
-    public void setAlternativeDataSharingPlanDataSubmitted(List<AlternativeDataSharingPlanDataSubmitted> alternativeDataSharingPlanDataSubmitted) {
+    public void setAlternativeDataSharingPlanDataSubmitted(DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted alternativeDataSharingPlanDataSubmitted) {
         this.alternativeDataSharingPlanDataSubmitted = alternativeDataSharingPlanDataSubmitted;
     }
 
@@ -1332,6 +1332,51 @@ public class DatasetRegistrationSchemaV1 {
         @JsonCreator
         public static DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanControlledOpenAccess fromValue(String value) {
             DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanControlledOpenAccess constant = CONSTANTS.get(value);
+            if (constant == null) {
+                throw new IllegalArgumentException(value);
+            } else {
+                return constant;
+            }
+        }
+
+    }
+
+
+    /**
+     * Upload your alternative sharing plan (file upload)
+     *
+     */
+    @Generated("jsonschema2pojo")
+    public enum AlternativeDataSharingPlanDataSubmitted {
+
+        Within_3_months_of_the_last_data_generated_or_last_clinical_visit("Within 3 months of the last data generated or last clinical visit"),
+        By_batches_over_study_timeline_e_g_based_on_clinical_trial_enrollment_benchmarks("By batches over Study Timeline (e.g. based on clinical trial enrollment benchmarks)");
+        private final String value;
+        private final static Map<String, DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted>();
+
+        static {
+            for (DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted c: values()) {
+                CONSTANTS.put(c.value, c);
+            }
+        }
+
+        AlternativeDataSharingPlanDataSubmitted(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return this.value;
+        }
+
+        @JsonValue
+        public String value() {
+            return this.value;
+        }
+
+        @JsonCreator
+        public static DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted fromValue(String value) {
+            DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted constant = CONSTANTS.get(value);
             if (constant == null) {
                 throw new IllegalArgumentException(value);
             } else {

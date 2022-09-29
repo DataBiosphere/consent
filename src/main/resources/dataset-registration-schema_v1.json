@@ -212,16 +212,13 @@
       "description": "Upload your alternative sharing plan (file upload)"
     },
     "alternativeDataSharingPlanDataSubmitted": {
-      "type": "array",
+      "type": "string",
       "label": "Data will be submitted",
       "description": "Upload your alternative sharing plan (file upload)",
-      "items": {
-        "type": "string",
-        "enum": [
-          "Within 3 months of the last data generated or last clinical visit",
-          "By batches over Study Timeline (e.g. based on clinical trial enrollment benchmarks)"
-        ]
-      }
+      "enum": [
+        "Within 3 months of the last data generated or last clinical visit",
+        "By batches over Study Timeline (e.g. based on clinical trial enrollment benchmarks)"
+      ]
     },
     "alternativeDataSharingPlanDataReleased": {
       "type": "boolean",
