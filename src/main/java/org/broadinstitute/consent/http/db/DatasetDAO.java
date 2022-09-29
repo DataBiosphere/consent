@@ -99,6 +99,18 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " WHERE d.alias = :alias")
     Dataset findDatasetByAlias(@Bind("alias") Integer alias);
 
+    @UseRowReducer(DatasetReducer.class)
+    @SqlQuery(
+            "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use " +
+                    " FROM dataset d " +
+                    " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
+                    " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
+                    " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
+                    " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
+                    " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
+                    " WHERE d.alias IN (<aliases>)")
+    List<Dataset> findDatasetsByAlias(@BindList("aliases") List<Integer> aliases);
+
     @SqlQuery("SELECT dataset_id FROM dataset WHERE object_id = :objectId")
     Integer findDatasetIdByObjectId(@Bind("objectId") String objectId);
 
