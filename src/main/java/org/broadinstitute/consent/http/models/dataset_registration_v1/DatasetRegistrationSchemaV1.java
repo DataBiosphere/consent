@@ -84,7 +84,7 @@ public class DatasetRegistrationSchemaV1 {
      */
     @JsonProperty("studyType")
     @JsonPropertyDescription("The study type")
-    private DatasetRegistrationSchemaV1 .StudyType studyType;
+    private DatasetRegistrationSchemaV1.StudyType studyType;
     /**
      * Description of the study
      * (Required)
@@ -377,7 +377,7 @@ public class DatasetRegistrationSchemaV1 {
      *
      */
     @JsonProperty("studyType")
-    public DatasetRegistrationSchemaV1 .StudyType getStudyType() {
+    public DatasetRegistrationSchemaV1.StudyType getStudyType() {
         return studyType;
     }
 
@@ -387,7 +387,7 @@ public class DatasetRegistrationSchemaV1 {
      *
      */
     @JsonProperty("studyType")
-    public void setStudyType(DatasetRegistrationSchemaV1 .StudyType studyType) {
+    public void setStudyType(DatasetRegistrationSchemaV1.StudyType studyType) {
         this.studyType = studyType;
     }
 
@@ -1489,16 +1489,16 @@ public class DatasetRegistrationSchemaV1 {
     @Generated("jsonschema2pojo")
     public enum StudyType {
 
-        OBSERVATIONAL("Observational"),
-        INTERVENTIONAL("Interventional"),
-        DESCRIPTIVE("Descriptive"),
-        ANALYTICAL("Analytical"),
-        PROSPECTIVE("Prospective"),
-        RETROSPECTIVE("Retrospective"),
-        CASE_REPORT("Case report"),
-        CASE_SERIES("Case series"),
-        CROSS_SECTIONAL("Cross-sectional"),
-        COHORT_STUDY("Cohort study");
+        Observational("Observational"),
+        Interventional("Interventional"),
+        Descriptive("Descriptive"),
+        Analytical("Analytical"),
+        Prospective("Prospective"),
+        Retrospective("Retrospective"),
+        Case_report("Case report"),
+        Case_series("Case series"),
+        Cross_sectional("Cross-sectional"),
+        Cohort_study("Cohort study");
         private final String value;
         private final static Map<String, DatasetRegistrationSchemaV1 .StudyType> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1 .StudyType>();
 

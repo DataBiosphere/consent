@@ -279,11 +279,15 @@
       }
     },
     "consentGroup": {
-      "required": ["consentGroupName"],
-      "oneOf": [
-        {"required":  ["generalResearchUse"]},
-        {"required":  ["hmb"]},
-        {"required":  ["diseaseSpecificUse"]}
+      "allOf": [
+        {"required": ["consentGroupName"]},
+        {
+          "anyOf": [
+            {"required": ["generalResearchUse"]},
+            {"required": ["hmb"]},
+            {"required": ["diseaseSpecificUse"]}
+          ]
+        }
       ],
       "type": "object",
       "properties": {

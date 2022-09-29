@@ -153,12 +153,16 @@ public class DatasetResource extends Resource {
             @FormDataParam("file") InputStream uploadInputStream,
             @FormDataParam("file") FormDataContentDisposition fileDetail,
             @FormDataParam("dataset") String json) {
-        if (!jsonSchemaUtil.isValidSchema_v1(json)) {
-            throw new BadRequestException("Invalid schema");
-        }
         try {
+            try {
+                if (!jsonSchemaUtil.isValidSchema_v1(json)) {
+                    throw new BadRequestException("Invalid schema");
+                }
+            } catch (Exception e) {
+                throw new BadRequestException("Invalid schema");
+            }
             DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserialize(json);
-            User user = userService.findUserByEmail(authUser.getGoogleUser().getEmail());
+            User user = userService.findUserByEmail(authUser.getEmail());
             // validate file if exists.
             if (Objects.nonNull(fileDetail)) {
                 validateFileDetails(fileDetail);
@@ -442,7 +446,7 @@ public class DatasetResource extends Resource {
         List<Integer> dacIds = user.getRoles().stream()
             .filter(r -> r.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()))
             .map(UserRole::getDacId)
-            .collect(Collectors.toList());
+            .toList();
         if (dacIds.isEmpty()) {
             // Something went very wrong here. A chairperson with no dac ids is an error
             logger().error("Unable to find dac ids for chairperson user: " + user.getEmail());

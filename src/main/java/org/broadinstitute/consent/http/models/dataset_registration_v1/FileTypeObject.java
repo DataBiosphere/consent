@@ -158,11 +158,11 @@ public class FileTypeObject {
     @Generated("jsonschema2pojo")
     public enum FileType {
 
-        ARRAYS("Arrays"),
-        GENOME("Genome"),
-        EXOME("Exome"),
-        SURVEY("Survey"),
-        PHENOTYPE("Phenotype");
+        Arrays("Arrays"),
+        Genome("Genome"),
+        Exome("Exome"),
+        Survey("Survey"),
+        Phenotype("Phenotype");
         private final String value;
         private final static Map<String, FileTypeObject.FileType> CONSTANTS = new HashMap<String, FileTypeObject.FileType>();
 

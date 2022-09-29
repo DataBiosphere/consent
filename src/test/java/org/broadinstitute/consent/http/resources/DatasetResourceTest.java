@@ -11,9 +11,11 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.service.ConsentService;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -44,9 +46,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DatasetResourceTest {
-
-    @Mock
-    private ConsentService consentService;
 
     @Mock
     private DataAccessRequestService darService;
@@ -429,9 +428,6 @@ public class DatasetResourceTest {
         dataSet.setDataSetId(1);
         dataSet.setDacId(1);
 
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
-
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         role.setDacId(1);
@@ -465,8 +461,6 @@ public class DatasetResourceTest {
     public void testDeleteErrorNullConsent() {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -486,9 +480,6 @@ public class DatasetResourceTest {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         dataSet.setDacId(2);
-
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -521,8 +512,6 @@ public class DatasetResourceTest {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         dataSet.setDacId(1);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -557,8 +546,6 @@ public class DatasetResourceTest {
     public void testDisableDataSetErrorNullConsent() {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -578,8 +565,6 @@ public class DatasetResourceTest {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         dataSet.setDacId(2);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -679,4 +664,60 @@ public class DatasetResourceTest {
         Response response = resource.findAllDatasetsAvailableToUser(authUser);
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
+
+    @Test
+    public void testCreateDatasetRegistration_invalidSchema_case1() {
+        initResource();
+        Response response = resource.createDatasetRegistration(authUser,null, null, "");
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testCreateDatasetRegistration_invalidSchema_case2() {
+        initResource();
+        Response response = resource.createDatasetRegistration(authUser,null, null, "{}");
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testCreateDatasetRegistration_invalidSchema_case3() {
+        DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+        String schemaString = new Gson().toJson(schemaV1);
+        initResource();
+        Response response = resource.createDatasetRegistration(authUser,null, null, schemaString);
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testCreateDatasetRegistration_validSchema() {
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(datasetService.createDatasetsFromRegistration(any(), any(), any(), any())).thenReturn(List.of());
+        DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+        schemaV1.setStudyName("Name");
+        schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.Observational);
+        schemaV1.setStudyDescription("Description");
+        schemaV1.setDataTypes(List.of("Data Type"));
+        FileTypeObject fileType = new FileTypeObject();
+        fileType.setFileType(FileTypeObject.FileType.Arrays);
+        fileType.setFunctionalEquivalence("Functional Equivalence");
+        fileType.setNumberOfParticipants(1);
+        schemaV1.setFileTypes(List.of(fileType));
+        schemaV1.setPhenotypeIndication("Indication");
+        schemaV1.setSpecies("Species");
+        schemaV1.setPiName("PI Name");
+        when(user.getUserId()).thenReturn(1);
+        schemaV1.setDataSubmitterUserId(user.getUserId());
+        schemaV1.setDataCustodianEmail(List.of("valid_email@domain.org"));
+        schemaV1.setPublicVisibility(true);
+        schemaV1.setDataAccessCommitteeId(1);
+        ConsentGroup consentGroup = new ConsentGroup();
+        consentGroup.setConsentGroupName("Name");
+        consentGroup.setGeneralResearchUse(true);
+        schemaV1.setConsentGroups(List.of(consentGroup));
+        String schemaString = new Gson().toJson(schemaV1);
+        initResource();
+        Response response = resource.createDatasetRegistration(authUser,null, null, schemaString);
+        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
+
 }
