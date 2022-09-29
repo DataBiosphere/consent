@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.util;
 
+import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -43,6 +45,21 @@ public class JsonSchemaUtil {
         }
       }
       return false;
+    }
+  }
+
+  public DatasetRegistrationSchemaV1 deserialize(String datasetRegistrationInstance) {
+    try {
+      String schemaString = IOUtils.resourceToString("/dataset-registration-schema_v1.json", Charset.defaultCharset());
+      JSONObject jsonSchema = new JSONObject(schemaString);
+      JSONObject jsonSubject = new JSONObject(datasetRegistrationInstance);
+      Schema schema = SchemaLoader.load(jsonSchema);
+      schema.validate(jsonSubject);
+      Gson gson = new Gson();
+      return gson.fromJson(datasetRegistrationInstance, DatasetRegistrationSchemaV1.class);
+    } catch (IOException ioe) {
+      logger.error("Unable to load the data submitter schema: " + ioe.getMessage());
+      return null;
     }
   }
 }

@@ -83,7 +83,7 @@ public class DatasetResourceTest {
     }
 
     private void initResource() {
-        resource = new DatasetResource(consentService, datasetService, userService, darService);
+        resource = new DatasetResource(datasetService, userService, darService);
     }
 
     private String createPropertiesJson(List<DatasetPropertyDTO> properties) {

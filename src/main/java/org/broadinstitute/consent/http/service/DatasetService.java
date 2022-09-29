@@ -1,31 +1,35 @@
 package org.broadinstitute.consent.http.service;
 
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
-
+import java.io.InputStream;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -51,15 +55,17 @@ public class DatasetService {
     private final ConsentDAO consentDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DatasetDAO datasetDAO;
+    private final GCSService gcsService;
     private final UserRoleDAO userRoleDAO;
     private final UseRestrictionConverter converter;
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
-                          UserRoleDAO userRoleDAO, UseRestrictionConverter converter) {
+                          GCSService gcsService, UserRoleDAO userRoleDAO, UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.datasetDAO = dataSetDAO;
+        this.gcsService = gcsService;
         this.userRoleDAO = userRoleDAO;
         this.converter = converter;
     }
@@ -477,5 +483,24 @@ public class DatasetService {
             }
             return datasets;
         }
+    }
+
+    /**
+     * This method takes an instance of a dataset registration schema and creates datasets from it.
+     * There will be one dataset per ConsentGroup in the dataset.
+     * TODO: This is a stub and will be fleshed out in future PRs.
+     *
+     * @param registration The DatasetRegistrationSchemaV1
+     * @param user The User creating these datasets
+     * @param uploadInputStream InputStream nullable input stream representing file content for created datasets
+     * @param fileDetail FormDataContentDisposition nullable file details for created datasets
+     * @return List of created Datasets from the provided registration schema
+     */
+    public List<Dataset> createDatasetsFromRegistration(
+        DatasetRegistrationSchemaV1 registration,
+        User user,
+        @Nullable InputStream uploadInputStream,
+        @Nullable FormDataContentDisposition fileDetail) {
+        return List.of();
     }
 }
