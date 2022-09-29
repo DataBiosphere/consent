@@ -115,6 +115,17 @@ public class DatasetDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindDatasetsByAlias() {
+        Dataset dataset1 = createDataset();
+        Dataset dataset2 = createDataset();
+
+        List<Dataset> foundDatasets = datasetDAO.findDatasetsByAlias(List.of(dataset1.getAlias(), dataset2.getAlias()));
+        List<Integer> foundDatasetIds = foundDatasets.stream().map(Dataset::getDataSetId).toList();
+        assertNotNull(foundDatasets);
+        assertTrue(foundDatasetIds.containsAll(List.of(dataset1.getDataSetId(), dataset2.getDataSetId())));
+    }
+
+    @Test
     public void testFindNeedsApprovalDataSetByDataSetId() {
         Dataset dataset = createDataset();
         datasetDAO.updateDatasetNeedsApproval(dataset.getDataSetId(), true);
