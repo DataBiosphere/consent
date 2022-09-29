@@ -134,6 +134,32 @@ public interface UserDAO extends Transactional<UserDAO> {
         + " ORDER BY u.create_date DESC ")
     Set<User> findUsers();
 
+    @RegisterBeanMapper(value = User.class, prefix = "u")
+    @RegisterBeanMapper(value = UserRole.class)
+    @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
+    @RegisterBeanMapper(value = Institution.class, prefix = "lci")
+    @RegisterBeanMapper(value = Institution.class, prefix = "i")
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery(
+            //This will pull in users tied to the institution
+            //Users will come with LCs issued by SOs institution (if any)
+            " SELECT DISTINCT " +
+                    User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
+                    " r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
+                    " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, " +
+                    " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
+                    " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, " +
+                    " lc.update_user_id AS lc_update_user_id, " +
+                    Institution.QUERY_FIELDS_WITH_LCI_PREFIX + QUERY_FIELD_SEPARATOR +
+                    Institution.QUERY_FIELDS_WITH_I_PREFIX +
+                    " FROM users u " +
+                    " LEFT JOIN user_role ur ON ur.user_id = u.user_id " +
+                    " LEFT JOIN roles r ON r.roleid = ur.role_id " +
+                    " LEFT JOIN library_card lc ON lc.user_id = u.user_id " +
+                    " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id" +
+                    " LEFT JOIN institution i ON u.institution_id = i.institution_id")
+    List<User> findUsersWithLCsAndInstitution();
+
     @UseRowMapper(UserWithRolesMapper.class)
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.roleId = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
     List<User> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);
