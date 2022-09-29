@@ -742,7 +742,7 @@ public class DatasetResourceTest {
     /**
      * Helper method to create a minimally valid instance of a dataset registration schema
      * @param user The User
-     * @return The DatasetRegistrationSchemaV1 instance
+     * @return The DatasetRegistrationSchemaV1.yaml instance
      */
     private DatasetRegistrationSchemaV1 creatDatasetRegistrationMock(User user) {
         DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();

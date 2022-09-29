@@ -490,7 +490,7 @@ public class DatasetService {
      * There will be one dataset per ConsentGroup in the dataset.
      * TODO: This is a stub and will be fleshed out in future PRs.
      *
-     * @param registration The DatasetRegistrationSchemaV1
+     * @param registration The DatasetRegistrationSchemaV1.yaml
      * @param user The User creating these datasets
      * @param uploadInputStream InputStream nullable input stream representing file content for created datasets
      * @param fileDetail FormDataContentDisposition nullable file details for created datasets
