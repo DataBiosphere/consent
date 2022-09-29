@@ -34,8 +34,10 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -884,9 +886,10 @@ public class DarCollectionServiceTest {
     summaryThree.addStatus(DarStatus.CANCELED.getValue(), RandomStringUtils.randomAlphabetic(3));
 
     DataAccessRequest draft = new DataAccessRequest();
+    draft.setCreateDate(new Timestamp(new Date().getTime()));
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(RandomStringUtils.randomAlphabetic(10));
-    data.setCreateDate(Calendar.getInstance().getTimeInMillis());
+    data.setCreateDate(draft.getCreateDate().getTime());
     draft.setDraft(true);
     draft.setData(data);
     List<DarCollectionSummary> mockSummaries = new ArrayList<>();
