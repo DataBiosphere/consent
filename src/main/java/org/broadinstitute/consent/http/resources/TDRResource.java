@@ -137,7 +137,6 @@ public class TDRResource extends Resource {
           String referenceId = UUID.randomUUID().toString();
           newDar.setReferenceId(referenceId);
           data.setReferenceId(referenceId);
-          data.setCreateDate(newDar.getCreateDate().getTime());
           if (!Objects.isNull(projectTitle) && !projectTitle.isBlank()) {
             data.setProjectTitle(projectTitle);
           }
