@@ -10,9 +10,9 @@ import java.util.Map;
 @Generated("jsonschema2pojo")
 public enum NihAnvilUse {
 
-    I_DID("I did"),
-    I_WILL("I will"),
-    NO("No");
+    I_did("I did"),
+    I_will("I will"),
+    No("No");
     private final String value;
     private final static Map<String, NihAnvilUse> CONSTANTS = new HashMap<String, NihAnvilUse>();
 

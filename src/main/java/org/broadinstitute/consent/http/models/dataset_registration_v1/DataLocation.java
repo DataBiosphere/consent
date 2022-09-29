@@ -10,10 +10,10 @@ import java.util.Map;
 @Generated("jsonschema2pojo")
 public enum DataLocation {
 
-    AN_VIL_WORKSPACE("AnVIL Workspace"),
-    TERRA_WORKSPACE("Terra Workspace"),
-    TDR_LOCATION("TDR Location"),
-    NOT_DETERMINED("Not Determined");
+    An_VIL_Workspace("AnVIL Workspace"),
+    Terra_Workspace("Terra Workspace"),
+    TDR_Location("TDR Location"),
+    Not_Determined("Not Determined");
     private final String value;
     private final static Map<String, DataLocation> CONSTANTS = new HashMap<String, DataLocation>();
 
