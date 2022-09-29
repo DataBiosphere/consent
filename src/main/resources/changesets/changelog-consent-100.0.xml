@@ -5,13 +5,13 @@
         <addColumn tableName="email_entity">
             <column name="sendgrid_response" type="text"/>
             <column name="sendgrid_status" type="integer" defaultValue="null"/>
-            // todo: default value of date_sent for existing records
-            <column name="create_date" type="date" defaultValue="date_sent"??/>
+            <column name="create_date" type="date"/>
         </addColumn>
         <sql>
-        <!-- Populate date_sent column on email_entity table
-                 with date_sent value for existing records -->
-            UPDATE email_entity e SET create_date = date_sent;
+            UPDATE email_entity e
+            SET create_date = date_sent
+            WHERE create_date IS NULL
+            AND date_sent IS NOT NULL;
         </sql>
     </changeSet>
 </databaseChangeLog>
