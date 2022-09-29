@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -196,6 +197,28 @@ public class UserDAOTest extends DAOTestHelper {
         assertFalse(users.isEmpty());
         assertFalse(users.get(0).getProperties().isEmpty());
         assertFalse(users.get(0).getRoles().isEmpty());
+    }
+
+    @Test
+    public void testFindUsersWithLCsAndInstitution() {
+        User user = createUserWithInstitution();
+        libraryCardDAO.insertLibraryCard(user.getUserId(), user.getInstitutionId(), "asdf", user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+
+        User user2 = createUserWithInstitution();
+        libraryCardDAO.insertLibraryCard(user2.getUserId(), user.getInstitutionId(), "asdf", user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+
+        List<User> users = userDAO.findUsersWithLCsAndInstitution();
+        System.out.println(users.stream().map((u) -> u.getUserId()).collect(Collectors.toList()));
+        assertNotNull(users);
+        assertFalse(users.isEmpty());
+        assertEquals(2, users.size());
+        assertNotNull(users.get(0).getInstitution());
+        assertNotNull(users.get(0).getLibraryCards());
+        assertEquals(1, users.get(0).getLibraryCards().size());
+        assertNotNull(users.get(1).getInstitution());
+        assertNotNull(users.get(1).getLibraryCards());
+        assertEquals(1, users.get(1).getLibraryCards().size());
+
     }
 
     @Test

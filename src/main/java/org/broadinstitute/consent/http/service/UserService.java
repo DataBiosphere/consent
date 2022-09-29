@@ -215,7 +215,7 @@ public class UserService {
                     throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") is not associated with an Institution.");
                 }
             case Resource.ADMIN :
-                return new ArrayList<>(userDAO.findUsers());
+                return userDAO.findUsersWithLCsAndInstitution();
         }
         return Collections.emptyList();
     }
