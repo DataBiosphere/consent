@@ -1,5 +1,5 @@
 {
-  "$id": "https://consent.dsde-prod.broadinstitute.org/schemas/dataset-submission",
+  "$id": "https://consent.dsde-prod.broadinstitute.org/schemas/dataset-registration",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Dataset Registration Schema",
   "version": 1,
@@ -355,6 +355,12 @@
           "type": "boolean",
           "label": "Publication Moratorium (MOR)",
           "description": "Publication Moratorium (MOR)"
+        },
+        "morDate": {
+          "type": "string",
+          "format": "date",
+          "label": "Publication Moratorium Date (MOR)",
+          "description": "Publication Moratorium Date (MOR)"
         },
         "npu": {
           "type": "boolean",
