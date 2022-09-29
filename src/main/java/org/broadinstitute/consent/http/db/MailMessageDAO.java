@@ -20,8 +20,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
     Integer existsCollectDAREmail(@Bind("darReferenceId") String darReferenceId, @Bind("rpReferenceId") String rpReferenceId);
 
     @SqlUpdate("INSERT INTO email_entity " +
-            "(vote_id, entity_reference_id, user_id, email_type, date_sent, email_text) VALUES " +
-            "(:voteId, :entityReferenceId, :userId, :emailType, :dateSent, :emailText)")
+            "(vote_id, entity_reference_id, user_id, email_type, date_sent, email_text, create_date) VALUES " +
+            "(:voteId, :entityReferenceId, :userId, :emailType, :dateSent, :emailText, :dateSent)")
     void insertEmail(@Bind("voteId") Integer voteId,
                      @Bind("entityReferenceId") String entityReferenceId,
                      @Bind("userId") Integer userId,
@@ -30,8 +30,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
                      @Bind("emailText") String emailText);
 
     @SqlBatch("INSERT INTO email_entity " +
-            "(entity_reference_id, user_id, email_type, date_sent, email_text) VALUES " +
-            "(:entityReferenceId, :userId, :emailType, :dateSent, :emailText)")
+            "(entity_reference_id, user_id, email_type, date_sent, email_text, create_date) VALUES " +
+            "(:entityReferenceId, :userId, :emailType, :dateSent, :emailText, :dateSent)")
     void insertBulkEmailNoVotes(@Bind("userId") List<Integer> userIds,
                          @Bind("entityReferenceId") String entityReferenceId,
                          @Bind("emailType") Integer emailType,
