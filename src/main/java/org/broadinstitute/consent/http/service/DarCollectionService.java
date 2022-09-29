@@ -51,6 +51,7 @@ import static java.util.stream.Collectors.toList;
 
 public class DarCollectionService {
 
+  private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final DarCollectionDAO darCollectionDAO;
   private final DarCollectionServiceDAO collectionServiceDAO;
@@ -130,30 +131,21 @@ public class DarCollectionService {
     });
   }
 
-  private void processDarCollectionDraftsAsSummaries(List<DataAccessRequest> drafts, List<DarCollectionSummary> summaries) {
-    drafts.forEach(d -> {
-      try{
-        summaries.add(processDraftAsSummary(d));
-      } catch(Exception e) {
-        logger.warn("Error processing draft with id: " + d.getId());
-      }
-    });
-  }
-
   private DarCollectionSummary processDraftAsSummary(DataAccessRequest d) {
-    DarCollectionSummary summary = new DarCollectionSummary();
-    Date createDate = new Date(d.getData().getCreateDate());
-    String darCode = "DRAFT_DAR_" + new SimpleDateFormat("yyyy-MM-dd")
-            .format(createDate);
-
-    summary.setDarCode(darCode);
-    summary.setStatus(DarCollectionStatus.DRAFT.getValue());
-    summary.setName(d.getData().getProjectTitle());
-    summary.addAction(DarCollectionActions.RESUME.getValue());
-    summary.addAction(DarCollectionActions.DELETE.getValue());
-    summary.addReferenceId(d.referenceId);
-
-    return summary;
+    try {
+      DarCollectionSummary summary = new DarCollectionSummary();
+      String darCode = "DRAFT_DAR_" + sdf.format(d.getCreateDate());
+      summary.setDarCode(darCode);
+      summary.setStatus(DarCollectionStatus.DRAFT.getValue());
+      summary.setName(d.getData().getProjectTitle());
+      summary.addAction(DarCollectionActions.RESUME.getValue());
+      summary.addAction(DarCollectionActions.DELETE.getValue());
+      summary.addReferenceId(d.referenceId);
+      return summary;
+    } catch (Exception e) {
+      logger.warn("Error processing draft with id: " + d.getId());
+    }
+    return null;
   }
 
   private void processDarCollectionSummariesForResearcher(List<DarCollectionSummary> summaries) {
@@ -311,7 +303,12 @@ public class DarCollectionService {
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
         processDarCollectionSummariesForResearcher(summaries);
         List<DataAccessRequest> drafts = dataAccessRequestDAO.findAllDraftsByUserId(userId);
-        processDarCollectionDraftsAsSummaries(drafts, summaries);
+        summaries.addAll(drafts
+          .stream()
+          .map(this::processDraftAsSummary)
+          .filter(Objects::nonNull)
+          .toList()
+        );
         break;
       default:
         break;
