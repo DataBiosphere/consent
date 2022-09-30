@@ -1,19 +1,33 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.TDRService;
+import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Spy;
 
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -26,6 +40,18 @@ public class TDRResourceTest {
     @Mock
     private DatasetService datasetService;
 
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private DataAccessRequestService darService;
+
+    @Spy
+    private DataAccessRequestDAO dataAccessRequestDAO;
+
+    private final AuthUser authUser = new AuthUser("test@test.com");
+    private final User user = new User(1, authUser.getEmail(), "Display Name", new Date());
+
     private TDRResource resource;
 
     @Before
@@ -34,7 +60,11 @@ public class TDRResourceTest {
     }
 
     private void initResource() {
-        resource = new TDRResource(tdrService, datasetService);
+      try {
+        resource = new TDRResource(tdrService, datasetService, userService, darService);
+      } catch (Exception e) {
+        fail("Initialization Exception: " + e.getMessage());
+      }
     }
 
     @Test
@@ -98,4 +128,87 @@ public class TDRResourceTest {
         assertEquals(404, r.getStatus());
     }
 
+    // Created response when a new DAR draft is successful
+    @Test
+    public void testCreateDraftDataAccessRequest() throws Exception {
+        String identifiers = "DUOS-00001, DUOS-00002";
+        List<Integer> identifierList = Arrays.stream(identifiers.split(","))
+                .map(String::trim)
+                .filter(identifier -> !identifier.isBlank())
+                .map(Dataset::parseIdentifierToAlias)
+                .toList();
+
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+        d1.setAlias(1);
+
+        Dataset d2 = new Dataset();
+        d2.setDataSetId(2);
+        d2.setAlias(2);
+
+        DataAccessRequest newDar = generateDataAccessRequest();
+
+        when(userService.findOrCreateUser(any())).thenReturn(user);
+        when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1,d2));
+        when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
+
+        initResource();
+
+        String expectedUri = "api/dar/v2/" + newDar.getReferenceId();
+
+        Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
+        assertEquals(Response.Status.CREATED.getStatusCode(), r.getStatus());
+        assertEquals(r.getLocation().toString(), expectedUri);
+    }
+
+    // Bad Request response (400) when no identifiers are provided
+    @Test
+    public void testCreateDraftDataAccessRequestNoIdentifiers() throws Exception {
+        when(userService.findOrCreateUser(any())).thenReturn(user);
+
+        initResource();
+
+        Response r = resource.createDraftDataAccessRequest(authUser, null, null);
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), r.getStatus());
+    }
+
+    // Not Found response (404) with list of invalid identifiers if any do not match to a dataset
+    @Test
+    public void testCreateDraftDataAccessRequestInvalidIdentifiers() throws Exception {
+        String identifiers = "DUOS-00001, DUOS-00002";
+        List<Integer> identifierList = Arrays.stream(identifiers.split(","))
+                .map(String::trim)
+                .filter(identifier -> !identifier.isBlank())
+                .map(Dataset::parseIdentifierToAlias)
+                .toList();
+
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+        d1.setAlias(1);
+
+        Dataset d2 = new Dataset();
+        d2.setDataSetId(2);
+        d2.setAlias(2);
+
+        when(userService.findOrCreateUser(any())).thenReturn(user);
+        when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1));
+
+        initResource();
+
+        Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), r.getStatus());
+        Error notFoundError = (Error) r.getEntity();
+        assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]", notFoundError.getMessage());
+    }
+
+    private DataAccessRequest generateDataAccessRequest() {
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        dar.setReferenceId(UUID.randomUUID().toString());
+        data.setReferenceId(dar.getReferenceId());
+        dar.setDatasetIds(Arrays.asList(1, 2));
+        dar.setData(data);
+        dar.setUserId(user.getUserId());
+        return dar;
+    }
 }

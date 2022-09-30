@@ -5,6 +5,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
+import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -17,6 +18,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
+import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
@@ -68,6 +70,9 @@ public class UserServiceTest {
     @Mock
     private LibraryCardDAO libraryCardDAO;
 
+    @Mock
+    private SamDAO samDAO;
+
     private UserService service;
 
     @Before
@@ -76,7 +81,7 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO);
+        service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO, samDAO);
     }
 
     @Test
@@ -453,7 +458,7 @@ public class UserServiceTest {
         if (!returnedUsers.contains(u3)) {
             returnedUsers.add(u3);
         }
-        when(userDAO.findUsers()).thenReturn(new HashSet<>(returnedUsers));
+        when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(returnedUsers);
         initService();
         List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
         assertNotNull(users);
@@ -515,6 +520,75 @@ public class UserServiceTest {
         assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
         assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
         assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
+    }
+
+    @Test
+    public void testFindOrCreateUser() throws Exception {
+        User user = generateUser();
+        UserStatus.UserInfo info = new UserStatus.UserInfo()
+                .setUserEmail(user.getEmail());
+        UserStatus.Enabled enabled = new UserStatus.Enabled()
+                .setAllUsersGroup(true)
+                .setGoogle(true)
+                .setLdap(true);
+        UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+        AuthUser authUser = new AuthUser()
+                .setEmail(user.getEmail())
+                .setAuthToken(RandomStringUtils.random(30, true, false));
+
+
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        try {
+            when(samDAO.postRegistrationInfo(any())).thenReturn(status);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        initService();
+        User existingUser = service.findOrCreateUser(authUser);
+        assertEquals(existingUser, user);
+    }
+
+    @Test
+    public void testFindOrCreateUserNewUser() throws Exception {
+        User user = generateUser();
+        List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
+        user.setRoles(roles);
+        UserStatus.UserInfo info = new UserStatus.UserInfo()
+                .setUserEmail(user.getEmail());
+        UserStatus.Enabled enabled = new UserStatus.Enabled()
+                .setAllUsersGroup(true)
+                .setGoogle(true)
+                .setLdap(true);
+        UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+        AuthUser authUser = new AuthUser()
+                .setName(user.getDisplayName())
+                .setEmail(user.getEmail())
+                .setAuthToken(RandomStringUtils.random(30, true, false));
+
+        // mock findUserByEmail to throw the NFE on the first call (findOrCreateUser) and then return null (createUser)
+        when(userDAO.findUserByEmail(authUser.getEmail())).thenThrow(new NotFoundException()).thenReturn(null);
+        when(userDAO.insertUser(any(), any(), any())).thenReturn(user.getUserId());
+        when(userRoleDAO.findRoleIdByName(any())).thenReturn(1);
+        when(userDAO.findUserById(any())).thenReturn(user);
+
+        try {
+            when(samDAO.postRegistrationInfo(any())).thenReturn(status);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        spy(userRoleDAO);
+        spy(libraryCardDAO);
+        spy(userDAO);
+
+        initService();
+
+        User newUser = service.findOrCreateUser(authUser);
+        assertEquals(user.getEmail(), newUser.getEmail());
+        verify(userRoleDAO, times(1)).insertUserRoles(any(), any());
+        verify(libraryCardDAO, times(1)).findAllLibraryCardsByUserEmail(any());
+        verify(userDAO, times(1)).insertUser(any(), any(), any());
     }
 
     private User generateUser() {

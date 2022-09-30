@@ -1896,6 +1896,8 @@ paths:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
     $ref: './paths/tdrDataset.yaml'
+  /api/tdr/dar/draft:
+    $ref: './paths/tdrDraftDAR.yaml'
   /api/election/{id}:
     get:
       summary: describeElectionById
