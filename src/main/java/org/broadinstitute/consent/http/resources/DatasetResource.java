@@ -141,7 +141,7 @@ public class DatasetResource extends Resource {
     @Consumes({MediaType.MULTIPART_FORM_DATA})
     @Produces({MediaType.APPLICATION_JSON})
     @Path("/v3")
-    @RolesAllowed({ADMIN, DATASUBMITTER})
+    @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
     /*
      * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
      * With that object, we can fully create datasets from the provided values.
