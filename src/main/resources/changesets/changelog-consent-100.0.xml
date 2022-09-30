@@ -1,17 +1,12 @@
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-    <changeSet id="100.0" author="qhoque">
-        <addColumn tableName="email_entity">
-            <column name="sendgrid_response" type="text"/>
-            <column name="sendgrid_status" type="integer" defaultValue="null"/>
-            <column name="create_date" type="date"/>
-        </addColumn>
-        <sql>
-            UPDATE email_entity e
-            SET create_date = date_sent
-            WHERE create_date IS NULL
-            AND date_sent IS NOT NULL;
-        </sql>
-    </changeSet>
+  <changeSet id="100.0" author="connorlbark">
+      <sql>
+          ALTER SEQUENCE roles_roleid_seq RESTART WITH 9
+      </sql>
+
+      <insert tableName="roles">
+          <column name="name" value="ITDirector"/>
+      </insert>
+  </changeSet>
 </databaseChangeLog>

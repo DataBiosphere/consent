@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -418,6 +419,31 @@ public class UserDAOTest extends DAOTestHelper {
         userDAO.updateEraCommonsId(u.getUserId(), "newEraCommonsId");
         User updated = userDAO.findUserById(u.getUserId());
         assertEquals("newEraCommonsId", updated.getEraCommonsId());
+    }
+
+    @Test
+    public void testCanAddAllRoles() {
+        User u = createUser();
+
+        UserRoles[] roles = UserRoles.values();
+
+        for (UserRoles role : roles) {
+            u.addRole(new UserRole(role.getRoleId(), role.getRoleName()));
+        }
+
+        userRoleDAO.insertUserRoles(u.getRoles(), u.getUserId());
+
+
+        User found = userDAO.findUserById(u.getUserId());
+
+        for (UserRoles role : roles) {
+            // ensure that each role exists on user
+            assertTrue(
+                    found.getRoles().stream().anyMatch(
+                        (existingRole) -> (
+                            role.getRoleId().equals(existingRole.getRoleId())
+                            && role.getRoleName().equals(existingRole.getName()))));
+        }
     }
 
     private String getRandomEmailAddress() {
