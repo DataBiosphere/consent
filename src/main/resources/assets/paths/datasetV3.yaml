@@ -21,7 +21,7 @@ post:
               type: string
               format: binary
   tags:
-    - Datasets
+    - Dataset
   responses:
     201:
       description: Successfully created Datasets from Registration instance
