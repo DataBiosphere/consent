@@ -88,6 +88,7 @@ public class DatasetResource extends Resource {
         resetDataSetSampleContent();
     }
 
+    @Deprecated
     @POST
     @Consumes("application/json")
     @Produces("application/json")

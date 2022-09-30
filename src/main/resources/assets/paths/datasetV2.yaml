@@ -18,6 +18,7 @@ get:
             items:
               $ref: '../schemas/Dataset.yaml'
 post:
+  deprecated: true
   summary: Creates the Dataset from JSON
   description: Creates the Dataset from JSON
   requestBody:
