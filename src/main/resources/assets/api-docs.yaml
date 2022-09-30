@@ -2524,6 +2524,7 @@ paths:
             DATAOWNER: 6
             SIGNINGOFFICIAL: 7
             DATASUBMITTER: 8
+            ITDIRECTOR: 9
           required: true
           schema:
             type: number
@@ -2535,6 +2536,7 @@ paths:
               - 6
               - 7
               - 8
+              - 9
       tags:
         - User
       responses:
@@ -2573,6 +2575,7 @@ paths:
             DATAOWNER: 6
             SIGNINGOFFICIAL: 7
             DATASUBMITTER: 8
+            ITDIRECTOR: 9
           required: true
           schema:
             type: number
@@ -2584,6 +2587,7 @@ paths:
               - 6
               - 7
               - 8
+              - 9
       tags:
         - User
       responses:

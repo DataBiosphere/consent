@@ -196,6 +196,10 @@ public class UserResource extends Resource {
                 throw new BadRequestException("Cannot change user's roles.");
             }
 
+            if (Objects.nonNull(userUpdateFields.getInstitutionId()) && !canUpdateInstitution(user, userUpdateFields.getInstitutionId())) {
+                throw new BadRequestException("Cannot update user's institution id.");
+            }
+
             user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
             supportRequestService.handleInstitutionSOSupportRequest(userUpdateFields, user);
             Gson gson = new Gson();
@@ -205,6 +209,19 @@ public class UserResource extends Resource {
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
+    }
+
+    private boolean canUpdateInstitution(User user, Integer newInstitutionId) {
+        if (Objects.nonNull(user.getInstitutionId()) && user.getInstitutionId().equals(newInstitutionId)) {
+            return true; // no op, no change
+        }
+
+        if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL) || user.hasUserRole(UserRoles.ITDIRECTOR)) {
+            // can only update institution if not set.
+            return Objects.isNull(user.getInstitutionId());
+        }
+
+        return true;
     }
 
     @PUT

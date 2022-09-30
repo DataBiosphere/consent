@@ -17,7 +17,8 @@ public enum UserRoles {
     RESEARCHER(Resource.RESEARCHER, 5),
     DATAOWNER(Resource.DATAOWNER, 6),
     SIGNINGOFFICIAL(Resource.SIGNINGOFFICIAL, 7),
-    DATASUBMITTER(Resource.DATASUBMITTER, 8);
+    DATASUBMITTER(Resource.DATASUBMITTER, 8),
+    ITDIRECTOR(Resource.ITDIRECTOR, 9);
 
     private final String roleName;
     private final Integer roleId;
@@ -65,7 +66,14 @@ public enum UserRoles {
 
     public static boolean isValidNonDACRoleId(Integer roleId) {
         List<Integer> listOfNonDacRoleIds = Arrays.asList(
-          ALUMNI.getRoleId(), ADMIN.getRoleId(), RESEARCHER.getRoleId(), DATAOWNER.getRoleId(), SIGNINGOFFICIAL.getRoleId(), DATASUBMITTER.getRoleId());
+                ALUMNI.getRoleId(),
+                ADMIN.getRoleId(),
+                RESEARCHER.getRoleId(),
+                DATAOWNER.getRoleId(),
+                SIGNINGOFFICIAL.getRoleId(),
+                DATASUBMITTER.getRoleId(),
+                ITDIRECTOR.getRoleId());
+
         return !Objects.isNull(roleId) && listOfNonDacRoleIds.contains(roleId);
     }
 
