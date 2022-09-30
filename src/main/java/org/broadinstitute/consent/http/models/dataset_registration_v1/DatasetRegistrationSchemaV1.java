@@ -157,6 +157,10 @@ public class DatasetRegistrationSchemaV1 {
     @JsonProperty("publicVisibility")
     @JsonPropertyDescription("Public Visibility of this study")
     private Boolean publicVisibility;
+    /**
+     * NIH Anvil Use
+     *
+     */
     @JsonProperty("nihAnvilUse")
     private List<NihAnvilUse> nihAnvilUse = new ArrayList<NihAnvilUse>();
     /**

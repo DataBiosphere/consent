@@ -86,6 +86,7 @@
     },
     "nihAnvilUse": {
       "type": "array",
+      "description": "NIH Anvil Use",
       "items": {
           "type": "string",
           "enum": ["I did", "I will", "No"]
