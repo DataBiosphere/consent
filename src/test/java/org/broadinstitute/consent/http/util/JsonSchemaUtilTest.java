@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.util;
 
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -8,6 +9,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class JsonSchemaUtilTest {
+
+  private static JsonSchemaUtil schemaUtil;
 
   private final String datasetRegistrationInstance = """
           {
@@ -34,25 +37,28 @@ public class JsonSchemaUtilTest {
           }
           """;
 
+
+  @BeforeClass
+  public static void setUp() {
+    schemaUtil = new JsonSchemaUtil();
+  }
+
   @Test
   public void testIsValidDatasetRegistrationObject_v1_case0() {
     String instance = "{}";
-    JsonSchemaUtil util = new JsonSchemaUtil();
-    boolean valid = util.isValidSchema_v1(instance);
+    boolean valid = schemaUtil.isValidSchema_v1(instance);
     assertFalse(valid);
   }
 
   @Test
   public void testIsValidDatasetRegistrationObject_v1_case1() {
-    JsonSchemaUtil util = new JsonSchemaUtil();
-    boolean valid = util.isValidSchema_v1(datasetRegistrationInstance);
+    boolean valid = schemaUtil.isValidSchema_v1(datasetRegistrationInstance);
     assertTrue(valid);
   }
 
   @Test
   public void testParseDatasetRegistrationObject_v1() {
-    JsonSchemaUtil util = new JsonSchemaUtil();
-    DatasetRegistrationSchemaV1 instance = util.deserializeDatasetRegistration(datasetRegistrationInstance);
+    DatasetRegistrationSchemaV1 instance = schemaUtil.deserializeDatasetRegistration(datasetRegistrationInstance);
     assertNotNull(instance);
     assertNotNull(instance.getStudyType());
     assertNotNull(instance.getStudyName());

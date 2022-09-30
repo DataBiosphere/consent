@@ -62,7 +62,7 @@ public class DatasetResource extends Resource {
     private final UserService userService;
     private final DataAccessRequestService darService;
 
-    private final JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
+    private final JsonSchemaUtil jsonSchemaUtil;
 
     private final String defaultDataSetSampleFileName = "DataSetSample.tsv";
     private final String defaultDataSetSampleContent = "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
@@ -84,6 +84,7 @@ public class DatasetResource extends Resource {
         this.datasetService = datasetService;
         this.userService = userService;
         this.darService = darService;
+        this.jsonSchemaUtil = new JsonSchemaUtil();
         resetDataSetSampleFileName();
         resetDataSetSampleContent();
     }
