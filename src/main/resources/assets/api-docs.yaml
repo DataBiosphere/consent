@@ -2722,7 +2722,7 @@ paths:
           description: Internal Server Error
   /liveness:
     $ref: './paths/liveness.yaml'
-  /schema/dataset-registration/v1:
+  /schemas/dataset-registration/v1:
     $ref: './paths/schemaDatasetRegistrationV1.yaml'
   /status:
     get:

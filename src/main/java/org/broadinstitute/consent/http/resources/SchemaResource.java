@@ -9,7 +9,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Path("/schema")
+@Path("/schemas")
 public class SchemaResource extends Resource {
 
     private final JsonSchemaUtil jsonSchemaUtil;
@@ -21,7 +21,7 @@ public class SchemaResource extends Resource {
     @GET
     @Path("/dataset-registration/v1")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getSchema() {
+    public Response getDatasetRegistrationSchemaV1() {
         String content = jsonSchemaUtil.getDatasetRegistrationSchemaV1();
         return Response.ok().entity(content).type(MediaType.APPLICATION_JSON).build();
     }
