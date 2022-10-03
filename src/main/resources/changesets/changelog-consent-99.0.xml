@@ -4,22 +4,12 @@
     <changeSet id="99.0" author="connorlbark">
         <validCheckSum>ANY</validCheckSum>
         <sql>
-            ALTER TABLE institution ADD COLUMN IF NOT EXISTS institution_url TEXT
-        </sql>
-        <sql>
-            ALTER TABLE institution ADD COLUMN IF NOT EXISTS duns_number INT DEFAULT(null)
-        </sql>
-        <sql>
-            ALTER TABLE institution ADD COLUMN IF NOT EXISTS org_chart_url TEXT
-        </sql>
-        <sql>
-            ALTER TABLE institution ADD COLUMN IF NOT EXISTS verification_url TEXT
-        </sql>
-        <sql>
-            ALTER TABLE institution ADD COLUMN IF NOT EXISTS verification_filename VARCHAR(255)
-        </sql>
-        <sql>
-            ALTER TABLE institution ADD COLUMN IF NOT EXISTS organization_type TEXT
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS institution_url TEXT;
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS duns_number INT DEFAULT(null);
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS org_chart_url TEXT;
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS verification_url TEXT;
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS verification_filename VARCHAR(255);
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS organization_type TEXT;
         </sql>
     </changeSet>
 </databaseChangeLog>
