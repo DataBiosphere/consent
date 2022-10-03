@@ -3,13 +3,31 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <changeSet id="99.0" author="connorlbark">
         <validCheckSum>ANY</validCheckSum>
-        <addColumn tableName="institution">
-            <column name="institution_url" type="text"/>
-            <column name="duns_number" type="integer" defaultValue="null"/>
-            <column name="org_chart_url" type="text"/>
-            <column name="verification_url" type="text"/>
-            <column name="verification_filename" type="varchar(255)"/>
-            <column name="organization_type" type="text"/>
-        </addColumn>
+<!--        <addColumn tableName="institution">-->
+<!--            <column name="institution_url" type="text"/>-->
+<!--            <column name="duns_number" type="integer" defaultValue="null"/>-->
+<!--            <column name="org_chart_url" type="text"/>-->
+<!--            <column name="verification_url" type="text"/>-->
+<!--            <column name="verification_filename" type="varchar(255)"/>-->
+<!--            <column name="organization_type" type="text"/>-->
+<!--        </addColumn>-->
+        <sql>
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS institution_url TEXT
+        </sql>
+        <sql>
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS duns_number INT DEFAULT(null)
+        </sql>
+        <sql>
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS org_chart_url TEXT
+        </sql>
+        <sql>
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS verification_url TEXT
+        </sql>
+        <sql>
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS verification_filename VARCHAR(255)
+        </sql>
+        <sql>
+            ALTER TABLE institution ADD COLUMN IF NOT EXISTS organization_type TEXT
+        </sql>
     </changeSet>
 </databaseChangeLog>
