@@ -13,7 +13,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.ExecutionException;
 
@@ -32,6 +31,24 @@ public class JsonSchemaUtil {
     this.cache = CacheBuilder.newBuilder().build(loader);
   }
 
+
+  /**
+   * Loads a Schema populated from the current dataset registration schema
+   * @return Schema The Schema
+   * @throws ExecutionException Error reading from cache
+   */
+  private Schema getDatasetRegistrationSchema() throws ExecutionException {
+      String schemaString = cache.get("/dataset-registration-schema_v1.json");
+      JSONObject jsonSchema = new JSONObject(schemaString);
+      return SchemaLoader
+        .builder()
+        .schemaJson(jsonSchema)
+        .addFormatValidator(new JsonSchemaDateValidator())
+        .build()
+        .load()
+        .build();
+  }
+
   /**
    * Compares an instance of a dataset registration object to the dataset registration schema
    *
@@ -40,10 +57,8 @@ public class JsonSchemaUtil {
    */
   public boolean isValidSchema_v1(String datasetRegistrationInstance) {
     try {
-      String schemaString = cache.get("/dataset-registration-schema_v1.json");
-      JSONObject jsonSchema = new JSONObject(schemaString);
       JSONObject jsonSubject = new JSONObject(datasetRegistrationInstance);
-      Schema schema = SchemaLoader.load(jsonSchema);
+      Schema schema = getDatasetRegistrationSchema();
       schema.validate(jsonSubject);
       return true;
     } catch (ExecutionException ee) {
@@ -64,15 +79,13 @@ public class JsonSchemaUtil {
 
   public DatasetRegistrationSchemaV1 deserializeDatasetRegistration(String datasetRegistrationInstance) {
     try {
-      String schemaString = IOUtils.resourceToString("/dataset-registration-schema_v1.json", Charset.defaultCharset());
-      JSONObject jsonSchema = new JSONObject(schemaString);
       JSONObject jsonSubject = new JSONObject(datasetRegistrationInstance);
-      Schema schema = SchemaLoader.load(jsonSchema);
+      Schema schema = getDatasetRegistrationSchema();
       schema.validate(jsonSubject);
       Gson gson = new Gson();
       return gson.fromJson(datasetRegistrationInstance, DatasetRegistrationSchemaV1.class);
-    } catch (IOException ioe) {
-      logger.error("Unable to load the data submitter schema: " + ioe.getMessage());
+    } catch (ExecutionException ee) {
+      logger.error("Unable to load the data submitter schema: " + ee.getMessage());
       return null;
     }
   }

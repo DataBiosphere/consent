@@ -74,4 +74,96 @@ public class JsonSchemaUtilTest {
     assertNotNull(instance.getDataAccessCommitteeId());
     assertFalse(instance.getConsentGroups().isEmpty());
   }
+
+  @Test
+  public void testParseDatasetRegistrationObject_v1_date_case_1() {
+    String instance = """
+          {
+            "studyType": "Observational",
+            "studyName": "name",
+            "studyDescription": "description",
+            "dataTypes": ["types"],
+            "fileTypes": [{
+              "fileType": "Arrays",
+              "functionalEquivalence": "equivalence",
+              "numberOfParticipants": 2
+            }],
+            "phenotypeIndication": "phenotype",
+            "species": "species",
+            "piName": "PI Name",
+            "dataSubmitterUserId": 1,
+            "dataCustodianEmail": ["email@abc.com"],
+            "publicVisibility": true,
+            "dataAccessCommitteeId": 1,
+            "consentGroups": [{
+              "consentGroupName": "name",
+              "generalResearchUse": true
+            }],
+            "embargoReleaseDate": "2018-11-13"
+          }
+          """;
+    boolean valid = schemaUtil.isValidSchema_v1(instance);
+    assertTrue(valid);
+  }
+
+  @Test
+  public void testParseDatasetRegistrationObject_v1_date_case_2() {
+    String instance = """
+          {
+            "studyType": "Observational",
+            "studyName": "name",
+            "studyDescription": "description",
+            "dataTypes": ["types"],
+            "fileTypes": [{
+              "fileType": "Arrays",
+              "functionalEquivalence": "equivalence",
+              "numberOfParticipants": 2
+            }],
+            "phenotypeIndication": "phenotype",
+            "species": "species",
+            "piName": "PI Name",
+            "dataSubmitterUserId": 1,
+            "dataCustodianEmail": ["email@abc.com"],
+            "publicVisibility": true,
+            "dataAccessCommitteeId": 1,
+            "consentGroups": [{
+              "consentGroupName": "name",
+              "generalResearchUse": true
+            }],
+            "embargoReleaseDate": "asdf-11-13"
+          }
+          """;
+    boolean valid = schemaUtil.isValidSchema_v1(instance);
+    assertFalse(valid);
+  }  @Test
+
+  public void testParseDatasetRegistrationObject_v1_date_case_3() {
+    String instance = """
+          {
+            "studyType": "Observational",
+            "studyName": "name",
+            "studyDescription": "description",
+            "dataTypes": ["types"],
+            "fileTypes": [{
+              "fileType": "Arrays",
+              "functionalEquivalence": "equivalence",
+              "numberOfParticipants": 2
+            }],
+            "phenotypeIndication": "phenotype",
+            "species": "species",
+            "piName": "PI Name",
+            "dataSubmitterUserId": 1,
+            "dataCustodianEmail": ["email@abc.com"],
+            "publicVisibility": true,
+            "dataAccessCommitteeId": 1,
+            "consentGroups": [{
+              "consentGroupName": "name",
+              "generalResearchUse": true
+            }],
+            "embargoReleaseDate": "12-34-5678"
+          }
+          """;
+    boolean valid = schemaUtil.isValidSchema_v1(instance);
+    assertFalse(valid);
+  }
 }
