@@ -32,13 +32,23 @@ public class JsonSchemaUtil {
     this.cache = CacheBuilder.newBuilder().build(loader);
   }
 
+  public String getDatasetRegistrationSchemaV1() {
+    try {
+      return cache.get(datasetRegistrationSchemaV1);
+    } catch (ExecutionException ee) {
+      logger.error("Unable to load the data submitter schema: " + ee.getMessage());
+      return null;
+    }
+  }
+
+
   /**
    * Loads a Schema populated from the current dataset registration schema
    * @return Schema The Schema
    * @throws ExecutionException Error reading from cache
    */
   private Schema getDatasetRegistrationSchema() throws ExecutionException {
-      String schemaString = cache.get("/dataset-registration-schema_v1.json");
+      String schemaString = getDatasetRegistrationSchemaV1();
       JSONObject jsonSchema = new JSONObject(schemaString);
       return SchemaLoader
         .builder()
