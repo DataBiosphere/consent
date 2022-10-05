@@ -2722,6 +2722,8 @@ paths:
           description: Internal Server Error
   /liveness:
     $ref: './paths/liveness.yaml'
+  /schemas/dataset-registration/v1:
+    $ref: './paths/schemaDatasetRegistrationV1.yaml'
   /status:
     get:
       summary: System Health Status
