@@ -20,6 +20,7 @@ public class JsonSchemaUtil {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final LoadingCache<String, String> cache;
+  private final String datasetRegistrationSchemaV1 = "/dataset-registration-schema_v1.json";
 
   public JsonSchemaUtil() {
     CacheLoader<String, String> loader = new CacheLoader<>() {
@@ -30,7 +31,6 @@ public class JsonSchemaUtil {
     };
     this.cache = CacheBuilder.newBuilder().build(loader);
   }
-
 
   /**
    * Loads a Schema populated from the current dataset registration schema

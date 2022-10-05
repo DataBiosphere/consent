@@ -2526,6 +2526,7 @@ paths:
             DATAOWNER: 6
             SIGNINGOFFICIAL: 7
             DATASUBMITTER: 8
+            ITDIRECTOR: 9
           required: true
           schema:
             type: number
@@ -2537,6 +2538,7 @@ paths:
               - 6
               - 7
               - 8
+              - 9
       tags:
         - User
       responses:
@@ -2575,6 +2577,7 @@ paths:
             DATAOWNER: 6
             SIGNINGOFFICIAL: 7
             DATASUBMITTER: 8
+            ITDIRECTOR: 9
           required: true
           schema:
             type: number
@@ -2586,6 +2589,7 @@ paths:
               - 6
               - 7
               - 8
+              - 9
       tags:
         - User
       responses:
@@ -2720,6 +2724,8 @@ paths:
           description: Internal Server Error
   /liveness:
     $ref: './paths/liveness.yaml'
+  /schemas/dataset-registration/v1:
+    $ref: './paths/schemaDatasetRegistrationV1.yaml'
   /status:
     get:
       summary: System Health Status
