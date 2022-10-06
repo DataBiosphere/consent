@@ -365,6 +365,20 @@ public class DatasetResource extends Resource {
         }
     }
 
+    @GET
+    @Path("/search")
+    @Produces("application/json")
+    @PermitAll
+    public Response searchDatasets(@Auth AuthUser authUser, @QueryParam("query") String query){
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            List<Dataset> datasets = datasetService.searchDatasets(query, user);
+            return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
     @PUT
     @Produces("application/json")
     @RolesAllowed(ADMIN)

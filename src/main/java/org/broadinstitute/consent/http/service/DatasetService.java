@@ -391,11 +391,11 @@ public class DatasetService {
         List<Integer> datasetIdsInUse = dataAccessRequestDAO.findAllDARDatasetRelationDatasetIds();
         HashSet<DatasetDTO> datasets = new HashSet<>();
         if (userHasRole(UserRoles.ADMIN.getRoleName(), userId)) {
-            datasets.addAll(datasetDAO.findAllDatasets());
+            datasets.addAll(datasetDAO.findAllDatasetDTOs());
         } else {
-            datasets.addAll(datasetDAO.findActiveDatasets());
+            datasets.addAll(datasetDAO.findActiveDatasetDTOs());
             if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), userId)) {
-                Collection<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetsByUserId(userId);
+                Collection<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetDTOsByUserId(userId);
                 datasets.addAll(chairSpecificDatasets);
             }
         }
@@ -403,30 +403,66 @@ public class DatasetService {
         return datasets;
     }
 
+
+    public List<Dataset> searchDatasets(String query, User user) {
+        List<Dataset> datasets = this.findAllDatasetsByUser(user);
+
+        return datasets.stream().filter(ds ->this.filterDatasetByQuery(ds, query)).toList();
+    }
+
+
+    // dataset properties which can be searched by
+    private static final List<String> filterableDatasetProperties = List.of(
+            "Principal Investigator(PI)"
+    );
+    private boolean filterDatasetByQuery(Dataset ds, String query) {
+        List<String> terms = new ArrayList<>();
+
+        terms.add(ds.getName());
+        terms.add(ds.getDatasetIdentifier());
+        terms.add(ds.getDatasetName());
+
+        if (Objects.nonNull(ds.getProperties())) {
+            ds.getProperties().forEach(prop -> {
+                if (Objects.nonNull(prop.getPropertyName()) && Objects.nonNull(prop.getPropertyValue())
+                        && filterableDatasetProperties.contains(prop.getPropertyName())) {
+                    terms.add(prop.getPropertyValueAsString());
+                }
+            });
+        }
+
+        String normalizedQuery = query.toLowerCase();
+        return terms
+                .stream()
+                .filter(Objects::nonNull)
+                .map(String::toLowerCase)
+                .anyMatch((t) -> t.contains(normalizedQuery));
+    }
+
     public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
         Set<DatasetDTO> datasets = describeDatasets(dacUserId);
         String lowercasePartial = partial.toLowerCase();
         Set<DatasetDTO> filteredDatasetsContainingPartial = datasets.stream()
-        .filter(ds -> filterDatasetOnProperties(ds, lowercasePartial))
-        .collect(Collectors.toSet());
+                .filter(ds -> filterDatasetOnProperties(ds, lowercasePartial))
+                .collect(Collectors.toSet());
         return filteredDatasetsContainingPartial.stream().map(ds ->
-              {
-                  HashMap<String, String> map = new HashMap<>();
-                  List<DatasetPropertyDTO> properties = ds.getProperties();
-                  Optional<DatasetPropertyDTO> datasetName = properties.stream()
-                        .filter(p -> p.getPropertyName().equalsIgnoreCase("Dataset Name")).findFirst();
-                  Optional<DatasetPropertyDTO> pi = properties.stream()
-                        .filter(p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
-                        .findFirst();
-                  String datasetNameString =
-                        datasetName.isPresent() ? datasetName.get().getPropertyValue() : "";
-                  String piString = pi.isPresent() ? pi.get().getPropertyValue() : "";
-                  map.put("id", ds.getDataSetId().toString());
-                  map.put("objectId", ds.getObjectId());
-                  map.put("concatenation",
-                        datasetNameString + " | " + piString + " | " + ds.getConsentId());
-                  return map;
-              }
+                {
+                    HashMap<String, String> map = new HashMap<>();
+                    List<DatasetPropertyDTO> properties = ds.getProperties();
+                    Optional<DatasetPropertyDTO> datasetName = properties.stream()
+                            .filter(p -> p.getPropertyName().equalsIgnoreCase("Dataset Name")).findFirst();
+                    Optional<DatasetPropertyDTO> pi = properties.stream()
+                            .filter(p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
+                            .findFirst();
+                    String datasetNameString =
+                            datasetName.isPresent() ? datasetName.get().getPropertyValue() : "";
+                    String piString = pi.isPresent() ? pi.get().getPropertyValue() : "";
+                    map.put("id", ds.getDataSetId().toString());
+                    map.put("objectId", ds.getObjectId());
+                    map.put("concatenation",
+                            datasetNameString + " | " + piString + " | " + ds.getConsentId());
+                    return map;
+                }
         ).collect(Collectors.toList());
     }
 

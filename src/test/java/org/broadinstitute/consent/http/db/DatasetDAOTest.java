@@ -465,7 +465,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Consent consent = createConsent();
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
-        Set<DatasetDTO> datasets = datasetDAO.findAllDatasets();
+        Set<DatasetDTO> datasets = datasetDAO.findAllDatasetDTOs();
         assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
@@ -478,7 +478,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
-        Set<DatasetDTO> datasets = datasetDAO.findActiveDatasets();
+        Set<DatasetDTO> datasets = datasetDAO.findActiveDatasetDTOs();
         assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
@@ -494,7 +494,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         User user = createUser();
         createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(), dac.getDacId());
 
-        Set<DatasetDTO> datasets = datasetDAO.findDatasetsByUserId(user.getUserId());
+        Set<DatasetDTO> datasets = datasetDAO.findDatasetDTOsByUserId(user.getUserId());
         assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).collect(Collectors.toList());
         assertTrue(datasetIds.contains(dataset.getDataSetId()));

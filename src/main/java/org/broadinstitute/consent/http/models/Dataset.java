@@ -227,6 +227,10 @@ public class Dataset {
     }
 
     public String getDatasetIdentifier() {
+        if (Objects.isNull(this.getAlias())) {
+            return null;
+        }
+
         return parseAliasToIdentifier(this.getAlias());
     }
 

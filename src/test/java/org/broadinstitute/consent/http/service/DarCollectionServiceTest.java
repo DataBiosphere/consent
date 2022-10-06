@@ -36,7 +36,6 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1060,7 +1059,7 @@ public class DarCollectionServiceTest {
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
       .thenReturn(List.of(summary, summaryTwo, summaryThree));
-    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+    when(datasetDAO.findDatasetDTOsByUserId(any())).thenReturn(Set.of());
 
     initService();
 
@@ -1173,7 +1172,7 @@ public class DarCollectionServiceTest {
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
       .thenReturn(List.of(summaryOne, summaryTwo, summaryThree, summaryFour, summaryFive, summarySix));
-    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+    when(datasetDAO.findDatasetDTOsByUserId(any())).thenReturn(Set.of());
 
     initService();
 
@@ -1356,7 +1355,7 @@ public class DarCollectionServiceTest {
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(user.getUserId(), List.of(), collectionId))
             .thenReturn(summary);
-    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+    when(datasetDAO.findDatasetDTOsByUserId(any())).thenReturn(Set.of());
 
     initService();
 
@@ -1396,7 +1395,7 @@ public class DarCollectionServiceTest {
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(user.getUserId(), List.of(), collectionId))
             .thenReturn(summary);
-    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+    when(datasetDAO.findDatasetDTOsByUserId(any())).thenReturn(Set.of());
 
     initService();
 

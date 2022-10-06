@@ -285,7 +285,7 @@ public class DarCollectionService {
         break;
       case CHAIRPERSON:
         userId = user.getUserId();
-        datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+        datasetIds = datasetDAO.findDatasetDTOsByUserId(userId).stream()
             .map(d -> d.getDataSetId())
             .collect(Collectors.toList());
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
@@ -293,7 +293,7 @@ public class DarCollectionService {
         break;
       case MEMBER:
         userId = user.getUserId();
-        datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+        datasetIds = datasetDAO.findDatasetDTOsByUserId(userId).stream()
           .map(d -> d.getDataSetId())
           .collect(Collectors.toList());
           summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
@@ -340,14 +340,14 @@ public class DarCollectionService {
           processDarCollectionSummariesForSO(List.of(summary));
           break;
         case CHAIRPERSON:
-          datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+          datasetIds = datasetDAO.findDatasetDTOsByUserId(userId).stream()
           .map(d -> d.getDataSetId())
           .collect(Collectors.toList());
           summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, datasetIds, collectionId);
           processDarCollectionSummariesForChair(List.of(summary));
           break;
         case MEMBER:
-          datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+          datasetIds = datasetDAO.findDatasetDTOsByUserId(userId).stream()
           .map(d -> d.getDataSetId())
           .collect(Collectors.toList());
           summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, datasetIds, collectionId);

@@ -221,7 +221,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             + " WHERE ur.user_id = :userId "
                 + " AND d.name IS NOT NULL "
             + " ORDER BY d.dataset_id ")
-    Set<DatasetDTO> findDatasetsByUserId(@Bind("userId") Integer userId);
+    Set<DatasetDTO> findDatasetDTOsByUserId(@Bind("userId") Integer userId);
 
     @Deprecated
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
@@ -234,7 +234,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             + " LEFT OUTER JOIN consents c ON c.consent_id = ca.consent_id "
             + " WHERE d.name IS NOT NULL AND d.active = true "
             + " ORDER BY d.dataset_id ")
-    Set<DatasetDTO> findActiveDatasets();
+    Set<DatasetDTO> findActiveDatasetDTOs();
 
     @Deprecated
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
@@ -246,7 +246,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             + " LEFT OUTER JOIN consent_associations ca ON ca.dataset_id = d.dataset_id "
             + " LEFT OUTER JOIN consents c ON c.consent_id = ca.consent_id "
             + " ORDER BY d.dataset_id ")
-    Set<DatasetDTO> findAllDatasets();
+    Set<DatasetDTO> findAllDatasetDTOs();
 
     @Deprecated
     @UseRowMapper(DatasetDTOWithPropertiesMapper.class)

@@ -502,12 +502,69 @@ public class DatasetServiceTest {
     public void testAutoCompleteDatasets() {
         List<DatasetDTO> dtos = getDatasetDTOs();
         Set<DatasetDTO> setOfDtos = new HashSet<>(dtos);
-        when(datasetDAO.findAllDatasets()).thenReturn(setOfDtos);
+        when(datasetDAO.findAllDatasetDTOs()).thenReturn(setOfDtos);
         when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 0)).thenReturn(UserRoles.ADMIN.getRoleId());
         initService();
         List<Map<String, String>> result = datasetService.autoCompleteDatasets("a", 0);
         assertNotNull(result);
         assertEquals(result.size(), dtos.size());
+    }
+
+    @Test
+    public void testSearchDatasets() {
+        Dataset ds1 = new Dataset();
+        ds1.setName("asdf1234");
+        ds1.setAlias(3);
+        DatasetProperty ds1PI = new DatasetProperty();
+        ds1PI.setPropertyName("Principal Investigator(PI)");
+        ds1PI.setPropertyValue("John Doe");
+        ds1PI.setPropertyType(DatasetPropertyType.String);
+        ds1.setProperties(Set.of(ds1PI));
+
+        Dataset ds2 = new Dataset();
+        ds2.setName("ghjk5678");
+        ds2.setAlias(280);
+        DatasetProperty ds2PI = new DatasetProperty();
+        ds2PI.setPropertyName("Principal Investigator(PI)");
+        ds2PI.setPropertyValue("Sally Doe");
+        ds2PI.setPropertyType(DatasetPropertyType.String);
+        ds2.setProperties(Set.of(ds2PI));
+
+        User u = new User();
+        u.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+
+        when(datasetDAO.getAllDatasets()).thenReturn(List.of(ds1, ds2));
+
+        initService();
+
+        // query dataset name
+        List<Dataset> results = datasetService.searchDatasets("asdf", u);
+
+        assertEquals(1, results.size());
+        assertTrue(results.contains(ds1));
+
+        // query pi name
+        results = datasetService.searchDatasets("John", u);
+
+        assertEquals(1, results.size());
+        assertTrue(results.contains(ds1));
+
+        // query ds identifier
+        results = datasetService.searchDatasets("DUOS-000280", u);
+
+        assertEquals(1, results.size());
+        assertTrue(results.contains(ds2));
+
+        // query pi name for all of them
+        results = datasetService.searchDatasets("Doe", u);
+
+        assertEquals(2, results.size());
+        assertTrue(results.contains(ds2));
+        assertTrue(results.contains(ds1));
+
+        // query nonexistent phrase
+        results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf", u);
+        assertEquals(0, results.size());
     }
 
     @Test
@@ -521,9 +578,9 @@ public class DatasetServiceTest {
         when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 2)).thenReturn(null);
         when(userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), 0)).thenReturn(null);
         when(userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), 2)).thenReturn(2);
-        when(datasetDAO.findAllDatasets()).thenReturn(setOfDtos);
-        when(datasetDAO.findActiveDatasets()).thenReturn(emptyActiveDtoSet);
-        when(datasetDAO.findDatasetsByUserId(2)).thenReturn(singleDtoSet);
+        when(datasetDAO.findAllDatasetDTOs()).thenReturn(setOfDtos);
+        when(datasetDAO.findActiveDatasetDTOs()).thenReturn(emptyActiveDtoSet);
+        when(datasetDAO.findDatasetDTOsByUserId(2)).thenReturn(singleDtoSet);
         initService();
 
         Set<DatasetDTO> memberResult = datasetService.describeDatasets(0);
