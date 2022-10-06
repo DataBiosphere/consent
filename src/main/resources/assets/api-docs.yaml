@@ -1790,6 +1790,7 @@ paths:
     $ref: './paths/datasetSearch.yaml'
   /api/dataset/autocomplete/{partial}:
     get:
+      deprecated: true
       summary: datasetAutocomplete
       description: Returns Dataset list with the Datasets whose objectsIds matches with the partial string.
       parameters:

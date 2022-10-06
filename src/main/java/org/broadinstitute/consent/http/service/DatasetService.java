@@ -439,6 +439,7 @@ public class DatasetService {
                 .anyMatch((t) -> t.contains(normalizedQuery));
     }
 
+    @Deprecated
     public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
         Set<DatasetDTO> datasets = describeDatasets(dacUserId);
         String lowercasePartial = partial.toLowerCase();

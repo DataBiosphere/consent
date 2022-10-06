@@ -354,6 +354,7 @@ public class DatasetResource extends Resource {
     @Path("/autocomplete/{partial}")
     @Produces("application/json")
     @PermitAll
+    @Deprecated
     public Response datasetAutocomplete(@Auth AuthUser authUser, @PathParam("partial") String partial){
         try {
             User dacUser = userService.findUserByEmail(authUser.getEmail());
