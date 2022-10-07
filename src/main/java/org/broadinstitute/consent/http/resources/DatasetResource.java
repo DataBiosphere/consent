@@ -209,6 +209,7 @@ public class DatasetResource extends Resource {
     }
 
     @GET
+    @Deprecated
     @Path("/{datasetId}")
     @Produces("application/json")
     @PermitAll
@@ -216,6 +217,22 @@ public class DatasetResource extends Resource {
         try {
             DatasetDTO datasetDTO = datasetService.getDatasetDTO(datasetId);
             return Response.ok(datasetDTO, MediaType.APPLICATION_JSON).build();
+        } catch (Exception e){
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Path("/v2/{datasetId}")
+    @Produces("application/json")
+    @PermitAll
+    public Response getDataset(@PathParam("datasetId") Integer datasetId){
+        try {
+            Dataset dataset = datasetService.getDataset(datasetId);
+            if (Objects.isNull(dataset)) {
+                throw new NotFoundException("Could not find the dataset with id: " + datasetId.toString());
+            }
+            return Response.ok(dataset, MediaType.APPLICATION_JSON).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }

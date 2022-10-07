@@ -478,4 +478,8 @@ public class DatasetService {
             return datasets;
         }
     }
+
+    public Dataset getDataset(Integer datasetId) {
+        return this.datasetDAO.findDatasetById(datasetId);
+    }
 }
