@@ -9,7 +9,7 @@ get:
       schema:
         type: integer
   tags:
-    - Datasets
+    - Dataset
   responses:
     200:
       description: The Dataset with properties
@@ -32,7 +32,7 @@ delete:
       schema:
         type: integer
   tags:
-    - Datasets
+    - Dataset
   responses:
     200:
       description: The Dataset was deleted.
@@ -58,7 +58,7 @@ put:
         schema:
           $ref: '../schemas/Dataset.yaml'
   tags:
-    - Datasets
+    - Dataset
   responses:
     200:
       description: Successfully updated Dataset

@@ -1686,7 +1686,7 @@ paths:
       description: Returns Dataset list filtered by authenticated user.
       deprecated: true
       tags:
-        - Datasets
+        - Dataset
       responses:
         200:
           description: A list of Datasets
@@ -1699,6 +1699,8 @@ paths:
 
   /api/dataset/v2:
     $ref: './paths/datasetV2.yaml'
+  /api/dataset/v3:
+    $ref: './paths/datasetV3.yaml'
   /api/dataset/validate:
     get:
       summary: validateDatasetName
@@ -1711,7 +1713,7 @@ paths:
           schema:
             type: string
       tags:
-        - Datasets
+        - Dataset
       responses:
         200:
           description: dataset id
@@ -1726,7 +1728,7 @@ paths:
       summary: getDataSetSample
       description: Returns a Dataset sample .tsv file.
       tags:
-        - Datasets
+        - Dataset
       responses:
         200:
           description: .tsv sample
@@ -1750,7 +1752,7 @@ paths:
       summary: describeDictionary
       description: Return all the values that compound the dictionary , this values are the attributes of a Dataset.
       tags:
-        - Datasets
+        - Dataset
       responses:
         200:
           description: An array of the existent dictionaries
@@ -1783,7 +1785,7 @@ paths:
               items:
                 type: string
       tags:
-        - Datasets
+        - Dataset
       responses:
         200:
           description: The specified datasets were downloaded.
@@ -1801,7 +1803,7 @@ paths:
           schema:
             type: string
       tags:
-        - Datasets
+        - Dataset
       responses:
         200:
           description: An array of Dataset objectIds
@@ -1827,7 +1829,7 @@ paths:
           schema:
             type: integer
       tags:
-        - Datasets
+        - Dataset
       responses:
         200:
           description: Map of associated and non-associated users
@@ -1854,7 +1856,7 @@ paths:
             items:
               type: integer
       tags:
-        - Datasets
+        - Dataset
       responses:
         201:
           description: An array of created dataset associations
@@ -1883,7 +1885,7 @@ paths:
             items:
               type: integer
       tags:
-        - Datasets
+        - Dataset
       responses:
         200:
           description: An array of updated dataset associations
@@ -2792,6 +2794,8 @@ components:
       $ref: './schemas/DatasetApproval.yaml'
     DatasetProperty:
       $ref: './schemas/DatasetProperty.yaml'
+    DatasetRegistrationSchemaV1:
+      $ref: './schemas/DatasetRegistrationSchemaV1.yaml'
     Election:
       $ref: './schemas/Election.yaml'
     Institution:
