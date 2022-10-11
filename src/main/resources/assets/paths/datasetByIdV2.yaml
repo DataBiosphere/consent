@@ -9,7 +9,7 @@ get:
       schema:
         type: integer
   tags:
-    - Datasets
+    - Dataset
   responses:
     200:
       description: The Dataset with properties
