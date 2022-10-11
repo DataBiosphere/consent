@@ -8,6 +8,7 @@ get:
       required: true
       schema:
         type: integer
+  deprecated: true
   tags:
     - Dataset
   responses:
