@@ -1,0 +1,39 @@
+post:
+  summary: Creates a set of Datasets from a valid dataset registration JsonSchema object
+  description: Creates a set of Datasets from a valid dataset registration JsonSchema object
+  requestBody:
+    description: | 
+      Dataset registration schema instance and optional file for
+      an alternative data sharing plan. The registration schema is 
+      always required. If a file is also provided, then alternative 
+      data sharing information is required in the registration schema.
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            dataset:
+              description: Required dataset registration json schema instance
+              type: object
+              $ref: '../schemas/DatasetRegistrationSchemaV1.yaml'
+            file:
+              description: Optional alternative data sharing plan
+              type: string
+              format: binary
+  tags:
+    - Dataset
+  responses:
+    201:
+      description: Successfully created Datasets from Registration instance
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/Dataset.yaml'
+    400:
+      description: Bad Request (invalid input)
+    409:
+      description: Dataset Name given is already in use by another dataset
+    500:
+      description: Internal Error (something went wrong processing a valid input)

@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -11,12 +12,15 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.service.ConsentService;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -27,7 +31,9 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,9 +50,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DatasetResourceTest {
-
-    @Mock
-    private ConsentService consentService;
 
     @Mock
     private DataAccessRequestService darService;
@@ -83,7 +86,7 @@ public class DatasetResourceTest {
     }
 
     private void initResource() {
-        resource = new DatasetResource(consentService, datasetService, userService, darService);
+        resource = new DatasetResource(datasetService, userService, darService);
     }
 
     private String createPropertiesJson(List<DatasetPropertyDTO> properties) {
@@ -429,9 +432,6 @@ public class DatasetResourceTest {
         dataSet.setDataSetId(1);
         dataSet.setDacId(1);
 
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
-
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         role.setDacId(1);
@@ -465,8 +465,6 @@ public class DatasetResourceTest {
     public void testDeleteErrorNullConsent() {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -486,9 +484,6 @@ public class DatasetResourceTest {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         dataSet.setDacId(2);
-
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -521,8 +516,6 @@ public class DatasetResourceTest {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         dataSet.setDacId(1);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -557,8 +550,6 @@ public class DatasetResourceTest {
     public void testDisableDataSetErrorNullConsent() {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -578,8 +569,6 @@ public class DatasetResourceTest {
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(1);
         dataSet.setDacId(2);
-        Consent consent = new Consent();
-        when(consentService.getConsentFromDatasetID(any())).thenReturn(consent);
 
         when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
         UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -678,5 +667,106 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.findAllDatasetsAvailableToUser(authUser);
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+
+    @Test
+    public void testCreateDatasetRegistration_invalidSchema_case1() {
+        initResource();
+        Response response = resource.createDatasetRegistration(authUser,null, null, "");
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testCreateDatasetRegistration_invalidSchema_case2() {
+        initResource();
+        Response response = resource.createDatasetRegistration(authUser,null, null, "{}");
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testCreateDatasetRegistration_invalidSchema_case3() {
+        DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+        String schemaString = new Gson().toJson(schemaV1);
+        initResource();
+        Response response = resource.createDatasetRegistration(authUser,null, null, schemaString);
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testCreateDatasetRegistration_validSchema() {
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(datasetService.createDatasetsFromRegistration(any(), any(), any(), any())).thenReturn(List.of());
+        DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
+        String schemaString = new Gson().toJson(schemaV1);
+        initResource();
+
+        Response response = resource.createDatasetRegistration(authUser,null, null, schemaString);
+        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
+
+    @Test
+    public void testCreateDatasetRegistration_withFile() {
+        String fileContent = "test";
+        InputStream stream = IOUtils.toInputStream(fileContent, Charset.defaultCharset());
+        FormDataContentDisposition content = FormDataContentDisposition
+            .name("file")
+            .fileName("sharing_plan.txt")
+            .build();
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(datasetService.createDatasetsFromRegistration(any(), any(), any(), any())).thenReturn(List.of());
+        DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
+        String instance = new Gson().toJson(schemaV1);
+        initResource();
+
+        Response response = resource.createDatasetRegistration(authUser, stream, content, instance);
+        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
+
+    @Test
+    public void testCreateDatasetRegistration_invalidFileName() {
+        String fileContent = "test";
+        InputStream stream = IOUtils.toInputStream(fileContent, Charset.defaultCharset());
+        FormDataContentDisposition content = FormDataContentDisposition
+            .name("file")
+            .fileName("file/with&$invalid*^chars\\.txt")
+            .build();
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
+        String instance = new Gson().toJson(schemaV1);
+        initResource();
+
+        Response response = resource.createDatasetRegistration(authUser, stream, content, instance);
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    /**
+     * Helper method to create a minimally valid instance of a dataset registration schema
+     * @param user The User
+     * @return The DatasetRegistrationSchemaV1.yaml instance
+     */
+    private DatasetRegistrationSchemaV1 creatDatasetRegistrationMock(User user) {
+        DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+        schemaV1.setStudyName("Name");
+        schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.Observational);
+        schemaV1.setStudyDescription("Description");
+        schemaV1.setDataTypes(List.of("Data Type"));
+        FileTypeObject fileType = new FileTypeObject();
+        fileType.setFileType(FileTypeObject.FileType.Arrays);
+        fileType.setFunctionalEquivalence("Functional Equivalence");
+        fileType.setNumberOfParticipants(1);
+        schemaV1.setFileTypes(List.of(fileType));
+        schemaV1.setPhenotypeIndication("Indication");
+        schemaV1.setSpecies("Species");
+        schemaV1.setPiName("PI Name");
+        when(user.getUserId()).thenReturn(1);
+        schemaV1.setDataSubmitterUserId(user.getUserId());
+        schemaV1.setDataCustodianEmail(List.of("valid_email@domain.org"));
+        schemaV1.setPublicVisibility(true);
+        schemaV1.setDataAccessCommitteeId(1);
+        ConsentGroup consentGroup = new ConsentGroup();
+        consentGroup.setConsentGroupName("Name");
+        consentGroup.setGeneralResearchUse(true);
+        schemaV1.setConsentGroups(List.of(consentGroup));
+        return schemaV1;
     }
 }
