@@ -396,12 +396,27 @@ public class DatasetResource extends Resource {
     @Path("/autocomplete/{partial}")
     @Produces("application/json")
     @PermitAll
+    @Deprecated
     public Response datasetAutocomplete(@Auth AuthUser authUser, @PathParam("partial") String partial){
         try {
             User dacUser = userService.findUserByEmail(authUser.getEmail());
             Integer dacUserId = dacUser.getUserId();
             List<Map<String, String>> datasets = datasetService.autoCompleteDatasets(partial, dacUserId);
             return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Path("/search")
+    @Produces("application/json")
+    @PermitAll
+    public Response searchDatasets(@Auth AuthUser authUser, @QueryParam("query") String query){
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            List<Dataset> datasets = datasetService.searchDatasets(query, user);
+            return Response.ok().entity(datasets).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

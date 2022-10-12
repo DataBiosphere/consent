@@ -397,11 +397,11 @@ public class DatasetService {
         List<Integer> datasetIdsInUse = dataAccessRequestDAO.findAllDARDatasetRelationDatasetIds();
         HashSet<DatasetDTO> datasets = new HashSet<>();
         if (userHasRole(UserRoles.ADMIN.getRoleName(), userId)) {
-            datasets.addAll(datasetDAO.findAllDatasets());
+            datasets.addAll(datasetDAO.findAllDatasetDTOs());
         } else {
-            datasets.addAll(datasetDAO.findActiveDatasets());
+            datasets.addAll(datasetDAO.findActiveDatasetDTOs());
             if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), userId)) {
-                Collection<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetsByUserId(userId);
+                Collection<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetDTOsByUserId(userId);
                 datasets.addAll(chairSpecificDatasets);
             }
         }
@@ -409,30 +409,38 @@ public class DatasetService {
         return datasets;
     }
 
+
+    public List<Dataset> searchDatasets(String query, User user) {
+        List<Dataset> datasets = this.findAllDatasetsByUser(user);
+
+        return datasets.stream().filter(ds -> ds.isStringMatch(query)).toList();
+    }
+
+    @Deprecated
     public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
         Set<DatasetDTO> datasets = describeDatasets(dacUserId);
         String lowercasePartial = partial.toLowerCase();
         Set<DatasetDTO> filteredDatasetsContainingPartial = datasets.stream()
-        .filter(ds -> filterDatasetOnProperties(ds, lowercasePartial))
-        .collect(Collectors.toSet());
+                .filter(ds -> filterDatasetOnProperties(ds, lowercasePartial))
+                .collect(Collectors.toSet());
         return filteredDatasetsContainingPartial.stream().map(ds ->
-              {
-                  HashMap<String, String> map = new HashMap<>();
-                  List<DatasetPropertyDTO> properties = ds.getProperties();
-                  Optional<DatasetPropertyDTO> datasetName = properties.stream()
-                        .filter(p -> p.getPropertyName().equalsIgnoreCase("Dataset Name")).findFirst();
-                  Optional<DatasetPropertyDTO> pi = properties.stream()
-                        .filter(p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
-                        .findFirst();
-                  String datasetNameString =
-                        datasetName.isPresent() ? datasetName.get().getPropertyValue() : "";
-                  String piString = pi.isPresent() ? pi.get().getPropertyValue() : "";
-                  map.put("id", ds.getDataSetId().toString());
-                  map.put("objectId", ds.getObjectId());
-                  map.put("concatenation",
-                        datasetNameString + " | " + piString + " | " + ds.getConsentId());
-                  return map;
-              }
+                {
+                    HashMap<String, String> map = new HashMap<>();
+                    List<DatasetPropertyDTO> properties = ds.getProperties();
+                    Optional<DatasetPropertyDTO> datasetName = properties.stream()
+                            .filter(p -> p.getPropertyName().equalsIgnoreCase("Dataset Name")).findFirst();
+                    Optional<DatasetPropertyDTO> pi = properties.stream()
+                            .filter(p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
+                            .findFirst();
+                    String datasetNameString =
+                            datasetName.isPresent() ? datasetName.get().getPropertyValue() : "";
+                    String piString = pi.isPresent() ? pi.get().getPropertyValue() : "";
+                    map.put("id", ds.getDataSetId().toString());
+                    map.put("objectId", ds.getObjectId());
+                    map.put("concatenation",
+                            datasetNameString + " | " + piString + " | " + ds.getConsentId());
+                    return map;
+                }
         ).collect(Collectors.toList());
     }
 

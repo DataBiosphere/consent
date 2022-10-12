@@ -1077,7 +1077,7 @@ public class DarCollectionServiceTest {
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
       .thenReturn(List.of(summary, summaryTwo, summaryThree, summaryFour));
-    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+    when(datasetDAO.findDatasetDTOsByUserId(any())).thenReturn(Set.of());
 
     initService();
 
@@ -1195,7 +1195,7 @@ public class DarCollectionServiceTest {
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
       .thenReturn(List.of(summaryOne, summaryTwo, summaryThree, summaryFour, summaryFive, summarySix));
-    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+    when(datasetDAO.findDatasetDTOsByUserId(any())).thenReturn(Set.of());
 
     initService();
 
@@ -1378,7 +1378,7 @@ public class DarCollectionServiceTest {
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(user.getUserId(), List.of(), collectionId))
             .thenReturn(summary);
-    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+    when(datasetDAO.findDatasetDTOsByUserId(any())).thenReturn(Set.of());
 
     initService();
 
@@ -1420,7 +1420,7 @@ public class DarCollectionServiceTest {
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(user.getUserId(), List.of(), collectionId))
             .thenReturn(summary);
-    when(datasetDAO.findDatasetsByUserId(any())).thenReturn(Set.of());
+    when(datasetDAO.findDatasetDTOsByUserId(any())).thenReturn(Set.of());
 
     initService();
 

@@ -1,9 +1,12 @@
 package org.broadinstitute.consent.http.models;
 
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -227,6 +230,10 @@ public class Dataset {
     }
 
     public String getDatasetIdentifier() {
+        if (Objects.isNull(this.getAlias())) {
+            return null;
+        }
+
         return parseAliasToIdentifier(this.getAlias());
     }
 
@@ -295,6 +302,61 @@ public class Dataset {
 
     public void setSharingPlanDocumentName(String sharingPlanDocumentName) {
         this.sharingPlanDocumentName = sharingPlanDocumentName;
+    }
+
+    /**
+     * Checks if the Dataset matches a raw search query. Searches on all dataset properties
+     * and some data use properties.
+     *
+     * @param query Raw string query
+     * @return if the Dataset matched query
+     */
+    public boolean isStringMatch(@NonNull String query) {
+        String lowerCaseQuery = query.toLowerCase();
+        List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
+
+        List<String> matchTerms = new ArrayList<>();
+        matchTerms.add(this.getName());
+        matchTerms.add(this.getDatasetIdentifier());
+
+        if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
+            List<String> propVals = getProperties()
+                    .stream()
+                    .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
+                    .map(DatasetProperty::getPropertyValueAsString)
+                    .map(String::toLowerCase)
+                    .toList();
+            matchTerms.addAll(propVals);
+        }
+
+        if (Objects.nonNull(dataUse)) {
+            if (Objects.nonNull(dataUse.getEthicsApprovalRequired())
+                    && dataUse.getEthicsApprovalRequired()) {
+                matchTerms.add("irb");
+            }
+
+            if (Objects.nonNull(dataUse.getCollaboratorRequired())
+                    && dataUse.getCollaboratorRequired()) {
+                matchTerms.add("collaborator");
+            }
+
+            if (Objects.nonNull(dataUse.getDiseaseRestrictions())) {
+                matchTerms.addAll(dataUse.getDiseaseRestrictions());
+            }
+        }
+
+        return queryTerms
+                .stream()
+                .filter(Objects::nonNull)
+                // all terms must match at least one thing
+                .allMatch((q) ->
+                        matchTerms
+                                .stream()
+                                .filter(Objects::nonNull)
+                                .map(String::toLowerCase)
+                                .anyMatch(
+                                        (t) -> t.contains(q)
+                                ));
     }
 
     @Override
