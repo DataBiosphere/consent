@@ -407,36 +407,7 @@ public class DatasetService {
     public List<Dataset> searchDatasets(String query, User user) {
         List<Dataset> datasets = this.findAllDatasetsByUser(user);
 
-        return datasets.stream().filter(ds ->this.filterDatasetByQuery(ds, query)).toList();
-    }
-
-
-    // dataset properties which can be searched by
-    private static final List<String> filterableDatasetProperties = List.of(
-            "Principal Investigator(PI)"
-    );
-    private boolean filterDatasetByQuery(Dataset ds, String query) {
-        List<String> terms = new ArrayList<>();
-
-        terms.add(ds.getName());
-        terms.add(ds.getDatasetIdentifier());
-        terms.add(ds.getDatasetName());
-
-        if (Objects.nonNull(ds.getProperties())) {
-            ds.getProperties().forEach(prop -> {
-                if (Objects.nonNull(prop.getPropertyName()) && Objects.nonNull(prop.getPropertyValue())
-                        && filterableDatasetProperties.contains(prop.getPropertyName())) {
-                    terms.add(prop.getPropertyValueAsString());
-                }
-            });
-        }
-
-        String normalizedQuery = query.toLowerCase();
-        return terms
-                .stream()
-                .filter(Objects::nonNull)
-                .map(String::toLowerCase)
-                .anyMatch((t) -> t.contains(normalizedQuery));
+        return datasets.stream().filter(ds -> ds.isStringMatch(query)).toList();
     }
 
     @Deprecated

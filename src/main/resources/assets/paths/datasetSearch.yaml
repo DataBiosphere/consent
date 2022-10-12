@@ -9,7 +9,7 @@ get:
       schema:
         type: string
   tags:
-    - Datasets
+    - Dataset
   responses:
     200:
       description: A list of Datasets

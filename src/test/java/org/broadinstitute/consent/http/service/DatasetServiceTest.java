@@ -562,6 +562,12 @@ public class DatasetServiceTest {
         assertTrue(results.contains(ds2));
         assertTrue(results.contains(ds1));
 
+        // search on two things at once
+        results = datasetService.searchDatasets("Doe asdf", u);
+
+        assertEquals(1, results.size());
+        assertTrue(results.contains(ds1));
+
         // query nonexistent phrase
         results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf", u);
         assertEquals(0, results.size());
