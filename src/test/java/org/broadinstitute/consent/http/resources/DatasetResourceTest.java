@@ -612,6 +612,7 @@ public class DatasetResourceTest {
         assertEquals(200, response.getStatus());
     }
 
+
     @Test
     public void testDatasetAutocompleteError() {
         when(authUser.getEmail()).thenReturn("testauthuser@test.com");
@@ -622,6 +623,22 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.datasetAutocomplete(authUser, "test");
         assertEquals(500, response.getStatus());
+    }
+
+    @Test
+    public void testSearchDatasets() {
+        Dataset ds = new Dataset();
+        ds.setDataSetId(1);
+        when(authUser.getEmail()).thenReturn("testauthuser@test.com");
+        when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
+        when(user.getUserId()).thenReturn(0);
+        when(datasetService.searchDatasets("search query", user)).thenReturn(List.of(ds));
+
+        initResource();
+        Response response = resource.searchDatasets(authUser, "search query");
+
+        assertEquals(200, response.getStatus());
+        assertEquals(List.of(ds), response.getEntity());
     }
 
     @Test

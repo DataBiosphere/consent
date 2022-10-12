@@ -1788,8 +1788,11 @@ paths:
           description: The specified datasets were downloaded.
         500:
           description: Server error.
+  /api/dataset/search:
+    $ref: './paths/datasetSearch.yaml'
   /api/dataset/autocomplete/{partial}:
     get:
+      deprecated: true
       summary: datasetAutocomplete
       description: Returns Dataset list with the Datasets whose objectsIds matches with the partial string.
       parameters:
