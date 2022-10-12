@@ -328,12 +328,18 @@ public class Dataset {
         }
 
         if (Objects.nonNull(this.dataUse)) {
-            if (this.dataUse.getEthicsApprovalRequired()) {
+            if (Objects.nonNull(this.dataUse.getEthicsApprovalRequired())
+                    && this.dataUse.getEthicsApprovalRequired()) {
                 matchTerms.add("irb");
             }
 
-            if (this.dataUse.getCommercialUse()) {
-                matchTerms.add("commercialUse");
+            if (Objects.nonNull(this.dataUse.getCollaboratorRequired())
+                    && this.dataUse.getCollaboratorRequired()) {
+                matchTerms.add("collaborator");
+            }
+            
+            if (Objects.nonNull(this.dataUse.getDiseaseRestrictions())) {
+                matchTerms.addAll(this.dataUse.getDiseaseRestrictions());
             }
         }
 

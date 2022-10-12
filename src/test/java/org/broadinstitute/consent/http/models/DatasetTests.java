@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class DatasetTests {
@@ -76,6 +77,52 @@ public class DatasetTests {
         assertTrue(ds.isStringMatch("123"));
         assertTrue(ds.isStringMatch("001235"));
         assertFalse(ds.isStringMatch("DUOS-123456"));
+    }
+
+    @Test
+    public void testIsStringMatchDataUseCommercial() {
+        Dataset ds = new Dataset();
+
+        assertFalse(ds.isStringMatch("collaborator"));
+
+        DataUse du = new DataUse();
+        du.setCommercialUse(true);
+
+        ds.setDataUse(du);
+
+        assertTrue(ds.isStringMatch("collaborator"));
+        assertTrue(ds.isStringMatch("collab"));
+    }
+
+    @Test
+    public void testIsStringMatchDataUseIrb() {
+        Dataset ds = new Dataset();
+
+        assertFalse(ds.isStringMatch("irb"));
+
+        DataUse du = new DataUse();
+        du.setEthicsApprovalRequired(true);
+
+        ds.setDataUse(du);
+
+        assertTrue(ds.isStringMatch("irb"));
+        assertTrue(ds.isStringMatch("irb"));
+    }
+
+    @Test
+    public void testIsStringMatchDataUseDiseases() {
+        Dataset ds = new Dataset();
+
+        assertFalse(ds.isStringMatch("cancer"));
+        assertFalse(ds.isStringMatch("alzheimers"));
+
+        DataUse du = new DataUse();
+        du.setDiseaseRestrictions(List.of("cancer", "alzheimers"));
+
+        ds.setDataUse(du);
+
+        assertTrue(ds.isStringMatch("cancer"));
+        assertTrue(ds.isStringMatch("alzheimers"));
     }
 
     @Test
