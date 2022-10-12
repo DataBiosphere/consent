@@ -6,17 +6,19 @@ import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.JsonSchemaUtil;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -55,10 +58,11 @@ import java.util.stream.Collectors;
 public class DatasetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
-    private final ConsentService consentService;
     private final DatasetService datasetService;
     private final UserService userService;
     private final DataAccessRequestService darService;
+
+    private final JsonSchemaUtil jsonSchemaUtil;
 
     private final String defaultDataSetSampleFileName = "DataSetSample.tsv";
     private final String defaultDataSetSampleContent = "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
@@ -76,15 +80,16 @@ public class DatasetResource extends Resource {
     }
 
     @Inject
-    public DatasetResource(ConsentService consentService, DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
-        this.consentService = consentService;
+    public DatasetResource(DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
         this.datasetService = datasetService;
         this.userService = userService;
         this.darService = darService;
+        this.jsonSchemaUtil = new JsonSchemaUtil();
         resetDataSetSampleFileName();
         resetDataSetSampleContent();
     }
 
+    @Deprecated
     @POST
     @Consumes("application/json")
     @Produces("application/json")
@@ -130,6 +135,43 @@ public class DatasetResource extends Resource {
             return Response.created(uri).entity(createdDatasetWithConsent).build();
         }
         catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @POST
+    @Consumes({MediaType.MULTIPART_FORM_DATA})
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path("/v3")
+    @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+    /*
+     * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
+     * With that object, we can fully create datasets from the provided values.
+     */
+    public Response createDatasetRegistration(
+            @Auth AuthUser authUser,
+            @FormDataParam("file") InputStream uploadInputStream,
+            @FormDataParam("file") FormDataContentDisposition fileDetail,
+            @FormDataParam("dataset") String json) {
+        try {
+            try {
+                if (!jsonSchemaUtil.isValidSchema_v1(json)) {
+                    throw new BadRequestException("Invalid schema");
+                }
+            } catch (Exception e) {
+                throw new BadRequestException("Invalid schema");
+            }
+            DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
+            User user = userService.findUserByEmail(authUser.getEmail());
+            // validate file if exists.
+            if (Objects.nonNull(fileDetail)) {
+                validateFileDetails(fileDetail);
+            }
+            // Generate datasets from registration
+            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, uploadInputStream, fileDetail);
+            URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
+            return Response.created(uri).entity(datasets).build();
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -419,7 +461,7 @@ public class DatasetResource extends Resource {
         List<Integer> dacIds = user.getRoles().stream()
             .filter(r -> r.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()))
             .map(UserRole::getDacId)
-            .collect(Collectors.toList());
+            .toList();
         if (dacIds.isEmpty()) {
             // Something went very wrong here. A chairperson with no dac ids is an error
             logger().error("Unable to find dac ids for chairperson user: " + user.getEmail());

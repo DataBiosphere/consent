@@ -3,7 +3,9 @@ package org.broadinstitute.consent.http.util;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -38,6 +40,25 @@ public class JsonSchemaUtil {
       return null;
     }
   }
+
+
+  /**
+   * Loads a Schema populated from the current dataset registration schema
+   * @return Schema The Schema
+   * @throws ExecutionException Error reading from cache
+   */
+  private Schema getDatasetRegistrationSchema() throws ExecutionException {
+      String schemaString = getDatasetRegistrationSchemaV1();
+      JSONObject jsonSchema = new JSONObject(schemaString);
+      return SchemaLoader
+        .builder()
+        .schemaJson(jsonSchema)
+        .addFormatValidator(new JsonSchemaDateValidator())
+        .build()
+        .load()
+        .build();
+  }
+
   /**
    * Compares an instance of a dataset registration object to the dataset registration schema
    *
@@ -46,10 +67,8 @@ public class JsonSchemaUtil {
    */
   public boolean isValidSchema_v1(String datasetRegistrationInstance) {
     try {
-      String schemaString = cache.get(datasetRegistrationSchemaV1);
-      JSONObject jsonSchema = new JSONObject(schemaString);
       JSONObject jsonSubject = new JSONObject(datasetRegistrationInstance);
-      Schema schema = SchemaLoader.load(jsonSchema);
+      Schema schema = getDatasetRegistrationSchema();
       schema.validate(jsonSubject);
       return true;
     } catch (ExecutionException ee) {
@@ -68,4 +87,16 @@ public class JsonSchemaUtil {
     }
   }
 
+  public DatasetRegistrationSchemaV1 deserializeDatasetRegistration(String datasetRegistrationInstance) {
+    try {
+      JSONObject jsonSubject = new JSONObject(datasetRegistrationInstance);
+      Schema schema = getDatasetRegistrationSchema();
+      schema.validate(jsonSubject);
+      Gson gson = new Gson();
+      return gson.fromJson(datasetRegistrationInstance, DatasetRegistrationSchemaV1.class);
+    } catch (ExecutionException ee) {
+      logger.error("Unable to load the data submitter schema: " + ee.getMessage());
+      return null;
+    }
+  }
 }

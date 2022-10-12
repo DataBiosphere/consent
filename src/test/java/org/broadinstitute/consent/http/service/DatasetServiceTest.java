@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -69,6 +70,9 @@ public class DatasetServiceTest {
     private DatasetDAO datasetDAO;
 
     @Mock
+    private GCSService gcsService;
+
+    @Mock
     private UserRoleDAO userRoleDAO;
 
     @Mock
@@ -80,7 +84,7 @@ public class DatasetServiceTest {
     }
 
     private void initService() {
-        datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, userRoleDAO, useRestrictionConverter);
+        datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, gcsService, userRoleDAO, useRestrictionConverter);
     }
 
     @Test
@@ -719,7 +723,7 @@ public class DatasetServiceTest {
         Dataset updatedDataset = new Dataset();
         updatedDataset.setDataSetId(1);
         updatedDataset.setDacApproval(payloadBool);
-        
+
         when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
         initService();
 

@@ -14,7 +14,7 @@ delete:
       schema:
         type: boolean
   tags:
-    - Datasets
+    - Dataset
   responses:
     200:
       description: Successful update
