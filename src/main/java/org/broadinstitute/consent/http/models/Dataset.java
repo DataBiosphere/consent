@@ -313,33 +313,35 @@ public class Dataset {
      */
     public boolean isStringMatch(@NonNull String query) {
         String lowerCaseQuery = query.toLowerCase();
-        List<String> queryTerms = new ArrayList<>(List.of(lowerCaseQuery.split("\\s+")));
+        List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
 
         List<String> matchTerms = new ArrayList<>();
         matchTerms.add(this.getName());
         matchTerms.add(this.getDatasetIdentifier());
 
-        if (Objects.nonNull(this.getProperties())) {
-            this.getProperties().forEach(prop -> {
-                if (Objects.nonNull(prop.getPropertyValue())) {
-                    matchTerms.add(prop.getPropertyValueAsString().toLowerCase());
-                }
-            });
+        if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
+            List<String> propVals = getProperties()
+                    .stream()
+                    .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
+                    .map(DatasetProperty::getPropertyValueAsString)
+                    .map(String::toLowerCase)
+                    .toList();
+            matchTerms.addAll(propVals);
         }
 
-        if (Objects.nonNull(this.dataUse)) {
-            if (Objects.nonNull(this.dataUse.getEthicsApprovalRequired())
-                    && this.dataUse.getEthicsApprovalRequired()) {
+        if (Objects.nonNull(dataUse)) {
+            if (Objects.nonNull(dataUse.getEthicsApprovalRequired())
+                    && dataUse.getEthicsApprovalRequired()) {
                 matchTerms.add("irb");
             }
 
-            if (Objects.nonNull(this.dataUse.getCollaboratorRequired())
-                    && this.dataUse.getCollaboratorRequired()) {
+            if (Objects.nonNull(dataUse.getCollaboratorRequired())
+                    && dataUse.getCollaboratorRequired()) {
                 matchTerms.add("collaborator");
             }
 
-            if (Objects.nonNull(this.dataUse.getDiseaseRestrictions())) {
-                matchTerms.addAll(this.dataUse.getDiseaseRestrictions());
+            if (Objects.nonNull(dataUse.getDiseaseRestrictions())) {
+                matchTerms.addAll(dataUse.getDiseaseRestrictions());
             }
         }
 
