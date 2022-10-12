@@ -416,7 +416,7 @@ public class DatasetResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<Dataset> datasets = datasetService.searchDatasets(query, user);
-            return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
+            return Response.ok().entity(datasets).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
