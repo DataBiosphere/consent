@@ -194,7 +194,7 @@ public class DarCollectionService {
           if(isVotable) {
             s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
             List<Vote> votes = s.getVotes().stream()
-              .filter(v -> v.getDacUserId() == userId && v.getType() == VoteType.DAC.getValue())
+              .filter(v -> v.getDacUserId().equals(userId) && v.getType().equals(VoteType.DAC.getValue()))
               .collect(Collectors.toList());
             if(!votes.isEmpty()) {
               Boolean hasVoted = votes.stream().allMatch(v -> Objects.nonNull(v.getVote()));
