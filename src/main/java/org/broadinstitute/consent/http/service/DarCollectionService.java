@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.enumeration.DarCollectionStatus;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -25,6 +26,7 @@ import org.broadinstitute.consent.http.models.PaginationResponse;
 import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.slf4j.Logger;
@@ -176,9 +178,9 @@ public class DarCollectionService {
     });
   }
 
-  private void processDarCollectionSummariesForMember(List<DarCollectionSummary> summaries) {
+  private void processDarCollectionSummariesForMember(List<DarCollectionSummary> summaries, Integer userId) {
     summaries.forEach(s -> {
-      Collection<Election> elections = s.getElections().values();
+        Collection<Election> elections = s.getElections().values();
         Integer electionCount = elections.size();
         //if there are no elections present, unreviewed
         //if there are elections present. in process
@@ -191,7 +193,14 @@ public class DarCollectionService {
 
           if(isVotable) {
             s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
-            s.addAction(DarCollectionActions.VOTE.getValue());
+            List<Vote> votes = s.getVotes().stream()
+              .filter(v -> v.getDacUserId() == userId && v.getType() == VoteType.DAC.getValue())
+              .collect(Collectors.toList());
+            if(!votes.isEmpty()) {
+              Boolean hasVoted = votes.stream().allMatch(v -> Objects.nonNull(v.getVote()));
+              String targetActionString = hasVoted ? DarCollectionActions.UPDATE.getValue() : DarCollectionActions.VOTE.getValue();
+              s.addAction(targetActionString);
+            }
           } else {
             //non-votable states
               //all canceled (complete)
@@ -297,7 +306,7 @@ public class DarCollectionService {
           .map(d -> d.getDataSetId())
           .collect(Collectors.toList());
           summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
-          processDarCollectionSummariesForMember(summaries);
+          processDarCollectionSummariesForMember(summaries, userId);
         break;
       case RESEARCHER:
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
@@ -351,7 +360,7 @@ public class DarCollectionService {
           .map(d -> d.getDataSetId())
           .collect(Collectors.toList());
           summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, datasetIds, collectionId);
-          processDarCollectionSummariesForMember(List.of(summary));
+          processDarCollectionSummariesForMember(List.of(summary), userId);
           break;
         case RESEARCHER:
           summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
