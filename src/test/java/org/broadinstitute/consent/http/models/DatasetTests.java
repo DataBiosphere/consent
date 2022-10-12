@@ -85,8 +85,7 @@ public class DatasetTests {
 
         assertFalse(ds.isStringMatch("collaborator"));
 
-        DataUse du = new DataUse();
-        du.setCollaboratorRequired(true);
+        DataUse du = new DataUseBuilder().setCollaboratorRequired(true).build();
 
         ds.setDataUse(du);
 
