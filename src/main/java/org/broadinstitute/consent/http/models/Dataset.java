@@ -337,7 +337,7 @@ public class Dataset {
                     && this.dataUse.getCollaboratorRequired()) {
                 matchTerms.add("collaborator");
             }
-            
+
             if (Objects.nonNull(this.dataUse.getDiseaseRestrictions())) {
                 matchTerms.addAll(this.dataUse.getDiseaseRestrictions());
             }
