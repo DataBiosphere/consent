@@ -493,6 +493,10 @@ public class DatasetService {
         }
     }
 
+    public Dataset getDataset(Integer datasetId) {
+        return this.datasetDAO.findDatasetById(datasetId);
+    }
+
     /**
      * This method takes an instance of a dataset registration schema and creates datasets from it.
      * There will be one dataset per ConsentGroup in the dataset.

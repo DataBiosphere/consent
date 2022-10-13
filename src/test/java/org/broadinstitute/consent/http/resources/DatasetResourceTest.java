@@ -652,6 +652,29 @@ public class DatasetResourceTest {
     }
 
     @Test
+    public void testGetDataset() {
+        Dataset ds = new Dataset();
+        ds.setDataSetId(1);
+        ds.setName("asdfasdfasdfasdfasdfasdf");
+        when(datasetService.getDataset(1)).thenReturn(ds);
+
+        initResource();
+        Response response = resource.getDataset(1);
+        assertEquals(200, response.getStatus());
+        assertEquals(ds, response.getEntity());
+    }
+
+    @Test
+    public void testGetDatasetNotFound() {
+        when(datasetService.getDataset(1)).thenReturn(null);
+
+        initResource();
+        Response response = resource.getDataset(1);
+        assertEquals(404, response.getStatus());
+    }
+
+
+    @Test
     public void testUpdateNeedsReviewDataSetsError() {
         doThrow(new RuntimeException()).when(datasetService).updateNeedsReviewDatasets(any(), any());
 

@@ -1766,6 +1766,9 @@ paths:
           description: Server error.
   /api/dataset/{id}:
     $ref: './paths/datasetById.yaml'
+  /api/dataset/v2/{id}:
+    $ref: './paths/datasetByIdV2.yaml'
+
   /api/dataset/{id}/approved/users:
     $ref: './paths/datasetByIdApprovedUsers.yaml'
   /api/dataset/download:
