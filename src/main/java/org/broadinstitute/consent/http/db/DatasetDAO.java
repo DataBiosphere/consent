@@ -280,6 +280,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     List<Dictionary> getMappedFieldsOrderByReceiveOrder();
 
     @RegisterRowMapper(DictionaryMapper.class)
+    @SqlQuery("SELECT * FROM dictionary d")
+    List<Dictionary> getDictionaryTerms();
+
+    @RegisterRowMapper(DictionaryMapper.class)
     @SqlQuery("SELECT * FROM dictionary d WHERE d.displayOrder IS NOT NULL  ORDER BY displayOrder")
     List<Dictionary> getMappedFieldsOrderByDisplayOrder();
 
