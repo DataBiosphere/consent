@@ -39,14 +39,16 @@ public class DatasetServiceDAO {
                     // 3. Generate updates for existing dataset properties
                     // 4. Generate deletes for outdated dataset properties
                     List<Update> updates = new ArrayList<>(generateDictionaryInsertsForProperties(handle, properties));
-                    updates.addAll(generatePropertyInserts(handle, datasetId, properties, now));
-                    updates.addAll(generatePropertyUpdates(handle, datasetId, properties));
-                    updates.addAll(generatePropertyDeletes(handle, datasetId, properties));
+                    // We need to know existing properties for all property operations
+                    Set<DatasetProperty> existingProps = datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
+                    updates.addAll(generatePropertyInserts(handle, datasetId, properties, existingProps, now));
+                    updates.addAll(generatePropertyUpdates(handle, datasetId, properties, existingProps));
+                    updates.addAll(generatePropertyDeletes(handle, properties, existingProps));
                     updates.forEach(Update::execute);
                     handle.commit();
                 }
         );
-        return List.of();
+        return datasetDAO.findDatasetPropertiesByDatasetId(datasetId).stream().toList();
     }
 
     private List<Update> generateDictionaryInsertsForProperties(Handle handle, List<DatasetProperty> properties) {
@@ -68,9 +70,8 @@ public class DatasetServiceDAO {
         return insert;
     }
 
-    private List<Update> generatePropertyInserts(Handle handle, Integer datasetId, List<DatasetProperty> properties, Timestamp now) {
+    private List<Update> generatePropertyInserts(Handle handle, Integer datasetId, List<DatasetProperty> properties, Set<DatasetProperty> existingProps, Timestamp now) {
         List<Update> updates = new ArrayList<>();
-        Set<DatasetProperty> existingProps = datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
         List<String> existingPropNames = existingProps.stream().map(DatasetProperty::getPropertyName).toList();
         // Generate new inserts for props we don't know about yet
         properties.forEach(prop -> {
@@ -83,8 +84,7 @@ public class DatasetServiceDAO {
         return updates;
     }
 
-    private List<Update> generatePropertyUpdates(Handle handle, Integer datasetId, List<DatasetProperty> properties) {
-        Set<DatasetProperty> existingProps = datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
+    private List<Update> generatePropertyUpdates(Handle handle, Integer datasetId, List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
         List<Update> updates = new ArrayList<>();
         List<String> existingPropNames = existingProps.stream().map(DatasetProperty::getPropertyName).toList();
         // Generate updates for props we already know
@@ -97,9 +97,8 @@ public class DatasetServiceDAO {
         return updates;
     }
 
-    private List<Update> generatePropertyDeletes(Handle handle, Integer datasetId, List<DatasetProperty> properties) {
+    private List<Update> generatePropertyDeletes(Handle handle, List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
         List<Update> updates = new ArrayList<>();
-        Set<DatasetProperty> existingProps = datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
         List<String> newPropNames = properties.stream().map(DatasetProperty::getPropertyName).toList();
         // Generate deletes for existing props not enumerated in the new props
         existingProps.forEach(existingProp -> {
