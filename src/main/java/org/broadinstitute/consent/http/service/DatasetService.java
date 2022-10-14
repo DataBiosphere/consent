@@ -80,10 +80,12 @@ public class DatasetService {
         return datasetDAO.findDatasetsByReceiveOrder(dataSetId);
     }
 
+    @Deprecated
     public Collection<Dictionary> describeDictionaryByDisplayOrder() {
         return datasetDAO.getMappedFieldsOrderByDisplayOrder();
     }
 
+    @Deprecated
     public Collection<Dictionary> describeDictionaryByReceiveOrder() {
         return datasetDAO.getMappedFieldsOrderByReceiveOrder();
     }

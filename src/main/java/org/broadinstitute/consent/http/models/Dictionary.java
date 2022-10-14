@@ -1,13 +1,14 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Date;
-
 public class Dictionary {
 
     private Integer keyId;
     private String key;
+    @Deprecated
     private Boolean required;
+    @Deprecated
     private Integer displayOrder;
+    @Deprecated
     private Integer receiveOrder;
 
     public Dictionary(Integer keyId, String key, Boolean required, Integer displayOrder, Integer receiveOrder){
@@ -38,26 +39,32 @@ public class Dictionary {
         this.key = key;
     }
 
+    @Deprecated
     public Boolean getRequired() {
         return required;
     }
 
+    @Deprecated
     public void setRequired(Boolean required) {
         this.required = required;
     }
 
+    @Deprecated
     public Integer getDisplayOrder() {
         return displayOrder;
     }
 
+    @Deprecated
     public void setDisplayOrder(Integer displayOrder) {
         this.displayOrder = displayOrder;
     }
 
+    @Deprecated
     public Integer getReceiveOrder() {
         return receiveOrder;
     }
 
+    @Deprecated
     public void setReceiveOrder(Integer receiveOrder) {
         this.receiveOrder = receiveOrder;
     }
