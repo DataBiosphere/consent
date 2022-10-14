@@ -8,7 +8,6 @@ public class Dictionary {
     private String key;
     private Boolean required;
     private Integer displayOrder;
-    private Date createDate;
     private Integer receiveOrder;
 
     public Dictionary(Integer keyId, String key, Boolean required, Integer displayOrder, Integer receiveOrder){
@@ -53,14 +52,6 @@ public class Dictionary {
 
     public void setDisplayOrder(Integer displayOrder) {
         this.displayOrder = displayOrder;
-    }
-
-    public Date getCreateDate() {
-        return createDate;
-    }
-
-    public void setCreateDate(Date createDate) {
-        this.createDate = createDate;
     }
 
     public Integer getReceiveOrder() {

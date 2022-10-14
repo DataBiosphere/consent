@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class DatasetServiceDAOTest extends DAOTestHelper {
 
@@ -38,6 +40,17 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
      *  5. Add new dataset property without an existing dictionary key + Delete existing property
      *  6. Update existing dataset property + Delete existing property
      */
+
+    @Test
+    public void testSynchronizeDatasetProperties_case2() throws Exception {
+        String newPropName = "New Prop Name";
+        Dataset dataset = createSampleDataset();
+        DatasetProperty prop = createSamplePropNoDictionary(dataset, newPropName);
+        List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(prop));
+        assertEquals(1, synchronizedProps.size());
+        List<String> dictionaryTerms = datasetDAO.getDictionaryTerms().stream().map(Dictionary::getKey).toList();
+        assertTrue(dictionaryTerms.contains(newPropName));
+    }
 
     @Test
     public void testSynchronizeDatasetProperties_case3() throws Exception {
@@ -77,7 +90,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     }
 
     /**
-     * Creates a DatasetProperty that uses an existing Dictionary term
+     * Creates a saved DatasetProperty that uses an existing Dictionary term
      *
      * @param dataset    The Dataset
      * @param dictionary The Dictionary
@@ -95,6 +108,23 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         datasetDAO.insertDatasetProperties(List.of(prop));
         Set<DatasetProperty> props = datasetDAO.findDatasetPropertiesByDatasetId(dataset.getDataSetId());
         return props.stream().toList().get(0);
+    }
+
+    /**
+     * Populates an unsaved DatasetProperty that does not use an existing Dictionary term
+     *
+     * @param dataset    The Dataset
+     * @return The populated DatasetProperty
+     */
+    private DatasetProperty createSamplePropNoDictionary(Dataset dataset, String keyName) {
+        DatasetProperty prop = new DatasetProperty();
+        prop.setDataSetId(dataset.getDataSetId());
+        prop.setPropertyName(keyName);
+        prop.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+        prop.setCreateDate(new Date());
+        prop.setSchemaProperty("testSchemaProp");
+        prop.setPropertyType(DatasetPropertyType.String);
+        return prop;
     }
 
 }
