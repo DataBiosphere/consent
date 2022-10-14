@@ -41,6 +41,17 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
      */
 
     @Test
+    public void testSynchronizeDatasetProperties_case1() throws Exception {
+        List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
+        Dictionary dictionary = dictionaryTerms.get(0);
+        Dataset dataset = createSampleDataset();
+        DatasetProperty prop = createSamplePropNoDictionary(dataset, dictionary.getKey());
+        List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(prop));
+        assertEquals(1, synchronizedProps.size());
+        assertEquals(dictionary.getKey(), synchronizedProps.get(0).getPropertyName());
+    }
+
+    @Test
     public void testSynchronizeDatasetProperties_case2() throws Exception {
         String newPropName = "New Prop Name";
         Dataset dataset = createSampleDataset();
