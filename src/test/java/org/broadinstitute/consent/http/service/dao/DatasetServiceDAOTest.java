@@ -45,6 +45,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
         Dictionary dictionary = dictionaryTerms.get(0);
         Dataset dataset = createSampleDataset();
+        // Creating a prop that will be added
         DatasetProperty prop = createUnsavedPropWithKeyName(dataset, dictionary.getKey());
         List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(prop));
         assertEquals(1, synchronizedProps.size());
@@ -55,6 +56,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     public void testSynchronizeDatasetProperties_case2() throws Exception {
         String newPropName = "New Prop Name";
         Dataset dataset = createSampleDataset();
+        // Creating a prop that will be added
         DatasetProperty prop = createUnsavedPropWithKeyName(dataset, newPropName);
         List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(prop));
         assertEquals(1, synchronizedProps.size());
@@ -67,6 +69,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Dataset dataset = createSampleDataset();
         List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
         Dictionary dictionary = dictionaryTerms.get(0);
+        // Saving a prop that will be updated
         DatasetProperty prop = savePropWithDictionaryTerm(dataset, dictionary);
         String newPropVal = RandomStringUtils.randomAlphabetic(10);
         prop.setPropertyValue(newPropVal);
@@ -81,8 +84,9 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Dictionary dict1 = dictionaryTerms.get(0);
         Dictionary dict2 = dictionaryTerms.get(1);
         Dataset dataset = createSampleDataset();
-        // Saving a prop that should be deleted via synchronization
+        // Saving a prop that will be deleted via synchronization
         savePropWithDictionaryTerm(dataset, dict1);
+        // Creating a prop that will be added
         DatasetProperty propToAdd = createUnsavedPropWithKeyName(dataset, dict2.getKey());
         List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(propToAdd));
         assertEquals(1, synchronizedProps.size());
@@ -95,8 +99,9 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Dictionary dict1 = dictionaryTerms.get(0);
         String newPropName = "New Prop Name";
         Dataset dataset = createSampleDataset();
-        // Saving a prop that should be deleted via synchronization
+        // Saving a prop that will be deleted via synchronization
         savePropWithDictionaryTerm(dataset, dict1);
+        // Creating a prop that will be added
         DatasetProperty propToAdd = createUnsavedPropWithKeyName(dataset, newPropName);
         List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(propToAdd));
         assertEquals(1, synchronizedProps.size());
@@ -109,8 +114,9 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Dictionary dict1 = dictionaryTerms.get(0);
         Dictionary dict2 = dictionaryTerms.get(1);
         Dataset dataset = createSampleDataset();
-        // Saving a prop that should be deleted via synchronization
+        // Saving a prop that will be deleted via synchronization
         savePropWithDictionaryTerm(dataset, dict1);
+        // Saving a prop that will be updated
         DatasetProperty propToUpdate = savePropWithDictionaryTerm(dataset, dict2);
         String newPropVal = RandomStringUtils.randomAlphabetic(10);
         propToUpdate.setPropertyValue(newPropVal);
