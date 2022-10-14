@@ -67,7 +67,7 @@ public class DatasetServiceDAO {
     private Update createDictionaryInsert(Handle handle, String key) {
         final String sql = """
             INSERT INTO dictionary (key, required)
-            VALUES (:key, FALSE) 
+            VALUES (:key, FALSE)
             ON CONFLICT DO NOTHING
         """;
         Update insert = handle.createUpdate(sql);
