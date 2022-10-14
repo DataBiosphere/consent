@@ -50,6 +50,8 @@ public class DatasetServiceDAO {
         return datasetDAO.findDatasetPropertiesByDatasetId(datasetId).stream().toList();
     }
 
+    // Helper methods to generate Dictionary inserts
+
     private List<Update> generateDictionaryInsertsForProperties(Handle handle, List<DatasetProperty> properties) {
         List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
         List<String> keyValues = dictionaryTerms.stream().map(Dictionary::getKey).toList();
@@ -69,6 +71,8 @@ public class DatasetServiceDAO {
         return insert;
     }
 
+    // Helper methods to generate DatasetProperty inserts
+
     private List<Update> generatePropertyInserts(Handle handle, Integer datasetId, List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
         Timestamp now = new Timestamp(new Date().getTime());
         List<Update> updates = new ArrayList<>();
@@ -84,10 +88,30 @@ public class DatasetServiceDAO {
         return updates;
     }
 
+    private Update createPropertyInsert(Handle handle, DatasetProperty property, Timestamp now) {
+        final String sql = """
+            INSERT INTO dataset_property (dataset_id, property_key, schema_property, property_value, property_type, create_date )
+            SELECT :datasetId,
+                    (SELECT DISTINCT key_id FROM dictionary WHERE LOWER(key) = LOWER(:propertyName) ORDER BY key_id LIMIT 1),
+                    :schemaProperty, :propertyStringValue, :propertyTypeValue, :createDate
+        """;
+        Update insert = handle.createUpdate(sql);
+        insert.bind("datasetId", property.getDataSetId());
+        insert.bind("propertyKey", property.getPropertyKey());
+        insert.bind("propertyName", property.getPropertyName());
+        insert.bind("schemaProperty", property.getSchemaProperty());
+        insert.bind("propertyStringValue", property.getPropertyValueAsString());
+        insert.bind("propertyTypeValue", property.getPropertyTypeAsString());
+        insert.bind("createDate", now);
+        return insert;
+    }
+
+    // Helper methods to generate DatasetProperty updates
+
     private List<Update> generatePropertyUpdates(Handle handle, Integer datasetId, List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
         List<Update> updates = new ArrayList<>();
         List<String> existingPropNames = existingProps.stream().map(DatasetProperty::getPropertyName).toList();
-        // Generate updates for props we already know
+        // Generate value updates for props that exist
         properties.forEach(prop -> {
             if (existingPropNames.contains(prop.getPropertyName())) {
                 prop.setDataSetId(datasetId);
@@ -95,34 +119,6 @@ public class DatasetServiceDAO {
             }
         });
         return updates;
-    }
-
-    private List<Update> generatePropertyDeletes(Handle handle, List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
-        List<Update> updates = new ArrayList<>();
-        List<String> newPropNames = properties.stream().map(DatasetProperty::getPropertyName).toList();
-        // Generate deletes for existing props not enumerated in the new props
-        existingProps.forEach(existingProp -> {
-            if (!newPropNames.contains(existingProp.getPropertyName())) {
-                updates.add(createPropertyDelete(handle, existingProp));
-            }
-        });
-        return updates;
-    }
-
-    private Update createPropertyInsert(Handle handle, DatasetProperty property, Timestamp now) {
-        // TODO - the key will need to be a subquery since it could be a previous insert into dictionary
-        final String sql = """
-            INSERT INTO dataset_property (dataset_id, property_key, schema_property, property_value, property_type, create_date ) 
-            VALUES (:datasetId, :propertyKey, :schemaProperty, :propertyStringValue, :propertyTypeValue, :createDate)
-        """;
-        Update insert = handle.createUpdate(sql);
-        insert.bind("datasetId", property.getDataSetId());
-        insert.bind("propertyKey", property.getPropertyKey());
-        insert.bind("schemaProperty", property.getSchemaProperty());
-        insert.bind("propertyStringValue", property.getPropertyValueAsString());
-        insert.bind("propertyTypeValue", property.getPropertyTypeAsString());
-        insert.bind("createDate", now);
-        return insert;
     }
 
     private Update createPropertyUpdate(Handle handle, DatasetProperty property) {
@@ -135,6 +131,20 @@ public class DatasetServiceDAO {
         insert.bind("datasetId", property.getDataSetId());
         insert.bind("propertyStringValue", property.getPropertyValueAsString());
         return insert;
+    }
+
+    // Helper methods to generate DatasetProperty deletes
+
+    private List<Update> generatePropertyDeletes(Handle handle, List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
+        List<Update> updates = new ArrayList<>();
+        List<String> newPropNames = properties.stream().map(DatasetProperty::getPropertyName).toList();
+        // Generate deletes for existing props that do not exist in the new props
+        existingProps.forEach(existingProp -> {
+            if (!newPropNames.contains(existingProp.getPropertyName())) {
+                updates.add(createPropertyDelete(handle, existingProp));
+            }
+        });
+        return updates;
     }
 
     private Update createPropertyDelete(Handle handle, DatasetProperty property) {
