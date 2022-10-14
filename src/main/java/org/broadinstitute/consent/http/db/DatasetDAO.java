@@ -261,7 +261,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     Set<DatasetDTO> findDatasetDTOWithPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
     @UseRowMapper(DatasetPropertyMapper.class)
-    @SqlQuery("SELECT * FROM dataset_property WHERE dataset_id = :datasetId")
+    @SqlQuery(
+        " SELECT p.*, d.key FROM dataset_property p " +
+        " INNER JOIN dictionary d ON p.property_key = d.key_id " +
+        " WHERE p.dataset_id = :datasetId ")
     Set<DatasetProperty> findDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
     @Deprecated
@@ -280,7 +283,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     List<Dictionary> getMappedFieldsOrderByReceiveOrder();
 
     @RegisterRowMapper(DictionaryMapper.class)
-    @SqlQuery("SELECT * FROM dictionary d")
+    @SqlQuery("SELECT * FROM dictionary")
     List<Dictionary> getDictionaryTerms();
 
     @RegisterRowMapper(DictionaryMapper.class)
