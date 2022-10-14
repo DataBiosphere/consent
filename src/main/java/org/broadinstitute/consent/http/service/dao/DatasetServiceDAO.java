@@ -151,9 +151,11 @@ public class DatasetServiceDAO {
         final String sql = """
             DELETE FROM dataset_property
             WHERE dataset_id = :datasetId
+            AND property_key = :propertyKey
         """;
         Update insert = handle.createUpdate(sql);
         insert.bind("datasetId", property.getDataSetId());
+        insert.bind("propertyKey", property.getPropertyKey());
         return insert;
     }
 }

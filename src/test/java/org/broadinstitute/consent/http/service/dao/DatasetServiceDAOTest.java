@@ -45,7 +45,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
         Dictionary dictionary = dictionaryTerms.get(0);
         Dataset dataset = createSampleDataset();
-        DatasetProperty prop = createSamplePropNoDictionary(dataset, dictionary.getKey());
+        DatasetProperty prop = createUnsavedPropWithKeyName(dataset, dictionary.getKey());
         List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(prop));
         assertEquals(1, synchronizedProps.size());
         assertEquals(dictionary.getKey(), synchronizedProps.get(0).getPropertyName());
@@ -55,7 +55,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     public void testSynchronizeDatasetProperties_case2() throws Exception {
         String newPropName = "New Prop Name";
         Dataset dataset = createSampleDataset();
-        DatasetProperty prop = createSamplePropNoDictionary(dataset, newPropName);
+        DatasetProperty prop = createUnsavedPropWithKeyName(dataset, newPropName);
         List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(prop));
         assertEquals(1, synchronizedProps.size());
         List<String> dictionaryTerms = datasetDAO.getDictionaryTerms().stream().map(Dictionary::getKey).toList();
@@ -67,12 +67,26 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Dataset dataset = createSampleDataset();
         List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
         Dictionary dictionary = dictionaryTerms.get(0);
-        DatasetProperty prop = createSamplePropFromDictionaryTerm(dataset, dictionary);
+        DatasetProperty prop = savePropWithDictionaryTerm(dataset, dictionary);
         String newPropVal = RandomStringUtils.randomAlphabetic(10);
         prop.setPropertyValue(newPropVal);
         List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(prop));
         assertEquals(1, synchronizedProps.size());
         assertEquals(newPropVal, synchronizedProps.get(0).getPropertyValueAsString());
+    }
+
+    @Test
+    public void testSynchronizeDatasetProperties_case4() throws Exception {
+        List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
+        Dictionary dict1 = dictionaryTerms.get(0);
+        Dictionary dict2 = dictionaryTerms.get(1);
+        Dataset dataset = createSampleDataset();
+        // Saving a prop that should be deleted via synchronization
+        savePropWithDictionaryTerm(dataset, dict1);
+        DatasetProperty propToAdd = createUnsavedPropWithKeyName(dataset, dict2.getKey());
+        List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(propToAdd));
+        assertEquals(1, synchronizedProps.size());
+        assertEquals(dict2.getKey(), synchronizedProps.get(0).getPropertyName());
     }
 
     // Helper methods
@@ -106,7 +120,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
      * @param dictionary The Dictionary
      * @return The created DatasetProperty
      */
-    private DatasetProperty createSamplePropFromDictionaryTerm(Dataset dataset, Dictionary dictionary) {
+    private DatasetProperty savePropWithDictionaryTerm(Dataset dataset, Dictionary dictionary) {
         DatasetProperty prop = new DatasetProperty();
         prop.setDataSetId(dataset.getDataSetId());
         prop.setPropertyKey(dictionary.getKeyId());
@@ -126,7 +140,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
      * @param dataset    The Dataset
      * @return The populated DatasetProperty
      */
-    private DatasetProperty createSamplePropNoDictionary(Dataset dataset, String keyName) {
+    private DatasetProperty createUnsavedPropWithKeyName(Dataset dataset, String keyName) {
         DatasetProperty prop = new DatasetProperty();
         prop.setDataSetId(dataset.getDataSetId());
         prop.setPropertyName(keyName);
