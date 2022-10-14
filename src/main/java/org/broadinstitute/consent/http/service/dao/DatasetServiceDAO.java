@@ -65,7 +65,11 @@ public class DatasetServiceDAO {
     }
 
     private Update createDictionaryInsert(Handle handle, String key) {
-        final String sql = " INSERT INTO dictionary (key, required) VALUES (:key, FALSE) ON CONFLICT DO NOTHING ";
+        final String sql = """
+            INSERT INTO dictionary (key, required) 
+            VALUES (:key, FALSE) 
+            ON CONFLICT DO NOTHING
+        """;
         Update insert = handle.createUpdate(sql);
         insert.bind("key", key);
         return insert;
@@ -126,10 +130,14 @@ public class DatasetServiceDAO {
             UPDATE dataset_property
             SET property_value = :propertyStringValue
             WHERE dataset_id = :datasetId
+            AND property_key = :propertyKey
+            AND property_id = :propertyId
         """;
         Update insert = handle.createUpdate(sql);
         insert.bind("datasetId", property.getDataSetId());
         insert.bind("propertyStringValue", property.getPropertyValueAsString());
+        insert.bind("propertyKey", property.getPropertyKey());
+        insert.bind("propertyId", property.getPropertyId());
         return insert;
     }
 
@@ -152,10 +160,12 @@ public class DatasetServiceDAO {
             DELETE FROM dataset_property
             WHERE dataset_id = :datasetId
             AND property_key = :propertyKey
+            AND property_id = :propertyId
         """;
         Update insert = handle.createUpdate(sql);
         insert.bind("datasetId", property.getDataSetId());
         insert.bind("propertyKey", property.getPropertyKey());
+        insert.bind("propertyId", property.getPropertyId());
         return insert;
     }
 }
