@@ -37,7 +37,7 @@ public class DatasetServiceDAO {
                     // 2. Generate inserts for new dataset properties
                     // 3. Generate updates for existing dataset properties
                     // 4. Generate deletes for outdated dataset properties
-                    List<Update> updates = new ArrayList<>(generateDictionaryInsertsForProperties(handle, properties));
+                    List<Update> updates = new ArrayList<>(generateDictionaryInserts(handle, properties));
                     // We need to know existing properties for all property operations
                     Set<DatasetProperty> existingProps = datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
                     updates.addAll(generatePropertyInserts(handle, datasetId, properties, existingProps));
@@ -52,7 +52,7 @@ public class DatasetServiceDAO {
 
     // Helper methods to generate Dictionary inserts
 
-    private List<Update> generateDictionaryInsertsForProperties(Handle handle, List<DatasetProperty> properties) {
+    private List<Update> generateDictionaryInserts(Handle handle, List<DatasetProperty> properties) {
         List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
         List<String> keyValues = dictionaryTerms.stream().map(Dictionary::getKey).toList();
         List<Update> updates = new ArrayList<>();

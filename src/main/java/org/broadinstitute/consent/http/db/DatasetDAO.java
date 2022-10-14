@@ -278,16 +278,18 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " WHERE d.dataset_id IN (<dataSetIdList>) ORDER BY d.dataset_id, k.receive_order ")
     Set<DatasetDTO> findDatasetsByReceiveOrder(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
+    @Deprecated // Use getDictionaryTerms()
     @RegisterRowMapper(DictionaryMapper.class)
-    @SqlQuery("SELECT * FROM dictionary d ORDER BY receiveOrder")
+    @SqlQuery("SELECT * FROM dictionary d ORDER BY receive_order")
     List<Dictionary> getMappedFieldsOrderByReceiveOrder();
 
     @RegisterRowMapper(DictionaryMapper.class)
-    @SqlQuery("SELECT * FROM dictionary")
+    @SqlQuery("SELECT * FROM dictionary ORDER BY key_id")
     List<Dictionary> getDictionaryTerms();
 
+    @Deprecated // Use getDictionaryTerms()
     @RegisterRowMapper(DictionaryMapper.class)
-    @SqlQuery("SELECT * FROM dictionary d WHERE d.displayOrder IS NOT NULL  ORDER BY displayOrder")
+    @SqlQuery("SELECT * FROM dictionary d WHERE d.display_order IS NOT NULL ORDER BY display_order")
     List<Dictionary> getMappedFieldsOrderByDisplayOrder();
 
     @UseRowReducer(DatasetReducer.class)
