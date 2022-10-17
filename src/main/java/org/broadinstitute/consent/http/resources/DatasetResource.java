@@ -281,6 +281,35 @@ public class DatasetResource extends Resource {
     }
 
     @GET
+    @Path("/batch")
+    @Produces("application/json")
+    @PermitAll
+    public Response getDatasets(@QueryParam("ids") List<Integer> datasetIds){
+        try {
+            List<Dataset> datasets = datasetService.getDatasets(datasetIds);
+            if (datasets.size() != datasetIds.size()) {
+                List<Integer> idsNotFound =
+                        datasetIds
+                                .stream()
+                                .filter(
+                                        (id) -> !datasets
+                                                .stream()
+                                                .map(Dataset::getDataSetId)
+                                                .toList()
+                                                .contains(id))
+                                .toList();
+
+                throw new NotFoundException(
+                        "Could not find datasets with ids: "
+                                + String.join(",", idsNotFound.stream().map((i) -> i.toString()).toList()));
+            }
+            return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
+        } catch (Exception e){
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/validate")

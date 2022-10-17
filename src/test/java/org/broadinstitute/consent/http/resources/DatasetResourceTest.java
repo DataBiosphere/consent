@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -671,6 +672,46 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDataset(1);
         assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    public void testGetDatasets() {
+        Dataset ds1 = new Dataset();
+        ds1.setDataSetId(1);
+        Dataset ds2 = new Dataset();
+        ds2.setDataSetId(2);
+        Dataset ds3 = new Dataset();
+        ds3.setDataSetId(3);
+
+        when(datasetService.getDatasets(List.of(1,2,3))).thenReturn(List.of(
+                ds1,
+                ds2,
+                ds3
+        ));
+
+        initResource();
+        Response response = resource.getDatasets(List.of(1,2,3));
+        assertEquals(200, response.getStatus());
+        assertEquals(List.of(ds1,ds2,ds3), response.getEntity());
+    }
+
+    @Test
+    public void testGetDatasetsNotFound() {
+        Dataset ds1 = new Dataset();
+        ds1.setDataSetId(1);
+        Dataset ds3 = new Dataset();
+        ds3.setDataSetId(3);
+
+
+        when(datasetService.getDatasets(List.of(1,2,3,4))).thenReturn(List.of(
+                ds1,
+                ds3
+        ));
+
+        initResource();
+        Response response = resource.getDatasets(List.of(1,2,3,4));
+        assertEquals(404, response.getStatus());
+        assertEquals("Could not find datasets with ids: 2,4", ((Error)response.getEntity()).getMessage());
     }
 
 

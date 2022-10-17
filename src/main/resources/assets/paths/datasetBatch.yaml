@@ -1,0 +1,27 @@
+get:
+  summary: Get Dataset by Id
+  description: Finds Dataset and DatasetProperties of the Dataset specified by id.
+  parameters:
+    - name: ids
+      in: query
+      description: Comma separate dataset ids, e.g. "1,2,3,4,5"
+      required: true
+      schema:
+        type: array
+        items:
+          type: integer
+  tags:
+    - Dataset
+  responses:
+    200:
+      description: The Dataset with properties
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/Dataset.yaml'
+    404:
+      description: Not Found
+    500:
+      description: Server error
