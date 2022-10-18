@@ -1092,7 +1092,7 @@ public class DarCollectionServiceTest {
     assertEquals(DarCollectionStatus.COMPLETE.getValue(), testOne.getStatus());
 
     DarCollectionSummary testTwo = summaries.get(1);
-    Set<String> expectedTwoActions = Set.of("Update");
+    Set<String> expectedTwoActions = Set.of(DarCollectionActions.UPDATE.getValue());
     assertEquals(testTwo.getActions(), expectedTwoActions);
     assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testTwo.getStatus());
 
@@ -1102,7 +1102,7 @@ public class DarCollectionServiceTest {
     assertEquals(DarCollectionStatus.UNREVIEWED.getValue(), testThree.getStatus());
 
     DarCollectionSummary testFour = summaries.get(3);
-    Set<String> expectedFourActions = Set.of("Vote");
+    Set<String> expectedFourActions = Set.of(DarCollectionActions.VOTE.getValue());
     assertEquals(testFour.getActions(), expectedFourActions);
     assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testFour.getStatus());
   }
