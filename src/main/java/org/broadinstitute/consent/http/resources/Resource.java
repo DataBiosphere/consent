@@ -75,7 +75,7 @@ abstract public class Resource implements ConsentLogger {
                 return Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
             }
         } catch (Throwable t) {
-            logException(t);
+            logThrowable(t);
             return Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }

@@ -59,7 +59,7 @@ public class DataUseLetterResource extends Resource {
                 new GenericUrl(prevFile);
                 store.deleteStorageDocument(prevFile);
             } catch (IllegalArgumentException e) {
-                logger().warn("Document URL is not valid, could not delete '" + prevFile + "' from GCS for consent id: " + consentId);
+                logWarn("Document URL is not valid, could not delete '" + prevFile + "' from GCS for consent id: " + consentId);
             }
         }
     }
@@ -75,7 +75,7 @@ public class DataUseLetterResource extends Resource {
             @QueryParam("fileName") String fileName,
             @Auth AuthUser user) {
         String msg = String.format("POSTing Data Use Letter to consent with id '%s'", consentId);
-        logger().debug(msg);
+        logDebug(msg);
         try {
             String name = StringUtils.isNotEmpty(fileName) ? fileName : part.getContentDisposition().getFileName();
             deletePreviousStorageFile(consentId);

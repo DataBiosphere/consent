@@ -25,7 +25,7 @@ public interface ConsentLogger {
    * Logs a throwable to the console and to Sentry
    * @param t Throwable
    */
-  default void logException(Throwable t) {
+  default void logThrowable(Throwable t) {
     getLogger(this.getClass()).error(t.getMessage());
     Sentry.captureEvent(new SentryEvent(t));
   }
