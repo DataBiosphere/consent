@@ -16,7 +16,7 @@ import org.junit.Test;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -167,8 +167,11 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         prop.setSchemaProperty("testSchemaProp");
         prop.setPropertyType(DatasetPropertyType.String);
         datasetDAO.insertDatasetProperties(List.of(prop));
-        Set<DatasetProperty> props = datasetDAO.findDatasetPropertiesByDatasetId(dataset.getDataSetId());
-        return props.stream().toList().get(0);
+        Optional<DatasetProperty> optional = datasetDAO.findDatasetPropertiesByDatasetId(dataset.getDataSetId())
+            .stream()
+            .filter(p -> p.getPropertyKey().equals(dictionary.getKeyId()))
+            .findFirst();
+        return optional.orElse(null);
     }
 
     /**
