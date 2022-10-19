@@ -20,8 +20,6 @@ import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -464,11 +462,6 @@ public class DatasetResource extends Resource {
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
-    }
-
-    @Override
-    protected Logger logger() {
-        return LoggerFactory.getLogger(this.getClass());
     }
 
     private void validateDatasetDacAccess(User user, Dataset dataset) {

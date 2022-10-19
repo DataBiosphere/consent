@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http;
 
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -13,6 +14,8 @@ import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jdbi3.bundles.JdbiExceptionsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.sentry.Sentry;
+import io.sentry.SentryLevel;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -105,8 +108,6 @@ import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
-import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
-import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
@@ -126,7 +127,7 @@ import java.util.Objects;
  * Top-level entry point to the entire application.
  * <p>
  * See the Dropwizard docs here:
- * https://dropwizard.github.io
+ * <a href="https://dropwizard.github.io">https://dropwizard.github.io</a>
  */
 public class ConsentApplication extends Application<ConsentConfiguration> {
 
@@ -143,7 +144,13 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         try {
             String dsn = System.getProperties().getProperty("sentry.dsn");
             if (StringUtils.isNotBlank(dsn)) {
-                SentryBootstrap.Builder.withDsn(dsn).bootstrap();
+                Sentry.init(config -> {
+                  config.setDsn(dsn);
+                  config.setDiagnosticLevel(SentryLevel.ERROR);
+                  config.setServerName("Consent");
+                  config.addContextTag("Consent");
+                  config.addInAppInclude("org.broadinstitute");
+                });
                 Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
             } else {
                 LOGGER.error("Unable to bootstrap sentry logging.");
