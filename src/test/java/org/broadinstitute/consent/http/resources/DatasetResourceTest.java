@@ -799,11 +799,6 @@ public class DatasetResourceTest {
         schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.Observational);
         schemaV1.setStudyDescription("Description");
         schemaV1.setDataTypes(List.of("Data Type"));
-        FileTypeObject fileType = new FileTypeObject();
-        fileType.setFileType(FileTypeObject.FileType.Arrays);
-        fileType.setFunctionalEquivalence("Functional Equivalence");
-        fileType.setNumberOfParticipants(1);
-        schemaV1.setFileTypes(List.of(fileType));
         schemaV1.setPhenotypeIndication("Indication");
         schemaV1.setSpecies("Species");
         schemaV1.setPiName("PI Name");
@@ -815,6 +810,11 @@ public class DatasetResourceTest {
         ConsentGroup consentGroup = new ConsentGroup();
         consentGroup.setConsentGroupName("Name");
         consentGroup.setGeneralResearchUse(true);
+        FileTypeObject fileType = new FileTypeObject();
+        fileType.setFileType(FileTypeObject.FileType.Arrays);
+        fileType.setFunctionalEquivalence("Functional Equivalence");
+        fileType.setNumberOfParticipants(1);
+        consentGroup.setFileTypes(List.of(fileType));
         schemaV1.setConsentGroups(List.of(consentGroup));
         return schemaV1;
     }

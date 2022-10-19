@@ -9,7 +9,6 @@
     "studyType",
     "studyDescription",
     "dataTypes",
-    "fileTypes",
     "phenotypeIndication",
     "species",
     "piName",
@@ -43,11 +42,6 @@
       "items": {
         "type": "string"
       }
-    },
-    "fileTypes": {
-      "type": "array",
-      "items": { "$ref":  "#/$defs/fileTypeObject"},
-      "description": "List of File Types"
     },
     "phenotypeIndication": {
       "type": "string",
@@ -135,10 +129,13 @@
       "description": "NIH Grant or Contract Number"
     },
     "nihICsSupportingStudy": {
-      "type": "string",
+      "type": "array",
       "label": "NIH ICs Supporting the Study",
       "description": "NIH ICs Supporting the Study",
-      "enum": ["NCI", "NEI", "NHLBI", "NHGRI", "NIA", "NIAAA", "NIAID", "NIAMS", "NIBIB", "NICHD", "NIDCD", "NIDCR", "NIDDK", "NIDA", "NIEHS", "NIGMS", "NIMH", "NIMHD", "NINDS", "NINR", "NLM", "CC", "CIT", "CSR", "FIC", "NCATS", "NCCIH"]
+      "items": {
+          "type": "string",
+                "enum": ["NCI", "NEI", "NHLBI", "NHGRI", "NIA", "NIAAA", "NIAID", "NIAMS", "NIBIB", "NICHD", "NIDCD", "NIDCR", "NIDDK", "NIDA", "NIEHS", "NIGMS", "NIMH", "NIMHD", "NINDS", "NINR", "NLM", "CC", "CIT", "CSR", "FIC", "NCATS", "NCCIH"]
+      }
     },
     "nihProgramOfficerName": {
       "type": "string",
@@ -212,6 +209,11 @@
       "label": "Upload your alternative sharing plan (file upload)",
       "description": "Upload your alternative sharing plan (file upload)"
     },
+    "nihInstitutionalCertificationFileName": {
+      "type": "string",
+      "label": "If an Institutional Certification for this consent group exists, please upload it here (file upload)",
+      "description": "If an Institutional Certification for this consent group exists, please upload it here (file upload)"
+    },
     "alternativeDataSharingPlanDataSubmitted": {
       "type": "string",
       "label": "Data will be submitted",
@@ -278,7 +280,12 @@
     },
     "consentGroup": {
       "allOf": [
-        {"required": ["consentGroupName"]},
+        {
+          "required": [
+            "consentGroupName",
+            "fileTypes"
+          ]
+        },
         {
           "anyOf": [
             {"required": ["generalResearchUse"]},
@@ -387,6 +394,11 @@
           "format": "uri",
           "label": "Free text field for entering URL of data",
           "description": "Free text field for entering URL of data"
+        },
+        "fileTypes": {
+          "type": "array",
+          "items": { "$ref":  "#/$defs/fileTypeObject"},
+          "description": "List of File Types"
         }
       }
     }
