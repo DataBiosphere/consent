@@ -3,8 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import org.broadinstitute.consent.http.ConsentApplication;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -16,15 +14,11 @@ import java.util.Map;
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 
 @Path("status")
-public class StatusResource {
+public class StatusResource extends Resource {
 
     public static final String OK = "ok";
     public static final String DEGRADED = "degraded";
     public static final String SYSTEMS = "systems";
-
-    private Logger logger() {
-        return LoggerFactory.getLogger(this.getClass());
-    }
 
     private final HealthCheckRegistry healthChecks;
 
@@ -43,7 +37,7 @@ public class StatusResource {
             results.entrySet().
                     stream().
                     filter(e -> !e.getValue().isHealthy()).
-                    forEach(e -> logger().error("Error in service " + e.getKey() + ": " + formatResultError(e.getValue())));
+                    forEach(e -> logWarn("Error in service " + e.getKey() + ": " + formatResultError(e.getValue())));
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(formatResults(results)).build();
         }
     }

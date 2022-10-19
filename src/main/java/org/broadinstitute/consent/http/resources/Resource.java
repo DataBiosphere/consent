@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.MalformedJsonException;
+import io.sentry.Sentry;
+import io.sentry.SentryEvent;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -16,7 +18,6 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.owasp.fileio.FileValidator;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
@@ -59,10 +60,6 @@ abstract public class Resource implements ConsentLogger {
     private final static Map<String, Integer> vendorCodeStatusMap = Map.ofEntries(
         new AbstractMap.SimpleEntry<>(PSQLState.UNIQUE_VIOLATION.getState(), Response.Status.CONFLICT.getStatusCode())
     );
-
-    protected Logger logger() {
-        return LoggerFactory.getLogger(this.getClass());
-    }
 
     protected Response createExceptionResponse(Exception e) {
         try {
@@ -148,6 +145,8 @@ abstract public class Resource implements ConsentLogger {
 
     private static Response errorLoggedExceptionHandler(Exception e, Error error) {
         LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
+        // static makes using the interface less flexible
+        Sentry.captureEvent(new SentryEvent(e));
         return Response.serverError().type(MediaType.APPLICATION_JSON).entity(error).build();
     }
 
@@ -155,6 +154,8 @@ abstract public class Resource implements ConsentLogger {
     private static Response unableToExecuteExceptionHandler(Exception e) {
         //default status definition
         LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
+        // static makes using the interface less flexible
+        Sentry.captureEvent(new SentryEvent(e));
         Integer status = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
 
         try {
