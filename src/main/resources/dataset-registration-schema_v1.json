@@ -134,7 +134,7 @@
       "description": "NIH ICs Supporting the Study",
       "items": {
           "type": "string",
-                "enum": ["NCI", "NEI", "NHLBI", "NHGRI", "NIA", "NIAAA", "NIAID", "NIAMS", "NIBIB", "NICHD", "NIDCD", "NIDCR", "NIDDK", "NIDA", "NIEHS", "NIGMS", "NIMH", "NIMHD", "NINDS", "NINR", "NLM", "CC", "CIT", "CSR", "FIC", "NCATS", "NCCIH"]
+          "enum": ["NCI", "NEI", "NHLBI", "NHGRI", "NIA", "NIAAA", "NIAID", "NIAMS", "NIBIB", "NICHD", "NIDCD", "NIDCR", "NIDDK", "NIDA", "NIEHS", "NIGMS", "NIMH", "NIMHD", "NINDS", "NINR", "NLM", "CC", "CIT", "CSR", "FIC", "NCATS", "NCCIH"]
       }
     },
     "nihProgramOfficerName": {
@@ -147,6 +147,11 @@
       "label": "NIH Institution/Center for Submission",
       "description": "NIH Institution/Center for Submission",
       "enum": ["NCI", "NEI", "NHLBI", "NHGRI", "NIA", "NIAAA", "NIAID", "NIAMS", "NIBIB", "NICHD", "NIDCD", "NIDCR", "NIDDK", "NIDA", "NIEHS", "NIGMS", "NIMH", "NIMHD", "NINDS", "NINR", "NLM", "CC", "CIT", "CSR", "FIC", "NCATS", "NCCIH"]
+    },
+    "nihInstitutionalCertificationFileName": {
+      "type": "string",
+      "label": "If an Institutional Certification for this consent group exists, please upload it here (file upload)",
+      "description": "If an Institutional Certification for this consent group exists, please upload it here (file upload)"
     },
     "nihGenomicProgramAdministratorName": {
       "type": "string",
@@ -208,11 +213,6 @@
       "type": "string",
       "label": "Upload your alternative sharing plan (file upload)",
       "description": "Upload your alternative sharing plan (file upload)"
-    },
-    "nihInstitutionalCertificationFileName": {
-      "type": "string",
-      "label": "If an Institutional Certification for this consent group exists, please upload it here (file upload)",
-      "description": "If an Institutional Certification for this consent group exists, please upload it here (file upload)"
     },
     "alternativeDataSharingPlanDataSubmitted": {
       "type": "string",

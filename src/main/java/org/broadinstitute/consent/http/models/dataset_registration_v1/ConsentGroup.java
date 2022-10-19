@@ -574,6 +574,10 @@ public class ConsentGroup {
         sb.append('=');
         sb.append(((this.mor == null)?"<null>":this.mor));
         sb.append(',');
+        sb.append("morDate");
+        sb.append('=');
+        sb.append(((this.morDate == null)?"<null>":this.morDate));
+        sb.append(',');
         sb.append("npu");
         sb.append('=');
         sb.append(((this.npu == null)?"<null>":this.npu));
@@ -609,9 +613,11 @@ public class ConsentGroup {
         result = ((result* 31)+((this.gso == null)? 0 :this.gso.hashCode()));
         result = ((result* 31)+((this.generalResearchUse == null)? 0 :this.generalResearchUse.hashCode()));
         result = ((result* 31)+((this.poa == null)? 0 :this.poa.hashCode()));
+        result = ((result* 31)+((this.morDate == null)? 0 :this.morDate.hashCode()));
         result = ((result* 31)+((this.otherPrimary == null)? 0 :this.otherPrimary.hashCode()));
         result = ((result* 31)+((this.gs == null)? 0 :this.gs.hashCode()));
         result = ((result* 31)+((this.url == null)? 0 :this.url.hashCode()));
+        result = ((result* 31)+((this.fileTypes == null)? 0 :this.fileTypes.hashCode()));
         result = ((result* 31)+((this.diseaseSpecificUse == null)? 0 :this.diseaseSpecificUse.hashCode()));
         result = ((result* 31)+((this.consentGroupName == null)? 0 :this.consentGroupName.hashCode()));
         result = ((result* 31)+((this.mor == null)? 0 :this.mor.hashCode()));
