@@ -47,6 +47,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -287,21 +288,16 @@ public class DatasetResource extends Resource {
     public Response getDatasets(@QueryParam("ids") List<Integer> datasetIds){
         try {
             List<Dataset> datasets = datasetService.getDatasets(datasetIds);
-            if (datasets.size() != datasetIds.size()) {
-                List<Integer> idsNotFound =
-                        datasetIds
-                                .stream()
-                                .filter(
-                                        (id) -> !datasets
-                                                .stream()
-                                                .map(Dataset::getDataSetId)
-                                                .toList()
-                                                .contains(id))
-                                .toList();
 
+            List<Integer> foundIds = datasets.stream().map(Dataset::getDataSetId).toList();
+            if (!foundIds.containsAll(datasetIds)) {
+                // find the differences
+                List<Integer> differences = new ArrayList<>(datasetIds);
+                differences.removeAll(foundIds);
                 throw new NotFoundException(
                         "Could not find datasets with ids: "
-                                + String.join(",", idsNotFound.stream().map((i) -> i.toString()).toList()));
+                                + String.join(",", differences.stream().map((i) -> i.toString()).collect(Collectors.toSet())));
+
             }
             return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
         } catch (Exception e){

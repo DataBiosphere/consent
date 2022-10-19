@@ -696,6 +696,45 @@ public class DatasetResourceTest {
     }
 
     @Test
+    public void testGetDatasetsDuplicates() {
+        Dataset ds1 = new Dataset();
+        ds1.setDataSetId(1);
+        Dataset ds2 = new Dataset();
+        ds2.setDataSetId(2);
+        Dataset ds3 = new Dataset();
+        ds3.setDataSetId(3);
+
+        when(datasetService.getDatasets(List.of(1,1,2,2,3,3))).thenReturn(List.of(
+                ds1,
+                ds2,
+                ds3
+        ));
+
+        initResource();
+        Response response = resource.getDatasets(List.of(1,1,2,2,3,3));
+        assertEquals(200, response.getStatus());
+        assertEquals(List.of(ds1,ds2,ds3), response.getEntity());
+    }
+
+    @Test
+    public void testGetDatasetsDuplicatesNotFound() {
+        Dataset ds1 = new Dataset();
+        ds1.setDataSetId(1);
+        Dataset ds2 = new Dataset();
+        ds2.setDataSetId(2);
+
+        when(datasetService.getDatasets(List.of(1,1,2,2,3,3))).thenReturn(List.of(
+                ds1,
+                ds2
+        ));
+
+        initResource();
+        Response response = resource.getDatasets(List.of(1,1,2,2,3,3));
+        assertEquals(404, response.getStatus());
+        assertEquals("Could not find datasets with ids: 3", ((Error)response.getEntity()).getMessage());
+    }
+
+    @Test
     public void testGetDatasetsNotFound() {
         Dataset ds1 = new Dataset();
         ds1.setDataSetId(1);
