@@ -21,7 +21,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,6 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
-import java.io.InputStream;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -504,15 +503,13 @@ public class DatasetService {
      *
      * @param registration The DatasetRegistrationSchemaV1.yaml
      * @param user The User creating these datasets
-     * @param uploadInputStream InputStream nullable input stream representing file content for created datasets
-     * @param fileDetail FormDataContentDisposition nullable file details for created datasets
+     * @param formDataBodyPart Nullable FormDataBodyPart
      * @return List of created Datasets from the provided registration schema
      */
     public List<Dataset> createDatasetsFromRegistration(
         DatasetRegistrationSchemaV1 registration,
         User user,
-        @Nullable InputStream uploadInputStream,
-        @Nullable FormDataContentDisposition fileDetail) {
+        @Nullable FormDataBodyPart formDataBodyPart) {
         return List.of();
     }
 }

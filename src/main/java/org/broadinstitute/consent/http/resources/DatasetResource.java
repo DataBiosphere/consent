@@ -17,7 +17,8 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.BodyPart;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -150,8 +151,7 @@ public class DatasetResource extends Resource {
      */
     public Response createDatasetRegistration(
             @Auth AuthUser authUser,
-            @FormDataParam("file") InputStream uploadInputStream,
-            @FormDataParam("file") FormDataContentDisposition fileDetail,
+            @FormDataParam("file") FormDataBodyPart formDataBodyPart,
             @FormDataParam("dataset") String json) {
         try {
             try {
@@ -163,12 +163,14 @@ public class DatasetResource extends Resource {
             }
             DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
             User user = userService.findUserByEmail(authUser.getEmail());
-            // validate file if exists.
-            if (Objects.nonNull(fileDetail)) {
-                validateFileDetails(fileDetail);
+            // validate file names if they exist.
+            if (Objects.nonNull(formDataBodyPart)) {
+                for (BodyPart part : formDataBodyPart.getParent().getBodyParts()) {
+                    validateFileDetails(part.getContentDisposition());
+                }
             }
             // Generate datasets from registration
-            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, uploadInputStream, fileDetail);
+            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, formDataBodyPart);
             URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
             return Response.created(uri).entity(datasets).build();
         } catch (Exception e) {
