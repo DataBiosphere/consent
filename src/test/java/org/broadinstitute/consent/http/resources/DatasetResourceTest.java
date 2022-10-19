@@ -720,7 +720,7 @@ public class DatasetResourceTest {
     @Test
     public void testCreateDatasetRegistration_invalidSchema_case2() {
         initResource();
-        Response response = resource.createDatasetRegistration(authUser,null, "{}");
+        Response response = resource.createDatasetRegistration(authUser, null, "{}");
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
@@ -729,7 +729,7 @@ public class DatasetResourceTest {
         DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
         String schemaString = new Gson().toJson(schemaV1);
         initResource();
-        Response response = resource.createDatasetRegistration(authUser,null, schemaString);
+        Response response = resource.createDatasetRegistration(authUser, null, schemaString);
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
@@ -741,7 +741,7 @@ public class DatasetResourceTest {
         String schemaString = new Gson().toJson(schemaV1);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser,null, schemaString);
+        Response response = resource.createDatasetRegistration(authUser, null, schemaString);
         assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
 
