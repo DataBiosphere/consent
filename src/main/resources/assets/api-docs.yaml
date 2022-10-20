@@ -1220,23 +1220,6 @@ paths:
           description: Forbidden
         500:
           description: Internal Server Error.
-  /api/dataRequest/cases/pending:
-    get:
-      deprecated: true
-      summary: Get Data Access Request Pending Cases
-      description: Retrieves the pending cases for open/final elections the user has access to
-      tags:
-        - Data Access Request
-        - Pending Case
-      responses:
-        200:
-          description: A list of Data Access Request Pending Cases
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PendingCase'
   /api/dataRequest/cases/summary/DataAccess:
     get:
       summary: getConsentSummaryCases
@@ -2859,61 +2842,6 @@ components:
           type: string
           format: date
           description: Describes the date the match was created.
-    PendingCase:
-      type: object
-      properties:
-        referenceId:
-          type: string
-          description: The reference ID that identifies the case
-        frontEndId:
-          type: string
-          description: The front end ID for the case
-        logged:
-          type: string
-          description: Describes the logged votes vs. total votes required.
-        alreadyVoted:
-          type: boolean
-          description: Describes if the user already voted on this case
-        isReminderSent:
-          type: boolean
-          description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
-        isFinalVote:
-          type: boolean
-          description: If the user is chairperson, this will be false if the final vote is not logged yet, true otherwise.
-        status:
-          type: string
-          description: Status of the vote. Pending or editable.
-        electionStatus:
-          type: string
-          description: Describes the status of the election related to this pending case. Open, closed or cancelled.
-        electionId:
-          type: integer
-          format: int32
-          description: Describes the id of the election related to this pending  case.
-        voteId:
-          type: integer
-          format: int32
-          description: Describes the id of the users vote, related to this particular pending case.
-        createDate:
-          type: string
-          format: date
-          description: 'Defines the type of the association. Possible values: sample, sampleSet.'
-        totalVotes:
-          type: integer
-          format: int32
-          description: Describes the total votes(users) required to vote for this election.
-        votesLogged:
-          type: integer
-          format: int32
-          description: Votes already logged in this pending case. Equal to the total of users that voted minus the ones that didnt.
-        rpElectionId:
-          type: integer
-          format: int32
-          description: Describes the id of the research purpose election related to this pending case, if it exists
-        rpVoteId:
-          type: integer
-          format: int32
-          description: Describes the id of the research purpose vote, related to this particular pending case, if it exists
     Summary:
       type: object
       properties:

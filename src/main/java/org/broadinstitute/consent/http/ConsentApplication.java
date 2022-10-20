@@ -126,7 +126,7 @@ import java.util.Objects;
  * Top-level entry point to the entire application.
  * <p>
  * See the Dropwizard docs here:
- * https://dropwizard.github.io
+ * <a href="https://dropwizard.github.io">https://dropwizard.github.io</a>
  */
 public class ConsentApplication extends Application<ConsentConfiguration> {
 
@@ -240,7 +240,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DarCollectionResource(dataAccessRequestService, darCollectionService, userService));
         env.jersey().register(new DataRequestElectionResource(dataAccessRequestService, emailNotifierService, voteService, electionService));
         env.jersey().register(new DataRequestVoteResource(dataAccessRequestService, darCollectionService, datasetAssociationService, emailNotifierService, voteService, datasetService, electionService, userService));
-        env.jersey().register(new DataRequestCasesResource(pendingCaseService, summaryService));
+        env.jersey().register(new DataRequestCasesResource(summaryService));
         env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
         env.jersey().register(new DataUseLetterResource(auditService, googleStore, userService, consentService));
         env.jersey().register(new ElectionResource(voteService, electionService));

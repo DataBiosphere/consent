@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -109,7 +108,7 @@ public class VoteDAOTest extends DAOTestHelper {
         List<Vote> foundVotes = voteDAO.findVotesByIds(voteIds);
         assertNotNull(foundVotes);
         assertFalse(foundVotes.isEmpty());
-        assertTrue(foundVotes.stream().map(Vote::getVoteId).collect(Collectors.toList()).containsAll(voteIds));
+        assertTrue(foundVotes.stream().map(Vote::getVoteId).toList().containsAll(voteIds));
     }
 
     @Test
@@ -242,19 +241,6 @@ public class VoteDAOTest extends DAOTestHelper {
         assertNotNull(foundVotes);
         assertFalse(foundVotes.isEmpty());
         assertEquals(vote.getVoteId(), foundVotes.get(0).getVoteId());
-    }
-
-    @Test
-    public void testFindChairPersonVoteByElectionIdAndDACUserId() {
-        User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        Consent consent = createConsent();
-        Dataset dataset = createDataset();
-        Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
-        Vote vote = createFinalVote(user.getUserId(), election.getElectionId());
-
-        Vote foundVote = voteDAO.findChairPersonVoteByElectionIdAndDACUserId(election.getElectionId(), user.getUserId());
-        assertNotNull(foundVote);
-        assertEquals(vote.getVoteId(), foundVote.getVoteId());
     }
 
     @Test
@@ -702,7 +688,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote v3 = createChairpersonVote(user.getUserId(), e.getElectionId());
 
         List<ElectionReviewVote> found = voteDAO.findAllElectionReviewVotesByElectionId(e.getElectionId());
-        List<Integer> foundVoteIds = found.stream().map((v) -> v.getVote().getVoteId()).collect(Collectors.toList());
+        List<Integer> foundVoteIds = found.stream().map((v) -> v.getVote().getVoteId()).toList();
 
         assertEquals(3, found.size());
         assertTrue(foundVoteIds.contains(v1.getVoteId()));
@@ -746,7 +732,7 @@ public class VoteDAOTest extends DAOTestHelper {
         List<ElectionReviewVote> found = voteDAO.findElectionReviewVotesByElectionId(
                 e.getElectionId(),
                 VoteType.FINAL.getValue());
-        List<Integer> foundVoteIds = found.stream().map((v) -> v.getVote().getVoteId()).collect(Collectors.toList());
+        List<Integer> foundVoteIds = found.stream().map((v) -> v.getVote().getVoteId()).toList();
 
         assertEquals(1, found.size());
         assertTrue(foundVoteIds.contains(v1.getVoteId()));
