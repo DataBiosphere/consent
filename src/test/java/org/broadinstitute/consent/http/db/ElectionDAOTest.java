@@ -1146,85 +1146,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     assertEquals(0, returned.size());
   }
 
-//  @Test
-//  public void testFindOpenLastElectionsByTypeAndFinalAccessChairPersonVote() {
-//    Dac dac = createDac();
-//    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-//
-//    Dataset ds1 = createDatasetWithDac(dac.getDacId());
-//    DataAccessRequest dar1 = createDataAccessRequestV3();
-//    String referenceId1 = dar1.getReferenceId();
-//    Integer datasetId1 = ds1.getDataSetId();
-//
-//    Dataset ds2 = createDatasetWithDac(dac.getDacId());
-//    DataAccessRequest dar2 = createDataAccessRequestV3();
-//    String referenceId2 = dar2.getReferenceId();
-//    Integer datasetId2 = ds2.getDataSetId();
-//
-//    Election ds1FirstElection = createDataAccessElection(referenceId1, datasetId1);
-//    Election ds1SecondElection = createDataAccessElection(referenceId1, datasetId1);
-//    createChairpersonVote(user.getUserId(), ds1FirstElection.getElectionId());
-//    createChairpersonVote(user.getUserId(), ds1SecondElection.getElectionId());
-//
-//    electionDAO.updateElectionById(ds1FirstElection.getElectionId(),
-//            ElectionStatus.FINAL.getValue(),
-//            new Date(),
-//            false);
-//    electionDAO.updateElectionById(ds1SecondElection.getElectionId(),
-//            ElectionStatus.FINAL.getValue(),
-//            new Date(),
-//            false);
-//
-//    Election ds2OnlyElection = createDataAccessElection(referenceId2, datasetId2);
-//    createChairpersonVote(user.getUserId(), ds2OnlyElection.getElectionId());
-//    electionDAO.updateElectionById(ds2OnlyElection.getElectionId(),
-//            ElectionStatus.FINAL.getValue(),
-//            new Date(),
-//            false);
-//
-//    List<Election> returned =
-//            electionDAO.findOpenLastElectionsByTypeAndFinalAccessChairPersonVote(
-//                    ElectionType.DATA_ACCESS.getValue(),
-//                    false);
-//
-//    assertEquals(2, returned.size());
-//    assertEquals(ds1SecondElection.getElectionId(), returned.get(0).getElectionId());
-//    assertEquals(ds2OnlyElection.getElectionId(), returned.get(1).getElectionId());
-//  }
-
-//  @Test
-//  public void testFindOpenLastElectionsByTypeAndFinalAccessChairPersonVote_WrongFinalVote() {
-//
-//    Dac dac = createDac();
-//    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-//
-//    Dataset ds = createDatasetWithDac(dac.getDacId());
-//    DataAccessRequest dar = createDataAccessRequestV3();
-//    String referenceId = dar.getReferenceId();
-//    Integer datasetId = ds.getDataSetId();
-//
-//    Election dsFirstElection = createDataAccessElection(referenceId, datasetId);
-//    Election dsSecondElection = createDataAccessElection(referenceId, datasetId);
-//    createChairpersonVote(user.getUserId(), dsFirstElection.getElectionId());
-//    createChairpersonVote(user.getUserId(), dsSecondElection.getElectionId());
-//
-//    electionDAO.updateElectionById(dsFirstElection.getElectionId(),
-//            ElectionStatus.FINAL.getValue(),
-//            new Date(),
-//            false);
-//    electionDAO.updateElectionById(dsSecondElection.getElectionId(),
-//            ElectionStatus.FINAL.getValue(),
-//            new Date(),
-//            true);
-//
-//    List<Election> returned =
-//            electionDAO.findOpenLastElectionsByTypeAndFinalAccessChairPersonVote(
-//                    ElectionType.DATA_ACCESS.getValue(),
-//                    false);
-//
-//    assertEquals(0, returned.size());
-//  }
-
   @Test
   public void testFindTotalElectionsByTypeStatusAndVote() {
     Dac dac = createDac();
@@ -1243,13 +1164,6 @@ public class ElectionDAOTest extends DAOTestHelper {
             new Date(),
             false
     );
-
-    // TODO: should be 1?
-//    assertEquals(1, (long)electionDAO.findTotalElectionsByTypeStatusAndVote(
-//            ElectionType.DATA_ACCESS.getValue(),
-//            ElectionStatus.OPEN.getValue(),
-//            false
-//    ));
 
     assertEquals(0, (long)electionDAO.findTotalElectionsByTypeStatusAndVote(
             ElectionType.DATA_ACCESS.getValue(),
