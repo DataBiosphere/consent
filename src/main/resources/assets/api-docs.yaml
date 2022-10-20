@@ -811,27 +811,6 @@ paths:
                 $ref: '#/components/schemas/User'
         400:
           description: Malformed user entity.
-  /api/dacuser/{email}:
-    get:
-      deprecated: true
-      summary: describe
-      description: Returns the user identified by the email.
-      parameters:
-        - name: email
-          in: path
-          description: The email of the user.
-          required: true
-          schema:
-            type: string
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the user.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
   /api/dar/v2/{referenceId}:

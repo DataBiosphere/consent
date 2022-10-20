@@ -4,25 +4,16 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
-import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -30,8 +21,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Path("api/dacuser")
 public class DACUserResource extends Resource {
@@ -61,21 +50,6 @@ public class DACUserResource extends Resource {
         }
     }
 
-    @Deprecated
-    @GET
-    @Path("/{email}")
-    @Produces("application/json")
-    @PermitAll
-    public User describe(@Auth AuthUser authUser, @PathParam("email") String email) {
-        User searchUser = userService.findUserByEmail(email);
-        validateAuthedRoleUser(Stream
-                .of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-                .collect(Collectors.toList()),
-            findByAuthUser(authUser),
-            searchUser.getUserId());
-        return searchUser;
-    }
-
     /**
      * Convenience method to find the email preference from legacy json structure.
      *
@@ -100,7 +74,7 @@ public class DACUserResource extends Resource {
                             filter(e -> e.getAsJsonObject().has(memberName)).
                             map(e -> e.getAsJsonObject().get(memberName).getAsBoolean()).
                             distinct().
-                            collect(Collectors.toList());
+                            toList();
                     // In practice, there should only be a single email preference value, if any.
                     if (emailPrefs.size() == 1) {
                         aBoolean = Optional.of(emailPrefs.get(0));
@@ -111,15 +85,6 @@ public class DACUserResource extends Resource {
             logger.warn("Unable to extract email preference from: " + json + " : " + e.getMessage());
         }
         return aBoolean;
-    }
-
-    private User findByAuthUser(AuthUser user) {
-        GoogleUser googleUser = user.getGoogleUser();
-        User dacUser = userService.findUserByEmail(googleUser.getEmail());
-        if (dacUser == null) {
-            throw new NotFoundException("Unable to find user :" + user.getEmail());
-        }
-        return dacUser;
     }
 
 }
