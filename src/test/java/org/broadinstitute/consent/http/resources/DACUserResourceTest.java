@@ -1,24 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
-import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import java.net.URI;
-import java.util.Collections;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
@@ -27,12 +8,22 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.Collections;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 
 public class DACUserResourceTest {
@@ -64,102 +55,6 @@ public class DACUserResourceTest {
 
     private void initResource() {
         resource = new DACUserResource(userService);
-    }
-
-    /**
-     * Utility method to construct a user json object as the API expects it to be formatted.
-     * @param user The User
-     * @return Json object in the form of { "updatedUser": {... user json ...}}
-     */
-    private JsonObject makeUserMapJsonObject(User user) {
-        JsonObject json = new JsonObject();
-        JsonElement userJson = new Gson().toJsonTree(user);
-        json.add(UserRolesHandler.UPDATED_USER_KEY, userJson);
-        return json;
-    }
-
-    @Test
-    public void testUpdateResearcherAsSelf() {
-        User researcher = createDacUser(UserRoles.RESEARCHER);
-        JsonObject json = makeUserMapJsonObject(researcher);
-
-        when(userService.findUserByEmail(any())).thenReturn(researcher);
-        when(userService.findUserById(any())).thenReturn(researcher);
-        when(userService.updateDACUserById(any(), anyInt())).thenReturn(researcher);
-        doNothing().when(userService).updateEmailPreference(anyBoolean(), anyInt());
-        initResource();
-
-        Response response = resource.update(authUser, uriInfo, json.toString(), researcher.getUserId());
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
-
-    @Test
-    public void testUpdateResearcherAsSomeoneElse() {
-        User researcher = createDacUser(UserRoles.RESEARCHER);
-        JsonObject json = makeUserMapJsonObject(researcher);
-
-        when(userService.findUserByEmail(any())).thenReturn(researcher);
-        when(userService.findUserById(any())).thenReturn(researcher);
-        when(userService.updateDACUserById(any(), anyInt())).thenReturn(researcher);
-        doNothing().when(userService).updateEmailPreference(anyBoolean(), anyInt());
-        initResource();
-
-        Response response = resource.update(authUser, uriInfo, json.toString(), researcher.getUserId() + 1);
-        assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
-    }
-
-    @Test
-    public void testUpdateResearcherAsAdmin() {
-        User admin = createDacUser(UserRoles.ADMIN);
-        JsonObject json = makeUserMapJsonObject(admin);
-
-        when(userService.findUserByEmail(any())).thenReturn(admin);
-        when(userService.findUserById(any())).thenReturn(admin);
-        when(userService.updateDACUserById(any(), anyInt())).thenReturn(admin);
-        doNothing().when(userService).updateEmailPreference(anyBoolean(), anyInt());
-        initResource();
-
-        Response response = resource.update(authUser, uriInfo, json.toString(), admin.getUserId() + 1);
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
-
-    @Test
-    public void testSetSOInstitutionOK() {
-        User user = createDacUser(UserRoles.SIGNINGOFFICIAL);
-        user.setInstitutionId(null);
-        user.setUserId(RandomUtils.nextInt(1, 10));
-        when(userService.findUserById(any())).thenReturn(user);
-        when(userService.findUserByEmail(any())).thenReturn(user);
-        when(userService.updateDACUserById(any(), anyInt())).thenReturn(user);
-        initResource();
-
-        // Update passed in user to have a different institution id to trigger SO error
-        Gson gson = new Gson();
-        User updateUser = gson.fromJson(gson.toJson(user), User.class);
-        updateUser.setInstitutionId(RandomUtils.nextInt(1, 10));
-
-        JsonObject json = makeUserMapJsonObject(updateUser);
-
-        Response response = resource.update(authUser, uriInfo, json.toString(), updateUser.getUserId());
-        assertEquals(200, response.getStatus());
-    }
-
-    @Test
-    public void testUpdateSOInstitutionBadRequest() {
-        User user = createDacUser(UserRoles.SIGNINGOFFICIAL);
-        user.setUserId(RandomUtils.nextInt(1, 10));
-        when(userService.findUserById(any())).thenReturn(user);
-        initResource();
-
-        // Update passed in user to have a different institution id to trigger SO error
-        Gson gson = new Gson();
-        User updateUser = gson.fromJson(gson.toJson(user), User.class);
-        updateUser.setInstitutionId(user.getInstitutionId() + 10);
-
-        JsonObject json = makeUserMapJsonObject(updateUser);
-
-        Response response = resource.update(authUser, uriInfo, json.toString(), updateUser.getUserId());
-        assertEquals(400, response.getStatus());
     }
 
     @Test(expected = NotFoundException.class)

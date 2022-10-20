@@ -832,8 +832,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-  /api/dacuser/{id}:
-    $ref: './paths/userById.yaml'
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
   /api/dar/v2/{referenceId}:

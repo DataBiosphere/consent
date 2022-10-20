@@ -21,7 +21,6 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
-import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -30,9 +29,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -345,33 +342,6 @@ public class UserServiceTest {
         when(userDAO.findUserByEmail(any())).thenThrow(new NotFoundException());
         initService();
         service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
-    }
-
-
-    @Test
-    public void testUpdateDACUserById() {
-        User u = generateUser();
-        when(userDAO.findUserById(u.getUserId()))
-                .thenReturn(u);
-        when(institutionDAO.checkForExistingInstitution(any()))
-                .thenReturn(u.getInstitutionId());
-        doNothing().when(userDAO).updateUser(any(), any(), any());
-        initService();
-        Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
-        User user = service.updateDACUserById(dacUsers, u.getUserId());
-        assertNotNull(user);
-        assertEquals(u.getUserId(), user.getUserId());
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void testUpdateDACUserById_NonExisting() {
-        User u = generateUser();
-        when(userDAO.findUserById(u.getUserId()))
-                .thenReturn(null);
-        doNothing().when(userDAO).updateUser(any(), any(), any());
-        initService();
-        Map<String, User> dacUsers = Map.of(UserRolesHandler.UPDATED_USER_KEY, u);
-        service.updateDACUserById(dacUsers, u.getUserId());
     }
 
     @Test
