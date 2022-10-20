@@ -838,7 +838,7 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
   // this method returns a list that includes: user, now, dataset, collectionId, testDar, dac, testDarCollection
   public List<Object> createDarCollectionWithDataset(User user) {
     Timestamp now = new Timestamp(new Date().getTime());
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 100000);
     Dataset dataset = createDataset();
 
     // creating a collection and DAR
