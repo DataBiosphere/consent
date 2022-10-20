@@ -39,14 +39,6 @@ public class ElectionReviewResource extends Resource {
         this.darService = darService;
     }
 
-    @Deprecated
-    @GET
-    @Produces("application/json")
-    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
-    public ElectionReview getCollectElectionReview(@QueryParam("referenceId") String referenceId, @QueryParam("type") String type) {
-        return service.describeLastElectionReviewByReferenceIdAndType(referenceId, type);
-    }
-
     @GET
     @Path("/openElection")
     @Produces("application/json")

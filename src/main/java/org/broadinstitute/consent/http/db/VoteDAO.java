@@ -25,14 +25,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("SELECT v.* FROM vote v INNER JOIN election ON election.election_id = v.electionid WHERE election.reference_id = :referenceId")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
-    @SqlQuery(" SELECT v.*, u.email, u.display_name "
-          + " FROM vote v "
-          + " INNER JOIN election ON election.election_id = v.electionId "
-          + " INNER JOIN users u ON u.user_id = v.dacUserId "
-          + " WHERE election.election_id = :electionId AND LOWER(v.type) != 'chairperson'")
-    @UseRowMapper(ElectionReviewVoteMapper.class)
-    List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId);
-
     @SqlQuery("SELECT v.*, u.email, u.display_name FROM vote v "
             + " INNER JOIN election ON election.election_id = v.electionid "
             + " INNER JOIN users u ON u.user_id = v.dacuserid "
