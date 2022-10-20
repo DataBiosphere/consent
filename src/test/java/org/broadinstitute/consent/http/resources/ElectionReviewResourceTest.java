@@ -54,14 +54,6 @@ public class ElectionReviewResourceTest {
     }
 
     @Test
-    public void testGetElectionReviewByElectionId() {
-        when(reviewResultsService.describeElectionReviewByElectionId(any())).thenReturn(new ElectionReview());
-        initResource();
-        ElectionReview response = resource.getElectionReviewByElectionId(RandomUtils.nextInt(100, 1000));
-        assertNotNull(response);
-    }
-
-    @Test
     public void testGetAccessElectionReviewByReferenceId() {
         Election e = new Election();
         e.setElectionId(RandomUtils.nextInt(100, 1000));

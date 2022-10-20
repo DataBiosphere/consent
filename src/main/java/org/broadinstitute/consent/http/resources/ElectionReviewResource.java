@@ -47,15 +47,6 @@ public class ElectionReviewResource extends Resource {
         return ("{ \"open\" : " + service.openElections() + " }");
     }
 
-    @Deprecated
-    @GET
-    @Path("/{electionId}")
-    @Produces("application/json")
-    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
-    public ElectionReview getElectionReviewByElectionId(@PathParam("electionId") Integer electionId) {
-        return service.describeElectionReviewByElectionId(electionId);
-    }
-
     @GET
     @Path("access/{electionId}")
     @Produces("application/json")

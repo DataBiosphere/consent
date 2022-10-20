@@ -2001,27 +2001,6 @@ paths:
             text/plain:
               schema:
                 type: string
-  /api/electionReview/{electionId}:
-    get:
-      deprecated: true
-      summary: describeElectionReviewByElectionId
-      description: "Returns the ElectionReview from an Election identified by ElectionId. This endpoint doesn't filter votes by isFinalAccess attribute so the reviewVote array of the retrieved ElectionReview will contain the isFinalAccess = TRUE Vote."
-      parameters:
-        - name: electionId
-          in: path
-          description: Election Id
-          required: true
-          schema:
-            type: integer
-      tags:
-        - ElectionReview
-      responses:
-        200:
-          description: ElectionReview
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/access/{electionId}:
     get:
       summary: get ElectionReview for access election identified by electionId
