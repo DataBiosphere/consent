@@ -1988,38 +1988,6 @@ paths:
           description: All incomplete votes for the elections have been advanced.
         500:
           description: Server error.
-  /api/electionReview:
-    get:
-      deprecated: true
-      summary: getCollectElectionReview
-      description: Returns the ElectionReview from an Open Election identified by reference Id.
-      parameters:
-        - name: referenceId
-          in: query
-          description: referenceId of the Election
-          required: true
-          schema:
-            type: string
-        - name: type
-          in: query
-          description: Type of the Election
-          required: true
-          schema:
-            type: string
-            enum:
-              - TranslateDUL
-              - DataAccess
-              - DataSet
-              - RP
-      tags:
-        - ElectionReview
-      responses:
-        200:
-          description: ElectionReview
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/openElection:
     get:
       summary: describeElectionById
