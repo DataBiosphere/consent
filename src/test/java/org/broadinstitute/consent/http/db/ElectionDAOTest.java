@@ -1055,53 +1055,6 @@ public class ElectionDAOTest extends DAOTestHelper {
     assertEquals(0, returned.size());
   }
 
-//  @Test
-//  public void testFindLastDataAccessElectionsWithFinalVoteByStatus() {
-//    Dac dac = createDac();
-//    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-//
-//    Dataset ds1 = createDatasetWithDac(dac.getDacId());
-//    DataAccessRequest dar1 = createDataAccessRequestV3();
-//    String referenceId1 = dar1.getReferenceId();
-//    Integer datasetId1 = ds1.getDataSetId();
-//
-//    Dataset ds2 = createDatasetWithDac(dac.getDacId());
-//    DataAccessRequest dar2 = createDataAccessRequestV3();
-//    String referenceId2 = dar2.getReferenceId();
-//    Integer datasetId2 = ds2.getDataSetId();
-//
-//    Election ds1FirstElection = createDataAccessElection(referenceId1, datasetId1);
-//    Election ds1SecondElection = createDataAccessElection(referenceId1, datasetId1);
-//    createChairpersonVote(user.getUserId(), ds1FirstElection.getElectionId());
-//    createChairpersonVote(user.getUserId(), ds1SecondElection.getElectionId());
-//
-//    electionDAO.updateElectionById(ds1FirstElection.getElectionId(),
-//            ElectionStatus.OPEN.getValue(),
-//            new Date(),
-//            false);
-//    electionDAO.updateElectionById(ds1SecondElection.getElectionId(),
-//            ElectionStatus.OPEN.getValue(),
-//            new Date(),
-//            false);
-//
-//    Election ds2OnlyElection = createDataAccessElection(referenceId2, datasetId2);
-//    createChairpersonVote(user.getUserId(), ds2OnlyElection.getElectionId());
-//    electionDAO.updateElectionById(ds2OnlyElection.getElectionId(),
-//            ElectionStatus.OPEN.getValue(),
-//            new Date(),
-//            false);
-//
-//    List<Election> returned =
-//            electionDAO.findOpenLastElectionsByTypeAndFinalAccessChairPersonVote(
-//                    ElectionType.DATA_ACCESS.getValue(),
-//                    false);
-//
-//    assertEquals(2, returned.size());
-//    assertEquals(ds1SecondElection.getElectionId(), returned.get(0).getElectionId());
-//    // TODO: redundant output (would expect ds2OnlyElection to be returned as well)
-//    assertEquals(ds1SecondElection.getElectionId(), returned.get(0).getElectionId());
-//  }
-
   @Test
   public void testFindLastDataAccessElectionsWithFinalVoteByStatus_FiltersByStatus() {
     Dac dac = createDac();
