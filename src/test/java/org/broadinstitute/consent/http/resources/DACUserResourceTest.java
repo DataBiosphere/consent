@@ -1,12 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,7 +15,6 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -91,17 +87,4 @@ public class DACUserResourceTest {
         Assert.assertFalse(user.getRoles().isEmpty());
         Assert.assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
     }
-
-    private User createDacUser(UserRoles roles) {
-        User user = new User();
-        user.setUserId(RandomUtils.nextInt(1, 100));
-        user.setDisplayName("name");
-        user.setEmail("email");
-        user.setEmailPreference(true);
-        user.setInstitutionId(RandomUtils.nextInt(1, 100));
-        UserRole userRole = new UserRole(roles.getRoleId(), roles.getRoleName());
-        user.setRoles(Collections.singletonList(userRole));
-        return user;
-    }
-
 }
