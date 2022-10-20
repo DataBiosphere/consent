@@ -197,44 +197,6 @@ paths:
           description: There is an existing open election for the consent.
         404:
           description: The consent sent as a parameter does not exist.
-  /api/consent/{consentId}/election/dac/{dacId}:
-    post:
-      deprecated: true
-      summary: Create Consent Election For Dac
-      description: |
-        Creates a consent election for a data access committee. Assigns the consent to the provided
-        Data Access Committee.
-      parameters:
-        - name: consentId
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-        - name: dacId
-          in: path
-          description: DAC ID
-          required: true
-          schema:
-            type: integer
-        - name: election
-          in: body
-          description: Election to be created
-          required: true
-          schema:
-            $ref: '#/components/schemas/Election'
-      tags:
-        - Election
-        - Consent
-      responses:
-        201:
-          description: Returns the URI to access the newly created election.
-        400:
-          description: |
-            There is an existing open election for the consent, or the consent is already
-            associated to an existing dac.
-        404:
-          description: The consent or dac does not exist.
   /api/consent/{consentId}/election/{id}:
     put:
       summary: Update Consent Election
@@ -1360,41 +1322,8 @@ paths:
                 type: string
                 format: binary
   /api/consent/{id}/dul:
-    get:
-      deprecated: true
-      summary: getDUL
-      description: Returns Data Use Letter file specified by consentId.
-      parameters:
-        - name: id
-          in: path
-          description: Id of the consent at which belongs the Data Use Letter.
-          required: true
-          schema:
-            type: string
-        - name: electionId
-          in: query
-          required: false
-          description: Optional election id for the consent election
-          schema:
-            type: integer
-      tags:
-        - Consent
-      responses:
-        200:
-          description: Data Use Letter file
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-          headers:
-            Content-Disposition:
-              schema:
-                type: string
-              description: attachment; filename= targetFile name
-        404:
-          description: Could not find consent with the specified Id
     post:
+      deprecated: true
       summary: createDUL
       description: Persists the loaded file in the CloudStorage and update the related Consent.
       requestBody:
@@ -1426,65 +1355,6 @@ paths:
       responses:
         200:
           description: The modified Consent with dataUseLetter field empty
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/Consent.yaml'
-        404:
-          description: Could not find consent with the specified Id
-    put:
-      summary: updateDUL
-      description: Updates the Consent's Data Use Letter in the CloudStorage and the related Consent.
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-      parameters:
-        - name: data
-          in: formData
-          description: new Data Use Letter file.
-          required: true
-          schema:
-            type: file
-        - name: id
-          in: path
-          description: Id of the consent at which belongs the Data Use Letter.
-          required: true
-          schema:
-            type: string
-        - name: fileName
-          in: query
-          description: File name.
-          required: false
-          schema:
-            type: string
-      tags:
-        - Consent
-      responses:
-        200:
-          description: The updated Consent
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/Consent.yaml'
-        404:
-          description: Could not find consent with the specified Id
-    delete:
-      summary: deleteDUL
-      description: Deletes the Data Use Letter of the Consent specified by Id and updates the Consent's dataUseLetter property.
-      parameters:
-        - name: id
-          in: path
-          description: Id of the consent at which belongs the Data Use Letter.
-          required: true
-          schema:
-            type: string
-      tags:
-        - Consent
-      responses:
-        200:
-          description: The updated Consent with empty dataUseLetter property.
           content:
             application/json:
               schema:
