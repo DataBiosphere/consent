@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -54,7 +55,7 @@ public class DatasetServiceDAO {
 
     private List<Update> generateDictionaryInserts(Handle handle, List<DatasetProperty> properties) {
         List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
-        List<String> keyValues = dictionaryTerms.stream().map(Dictionary::getKey).toList();
+        HashSet<String> keyValues = new HashSet<>(dictionaryTerms.stream().map(Dictionary::getKey).toList());
         List<Update> updates = new ArrayList<>();
         properties.forEach(prop -> {
             if (!keyValues.contains(prop.getPropertyName())) {
@@ -80,7 +81,7 @@ public class DatasetServiceDAO {
     private List<Update> generatePropertyInserts(Handle handle, Integer datasetId, List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
         Timestamp now = new Timestamp(new Date().getTime());
         List<Update> updates = new ArrayList<>();
-        List<String> existingPropNames = existingProps.stream().map(DatasetProperty::getPropertyName).toList();
+        HashSet<String> existingPropNames = new HashSet<>(existingProps.stream().map(DatasetProperty::getPropertyName).toList());
         // Generate new inserts for props we don't know about yet
         properties.forEach(prop -> {
             if (!existingPropNames.contains(prop.getPropertyName())) {
@@ -114,7 +115,7 @@ public class DatasetServiceDAO {
 
     private List<Update> generatePropertyUpdates(Handle handle, Integer datasetId, List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
         List<Update> updates = new ArrayList<>();
-        List<String> existingPropNames = existingProps.stream().map(DatasetProperty::getPropertyName).toList();
+        HashSet<String> existingPropNames = new HashSet<>(existingProps.stream().map(DatasetProperty::getPropertyName).toList());
         // Generate value updates for props that exist
         properties.forEach(prop -> {
             if (existingPropNames.contains(prop.getPropertyName())) {
@@ -145,7 +146,7 @@ public class DatasetServiceDAO {
 
     private List<Update> generatePropertyDeletes(Handle handle, List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
         List<Update> updates = new ArrayList<>();
-        List<String> newPropNames = properties.stream().map(DatasetProperty::getPropertyName).toList();
+        HashSet<String> newPropNames = new HashSet<>(properties.stream().map(DatasetProperty::getPropertyName).toList());
         // Generate deletes for existing props that do not exist in the new props
         existingProps.forEach(existingProp -> {
             if (!newPropNames.contains(existingProp.getPropertyName())) {
