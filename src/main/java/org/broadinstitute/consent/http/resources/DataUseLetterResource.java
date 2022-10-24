@@ -33,6 +33,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Deprecated
 @Path("api/consent/{id}/dul")
 public class DataUseLetterResource extends Resource {
 
@@ -65,6 +66,7 @@ public class DataUseLetterResource extends Resource {
         }
     }
 
+    @Deprecated
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)

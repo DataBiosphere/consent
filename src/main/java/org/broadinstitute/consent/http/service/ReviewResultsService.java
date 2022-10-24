@@ -25,11 +25,6 @@ public class ReviewResultsService {
         this.consentDAO = consentDAO;
     }
 
-    public ElectionReview describeLastElectionReviewByReferenceIdAndType(String referenceId, String type) {
-        Election election = electionDAO.findLastElectionByReferenceIdAndType(referenceId, type);
-        return getElectionReview(referenceId, election);
-    }
-
     public Boolean openElections() {
         Boolean openElections = false;
         if(electionDAO.verifyOpenElections() != null && electionDAO.verifyOpenElections() > 0){
@@ -57,16 +52,4 @@ public class ReviewResultsService {
         return voteDAO.findVoteByTypeAndElectionId(electionId, VoteType.AGREEMENT.getValue());
     }
 
-    private ElectionReview getElectionReview(String referenceId, Election election) {
-        ElectionReview review = null;
-        if(election != null){
-            review = new ElectionReview();
-            List<ElectionReviewVote> rVotes = voteDAO.findElectionReviewVotesByElectionId(election.getElectionId());
-            Consent consent = consentDAO.findConsentById(referenceId);
-            review.setConsent(consent);
-            review.setElection(election);
-            review.setReviewVote(rVotes);
-        }
-        return review;
-    }
 }

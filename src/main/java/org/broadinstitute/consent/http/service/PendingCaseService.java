@@ -62,8 +62,7 @@ public class PendingCaseService {
     public List<PendingCase> describeConsentPendingCases(AuthUser authUser) throws NotFoundException {
         User user = userService.findUserByEmail(authUser.getEmail());
         List<Integer> roleIds = user.getRoles().stream().
-                map(UserRole::getRoleId).
-                collect(Collectors.toList());
+                map(UserRole::getRoleId).toList();
         Integer dacUserId = user.getUserId();
         List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = dacService.filterElectionsByDAC(elections, authUser).
@@ -91,47 +90,6 @@ public class PendingCaseService {
             return orderPendingCasesForMember(pendingCases);
         }
         return pendingCases;
-    }
-
-    public List<PendingCase> describeDataRequestPendingCases(AuthUser authUser) throws NotFoundException {
-        User user = userService.findUserByEmail(authUser.getEmail());
-        Integer dacUserId = user.getUserId();
-        boolean isChair = dacService.isAuthUserChair(authUser);
-        List<Election> unfilteredElections = isChair ?
-                electionDAO.findOpenLastElectionsByTypeAndFinalAccessChairPersonVote(ElectionType.DATA_ACCESS.getValue(), false) :
-                electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
-        List<Election> elections = dacService.filterElectionsByDAC(unfilteredElections, authUser);
-        List<PendingCase> pendingCases = new ArrayList<>();
-        if (elections != null) {
-            for (Election election : elections) {
-                Vote accessVote = voteDAO.findVoteByElectionIdAndDACUserId(election.getElectionId(),
-                        dacUserId);
-                if (accessVote == null) {
-                    continue;
-                }
-                Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(election.getElectionId());
-                PendingCase pendingCase = new PendingCase();
-                Boolean isReminderSent;
-                if (Objects.nonNull(rpElectionId)) {
-                    Vote rpVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId);
-                    isReminderSent = accessVote.getIsReminderSent() || (Objects.nonNull(rpVote) && rpVote.getIsReminderSent());
-                    pendingCase.setRpElectionId(rpElectionId);
-                    pendingCase.setAlreadyVoted(accessVote.getVote() != null && Objects.nonNull(rpVote) && rpVote.getVote() != null);
-                    if (Objects.nonNull(rpVote)) {
-                        pendingCase.setRpVoteId(rpVote.getVoteId());
-                    }
-                    pendingCase.setStatus(accessVote.getVote() == null || (Objects.nonNull(rpVote) && rpVote.getVote() == null) ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
-                } else {
-                    isReminderSent = (accessVote.getIsReminderSent());
-                    pendingCase.setAlreadyVoted(accessVote.getVote() != null);
-                    pendingCase.setStatus(accessVote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
-                }
-                setGeneralFields(pendingCase, election, accessVote, isReminderSent);
-                setFinalVote(dacUserId, election, pendingCase);
-                pendingCases.add(pendingCase);
-            }
-        }
-        return pendingCases.stream().distinct().collect(Collectors.toList());
     }
 
     private void setGeneralFields(PendingCase pendingCase, Election election, Vote vote, boolean isReminderSent) {
@@ -176,8 +134,7 @@ public class PendingCaseService {
                 filter(p1 -> p1.getTotalVotes().equals(p1.getVotesLogged())).
                 collect(Collectors.toList());
         List<PendingCase> remainingList = cases.stream().
-                filter(p1 -> !p1.getTotalVotes().equals(p1.getVotesLogged())).
-                collect(Collectors.toList());
+                filter(p1 -> !p1.getTotalVotes().equals(p1.getVotesLogged())).toList();
         for (PendingCase p : remainingList) {
             Integer key = Integer.parseInt(String.valueOf(p.getVotesLogged()) + p.getTotalVotes());
             if (!pendingCases.containsKey(key)) {
@@ -191,8 +148,8 @@ public class PendingCaseService {
 
     private List<PendingCase> generateFinalList(List<PendingCase> readyToCollect, HashMap<Integer, Queue<PendingCase>> pendingCases) {
         List<PendingCase> prevList = orderedVotedCases(orderListDecreased(pendingCases.keySet()), pendingCases);
-        readyToCollect.addAll(prevList.stream().filter(PendingCase::getAlreadyVoted).collect(Collectors.toList()));
-        readyToCollect.addAll(prevList.stream().filter(p1 -> !p1.getAlreadyVoted()).collect(Collectors.toList()));
+        readyToCollect.addAll(prevList.stream().filter(PendingCase::getAlreadyVoted).toList());
+        readyToCollect.addAll(prevList.stream().filter(p1 -> !p1.getAlreadyVoted()).toList());
         return readyToCollect;
     }
 
@@ -210,22 +167,10 @@ public class PendingCaseService {
 
     private List<PendingCase> orderPendingCasesForMember(List<PendingCase> cases) {
         List<PendingCase> memberCaseList = new ArrayList<>();
-        memberCaseList.addAll(cases.stream().filter(PendingCase::getIsReminderSent).collect(Collectors.toList()));
-        memberCaseList.addAll(cases.stream().filter(p1 -> (!p1.getAlreadyVoted()) && (!p1.getIsReminderSent())).collect(Collectors.toList()));
-        memberCaseList.addAll(cases.stream().filter(PendingCase::getAlreadyVoted).collect(Collectors.toList()));
+        memberCaseList.addAll(cases.stream().filter(PendingCase::getIsReminderSent).toList());
+        memberCaseList.addAll(cases.stream().filter(p1 -> (!p1.getAlreadyVoted()) && (!p1.getIsReminderSent())).toList());
+        memberCaseList.addAll(cases.stream().filter(PendingCase::getAlreadyVoted).toList());
         return memberCaseList;
-    }
-
-    private void setFinalVote(Integer dacUserId, Election election, PendingCase pendingCase) {
-        if (pendingCase.getAlreadyVoted()) {
-            Vote chairPersonVote = voteDAO.findChairPersonVoteByElectionIdAndDACUserId(
-                    election.getElectionId(), dacUserId);
-            if (chairPersonVote != null) {
-                pendingCase.setIsFinalVote(chairPersonVote.getVote() != null);
-            }
-        } else {
-            pendingCase.setIsFinalVote(false);
-        }
     }
 
     private void createMissingUserVotes(Election e, User user) {

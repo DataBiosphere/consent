@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.junit.Assert;
 import org.junit.Before;
@@ -17,9 +16,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataRequestCasesResourceTest {
-
-    @Mock
-    PendingCaseService pendingCaseService;
 
     @Mock
     SummaryService summaryService;
@@ -52,7 +48,7 @@ public class DataRequestCasesResourceTest {
     }
 
     private void initResource() {
-        resource = new DataRequestCasesResource(pendingCaseService, summaryService);
+        resource = new DataRequestCasesResource(summaryService);
     }
 
 }

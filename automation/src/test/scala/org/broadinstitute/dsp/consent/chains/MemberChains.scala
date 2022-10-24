@@ -13,9 +13,6 @@ object MemberChains {
         )
         .pause(TestConfig.defaultPause)
         .exec(
-            Requests.PendingCases.getPendingDataRequests(OK.code, additionalHeaders)
-        )
-        .exec(
             Requests.PendingCases.getPendingCasesByUserId(OK.code, "${userId}", additionalHeaders)
         )
     }

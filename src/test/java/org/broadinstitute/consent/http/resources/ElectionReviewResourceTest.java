@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -47,26 +46,10 @@ public class ElectionReviewResourceTest {
     }
 
     @Test
-    public void testGetCollectElectionReview() {
-        when(reviewResultsService.describeLastElectionReviewByReferenceIdAndType(any(), any())).thenReturn(new ElectionReview());
-        initResource();
-        ElectionReview response = resource.getCollectElectionReview(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10));
-        assertNotNull(response);
-    }
-
-    @Test
     public void testOpenElections() {
         when(reviewResultsService.openElections()).thenReturn(true);
         initResource();
         String response = resource.openElections();
-        assertNotNull(response);
-    }
-
-    @Test
-    public void testGetElectionReviewByElectionId() {
-        when(reviewResultsService.describeElectionReviewByElectionId(any())).thenReturn(new ElectionReview());
-        initResource();
-        ElectionReview response = resource.getElectionReviewByElectionId(RandomUtils.nextInt(100, 1000));
         assertNotNull(response);
     }
 
