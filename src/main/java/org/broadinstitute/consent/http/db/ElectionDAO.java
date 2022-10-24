@@ -1,12 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Date;
-import java.util.List;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DateMapper;
 import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
-import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.db.mapper.SimpleElectionMapper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
@@ -18,6 +14,9 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
+
+import java.util.Date;
+import java.util.List;
 
 @RegisterRowMapper(ElectionMapper.class)
 public interface ElectionDAO extends Transactional<ElectionDAO> {
@@ -189,25 +188,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
         "INNER JOIN library_card lc ON lc.user_id = u.user_id " +
         "WHERE e.election_id IN (<electionIds>) ")
     List<Election> findElectionsWithCardHoldingUsersByElectionIds(@BindList("electionIds") List <Integer> electionIds);
-
-    @SqlQuery(
-        "SELECT DISTINCT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, " +
-            "v.rationale final_rationale, v.createDate final_vote_date, e.last_update, e.final_access_vote, " +
-            "e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
-        "FROM election e " +
-        "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'chairperson' " +
-        "INNER JOIN " +
-            "(SELECT reference_id, MAX(create_date) max_date " +
-            "FROM election e " +
-            "WHERE LOWER(e.election_type) = LOWER(:type) " +
-            "GROUP BY reference_id) election_view " +
-                "ON election_view.max_date = e.create_date " +
-                "AND election_view.reference_id = e.reference_id " +
-                "AND LOWER(e.election_type) = LOWER(:type) " +
-                "AND e.final_access_vote = :vote " +
-                "AND LOWER(e.status) NOT IN ('canceled', 'closed') " +
-        "ORDER BY create_date ASC")
-    List<Election> findOpenLastElectionsByTypeAndFinalAccessChairPersonVote(@Bind("type") String type, @Bind("vote") Boolean finalAccessVote);
 
     @SqlQuery(
         "SELECT count(*) " +
