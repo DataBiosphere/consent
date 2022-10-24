@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -15,12 +14,12 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
-import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,17 +54,17 @@ public class DatasetService {
     private final ConsentDAO consentDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DatasetDAO datasetDAO;
-    private final GCSService gcsService;
+    private final DatasetServiceDAO datasetServiceDAO;
     private final UserRoleDAO userRoleDAO;
     private final UseRestrictionConverter converter;
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
-                          GCSService gcsService, UserRoleDAO userRoleDAO, UseRestrictionConverter converter) {
+                          DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.datasetDAO = dataSetDAO;
-        this.gcsService = gcsService;
+        this.datasetServiceDAO = datasetServiceDAO;
         this.userRoleDAO = userRoleDAO;
         this.converter = converter;
     }
@@ -77,10 +77,12 @@ public class DatasetService {
         return datasetDAO.findDatasetsByReceiveOrder(dataSetId);
     }
 
+    @Deprecated
     public Collection<Dictionary> describeDictionaryByDisplayOrder() {
         return datasetDAO.getMappedFieldsOrderByDisplayOrder();
     }
 
+    @Deprecated
     public Collection<Dictionary> describeDictionaryByReceiveOrder() {
         return datasetDAO.getMappedFieldsOrderByReceiveOrder();
     }
@@ -317,6 +319,20 @@ public class DatasetService {
     }
 
 
+    /**
+     * This method will create new, update existing, and delete unused properties for a dataset.
+     * It will also create new Dictionary keys for properties where keys do not exist.
+     *
+     * @param datasetId The Dataset ID
+     * @param properties List of DatasetProperty objects
+     * @return List of updated DatasetProperty objects
+     * @throws SQLException The Exception
+     */
+    public List<DatasetProperty> synchronizeDatasetProperties(Integer datasetId, List<DatasetProperty> properties) throws SQLException {
+        return datasetServiceDAO.synchronizeDatasetProperties(datasetId, properties);
+    }
+
+    @Deprecated // Use synchronizeDatasetProperties() instead
     public List<DatasetProperty> processDatasetProperties(Integer datasetId,
                                                           List<DatasetPropertyDTO> properties) {
         Date now = new Date();

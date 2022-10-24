@@ -2828,17 +2828,16 @@ components:
           format: int32
           description: Value of the key.
         required:
+          deprecated: true
           type: boolean
           description: Defines if this attribute is required to create a Dataset
         displayOrder:
+          deprecated: true
           type: integer
           format: int32
           description: Defines the position of the attribute in the .tsv file
-        createDate:
-          type: string
-          format: date
-          description: Describes the date the Dictionary was created.
         receiveOrder:
+          deprecated: true
           type: integer
           format: int32
           description: The display order of the properties.

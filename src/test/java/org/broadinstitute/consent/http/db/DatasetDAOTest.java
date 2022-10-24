@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
@@ -143,6 +144,15 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertFalse(datasets.get(0).getProperties().isEmpty());
     }
 
+    @Test
+    public void testGetDictionaryTerms() {
+        List<Dictionary> terms = datasetDAO.getDictionaryTerms();
+        assertFalse(terms.isEmpty());
+        terms.forEach(t -> {
+            assertNotNull(t.getKeyId());
+            assertNotNull(t.getKey());
+        });
+    }
     @Test
     public void testGetDataSetsForObjectIdList() {
         Dataset dataset = createDataset();

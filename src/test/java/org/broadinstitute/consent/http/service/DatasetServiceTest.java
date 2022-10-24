@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -70,7 +71,7 @@ public class DatasetServiceTest {
     private DatasetDAO datasetDAO;
 
     @Mock
-    private GCSService gcsService;
+    private DatasetServiceDAO datasetServiceDAO;
 
     @Mock
     private UserRoleDAO userRoleDAO;
@@ -84,7 +85,7 @@ public class DatasetServiceTest {
     }
 
     private void initService() {
-        datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, gcsService, userRoleDAO, useRestrictionConverter);
+        datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, datasetServiceDAO, userRoleDAO, useRestrictionConverter);
     }
 
     @Test
