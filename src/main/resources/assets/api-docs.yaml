@@ -197,44 +197,6 @@ paths:
           description: There is an existing open election for the consent.
         404:
           description: The consent sent as a parameter does not exist.
-  /api/consent/{consentId}/election/dac/{dacId}:
-    post:
-      deprecated: true
-      summary: Create Consent Election For Dac
-      description: |
-        Creates a consent election for a data access committee. Assigns the consent to the provided
-        Data Access Committee.
-      parameters:
-        - name: consentId
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-        - name: dacId
-          in: path
-          description: DAC ID
-          required: true
-          schema:
-            type: integer
-        - name: election
-          in: body
-          description: Election to be created
-          required: true
-          schema:
-            $ref: '#/components/schemas/Election'
-      tags:
-        - Election
-        - Consent
-      responses:
-        201:
-          description: Returns the URI to access the newly created election.
-        400:
-          description: |
-            There is an existing open election for the consent, or the consent is already
-            associated to an existing dac.
-        404:
-          description: The consent or dac does not exist.
   /api/consent/{consentId}/election/{id}:
     put:
       summary: Update Consent Election
@@ -811,29 +773,6 @@ paths:
                 $ref: '#/components/schemas/User'
         400:
           description: Malformed user entity.
-  /api/dacuser/{email}:
-    get:
-      deprecated: true
-      summary: describe
-      description: Returns the user identified by the email.
-      parameters:
-        - name: email
-          in: path
-          description: The email of the user.
-          required: true
-          schema:
-            type: string
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the user.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-  /api/dacuser/{id}:
-    $ref: './paths/userById.yaml'
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
   /api/dar/v2/{referenceId}:
@@ -1220,23 +1159,6 @@ paths:
           description: Forbidden
         500:
           description: Internal Server Error.
-  /api/dataRequest/cases/pending:
-    get:
-      deprecated: true
-      summary: Get Data Access Request Pending Cases
-      description: Retrieves the pending cases for open/final elections the user has access to
-      tags:
-        - Data Access Request
-        - Pending Case
-      responses:
-        200:
-          description: A list of Data Access Request Pending Cases
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PendingCase'
   /api/dataRequest/cases/summary/DataAccess:
     get:
       summary: getConsentSummaryCases
@@ -1377,41 +1299,8 @@ paths:
                 type: string
                 format: binary
   /api/consent/{id}/dul:
-    get:
-      deprecated: true
-      summary: getDUL
-      description: Returns Data Use Letter file specified by consentId.
-      parameters:
-        - name: id
-          in: path
-          description: Id of the consent at which belongs the Data Use Letter.
-          required: true
-          schema:
-            type: string
-        - name: electionId
-          in: query
-          required: false
-          description: Optional election id for the consent election
-          schema:
-            type: integer
-      tags:
-        - Consent
-      responses:
-        200:
-          description: Data Use Letter file
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-          headers:
-            Content-Disposition:
-              schema:
-                type: string
-              description: attachment; filename= targetFile name
-        404:
-          description: Could not find consent with the specified Id
     post:
+      deprecated: true
       summary: createDUL
       description: Persists the loaded file in the CloudStorage and update the related Consent.
       requestBody:
@@ -1443,65 +1332,6 @@ paths:
       responses:
         200:
           description: The modified Consent with dataUseLetter field empty
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/Consent.yaml'
-        404:
-          description: Could not find consent with the specified Id
-    put:
-      summary: updateDUL
-      description: Updates the Consent's Data Use Letter in the CloudStorage and the related Consent.
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-      parameters:
-        - name: data
-          in: formData
-          description: new Data Use Letter file.
-          required: true
-          schema:
-            type: file
-        - name: id
-          in: path
-          description: Id of the consent at which belongs the Data Use Letter.
-          required: true
-          schema:
-            type: string
-        - name: fileName
-          in: query
-          description: File name.
-          required: false
-          schema:
-            type: string
-      tags:
-        - Consent
-      responses:
-        200:
-          description: The updated Consent
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/Consent.yaml'
-        404:
-          description: Could not find consent with the specified Id
-    delete:
-      summary: deleteDUL
-      description: Deletes the Data Use Letter of the Consent specified by Id and updates the Consent's dataUseLetter property.
-      parameters:
-        - name: id
-          in: path
-          description: Id of the consent at which belongs the Data Use Letter.
-          required: true
-          schema:
-            type: string
-      tags:
-        - Consent
-      responses:
-        200:
-          description: The updated Consent with empty dataUseLetter property.
           content:
             application/json:
               schema:
@@ -2005,38 +1835,6 @@ paths:
           description: All incomplete votes for the elections have been advanced.
         500:
           description: Server error.
-  /api/electionReview:
-    get:
-      deprecated: true
-      summary: getCollectElectionReview
-      description: Returns the ElectionReview from an Open Election identified by reference Id.
-      parameters:
-        - name: referenceId
-          in: query
-          description: referenceId of the Election
-          required: true
-          schema:
-            type: string
-        - name: type
-          in: query
-          description: Type of the Election
-          required: true
-          schema:
-            type: string
-            enum:
-              - TranslateDUL
-              - DataAccess
-              - DataSet
-              - RP
-      tags:
-        - ElectionReview
-      responses:
-        200:
-          description: ElectionReview
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/openElection:
     get:
       summary: describeElectionById
@@ -2050,27 +1848,6 @@ paths:
             text/plain:
               schema:
                 type: string
-  /api/electionReview/{electionId}:
-    get:
-      deprecated: true
-      summary: describeElectionReviewByElectionId
-      description: "Returns the ElectionReview from an Election identified by ElectionId. This endpoint doesn't filter votes by isFinalAccess attribute so the reviewVote array of the retrieved ElectionReview will contain the isFinalAccess = TRUE Vote."
-      parameters:
-        - name: electionId
-          in: path
-          description: Election Id
-          required: true
-          schema:
-            type: integer
-      tags:
-        - ElectionReview
-      responses:
-        200:
-          description: ElectionReview
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/access/{electionId}:
     get:
       summary: get ElectionReview for access election identified by electionId
@@ -2859,61 +2636,6 @@ components:
           type: string
           format: date
           description: Describes the date the match was created.
-    PendingCase:
-      type: object
-      properties:
-        referenceId:
-          type: string
-          description: The reference ID that identifies the case
-        frontEndId:
-          type: string
-          description: The front end ID for the case
-        logged:
-          type: string
-          description: Describes the logged votes vs. total votes required.
-        alreadyVoted:
-          type: boolean
-          description: Describes if the user already voted on this case
-        isReminderSent:
-          type: boolean
-          description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
-        isFinalVote:
-          type: boolean
-          description: If the user is chairperson, this will be false if the final vote is not logged yet, true otherwise.
-        status:
-          type: string
-          description: Status of the vote. Pending or editable.
-        electionStatus:
-          type: string
-          description: Describes the status of the election related to this pending case. Open, closed or cancelled.
-        electionId:
-          type: integer
-          format: int32
-          description: Describes the id of the election related to this pending  case.
-        voteId:
-          type: integer
-          format: int32
-          description: Describes the id of the users vote, related to this particular pending case.
-        createDate:
-          type: string
-          format: date
-          description: 'Defines the type of the association. Possible values: sample, sampleSet.'
-        totalVotes:
-          type: integer
-          format: int32
-          description: Describes the total votes(users) required to vote for this election.
-        votesLogged:
-          type: integer
-          format: int32
-          description: Votes already logged in this pending case. Equal to the total of users that voted minus the ones that didnt.
-        rpElectionId:
-          type: integer
-          format: int32
-          description: Describes the id of the research purpose election related to this pending case, if it exists
-        rpVoteId:
-          type: integer
-          format: int32
-          description: Describes the id of the research purpose vote, related to this particular pending case, if it exists
     Summary:
       type: object
       properties:

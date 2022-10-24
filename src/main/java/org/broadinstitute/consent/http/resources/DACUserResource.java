@@ -1,43 +1,24 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
-import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 
-import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Path("api/dacuser")
 public class DACUserResource extends Resource {
@@ -66,63 +47,6 @@ public class DACUserResource extends Resource {
         }
     }
 
-    @Deprecated
-    @GET
-    @Path("/{email}")
-    @Produces("application/json")
-    @PermitAll
-    public User describe(@Auth AuthUser authUser, @PathParam("email") String email) {
-        User searchUser = userService.findUserByEmail(email);
-        validateAuthedRoleUser(Stream
-                .of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-                .collect(Collectors.toList()),
-            findByAuthUser(authUser),
-            searchUser.getUserId());
-        return searchUser;
-    }
-
-    @Deprecated
-    @PUT
-    @Path("/{id}")
-    @Consumes("application/json")
-    @Produces("application/json")
-    @PermitAll
-    public Response update(@Auth AuthUser authUser, @Context UriInfo info, String json, @PathParam("id") Integer userId) {
-        Map<String, User> userMap = constructUserMapFromJson(json);
-        try {
-            User userToUpdate = userMap.get(UserRolesHandler.UPDATED_USER_KEY);
-            User existingUser = userService.findUserById(userId);
-            // Signing Officials are prohibited from changing their institution
-            if (existingUser.getUserRoleIdsFromUser().contains(UserRoles.SIGNINGOFFICIAL.getRoleId())) {
-                // A SO should be able to update their institution if they don't have one
-                // If they do have one, it cannot be changed through this endpoint.
-                if (Objects.nonNull(userToUpdate.getInstitutionId()) && Objects.nonNull(existingUser.getInstitutionId())) {
-                    if (!Objects.equals(userToUpdate.getInstitutionId(), existingUser.getInstitutionId())) {
-                        throw new BadRequestException("Signing Officials are not permitted to update their institution. Please contact support.");
-                    }
-                }
-            }
-            validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), findByAuthUser(authUser), userId);
-            URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
-            // The `updateDACUserById` method only updates the following fields:
-            // * Display Name
-            // * Additional Email
-            // * Institution
-            User user = userService.updateDACUserById(userMap, userId);
-            // Update email preference
-            JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
-            JsonElement updateUser = jsonObject.get(UserRolesHandler.UPDATED_USER_KEY);
-            getEmailPreferenceValueFromUserJson(updateUser.toString()).ifPresent(aBoolean ->
-                    userService.updateEmailPreference(aBoolean, user.getUserId())
-            );
-            Gson gson = new Gson();
-            JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
-            return Response.ok(uri).entity(gson.toJson(jsonUser)).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
     /**
      * Convenience method to find the email preference from legacy json structure.
      *
@@ -147,7 +71,7 @@ public class DACUserResource extends Resource {
                             filter(e -> e.getAsJsonObject().has(memberName)).
                             map(e -> e.getAsJsonObject().get(memberName).getAsBoolean()).
                             distinct().
-                            collect(Collectors.toList());
+                            toList();
                     // In practice, there should only be a single email preference value, if any.
                     if (emailPrefs.size() == 1) {
                         aBoolean = Optional.of(emailPrefs.get(0));
@@ -158,31 +82,6 @@ public class DACUserResource extends Resource {
             logWarn("Unable to extract email preference from: " + json + " : " + e.getMessage());
         }
         return aBoolean;
-    }
-
-    /**
-     * Convenience method to handle legacy json user map structure
-     *
-     * @param json Raw json string from client
-     * @return Map of operation to DACUser
-     */
-    private Map<String, User> constructUserMapFromJson(String json) {
-        JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
-        Map<String, User> userMap = new HashMap<>();
-        JsonElement updatedUser = jsonObject.get(UserRolesHandler.UPDATED_USER_KEY);
-        if (updatedUser != null && !updatedUser.isJsonNull()) {
-            userMap.put(UserRolesHandler.UPDATED_USER_KEY, new User(updatedUser.toString()));
-        }
-        return userMap;
-    }
-
-    private User findByAuthUser(AuthUser user) {
-        GoogleUser googleUser = user.getGoogleUser();
-        User dacUser = userService.findUserByEmail(googleUser.getEmail());
-        if (dacUser == null) {
-            throw new NotFoundException("Unable to find user :" + user.getEmail());
-        }
-        return dacUser;
     }
 
 }

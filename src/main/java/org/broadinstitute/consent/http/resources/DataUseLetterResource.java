@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.UUID;
 
+@Deprecated
 @Path("api/consent/{id}/dul")
 public class DataUseLetterResource extends Resource {
 
@@ -64,6 +65,7 @@ public class DataUseLetterResource extends Resource {
         }
     }
 
+    @Deprecated
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)

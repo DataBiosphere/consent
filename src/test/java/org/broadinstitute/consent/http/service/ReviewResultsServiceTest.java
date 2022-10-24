@@ -1,25 +1,33 @@
 package org.broadinstitute.consent.http.service;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ConsentBuilder;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.ElectionReview;
+import org.broadinstitute.consent.http.models.ElectionReviewVote;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.grammar.And;
 import org.broadinstitute.consent.http.models.grammar.Named;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
-import static org.junit.Assert.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ReviewResultsServiceTest {
 
@@ -32,9 +40,9 @@ public class ReviewResultsServiceTest {
 
     private ReviewResultsService service;
 
-    private Election sampleElection = new Election();
-    private DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    private Consent consent = new ConsentBuilder().
+    private final Election sampleElection = new Election();
+    private final DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    private final Consent consent = new ConsentBuilder().
             setRequiresManualReview(false).
             setUseRestriction(new And(new Named("DOID:1"), new Named("DOID:2"))).
             setDataUse(dataUse).
@@ -47,21 +55,11 @@ public class ReviewResultsServiceTest {
 
     @Before
     public void setUp(){
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         when(voteDAO.findVoteByTypeAndElectionId(anyInt(), anyString())).thenReturn(randomVotesList());
-        when(voteDAO.findElectionReviewVotesByElectionId(anyInt())).thenReturn(randomReviewVotesList());
         when(voteDAO.findElectionReviewVotesByElectionId(anyInt(), anyString())).thenReturn(randomReviewVotesList());
-        when(electionDAO.findLastElectionByReferenceIdAndType(anyString(), anyString())).thenReturn(sampleElection);
         when(electionDAO.findElectionWithFinalVoteById(anyInt())).thenReturn(sampleElection);
         when(consentDAO.findConsentById(any())).thenReturn(consent);
-    }
-
-    @Test
-    public void testDescribeLastElectionReviewByReferenceIdAndType() throws Exception {
-        initService();
-        ElectionReview review = service.describeLastElectionReviewByReferenceIdAndType("anyString", "anyType");
-        assertTrue("Consent should be equal to mocked response ", review.getConsent().equals(consent));
-        assertTrue("Sample Election should be equal to mocked response ", review.getElection().equals(sampleElection));
     }
 
     @Test

@@ -11,7 +11,6 @@ import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -109,8 +108,6 @@ abstract public class Resource implements ConsentLogger {
     static {
         dispatch.put(ConsentConflictException.class, e->
             Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
-        dispatch.put(UserRoleHandlerException.class, e ->
-                Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
         dispatch.put(UnsupportedOperationException.class, e ->
                 Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
         dispatch.put(IllegalArgumentException.class, e ->

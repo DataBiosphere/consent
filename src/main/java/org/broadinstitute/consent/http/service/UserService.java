@@ -25,18 +25,14 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
-import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
-import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -248,34 +244,6 @@ public class UserService {
 
     public List<User> describeAdminUsersThatWantToReceiveMails() {
         return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
-    }
-
-    public User updateDACUserById(Map<String, User> dac, Integer id) throws IllegalArgumentException, NotFoundException {
-        User updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
-        // validate user exists
-        User existingUser = userDAO.findUserById(id);
-        if (Objects.isNull(existingUser)) {
-            throw new NotFoundException("The user for the specified id does not exist");
-        }
-        // validate required fields are not null or empty
-        if (StringUtils.isEmpty(updatedUser.getDisplayName())) {
-            updatedUser.setDisplayName(existingUser.getDisplayName());
-        }
-
-        if (Objects.isNull(updatedUser.getInstitutionId())) {
-            updatedUser.setInstitutionId(existingUser.getInstitutionId());
-        }
-
-        if (Objects.nonNull(updatedUser.getInstitutionId()) && !checkForValidInstitution(updatedUser.getInstitutionId())) {
-            throw new BadRequestException("Institution with the given id does not exist");
-        }
-
-        try {
-            userDAO.updateUser(updatedUser.getDisplayName(), id, updatedUser.getInstitutionId());
-        } catch (UnableToExecuteStatementException e) {
-            throw new IllegalArgumentException("Email should be unique.");
-        }
-        return userDAO.findUserById(id);
     }
 
     public void updateEmailPreference(boolean preference, Integer userId) {

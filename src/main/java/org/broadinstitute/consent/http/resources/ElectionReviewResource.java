@@ -39,29 +39,12 @@ public class ElectionReviewResource extends Resource {
         this.darService = darService;
     }
 
-    @Deprecated
-    @GET
-    @Produces("application/json")
-    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
-    public ElectionReview getCollectElectionReview(@QueryParam("referenceId") String referenceId, @QueryParam("type") String type) {
-        return service.describeLastElectionReviewByReferenceIdAndType(referenceId, type);
-    }
-
     @GET
     @Path("/openElection")
     @Produces("application/json")
     @PermitAll
     public String openElections() {
         return ("{ \"open\" : " + service.openElections() + " }");
-    }
-
-    @Deprecated
-    @GET
-    @Path("/{electionId}")
-    @Produces("application/json")
-    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
-    public ElectionReview getElectionReviewByElectionId(@PathParam("electionId") Integer electionId) {
-        return service.describeElectionReviewByElectionId(electionId);
     }
 
     @GET
