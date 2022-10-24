@@ -150,7 +150,7 @@
     },
     "nihInstitutionalCertificationFileName": {
       "type": "string",
-      "label": "If an Institutional Certification for this consent group exists, please upload it here (file upload)",
+      "label": "NIH Institutional Certification",
       "description": "If an Institutional Certification for this consent group exists, please upload it here (file upload)"
     },
     "nihGenomicProgramAdministratorName": {
