@@ -8,10 +8,10 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class DatasetPropertyMapper implements RowMapper<DatasetProperty> {
+public class DatasetPropertyMapper implements RowMapper<DatasetProperty>, RowMapperHelper {
 
     public DatasetProperty map(ResultSet r, StatementContext ctx) throws SQLException {
-      return new DatasetProperty(
+        DatasetProperty prop = new DatasetProperty(
           r.getInt("property_id"),
           r.getInt("dataset_id"),
           r.getInt("property_key"),
@@ -20,5 +20,9 @@ public class DatasetPropertyMapper implements RowMapper<DatasetProperty> {
           DatasetPropertyType.parse(r.getString("property_type")),
           r.getTimestamp("create_date")
       );
+      if (hasColumn(r, "key")) {
+          prop.setPropertyName(r.getString("key"));
+      }
+      return prop;
     }
 }
