@@ -43,6 +43,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -731,7 +733,10 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDatasets(List.of(1,1,2,2,3,3));
         assertEquals(404, response.getStatus());
-        assertEquals("Could not find datasets with ids: 3", ((Error)response.getEntity()).getMessage());
+        assertTrue(((Error)response.getEntity()).getMessage().contains("3"));
+        assertFalse(((Error)response.getEntity()).getMessage().contains("2"));
+        assertFalse(((Error)response.getEntity()).getMessage().contains("1"));
+
     }
 
     @Test
@@ -750,7 +755,10 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDatasets(List.of(1,2,3,4));
         assertEquals(404, response.getStatus());
-        assertEquals("Could not find datasets with ids: 2,4", ((Error)response.getEntity()).getMessage());
+        assertTrue(((Error)response.getEntity()).getMessage().contains("4"));
+        assertFalse(((Error)response.getEntity()).getMessage().contains("3"));
+        assertTrue(((Error)response.getEntity()).getMessage().contains("2"));
+        assertFalse(((Error)response.getEntity()).getMessage().contains("1"));
     }
 
 

@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Path("api/dataset")
@@ -289,7 +290,7 @@ public class DatasetResource extends Resource {
         try {
             List<Dataset> datasets = datasetService.getDatasets(datasetIds);
 
-            List<Integer> foundIds = datasets.stream().map(Dataset::getDataSetId).toList();
+            Set<Integer> foundIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toSet());
             if (!foundIds.containsAll(datasetIds)) {
                 // find the differences
                 List<Integer> differences = new ArrayList<>(datasetIds);
@@ -299,7 +300,7 @@ public class DatasetResource extends Resource {
                                 + String.join(",", differences.stream().map((i) -> i.toString()).collect(Collectors.toSet())));
 
             }
-            return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
+            return Response.ok(datasets).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
