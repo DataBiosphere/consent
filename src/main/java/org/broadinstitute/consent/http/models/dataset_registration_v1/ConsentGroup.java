@@ -29,7 +29,8 @@ import java.util.List;
     "npu",
     "otherSecondary",
     "dataLocation",
-    "url"
+    "url",
+    "fileTypes"
 })
 @Generated("jsonschema2pojo")
 public class ConsentGroup {
@@ -161,6 +162,15 @@ public class ConsentGroup {
     @JsonProperty("url")
     @JsonPropertyDescription("Free text field for entering URL of data")
     private URI url;
+
+    /**
+     * List of File Types
+     * (Required)
+     *
+     */
+    @JsonProperty("fileTypes")
+    @JsonPropertyDescription("List of File Types")
+    private List<FileTypeObject> fileTypes = new ArrayList<FileTypeObject>();
 
     /**
      * Consent Group Name
@@ -488,6 +498,26 @@ public class ConsentGroup {
         this.url = url;
     }
 
+    /**
+     * List of File Types
+     * (Required)
+     *
+     */
+    @JsonProperty("fileTypes")
+    public List<FileTypeObject> getFileTypes() {
+        return fileTypes;
+    }
+
+    /**
+     * List of File Types
+     * (Required)
+     *
+     */
+    @JsonProperty("fileTypes")
+    public void setFileTypes(List<FileTypeObject> fileTypes) {
+        this.fileTypes = fileTypes;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -544,6 +574,10 @@ public class ConsentGroup {
         sb.append('=');
         sb.append(((this.mor == null)?"<null>":this.mor));
         sb.append(',');
+        sb.append("morDate");
+        sb.append('=');
+        sb.append(((this.morDate == null)?"<null>":this.morDate));
+        sb.append(',');
         sb.append("npu");
         sb.append('=');
         sb.append(((this.npu == null)?"<null>":this.npu));
@@ -560,6 +594,10 @@ public class ConsentGroup {
         sb.append('=');
         sb.append(((this.url == null)?"<null>":this.url));
         sb.append(',');
+        sb.append("fileTypes");
+        sb.append('=');
+        sb.append(((this.fileTypes == null)?"<null>":this.fileTypes));
+        sb.append(',');
         if (sb.charAt((sb.length()- 1)) == ',') {
             sb.setCharAt((sb.length()- 1), ']');
         } else {
@@ -575,9 +613,11 @@ public class ConsentGroup {
         result = ((result* 31)+((this.gso == null)? 0 :this.gso.hashCode()));
         result = ((result* 31)+((this.generalResearchUse == null)? 0 :this.generalResearchUse.hashCode()));
         result = ((result* 31)+((this.poa == null)? 0 :this.poa.hashCode()));
+        result = ((result* 31)+((this.morDate == null)? 0 :this.morDate.hashCode()));
         result = ((result* 31)+((this.otherPrimary == null)? 0 :this.otherPrimary.hashCode()));
         result = ((result* 31)+((this.gs == null)? 0 :this.gs.hashCode()));
         result = ((result* 31)+((this.url == null)? 0 :this.url.hashCode()));
+        result = ((result* 31)+((this.fileTypes == null)? 0 :this.fileTypes.hashCode()));
         result = ((result* 31)+((this.diseaseSpecificUse == null)? 0 :this.diseaseSpecificUse.hashCode()));
         result = ((result* 31)+((this.consentGroupName == null)? 0 :this.consentGroupName.hashCode()));
         result = ((result* 31)+((this.mor == null)? 0 :this.mor.hashCode()));
@@ -588,6 +628,7 @@ public class ConsentGroup {
         result = ((result* 31)+((this.pub == null)? 0 :this.pub.hashCode()));
         result = ((result* 31)+((this.nmds == null)? 0 :this.nmds.hashCode()));
         result = ((result* 31)+((this.otherSecondary == null)? 0 :this.otherSecondary.hashCode()));
+        result = ((result* 31)+((this.fileTypes == null)? 0 :this.fileTypes.hashCode()));
         return result;
     }
 
@@ -600,7 +641,7 @@ public class ConsentGroup {
             return false;
         }
         ConsentGroup rhs = ((ConsentGroup) other);
-        return ((((((((((((((((((this.col == rhs.col)||((this.col!= null)&&this.col.equals(rhs.col)))&&((this.gso == rhs.gso)||((this.gso!= null)&&this.gso.equals(rhs.gso))))&&((this.generalResearchUse == rhs.generalResearchUse)||((this.generalResearchUse!= null)&&this.generalResearchUse.equals(rhs.generalResearchUse))))&&((this.poa == rhs.poa)||((this.poa!= null)&&this.poa.equals(rhs.poa))))&&((this.otherPrimary == rhs.otherPrimary)||((this.otherPrimary!= null)&&this.otherPrimary.equals(rhs.otherPrimary))))&&((this.gs == rhs.gs)||((this.gs!= null)&&this.gs.equals(rhs.gs))))&&((this.url == rhs.url)||((this.url!= null)&&this.url.equals(rhs.url))))&&((this.diseaseSpecificUse == rhs.diseaseSpecificUse)||((this.diseaseSpecificUse!= null)&&this.diseaseSpecificUse.equals(rhs.diseaseSpecificUse))))&&((this.consentGroupName == rhs.consentGroupName)||((this.consentGroupName!= null)&&this.consentGroupName.equals(rhs.consentGroupName))))&&((this.mor == rhs.mor)||((this.mor!= null)&&this.mor.equals(rhs.mor))))&&((this.npu == rhs.npu)||((this.npu!= null)&&this.npu.equals(rhs.npu))))&&((this.dataLocation == rhs.dataLocation)||((this.dataLocation!= null)&&this.dataLocation.equals(rhs.dataLocation))))&&((this.irb == rhs.irb)||((this.irb!= null)&&this.irb.equals(rhs.irb))))&&((this.hmb == rhs.hmb)||((this.hmb!= null)&&this.hmb.equals(rhs.hmb))))&&((this.pub == rhs.pub)||((this.pub!= null)&&this.pub.equals(rhs.pub))))&&((this.nmds == rhs.nmds)||((this.nmds!= null)&&this.nmds.equals(rhs.nmds))))&&((this.otherSecondary == rhs.otherSecondary)||((this.otherSecondary!= null)&&this.otherSecondary.equals(rhs.otherSecondary))));
+        return ((((((((((((((((((this.col == rhs.col)||((this.col!= null)&&this.col.equals(rhs.col)))&&((this.gso == rhs.gso)||((this.gso!= null)&&this.gso.equals(rhs.gso))))&&((this.generalResearchUse == rhs.generalResearchUse)||((this.generalResearchUse!= null)&&this.generalResearchUse.equals(rhs.generalResearchUse))))&&((this.poa == rhs.poa)||((this.poa!= null)&&this.poa.equals(rhs.poa))))&&((this.otherPrimary == rhs.otherPrimary)||((this.otherPrimary!= null)&&this.otherPrimary.equals(rhs.otherPrimary))))&&((this.gs == rhs.gs)||((this.gs!= null)&&this.gs.equals(rhs.gs))))&&((this.url == rhs.url)||((this.url!= null)&&this.url.equals(rhs.url))))&&((this.diseaseSpecificUse == rhs.diseaseSpecificUse)||((this.diseaseSpecificUse!= null)&&this.diseaseSpecificUse.equals(rhs.diseaseSpecificUse))))&&((this.consentGroupName == rhs.consentGroupName)||((this.consentGroupName!= null)&&this.consentGroupName.equals(rhs.consentGroupName))))&&((this.mor == rhs.mor)||((this.mor!= null)&&this.mor.equals(rhs.mor))))&&((this.npu == rhs.npu)||((this.npu!= null)&&this.npu.equals(rhs.npu))))&&((this.dataLocation == rhs.dataLocation)||((this.dataLocation!= null)&&this.dataLocation.equals(rhs.dataLocation))))&&((this.irb == rhs.irb)||((this.irb!= null)&&this.irb.equals(rhs.irb))))&&((this.hmb == rhs.hmb)||((this.hmb!= null)&&this.hmb.equals(rhs.hmb))))&&((this.pub == rhs.pub)||((this.pub!= null)&&this.pub.equals(rhs.pub))))&&((this.nmds == rhs.nmds)||((this.nmds!= null)&&this.nmds.equals(rhs.nmds))))&&((this.otherSecondary == rhs.otherSecondary)||((this.otherSecondary!= null)&&this.otherSecondary.equals(rhs.otherSecondary)))&&((this.fileTypes == rhs.fileTypes)||((this.fileTypes!= null)&&this.fileTypes.equals(rhs.fileTypes))));
     }
 
 }

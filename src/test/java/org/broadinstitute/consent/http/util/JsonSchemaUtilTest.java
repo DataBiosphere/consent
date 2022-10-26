@@ -18,11 +18,6 @@ public class JsonSchemaUtilTest {
             "studyName": "name",
             "studyDescription": "description",
             "dataTypes": ["types"],
-            "fileTypes": [{
-              "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
-            }],
             "phenotypeIndication": "phenotype",
             "species": "species",
             "piName": "PI Name",
@@ -31,6 +26,11 @@ public class JsonSchemaUtilTest {
             "publicVisibility": true,
             "dataAccessCommitteeId": 1,
             "consentGroups": [{
+              "fileTypes": [{
+                "fileType": "Arrays",
+                "functionalEquivalence": "equivalence",
+                "numberOfParticipants": 2
+              }],
               "consentGroupName": "name",
               "generalResearchUse": true
             }]
@@ -64,7 +64,6 @@ public class JsonSchemaUtilTest {
     assertNotNull(instance.getStudyName());
     assertNotNull(instance.getStudyDescription());
     assertFalse(instance.getDataTypes().isEmpty());
-    assertFalse(instance.getFileTypes().isEmpty());
     assertNotNull(instance.getPhenotypeIndication());
     assertNotNull(instance.getSpecies());
     assertNotNull(instance.getPiName());
@@ -73,6 +72,7 @@ public class JsonSchemaUtilTest {
     assertNotNull(instance.getPublicVisibility());
     assertNotNull(instance.getDataAccessCommitteeId());
     assertFalse(instance.getConsentGroups().isEmpty());
+    assertFalse(instance.getConsentGroups().get(0).getFileTypes().isEmpty());
   }
 
   @Test
@@ -83,11 +83,6 @@ public class JsonSchemaUtilTest {
             "studyName": "name",
             "studyDescription": "description",
             "dataTypes": ["types"],
-            "fileTypes": [{
-              "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
-            }],
             "phenotypeIndication": "phenotype",
             "species": "species",
             "piName": "PI Name",
@@ -96,6 +91,11 @@ public class JsonSchemaUtilTest {
             "publicVisibility": true,
             "dataAccessCommitteeId": 1,
             "consentGroups": [{
+              "fileTypes": [{
+                "fileType": "Arrays",
+                "functionalEquivalence": "equivalence",
+                "numberOfParticipants": 2
+              }],
               "consentGroupName": "name",
               "generalResearchUse": true
             }],
@@ -144,11 +144,6 @@ public class JsonSchemaUtilTest {
             "studyName": "name",
             "studyDescription": "description",
             "dataTypes": ["types"],
-            "fileTypes": [{
-              "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
-            }],
             "phenotypeIndication": "phenotype",
             "species": "species",
             "piName": "PI Name",
@@ -157,6 +152,11 @@ public class JsonSchemaUtilTest {
             "publicVisibility": true,
             "dataAccessCommitteeId": 1,
             "consentGroups": [{
+              "fileTypes": [{
+                "fileType": "Arrays",
+                "functionalEquivalence": "equivalence",
+                "numberOfParticipants": 2
+              }],
               "consentGroupName": "name",
               "generalResearchUse": true
             }],

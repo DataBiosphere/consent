@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -20,7 +19,10 @@ import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.glassfish.jersey.media.multipart.BodyPart;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.MultiPart;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -31,9 +33,7 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +46,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -712,14 +713,14 @@ public class DatasetResourceTest {
     @Test
     public void testCreateDatasetRegistration_invalidSchema_case1() {
         initResource();
-        Response response = resource.createDatasetRegistration(authUser,null, null, "");
+        Response response = resource.createDatasetRegistration(authUser, null, "");
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
     public void testCreateDatasetRegistration_invalidSchema_case2() {
         initResource();
-        Response response = resource.createDatasetRegistration(authUser,null, null, "{}");
+        Response response = resource.createDatasetRegistration(authUser, null, "{}");
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
@@ -728,54 +729,62 @@ public class DatasetResourceTest {
         DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
         String schemaString = new Gson().toJson(schemaV1);
         initResource();
-        Response response = resource.createDatasetRegistration(authUser,null, null, schemaString);
+        Response response = resource.createDatasetRegistration(authUser, null, schemaString);
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
     public void testCreateDatasetRegistration_validSchema() {
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(datasetService.createDatasetsFromRegistration(any(), any(), any(), any())).thenReturn(List.of());
+        when(datasetService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
         DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
         String schemaString = new Gson().toJson(schemaV1);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser,null, null, schemaString);
+        Response response = resource.createDatasetRegistration(authUser, null, schemaString);
         assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
 
     @Test
     public void testCreateDatasetRegistration_withFile() {
-        String fileContent = "test";
-        InputStream stream = IOUtils.toInputStream(fileContent, Charset.defaultCharset());
         FormDataContentDisposition content = FormDataContentDisposition
             .name("file")
             .fileName("sharing_plan.txt")
             .build();
+        FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
+        MultiPart multiPart = mock(MultiPart.class);
+        BodyPart bodyPart = mock(BodyPart.class);
+        when(formDataBodyPart.getParent()).thenReturn(multiPart);
+        when(multiPart.getBodyParts()).thenReturn(List.of(bodyPart));
+        when(bodyPart.getContentDisposition()).thenReturn(content);
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(datasetService.createDatasetsFromRegistration(any(), any(), any(), any())).thenReturn(List.of());
+        when(datasetService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
         DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
         String instance = new Gson().toJson(schemaV1);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser, stream, content, instance);
+        Response response = resource.createDatasetRegistration(authUser, formDataBodyPart, instance);
         assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
 
     @Test
     public void testCreateDatasetRegistration_invalidFileName() {
-        String fileContent = "test";
-        InputStream stream = IOUtils.toInputStream(fileContent, Charset.defaultCharset());
         FormDataContentDisposition content = FormDataContentDisposition
             .name("file")
             .fileName("file/with&$invalid*^chars\\.txt")
             .build();
+        FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
+        MultiPart multiPart = mock(MultiPart.class);
+        BodyPart bodyPart = mock(BodyPart.class);
+        when(formDataBodyPart.getParent()).thenReturn(multiPart);
+        when(multiPart.getBodyParts()).thenReturn(List.of(bodyPart));
+        when(bodyPart.getContentDisposition()).thenReturn(content);
         when(userService.findUserByEmail(any())).thenReturn(user);
         DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
         String instance = new Gson().toJson(schemaV1);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser, stream, content, instance);
+        Response response = resource.createDatasetRegistration(authUser, formDataBodyPart, instance);
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
@@ -790,11 +799,6 @@ public class DatasetResourceTest {
         schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.Observational);
         schemaV1.setStudyDescription("Description");
         schemaV1.setDataTypes(List.of("Data Type"));
-        FileTypeObject fileType = new FileTypeObject();
-        fileType.setFileType(FileTypeObject.FileType.Arrays);
-        fileType.setFunctionalEquivalence("Functional Equivalence");
-        fileType.setNumberOfParticipants(1);
-        schemaV1.setFileTypes(List.of(fileType));
         schemaV1.setPhenotypeIndication("Indication");
         schemaV1.setSpecies("Species");
         schemaV1.setPiName("PI Name");
@@ -806,6 +810,11 @@ public class DatasetResourceTest {
         ConsentGroup consentGroup = new ConsentGroup();
         consentGroup.setConsentGroupName("Name");
         consentGroup.setGeneralResearchUse(true);
+        FileTypeObject fileType = new FileTypeObject();
+        fileType.setFileType(FileTypeObject.FileType.Arrays);
+        fileType.setFunctionalEquivalence("Functional Equivalence");
+        fileType.setNumberOfParticipants(1);
+        consentGroup.setFileTypes(List.of(fileType));
         schemaV1.setConsentGroups(List.of(consentGroup));
         return schemaV1;
     }

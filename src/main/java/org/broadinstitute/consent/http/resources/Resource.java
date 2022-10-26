@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.owasp.fileio.FileValidator;
 import org.postgresql.util.PSQLException;
@@ -90,13 +90,13 @@ abstract public class Resource {
         };
     }
 
-    protected void validateFileDetails(FormDataContentDisposition fileDetail) {
+    protected void validateFileDetails(ContentDisposition contentDisposition) {
         FileValidator validator = new FileValidator();
-        boolean validName = validator.isValidFileName("validating uploaded file name", fileDetail.getFileName(), true);
+        boolean validName = validator.isValidFileName("validating uploaded file name", contentDisposition.getFileName(), true);
         if (!validName) {
             throw new IllegalArgumentException("File name is invalid");
         }
-        boolean validSize = validator.getMaxFileUploadSize() >= fileDetail.getSize();
+        boolean validSize = validator.getMaxFileUploadSize() >= contentDisposition.getSize();
         if (!validSize) {
             throw new IllegalArgumentException("File size is invalid. Max size is: " + validator.getMaxFileUploadSize()/1000000 + " MB");
         }
