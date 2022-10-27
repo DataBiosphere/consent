@@ -7,9 +7,8 @@ import org.mockito.Mock;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class NewCaseMessageTest {
@@ -24,10 +23,10 @@ public class NewCaseMessageTest {
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        List<Mail> messages = new NewCaseMessage().newCaseMessage("to@address.com", "from@address.com", template, "DUL-123", "Data Use Limitations");
-        assertTrue(messages.get(0).getSubject().equals("Log vote on Data Use Limitations case id: DUL-123."));
-        messages = new NewCaseMessage().newCaseMessage("to@address.com", "from@address.com", template, "DAR-123", "Data Access");
-        assertTrue(messages.get(0).getSubject().equals("Log votes on Data Access Request case id: DAR-123."));
+        Mail message = new NewCaseMessage().newCaseMessage("to@address.com", "from@address.com", template, "DUL-123", "Data Use Limitations");
+        assertEquals("Log vote on Data Use Limitations case id: DUL-123.", message.getSubject());
+        Mail message2 = new NewCaseMessage().newCaseMessage("to@address.com", "from@address.com", template, "DAR-123", "Data Access");
+        assertEquals("Log votes on Data Access Request case id: DAR-123.", message2.getSubject());
     }
 
 }

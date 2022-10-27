@@ -7,9 +7,8 @@ import org.mockito.Mock;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.Collection;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ClosedDatasetElectionMessageTest {
@@ -24,10 +23,8 @@ public class ClosedDatasetElectionMessageTest {
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        Collection<Mail> messages = new ClosedDatasetElectionMessage().closedDatasetElectionMessage("to@address.com", "from@address.com", template, "SomeReferenceId", "Some Type");
-        for (Mail message: messages) {
-            assertTrue(message.getSubject().equals("Report of closed Dataset elections."));
-        }
+        Mail message = new ClosedDatasetElectionMessage().closedDatasetElectionMessage("to@address.com", "from@address.com", template, "SomeReferenceId", "Some Type");
+        assertEquals("Report of closed Dataset elections.", message.getSubject());
     }
 
 }

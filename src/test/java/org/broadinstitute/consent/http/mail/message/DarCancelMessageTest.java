@@ -7,9 +7,8 @@ import org.mockito.Mock;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.Collection;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DarCancelMessageTest {
@@ -24,10 +23,8 @@ public class DarCancelMessageTest {
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        Collection<Mail> messages = new DarCancelMessage().cancelDarMessage("to@address.com", "from@address.com", template, "DAR-123", "Data Access");
-        for (Mail message: messages) {
-            assertTrue(message.getSubject().equals("The Data Access Request with ID DAR-123 has been cancelled."));
-        }
+        Mail message = new DarCancelMessage().cancelDarMessage("to@address.com", "from@address.com", template, "DAR-123", "Data Access");
+        assertEquals("The Data Access Request with ID DAR-123 has been cancelled.", message.getSubject());
     }
 
 }
