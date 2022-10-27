@@ -1,0 +1,27 @@
+get:
+  summary: Get Dataset by List of Ids
+  description: Finds Dataset and DatasetProperties of the Dataset specified by id.
+  parameters:
+    - name: ids
+      in: query
+      description: Ids to query for; e.g., /batch?ids=1&ids=2&ids=3
+      required: true
+      schema:
+        type: array
+        items:
+          type: integer
+  tags:
+    - Dataset
+  responses:
+    200:
+      description: The List of Datasets with properties
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/Dataset.yaml'
+    404:
+      description: Not Found
+    500:
+      description: Server error
