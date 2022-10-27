@@ -8,7 +8,6 @@ import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
@@ -25,7 +24,7 @@ public class NewResearcherCreatedTest {
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        List<Mail> messages = new NewResearcherCreatedMessage().newResearcherCreatedMessage(Collections.singleton("to@address.com"), "from@address.com", template, "SomeReferenceId", "Some Type") ;
+        List<Mail> messages = new NewResearcherCreatedMessage().newResearcherCreatedMessage("to@address.com", "from@address.com", template, "SomeReferenceId", "Some Type") ;
         assertTrue(messages.get(0).getSubject().equals("Review Researcher Profile."));
     }
 }

@@ -25,7 +25,7 @@ public class FlaggedDarApprovedMessageTest {
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        List<Mail> messages = new FlaggedDarApprovedMessage().flaggedDarMessage(Collections.singleton(("to@address.com")), "from@address.com", template, "DS-123", "SomeType");
+        List<Mail> messages = new FlaggedDarApprovedMessage().flaggedDarMessage("to@address.com", "from@address.com", template, "DS-123", "SomeType");
         assertTrue(messages.get(0).getSubject().equals("DS-123 that requires data owners reviewing approved."));
     }
 
