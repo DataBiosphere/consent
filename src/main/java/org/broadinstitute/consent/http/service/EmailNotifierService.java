@@ -133,7 +133,7 @@ public class EmailNotifierService {
                 Map<String, String> data = retrieveForCollect(electionId, chair);
                 String collectUrl = generateCollectVoteUrl(SERVER_URL, data.get("electionType"), data.get("entityId"), data.get("electionId"));
                 Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), collectUrl);
-                sendgridAPI.sendCollectMessage(chair.getEmail(), data.get("entityName"), data.get("electionType"), template);
+                sendgridAPI.sendCollectMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
                 emailDAO.insertEmail(null, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 1, new Date(), template.toString());
             }
         }
