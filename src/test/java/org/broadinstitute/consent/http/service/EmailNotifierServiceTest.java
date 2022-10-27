@@ -8,7 +8,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.mail.SendgridAPI;
+import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.junit.Before;
@@ -64,14 +64,14 @@ public class EmailNotifierServiceTest {
         mConfig.setActivateEmailNotifications(serviceActive);
         mConfig.setGoogleAccount("");
         mConfig.setSendGridApiKey("");
-        SendgridAPI sendgridAPI = new SendgridAPI(mConfig);
+        SendGridAPI sendGridAPI = new SendGridAPI(mConfig);
 
         FreeMarkerConfiguration fmConfig = new FreeMarkerConfiguration();
         fmConfig.setDefaultEncoding("UTF-8");
         fmConfig.setTemplateDirectory("/freemarker");
         FreeMarkerTemplateHelper helper = new FreeMarkerTemplateHelper(fmConfig);
         service = new EmailNotifierService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
-                emailDAO, sendgridAPI, helper, serverUrl, serviceActive);
+                emailDAO, sendGridAPI, helper, serverUrl, serviceActive);
     }
 
     @Test

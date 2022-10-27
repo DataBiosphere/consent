@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
-import org.broadinstitute.consent.http.mail.SendgridAPI;
+import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,12 +13,12 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-public class SendgridAPITest {
+public class SendGridAPITest {
 
     private static final String TO = "to@broadinstitute.org";
     private static final String ID = "DUL-123";
     private static final String TYPE = "Data Use Limitations";
-    private SendgridAPI sendgridAPI;
+    private SendGridAPI sendGridAPI;
 
     @Mock
     private Writer template;
@@ -30,7 +30,7 @@ public class SendgridAPITest {
         config.setSendGridApiKey("test");
         config.setGoogleAccount("from@broadinstitute.org");
         config.setActivateEmailNotifications(false);
-        sendgridAPI = new SendgridAPI(config);
+        sendGridAPI = new SendGridAPI(config);
         doNothing().when(template).write(anyString());
     }
 
@@ -48,7 +48,7 @@ public class SendgridAPITest {
     @Test
     public void testCollectMessage() {
         try {
-            sendgridAPI.sendCollectMessage(TO, ID, TYPE, template);
+            sendGridAPI.sendCollectMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -57,7 +57,7 @@ public class SendgridAPITest {
     @Test
     public void testNewCaseMessage() {
         try {
-            sendgridAPI.sendNewCaseMessage(TO, ID, TYPE, template);
+            sendGridAPI.sendNewCaseMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -66,7 +66,7 @@ public class SendgridAPITest {
     @Test
     public void testReminderMessage() {
         try {
-            sendgridAPI.sendReminderMessage(TO, ID, TYPE, template);
+            sendGridAPI.sendReminderMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -75,7 +75,7 @@ public class SendgridAPITest {
     @Test
     public void testDisabledDatasetMessage() {
         try {
-            sendgridAPI.sendDisabledDatasetMessage(TO, ID, TYPE, template);
+            sendGridAPI.sendDisabledDatasetMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -84,7 +84,7 @@ public class SendgridAPITest {
     @Test
     public void testNewDARRequests() {
         try {
-            sendgridAPI.sendNewDARRequests(TO, ID, TYPE, template);
+            sendGridAPI.sendNewDARRequests(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -93,7 +93,7 @@ public class SendgridAPITest {
     @Test
     public void testCancelDARRequestMessage() {
         try {
-            sendgridAPI.sendCancelDARRequestMessage(TO, ID, TYPE, template);
+            sendGridAPI.sendCancelDARRequestMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -102,7 +102,7 @@ public class SendgridAPITest {
     @Test
     public void testFlaggedDarAdminApprovedMessage() {
         try {
-            sendgridAPI.sendFlaggedDarAdminApprovedMessage(TO, ID, TYPE, template);
+            sendGridAPI.sendFlaggedDarAdminApprovedMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -111,7 +111,7 @@ public class SendgridAPITest {
     @Test
     public void testClosedDatasetElectionsMessage() {
         try {
-            sendgridAPI.sendClosedDatasetElectionsMessage(TO, ID, TYPE, template);
+            sendGridAPI.sendClosedDatasetElectionsMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -120,7 +120,7 @@ public class SendgridAPITest {
     @Test
     public void testDelegateResponsibilitiesMessage() {
         try {
-            sendgridAPI.sendDelegateResponsibilitiesMessage(TO, template);
+            sendGridAPI.sendDelegateResponsibilitiesMessage(TO, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -129,7 +129,7 @@ public class SendgridAPITest {
     @Test
     public void testNewResearcherCreatedMessage() {
         try {
-            sendgridAPI.sendNewResearcherCreatedMessage(TO, template);
+            sendGridAPI.sendNewResearcherCreatedMessage(TO, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -138,7 +138,7 @@ public class SendgridAPITest {
     @Test
     public void testNewResearcherApprovedMessage() {
         try {
-            sendgridAPI.sendNewResearcherApprovedMessage(TO, template, "Test");
+            sendGridAPI.sendNewResearcherApprovedMessage(TO, template, "Test");
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -147,7 +147,7 @@ public class SendgridAPITest {
     @Test
     public void testDataCustodianApprovalMessage() {
         try {
-            sendgridAPI.sendDataCustodianApprovalMessage(TO, "Test", template);
+            sendGridAPI.sendDataCustodianApprovalMessage(TO, "Test", template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }

@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Optional;
 
-public class SendgridAPI {
+public class SendGridAPI {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final String fromAccount;
@@ -44,7 +44,7 @@ public class SendgridAPI {
     private final ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
     private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
 
-    public SendgridAPI(MailConfiguration config) {
+    public SendGridAPI(MailConfiguration config) {
         this.fromAccount = config.getGoogleAccount();
         this.sendGrid = new SendGrid(config.getSendGridApiKey());
         this.activateEmailNotifications = config.isActivateEmailNotifications();
