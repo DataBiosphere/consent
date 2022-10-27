@@ -48,11 +48,13 @@ import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Path("api/dataset")
@@ -277,6 +279,30 @@ public class DatasetResource extends Resource {
                 throw new NotFoundException("Could not find the dataset with id: " + datasetId.toString());
             }
             return Response.ok(dataset, MediaType.APPLICATION_JSON).build();
+        } catch (Exception e){
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Path("/batch")
+    @Produces("application/json")
+    @PermitAll
+    public Response getDatasets(@QueryParam("ids") List<Integer> datasetIds){
+        try {
+            List<Dataset> datasets = datasetService.getDatasets(datasetIds);
+
+            Set<Integer> foundIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toSet());
+            if (!foundIds.containsAll(datasetIds)) {
+                // find the differences
+                List<Integer> differences = new ArrayList<>(datasetIds);
+                differences.removeAll(foundIds);
+                throw new NotFoundException(
+                        "Could not find datasets with ids: "
+                                + String.join(",", differences.stream().map((i) -> i.toString()).collect(Collectors.toSet())));
+
+            }
+            return Response.ok(datasets).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
