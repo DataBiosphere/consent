@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.mail.message;
 import com.sendgrid.helpers.mail.Mail;
 
 import java.io.Writer;
-import java.util.List;
 
 public class NewCaseMessage extends MailMessage{
 

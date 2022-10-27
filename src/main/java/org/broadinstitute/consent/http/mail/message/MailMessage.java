@@ -5,8 +5,6 @@ import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 
 import java.io.Writer;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public abstract class MailMessage {
 
