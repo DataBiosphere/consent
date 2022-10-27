@@ -25,11 +25,6 @@ properties:
     description: All data types that study encompasses
     items:
       type: string
-  fileTypes:
-    type: array
-    items:
-      "$ref": "#/$defs/fileTypeObject"
-    description: List of File Types
   phenotypeIndication:
     type: string
     description: Phenotype/Indication Studied
@@ -86,36 +81,38 @@ properties:
     type: string
     description: NIH Grant or Contract Number
   nihICsSupportingStudy:
-    type: string
+    type: array
     description: NIH ICs Supporting the Study
-    enum:
-      - NCI
-      - NEI
-      - NHLBI
-      - NHGRI
-      - NIA
-      - NIAAA
-      - NIAID
-      - NIAMS
-      - NIBIB
-      - NICHD
-      - NIDCD
-      - NIDCR
-      - NIDDK
-      - NIDA
-      - NIEHS
-      - NIGMS
-      - NIMH
-      - NIMHD
-      - NINDS
-      - NINR
-      - NLM
-      - CC
-      - CIT
-      - CSR
-      - FIC
-      - NCATS
-      - NCCIH
+    items:
+      type: string
+      enum:
+        - NCI
+        - NEI
+        - NHLBI
+        - NHGRI
+        - NIA
+        - NIAAA
+        - NIAID
+        - NIAMS
+        - NIBIB
+        - NICHD
+        - NIDCD
+        - NIDCR
+        - NIDDK
+        - NIDA
+        - NIEHS
+        - NIGMS
+        - NIMH
+        - NIMHD
+        - NINDS
+        - NINR
+        - NLM
+        - CC
+        - CIT
+        - CSR
+        - FIC
+        - NCATS
+        - NCCIH
   nihProgramOfficerName:
     type: string
     description: NIH Program Officer Name
@@ -150,6 +147,9 @@ properties:
       - FIC
       - NCATS
       - NCCIH
+  nihInstitutionalCertificationFileName:
+    type: string
+    description: If an Institutional Certification for this consent group exists, please upload it here (file upload)
   nihGenomicProgramAdministratorName:
     type: string
     description: NIH Genomic Program Administrator Name
@@ -331,5 +331,11 @@ required:
         type: string
         format: uri
         description: Free text field for entering URL of data
+      fileTypes:
+        type: array
+        items:
+          "$ref": "#/$defs/fileTypeObject"
+        description: List of File Types
     required:
       - consentGroupName
+      - fileTypes

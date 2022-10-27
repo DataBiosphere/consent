@@ -164,6 +164,7 @@ public class DAOTestHelper {
         testingDAO.deleteAllAccessRps();
         testingDAO.deleteAllElections();
         testingDAO.deleteAllDatasetProperties();
+        testingDAO.deleteAllDictionaryTerms();
         testingDAO.deleteAllDatasetAssociations();
         testingDAO.deleteAllDatasets();
         testingDAO.deleteAllDacUserRoles();

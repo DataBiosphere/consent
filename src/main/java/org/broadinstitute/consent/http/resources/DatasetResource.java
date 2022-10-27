@@ -17,7 +17,8 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.BodyPart;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
 
@@ -45,11 +46,13 @@ import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Path("api/dataset")
@@ -148,8 +151,7 @@ public class DatasetResource extends Resource {
      */
     public Response createDatasetRegistration(
             @Auth AuthUser authUser,
-            @FormDataParam("file") InputStream uploadInputStream,
-            @FormDataParam("file") FormDataContentDisposition fileDetail,
+            @FormDataParam("file") FormDataBodyPart formDataBodyPart,
             @FormDataParam("dataset") String json) {
         try {
             try {
@@ -161,12 +163,14 @@ public class DatasetResource extends Resource {
             }
             DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
             User user = userService.findUserByEmail(authUser.getEmail());
-            // validate file if exists.
-            if (Objects.nonNull(fileDetail)) {
-                validateFileDetails(fileDetail);
+            // validate file names if they exist.
+            if (Objects.nonNull(formDataBodyPart)) {
+                for (BodyPart part : formDataBodyPart.getParent().getBodyParts()) {
+                    validateFileDetails(part.getContentDisposition());
+                }
             }
             // Generate datasets from registration
-            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, uploadInputStream, fileDetail);
+            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, formDataBodyPart);
             URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
             return Response.created(uri).entity(datasets).build();
         } catch (Exception e) {
@@ -273,6 +277,30 @@ public class DatasetResource extends Resource {
                 throw new NotFoundException("Could not find the dataset with id: " + datasetId.toString());
             }
             return Response.ok(dataset, MediaType.APPLICATION_JSON).build();
+        } catch (Exception e){
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Path("/batch")
+    @Produces("application/json")
+    @PermitAll
+    public Response getDatasets(@QueryParam("ids") List<Integer> datasetIds){
+        try {
+            List<Dataset> datasets = datasetService.getDatasets(datasetIds);
+
+            Set<Integer> foundIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toSet());
+            if (!foundIds.containsAll(datasetIds)) {
+                // find the differences
+                List<Integer> differences = new ArrayList<>(datasetIds);
+                differences.removeAll(foundIds);
+                throw new NotFoundException(
+                        "Could not find datasets with ids: "
+                                + String.join(",", differences.stream().map((i) -> i.toString()).collect(Collectors.toSet())));
+
+            }
+            return Response.ok(datasets).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }

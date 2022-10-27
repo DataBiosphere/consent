@@ -59,6 +59,7 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.jdbi.v3.core.Jdbi;
@@ -256,12 +257,19 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
+    DatasetServiceDAO providesDatasetServiceDAO() {
+        return new DatasetServiceDAO(
+                jdbi,
+                providesDatasetDAO());
+    }
+
+    @Provides
     DatasetService providesDatasetService() {
         return new DatasetService(
                 providesConsentDAO(),
                 providesDataAccessRequestDAO(),
                 providesDatasetDAO(),
-                providesGCSService(),
+                providesDatasetServiceDAO(),
                 providesUserRoleDAO(),
                 providesUseRestrictionConverter());
     }

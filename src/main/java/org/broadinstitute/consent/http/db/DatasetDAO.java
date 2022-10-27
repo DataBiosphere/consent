@@ -261,7 +261,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     Set<DatasetDTO> findDatasetDTOWithPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
     @UseRowMapper(DatasetPropertyMapper.class)
-    @SqlQuery("SELECT * FROM dataset_property WHERE dataset_id = :datasetId")
+    @SqlQuery(
+        " SELECT p.*, d.key FROM dataset_property p " +
+        " INNER JOIN dictionary d ON p.property_key = d.key_id " +
+        " WHERE p.dataset_id = :datasetId ")
     Set<DatasetProperty> findDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
     @Deprecated
@@ -275,12 +278,18 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " WHERE d.dataset_id IN (<dataSetIdList>) ORDER BY d.dataset_id, k.receive_order ")
     Set<DatasetDTO> findDatasetsByReceiveOrder(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
+    @Deprecated // Use getDictionaryTerms()
     @RegisterRowMapper(DictionaryMapper.class)
-    @SqlQuery("SELECT * FROM dictionary d ORDER BY receiveOrder")
+    @SqlQuery("SELECT * FROM dictionary d ORDER BY receive_order")
     List<Dictionary> getMappedFieldsOrderByReceiveOrder();
 
     @RegisterRowMapper(DictionaryMapper.class)
-    @SqlQuery("SELECT * FROM dictionary d WHERE d.displayOrder IS NOT NULL  ORDER BY displayOrder")
+    @SqlQuery("SELECT * FROM dictionary ORDER BY key_id")
+    List<Dictionary> getDictionaryTerms();
+
+    @Deprecated // Use getDictionaryTerms()
+    @RegisterRowMapper(DictionaryMapper.class)
+    @SqlQuery("SELECT * FROM dictionary d WHERE d.display_order IS NOT NULL ORDER BY display_order")
     List<Dictionary> getMappedFieldsOrderByDisplayOrder();
 
     @UseRowReducer(DatasetReducer.class)

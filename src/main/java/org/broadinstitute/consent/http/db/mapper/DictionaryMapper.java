@@ -10,10 +10,10 @@ public class DictionaryMapper implements RowMapper<Dictionary> {
   @Override
   public Dictionary map(ResultSet r, StatementContext statementContext) throws SQLException {
     return new Dictionary(
-        r.getInt("keyId"),
+        r.getInt("key_id"),
         r.getString("key"),
         r.getBoolean("required"),
-        r.getInt("displayOrder"),
-        r.getInt("receiveOrder"));
+        r.getInt("display_order"),
+        r.getInt("receive_order"));
   }
 }
