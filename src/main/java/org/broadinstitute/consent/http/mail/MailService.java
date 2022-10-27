@@ -16,6 +16,8 @@ import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage
 import org.broadinstitute.consent.http.mail.message.CollectMessage;
 import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
 import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.mail.message.DelegateResponsibilitiesMessage;
 import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
 import org.broadinstitute.consent.http.mail.message.FlaggedDarApprovedMessage;
@@ -41,10 +43,12 @@ public class MailService {
     private final DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
     private final FlaggedDarApprovedMessage adminApprovedDarMessageCreator = new FlaggedDarApprovedMessage();
     private final ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
-    private final DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
+    private final DelegateResponsibilitiesMessage delegateResponsibilitiesMessage = new DelegateResponsibilitiesMessage();
     private final NewResearcherCreatedMessage researcherCreatedMessage = new NewResearcherCreatedMessage();
     private final ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
     private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
+    private final DatasetApprovedMessage datasetApprovedMessage = new DatasetApprovedMessage();
+    private final DatasetDeniedMessage datasetDeniedMessage = new DatasetDeniedMessage();
 
     public MailService(MailConfiguration config) {
         this.fromAccount = config.getGoogleAccount();
@@ -126,7 +130,7 @@ public class MailService {
     }
 
     public void sendDelegateResponsibilitiesMessage(Set<String> userAddresses, Writer template) throws MessagingException {
-        List<Mail> messages = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(userAddresses, fromAccount, template);
+        List<Mail> messages = delegateResponsibilitiesMessage.delegateResponsibilitiesMessage(userAddresses, fromAccount, template);
         sendMessages(messages);
     }
 
@@ -144,5 +148,16 @@ public class MailService {
         Collection<Mail> messages = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAccount, darCode, template);
         sendMessages(messages);
     }
+
+    public void sendDatasetApprovedMessage(String toAddress, Writer template) throws MessagingException {
+        Collection<Mail> messages = datasetApprovedMessage.datasetApprovedMessage(toAddress, fromAccount, template);
+        sendMessages(messages);
+    }
+
+    public void sendDatasetDeniedMessage(String toAddress, Writer template) throws MessagingException {
+        Collection<Mail> messages = datasetDeniedMessage.datasetDeniedMessage(toAddress, fromAccount, template);
+        sendMessages(messages);
+    }
+
 
 }

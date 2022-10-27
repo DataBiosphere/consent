@@ -80,11 +80,36 @@ public class FreeMarkerTemplateHelper {
         return generateDataCustodianApprovalTemplate(datasets, dataDepositorName, darCode, researcherEmail, temp);
     }
 
+    public Writer getDatasetApprovedTemplate(String dataSubmitterName, String datasetName, String dacName) throws IOException, TemplateException {
+        Template temp = freeMarkerConfig.getTemplate("dataset-approved.html");
+        return generateDatasetApprovedTemplate(dataSubmitterName, datasetName, dacName, temp);
+    }
+
+    public Writer getDatasetDeniedTemplate(String dataSubmitterName, String datasetName, String dacName) throws IOException, TemplateException {
+        Template temp = freeMarkerConfig.getTemplate("dataset-denied.html");
+        return generateDatasetDeniedTemplate(dataSubmitterName, datasetName, dacName, temp);
+    }
+
+
     private Writer generateDataCustodianApprovalTemplate(List<DatasetMailDTO> datasets,
                                                          String dataDepositorName, String darCode,
                                                          String researcherEmail, Template temp) throws IOException, TemplateException {
         DataCustodianApprovalModel model = new DataCustodianApprovalModel(datasets,
                 dataDepositorName, darCode, researcherEmail);
+        Writer out = new StringWriter();
+        temp.process(model, out);
+        return out;
+    }
+
+    private Writer generateDatasetApprovedTemplate(String dataSubmitterName, String datasetName, String dacName, Template temp) throws IOException, TemplateException {
+        DatasetApprovedModel model = new DatasetApprovedModel(dataSubmitterName, datasetName, dacName);
+        Writer out = new StringWriter();
+        temp.process(model, out);
+        return out;
+    }
+
+    private Writer generateDatasetDeniedTemplate(String dataSubmitterName, String datasetName, String dacName, Template temp) throws IOException, TemplateException {
+        DatasetDeniedModel model = new DatasetDeniedModel(dataSubmitterName, datasetName, dacName);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;
