@@ -13,7 +13,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.mail.MailService;
+import org.broadinstitute.consent.http.mail.SendgridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -48,7 +48,7 @@ public class EmailNotifierService {
     private final MailMessageDAO emailDAO;
     private final VoteDAO voteDAO;
     private final FreeMarkerTemplateHelper templateHelper;
-    private final MailService mailService;
+    private final SendgridAPI sendgridAPI;
     private final String SERVER_URL;
     private final boolean isServiceActive;
 
@@ -87,7 +87,7 @@ public class EmailNotifierService {
     @Inject
     public EmailNotifierService(DarCollectionDAO collectionDAO, ConsentDAO consentDAO,
                                 VoteDAO voteDAO, ElectionDAO electionDAO,
-                                UserDAO userDAO, MailMessageDAO emailDAO, MailService mailService,
+                                UserDAO userDAO, MailMessageDAO emailDAO, SendgridAPI sendgridAPI,
                                 FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive) {
         this.collectionDAO = collectionDAO;
         this.consentDAO = consentDAO;
@@ -96,7 +96,7 @@ public class EmailNotifierService {
         this.voteDAO = voteDAO;
         this.templateHelper = helper;
         this.emailDAO = emailDAO;
-        this.mailService = mailService;
+        this.sendgridAPI = sendgridAPI;
         this.SERVER_URL = serverUrl;
         this.isServiceActive = serviceActive;
     }
@@ -119,7 +119,7 @@ public class EmailNotifierService {
             for (User user : distinctUsers) {
                 Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL, user.getDisplayName(), collection.getDarCode());
                 Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
-                mailService.sendNewDARRequests(getEmails(List.of(user)), data.get("entityId"), data.get("electionType"), template);
+                sendgridAPI.sendNewDARRequests(getEmails(List.of(user)), data.get("entityId"), data.get("electionType"), template);
                 emailDAO.insertBulkEmailNoVotes(List.of(user.getUserId()), collection.getDarCode(), 4, new Date(), template.toString());
             }
         }
@@ -135,7 +135,7 @@ public class EmailNotifierService {
                 String collectUrl = generateCollectVoteUrl(SERVER_URL, data.get("electionType"), data.get("entityId"), data.get("electionId"));
                 Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), collectUrl);
                 Set<String> emails = Set.of(data.get("email"));
-                mailService.sendCollectMessage(emails, data.get("entityName"), data.get("electionType"), template);
+                sendgridAPI.sendCollectMessage(emails, data.get("entityName"), data.get("electionType"), template);
                 emailDAO.insertEmail(null, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 1, new Date(), template.toString());
             }
         }
@@ -147,7 +147,7 @@ public class EmailNotifierService {
             String voteUrl = generateUserVoteUrl(SERVER_URL, data.get("electionType"), data.get("voteId"), data.get("entityId"), data.get("rpVoteId"));
             Writer template = templateHelper.getReminderTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), voteUrl);
             Set<String> emails = Set.of(data.get("email"));
-            mailService.sendReminderMessage(emails, data.get("entityName"), data.get("electionType"), template);
+            sendgridAPI.sendReminderMessage(emails, data.get("entityName"), data.get("electionType"), template);
             emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
             voteDAO.updateVoteReminderFlag(voteId, true);
         }
@@ -185,7 +185,7 @@ public class EmailNotifierService {
     public void sendDisabledDatasetsMessage(User user, List<String> disabledDatasets, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             Writer template = templateHelper.getDisabledDatasetsTemplate(user.getDisplayName(), disabledDatasets, dataAcessRequestId, SERVER_URL);
-            mailService.sendDisabledDatasetMessage(getEmails(Collections.singletonList(user)), dataAcessRequestId, null, template);
+            sendgridAPI.sendDisabledDatasetMessage(getEmails(Collections.singletonList(user)), dataAcessRequestId, null, template);
         }
     }
 
@@ -206,7 +206,7 @@ public class EmailNotifierService {
             List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
             if(CollectionUtils.isNotEmpty(users)) {
                 Writer template = templateHelper.getClosedDatasetElectionsTemplate(reviewedDatasets, "", "", SERVER_URL);
-                mailService.sendClosedDatasetElectionsMessage(getEmails(users), "", "", template);
+                sendgridAPI.sendClosedDatasetElectionsMessage(getEmails(users), "", "", template);
             }
 
         }
@@ -216,7 +216,7 @@ public class EmailNotifierService {
         if(isServiceActive){
             for(User admin: admins) {
                 Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVER_URL);
-                mailService.sendFlaggedDarAdminApprovedMessage(getEmails(Collections.singletonList(admin)), darCode, SERVER_URL, template);
+                sendgridAPI.sendFlaggedDarAdminApprovedMessage(getEmails(Collections.singletonList(admin)), darCode, SERVER_URL, template);
             }
         }
     }
@@ -225,7 +225,7 @@ public class EmailNotifierService {
         if(isServiceActive){
             User user = userDAO.findUserById(researcherId);
             Writer template = templateHelper.getResearcherDarApprovedTemplate(darCode, user.getDisplayName(), datasets, dataUseRestriction, user.getEmail());
-            mailService.sendNewResearcherApprovedMessage(getEmails(Collections.singletonList(user)), template, darCode);
+            sendgridAPI.sendNewResearcherApprovedMessage(getEmails(Collections.singletonList(user)), template, darCode);
         }
     }
 
@@ -237,7 +237,7 @@ public class EmailNotifierService {
         if (isServiceActive) {
             Writer template = templateHelper.getDataCustodianApprovalTemplate(datasets,
                     dataDepositorName, darCode, researcherEmail);
-            mailService.sendDataCustodianApprovalMessage(toAddress, darCode, template);
+            sendgridAPI.sendDataCustodianApprovalMessage(toAddress, darCode, template);
         }
     }
 
@@ -258,7 +258,7 @@ public class EmailNotifierService {
     }
 
     private void sendNewCaseMessage(Set<String> userAddress, String electionType, String entityId, Writer template) throws MessagingException {
-        mailService.sendNewCaseMessage(userAddress, entityId, electionType, template);
+        sendgridAPI.sendNewCaseMessage(userAddress, entityId, electionType, template);
     }
 
     private String generateUserVoteUrl(String serverUrl, String electionType, String voteId, String entityId, String rpVoteId) {

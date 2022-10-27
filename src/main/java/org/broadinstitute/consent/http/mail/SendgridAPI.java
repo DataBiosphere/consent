@@ -5,12 +5,6 @@ import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import javax.mail.MessagingException;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
 import org.broadinstitute.consent.http.mail.message.CollectMessage;
@@ -27,7 +21,15 @@ import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MailService {
+import javax.mail.MessagingException;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+public class SendgridAPI {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final String fromAccount;
@@ -46,7 +48,7 @@ public class MailService {
     private final ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
     private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
 
-    public MailService(MailConfiguration config) {
+    public SendgridAPI(MailConfiguration config) {
         this.fromAccount = config.getGoogleAccount();
         this.sendGrid = new SendGrid(config.getSendGridApiKey());
         this.activateEmailNotifications = config.isActivateEmailNotifications();
@@ -58,7 +60,7 @@ public class MailService {
         }
     }
 
-    private void sendMessage(Mail message) throws MessagingException {
+    private Optional<Response> sendMessage(Mail message) {
         if (activateEmailNotifications) {
             try {
                 // See https://github.com/sendgrid/sendgrid-java/issues/163
@@ -72,17 +74,12 @@ public class MailService {
                 for (String key : sendGrid.getRequestHeaders().keySet())
                     request.addHeader(key, sendGrid.getRequestHeaders().get(key));
                 // send
-                Response response = sendGrid.makeCall(request);
-                if (response.getStatusCode() >= 400) {
-                    throw new MessagingException(response.getBody());
-                }
+                return Optional.of(sendGrid.makeCall(request));
             } catch (IOException ex) {
                 logger.error("Exception sending email: " + ex.getMessage());
-                throw new MessagingException(ex.getMessage());
             }
-        } else {
-            logger.debug("Not configured to send email");
         }
+        return Optional.empty();
     }
 
     public void sendCollectMessage(Set<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
