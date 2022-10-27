@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.sendgrid.Response;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.junit.Assert;
@@ -8,7 +9,9 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import java.io.Writer;
+import java.util.Optional;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -33,17 +36,6 @@ public class SendGridAPITest {
         sendGridAPI = new SendGridAPI(config);
         doNothing().when(template).write(anyString());
     }
-
-// TODO: Update to reflect new api behavior
-//    @Test(expected=MessagingException.class)
-//    public void testCollectMessageFailure() throws Exception {
-//        MailConfiguration config = new MailConfiguration();
-//        config.setSendGridApiKey("test");
-//        config.setGoogleAccount("from@broadinstitute.org");
-//        config.setActivateEmailNotifications(true);
-//        sendgridAPI = new SendgridAPI(config);
-//        sendgridAPI.sendCollectMessage(TO, ID, TYPE, template);
-//    }
 
     @Test
     public void testCollectMessage() {

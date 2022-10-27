@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Map;
 import java.util.Optional;
 
 public class SendGridAPI {
@@ -66,7 +68,14 @@ public class SendGridAPI {
                 // send
                 return Optional.of(sendGrid.makeCall(request));
             } catch (IOException ex) {
-                logger.error("Exception sending email: " + ex.getMessage());
+                logger.error("Exception sending email via SendGrid: " + ex.getMessage());
+                // Create a response that we can use to capture this failure.
+                Response response = new Response(
+                        HttpStatusCodes.STATUS_CODE_SERVER_ERROR,
+                        ex.getMessage(),
+                        Map.of()
+                );
+                return Optional.of(response);
             }
         }
         return Optional.empty();
