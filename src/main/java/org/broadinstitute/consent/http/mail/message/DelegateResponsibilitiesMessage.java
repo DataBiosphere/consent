@@ -9,7 +9,7 @@ public class DelegateResponsibilitiesMessage extends MailMessage{
 
     private final String NEW_ROLES = "You have been assigned a New Role in DUOS.";
 
-    public List<Mail> delegateResponsibilitiesMessage(String toAddress, String fromAddress, Writer template) {
+    public Mail delegateResponsibilitiesMessage(String toAddress, String fromAddress, Writer template) {
         return generateEmailMessage(toAddress, fromAddress, template, null, null);
     }
 

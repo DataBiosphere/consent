@@ -11,7 +11,7 @@ public class ReminderMessage extends MailMessage {
     private final String REMINDER_DAR = "Urgent: Log votes on Data Access Request case id: %s.";
     private final String REMINDER_RP = "Urgent: Log votes on Research Purpose Review case id: %s.";
 
-    public List<Mail> reminderMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
+    public Mail reminderMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
         return generateEmailMessage(toAddress, fromAddress, template, referenceId, type);
     }
 

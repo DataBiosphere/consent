@@ -9,7 +9,7 @@ public class NewDARRequestMessage extends MailMessage{
 
     private final String NEW_DAR_REQUEST = "Create an election for Data Access Request id: %s.";
 
-    public Collection<Mail> newDARRequestMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
+    public Mail newDARRequestMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
         return generateEmailMessage(toAddress, fromAddress, template, referenceId, type);
     }
 

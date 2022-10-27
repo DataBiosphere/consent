@@ -9,7 +9,7 @@ public class DarCancelMessage extends MailMessage {
 
     private final String CANCEL_DAR = "The Data Access Request with ID %s has been cancelled.";
 
-    public Collection<Mail> cancelDarMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
+    public Mail cancelDarMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
         return generateEmailMessage(toAddress, fromAddress, template, referenceId, type);
     }
 

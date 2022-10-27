@@ -9,7 +9,7 @@ public class ClosedDatasetElectionMessage extends MailMessage {
 
     private final String CLOSED_DATASET_ELECTIONS = "Report of closed Dataset elections.";
 
-    public Collection<Mail> closedDatasetElectionMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
+    public Mail closedDatasetElectionMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
         return generateEmailMessage(toAddress, fromAddress, template, referenceId, type);
     }
 

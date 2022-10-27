@@ -10,7 +10,7 @@ public class CollectMessage extends MailMessage {
     private final String COLLECT_DUL = "Ready for vote collection on Data Use Limitations case id: %s.";
     private final String COLLECT_DAR = "Ready for votes collection on Data Access Request case id: %s.";
 
-    public List<Mail> collectMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
+    public Mail collectMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
         return generateEmailMessage(toAddress, fromAddress, template, referenceId, type);
     }
 

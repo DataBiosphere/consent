@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 public class SendgridAPI {
@@ -52,12 +50,6 @@ public class SendgridAPI {
         this.activateEmailNotifications = config.isActivateEmailNotifications();
     }
 
-    private void sendMessages(Collection<Mail> messages) {
-        for (Mail message : messages) {
-            sendMessage(message);
-        }
-    }
-
     private Optional<Response> sendMessage(Mail message) {
         if (activateEmailNotifications) {
             try {
@@ -80,64 +72,64 @@ public class SendgridAPI {
         return Optional.empty();
     }
 
-    public void sendCollectMessage(String toAddress, String referenceId, String type, Writer template) {
-        List<Mail> messages = collectMessageCreator.collectMessage(toAddress, fromAccount, template, referenceId, type);
-        sendMessages(messages);
+    public Optional<Response> sendCollectMessage(String toAddress, String referenceId, String type, Writer template) {
+        Mail message = collectMessageCreator.collectMessage(toAddress, fromAccount, template, referenceId, type);
+        return sendMessage(message);
     }
 
-    public void sendNewCaseMessage(String toAddress, String referenceId, String type, Writer template) {
-        List<Mail> messages = newCaseMessageCreator.newCaseMessage(toAddress, fromAccount, template, referenceId, type);
-        sendMessages(messages);
+    public Optional<Response> sendNewCaseMessage(String toAddress, String referenceId, String type, Writer template) {
+        Mail message = newCaseMessageCreator.newCaseMessage(toAddress, fromAccount, template, referenceId, type);
+        return sendMessage(message);
     }
 
-    public void sendReminderMessage(String toAddress, String referenceId, String type, Writer template) {
-        List<Mail> messages = reminderMessageCreator.reminderMessage(toAddress, fromAccount, template, referenceId, type);
-        sendMessages(messages);
+    public Optional<Response> sendReminderMessage(String toAddress, String referenceId, String type, Writer template) {
+        Mail message = reminderMessageCreator.reminderMessage(toAddress, fromAccount, template, referenceId, type);
+        return sendMessage(message);
     }
 
-    public void sendDisabledDatasetMessage(String toAddress, String referenceId, String type, Writer template) {
-        List<Mail> messages = disabledDatasetCreator.disabledDatasetMessage(toAddress, fromAccount, template, referenceId, type);
-        sendMessages(messages);
+    public Optional<Response> sendDisabledDatasetMessage(String toAddress, String referenceId, String type, Writer template) {
+        Mail message = disabledDatasetCreator.disabledDatasetMessage(toAddress, fromAccount, template, referenceId, type);
+        return sendMessage(message);
     }
 
-    public void sendNewDARRequests(String toAddress, String referenceId, String type, Writer template) {
-        Collection<Mail> messages = newDARMessageCreator.newDARRequestMessage(toAddress, fromAccount, template, referenceId, type);
-        sendMessages(messages);
+    public Optional<Response> sendNewDARRequests(String toAddress, String referenceId, String type, Writer template) {
+        Mail message =  newDARMessageCreator.newDARRequestMessage(toAddress, fromAccount, template, referenceId, type);
+        return sendMessage(message);
     }
 
-    public void sendCancelDARRequestMessage(String toAddress, String dataAccessRequestId, String type, Writer template) {
-        Collection<Mail> messages = darCancelMessageCreator.cancelDarMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
-        sendMessages(messages);
+    public Optional<Response> sendCancelDARRequestMessage(String toAddress, String dataAccessRequestId, String type, Writer template) {
+        Mail message =  darCancelMessageCreator.cancelDarMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
+        return sendMessage(message);
     }
 
-    public void sendClosedDatasetElectionsMessage(String toAddress, String dataAccessRequestId, String type, Writer template) {
-        Collection<Mail> messages = closedDatasetElections.closedDatasetElectionMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
-        sendMessages(messages);
+    public Optional<Response> sendClosedDatasetElectionsMessage(String toAddress, String dataAccessRequestId, String type, Writer template) {
+        Mail message =  closedDatasetElections.closedDatasetElectionMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
+        return sendMessage(message);
     }
 
-    public void sendFlaggedDarAdminApprovedMessage(String toAddress, String dataAccessRequestId, String type, Writer template) {
-        List<Mail> messages = adminApprovedDarMessageCreator.flaggedDarMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
-        sendMessages(messages);
+    public Optional<Response> sendFlaggedDarAdminApprovedMessage(String toAddress, String dataAccessRequestId, String type, Writer template) {
+        Mail message = adminApprovedDarMessageCreator.flaggedDarMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
+        return sendMessage(message);
     }
 
-    public void sendDelegateResponsibilitiesMessage(String toAddress, Writer template) {
-        List<Mail> messages = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(toAddress, fromAccount, template);
-        sendMessages(messages);
+    public Optional<Response> sendDelegateResponsibilitiesMessage(String toAddress, Writer template) {
+        Mail message = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(toAddress, fromAccount, template);
+        return sendMessage(message);
     }
 
-    public void sendNewResearcherCreatedMessage(String toAddress, Writer template) {
-        List<Mail> messages = researcherCreatedMessage.newResearcherCreatedMessage(toAddress, fromAccount, template, "", "");
-        sendMessages(messages);
+    public Optional<Response> sendNewResearcherCreatedMessage(String toAddress, Writer template) {
+        Mail message = researcherCreatedMessage.newResearcherCreatedMessage(toAddress, fromAccount, template, "", "");
+        return sendMessage(message);
     }
 
-    public void sendNewResearcherApprovedMessage(String toAddress, Writer template, String darCode) {
-        Collection<Mail> messages = researcherApprovedMessage.researcherApprovedMessage(toAddress, fromAccount, template, darCode);
-        sendMessages(messages);
+    public Optional<Response> sendNewResearcherApprovedMessage(String toAddress, Writer template, String darCode) {
+        Mail message = researcherApprovedMessage.researcherApprovedMessage(toAddress, fromAccount, template, darCode);
+        return sendMessage(message);
     }
 
-    public void sendDataCustodianApprovalMessage(String toAddress, String darCode, Writer template) {
-        Collection<Mail> messages = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAccount, darCode, template);
-        sendMessages(messages);
+    public Optional<Response> sendDataCustodianApprovalMessage(String toAddress, String darCode, Writer template) {
+        Mail message = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAccount, darCode, template);
+        return sendMessage(message);
     }
 
 }

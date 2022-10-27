@@ -8,7 +8,7 @@ import java.util.List;
 
 public class DataCustodianApprovalMessage extends MailMessage {
 
-    public List<Mail> dataCustodianApprovalMessage(
+    public Mail dataCustodianApprovalMessage(
             String toAddress,
             String fromAddress,
             String darCode,

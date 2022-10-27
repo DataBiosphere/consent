@@ -10,7 +10,7 @@ public class NewCaseMessage extends MailMessage{
     private final String NEWCASE_DUL = "Log vote on Data Use Limitations case id: %s.";
     private final String NEWCASE_DAR = "Log votes on Data Access Request case id: %s.";
 
-    public List<Mail> newCaseMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
+    public Mail newCaseMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) {
         return generateEmailMessage(toAddress, fromAddress, template, referenceId, type);
     }
 
