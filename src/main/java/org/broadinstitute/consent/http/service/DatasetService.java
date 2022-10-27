@@ -485,7 +485,7 @@ public class DatasetService {
         try {
             // if approval state changed
             if (currentApprovalState != datasetReturn.getDacApproval()) {
-                this.sendNotificationEmail(dataset, user, approval);
+                this.sendDatasetApprovalNotificationEmail(dataset, user, approval);
             }
         } catch (Exception e) {
             logger.error("Unable to notifier Data Submitter of dataset approval status: " + dataset.getDatasetIdentifier());
@@ -493,7 +493,7 @@ public class DatasetService {
         return datasetReturn;
     }
 
-    private void sendNotificationEmail(Dataset dataset, User user, Boolean approval) throws Exception {
+    private void sendDatasetApprovalNotificationEmail(Dataset dataset, User user, Boolean approval) throws Exception {
         Dac dac = this.dacDAO.findById(dataset.getDacId());
         if (approval) {
             this.emailNotifierService.sendDatasetApprovedMessage(
