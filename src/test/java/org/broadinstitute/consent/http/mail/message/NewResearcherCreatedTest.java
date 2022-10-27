@@ -4,13 +4,13 @@ import com.sendgrid.helpers.mail.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class NewResearcherCreatedTest {
 
@@ -19,7 +19,7 @@ public class NewResearcherCreatedTest {
 
     @Before
     public void setUp(){
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     @Test
