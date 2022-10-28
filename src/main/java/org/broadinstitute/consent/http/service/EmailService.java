@@ -120,7 +120,6 @@ public class EmailService {
                 response.orElse(null),
                 collection.getDarCode(),
                 null,
-                null,
                 user.getUserId(),
                 EmailType.NEW_DAR,
                 template
@@ -136,7 +135,7 @@ public class EmailService {
             @Nullable Response response,
             @Nullable String entityReferenceId,
             @Nullable Integer voteId,
-            @Nullable Integer electionId,
+//            @Nullable Integer electionId,
             Integer userId,
             EmailType emailType,
             Writer template) {
@@ -145,7 +144,7 @@ public class EmailService {
         emailDAO.insert(
             entityReferenceId,
             voteId,
-            electionId,
+//            electionId,
             userId,
             emailType.getTypeInt(),
             dateSent,
@@ -166,9 +165,8 @@ public class EmailService {
             Optional<Response> response = sendGridAPI.sendCollectMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
             saveEmailAndResponse(
                 response.orElse(null),
+                data.get("electionId"),
                 null,
-                null,
-                Integer.valueOf(data.get("electionId")),
                 Integer.valueOf(data.get("dacUserId")),
                 EmailType.COLLECT,
                 template
@@ -184,9 +182,8 @@ public class EmailService {
         voteDAO.updateVoteReminderFlag(voteId, true);
         saveEmailAndResponse(
             response.orElse(null),
-            null,
+            data.get("electionId"),
             voteId,
-            Integer.valueOf(data.get("electionId")),
             Integer.valueOf(data.get("dacUserId")),
             EmailType.REMINDER,
             template
@@ -202,7 +199,6 @@ public class EmailService {
             saveEmailAndResponse(
                 response.orElse(null),
                 darCode,
-                null,
                 null,
                 user.getUserId(),
                 EmailType.NEW_CASE,
@@ -228,7 +224,6 @@ public class EmailService {
                 response.orElse(null),
                 entityName,
                 null,
-                null,
                 user.getUserId(),
                 EmailType.NEW_CASE,
                 template
@@ -242,7 +237,6 @@ public class EmailService {
         saveEmailAndResponse(
             response.orElse(null),
             dataAccessRequestId,
-            null,
             null,
             user.getUserId(),
             EmailType.DISABLED_DATASET,
@@ -272,7 +266,6 @@ public class EmailService {
                     response.orElse(null),
                     null,
                     null,
-                    null,
                     u.getUserId(),
                     EmailType.CLOSED_DATASET_ELECTION,
                     template
@@ -289,7 +282,6 @@ public class EmailService {
                 response.orElse(null),
                 darCode,
                 null,
-                null,
                 admin.getUserId(),
                 EmailType.ADMIN_FLAGGED_DAR_APPROVED,
                 template
@@ -304,7 +296,6 @@ public class EmailService {
         saveEmailAndResponse(
             response.orElse(null),
             darCode,
-            null,
             null,
             user.getUserId(),
             EmailType.RESEARCHER_DAR_APPROVED,
@@ -323,7 +314,6 @@ public class EmailService {
         saveEmailAndResponse(
             response.orElse(null),
             darCode,
-            null,
             null,
             custodian.getUserId(),
             EmailType.RESEARCHER_DAR_APPROVED,

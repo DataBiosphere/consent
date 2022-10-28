@@ -7,7 +7,6 @@ public class MailMessage {
 
     private Integer emailId;
     private Integer voteId;
-    private Integer electionId;
     private Integer dacUserId;
     private String emailType;
     private Date dateSent;
@@ -16,10 +15,9 @@ public class MailMessage {
     private Integer sendgridStatus;
     private Date createDate;
 
-    public MailMessage(Integer emailId, Integer voteId, Integer electionId, Integer dacUserId, String emailType, Date dateSent, String emailText, String sendgridResponse, Integer sendgridStatus, Date createDate) {
+    public MailMessage(Integer emailId, Integer voteId, Integer dacUserId, String emailType, Date dateSent, String emailText, String sendgridResponse, Integer sendgridStatus, Date createDate) {
         this.emailId = emailId;
         this.voteId = voteId;
-        this.electionId = electionId;
         this.dacUserId = dacUserId;
         this.emailType = emailType;
         this.dateSent = dateSent;
@@ -43,14 +41,6 @@ public class MailMessage {
 
     public void setVoteId(Integer voteId) {
         this.voteId = voteId;
-    }
-
-    public Integer getElectionId() {
-        return electionId;
-    }
-
-    public void setElectionId(Integer electionId) {
-        this.electionId = electionId;
     }
 
     public Integer getUserId() {
