@@ -1,20 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Collections;
-import java.util.Date;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
+
+import static org.junit.Assert.assertNull;
 
 public class MailMessageDAOTest extends DAOTestHelper {
 
@@ -25,48 +14,6 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 RandomStringUtils.random(10, true, false)
         );
         assertNull(exists);
-    }
-
-    @Test
-    public void testInsertEmail() {
-        User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        Dac d = createDac();
-        Dataset dataset = createDatasetWithDac(d.getDacId());
-        Consent c = createConsent();
-        consentDAO.insertConsentAssociation(c.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
-        Election e = createDataAccessElection(c.getConsentId(), dataset.getDataSetId());
-        Vote vote = createChairpersonVote(chair.getUserId(), e.getElectionId());
-        mailMessageDAO.insertEmail(
-                vote.getVoteId(),
-                e.getReferenceId(),
-                chair.getUserId(),
-                1,
-                new Date(),
-                RandomStringUtils.random(10, true, false)
-        );
-        Integer exists = mailMessageDAO.existsCollectDAREmail(e.getReferenceId(), "rpReferenceId");
-        assertNotNull(exists);
-        assertTrue(exists > 0);
-    }
-
-    @Test
-    public void testInsertBulkEmailNoVotes() {
-        User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        Dac d = createDac();
-        Dataset dataset = createDatasetWithDac(d.getDacId());
-        Consent c = createConsent();
-        consentDAO.insertConsentAssociation(c.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
-        Election e = createDataAccessElection(c.getConsentId(), dataset.getDataSetId());
-        mailMessageDAO.insertBulkEmailNoVotes(
-                Collections.singletonList(chair.getUserId()),
-                e.getReferenceId(),
-                1,
-                new Date(),
-                RandomStringUtils.random(10, true, false)
-        );
-        Integer exists = mailMessageDAO.existsCollectDAREmail(e.getReferenceId(), "rpReferenceId");
-        assertNotNull(exists);
-        assertTrue(exists > 0);
     }
 
 }
