@@ -14,7 +14,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
@@ -51,7 +50,6 @@ import java.util.stream.Collectors;
 public class DataRequestVoteResource extends Resource {
 
     private final UserService userService;
-    private final DataAccessRequestService dataAccessRequestService;
     private final DarCollectionService darCollectionService;
     private final DatasetService datasetService;
     private final DatasetAssociationService datasetAssociationService;
@@ -63,7 +61,6 @@ public class DataRequestVoteResource extends Resource {
 
     @Inject
     public DataRequestVoteResource(
-            DataAccessRequestService dataAccessRequestService,
             DarCollectionService darCollectionService,
             DatasetAssociationService datasetAssociationService,
             EmailService emailService,
@@ -74,7 +71,6 @@ public class DataRequestVoteResource extends Resource {
         this.emailService = emailService;
         this.userService = userService;
         this.datasetService = datasetService;
-        this.dataAccessRequestService = dataAccessRequestService;
         this.darCollectionService = darCollectionService;
         this.datasetAssociationService = datasetAssociationService;
         this.electionService = electionService;

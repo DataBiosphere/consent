@@ -13,7 +13,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
@@ -53,8 +52,6 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
     @Mock
     private DatasetService datasetService;
     @Mock
-    private DataAccessRequestService dataAccessRequestService;
-    @Mock
     private DarCollectionService darCollectionService;
     @Mock
     private DatasetAssociationService datasetAssociationService;
@@ -77,7 +74,7 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
 
     private void initResource() {
         resource = new DataRequestVoteResource(
-                dataAccessRequestService, darCollectionService, datasetAssociationService,
+                darCollectionService, datasetAssociationService,
                 emailService, voteService,
                 datasetService, electionService, userService
         );
