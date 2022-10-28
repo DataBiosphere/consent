@@ -9,7 +9,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -36,16 +35,14 @@ import java.util.stream.Collectors;
 @Path("api/consent/{consentId}/election")
 public class ConsentElectionResource extends Resource {
 
-    private final ConsentService consentService;
     private final DacService dacService;
     private final EmailService emailService;
     private final VoteService voteService;
     private final ElectionService electionService;
 
     @Inject
-    public ConsentElectionResource(ConsentService consentService, DacService dacService,
+    public ConsentElectionResource(DacService dacService,
                                    EmailService emailService, VoteService voteService, ElectionService electionService) {
-        this.consentService = consentService;
         this.dacService = dacService;
         this.emailService = emailService;
         this.voteService = voteService;

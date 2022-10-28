@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -36,9 +35,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 public class ConsentElectionResourceTest {
-
-    @Mock
-    ConsentService consentService;
 
     @Mock
     DacService dacService;
@@ -107,7 +103,7 @@ public class ConsentElectionResourceTest {
     }
 
     private void initResource() {
-        resource = new ConsentElectionResource(consentService, dacService, emailService, voteService, electionService);
+        resource = new ConsentElectionResource(dacService, emailService, voteService, electionService);
     }
 
     private Election getElection() {
