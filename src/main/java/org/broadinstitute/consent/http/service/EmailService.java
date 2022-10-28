@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -116,7 +117,7 @@ public class EmailService {
             Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL, user.getDisplayName(), collection.getDarCode());
             Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
             Optional<Response> response = sendGridAPI.sendNewDARRequests(user.getEmail(), data.get("entityId"), data.get("electionType"), template);
-            emailDAO.insertBulkEmailNoVotes(List.of(user.getUserId()), collection.getDarCode(), 4, new Date(), template.toString());
+            emailDAO.insertBulkEmailNoVotes(List.of(user.getUserId()), collection.getDarCode(), EmailType.NEW_DAR.getTypeInt(), new Date(), template.toString());
         }
     }
 
@@ -129,7 +130,7 @@ public class EmailService {
             String collectUrl = generateCollectVoteUrl(SERVER_URL, data.get("electionType"), data.get("entityId"), data.get("electionId"));
             Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), collectUrl);
             Optional<Response> response = sendGridAPI.sendCollectMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
-            emailDAO.insertEmail(null, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 1, new Date(), template.toString());
+            emailDAO.insertEmail(null, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), EmailType.COLLECT.getTypeInt(), new Date(), template.toString());
         }
     }
 
@@ -138,11 +139,11 @@ public class EmailService {
         String voteUrl = generateUserVoteUrl(SERVER_URL, data.get("electionType"), data.get("voteId"), data.get("entityId"), data.get("rpVoteId"));
         Writer template = templateHelper.getReminderTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), voteUrl);
         Optional<Response> response = sendGridAPI.sendReminderMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
-        emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
+        emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), EmailType.REMINDER.getTypeInt(), new Date(), template.toString());
         voteDAO.updateVoteReminderFlag(voteId, true);
     }
 
-    public void sendDarNewCollectionElectionMessage(List<User> users, DarCollection darCollection) throws MessagingException, IOException, TemplateException {
+    public void sendDarNewCollectionElectionMessage(List<User> users, DarCollection darCollection) throws IOException, TemplateException {
         String electionType = "Data Access Request";
         String entityName = darCollection.getDarCode();
         for (User user : users) {
@@ -151,7 +152,7 @@ public class EmailService {
         }
     }
 
-    public void sendNewCaseMessageToList(List<Vote> votes, Election election) throws MessagingException, IOException, TemplateException {
+    public void sendNewCaseMessageToList(List<Vote> votes, Election election) throws IOException, TemplateException {
         String rpVoteId = "";
         String electionType = retrieveElectionTypeString(election.getElectionType());
         String entityId = election.getReferenceId();
