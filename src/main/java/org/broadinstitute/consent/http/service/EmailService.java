@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.common.collect.Streams;
 import com.google.inject.Inject;
+import com.sendgrid.Response;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -50,8 +51,6 @@ public class EmailService {
     private final FreeMarkerTemplateHelper templateHelper;
     private final SendGridAPI sendGridAPI;
     private final String SERVER_URL;
-    private final boolean isServiceActive;
-
     private static final String LOG_VOTE_DUL_URL = "dul_review";
     private static final String LOG_VOTE_ACCESS_URL = "access_review";
     private static final String COLLECT_VOTE_ACCESS_URL = "access_review_results";
@@ -87,7 +86,7 @@ public class EmailService {
     public EmailService(DarCollectionDAO collectionDAO, ConsentDAO consentDAO,
                         VoteDAO voteDAO, ElectionDAO electionDAO,
                         UserDAO userDAO, MailMessageDAO emailDAO, SendGridAPI sendGridAPI,
-                        FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive) {
+                        FreeMarkerTemplateHelper helper, String serverUrl) {
         this.collectionDAO = collectionDAO;
         this.consentDAO = consentDAO;
         this.userDAO = userDAO;
@@ -97,133 +96,115 @@ public class EmailService {
         this.emailDAO = emailDAO;
         this.sendGridAPI = sendGridAPI;
         this.SERVER_URL = serverUrl;
-        this.isServiceActive = serviceActive;
     }
 
-    public void sendNewDARCollectionMessage(Integer collectionId) throws MessagingException, IOException, TemplateException {
-        if (isServiceActive) {
-            DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
-            List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
-            List<Integer> datasetIds = collection.getDars().values().stream()
-                    .map(DataAccessRequest::getDatasetIds)
-                    .flatMap(List::stream)
-                    .collect(Collectors.toList());
-            Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
-            // Ensure that admins/chairs are not double emailed
-            // and filter users that don't want to receive email
-            List<User> distinctUsers = Streams.concat(admins.stream(), chairPersons.stream())
+    public void sendNewDARCollectionMessage(Integer collectionId) throws IOException, TemplateException {
+        DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
+        List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
+        List<Integer> datasetIds = collection.getDars().values().stream()
+                .map(DataAccessRequest::getDatasetIds)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+        Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+        // Ensure that admins/chairs are not double emailed
+        // and filter users that don't want to receive email
+        List<User> distinctUsers = Streams.concat(admins.stream(), chairPersons.stream())
                 .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
                 .distinct()
                 .toList();
-            for (User user : distinctUsers) {
-                Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL, user.getDisplayName(), collection.getDarCode());
-                Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
-                sendGridAPI.sendNewDARRequests(user.getEmail(), data.get("entityId"), data.get("electionType"), template);
-                emailDAO.insertBulkEmailNoVotes(List.of(user.getUserId()), collection.getDarCode(), 4, new Date(), template.toString());
-            }
+        for (User user : distinctUsers) {
+            Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL, user.getDisplayName(), collection.getDarCode());
+            Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
+            Optional<Response> response = sendGridAPI.sendNewDARRequests(user.getEmail(), data.get("entityId"), data.get("electionType"), template);
+            emailDAO.insertBulkEmailNoVotes(List.of(user.getUserId()), collection.getDarCode(), 4, new Date(), template.toString());
         }
     }
 
     public void sendCollectMessage(Integer electionId) throws MessagingException, IOException, TemplateException {
-        if (isServiceActive) {
-            Set<User> chairs = userDAO.findUsersForElectionsByRoles(
-                    Collections.singletonList(electionId),
-                    Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
-            for (User chair : chairs) {
-                Map<String, String> data = retrieveForCollect(electionId, chair);
-                String collectUrl = generateCollectVoteUrl(SERVER_URL, data.get("electionType"), data.get("entityId"), data.get("electionId"));
-                Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), collectUrl);
-                sendGridAPI.sendCollectMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
-                emailDAO.insertEmail(null, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 1, new Date(), template.toString());
-            }
+        Set<User> chairs = userDAO.findUsersForElectionsByRoles(
+                Collections.singletonList(electionId),
+                Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+        for (User chair : chairs) {
+            Map<String, String> data = retrieveForCollect(electionId, chair);
+            String collectUrl = generateCollectVoteUrl(SERVER_URL, data.get("electionType"), data.get("entityId"), data.get("electionId"));
+            Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), collectUrl);
+            Optional<Response> response = sendGridAPI.sendCollectMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
+            emailDAO.insertEmail(null, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 1, new Date(), template.toString());
         }
     }
 
-    public void sendReminderMessage(Integer voteId) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive){
-            Map<String, String> data = retrieveForVote(voteId);
-            String voteUrl = generateUserVoteUrl(SERVER_URL, data.get("electionType"), data.get("voteId"), data.get("entityId"), data.get("rpVoteId"));
-            Writer template = templateHelper.getReminderTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), voteUrl);
-            sendGridAPI.sendReminderMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
-            emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
-            voteDAO.updateVoteReminderFlag(voteId, true);
-        }
+    public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
+        Map<String, String> data = retrieveForVote(voteId);
+        String voteUrl = generateUserVoteUrl(SERVER_URL, data.get("electionType"), data.get("voteId"), data.get("entityId"), data.get("rpVoteId"));
+        Writer template = templateHelper.getReminderTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), voteUrl);
+        Optional<Response> response = sendGridAPI.sendReminderMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
+        emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
+        voteDAO.updateVoteReminderFlag(voteId, true);
     }
 
     public void sendDarNewCollectionElectionMessage(List<User> users, DarCollection darCollection) throws MessagingException, IOException, TemplateException {
-        if (isServiceActive) {
-            String electionType = "Data Access Request";
-            String entityName = darCollection.getDarCode();
-            for (User user: users) {
-                Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, entityName, SERVER_URL);
-                sendNewCaseMessage(getEmails(Collections.singletonList(user)), electionType, entityName, template);
-            }
+        String electionType = "Data Access Request";
+        String entityName = darCollection.getDarCode();
+        for (User user : users) {
+            Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, entityName, SERVER_URL);
+            sendNewCaseMessage(getEmails(Collections.singletonList(user)), electionType, entityName, template);
         }
     }
 
     public void sendNewCaseMessageToList(List<Vote> votes, Election election) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive) {
-            String rpVoteId = "";
-            String electionType = retrieveElectionTypeString(election.getElectionType());
-            String entityId = election.getReferenceId();
-            String entityName = retrieveReferenceId(election.getElectionType(), election.getReferenceId());
-            for(Vote vote: votes){
-                User user = describeDACUserById(vote.getDacUserId());
-                if(electionType.equals(ElectionTypeString.DATA_ACCESS.getValue())) {
-                    rpVoteId = findRpVoteId(election.getElectionId(), user.getUserId());
-                }
-                String serverUrl = generateUserVoteUrl(SERVER_URL, electionType, vote.getVoteId().toString(), entityId, rpVoteId);
-                Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, entityName, serverUrl);
-                sendNewCaseMessage(getEmails(Collections.singletonList(user)), electionType, entityName, template);
+        String rpVoteId = "";
+        String electionType = retrieveElectionTypeString(election.getElectionType());
+        String entityId = election.getReferenceId();
+        String entityName = retrieveReferenceId(election.getElectionType(), election.getReferenceId());
+        for (Vote vote : votes) {
+            User user = describeDACUserById(vote.getDacUserId());
+            if (electionType.equals(ElectionTypeString.DATA_ACCESS.getValue())) {
+                rpVoteId = findRpVoteId(election.getElectionId(), user.getUserId());
             }
+            String serverUrl = generateUserVoteUrl(SERVER_URL, electionType, vote.getVoteId().toString(), entityId, rpVoteId);
+            Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, entityName, serverUrl);
+            sendNewCaseMessage(getEmails(Collections.singletonList(user)), electionType, entityName, template);
         }
     }
 
-    public void sendDisabledDatasetsMessage(User user, List<String> disabledDatasets, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive){
-            Writer template = templateHelper.getDisabledDatasetsTemplate(user.getDisplayName(), disabledDatasets, dataAcessRequestId, SERVER_URL);
-            sendGridAPI.sendDisabledDatasetMessage(user.getEmail(), dataAcessRequestId, null, template);
-        }
+    public void sendDisabledDatasetsMessage(User user, List<String> disabledDatasets, String dataAcessRequestId) throws IOException, TemplateException {
+        Writer template = templateHelper.getDisabledDatasetsTemplate(user.getDisplayName(), disabledDatasets, dataAcessRequestId, SERVER_URL);
+        Optional<Response> response = sendGridAPI.sendDisabledDatasetMessage(user.getEmail(), dataAcessRequestId, null, template);
     }
 
     public void sendClosedDataSetElectionsMessage(List<Election> elections) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive){
-            Map<String, List<Election>> reviewedDatasets = new HashMap<>();
-            List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-            List<DarCollection> darCollections = referenceIds.isEmpty() ? List.of() :
-                    collectionDAO.findDARCollectionsByReferenceIds(referenceIds);
-            for(Election election: elections) {
-                List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
-                Optional<DarCollection> collection = darCollections.stream()
-                        .filter(c -> c.getDars().containsKey(election.getReferenceId()))
-                        .findFirst();
-                String darCode = collection.map(DarCollection::getDarCode).orElse("");
-                reviewedDatasets.put(darCode, dsElections);
-            }
-            List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
-            if (CollectionUtils.isNotEmpty(users)) {
-                Writer template = templateHelper.getClosedDatasetElectionsTemplate(reviewedDatasets, "", "", SERVER_URL);
-                users.forEach(u -> sendGridAPI.sendClosedDatasetElectionsMessage(u.getEmail(), "", "", template));
-            }
-
+        Map<String, List<Election>> reviewedDatasets = new HashMap<>();
+        List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
+        List<DarCollection> darCollections = referenceIds.isEmpty() ? List.of() :
+                collectionDAO.findDARCollectionsByReferenceIds(referenceIds);
+        for (Election election : elections) {
+            List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
+            Optional<DarCollection> collection = darCollections.stream()
+                    .filter(c -> c.getDars().containsKey(election.getReferenceId()))
+                    .findFirst();
+            String darCode = collection.map(DarCollection::getDarCode).orElse("");
+            reviewedDatasets.put(darCode, dsElections);
+        }
+        List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
+        if (CollectionUtils.isNotEmpty(users)) {
+            Writer template = templateHelper.getClosedDatasetElectionsTemplate(reviewedDatasets, "", "", SERVER_URL);
+            users.forEach(u -> {
+                Optional<Response> response = sendGridAPI.sendClosedDatasetElectionsMessage(u.getEmail(), "", "", template);
+            });
         }
     }
 
-    public void sendAdminFlaggedDarApproved(String darCode, List<User> admins, Map<User, List<Dataset>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
-        if(isServiceActive){
-            for(User admin: admins) {
-                Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVER_URL);
-                sendGridAPI.sendFlaggedDarAdminApprovedMessage(admin.getEmail(), darCode, SERVER_URL, template);
-            }
+    public void sendAdminFlaggedDarApproved(String darCode, List<User> admins, Map<User, List<Dataset>> dataOwnersDataSets) throws IOException, TemplateException {
+        for (User admin : admins) {
+            Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVER_URL);
+            Optional<Response> response = sendGridAPI.sendFlaggedDarAdminApprovedMessage(admin.getEmail(), darCode, SERVER_URL, template);
         }
     }
 
     public void sendResearcherDarApproved(String darCode, Integer researcherId, List<DatasetMailDTO> datasets, String dataUseRestriction) throws Exception {
-        if(isServiceActive){
-            User user = userDAO.findUserById(researcherId);
-            Writer template = templateHelper.getResearcherDarApprovedTemplate(darCode, user.getDisplayName(), datasets, dataUseRestriction, user.getEmail());
-            sendGridAPI.sendNewResearcherApprovedMessage(user.getEmail(), template, darCode);
-        }
+        User user = userDAO.findUserById(researcherId);
+        Writer template = templateHelper.getResearcherDarApprovedTemplate(darCode, user.getDisplayName(), datasets, dataUseRestriction, user.getEmail());
+        Optional<Response> response = sendGridAPI.sendNewResearcherApprovedMessage(user.getEmail(), template, darCode);
     }
 
     public void sendDataCustodianApprovalMessage(String toAddress,
@@ -231,11 +212,9 @@ public class EmailService {
                                                  List<DatasetMailDTO> datasets,
                                                  String dataDepositorName,
                                                  String researcherEmail) throws Exception {
-        if (isServiceActive) {
-            Writer template = templateHelper.getDataCustodianApprovalTemplate(datasets,
-                    dataDepositorName, darCode, researcherEmail);
-            sendGridAPI.sendDataCustodianApprovalMessage(toAddress, darCode, template);
-        }
+        Writer template = templateHelper.getDataCustodianApprovalTemplate(datasets,
+                dataDepositorName, darCode, researcherEmail);
+        Optional<Response> response = sendGridAPI.sendDataCustodianApprovalMessage(toAddress, darCode, template);
     }
 
     private Set<String> getEmails(List<User> users) {
@@ -254,33 +233,35 @@ public class EmailService {
         return user;
     }
 
-    private void sendNewCaseMessage(Set<String> userAddress, String electionType, String entityId, Writer template) throws MessagingException {
-        userAddress.forEach(u -> sendGridAPI.sendNewCaseMessage(u, entityId, electionType, template));
+    private void sendNewCaseMessage(Set<String> userAddress, String electionType, String entityId, Writer template) {
+        userAddress.forEach(u -> {
+            Optional<Response> response = sendGridAPI.sendNewCaseMessage(u, entityId, electionType, template);
+        });
     }
 
     private String generateUserVoteUrl(String serverUrl, String electionType, String voteId, String entityId, String rpVoteId) {
-        if(electionType.equals("Data Use Limitations")){
+        if (electionType.equals("Data Use Limitations")) {
             return serverUrl + LOG_VOTE_DUL_URL + "/" + voteId + "/" + entityId;
         } else {
-            if(electionType.equals("Data Access Request") || electionType.equals("Research Purpose")) {
-                return serverUrl + LOG_VOTE_ACCESS_URL + "/" +  entityId + "/" + voteId + "/" + rpVoteId;
+            if (electionType.equals("Data Access Request") || electionType.equals("Research Purpose")) {
+                return serverUrl + LOG_VOTE_ACCESS_URL + "/" + entityId + "/" + voteId + "/" + rpVoteId;
             }
         }
         return serverUrl;
     }
 
     private String generateCollectVoteUrl(String serverUrl, String electionType, String entityId, String electionId) {
-        if(electionType.equals("Data Use Limitations")){
+        if (electionType.equals("Data Use Limitations")) {
             return serverUrl + COLLECT_VOTE_DUL_URL + "/" + entityId;
         } else {
-            if(electionType.equals("Data Access Request")) {
-                return serverUrl + COLLECT_VOTE_ACCESS_URL + "/" +  electionId + "/" + entityId;
+            if (electionType.equals("Data Access Request")) {
+                return serverUrl + COLLECT_VOTE_ACCESS_URL + "/" + electionId + "/" + entityId;
             }
         }
         return serverUrl;
     }
 
-    private Map<String, String> retrieveForVote(Integer voteId){
+    private Map<String, String> retrieveForVote(Integer voteId) {
         Vote vote = voteDAO.findVoteById(voteId);
         Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
         User user = describeDACUserById(vote.getDacUserId());
@@ -290,12 +271,12 @@ public class EmailService {
         dataMap.put("electionType", retrieveElectionTypeString(election.getElectionType()));
         dataMap.put("entityId", election.getReferenceId());
         dataMap.put("entityName", retrieveReferenceId(election.getElectionType(), election.getReferenceId()));
-        dataMap.put("electionId",  election.getElectionId().toString());
+        dataMap.put("electionId", election.getElectionId().toString());
         dataMap.put("dacUserId", user.getUserId().toString());
-        dataMap.put("email",  user.getEmail());
-        if(dataMap.get("electionType").equals(ElectionTypeString.DATA_ACCESS.getValue())){
+        dataMap.put("email", user.getEmail());
+        if (dataMap.get("electionType").equals(ElectionTypeString.DATA_ACCESS.getValue())) {
             dataMap.put("rpVoteId", findRpVoteId(election.getElectionId(), user.getUserId()));
-        } else if(dataMap.get("electionType").equals(ElectionTypeString.RP.getValue())){
+        } else if (dataMap.get("electionType").equals(ElectionTypeString.RP.getValue())) {
             dataMap.put("voteId", findDataAccessVoteId(election.getElectionId(), user.getUserId()));
             dataMap.put("rpVoteId", voteId.toString());
         } else {
@@ -304,14 +285,14 @@ public class EmailService {
         return dataMap;
     }
 
-    private String findRpVoteId(Integer electionId, Integer dacUserId){
+    private String findRpVoteId(Integer electionId, Integer dacUserId) {
         Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(electionId);
-        return (rpElectionId != null) ? ((voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId).getVoteId()).toString()): "";
+        return (rpElectionId != null) ? ((voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId).getVoteId()).toString()) : "";
     }
 
-    private String findDataAccessVoteId(Integer electionId, Integer dacUserId){
+    private String findDataAccessVoteId(Integer electionId, Integer dacUserId) {
         Integer dataAccessElectionId = electionDAO.findAccessElectionByElectionRPId(electionId);
-        return (dataAccessElectionId != null) ? ((voteDAO.findVoteByElectionIdAndDACUserId(dataAccessElectionId, dacUserId).getVoteId()).toString()): "";
+        return (dataAccessElectionId != null) ? ((voteDAO.findVoteByElectionIdAndDACUserId(dataAccessElectionId, dacUserId).getVoteId()).toString()) : "";
     }
 
     private Map<String, String> retrieveForCollect(Integer electionId, User user) {
@@ -327,7 +308,7 @@ public class EmailService {
                 user.getEmail());
     }
 
-    private Map<String, String> createDataMap(String displayName, String electionType, String referenceId, String electionId, String dacUserId, String email){
+    private Map<String, String> createDataMap(String displayName, String electionType, String referenceId, String electionId, String dacUserId, String email) {
         Map<String, String> dataMap = new HashMap<>();
         dataMap.put("userName", displayName);
         dataMap.put("electionType", retrieveElectionTypeStringCollect(electionType));
@@ -360,16 +341,16 @@ public class EmailService {
     }
 
     private String retrieveElectionTypeString(String electionType) {
-        if(electionType.equals(ElectionType.TRANSLATE_DUL.getValue())){
+        if (electionType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
             return ElectionTypeString.TRANSLATE_DUL.getValue();
-        } else if(electionType.equals(ElectionType.DATA_ACCESS.getValue())){
+        } else if (electionType.equals(ElectionType.DATA_ACCESS.getValue())) {
             return ElectionTypeString.DATA_ACCESS.getValue();
         }
         return ElectionTypeString.RP.getValue();
     }
 
     private String retrieveElectionTypeStringCollect(String electionType) {
-        if(electionType.equals(ElectionType.TRANSLATE_DUL.getValue())){
+        if (electionType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
             return ElectionTypeString.TRANSLATE_DUL.getValue();
         }
         return ElectionTypeString.DATA_ACCESS.getValue();

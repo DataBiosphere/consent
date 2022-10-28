@@ -71,7 +71,7 @@ public class EmailServiceTest {
         fmConfig.setTemplateDirectory("/freemarker");
         FreeMarkerTemplateHelper helper = new FreeMarkerTemplateHelper(fmConfig);
         service = new EmailService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
-                emailDAO, sendGridAPI, helper, serverUrl, serviceActive);
+                emailDAO, sendGridAPI, helper, serverUrl);
     }
 
     @Test

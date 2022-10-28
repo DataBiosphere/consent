@@ -318,8 +318,7 @@ public class ConsentModule extends AbstractModule {
                 providesMailMessageDAO(),
                 providesSendGridAPI(),
                 providesFreeMarkerTemplateHelper(),
-                config.getServicesConfiguration().getLocalURL(),
-                config.getMailConfiguration().isActivateEmailNotifications()
+                config.getServicesConfiguration().getLocalURL()
         );
     }
 
