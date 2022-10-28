@@ -4,14 +4,12 @@ import com.sendgrid.helpers.mail.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.Collection;
-import java.util.Collections;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class NewDARRequestMessageTest {
 
@@ -20,15 +18,13 @@ public class NewDARRequestMessageTest {
 
     @Before
     public void setUp(){
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        Collection<Mail> messages = new NewDARRequestMessage().newDARRequestMessage(Collections.singleton("to@address.com"), "from@address.com", template, "DAR-123", "Data Use Limitations");
-        for (Mail message: messages) {
-            assertTrue(message.getSubject().equals("Create an election for Data Access Request id: DAR-123."));
-        }
+        Mail message = new NewDARRequestMessage().newDARRequestMessage("to@address.com", "from@address.com", template, "DAR-123", "Data Use Limitations");
+        assertEquals("Create an election for Data Access Request id: DAR-123.", message.getSubject());
     }
 
 }

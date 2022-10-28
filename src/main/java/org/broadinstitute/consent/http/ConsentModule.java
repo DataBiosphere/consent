@@ -31,7 +31,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.mail.MailService;
+import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
@@ -316,7 +316,7 @@ public class ConsentModule extends AbstractModule {
                 providesElectionDAO(),
                 providesUserDAO(),
                 providesMailMessageDAO(),
-                providesMailService(),
+                providesSendGridAPI(),
                 providesFreeMarkerTemplateHelper(),
                 config.getServicesConfiguration().getLocalURL(),
                 config.getMailConfiguration().isActivateEmailNotifications()
@@ -324,8 +324,8 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    MailService providesMailService() {
-        return new MailService(config.getMailConfiguration());
+    SendGridAPI providesSendGridAPI() {
+        return new SendGridAPI(config.getMailConfiguration());
     }
 
     @Provides

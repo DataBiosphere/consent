@@ -4,14 +4,12 @@ import com.sendgrid.helpers.mail.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.Collections;
-import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class NewResearcherCreatedTest {
 
@@ -20,12 +18,12 @@ public class NewResearcherCreatedTest {
 
     @Before
     public void setUp(){
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        List<Mail> messages = new NewResearcherCreatedMessage().newResearcherCreatedMessage(Collections.singleton("to@address.com"), "from@address.com", template, "SomeReferenceId", "Some Type") ;
-        assertTrue(messages.get(0).getSubject().equals("Review Researcher Profile."));
+        Mail message = new NewResearcherCreatedMessage().newResearcherCreatedMessage("to@address.com", "from@address.com", template, "SomeReferenceId", "Some Type") ;
+        assertEquals("Review Researcher Profile.", message.getSubject());
     }
 }
