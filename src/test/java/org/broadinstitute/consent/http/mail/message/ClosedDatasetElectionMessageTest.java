@@ -4,14 +4,12 @@ import com.sendgrid.helpers.mail.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.Collection;
-import java.util.Collections;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ClosedDatasetElectionMessageTest {
 
@@ -20,15 +18,13 @@ public class ClosedDatasetElectionMessageTest {
 
     @Before
     public void setUp(){
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        Collection<Mail> messages = new ClosedDatasetElectionMessage().closedDatasetElectionMessage(Collections.singleton("to@address.com"), "from@address.com", template, "SomeReferenceId", "Some Type");
-        for (Mail message: messages) {
-            assertTrue(message.getSubject().equals("Report of closed Dataset elections."));
-        }
+        Mail message = new ClosedDatasetElectionMessage().closedDatasetElectionMessage("to@address.com", "from@address.com", template, "SomeReferenceId", "Some Type");
+        assertEquals("Report of closed Dataset elections.", message.getSubject());
     }
 
 }

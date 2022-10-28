@@ -4,14 +4,12 @@ import com.sendgrid.helpers.mail.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.Collections;
-import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DelegateResponsibilitiesMessageTest {
 
@@ -20,13 +18,13 @@ public class DelegateResponsibilitiesMessageTest {
 
     @Before
     public void setUp(){
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        List<Mail> messages = new DelegateResponsibilitiesMessage().delegateResponsibilitiesMessage(Collections.singleton("to@address.com"), "from@address.com", template);
-        assertTrue(messages.get(0).getSubject().equals("You have been assigned a New Role in DUOS."));
+        Mail message = new DelegateResponsibilitiesMessage().delegateResponsibilitiesMessage("to@address.com", "from@address.com", template);
+        assertEquals("You have been assigned a New Role in DUOS.", message.getSubject());
     }
 
 }

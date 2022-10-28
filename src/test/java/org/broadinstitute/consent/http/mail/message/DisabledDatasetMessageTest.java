@@ -4,14 +4,12 @@ import com.sendgrid.helpers.mail.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.Collections;
-import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DisabledDatasetMessageTest {
 
@@ -20,13 +18,13 @@ public class DisabledDatasetMessageTest {
 
     @Before
     public void setUp(){
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        List<Mail> messages = new DisabledDatasetMessage().disabledDatasetMessage(Collections.singleton("to@address.com"), "from@address.com", template, "DAR-123", "SomeType");
-        assertTrue(messages.get(0).getSubject().equals("Datasets not available for Data Access Request Application id: DAR-123."));
+        Mail message = new DisabledDatasetMessage().disabledDatasetMessage("to@address.com", "from@address.com", template, "DAR-123", "SomeType");
+        assertEquals("Datasets not available for Data Access Request Application id: DAR-123.", message.getSubject());
     }
 
 }

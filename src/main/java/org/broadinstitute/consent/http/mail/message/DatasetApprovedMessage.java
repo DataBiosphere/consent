@@ -12,8 +12,8 @@ public class DatasetApprovedMessage extends MailMessage{
 
     private final String DATASET_APPROVED = "Dataset approved for DUOS";
 
-    public List<Mail> datasetApprovedMessage(String toAddress, String fromAddress, Writer template) throws MessagingException {
-        return generateEmailMessages(Collections.singleton(toAddress), fromAddress, template, null, null);
+    public Mail datasetApprovedMessage(String toAddress, String fromAddress, Writer template) throws MessagingException {
+        return generateEmailMessage(toAddress, fromAddress, template, null, null);
     }
 
     @Override

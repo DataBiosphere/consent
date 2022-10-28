@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -42,6 +43,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -672,6 +675,91 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDataset(1);
         assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    public void testGetDatasets() {
+        Dataset ds1 = new Dataset();
+        ds1.setDataSetId(1);
+        Dataset ds2 = new Dataset();
+        ds2.setDataSetId(2);
+        Dataset ds3 = new Dataset();
+        ds3.setDataSetId(3);
+
+        when(datasetService.getDatasets(List.of(1,2,3))).thenReturn(List.of(
+                ds1,
+                ds2,
+                ds3
+        ));
+
+        initResource();
+        Response response = resource.getDatasets(List.of(1,2,3));
+        assertEquals(200, response.getStatus());
+        assertEquals(List.of(ds1,ds2,ds3), response.getEntity());
+    }
+
+    @Test
+    public void testGetDatasetsDuplicates() {
+        Dataset ds1 = new Dataset();
+        ds1.setDataSetId(1);
+        Dataset ds2 = new Dataset();
+        ds2.setDataSetId(2);
+        Dataset ds3 = new Dataset();
+        ds3.setDataSetId(3);
+
+        when(datasetService.getDatasets(List.of(1,1,2,2,3,3))).thenReturn(List.of(
+                ds1,
+                ds2,
+                ds3
+        ));
+
+        initResource();
+        Response response = resource.getDatasets(List.of(1,1,2,2,3,3));
+        assertEquals(200, response.getStatus());
+        assertEquals(List.of(ds1,ds2,ds3), response.getEntity());
+    }
+
+    @Test
+    public void testGetDatasetsDuplicatesNotFound() {
+        Dataset ds1 = new Dataset();
+        ds1.setDataSetId(1);
+        Dataset ds2 = new Dataset();
+        ds2.setDataSetId(2);
+
+        when(datasetService.getDatasets(List.of(1,1,2,2,3,3))).thenReturn(List.of(
+                ds1,
+                ds2
+        ));
+
+        initResource();
+        Response response = resource.getDatasets(List.of(1,1,2,2,3,3));
+        assertEquals(404, response.getStatus());
+        assertTrue(((Error)response.getEntity()).getMessage().contains("3"));
+        assertFalse(((Error)response.getEntity()).getMessage().contains("2"));
+        assertFalse(((Error)response.getEntity()).getMessage().contains("1"));
+
+    }
+
+    @Test
+    public void testGetDatasetsNotFound() {
+        Dataset ds1 = new Dataset();
+        ds1.setDataSetId(1);
+        Dataset ds3 = new Dataset();
+        ds3.setDataSetId(3);
+
+
+        when(datasetService.getDatasets(List.of(1,2,3,4))).thenReturn(List.of(
+                ds1,
+                ds3
+        ));
+
+        initResource();
+        Response response = resource.getDatasets(List.of(1,2,3,4));
+        assertEquals(404, response.getStatus());
+        assertTrue(((Error)response.getEntity()).getMessage().contains("4"));
+        assertFalse(((Error)response.getEntity()).getMessage().contains("3"));
+        assertTrue(((Error)response.getEntity()).getMessage().contains("2"));
+        assertFalse(((Error)response.getEntity()).getMessage().contains("1"));
     }
 
 

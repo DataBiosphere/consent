@@ -11,8 +11,8 @@ public class DatasetDeniedMessage extends MailMessage{
 
     private final String DATASET_DENIED = "Dataset denied for DUOS";
 
-    public List<Mail> datasetDeniedMessage(String toAddress, String fromAddress, Writer template) throws MessagingException {
-        return generateEmailMessages(Collections.singleton(toAddress), fromAddress, template, null, null);
+    public Mail datasetDeniedMessage(String toAddress, String fromAddress, Writer template) throws MessagingException {
+        return generateEmailMessage(toAddress, fromAddress, template, null, null);
     }
 
     @Override

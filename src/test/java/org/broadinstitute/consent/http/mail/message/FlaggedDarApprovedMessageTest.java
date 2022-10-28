@@ -4,14 +4,12 @@ import com.sendgrid.helpers.mail.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.Collections;
-import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class FlaggedDarApprovedMessageTest {
 
@@ -20,13 +18,13 @@ public class FlaggedDarApprovedMessageTest {
 
     @Before
     public void setUp(){
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        List<Mail> messages = new FlaggedDarApprovedMessage().flaggedDarMessage(Collections.singleton(("to@address.com")), "from@address.com", template, "DS-123", "SomeType");
-        assertTrue(messages.get(0).getSubject().equals("DS-123 that requires data owners reviewing approved."));
+        Mail message = new FlaggedDarApprovedMessage().flaggedDarMessage("to@address.com", "from@address.com", template, "DS-123", "SomeType");
+        assertEquals("DS-123 that requires data owners reviewing approved.", message.getSubject());
     }
 
 }

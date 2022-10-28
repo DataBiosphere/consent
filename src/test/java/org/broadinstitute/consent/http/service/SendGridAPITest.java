@@ -1,54 +1,46 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-
-import java.io.Writer;
-import java.util.Collections;
-import javax.mail.MessagingException;
+import com.sendgrid.Response;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
-import org.broadinstitute.consent.http.mail.MailService;
+import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
-public class MailServiceTest {
+import java.io.Writer;
+import java.util.Optional;
+
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+public class SendGridAPITest {
 
     private static final String TO = "to@broadinstitute.org";
     private static final String ID = "DUL-123";
     private static final String TYPE = "Data Use Limitations";
-    private MailService mailService;
+    private SendGridAPI sendGridAPI;
 
     @Mock
     private Writer template;
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         MailConfiguration config = new MailConfiguration();
         config.setSendGridApiKey("test");
         config.setGoogleAccount("from@broadinstitute.org");
         config.setActivateEmailNotifications(false);
-        mailService = new MailService(config);
+        sendGridAPI = new SendGridAPI(config);
         doNothing().when(template).write(anyString());
-    }
-
-    @Test(expected=MessagingException.class)
-    public void testCollectMessageFailure() throws Exception {
-        MailConfiguration config = new MailConfiguration();
-        config.setSendGridApiKey("test");
-        config.setGoogleAccount("from@broadinstitute.org");
-        config.setActivateEmailNotifications(true);
-        mailService = new MailService(config);
-        mailService.sendCollectMessage(Collections.singleton(TO), ID, TYPE, template);
     }
 
     @Test
     public void testCollectMessage() {
         try {
-            mailService.sendCollectMessage(Collections.singleton(TO), ID, TYPE, template);
+            sendGridAPI.sendCollectMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -57,7 +49,7 @@ public class MailServiceTest {
     @Test
     public void testNewCaseMessage() {
         try {
-            mailService.sendNewCaseMessage(Collections.singleton(TO), ID, TYPE, template);
+            sendGridAPI.sendNewCaseMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -66,7 +58,7 @@ public class MailServiceTest {
     @Test
     public void testReminderMessage() {
         try {
-            mailService.sendReminderMessage(Collections.singleton(TO), ID, TYPE, template);
+            sendGridAPI.sendReminderMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -75,7 +67,7 @@ public class MailServiceTest {
     @Test
     public void testDisabledDatasetMessage() {
         try {
-            mailService.sendDisabledDatasetMessage(Collections.singleton(TO), ID, TYPE, template);
+            sendGridAPI.sendDisabledDatasetMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -84,7 +76,7 @@ public class MailServiceTest {
     @Test
     public void testNewDARRequests() {
         try {
-            mailService.sendNewDARRequests(Collections.singleton(TO), ID, TYPE, template);
+            sendGridAPI.sendNewDARRequests(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -93,7 +85,7 @@ public class MailServiceTest {
     @Test
     public void testCancelDARRequestMessage() {
         try {
-            mailService.sendCancelDARRequestMessage(Collections.singleton(TO), ID, TYPE, template);
+            sendGridAPI.sendCancelDARRequestMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -102,7 +94,7 @@ public class MailServiceTest {
     @Test
     public void testFlaggedDarAdminApprovedMessage() {
         try {
-            mailService.sendFlaggedDarAdminApprovedMessage(Collections.singleton(TO), ID, TYPE, template);
+            sendGridAPI.sendFlaggedDarAdminApprovedMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -111,7 +103,7 @@ public class MailServiceTest {
     @Test
     public void testClosedDatasetElectionsMessage() {
         try {
-            mailService.sendClosedDatasetElectionsMessage(Collections.singleton(TO), ID, TYPE, template);
+            sendGridAPI.sendClosedDatasetElectionsMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -120,7 +112,7 @@ public class MailServiceTest {
     @Test
     public void testDelegateResponsibilitiesMessage() {
         try {
-            mailService.sendDelegateResponsibilitiesMessage(Collections.singleton(TO), template);
+            sendGridAPI.sendDelegateResponsibilitiesMessage(TO, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -129,7 +121,7 @@ public class MailServiceTest {
     @Test
     public void testNewResearcherCreatedMessage() {
         try {
-            mailService.sendNewResearcherCreatedMessage(Collections.singleton(TO), template);
+            sendGridAPI.sendNewResearcherCreatedMessage(TO, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -138,7 +130,7 @@ public class MailServiceTest {
     @Test
     public void testNewResearcherApprovedMessage() {
         try {
-            mailService.sendNewResearcherApprovedMessage(Collections.singleton(TO), template, "Test");
+            sendGridAPI.sendNewResearcherApprovedMessage(TO, template, "Test");
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -147,7 +139,7 @@ public class MailServiceTest {
     @Test
     public void testDataCustodianApprovalMessage() {
         try {
-            mailService.sendDataCustodianApprovalMessage(TO, "Test", template);
+            sendGridAPI.sendDataCustodianApprovalMessage(TO, "Test", template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
