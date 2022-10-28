@@ -19,6 +19,7 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
             "AND e.email_type = 1 LIMIT 1")
     Integer existsCollectDAREmail(@Bind("darReferenceId") String darReferenceId, @Bind("rpReferenceId") String rpReferenceId);
 
+    @Deprecated
     @SqlUpdate("INSERT INTO email_entity " +
             "(vote_id, entity_reference_id, user_id, email_type, date_sent, email_text, create_date) VALUES " +
             "(:voteId, :entityReferenceId, :userId, :emailType, :dateSent, :emailText, :dateSent)")
@@ -29,13 +30,27 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
                      @Bind("dateSent") Date dateSent,
                      @Bind("emailText") String emailText);
 
+    @Deprecated
     @SqlBatch("INSERT INTO email_entity " +
             "(entity_reference_id, user_id, email_type, date_sent, email_text, create_date) VALUES " +
             "(:entityReferenceId, :userId, :emailType, :dateSent, :emailText, :dateSent)")
     void insertBulkEmailNoVotes(@Bind("userId") List<Integer> userIds,
-                         @Bind("entityReferenceId") String entityReferenceId,
-                         @Bind("emailType") Integer emailType,
-                         @Bind("dateSent") Date dateSent,
-                         @Bind("emailText") String emailText);
+                                @Bind("entityReferenceId") String entityReferenceId,
+                                @Bind("emailType") Integer emailType,
+                                @Bind("dateSent") Date dateSent,
+                                @Bind("emailText") String emailText);
 
+    @SqlBatch("INSERT INTO email_entity " +
+            "(entity_reference_id, vote_id, election_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date) VALUES " +
+            "(:entityReferenceId, :voteId, :electionId, :userId, :emailType, :dateSent, :emailText, :sendGridResponse, :sendGridStatus, :createDate)")
+    void insert(@Bind("entityReferenceId") String entityReferenceId,
+                @Bind("voteId") Integer voteId,
+                @Bind("electionId") Integer electionId,
+                @Bind("userId") Integer userId,
+                @Bind("emailType") Integer emailType,
+                @Bind("dateSent") Date dateSent,
+                @Bind("emailText") String emailText,
+                @Bind("sendGridResponse") String sendGridResponse,
+                @Bind("sendGridStatus") Integer sendGridStatus,
+                @Bind("createDate") Date createDate);
 }

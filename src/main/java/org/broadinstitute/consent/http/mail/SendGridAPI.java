@@ -66,7 +66,7 @@ public class SendGridAPI {
         this.activateEmailNotifications = activateEmailNotifications;
     }
 
-    private Optional<Response> sendMessage(Mail message) {
+    public Optional<Response> sendMessage(Mail message) {
         if (activateEmailNotifications) {
             try {
                 // See https://github.com/sendgrid/sendgrid-java/issues/163

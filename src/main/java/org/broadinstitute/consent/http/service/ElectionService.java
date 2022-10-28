@@ -609,7 +609,7 @@ public class ElectionService {
                             collection.getDarCode() :
                             referenceId;
 
-                    emailService.sendDataCustodianApprovalMessage(custodian.getEmail(), darCode, mailDTOS,
+                    emailService.sendDataCustodianApprovalMessage(custodian, darCode, mailDTOS,
                             custodian.getDisplayName(), researcherEmail);
                 } catch (Exception e) {
                     logger.error("Unable to send data custodian approval message: " + e);

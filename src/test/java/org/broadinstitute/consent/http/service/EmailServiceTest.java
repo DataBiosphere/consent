@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.junit.Before;
 import org.junit.Test;
@@ -84,8 +85,11 @@ public class EmailServiceTest {
         datasets.add(new DatasetMailDTO("DS-3 Name", "DS-3 Alias"));
         String dataDepositorName = "Data Depositor Name";
         String researcherEmail = "researcher@test.com";
+        User user = new User();
+        user.setEmail(defaultAccount);
+        user.setUserId(1);
         try {
-            service.sendDataCustodianApprovalMessage(defaultAccount, darCode, datasets,
+            service.sendDataCustodianApprovalMessage(user, darCode, datasets,
                     dataDepositorName, researcherEmail);
         } catch (Exception e) {
             fail("Should not fail sending message: " + e);
