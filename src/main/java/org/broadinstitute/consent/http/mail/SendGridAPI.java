@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.mail;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.common.annotations.VisibleForTesting;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
@@ -30,9 +31,9 @@ import java.util.Optional;
 public class SendGridAPI {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final String fromAccount;
-    private final SendGrid sendGrid;
-    private final Boolean activateEmailNotifications;
+    private String fromAccount;
+    private SendGrid sendGrid;
+    private Boolean activateEmailNotifications;
     private final CollectMessage collectMessageCreator = new CollectMessage();
     private final NewCaseMessage newCaseMessageCreator = new NewCaseMessage();
     private final NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
@@ -47,9 +48,22 @@ public class SendGridAPI {
     private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
 
     public SendGridAPI(MailConfiguration config) {
-        this.fromAccount = config.getGoogleAccount();
-        this.sendGrid = new SendGrid(config.getSendGridApiKey());
-        this.activateEmailNotifications = config.isActivateEmailNotifications();
+        setFromAccount(config.getGoogleAccount());
+        setSendGrid(new SendGrid(config.getSendGridApiKey()));
+        setActivateEmailNotifications(config.isActivateEmailNotifications());
+    }
+
+    private void setFromAccount(String fromAccount) {
+        this.fromAccount = fromAccount;
+    }
+
+    @VisibleForTesting
+    public void setSendGrid(SendGrid sendGrid) {
+        this.sendGrid = sendGrid;
+    }
+
+    private void setActivateEmailNotifications(Boolean activateEmailNotifications) {
+        this.activateEmailNotifications = activateEmailNotifications;
     }
 
     private Optional<Response> sendMessage(Mail message) {

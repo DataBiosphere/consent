@@ -1,6 +1,8 @@
-package org.broadinstitute.consent.http.service;
+package org.broadinstitute.consent.http.service.mail;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.sendgrid.Response;
+import com.sendgrid.SendGrid;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.junit.Assert;
@@ -8,12 +10,21 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import java.io.IOException;
 import java.io.Writer;
+import java.util.Map;
 import java.util.Optional;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class SendGridAPITest {
@@ -24,17 +35,53 @@ public class SendGridAPITest {
     private SendGridAPI sendGridAPI;
 
     @Mock
+    private SendGrid sendGrid;
+
+    @Mock
     private Writer template;
 
     @Before
     public void setUp() throws Exception {
         openMocks(this);
+        // For most tests, we don't want to actually make an external call to SendGrid.
+        configureApi(false);
+        doNothing().when(template).write(anyString());
+    }
+
+    private void configureApi(boolean active) {
         MailConfiguration config = new MailConfiguration();
         config.setSendGridApiKey("test");
         config.setGoogleAccount("from@broadinstitute.org");
-        config.setActivateEmailNotifications(false);
+        config.setActivateEmailNotifications(active);
         sendGridAPI = new SendGridAPI(config);
-        doNothing().when(template).write(anyString());
+        sendGridAPI.setSendGrid(sendGrid);
+    }
+
+    @Test
+    public void testSuccessfulAPICall() throws Exception {
+        configureApi(true);
+        when(sendGrid.getHost()).thenReturn("host");
+        when(sendGrid.getVersion()).thenReturn("version");
+        when(sendGrid.getRequestHeaders()).thenReturn(Map.of());
+        Response sendGridResponse = mock(Response.class);
+        when(sendGrid.makeCall(any())).thenReturn(sendGridResponse);
+        Optional<Response> response = sendGridAPI.sendCollectMessage(TO, ID, TYPE, template);
+        assertNotNull(response);
+        assertTrue(response.isPresent());
+        assertNotEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.get().getStatusCode());
+    }
+
+    @Test
+    public void testFailedAPICall() throws Exception {
+        configureApi(true);
+        when(sendGrid.getHost()).thenReturn("host");
+        when(sendGrid.getVersion()).thenReturn("version");
+        when(sendGrid.getRequestHeaders()).thenReturn(Map.of());
+        when(sendGrid.makeCall(any())).thenThrow(new IOException("Mock Failure"));
+        Optional<Response> response = sendGridAPI.sendCollectMessage(TO, ID, TYPE, template);
+        assertNotNull(response);
+        assertTrue(response.isPresent());
+        assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.get().getStatusCode());
     }
 
     @Test
