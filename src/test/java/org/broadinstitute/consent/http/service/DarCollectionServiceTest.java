@@ -70,7 +70,7 @@ public class DarCollectionServiceTest {
   @Mock private DatasetDAO datasetDAO;
   @Mock private ElectionDAO electionDAO;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
-  @Mock private EmailNotifierService emailNotifierService;
+  @Mock private EmailService emailService;
   @Mock private VoteDAO voteDAO;
   @Mock private MatchDAO matchDAO;
   @Mock private User user;
@@ -513,14 +513,14 @@ public class DarCollectionServiceTest {
     spy(darCollectionServiceDAO);
     spy(electionDAO);
     spy(voteDAO);
-    spy(emailNotifierService);
+    spy(emailService);
     spy(darCollectionDAO);
     initService();
 
     service.createElectionsForDarCollection(user, collection);
     verify(darCollectionServiceDAO, times(1)).createElectionsForDarCollection(any(), any());
     verify(voteDAO, times(1)).findVoteUsersByElectionReferenceIdList(any());
-    verify(emailNotifierService, times(1)).sendDarNewCollectionElectionMessage(any(), any());
+    verify(emailService, times(1)).sendDarNewCollectionElectionMessage(any(), any());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
   }
 
@@ -1073,7 +1073,7 @@ public class DarCollectionServiceTest {
     electionFour.setStatus(ElectionStatus.OPEN.getValue());
     summaryFour.addElection(electionFour);
     summaryFour.setVotes(List.of(voteTwo, voteThree));
-    
+
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
       .thenReturn(List.of(summary, summaryTwo, summaryThree, summaryFour));
@@ -1490,7 +1490,7 @@ public class DarCollectionServiceTest {
   }
 
   private void initService() {
-    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailNotifierService, voteDAO, matchDAO, darCollectionSummaryDAO);
+    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailService, voteDAO, matchDAO, darCollectionSummaryDAO);
   }
 
   //NOTE: init method does not work well with role based queries due to fetches by role rather by user (unless researcher)
@@ -1508,7 +1508,7 @@ public class DarCollectionServiceTest {
     when(darCollectionDAO.findDARCollectionsCreatedByUserId(any())).thenReturn(unfilteredDars);
     when(darCollectionDAO.findAllDARCollectionsWithFiltersByUser(any(), any(), any(), any())).thenReturn(filteredDars);
     when(darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(any(), any(), any())).thenReturn(collectionIdDars);
-    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailNotifierService, voteDAO, matchDAO, darCollectionSummaryDAO);
+    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailService, voteDAO, matchDAO, darCollectionSummaryDAO);
   }
 
   private List<DarCollection> createMockCollections(int count) {

@@ -27,9 +27,9 @@ import static org.mockito.MockitoAnnotations.openMocks;
  * Functional test emails will be directed to the private google group:
  *      https://groups.google.com/a/broadinstitute.org/g/duos-dev
  */
-public class EmailNotifierServiceTest {
+public class EmailServiceTest {
 
-    private EmailNotifierService service;
+    private EmailService service;
 
     @Mock
     private DarCollectionDAO collectionDAO;
@@ -70,7 +70,7 @@ public class EmailNotifierServiceTest {
         fmConfig.setDefaultEncoding("UTF-8");
         fmConfig.setTemplateDirectory("/freemarker");
         FreeMarkerTemplateHelper helper = new FreeMarkerTemplateHelper(fmConfig);
-        service = new EmailNotifierService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
+        service = new EmailService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
                 emailDAO, sendGridAPI, helper, serverUrl, serviceActive);
     }
 

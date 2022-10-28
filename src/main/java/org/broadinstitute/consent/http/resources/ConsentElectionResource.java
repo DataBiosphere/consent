@@ -5,8 +5,6 @@ import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
@@ -14,15 +12,12 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.VoteService;
 
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -43,16 +38,16 @@ public class ConsentElectionResource extends Resource {
 
     private final ConsentService consentService;
     private final DacService dacService;
-    private final EmailNotifierService emailNotifierService;
+    private final EmailService emailService;
     private final VoteService voteService;
     private final ElectionService electionService;
 
     @Inject
     public ConsentElectionResource(ConsentService consentService, DacService dacService,
-                                   EmailNotifierService emailNotifierService, VoteService voteService, ElectionService electionService) {
+                                   EmailService emailService, VoteService voteService, ElectionService electionService) {
         this.consentService = consentService;
         this.dacService = dacService;
-        this.emailNotifierService = emailNotifierService;
+        this.emailService = emailService;
         this.voteService = voteService;
         this.electionService = electionService;
     }
@@ -100,7 +95,7 @@ public class ConsentElectionResource extends Resource {
         List<Vote> dulVotes = votes.stream().
                 filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
                 collect(Collectors.toList());
-        emailNotifierService.sendNewCaseMessageToList(dulVotes, newElection);
+        emailService.sendNewCaseMessageToList(dulVotes, newElection);
         return info.getRequestUriBuilder().build();
     }
 

@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.VoteService;
 
 import javax.annotation.security.PermitAll;
@@ -28,14 +28,14 @@ import java.util.logging.Logger;
 @Path("api/consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
 
-    private final EmailNotifierService emailNotifierService;
+    private final EmailService emailService;
     private final VoteService voteService;
     private final ElectionService electionService;
     private static final Logger logger = Logger.getLogger(ConsentVoteResource.class.getName());
 
     @Inject
-    public ConsentVoteResource(EmailNotifierService emailNotifierService, ElectionService electionService, VoteService voteService) {
-        this.emailNotifierService = emailNotifierService;
+    public ConsentVoteResource(EmailService emailService, ElectionService electionService, VoteService voteService) {
+        this.emailService = emailService;
         this.voteService = voteService;
         this.electionService = electionService;
     }
@@ -51,7 +51,7 @@ public class ConsentVoteResource extends Resource {
             Vote vote = voteService.updateVoteById(rec, voteId);
             if(electionService.validateCollectEmailCondition(vote)){
                 try {
-                    emailNotifierService.sendCollectMessage(vote.getElectionId());
+                    emailService.sendCollectMessage(vote.getElectionId());
                 } catch (MessagingException | IOException | TemplateException e) {
                     logger.severe("Error when sending email notification to Chairpersons to collect votes. Cause: " + e);
                 }

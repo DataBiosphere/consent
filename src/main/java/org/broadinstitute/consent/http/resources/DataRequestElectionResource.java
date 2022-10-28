@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.VoteService;
 
 import javax.annotation.security.PermitAll;
@@ -36,15 +36,15 @@ public class DataRequestElectionResource extends Resource {
 
     private final DataAccessRequestService darService;
     private final ElectionService electionService;
-    private final EmailNotifierService emailNotifierService;
+    private final EmailService emailService;
     private final VoteService voteService;
 
     @Inject
     public DataRequestElectionResource(DataAccessRequestService darService,
-                                       EmailNotifierService emailNotifierService,
+                                       EmailService emailService,
                                        VoteService voteService, ElectionService electionService) {
         this.darService = darService;
-        this.emailNotifierService = emailNotifierService;
+        this.emailService = emailService;
         this.voteService = voteService;
         this.electionService = electionService;
     }
@@ -68,7 +68,7 @@ public class DataRequestElectionResource extends Resource {
             List<Vote> darVotes = votes.stream().
                     filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
                     collect(Collectors.toList());
-            emailNotifierService.sendNewCaseMessageToList(darVotes, accessElection);
+            emailService.sendNewCaseMessageToList(darVotes, accessElection);
             uri = info.getRequestUriBuilder().build();
         } catch (Exception e) {
             try {

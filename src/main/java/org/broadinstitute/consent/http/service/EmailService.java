@@ -39,7 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class EmailNotifierService {
+public class EmailService {
 
     private final DarCollectionDAO collectionDAO;
     private final ConsentDAO consentDAO;
@@ -84,10 +84,10 @@ public class EmailNotifierService {
     }
 
     @Inject
-    public EmailNotifierService(DarCollectionDAO collectionDAO, ConsentDAO consentDAO,
-                                VoteDAO voteDAO, ElectionDAO electionDAO,
-                                UserDAO userDAO, MailMessageDAO emailDAO, SendGridAPI sendGridAPI,
-                                FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive) {
+    public EmailService(DarCollectionDAO collectionDAO, ConsentDAO consentDAO,
+                        VoteDAO voteDAO, ElectionDAO electionDAO,
+                        UserDAO userDAO, MailMessageDAO emailDAO, SendGridAPI sendGridAPI,
+                        FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive) {
         this.collectionDAO = collectionDAO;
         this.consentDAO = consentDAO;
         this.userDAO = userDAO;

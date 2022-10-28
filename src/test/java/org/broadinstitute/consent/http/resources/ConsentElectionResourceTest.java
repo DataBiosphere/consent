@@ -1,45 +1,39 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-
-import java.net.URI;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 public class ConsentElectionResourceTest {
 
@@ -56,7 +50,7 @@ public class ConsentElectionResourceTest {
     VoteService voteService;
 
     @Mock
-    EmailNotifierService emailNotifierService;
+    EmailService emailService;
 
     @Mock
     UriInfo info;
@@ -78,7 +72,7 @@ public class ConsentElectionResourceTest {
         Election election = getElection();
         when(electionService.createElection(any(Election.class), anyString(), any(ElectionType.class))).thenReturn(election);
         when(voteService.createVotes(any(Election.class), any(ElectionType.class), anyBoolean())).thenReturn(getVotesForElection(election.getElectionId()));
-        doNothing().when(emailNotifierService).sendNewCaseMessageToList(anyList(), any(Election.class));
+        doNothing().when(emailService).sendNewCaseMessageToList(anyList(), any(Election.class));
     }
 
     @Test
@@ -113,7 +107,7 @@ public class ConsentElectionResourceTest {
     }
 
     private void initResource() {
-        resource = new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService);
+        resource = new ConsentElectionResource(consentService, dacService, emailService, voteService, electionService);
     }
 
     private Election getElection() {

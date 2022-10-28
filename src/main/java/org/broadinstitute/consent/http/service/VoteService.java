@@ -48,7 +48,7 @@ public class VoteService {
     private final DatasetAssociationDAO datasetAssociationDAO;
     private final DatasetDAO datasetDAO;
     private final ElectionDAO electionDAO;
-    private final EmailNotifierService emailNotifierService;
+    private final EmailService emailService;
     private final UseRestrictionConverter useRestrictionConverter;
     private final VoteDAO voteDAO;
     private final VoteServiceDAO voteServiceDAO;
@@ -57,7 +57,7 @@ public class VoteService {
     @Inject
     public VoteService(UserDAO userDAO, DarCollectionDAO darCollectionDAO, DataAccessRequestDAO dataAccessRequestDAO,
                        DatasetAssociationDAO datasetAssociationDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
-                       EmailNotifierService emailNotifierService, UseRestrictionConverter useRestrictionConverter,
+                       EmailService emailService, UseRestrictionConverter useRestrictionConverter,
                        VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
         this.userDAO = userDAO;
         this.darCollectionDAO = darCollectionDAO;
@@ -65,7 +65,7 @@ public class VoteService {
         this.datasetAssociationDAO = datasetAssociationDAO;
         this.datasetDAO = datasetDAO;
         this.electionDAO = electionDAO;
-        this.emailNotifierService = emailNotifierService;
+        this.emailService = emailService;
         this.useRestrictionConverter = useRestrictionConverter;
         this.voteDAO = voteDAO;
         this.voteServiceDAO = voteServiceDAO;
@@ -400,7 +400,7 @@ public class VoteService {
                 String translation = String.join(";", dataUseTranslations);
 
                 try {
-                    emailNotifierService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs, translation);
+                    emailService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs, translation);
                 } catch (Exception e) {
                     logger.error("Error sending researcher dar approved email: " + e.getMessage());
                 }

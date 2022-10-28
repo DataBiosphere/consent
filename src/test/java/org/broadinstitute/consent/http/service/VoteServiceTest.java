@@ -69,7 +69,7 @@ public class VoteServiceTest {
     @Mock
     private ElectionDAO electionDAO;
     @Mock
-    private EmailNotifierService emailNotifierService;
+    private EmailService emailService;
     @Mock
     private UseRestrictionConverter useRestrictionConverter;
     @Mock
@@ -90,7 +90,7 @@ public class VoteServiceTest {
     }
 
     private void initService() {
-        service = new VoteService(userDAO, darCollectionDAO, dataAccessRequestDAO, datasetAssociationDAO, datasetDAO, electionDAO, emailNotifierService, useRestrictionConverter, voteDAO, voteServiceDAO);
+        service = new VoteService(userDAO, darCollectionDAO, dataAccessRequestDAO, datasetAssociationDAO, datasetDAO, electionDAO, emailService, useRestrictionConverter, voteDAO, voteServiceDAO);
     }
 
     @Test
@@ -671,12 +671,12 @@ public class VoteServiceTest {
         when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1, dar2));
         when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c));
         when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
-        spy(emailNotifierService);
+        spy(emailService);
 
         initService();
         service.notifyResearchersOfDarApproval(List.of(v1, v2));
         // Since we have 1 collection with different DAR/Datasets, we should be sending 1 email
-        verify(emailNotifierService, times(1)).sendResearcherDarApproved(any(), any(), anyList(), any());
+        verify(emailService, times(1)).sendResearcherDarApproved(any(), any(), anyList(), any());
     }
 
     @Test
@@ -748,12 +748,12 @@ public class VoteServiceTest {
         when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1, dar2));
         when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1, c2));
         when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
-        spy(emailNotifierService);
+        spy(emailService);
 
         initService();
         service.notifyResearchersOfDarApproval(List.of(v1, v2));
         // Since we have 2 collections with different DAR/Datasets, we should be sending 2 emails
-        verify(emailNotifierService, times(2)).sendResearcherDarApproved(any(), any(), anyList(), any());
+        verify(emailService, times(2)).sendResearcherDarApproved(any(), any(), anyList(), any());
     }
 
     @Test
@@ -794,12 +794,12 @@ public class VoteServiceTest {
         when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1));
         when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1));
         when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1));
-        spy(emailNotifierService);
+        spy(emailService);
 
         initService();
         service.notifyResearchersOfDarApproval(List.of(v1));
         // Since we have a false vote, we should not be sending any email
-        verify(emailNotifierService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
+        verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
         // Similar check for all DAO calls
         verify(electionDAO, times(0)).findElectionsByIds(any());
         verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());
@@ -845,12 +845,12 @@ public class VoteServiceTest {
         when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1));
         when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1));
         when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1));
-        spy(emailNotifierService);
+        spy(emailService);
 
         initService();
         service.notifyResearchersOfDarApproval(List.of(v1));
         // Since we have a non-final vote, we should not be sending any email
-        verify(emailNotifierService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
+        verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
         // Similar check for all DAO calls
         verify(electionDAO, times(0)).findElectionsByIds(any());
         verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());

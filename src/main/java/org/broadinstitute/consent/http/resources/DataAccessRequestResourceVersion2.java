@@ -13,13 +13,11 @@ import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -53,7 +51,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final DataAccessRequestService dataAccessRequestService;
-  private final EmailNotifierService emailNotifierService;
+  private final EmailService emailService;
   private final GCSService gcsService;
   private final MatchService matchService;
   private final UserService userService;
@@ -61,13 +59,13 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @Inject
   public DataAccessRequestResourceVersion2(
       DataAccessRequestService dataAccessRequestService,
-      EmailNotifierService emailNotifierService,
+      EmailService emailService,
       GCSService gcsService,
       UserService userService,
       MatchService matchService
     ) {
     this.dataAccessRequestService = dataAccessRequestService;
-    this.emailNotifierService = emailNotifierService;
+    this.emailService = emailService;
     this.gcsService = gcsService;
     this.userService = userService;
     this.matchService = matchService;
@@ -98,7 +96,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
       Integer collectionId = newDar.getCollectionId();
       try {
-          emailNotifierService.sendNewDARCollectionMessage(collectionId);
+          emailService.sendNewDARCollectionMessage(collectionId);
       } catch (Exception e) {
           logger.error("Exception sending email for collection id: " + collectionId, e);
       }

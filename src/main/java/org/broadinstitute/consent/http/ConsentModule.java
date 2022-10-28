@@ -42,7 +42,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
@@ -308,8 +308,8 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    EmailNotifierService providesEmailNotifierService() {
-        return new EmailNotifierService(
+    EmailService providesEmailNotifierService() {
+        return new EmailService(
                 providesDARCollectionDAO(),
                 providesConsentDAO(),
                 providesVoteDAO(),

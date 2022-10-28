@@ -82,7 +82,7 @@ public class ElectionServiceTest {
     @Mock
     private DarCollectionDAO darCollectionDAO;
     @Mock
-    private EmailNotifierService emailNotifierService;
+    private EmailService emailService;
 
     @Mock
     private UseRestrictionConverter useRestrictionConverter;
@@ -206,7 +206,7 @@ public class ElectionServiceTest {
     }
 
     private void bunchOfDoNothings() throws Exception {
-        doNothing().when(emailNotifierService).sendDisabledDatasetsMessage(any(), any(), any());
+        doNothing().when(emailService).sendDisabledDatasetsMessage(any(), any(), any());
         doNothing().when(consentDAO).updateConsentSortDate(any(), any());
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(), any(), any(), any(), any());
         doNothing().when(electionDAO).insertAccessAndConsentElection(any(), any());
@@ -216,9 +216,9 @@ public class ElectionServiceTest {
         doNothing().when(electionDAO).updateElectionById(any(), any(), any(), any());
         doNothing().when(electionDAO).archiveElectionById(any(), any());
         doNothing().when(electionDAO).updateElectionStatus(any(), any());
-        doNothing().when(emailNotifierService).sendResearcherDarApproved(any(), any(), any(), any());
-        doNothing().when(emailNotifierService).sendDataCustodianApprovalMessage(any(), any(), any(), any(), any());
-        doNothing().when(emailNotifierService).sendClosedDataSetElectionsMessage(any());
+        doNothing().when(emailService).sendResearcherDarApproved(any(), any(), any(), any());
+        doNothing().when(emailService).sendDataCustodianApprovalMessage(any(), any(), any(), any(), any());
+        doNothing().when(emailService).sendClosedDataSetElectionsMessage(any());
         doNothing().when(voteDAO).deleteVoteById(any());
         doNothing().when(electionDAO).deleteElectionById(any());
         doNothing().when(electionDAO).deleteAccessRP(any());
@@ -298,7 +298,7 @@ public class ElectionServiceTest {
     }
 
     private void initService() {
-        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, dataAccessRequestDAO, darCollectionDAO, mailMessageDAO, emailNotifierService, dataAccessRequestService, useRestrictionConverter);
+        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, dataAccessRequestDAO, darCollectionDAO, mailMessageDAO, emailService, dataAccessRequestService, useRestrictionConverter);
     }
 
     @Test
