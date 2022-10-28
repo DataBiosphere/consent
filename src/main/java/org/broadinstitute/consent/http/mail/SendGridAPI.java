@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
