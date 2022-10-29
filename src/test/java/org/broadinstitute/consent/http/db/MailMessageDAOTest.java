@@ -22,7 +22,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testInsertAllFields() {
+    public void testInsert_AllFields() {
         Date now = new Date();
         Integer mailId = mailMessageDAO.insert(
             RandomStringUtils.randomAlphanumeric(10),
@@ -33,6 +33,91 @@ public class MailMessageDAOTest extends DAOTestHelper {
             RandomStringUtils.randomAlphanumeric(10),
             RandomStringUtils.randomAlphanumeric(10),
             RandomUtils.nextInt(200, 399),
+            now
+        );
+        assertNotNull(mailId);
+    }
+
+    @Test
+    public void testInsert_NullEntityReferenceId() {
+        Date now = new Date();
+        Integer mailId = mailMessageDAO.insert(
+            null,
+            RandomUtils.nextInt(1, 1000),
+            RandomUtils.nextInt(1, 1000),
+            EmailType.COLLECT.getTypeInt(),
+            now,
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomUtils.nextInt(200, 399),
+            now
+        );
+        assertNotNull(mailId);
+    }
+
+    @Test
+    public void testInsert_NullVoteId() {
+        Date now = new Date();
+        Integer mailId = mailMessageDAO.insert(
+            RandomStringUtils.randomAlphanumeric(10),
+            null,
+            RandomUtils.nextInt(1, 1000),
+            EmailType.COLLECT.getTypeInt(),
+            now,
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomUtils.nextInt(200, 399),
+            now
+        );
+        assertNotNull(mailId);
+    }
+
+    @Test
+    public void testInsert_NullDateSent() {
+        Date now = new Date();
+        Integer mailId = mailMessageDAO.insert(
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomUtils.nextInt(1, 1000),
+            RandomUtils.nextInt(1, 1000),
+            EmailType.COLLECT.getTypeInt(),
+            null,
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomUtils.nextInt(200, 399),
+            now
+        );
+        assertNotNull(mailId);
+    }
+
+    @Test
+    public void testInsert_NullSendGridResponse() {
+        Date now = new Date();
+        Integer mailId = mailMessageDAO.insert(
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomUtils.nextInt(1, 1000),
+            RandomUtils.nextInt(1, 1000),
+            EmailType.COLLECT.getTypeInt(),
+            now,
+            RandomStringUtils.randomAlphanumeric(10),
+            null,
+            RandomUtils.nextInt(200, 399),
+            now
+        );
+        assertNotNull(mailId);
+    }
+
+    @Test
+    public void testInsert_NullSendGridStatus() {
+        Date now = new Date();
+        Integer mailId = mailMessageDAO.insert(
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomUtils.nextInt(1, 1000),
+            RandomUtils.nextInt(1, 1000),
+            EmailType.COLLECT.getTypeInt(),
+            now,
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomStringUtils.randomAlphanumeric(10),
+            null,
             now
         );
         assertNotNull(mailId);
