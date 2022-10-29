@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.Test;
 
 import java.util.Date;
@@ -121,5 +122,21 @@ public class MailMessageDAOTest extends DAOTestHelper {
             now
         );
         assertNotNull(mailId);
+    }
+
+    @Test(expected = UnableToExecuteStatementException.class)
+    public void testInsert_MissingRequired() {
+        Date now = new Date();
+        mailMessageDAO.insert(
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomUtils.nextInt(1, 1000),
+            null,
+            null,
+            now,
+            null,
+            RandomStringUtils.randomAlphanumeric(10),
+            RandomUtils.nextInt(200, 399),
+            null
+        );
     }
 }
