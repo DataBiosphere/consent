@@ -30,8 +30,8 @@ import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.Writer;
+import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,23 +135,21 @@ public class EmailService {
             @Nullable Response response,
             @Nullable String entityReferenceId,
             @Nullable Integer voteId,
-//            @Nullable Integer electionId,
             Integer userId,
             EmailType emailType,
             Writer template) {
-        Date date = new Date();
-        Date dateSent = (Objects.nonNull(response) && response.getStatusCode() < 400)? date : null;
+        Instant now = Instant.now();
+        Instant dateSent = (Objects.nonNull(response) && response.getStatusCode() < 400)? now : null;
         emailDAO.insert(
             entityReferenceId,
             voteId,
-//            electionId,
             userId,
             emailType.getTypeInt(),
             dateSent,
             template.toString(),
             Objects.nonNull(response) ? response.getBody() : null,
             Objects.nonNull(response) ? response.getStatusCode() : null,
-            date);
+            now);
     }
 
     public void sendCollectMessage(Integer electionId) throws MessagingException, IOException, TemplateException {

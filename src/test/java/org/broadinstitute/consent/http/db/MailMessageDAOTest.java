@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.Test;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.EnumSet;
 
 import static org.junit.Assert.assertNotNull;
@@ -25,7 +25,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
     @Test
     public void testInsert_AllFields() {
-        Date now = new Date();
+        Instant now = Instant.now();
         Integer mailId = mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
                 RandomUtils.nextInt(1, 1000),
@@ -43,7 +43,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
     @Test
     public void testInsert_AllEmailTypes() {
         EnumSet.allOf(EmailType.class).forEach(t -> {
-            Date now = new Date();
+            Instant now = Instant.now();
             Integer mailId = mailMessageDAO.insert(
                     RandomStringUtils.randomAlphanumeric(10),
                     RandomUtils.nextInt(1, 1000),
@@ -62,7 +62,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
     @Test
     public void testInsert_NullEntityReferenceId() {
-        Date now = new Date();
+        Instant now = Instant.now();
         Integer mailId = mailMessageDAO.insert(
                 null,
                 RandomUtils.nextInt(1, 1000),
@@ -79,7 +79,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
     @Test
     public void testInsert_NullVoteId() {
-        Date now = new Date();
+        Instant now = Instant.now();
         Integer mailId = mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
                 null,
@@ -96,7 +96,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
     @Test
     public void testInsert_NullDateSent() {
-        Date now = new Date();
+        Instant now = Instant.now();
         Integer mailId = mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
                 RandomUtils.nextInt(1, 1000),
@@ -113,7 +113,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
     @Test
     public void testInsert_NullSendGridResponse() {
-        Date now = new Date();
+        Instant now = Instant.now();
         Integer mailId = mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
                 RandomUtils.nextInt(1, 1000),
@@ -130,7 +130,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
     @Test
     public void testInsert_NullSendGridStatus() {
-        Date now = new Date();
+        Instant now = Instant.now();
         Integer mailId = mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
                 RandomUtils.nextInt(1, 1000),
@@ -146,8 +146,8 @@ public class MailMessageDAOTest extends DAOTestHelper {
     }
 
     @Test(expected = UnableToExecuteStatementException.class)
-    public void testInsert_MissingRequired() {
-        Date now = new Date();
+    public void testInsert_MissingUserId() {
+        Instant now = Instant.now();
         mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
                 RandomUtils.nextInt(1, 1000),
@@ -155,6 +155,54 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 null,
                 now,
                 null,
+                RandomStringUtils.randomAlphanumeric(10),
+                RandomUtils.nextInt(200, 399),
+                null
+        );
+    }
+
+    @Test(expected = UnableToExecuteStatementException.class)
+    public void testInsert_MissingEmailType() {
+        Instant now = Instant.now();
+        mailMessageDAO.insert(
+                RandomStringUtils.randomAlphanumeric(10),
+                RandomUtils.nextInt(1, 1000),
+                RandomUtils.nextInt(1, 1000),
+                null,
+                now,
+                null,
+                RandomStringUtils.randomAlphanumeric(10),
+                RandomUtils.nextInt(200, 399),
+                null
+        );
+    }
+
+    @Test(expected = UnableToExecuteStatementException.class)
+    public void testInsert_MissingEmailText() {
+        Instant now = Instant.now();
+        mailMessageDAO.insert(
+                RandomStringUtils.randomAlphanumeric(10),
+                RandomUtils.nextInt(1, 1000),
+                RandomUtils.nextInt(1, 1000),
+                EmailType.COLLECT.getTypeInt(),
+                now,
+                null,
+                RandomStringUtils.randomAlphanumeric(10),
+                RandomUtils.nextInt(200, 399),
+                null
+        );
+    }
+
+    @Test(expected = UnableToExecuteStatementException.class)
+    public void testInsert_MissingCreateDate() {
+        Instant now = Instant.now();
+        mailMessageDAO.insert(
+                RandomStringUtils.randomAlphanumeric(10),
+                RandomUtils.nextInt(1, 1000),
+                RandomUtils.nextInt(1, 1000),
+                EmailType.COLLECT.getTypeInt(),
+                now,
+                RandomStringUtils.randomAlphanumeric(10),
                 RandomStringUtils.randomAlphanumeric(10),
                 RandomUtils.nextInt(200, 399),
                 null

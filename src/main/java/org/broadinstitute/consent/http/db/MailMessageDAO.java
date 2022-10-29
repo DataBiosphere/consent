@@ -9,7 +9,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import javax.annotation.Nullable;
-import java.util.Date;
+import java.time.Instant;
 
 @RegisterRowMapper(MailMessageMapper.class)
 public interface MailMessageDAO extends Transactional<MailMessageDAO> {
@@ -27,9 +27,9 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
                 @Nullable @Bind("voteId") Integer voteId,
                 @Bind("userId") Integer userId,
                 @Bind("emailType") Integer emailType,
-                @Nullable @Bind("dateSent") Date dateSent,
+                @Nullable @Bind("dateSent") Instant dateSent,
                 @Bind("emailText") String emailText,
                 @Nullable @Bind("sendGridResponse") String sendGridResponse,
                 @Nullable @Bind("sendGridStatus") Integer sendGridStatus,
-                @Bind("createDate") Date createDate);
+                @Bind("createDate") Instant createDate);
 }
