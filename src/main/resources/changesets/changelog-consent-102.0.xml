@@ -3,5 +3,6 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <changeSet id="102.0" author="grushton">
         <dropNotNullConstraint columnName="date_sent" tableName="email_entity"/>
+        <dropTable tableName="email_type" cascadeConstraints="true"/>
     </changeSet>
 </databaseChangeLog>
