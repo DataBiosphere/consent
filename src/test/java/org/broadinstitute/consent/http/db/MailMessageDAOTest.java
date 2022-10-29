@@ -59,7 +59,6 @@ public class MailMessageDAOTest extends DAOTestHelper {
         });
     }
 
-
     @Test
     public void testInsert_NullEntityReferenceId() {
         Instant now = Instant.now();
