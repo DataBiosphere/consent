@@ -80,7 +80,13 @@ public class SendGridAPI {
                 for (String key : sendGrid.getRequestHeaders().keySet())
                     request.addHeader(key, sendGrid.getRequestHeaders().get(key));
                 // send
-                return Optional.of(sendGrid.makeCall(request));
+                Response response = sendGrid.makeCall(request);
+                if (response.getStatusCode() > 202) {
+                    // Indicates some form of error:
+                    // https://docs.sendgrid.com/api-reference/mail-send/mail-send#responses
+                    logger.error(String.format("Error sending email via SendGrid: '%s': %s", response.getStatusCode(), response.getBody()));
+                }
+                return Optional.of(response);
             } catch (IOException ex) {
                 logger.error("Exception sending email via SendGrid: " + ex.getMessage());
                 // Create a response that we can use to capture this failure.
