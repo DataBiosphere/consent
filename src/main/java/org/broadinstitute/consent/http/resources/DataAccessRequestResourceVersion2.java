@@ -18,6 +18,8 @@ import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
