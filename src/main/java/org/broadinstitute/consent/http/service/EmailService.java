@@ -98,6 +98,31 @@ public class EmailService {
         this.SERVER_URL = serverUrl;
     }
 
+    /**
+     * This method saves an email (either sent or unsent) with all available
+     * metadata from the SendGrid response.
+     */
+    private void saveEmailAndResponse(
+            @Nullable Response response,
+            @Nullable String entityReferenceId,
+            @Nullable Integer voteId,
+            Integer userId,
+            EmailType emailType,
+            Writer template) {
+        Instant now = Instant.now();
+        Instant dateSent = (Objects.nonNull(response) && response.getStatusCode() < 400)? now : null;
+        emailDAO.insert(
+            entityReferenceId,
+            voteId,
+            userId,
+            emailType.getTypeInt(),
+            dateSent,
+            template.toString(),
+            Objects.nonNull(response) ? response.getBody() : null,
+            Objects.nonNull(response) ? response.getStatusCode() : null,
+            now);
+    }
+
     public void sendNewDARCollectionMessage(Integer collectionId) throws IOException, TemplateException {
         DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
         List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
@@ -125,31 +150,6 @@ public class EmailService {
                 template
             );
         }
-    }
-
-
-    /**
-     * This method saves an email (either sent or unsent) with all known metadata
-     */
-    private void saveEmailAndResponse(
-            @Nullable Response response,
-            @Nullable String entityReferenceId,
-            @Nullable Integer voteId,
-            Integer userId,
-            EmailType emailType,
-            Writer template) {
-        Instant now = Instant.now();
-        Instant dateSent = (Objects.nonNull(response) && response.getStatusCode() < 400)? now : null;
-        emailDAO.insert(
-            entityReferenceId,
-            voteId,
-            userId,
-            emailType.getTypeInt(),
-            dateSent,
-            template.toString(),
-            Objects.nonNull(response) ? response.getBody() : null,
-            Objects.nonNull(response) ? response.getStatusCode() : null,
-            now);
     }
 
     public void sendCollectMessage(Integer electionId) throws MessagingException, IOException, TemplateException {
