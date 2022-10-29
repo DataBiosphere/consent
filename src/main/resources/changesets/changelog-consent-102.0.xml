@@ -2,7 +2,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <changeSet id="102.0" author="grushton">
-        <modifyDataType tableName="email_entity" columnName="create_date" newDataType="timestamp"/>
+        <modifyDataType tableName="email_entity" columnName="create_date" newDataType="timestamp with timezone"/>
         <sql>
             UPDATE email_entity SET create_date = date_sent WHERE date_sent IS NOT NULL AND create_date IS NULL;
             UPDATE email_entity SET create_date = date_sent WHERE create_date IS NULL;
