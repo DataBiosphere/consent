@@ -7,8 +7,6 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -26,7 +24,6 @@ import java.util.Optional;
 public class DACUserResource extends Resource {
 
     private final UserService userService;
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
     public DACUserResource(UserService userService) {
@@ -82,7 +79,7 @@ public class DACUserResource extends Resource {
                 }
             }
         } catch (Exception e) {
-            logger.warn("Unable to extract email preference from: " + json + " : " + e.getMessage());
+            logWarn("Unable to extract email preference from: " + json + " : " + e.getMessage());
         }
         return aBoolean;
     }

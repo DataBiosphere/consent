@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.MalformedJsonException;
+import io.sentry.Sentry;
+import io.sentry.SentryEvent;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -9,12 +11,12 @@ import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.owasp.fileio.FileValidator;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
@@ -33,7 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 
 /**
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
  * <p/>
  * Abstract superclass for all Resources.
  */
-abstract public class Resource {
+abstract public class Resource implements ConsentLogger {
 
     // Resource based role names
     public final static String ADMIN = "Admin";
@@ -59,22 +60,18 @@ abstract public class Resource {
         new AbstractMap.SimpleEntry<>(PSQLState.UNIQUE_VIOLATION.getState(), Response.Status.CONFLICT.getStatusCode())
     );
 
-    protected Logger logger() {
-        return LoggerFactory.getLogger(this.getClass());
-    }
-
     protected Response createExceptionResponse(Exception e) {
         try {
-            logger().warn("Returning error response to client: " + e.getMessage());
+            logWarn("Returning error response to client: " + e.getMessage());
             ExceptionHandler handler = dispatch.get(e.getClass());
             if (handler != null) {
                 return handler.handle(e);
             } else {
-                logger().error(e.getMessage());
+                logException(e);
                 return Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
             }
         } catch (Throwable t) {
-            logger().error(t.getMessage());
+            logThrowable(t);
             return Response.serverError().type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
@@ -84,7 +81,7 @@ abstract public class Resource {
             try {
                 output.write(IOUtils.toByteArray(inputStream));
             } catch (Exception e) {
-                logger().error(e.getMessage());
+                logException(e);
                 throw e;
             }
         };
@@ -145,6 +142,8 @@ abstract public class Resource {
 
     private static Response errorLoggedExceptionHandler(Exception e, Error error) {
         LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
+        // static makes using the interface less flexible
+        Sentry.captureEvent(new SentryEvent(e));
         return Response.serverError().type(MediaType.APPLICATION_JSON).entity(error).build();
     }
 
@@ -152,6 +151,8 @@ abstract public class Resource {
     private static Response unableToExecuteExceptionHandler(Exception e) {
         //default status definition
         LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
+        // static makes using the interface less flexible
+        Sentry.captureEvent(new SentryEvent(e));
         Integer status = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
 
         try {
@@ -189,8 +190,7 @@ abstract public class Resource {
      */
     void validateAuthedRoleUser(final List<UserRoles> privilegedRoles, final User authedUser, final Integer userId) {
         List<Integer> authedRoleIds = privilegedRoles.stream().
-                map(UserRoles::getRoleId).
-                collect(Collectors.toList());
+                map(UserRoles::getRoleId).toList();
         boolean authedUserHasRole = authedUser.getRoles().stream().
                 anyMatch(userRole -> authedRoleIds.contains(userRole.getRoleId()));
         if (!authedUserHasRole && !authedUser.getUserId().equals(userId)) {
