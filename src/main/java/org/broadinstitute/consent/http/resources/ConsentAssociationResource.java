@@ -26,7 +26,7 @@ import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.util.List;
 
-@Path("{auth: (basic/|api/)?}consent/{consentId}/association")
+@Path("api/consent/{consentId}/association")
 public class ConsentAssociationResource extends Resource {
 
     private final ConsentService consentService;
