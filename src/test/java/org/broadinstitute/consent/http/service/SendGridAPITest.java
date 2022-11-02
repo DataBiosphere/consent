@@ -119,15 +119,6 @@ public class SendGridAPITest {
     }
 
     @Test
-    public void testNewResearcherCreatedMessage() {
-        try {
-            sendGridAPI.sendNewResearcherCreatedMessage(TO, template);
-        } catch (Exception e) {
-            Assert.fail("Should not throw exception");
-        }
-    }
-
-    @Test
     public void testNewResearcherApprovedMessage() {
         try {
             sendGridAPI.sendNewResearcherApprovedMessage(TO, template, "Test");

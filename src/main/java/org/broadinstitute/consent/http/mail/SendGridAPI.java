@@ -16,7 +16,6 @@ import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
 import org.broadinstitute.consent.http.mail.message.FlaggedDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
-import org.broadinstitute.consent.http.mail.message.NewResearcherCreatedMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
 import org.slf4j.Logger;
@@ -42,7 +41,6 @@ public class SendGridAPI {
     private final FlaggedDarApprovedMessage adminApprovedDarMessageCreator = new FlaggedDarApprovedMessage();
     private final ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
     private final DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
-    private final NewResearcherCreatedMessage researcherCreatedMessage = new NewResearcherCreatedMessage();
     private final ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
     private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
 
@@ -125,12 +123,6 @@ public class SendGridAPI {
         Mail message = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(toAddress, fromAccount, template);
         return sendMessage(message);
     }
-
-    public Optional<Response> sendNewResearcherCreatedMessage(String toAddress, Writer template) {
-        Mail message = researcherCreatedMessage.newResearcherCreatedMessage(toAddress, fromAccount, template, "", "");
-        return sendMessage(message);
-    }
-
     public Optional<Response> sendNewResearcherApprovedMessage(String toAddress, Writer template, String darCode) {
         Mail message = researcherApprovedMessage.researcherApprovedMessage(toAddress, fromAccount, template, darCode);
         return sendMessage(message);
