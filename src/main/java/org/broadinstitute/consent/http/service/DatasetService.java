@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -10,6 +11,7 @@ import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
@@ -57,17 +59,22 @@ public class DatasetService {
     private final DatasetDAO datasetDAO;
     private final DatasetServiceDAO datasetServiceDAO;
     private final UserRoleDAO userRoleDAO;
+    private final DacDAO dacDAO;
     private final UseRestrictionConverter converter;
+    private final EmailNotifierService emailNotifierService;
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
-                          DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, UseRestrictionConverter converter) {
+                          DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO, UseRestrictionConverter converter,
+                          EmailNotifierService emailNotifierService) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.datasetDAO = dataSetDAO;
         this.datasetServiceDAO = datasetServiceDAO;
         this.userRoleDAO = userRoleDAO;
+        this.dacDAO = dacDAO;
         this.converter = converter;
+        this.emailNotifierService = emailNotifierService;
     }
 
     public List<Dataset> getDataSetsForConsent(String consentId) {
@@ -474,7 +481,34 @@ public class DatasetService {
                 throw new IllegalArgumentException("Dataset is already approved");
             }
         }
+
+        try {
+            // if approval state changed
+            if (currentApprovalState != datasetReturn.getDacApproval()) {
+                this.sendDatasetApprovalNotificationEmail(dataset, user, approval);
+            }
+        } catch (Exception e) {
+            logger.error("Unable to notifier Data Submitter of dataset approval status: " + dataset.getDatasetIdentifier());
+        }
         return datasetReturn;
+    }
+
+    private void sendDatasetApprovalNotificationEmail(Dataset dataset, User user, Boolean approval) throws Exception {
+        Dac dac = this.dacDAO.findById(dataset.getDacId());
+        if (approval) {
+            this.emailNotifierService.sendDatasetApprovedMessage(
+                    user.getEmail(),
+                    user.getDisplayName(),
+                    dac.getName(),
+                    dataset.getDatasetIdentifier());
+        } else {
+            this.emailNotifierService.sendDatasetDeniedMessage(
+                    user.getEmail(),
+                    user.getDisplayName(),
+                    dac.getName(),
+                    dataset.getDatasetIdentifier());
+        }
+
     }
 
     private boolean filterDatasetOnProperties(DatasetDTO dataset, String term) {

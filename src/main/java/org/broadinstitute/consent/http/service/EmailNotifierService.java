@@ -238,6 +238,26 @@ public class EmailNotifierService {
         }
     }
 
+    public void sendDatasetApprovedMessage(String toAddress,
+                                           String dataSubmitterName,
+                                           String dacName,
+                                           String datasetName) throws Exception {
+        if (isServiceActive) {
+            Writer template = templateHelper.getDatasetApprovedTemplate(dataSubmitterName, datasetName, dacName);
+            sendGridAPI.sendDatasetApprovedMessage(toAddress, template);
+        }
+    }
+
+    public void sendDatasetDeniedMessage(String toAddress,
+                                           String dataSubmitterName,
+                                           String dacName,
+                                           String datasetName) throws Exception {
+        if (isServiceActive) {
+            Writer template = templateHelper.getDatasetDeniedTemplate(dataSubmitterName, datasetName, dacName);
+            sendGridAPI.sendDatasetDeniedMessage(toAddress, template);
+        }
+    }
+
     private Set<String> getEmails(List<User> users) {
         return users.stream()
                 .map(u -> List.of(u.getEmail()))

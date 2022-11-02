@@ -3,12 +3,14 @@ package org.broadinstitute.consent.http.service;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -75,9 +77,12 @@ public class DatasetServiceTest {
 
     @Mock
     private UserRoleDAO userRoleDAO;
-
+    @Mock
+    private DacDAO dacDAO;
     @Mock
     private UseRestrictionConverter useRestrictionConverter;
+    @Mock
+    private EmailNotifierService emailNotifierService;
 
     @Before
     public void setUp() {
@@ -85,7 +90,7 @@ public class DatasetServiceTest {
     }
 
     private void initService() {
-        datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, datasetServiceDAO, userRoleDAO, useRestrictionConverter);
+        datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, datasetServiceDAO, userRoleDAO, dacDAO, useRestrictionConverter, emailNotifierService);
     }
 
     @Test
@@ -677,14 +682,22 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void testApproveDataset_AlreadyApproved_TrueSubmission() {
+    public void testApproveDataset_AlreadyApproved_TrueSubmission() throws Exception {
         Dataset dataset = new Dataset();
         User user = new User();
+        user.setEmail("asdf@gmail.com");
+        user.setDisplayName("John Doe");
         dataset.setDacApproval(true);
         dataset.setDataSetId(1);
         dataset.setUpdateDate(new Date());
         dataset.setUpdateUserId(4);
+        dataset.setAlias(1);
+        dataset.setDacId(3);
+        Dac dac = new Dac();
+        dac.setName("DAC NAME");
+        spy(emailNotifierService);
         initService();
+        when(dacDAO.findById(3)).thenReturn(dac);
 
         Dataset datasetResult = datasetService.approveDataset(dataset, user, true);
         assertNotNull(datasetResult);
@@ -692,6 +705,12 @@ public class DatasetServiceTest {
         assertEquals(dataset.getUpdateUserId(), datasetResult.getUpdateUserId());
         assertEquals(dataset.getDacApproval(), datasetResult.getDacApproval());
         assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
+        verify(emailNotifierService, times(0)).sendDatasetApprovedMessage(
+                any(),
+                any(),
+                any(),
+                any()
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -715,22 +734,73 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void testApproveDataset() {
+    public void testApproveDataset() throws Exception {
         Dataset dataset = new Dataset();
         dataset.setDataSetId(1);
         User user = new User();
         user.setUserId(1);
+        user.setEmail("asdf@gmail.com");
+        user.setDisplayName("John Doe");
         Boolean payloadBool = true;
         Dataset updatedDataset = new Dataset();
         updatedDataset.setDataSetId(1);
         updatedDataset.setDacApproval(payloadBool);
 
         when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
+        dataset.setAlias(1);
+        dataset.setDacId(3);
+        Dac dac = new Dac();
+        dac.setName("DAC NAME");
+        spy(emailNotifierService);
         initService();
+        when(dacDAO.findById(3)).thenReturn(dac);
 
         Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
         assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
         assertTrue(returnedDataset.getDacApproval());
+
+        // send approved email
+        verify(emailNotifierService, times(1)).sendDatasetApprovedMessage(
+                "asdf@gmail.com",
+                "John Doe",
+                "DAC NAME",
+                "DUOS-000001"
+        );
+    }
+
+    @Test
+    public void testApproveDataset_DenyDataset() throws Exception {
+        Dataset dataset = new Dataset();
+        dataset.setDataSetId(1);
+        User user = new User();
+        user.setUserId(1);
+        user.setEmail("asdf@gmail.com");
+        user.setDisplayName("John Doe");
+        Boolean payloadBool = false;
+        Dataset updatedDataset = new Dataset();
+        updatedDataset.setDataSetId(1);
+        updatedDataset.setDacApproval(payloadBool);
+
+        when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
+        dataset.setAlias(1);
+        dataset.setDacId(3);
+        Dac dac = new Dac();
+        dac.setName("DAC NAME");
+        spy(emailNotifierService);
+        initService();
+        when(dacDAO.findById(3)).thenReturn(dac);
+
+        Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
+        assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
+        assertFalse(returnedDataset.getDacApproval());
+
+        // send denied email
+        verify(emailNotifierService, times(1)).sendDatasetDeniedMessage(
+                "asdf@gmail.com",
+                "John Doe",
+                "DAC NAME",
+                "DUOS-000001"
+        );
     }
 
     /* Helper functions */

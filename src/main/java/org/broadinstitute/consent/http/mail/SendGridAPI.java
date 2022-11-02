@@ -11,6 +11,8 @@ import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage
 import org.broadinstitute.consent.http.mail.message.CollectMessage;
 import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
 import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.mail.message.DelegateResponsibilitiesMessage;
 import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
 import org.broadinstitute.consent.http.mail.message.FlaggedDarApprovedMessage;
@@ -21,6 +23,7 @@ import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.mail.MessagingException;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
@@ -43,6 +46,8 @@ public class SendGridAPI {
     private final DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
     private final ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
     private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
+    private final DatasetApprovedMessage datasetApprovedMessage = new DatasetApprovedMessage();
+    private final DatasetDeniedMessage datasetDeniedMessage = new DatasetDeniedMessage();
 
     public SendGridAPI(MailConfiguration config) {
         this.fromAccount = config.getGoogleAccount();
@@ -131,6 +136,16 @@ public class SendGridAPI {
     public Optional<Response> sendDataCustodianApprovalMessage(String toAddress, String darCode, Writer template) {
         Mail message = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAccount, darCode, template);
         return sendMessage(message);
+    }
+
+    public void sendDatasetApprovedMessage(String toAddress, Writer template) throws MessagingException {
+        Mail message = datasetApprovedMessage.datasetApprovedMessage(toAddress, fromAccount, template);
+        sendMessage(message);
+    }
+
+    public void sendDatasetDeniedMessage(String toAddress, Writer template) throws MessagingException {
+        Mail message = datasetDeniedMessage.datasetDeniedMessage(toAddress, fromAccount, template);
+        sendMessage(message);
     }
 
 }
