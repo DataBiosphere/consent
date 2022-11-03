@@ -84,6 +84,7 @@ public class DataRequestElectionResource extends Resource {
     }
 
 
+    @Deprecated // See DUOS-2176
     @GET
     @Produces("application/json")
     @PermitAll

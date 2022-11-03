@@ -47,6 +47,7 @@ public class ElectionReviewResource extends Resource {
         return ("{ \"open\" : " + service.openElections() + " }");
     }
 
+    @Deprecated // See DUOS-2176
     @GET
     @Path("access/{electionId}")
     @Produces("application/json")
@@ -68,6 +69,7 @@ public class ElectionReviewResource extends Resource {
         return accessElectionReview;
     }
 
+    @Deprecated // See DUOS-2176
     @GET
     @Path("rp/{electionId}")
     @Produces("application/json")
