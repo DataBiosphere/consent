@@ -25,8 +25,6 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.authentication.BasicAuthenticator;
-import org.broadinstitute.consent.http.authentication.BasicCustomAuthFilter;
 import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
 import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
@@ -278,7 +276,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 .buildAuthFilter();
         List<AuthFilter> filters = Lists.newArrayList(
                 defaultAuthFilter,
-                new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())),
                 new OAuthCustomAuthFilter(authenticator, userRoleDAO));
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);

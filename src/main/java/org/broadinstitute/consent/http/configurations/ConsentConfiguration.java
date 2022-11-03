@@ -48,10 +48,6 @@ public class ConsentConfiguration extends Configuration {
     @NotNull
     private GoogleOAuth2Config googleAuthentication = new GoogleOAuth2Config();
 
-    @Valid
-    @NotNull
-    private BasicAuthConfig basicAuthentication = new BasicAuthConfig();
-
     @JsonProperty("datasets")
     private List<String> datasets = new ArrayList<>();
 
@@ -90,14 +86,6 @@ public class ConsentConfiguration extends Configuration {
 
     public FreeMarkerConfiguration getFreeMarkerConfiguration() {
         return freeMarkerConfiguration;
-    }
-
-    public BasicAuthConfig getBasicAuthentication() {
-        return basicAuthentication;
-    }
-
-    public void setBasicAuthentication(BasicAuthConfig basicAuthentication) {
-        this.basicAuthentication = basicAuthentication;
     }
 
     public GoogleOAuth2Config getGoogleAuthentication() {

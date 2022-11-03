@@ -16,7 +16,7 @@ public class DefaultAuthFilter<P extends Principal> extends AuthFilter<String, P
   @Override
   public void filter(ContainerRequestContext requestContext) {
     String path = requestContext.getUriInfo().getPath();
-    boolean match = path.matches("^(basic/|api/).*");
+    boolean match = path.matches("^(api/).*");
     if (!match) {
       logger.warn("Error processing path: " + path);
       throw new WebApplicationException(401);

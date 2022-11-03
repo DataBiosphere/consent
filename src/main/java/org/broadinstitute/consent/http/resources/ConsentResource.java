@@ -34,7 +34,7 @@ import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 
-@Path("{auth: (basic/|api/)?}consent")
+@Path("api/consent")
 public class ConsentResource extends Resource {
 
     private final ConsentService consentService;
