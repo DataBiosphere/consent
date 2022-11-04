@@ -96,7 +96,7 @@ public class SendGridAPITest {
     }
 
     @Test
-    public void testUserDisabled() throws Exception {
+    public void testUserEmailDisabled() throws Exception {
         configureApi(true);
         when(sendGrid.getHost()).thenReturn("host");
         when(sendGrid.getVersion()).thenReturn("version");
