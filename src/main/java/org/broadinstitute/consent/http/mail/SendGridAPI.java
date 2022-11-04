@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.mail;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
@@ -109,6 +110,10 @@ public class SendGridAPI {
 
     public Optional<Response> sendMessage(Mail message) {
         boolean userEmailPreference = findUserEmailPreference(message);
+        if (!userEmailPreference) {
+            Gson gson = new Gson();
+            logger.info("User Email Preference has evaluated to 'false', not sending to: " + gson.toJson(message.getPersonalization()));
+        }
         if (activateEmailNotifications && userEmailPreference) {
             try {
                 // See https://github.com/sendgrid/sendgrid-java/issues/163
