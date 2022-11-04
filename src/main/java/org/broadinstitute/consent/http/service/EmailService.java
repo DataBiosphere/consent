@@ -211,7 +211,7 @@ public class EmailService {
         String entityId = election.getReferenceId();
         String entityName = retrieveReferenceId(election.getElectionType(), election.getReferenceId());
         for (Vote vote : votes) {
-            User user = describeDACUserById(vote.getDacUserId());
+            User user = findUserById(vote.getDacUserId());
             if (electionType.equals(ElectionTypeString.DATA_ACCESS.getValue())) {
                 rpVoteId = findRpVoteId(election.getElectionId(), user.getUserId());
             }
@@ -349,7 +349,7 @@ public class EmailService {
         );
     }
 
-    private User describeDACUserById(Integer id) throws IllegalArgumentException {
+    private User findUserById(Integer id) throws IllegalArgumentException {
         User user = userDAO.findUserById(id);
         if (user == null) {
             throw new NotFoundException("Could not find dacUser for specified id : " + id);
@@ -382,7 +382,7 @@ public class EmailService {
     private Map<String, String> retrieveForVote(Integer voteId) {
         Vote vote = voteDAO.findVoteById(voteId);
         Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
-        User user = describeDACUserById(vote.getDacUserId());
+        User user = findUserById(vote.getDacUserId());
 
         Map<String, String> dataMap = new HashMap<>();
         dataMap.put("userName", user.getDisplayName());

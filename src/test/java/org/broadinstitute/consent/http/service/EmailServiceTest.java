@@ -65,7 +65,7 @@ public class EmailServiceTest {
         mConfig.setActivateEmailNotifications(serviceActive);
         mConfig.setGoogleAccount("");
         mConfig.setSendGridApiKey("");
-        SendGridAPI sendGridAPI = new SendGridAPI(mConfig);
+        SendGridAPI sendGridAPI = new SendGridAPI(mConfig, userDAO);
 
         FreeMarkerConfiguration fmConfig = new FreeMarkerConfiguration();
         fmConfig.setDefaultEncoding("UTF-8");

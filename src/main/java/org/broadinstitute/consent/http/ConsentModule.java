@@ -326,7 +326,9 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     SendGridAPI providesSendGridAPI() {
-        return new SendGridAPI(config.getMailConfiguration());
+        return new SendGridAPI(
+            config.getMailConfiguration(),
+            providesUserDAO());
     }
 
     @Provides
