@@ -110,17 +110,17 @@ public class EmailService {
             EmailType emailType,
             Writer template) {
         Instant now = Instant.now();
-        Instant dateSent = (Objects.nonNull(response) && response.getStatusCode() < 400)? now : null;
+        Instant dateSent = (Objects.nonNull(response) && response.getStatusCode() < 400) ? now : null;
         emailDAO.insert(
-            entityReferenceId,
-            voteId,
-            userId,
-            emailType.getTypeInt(),
-            dateSent,
-            template.toString(),
-            Objects.nonNull(response) ? response.getBody() : null,
-            Objects.nonNull(response) ? response.getStatusCode() : null,
-            now);
+                entityReferenceId,
+                voteId,
+                userId,
+                emailType.getTypeInt(),
+                dateSent,
+                template.toString(),
+                Objects.nonNull(response) ? response.getBody() : null,
+                Objects.nonNull(response) ? response.getStatusCode() : null,
+                now);
     }
 
     public void sendNewDARCollectionMessage(Integer collectionId) throws IOException, TemplateException {
@@ -142,12 +142,12 @@ public class EmailService {
             Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
             Optional<Response> response = sendGridAPI.sendNewDARRequests(user.getEmail(), data.get("entityId"), data.get("electionType"), template);
             saveEmailAndResponse(
-                response.orElse(null),
-                collection.getDarCode(),
-                null,
-                user.getUserId(),
-                EmailType.NEW_DAR,
-                template
+                    response.orElse(null),
+                    collection.getDarCode(),
+                    null,
+                    user.getUserId(),
+                    EmailType.NEW_DAR,
+                    template
             );
         }
     }
@@ -162,12 +162,12 @@ public class EmailService {
             Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), collectUrl);
             Optional<Response> response = sendGridAPI.sendCollectMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
             saveEmailAndResponse(
-                response.orElse(null),
-                data.get("electionId"),
-                null,
-                Integer.valueOf(data.get("dacUserId")),
-                EmailType.COLLECT,
-                template
+                    response.orElse(null),
+                    data.get("electionId"),
+                    null,
+                    Integer.valueOf(data.get("dacUserId")),
+                    EmailType.COLLECT,
+                    template
             );
         }
     }
@@ -179,12 +179,12 @@ public class EmailService {
         Optional<Response> response = sendGridAPI.sendReminderMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
         voteDAO.updateVoteReminderFlag(voteId, true);
         saveEmailAndResponse(
-            response.orElse(null),
-            data.get("electionId"),
-            voteId,
-            Integer.valueOf(data.get("dacUserId")),
-            EmailType.REMINDER,
-            template
+                response.orElse(null),
+                data.get("electionId"),
+                voteId,
+                Integer.valueOf(data.get("dacUserId")),
+                EmailType.REMINDER,
+                template
         );
     }
 
@@ -195,12 +195,12 @@ public class EmailService {
             Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, darCode, SERVER_URL);
             Optional<Response> response = sendGridAPI.sendNewCaseMessage(user.getEmail(), darCode, electionType, template);
             saveEmailAndResponse(
-                response.orElse(null),
-                darCode,
-                null,
-                user.getUserId(),
-                EmailType.NEW_CASE,
-                template
+                    response.orElse(null),
+                    darCode,
+                    null,
+                    user.getUserId(),
+                    EmailType.NEW_CASE,
+                    template
             );
         }
     }
@@ -219,12 +219,12 @@ public class EmailService {
             Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, entityName, serverUrl);
             Optional<Response> response = sendGridAPI.sendNewCaseMessage(user.getEmail(), entityId, electionType, template);
             saveEmailAndResponse(
-                response.orElse(null),
-                entityName,
-                null,
-                user.getUserId(),
-                EmailType.NEW_CASE,
-                template
+                    response.orElse(null),
+                    entityName,
+                    null,
+                    user.getUserId(),
+                    EmailType.NEW_CASE,
+                    template
             );
         }
     }
@@ -233,12 +233,12 @@ public class EmailService {
         Writer template = templateHelper.getDisabledDatasetsTemplate(user.getDisplayName(), disabledDatasets, dataAccessRequestId, SERVER_URL);
         Optional<Response> response = sendGridAPI.sendDisabledDatasetMessage(user.getEmail(), dataAccessRequestId, null, template);
         saveEmailAndResponse(
-            response.orElse(null),
-            dataAccessRequestId,
-            null,
-            user.getUserId(),
-            EmailType.DISABLED_DATASET,
-            template
+                response.orElse(null),
+                dataAccessRequestId,
+                null,
+                user.getUserId(),
+                EmailType.DISABLED_DATASET,
+                template
         );
     }
 
@@ -261,12 +261,12 @@ public class EmailService {
             users.forEach(u -> {
                 Optional<Response> response = sendGridAPI.sendClosedDatasetElectionsMessage(u.getEmail(), "", "", template);
                 saveEmailAndResponse(
-                    response.orElse(null),
-                    null,
-                    null,
-                    u.getUserId(),
-                    EmailType.CLOSED_DATASET_ELECTION,
-                    template
+                        response.orElse(null),
+                        null,
+                        null,
+                        u.getUserId(),
+                        EmailType.CLOSED_DATASET_ELECTION,
+                        template
                 );
             });
         }
@@ -277,12 +277,12 @@ public class EmailService {
             Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVER_URL);
             Optional<Response> response = sendGridAPI.sendFlaggedDarAdminApprovedMessage(admin.getEmail(), darCode, SERVER_URL, template);
             saveEmailAndResponse(
-                response.orElse(null),
-                darCode,
-                null,
-                admin.getUserId(),
-                EmailType.ADMIN_FLAGGED_DAR_APPROVED,
-                template
+                    response.orElse(null),
+                    darCode,
+                    null,
+                    admin.getUserId(),
+                    EmailType.ADMIN_FLAGGED_DAR_APPROVED,
+                    template
             );
         }
     }
@@ -292,12 +292,12 @@ public class EmailService {
         Writer template = templateHelper.getResearcherDarApprovedTemplate(darCode, user.getDisplayName(), datasets, dataUseRestriction, user.getEmail());
         Optional<Response> response = sendGridAPI.sendNewResearcherApprovedMessage(user.getEmail(), template, darCode);
         saveEmailAndResponse(
-            response.orElse(null),
-            darCode,
-            null,
-            user.getUserId(),
-            EmailType.RESEARCHER_DAR_APPROVED,
-            template
+                response.orElse(null),
+                darCode,
+                null,
+                user.getUserId(),
+                EmailType.RESEARCHER_DAR_APPROVED,
+                template
         );
     }
 
@@ -310,13 +310,29 @@ public class EmailService {
                 dataDepositorName, darCode, researcherEmail);
         Optional<Response> response = sendGridAPI.sendDataCustodianApprovalMessage(custodian.getEmail(), darCode, template);
         saveEmailAndResponse(
-            response.orElse(null),
-            darCode,
-            null,
-            custodian.getUserId(),
-            EmailType.RESEARCHER_DAR_APPROVED,
-            template
+                response.orElse(null),
+                darCode,
+                null,
+                custodian.getUserId(),
+                EmailType.RESEARCHER_DAR_APPROVED,
+                template
         );
+    }
+
+    public void sendDatasetApprovedMessage(String toAddress,
+                                           String dataSubmitterName,
+                                           String dacName,
+                                           String datasetName) throws Exception {
+        Writer template = templateHelper.getDatasetApprovedTemplate(dataSubmitterName, datasetName, dacName);
+        sendGridAPI.sendDatasetApprovedMessage(toAddress, template);
+    }
+
+    public void sendDatasetDeniedMessage(String toAddress,
+                                         String dataSubmitterName,
+                                         String dacName,
+                                         String datasetName) throws Exception {
+        Writer template = templateHelper.getDatasetDeniedTemplate(dataSubmitterName, datasetName, dacName);
+        sendGridAPI.sendDatasetDeniedMessage(toAddress, template);
     }
 
     private User describeDACUserById(Integer id) throws IllegalArgumentException {
