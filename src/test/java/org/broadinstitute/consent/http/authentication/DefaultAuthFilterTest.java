@@ -5,9 +5,7 @@ import io.dropwizard.auth.DefaultUnauthorizedHandler;
 import io.dropwizard.auth.UnauthorizedHandler;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.Spy;
 
@@ -23,22 +21,18 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DefaultAuthFilterTest {
 
-    private Optional principal = Optional.of("Testing DefaulthAuthFilter");
-
-    @Rule
-    public ExpectedException expectedEx = ExpectedException.none();
     @Mock
-    ContainerRequestContext requestContext;
+    private ContainerRequestContext requestContext;
     @Mock
-    MultivaluedMap<String, String> headers;
+    private MultivaluedMap<String, String> headers;
     @Mock
-    UriInfo uriInfo;
+    private UriInfo uriInfo;
     @Spy
-    DefaultAuthenticator authenticator = new DefaultAuthenticator();
+    private final DefaultAuthenticator authenticator = new DefaultAuthenticator();
     @Spy
-    UnauthorizedHandler unauthorizedHandler = new DefaultUnauthorizedHandler();
+    private final UnauthorizedHandler unauthorizedHandler = new DefaultUnauthorizedHandler();
 
-    AuthFilter filter = new DefaultAuthFilter.Builder<AuthUser>()
+    private final AuthFilter<String, AuthUser> filter = new DefaultAuthFilter.Builder<AuthUser>()
             .setAuthenticator(authenticator)
             .setRealm(" ")
             .setUnauthorizedHandler(unauthorizedHandler)
@@ -51,26 +45,16 @@ public class DefaultAuthFilterTest {
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
     }
 
-    @Test
+    @Test(expected = WebApplicationException.class)
     public void testUnauthorizedUrl() throws Exception {
         when(uriInfo.getPath()).thenReturn("/something");
         when(headers.getFirst("Authorization")).thenReturn(null);
-        expectedEx.expect(WebApplicationException.class);
-        expectedEx.expectMessage("HTTP 401 Unauthorized");
         filter.filter(requestContext);
     }
 
     @Test
-    public void testBasicUrl() throws Exception {
-        principal = Optional.of("Testing principal");
-        when(authenticator.authenticate(notNull())).thenReturn(principal);
-        when(uriInfo.getPath()).thenReturn("basic/something");
-        filter.filter(requestContext);
-    }
-
-    @Test
-    public void testApiUrl() throws Exception{
-        principal = Optional.of("Testing principal");
+    public void testApiUrl() throws Exception {
+        Optional<AuthUser> principal = Optional.of(new AuthUser("test@email.com"));
         when(authenticator.authenticate(notNull())).thenReturn(principal);
         when(uriInfo.getPath()).thenReturn("api/something");
         filter.filter(requestContext);

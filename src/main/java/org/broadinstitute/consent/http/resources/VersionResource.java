@@ -5,8 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -17,9 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Path("/version")
-public class VersionResource {
-
-    private final Logger log = LoggerFactory.getLogger(VersionResource.class);
+public class VersionResource extends Resource {
 
     @GET
     @Produces("application/json")
@@ -32,7 +28,7 @@ public class VersionResource {
         try {
             return IOUtils.resourceToString("/git.properties", Charset.defaultCharset());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            logException(e);
         }
         return null;
     }

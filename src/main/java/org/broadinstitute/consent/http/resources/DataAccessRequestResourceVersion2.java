@@ -51,7 +51,6 @@ import java.util.stream.Stream;
 @Path("api/dar/v2")
 public class DataAccessRequestResourceVersion2 extends Resource {
 
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final DataAccessRequestService dataAccessRequestService;
   private final EmailService emailService;
   private final GCSService gcsService;
@@ -100,7 +99,8 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       try {
           emailService.sendNewDARCollectionMessage(collectionId);
       } catch (Exception e) {
-          logger.error("Exception sending email for collection id: " + collectionId, e);
+          // non-fatal exception
+          logException("Exception sending email for collection id: " + collectionId, e);
       }
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
@@ -451,7 +451,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       gcsService.deleteDocument(blobIdName);
     } catch (Exception e) {
       String message = String.format("Unable to delete document for DAR ID: %s; dar document location: %s", dar.getReferenceId(), blobIdName);
-      logger.warn(message);
+      logWarn(message);
     }
   }
 
@@ -481,7 +481,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     if (Objects.nonNull(dataAccessRequest.getUserId()) && dataAccessRequest.getUserId() > 0) {
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
     } else {
-      logger.warn("DataAccessRequest '" + referenceId + "' has an invalid userId" );
+      logWarn("DataAccessRequest '" + referenceId + "' has an invalid userId" );
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
     }
   }

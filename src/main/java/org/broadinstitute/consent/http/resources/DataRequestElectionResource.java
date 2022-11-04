@@ -76,7 +76,7 @@ public class DataRequestElectionResource extends Resource {
                     electionService.deleteElection(accessElection.getElectionId());
                 }
             } catch (Exception e2) {
-                logger().warn("Error deleting created access election: ", e2);
+                logException("Error deleting created access election: ", e2);
             }
             return createExceptionResponse(e);
         }
@@ -84,6 +84,7 @@ public class DataRequestElectionResource extends Resource {
     }
 
 
+    @Deprecated // See DUOS-2176
     @GET
     @Produces("application/json")
     @PermitAll

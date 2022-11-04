@@ -12,7 +12,6 @@ public class DataCustodianApprovalModel {
 
     public DataCustodianApprovalModel(List<DatasetMailDTO> datasets,
                                       String dataDepositorName, String darCode, String researcherEmail) {
-        this.datasets = datasets;
         this.dataDepositorName = dataDepositorName;
         this.darCode = darCode;
         this.researcherEmail = researcherEmail;

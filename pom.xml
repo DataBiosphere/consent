@@ -13,7 +13,7 @@
     <java.version>17</java.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <liquibase.version>4.17.1</liquibase.version>
+    <liquibase.version>4.17.2</liquibase.version>
     <dropwizard.version>2.1.4</dropwizard.version>
     <owl.version>5.1.20</owl.version>
     <postgres.version>42.5.0</postgres.version>
@@ -394,9 +394,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.dhatim</groupId>
-      <artifactId>dropwizard-sentry</artifactId>
-      <version>2.0.22</version>
+      <groupId>io.sentry</groupId>
+      <artifactId>sentry</artifactId>
+      <version>6.6.0</version>
     </dependency>
 
     <!-- Support for JSON logging -->
@@ -586,7 +586,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.13.1</version>
+      <version>2.14.0</version>
     </dependency>
 
     <dependency>
@@ -636,7 +636,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.4.3</version>
+      <version>8.5.0</version>
     </dependency>
 
     <!-- See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/11441966 -->

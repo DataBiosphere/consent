@@ -21,8 +21,6 @@ import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -268,6 +266,7 @@ public class DatasetResource extends Resource {
         }
     }
 
+    @Deprecated // See DUOS-2176
     @GET
     @Path("/v2/{datasetId}")
     @Produces("application/json")
@@ -327,12 +326,12 @@ public class DatasetResource extends Resource {
     @PermitAll
     public Response getDataSetSample() {
         String msg = "GETting Data Set Sample";
-        logger().debug(msg);
+        logDebug(msg);
         InputStream inputStream = null;
         try {
             inputStream = new ByteArrayInputStream(dataSetSampleContent.getBytes());
         } catch (Exception e) {
-            logger().error("Error when GETting dataset sample. Cause: " + e);
+            logException("Error when GETting dataset sample.", e);
             return createExceptionResponse(e);
         }
         return Response.ok(inputStream).header("Content-Disposition", "attachment; filename=" + dataSetSampleFileName).build();
@@ -346,7 +345,7 @@ public class DatasetResource extends Resource {
     public Response downloadDataSets(List<Integer> idList) {
         try {
             String msg = "GETing DataSets to download";
-            logger().debug(msg);
+            logDebug(msg);
 
             JSONObject json = new JSONObject();
 
@@ -494,11 +493,6 @@ public class DatasetResource extends Resource {
         }
     }
 
-    @Override
-    protected Logger logger() {
-        return LoggerFactory.getLogger(this.getClass());
-    }
-
     private void validateDatasetDacAccess(User user, Dataset dataset) {
         if (user.hasUserRole(UserRoles.ADMIN)) {
             return;
@@ -509,11 +503,11 @@ public class DatasetResource extends Resource {
             .toList();
         if (dacIds.isEmpty()) {
             // Something went very wrong here. A chairperson with no dac ids is an error
-            logger().error("Unable to find dac ids for chairperson user: " + user.getEmail());
+            logWarn("Unable to find dac ids for chairperson user: " + user.getEmail());
             throw new NotFoundException();
         } else {
             if (Objects.isNull(dataset) || Objects.isNull(dataset.getDacId())) {
-                logger().warn("Cannot find a valid dac id for dataset: " + dataset.getDataSetId());
+                logWarn("Cannot find a valid dac id for dataset: " + dataset.getDataSetId());
                 throw new NotFoundException();
             } else {
                 if (!dacIds.contains(dataset.getDacId())) {

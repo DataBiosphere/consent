@@ -3,10 +3,21 @@ package org.broadinstitute.consent.http.resources;
 import com.google.api.client.http.GenericUrl;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.util.UUID;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.cloudstore.GCSStore;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
+import org.broadinstitute.consent.http.enumeration.AuditTable;
+import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.AuditService;
+import org.broadinstitute.consent.http.service.ConsentService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.NotFoundException;
@@ -16,22 +27,10 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.cloudstore.GCSStore;
-import org.broadinstitute.consent.http.enumeration.AuditActions;
-import org.broadinstitute.consent.http.enumeration.AuditTable;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.AuditService;
-import org.broadinstitute.consent.http.service.ConsentService;
-import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
-import org.broadinstitute.consent.http.service.UserService;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.util.UUID;
 
 @Deprecated
 @Path("api/consent/{id}/dul")
@@ -61,7 +60,7 @@ public class DataUseLetterResource extends Resource {
                 new GenericUrl(prevFile);
                 store.deleteStorageDocument(prevFile);
             } catch (IllegalArgumentException e) {
-                logger().warn("Document URL is not valid, could not delete '" + prevFile + "' from GCS for consent id: " + consentId);
+                logWarn("Document URL is not valid, could not delete '" + prevFile + "' from GCS for consent id: " + consentId);
             }
         }
     }
@@ -78,7 +77,7 @@ public class DataUseLetterResource extends Resource {
             @QueryParam("fileName") String fileName,
             @Auth AuthUser user) {
         String msg = String.format("POSTing Data Use Letter to consent with id '%s'", consentId);
-        logger().debug(msg);
+        logDebug(msg);
         try {
             String name = StringUtils.isNotEmpty(fileName) ? fileName : part.getContentDisposition().getFileName();
             deletePreviousStorageFile(consentId);
@@ -91,15 +90,10 @@ public class DataUseLetterResource extends Resource {
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e) {
-            logger().error("Error when trying to read/write the uploaded file " + e.getMessage());
+            logException("Error when trying to read/write the uploaded file", e);
         } catch (GeneralSecurityException e) {
-            logger().error("Security error: " + e.getMessage());
+            logException("Security error", e);
         }
         return null;
-    }
-
-    @Override
-    protected Logger logger() {
-        return LoggerFactory.getLogger(this.getClass());
     }
 }

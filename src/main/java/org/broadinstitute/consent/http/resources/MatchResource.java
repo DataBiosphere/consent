@@ -31,6 +31,7 @@ public class MatchResource extends Resource {
     this.service = matchService;
   }
 
+  @Deprecated // See DUOS-2176
   @GET
   @Path("/{consentId}/{purposeId}")
   @PermitAll
@@ -46,6 +47,7 @@ public class MatchResource extends Resource {
     }
   }
 
+  @Deprecated // See DUOS-2176
   @GET
   @Path("/consent/{consentId}")
   @RolesAllowed({Resource.ADMIN})
@@ -86,6 +88,7 @@ public class MatchResource extends Resource {
     }
   }
 
+  @Deprecated // See DUOS-2176
   @GET
   @Path("/purpose/{purposeId}")
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})

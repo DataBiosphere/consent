@@ -1189,6 +1189,7 @@ paths:
                 $ref: '#/components/schemas/Summary'
   /api/dataRequest/{requestId}/election:
     get:
+      deprecated: true
       summary: describe
       description: Returns the election for the sent DAR, if it exists.
       parameters:
@@ -1851,6 +1852,7 @@ paths:
                 type: string
   /api/electionReview/access/{electionId}:
     get:
+      deprecated: true
       summary: get ElectionReview for access election identified by electionId
       description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for DataAccess elections.
       parameters:
@@ -1877,6 +1879,7 @@ paths:
                 $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/rp/{electionId}:
     get:
+      deprecated: true
       summary: get ElectionReview for rp election identified by electionId
       description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for Research Purpose elections.
       parameters:
@@ -2087,6 +2090,7 @@ paths:
           description: Internal server error
   /api/match/{consentId}/{purposeId}:
     get:
+      deprecated: true
       summary: getMatches
       description: Returns the match results between a Consent and a Data Access Request.
       parameters:
@@ -2147,6 +2151,7 @@ paths:
 
   /api/match/consent/{consentId}:
     get:
+      deprecated: true
       summary: Get all matches for this consent id
       description: Get all matches for this consent id
       tags:
@@ -2173,6 +2178,7 @@ paths:
 
   /api/match/purpose/{purposeId}:
     get:
+      deprecated: true
       summary: Get all matches for this research purpose (DAR) id
       description: Get all matches for this research purpose (DAR) id
       tags:
