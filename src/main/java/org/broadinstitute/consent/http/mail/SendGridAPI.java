@@ -158,14 +158,14 @@ public class SendGridAPI {
         return sendMessage(message);
     }
 
-    public void sendDatasetApprovedMessage(String toAddress, Writer template) throws MessagingException {
+    public Optional<Response> sendDatasetApprovedMessage(String toAddress, Writer template) throws MessagingException {
         Mail message = datasetApprovedMessage.datasetApprovedMessage(toAddress, fromAccount, template);
-        sendMessage(message);
+        return sendMessage(message);
     }
 
-    public void sendDatasetDeniedMessage(String toAddress, Writer template) throws MessagingException {
+    public Optional<Response> sendDatasetDeniedMessage(String toAddress, Writer template) throws MessagingException {
         Mail message = datasetDeniedMessage.datasetDeniedMessage(toAddress, fromAccount, template);
-        sendMessage(message);
+        return sendMessage(message);
     }
 
 }

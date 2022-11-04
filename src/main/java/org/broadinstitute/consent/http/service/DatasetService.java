@@ -497,14 +497,12 @@ public class DatasetService {
         Dac dac = this.dacDAO.findById(dataset.getDacId());
         if (approval) {
             this.emailService.sendDatasetApprovedMessage(
-                    user.getEmail(),
-                    user.getDisplayName(),
+                    user,
                     dac.getName(),
                     dataset.getDatasetIdentifier());
         } else {
             this.emailService.sendDatasetDeniedMessage(
-                    user.getEmail(),
-                    user.getDisplayName(),
+                    user,
                     dac.getName(),
                     dataset.getDatasetIdentifier());
         }

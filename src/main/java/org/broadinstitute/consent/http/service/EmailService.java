@@ -319,20 +319,34 @@ public class EmailService {
         );
     }
 
-    public void sendDatasetApprovedMessage(String toAddress,
-                                           String dataSubmitterName,
+    public void sendDatasetApprovedMessage(User user,
                                            String dacName,
                                            String datasetName) throws Exception {
-        Writer template = templateHelper.getDatasetApprovedTemplate(dataSubmitterName, datasetName, dacName);
-        sendGridAPI.sendDatasetApprovedMessage(toAddress, template);
+        Writer template = templateHelper.getDatasetApprovedTemplate(user.getDisplayName(), datasetName, dacName);
+        Optional<Response> response = sendGridAPI.sendDatasetApprovedMessage(user.getEmail(), template);
+        saveEmailAndResponse(
+                response.orElse(null),
+                datasetName,
+                null,
+                user.getUserId(),
+                EmailType.NEW_CASE,
+                template
+        );
     }
 
-    public void sendDatasetDeniedMessage(String toAddress,
-                                         String dataSubmitterName,
+    public void sendDatasetDeniedMessage(User user,
                                          String dacName,
                                          String datasetName) throws Exception {
-        Writer template = templateHelper.getDatasetDeniedTemplate(dataSubmitterName, datasetName, dacName);
-        sendGridAPI.sendDatasetDeniedMessage(toAddress, template);
+        Writer template = templateHelper.getDatasetDeniedTemplate(user.getDisplayName(), datasetName, dacName);
+        Optional<Response> response = sendGridAPI.sendDatasetDeniedMessage(user.getEmail(), template);
+        saveEmailAndResponse(
+                response.orElse(null),
+                datasetName,
+                null,
+                user.getUserId(),
+                EmailType.NEW_CASE,
+                template
+        );
     }
 
     private User describeDACUserById(Integer id) throws IllegalArgumentException {

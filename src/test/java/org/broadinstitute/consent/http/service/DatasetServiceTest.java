@@ -707,7 +707,6 @@ public class DatasetServiceTest {
         verify(emailService, times(0)).sendDatasetApprovedMessage(
                 any(),
                 any(),
-                any(),
                 any()
         );
     }
@@ -760,8 +759,7 @@ public class DatasetServiceTest {
 
         // send approved email
         verify(emailService, times(1)).sendDatasetApprovedMessage(
-                "asdf@gmail.com",
-                "John Doe",
+                user,
                 "DAC NAME",
                 "DUOS-000001"
         );
@@ -795,8 +793,7 @@ public class DatasetServiceTest {
 
         // send denied email
         verify(emailService, times(1)).sendDatasetDeniedMessage(
-                "asdf@gmail.com",
-                "John Doe",
+                user,
                 "DAC NAME",
                 "DUOS-000001"
         );
