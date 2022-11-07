@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.WithLogHandler;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +31,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
     @Mock
     private ElectionService electionService;
     @Mock
-    private EmailNotifierService emailNotifierService;
+    private EmailService emailService;
 
     private ConsentVoteResource resource;
 
@@ -55,7 +55,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
     }
 
     private void initResource() {
-        resource = new ConsentVoteResource(emailNotifierService, electionService, voteService);
+        resource = new ConsentVoteResource(emailService, electionService, voteService);
     }
 
     @Test
@@ -65,7 +65,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
 
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
         when(electionService.validateCollectEmailCondition(any())).thenReturn(true);
-        doNothing().when(emailNotifierService).sendCollectMessage(any());
+        doNothing().when(emailService).sendCollectMessage(any());
         initResource();
 
         Response response = resource.firstVoteUpdate(vote, consent.getConsentId(), vote.getVoteId());
@@ -80,7 +80,7 @@ public class ConsentVoteResourceTest implements WithLogHandler {
 
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
         when(electionService.validateCollectEmailCondition(any())).thenReturn(true);
-        doThrow(new IOException()).when(emailNotifierService).sendCollectMessage(any());
+        doThrow(new IOException()).when(emailService).sendCollectMessage(any());
         initResource();
 
         Response response = resource.firstVoteUpdate(vote, consent.getConsentId(), vote.getVoteId());

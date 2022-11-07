@@ -14,11 +14,10 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 
@@ -51,30 +50,27 @@ import java.util.stream.Collectors;
 public class DataRequestVoteResource extends Resource {
 
     private final UserService userService;
-    private final DataAccessRequestService dataAccessRequestService;
     private final DarCollectionService darCollectionService;
     private final DatasetService datasetService;
     private final DatasetAssociationService datasetAssociationService;
     private final ElectionService electionService;
-    private final EmailNotifierService emailNotifierService;
+    private final EmailService emailService;
     private final VoteService voteService;
 
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
     @Inject
     public DataRequestVoteResource(
-            DataAccessRequestService dataAccessRequestService,
             DarCollectionService darCollectionService,
             DatasetAssociationService datasetAssociationService,
-            EmailNotifierService emailNotifierService,
+            EmailService emailService,
             VoteService voteService,
             DatasetService datasetService,
             ElectionService electionService,
             UserService userService) {
-        this.emailNotifierService = emailNotifierService;
+        this.emailService = emailService;
         this.userService = userService;
         this.datasetService = datasetService;
-        this.dataAccessRequestService = dataAccessRequestService;
         this.darCollectionService = darCollectionService;
         this.datasetAssociationService = datasetAssociationService;
         this.electionService = electionService;
@@ -270,7 +266,7 @@ public class DataRequestVoteResource extends Resource {
                 }
                 List<User> admins = userService.describeAdminUsersThatWantToReceiveMails();
                 if(CollectionUtils.isNotEmpty(admins)) {
-                    emailNotifierService.sendAdminFlaggedDarApproved(collection.getDarCode(), admins, dataOwnerDataSet);
+                    emailService.sendAdminFlaggedDarApproved(collection.getDarCode(), admins, dataOwnerDataSet);
                 }
             }
         }
@@ -279,7 +275,7 @@ public class DataRequestVoteResource extends Resource {
     private void validateCollectDAREmail(Vote vote) {
         if(!vote.getType().equals(VoteType.DATA_OWNER.getValue()) && electionService.validateCollectDAREmailCondition(vote)){
             try {
-                emailNotifierService.sendCollectMessage(vote.getElectionId());
+                emailService.sendCollectMessage(vote.getElectionId());
             } catch (MessagingException | IOException | TemplateException e) {
                 logger.severe("Error when sending email notification to Chairpersons to collect votes. Cause: " + e);
             }

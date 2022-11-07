@@ -42,7 +42,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
@@ -200,7 +200,7 @@ public class ConsentModule extends AbstractModule {
             providesDatasetDAO(),
             providesElectionDAO(),
             providesDataAccessRequestDAO(),
-            providesEmailNotifierService(),
+            providesEmailService(),
             providesVoteDAO(),
             providesMatchDAO(),
             providesDarCollectionSummaryDAO()
@@ -273,7 +273,7 @@ public class ConsentModule extends AbstractModule {
                 providesUserRoleDAO(),
                 providesDacDAO(),
                 providesUseRestrictionConverter(),
-                providesEmailNotifierService());
+                providesEmailService());
     }
 
     @Provides
@@ -299,7 +299,7 @@ public class ConsentModule extends AbstractModule {
                 providesDataAccessRequestDAO(),
                 providesDARCollectionDAO(),
                 providesMailMessageDAO(),
-                providesEmailNotifierService(),
+                providesEmailService(),
                 providesDataAccessRequestService(),
                 providesUseRestrictionConverter());
     }
@@ -310,8 +310,8 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    EmailNotifierService providesEmailNotifierService() {
-        return new EmailNotifierService(
+    EmailService providesEmailService() {
+        return new EmailService(
                 providesDARCollectionDAO(),
                 providesConsentDAO(),
                 providesVoteDAO(),
@@ -320,14 +320,15 @@ public class ConsentModule extends AbstractModule {
                 providesMailMessageDAO(),
                 providesSendGridAPI(),
                 providesFreeMarkerTemplateHelper(),
-                config.getServicesConfiguration().getLocalURL(),
-                config.getMailConfiguration().isActivateEmailNotifications()
+                config.getServicesConfiguration().getLocalURL()
         );
     }
 
     @Provides
     SendGridAPI providesSendGridAPI() {
-        return new SendGridAPI(config.getMailConfiguration());
+        return new SendGridAPI(
+            config.getMailConfiguration(),
+            providesUserDAO());
     }
 
     @Provides
@@ -402,7 +403,7 @@ public class ConsentModule extends AbstractModule {
                 providesDatasetAssociationDAO(),
                 providesDatasetDAO(),
                 providesElectionDAO(),
-                providesEmailNotifierService(),
+                providesEmailService(),
                 providesUseRestrictionConverter(),
                 providesVoteDAO(),
                 providesVoteServiceDAO());

@@ -1,12 +1,17 @@
 package org.broadinstitute.consent.http.mail;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Email;
+import com.sendgrid.helpers.mail.objects.Personalization;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
 import org.broadinstitute.consent.http.mail.message.CollectMessage;
 import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
@@ -20,21 +25,24 @@ import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
+import org.broadinstitute.consent.http.models.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public class SendGridAPI {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final String fromAccount;
-    private final SendGrid sendGrid;
-    private final Boolean activateEmailNotifications;
+    private String fromAccount;
+    private SendGrid sendGrid;
+    private Boolean activateEmailNotifications;
     private final CollectMessage collectMessageCreator = new CollectMessage();
     private final NewCaseMessage newCaseMessageCreator = new NewCaseMessage();
     private final NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
@@ -48,15 +56,65 @@ public class SendGridAPI {
     private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
     private final DatasetApprovedMessage datasetApprovedMessage = new DatasetApprovedMessage();
     private final DatasetDeniedMessage datasetDeniedMessage = new DatasetDeniedMessage();
+    private final UserDAO userDAO;
 
-    public SendGridAPI(MailConfiguration config) {
-        this.fromAccount = config.getGoogleAccount();
-        this.sendGrid = new SendGrid(config.getSendGridApiKey());
-        this.activateEmailNotifications = config.isActivateEmailNotifications();
+    public SendGridAPI(MailConfiguration config, UserDAO userDAO) {
+        setFromAccount(config.getGoogleAccount());
+        setSendGrid(new SendGrid(config.getSendGridApiKey()));
+        setActivateEmailNotifications(config.isActivateEmailNotifications());
+        this.userDAO = userDAO;
     }
 
-    private Optional<Response> sendMessage(Mail message) {
-        if (activateEmailNotifications) {
+    private void setFromAccount(String fromAccount) {
+        this.fromAccount = fromAccount;
+    }
+
+    @VisibleForTesting
+    public void setSendGrid(SendGrid sendGrid) {
+        this.sendGrid = sendGrid;
+    }
+
+    private void setActivateEmailNotifications(Boolean activateEmailNotifications) {
+        this.activateEmailNotifications = activateEmailNotifications;
+    }
+
+    /**
+     * Determine if the user we are sending an email to has set their preference
+     * to false or not. Users who have been disabled like this should never receive
+     * an email.
+     *
+     * @param message The mail message
+     * @return False if the user has explicitly disabled email, True otherwise.
+     */
+    private boolean findUserEmailPreference(Mail message) {
+        List<Personalization> personalizations = message.getPersonalization();
+        Optional<Personalization> toEmail = personalizations.stream().findFirst();
+        if (toEmail.isPresent()) {
+            List<Email> tos = toEmail.get().getTos();
+            // When we construct a mail message, we always send it to just one individual
+            // so that we can track emails at that level of granularity.
+            if (!tos.isEmpty()) {
+                User user = userDAO.findUserByEmail(tos.get(0).getEmail());
+                if (Objects.isNull(user)) {
+                    logger.error("Unknown user: " + tos.get(0).getEmail());
+                    return false;
+                }
+                if (Objects.isNull(user.getEmailPreference())) {
+                    return true;
+                }
+                return user.getEmailPreference();
+            }
+        }
+        return false;
+    }
+
+    public Optional<Response> sendMessage(Mail message) {
+        boolean userEmailPreference = findUserEmailPreference(message);
+        if (!userEmailPreference) {
+            Gson gson = new Gson();
+            logger.info("User Email Preference has evaluated to 'false', not sending to: " + gson.toJson(message.getPersonalization()));
+        }
+        if (activateEmailNotifications && userEmailPreference) {
             try {
                 // See https://github.com/sendgrid/sendgrid-java/issues/163
                 // for what actually works as compared to the documentation - which doesn't.
@@ -69,7 +127,13 @@ public class SendGridAPI {
                 for (String key : sendGrid.getRequestHeaders().keySet())
                     request.addHeader(key, sendGrid.getRequestHeaders().get(key));
                 // send
-                return Optional.of(sendGrid.makeCall(request));
+                Response response = sendGrid.makeCall(request);
+                if (response.getStatusCode() > 202) {
+                    // Indicates some form of error:
+                    // https://docs.sendgrid.com/api-reference/mail-send/mail-send#responses
+                    logger.error(String.format("Error sending email via SendGrid: '%s': %s", response.getStatusCode(), response.getBody()));
+                }
+                return Optional.of(response);
             } catch (IOException ex) {
                 logger.error("Exception sending email via SendGrid: " + ex.getMessage());
                 // Create a response that we can use to capture this failure.
@@ -138,14 +202,14 @@ public class SendGridAPI {
         return sendMessage(message);
     }
 
-    public void sendDatasetApprovedMessage(String toAddress, Writer template) throws MessagingException {
+    public Optional<Response> sendDatasetApprovedMessage(String toAddress, Writer template) throws MessagingException {
         Mail message = datasetApprovedMessage.datasetApprovedMessage(toAddress, fromAccount, template);
-        sendMessage(message);
+        return sendMessage(message);
     }
 
-    public void sendDatasetDeniedMessage(String toAddress, Writer template) throws MessagingException {
+    public Optional<Response> sendDatasetDeniedMessage(String toAddress, Writer template) throws MessagingException {
         Mail message = datasetDeniedMessage.datasetDeniedMessage(toAddress, fromAccount, template);
-        sendMessage(message);
+        return sendMessage(message);
     }
 
 }

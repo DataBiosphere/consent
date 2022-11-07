@@ -85,14 +85,13 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
-import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.ReviewResultsService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
@@ -184,7 +183,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DatasetAssociationService datasetAssociationService = injector.getProvider(DatasetAssociationService.class).get();
         final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
-        final EmailNotifierService emailNotifierService = injector.getProvider(EmailNotifierService.class).get();
+        final EmailService emailService = injector.getProvider(EmailService.class).get();
         final GCSService gcsService = injector.getProvider(GCSService.class).get();
         final InstitutionService institutionService = injector.getProvider(InstitutionService.class).get();
         final MetricsService metricsService = injector.getProvider(MetricsService.class).get();
@@ -216,7 +215,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 googleStore,
                 config.getStoreOntologyConfiguration().getBucketSubdirectory(),
                 config.getStoreOntologyConfiguration().getConfigurationFileName());
-        final ResearcherService researcherService = injector.getProvider(ResearcherService.class).get();
         final NihService nihService = injector.getProvider(NihService.class).get();
 
 
@@ -231,26 +229,26 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(ErrorResource.class);
 
         // Register standard application resources.
-        env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, gcsService, userService, matchService));
+        env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService, userService, matchService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService, consentService));
         env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService));
         env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
         env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService, useRestrictionValidator));
         env.jersey().register(new ConsentAssociationResource(consentService, userService));
-        env.jersey().register(new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService, electionService));
-        env.jersey().register(new ConsentVoteResource(emailNotifierService, electionService, voteService));
+        env.jersey().register(new ConsentElectionResource(dacService, emailService, voteService, electionService));
+        env.jersey().register(new ConsentVoteResource(emailService, electionService, voteService));
         env.jersey().register(new ConsentCasesResource(pendingCaseService, summaryService));
         env.jersey().register(new DacResource(dacService, userService, datasetService));
         env.jersey().register(new DACUserResource(userService));
         env.jersey().register(new DarCollectionResource(dataAccessRequestService, darCollectionService, userService));
-        env.jersey().register(new DataRequestElectionResource(dataAccessRequestService, emailNotifierService, voteService, electionService));
-        env.jersey().register(new DataRequestVoteResource(dataAccessRequestService, darCollectionService, datasetAssociationService, emailNotifierService, voteService, datasetService, electionService, userService));
+        env.jersey().register(new DataRequestElectionResource(dataAccessRequestService, emailService, voteService, electionService));
+        env.jersey().register(new DataRequestVoteResource(darCollectionService, datasetAssociationService, emailService, voteService, datasetService, electionService, userService));
         env.jersey().register(new DataRequestCasesResource(summaryService));
         env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
         env.jersey().register(new DataUseLetterResource(auditService, googleStore, userService, consentService));
         env.jersey().register(new ElectionResource(voteService, electionService));
         env.jersey().register(new ElectionReviewResource(dataAccessRequestService, consentService, electionService, reviewResultsService));
-        env.jersey().register(new EmailNotifierResource(emailNotifierService));
+        env.jersey().register(new EmailNotifierResource(emailService));
         env.jersey().register(new IndexerResource(indexerService, googleStore));
         env.jersey().register(new InstitutionResource(userService, institutionService));
         env.jersey().register(new LibraryCardResource(userService, libraryCardService));

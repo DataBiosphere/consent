@@ -61,12 +61,12 @@ public class DatasetService {
     private final UserRoleDAO userRoleDAO;
     private final DacDAO dacDAO;
     private final UseRestrictionConverter converter;
-    private final EmailNotifierService emailNotifierService;
+    private final EmailService emailService;
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
                           DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO, UseRestrictionConverter converter,
-                          EmailNotifierService emailNotifierService) {
+                          EmailService emailService) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.datasetDAO = dataSetDAO;
@@ -74,7 +74,7 @@ public class DatasetService {
         this.userRoleDAO = userRoleDAO;
         this.dacDAO = dacDAO;
         this.converter = converter;
-        this.emailNotifierService = emailNotifierService;
+        this.emailService = emailService;
     }
 
     public List<Dataset> getDataSetsForConsent(String consentId) {
@@ -496,15 +496,13 @@ public class DatasetService {
     private void sendDatasetApprovalNotificationEmail(Dataset dataset, User user, Boolean approval) throws Exception {
         Dac dac = this.dacDAO.findById(dataset.getDacId());
         if (approval) {
-            this.emailNotifierService.sendDatasetApprovedMessage(
-                    user.getEmail(),
-                    user.getDisplayName(),
+            this.emailService.sendDatasetApprovedMessage(
+                    user,
                     dac.getName(),
                     dataset.getDatasetIdentifier());
         } else {
-            this.emailNotifierService.sendDatasetDeniedMessage(
-                    user.getEmail(),
-                    user.getDisplayName(),
+            this.emailService.sendDatasetDeniedMessage(
+                    user,
                     dac.getName(),
                     dataset.getDatasetIdentifier());
         }

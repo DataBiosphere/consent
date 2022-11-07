@@ -5,8 +5,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.SummaryService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,7 +39,7 @@ public class DataRequestElectionResourceTest {
     @Mock
     private ElectionService electionService;
     @Mock
-    private EmailNotifierService emailNotifierService;
+    private EmailService emailService;
     @Mock
     private UriInfo uriInfo;
     @Mock
@@ -61,7 +60,7 @@ public class DataRequestElectionResourceTest {
     }
 
     private void initResource() {
-        resource = new DataRequestElectionResource(darService, emailNotifierService, voteService, electionService);
+        resource = new DataRequestElectionResource(darService, emailService, voteService, electionService);
     }
 
     @Test
@@ -69,7 +68,7 @@ public class DataRequestElectionResourceTest {
         when(darService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
         when(electionService.createElection(any(), any(), any())).thenReturn(new Election());
         when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
-        doNothing().when(emailNotifierService).sendNewCaseMessageToList(any(), any());
+        doNothing().when(emailService).sendNewCaseMessageToList(any(), any());
         initResource();
         Response response = resource.createDataRequestElection(
                 uriInfo,
@@ -86,7 +85,7 @@ public class DataRequestElectionResourceTest {
         when(darService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
         when(electionService.createElection(any(), any(), any())).thenReturn(election);
         when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
-        doNothing().when(emailNotifierService).sendNewCaseMessageToList(any(), any());
+        doNothing().when(emailService).sendNewCaseMessageToList(any(), any());
         initResource();
         Response response = resource.createDataRequestElection(
                 uriInfo,

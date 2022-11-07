@@ -63,16 +63,16 @@ public class DarCollectionService {
   private final ElectionDAO electionDAO;
   private final VoteDAO voteDAO;
   private final MatchDAO matchDAO;
-  private final EmailNotifierService emailNotifierService;
+  private final EmailService emailService;
 
   @Inject
-  public DarCollectionService(DarCollectionDAO darCollectionDAO, DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, EmailNotifierService emailNotifierService, VoteDAO voteDAO, MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO) {
+  public DarCollectionService(DarCollectionDAO darCollectionDAO, DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, EmailService emailService, VoteDAO voteDAO, MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO) {
     this.darCollectionDAO = darCollectionDAO;
     this.collectionServiceDAO = collectionServiceDAO;
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
-    this.emailNotifierService = emailNotifierService;
+    this.emailService = emailService;
     this.voteDAO = voteDAO;
     this.matchDAO = matchDAO;
     this.darCollectionSummaryDAO = darCollectionSummaryDAO;
@@ -821,7 +821,7 @@ public class DarCollectionService {
       List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarCollection(user, collection);
       List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
       try {
-        emailNotifierService.sendDarNewCollectionElectionMessage(voteUsers, collection);
+        emailService.sendDarNewCollectionElectionMessage(voteUsers, collection);
       } catch (Exception e) {
         logger.error("Unable to send new case message to DAC members for DAR Collection: " + collection.getDarCode());
       }

@@ -62,7 +62,7 @@ public class ElectionService {
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DarCollectionDAO darCollectionDAO;
     private final DataAccessRequestService dataAccessRequestService;
-    private final EmailNotifierService emailNotifierService;
+    private final EmailService emailService;
     private final UseRestrictionConverter useRestrictionConverter;
     private final String INACTIVE_DS = "Election was not created. The following Datasets are disabled : ";
     private static final Logger logger = LoggerFactory.getLogger("ElectionService");
@@ -71,7 +71,7 @@ public class ElectionService {
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
                            DatasetDAO datasetDAO, LibraryCardDAO libraryCardDAO, DatasetAssociationDAO datasetAssociationDAO,
                            DataAccessRequestDAO dataAccessRequestDAO, DarCollectionDAO darCollectionDAO,
-                           MailMessageDAO mailMessageDAO, EmailNotifierService emailNotifierService,
+                           MailMessageDAO mailMessageDAO, EmailService emailService,
                            DataAccessRequestService dataAccessRequestService, UseRestrictionConverter useRestrictionConverter) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
@@ -83,7 +83,7 @@ public class ElectionService {
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.darCollectionDAO = darCollectionDAO;
         this.mailMessageDAO = mailMessageDAO;
-        this.emailNotifierService = emailNotifierService;
+        this.emailService = emailService;
         this.dataAccessRequestService = dataAccessRequestService;
         this.useRestrictionConverter = useRestrictionConverter;
     }
@@ -321,7 +321,7 @@ public class ElectionService {
             if(validateAllDatasetElectionsAreClosed(dsElections)){
                 List<Election> darElections = new ArrayList<>();
                 darElections.add(electionDAO.findLastElectionByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_ACCESS.getValue()));
-                emailNotifierService.sendClosedDataSetElectionsMessage(darElections);
+                emailService.sendClosedDataSetElectionsMessage(darElections);
             }
         } catch (MessagingException | IOException | TemplateException e) {
             logger.error("Exception sending Closed Dataset Elections email. Cause: " + e.getMessage());
@@ -400,7 +400,7 @@ public class ElectionService {
         if (CollectionUtils.isNotEmpty(disabledDatasets)) {
             boolean createElection = disabledDatasets.size() != datasets.size();
             User user = userDAO.findUserById(collection.getCreateUserId());
-            emailNotifierService.sendDisabledDatasetsMessage(user, disabledDatasets, collection.getDarCode());
+            emailService.sendDisabledDatasetsMessage(user, disabledDatasets, collection.getDarCode());
             if (!createElection) {
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDatasets);
             }
@@ -567,7 +567,7 @@ public class ElectionService {
                     translatedUseRestriction = "";
                 }
             }
-            emailNotifierService.sendResearcherDarApproved(collection.getDarCode(),  collection.getCreateUserId(), datasetsDetail, translatedUseRestriction);
+            emailService.sendResearcherDarApproved(collection.getDarCode(),  collection.getCreateUserId(), datasetsDetail, translatedUseRestriction);
         }
     }
 
@@ -609,7 +609,7 @@ public class ElectionService {
                             collection.getDarCode() :
                             referenceId;
 
-                    emailNotifierService.sendDataCustodianApprovalMessage(custodian.getEmail(), darCode, mailDTOS,
+                    emailService.sendDataCustodianApprovalMessage(custodian, darCode, mailDTOS,
                             custodian.getDisplayName(), researcherEmail);
                 } catch (Exception e) {
                     logger.error("Unable to send data custodian approval message: " + e);

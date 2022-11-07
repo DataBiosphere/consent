@@ -13,7 +13,6 @@ public class MailMessageMapper implements RowMapper<MailMessage> {
     return new MailMessage(
         r.getInt("email_entity_id"),
         r.getInt("vote_id"),
-        r.getInt("election_id"),
         r.getInt("user_id"),
         r.getString("email_type"),
         r.getDate("date_sent"),

@@ -13,11 +13,10 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Before;
@@ -47,13 +46,11 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataRequestVoteResourceTest implements WithLogHandler {
     @Mock
-    private EmailNotifierService emailNotifierService;
+    private EmailService emailService;
     @Mock
     private UserService userService;
     @Mock
     private DatasetService datasetService;
-    @Mock
-    private DataAccessRequestService dataAccessRequestService;
     @Mock
     private DarCollectionService darCollectionService;
     @Mock
@@ -77,8 +74,8 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
 
     private void initResource() {
         resource = new DataRequestVoteResource(
-                dataAccessRequestService, darCollectionService, datasetAssociationService,
-                emailNotifierService, voteService,
+                darCollectionService, datasetAssociationService,
+                emailService, voteService,
                 datasetService, electionService, userService
         );
     }
@@ -125,7 +122,7 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
         UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         User adminUser = createMockUser(adminRole, 2);
         when(userService.describeAdminUsersThatWantToReceiveMails()).thenReturn(List.of(adminUser));
-        doNothing().when(emailNotifierService).sendAdminFlaggedDarApproved(any(), any(), any());
+        doNothing().when(emailService).sendAdminFlaggedDarApproved(any(), any(), any());
     }
 
     @Before
@@ -166,7 +163,7 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
 
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
         when(electionService.validateCollectDAREmailCondition(any())).thenReturn(true);
-        doNothing().when(emailNotifierService).sendCollectMessage(any());
+        doNothing().when(emailService).sendCollectMessage(any());
 
         initResource();
         Response response = resource.createDataRequestVote(authUser, uriInfo, "", 1, "");
@@ -241,7 +238,7 @@ public class DataRequestVoteResourceTest implements WithLogHandler {
         LogHandler handler = createLogHandler(DataRequestVoteResource.class.getName());
         when(voteService.updateVoteById(any(), any())).thenReturn(vote);
         when(electionService.validateCollectDAREmailCondition(any())).thenReturn(true);
-        doThrow(new IOException()).when(emailNotifierService).sendCollectMessage(any());
+        doThrow(new IOException()).when(emailService).sendCollectMessage(any());
 
         initResource();
         Response response = resource.createDataRequestVote(authUser, uriInfo, "", 1, "");

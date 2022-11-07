@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,9 +28,9 @@ import static org.mockito.MockitoAnnotations.openMocks;
  * Functional test emails will be directed to the private google group:
  *      https://groups.google.com/a/broadinstitute.org/g/duos-dev
  */
-public class EmailNotifierServiceTest {
+public class EmailServiceTest {
 
-    private EmailNotifierService service;
+    private EmailService service;
 
     @Mock
     private DarCollectionDAO collectionDAO;
@@ -64,14 +65,14 @@ public class EmailNotifierServiceTest {
         mConfig.setActivateEmailNotifications(serviceActive);
         mConfig.setGoogleAccount("");
         mConfig.setSendGridApiKey("");
-        SendGridAPI sendGridAPI = new SendGridAPI(mConfig);
+        SendGridAPI sendGridAPI = new SendGridAPI(mConfig, userDAO);
 
         FreeMarkerConfiguration fmConfig = new FreeMarkerConfiguration();
         fmConfig.setDefaultEncoding("UTF-8");
         fmConfig.setTemplateDirectory("/freemarker");
         FreeMarkerTemplateHelper helper = new FreeMarkerTemplateHelper(fmConfig);
-        service = new EmailNotifierService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
-                emailDAO, sendGridAPI, helper, serverUrl, serviceActive);
+        service = new EmailService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
+                emailDAO, sendGridAPI, helper, serverUrl);
     }
 
     @Test
@@ -84,8 +85,11 @@ public class EmailNotifierServiceTest {
         datasets.add(new DatasetMailDTO("DS-3 Name", "DS-3 Alias"));
         String dataDepositorName = "Data Depositor Name";
         String researcherEmail = "researcher@test.com";
+        User user = new User();
+        user.setEmail(defaultAccount);
+        user.setUserId(1);
         try {
-            service.sendDataCustodianApprovalMessage(defaultAccount, darCode, datasets,
+            service.sendDataCustodianApprovalMessage(user, darCode, datasets,
                     dataDepositorName, researcherEmail);
         } catch (Exception e) {
             fail("Should not fail sending message: " + e);

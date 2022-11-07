@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -16,15 +16,15 @@ import static org.mockito.Mockito.doNothing;
 public class EmailNotifierResourceTest {
 
     @Mock
-    private EmailNotifierService emailNotifierService;
+    private EmailService emailService;
 
     private EmailNotifierResource resource;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        doNothing().when(emailNotifierService).sendReminderMessage(any());
-        resource = new EmailNotifierResource(emailNotifierService);
+        doNothing().when(emailService).sendReminderMessage(any());
+        resource = new EmailNotifierResource(emailService);
     }
 
     @Test

@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -82,7 +81,7 @@ public class DatasetServiceTest {
     @Mock
     private UseRestrictionConverter useRestrictionConverter;
     @Mock
-    private EmailNotifierService emailNotifierService;
+    private EmailService emailService;
 
     @Before
     public void setUp() {
@@ -90,7 +89,7 @@ public class DatasetServiceTest {
     }
 
     private void initService() {
-        datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, datasetServiceDAO, userRoleDAO, dacDAO, useRestrictionConverter, emailNotifierService);
+        datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, datasetServiceDAO, userRoleDAO, dacDAO, useRestrictionConverter, emailService);
     }
 
     @Test
@@ -695,7 +694,7 @@ public class DatasetServiceTest {
         dataset.setDacId(3);
         Dac dac = new Dac();
         dac.setName("DAC NAME");
-        spy(emailNotifierService);
+        spy(emailService);
         initService();
         when(dacDAO.findById(3)).thenReturn(dac);
 
@@ -705,8 +704,7 @@ public class DatasetServiceTest {
         assertEquals(dataset.getUpdateUserId(), datasetResult.getUpdateUserId());
         assertEquals(dataset.getDacApproval(), datasetResult.getDacApproval());
         assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
-        verify(emailNotifierService, times(0)).sendDatasetApprovedMessage(
-                any(),
+        verify(emailService, times(0)).sendDatasetApprovedMessage(
                 any(),
                 any(),
                 any()
@@ -751,7 +749,7 @@ public class DatasetServiceTest {
         dataset.setDacId(3);
         Dac dac = new Dac();
         dac.setName("DAC NAME");
-        spy(emailNotifierService);
+        spy(emailService);
         initService();
         when(dacDAO.findById(3)).thenReturn(dac);
 
@@ -760,9 +758,8 @@ public class DatasetServiceTest {
         assertTrue(returnedDataset.getDacApproval());
 
         // send approved email
-        verify(emailNotifierService, times(1)).sendDatasetApprovedMessage(
-                "asdf@gmail.com",
-                "John Doe",
+        verify(emailService, times(1)).sendDatasetApprovedMessage(
+                user,
                 "DAC NAME",
                 "DUOS-000001"
         );
@@ -786,7 +783,7 @@ public class DatasetServiceTest {
         dataset.setDacId(3);
         Dac dac = new Dac();
         dac.setName("DAC NAME");
-        spy(emailNotifierService);
+        spy(emailService);
         initService();
         when(dacDAO.findById(3)).thenReturn(dac);
 
@@ -795,9 +792,8 @@ public class DatasetServiceTest {
         assertFalse(returnedDataset.getDacApproval());
 
         // send denied email
-        verify(emailNotifierService, times(1)).sendDatasetDeniedMessage(
-                "asdf@gmail.com",
-                "John Doe",
+        verify(emailService, times(1)).sendDatasetDeniedMessage(
+                user,
                 "DAC NAME",
                 "DUOS-000001"
         );

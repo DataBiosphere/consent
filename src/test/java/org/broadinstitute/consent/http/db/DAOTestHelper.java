@@ -177,6 +177,7 @@ public class DAOTestHelper {
         testingDAO.deleteAllDARs();
         testingDAO.deleteAllDARCollections();
         testingDAO.deleteAllCounters();
+        testingDAO.deleteAllEmailEntities();
     }
 
     /*
