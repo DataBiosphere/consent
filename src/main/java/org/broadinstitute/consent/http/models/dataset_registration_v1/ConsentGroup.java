@@ -38,6 +38,7 @@ public class ConsentGroup {
 
     /**
      * Consent Group Name
+     * (Required)
      */
     @JsonProperty("consentGroupName")
     @JsonPropertyDescription("Consent Group Name")
@@ -146,6 +147,7 @@ public class ConsentGroup {
     private URI url;
     /**
      * List of File Types
+     * (Required)
      */
     @JsonProperty("fileTypes")
     @JsonPropertyDescription("List of File Types")
@@ -159,6 +161,7 @@ public class ConsentGroup {
 
     /**
      * Consent Group Name
+     * (Required)
      */
     @JsonProperty("consentGroupName")
     public String getConsentGroupName() {
@@ -167,6 +170,7 @@ public class ConsentGroup {
 
     /**
      * Consent Group Name
+     * (Required)
      */
     @JsonProperty("consentGroupName")
     public void setConsentGroupName(String consentGroupName) {
@@ -447,6 +451,7 @@ public class ConsentGroup {
 
     /**
      * List of File Types
+     * (Required)
      */
     @JsonProperty("fileTypes")
     public List<FileTypeObject> getFileTypes() {
@@ -455,6 +460,7 @@ public class ConsentGroup {
 
     /**
      * List of File Types
+     * (Required)
      */
     @JsonProperty("fileTypes")
     public void setFileTypes(List<FileTypeObject> fileTypes) {
