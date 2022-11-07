@@ -377,6 +377,47 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(returnedDARs.isEmpty());
     }
 
+    // See: https://broadworkbench.atlassian.net/browse/DUOS-2182
+    @Test
+    public void testEnsureOnlyDataAccessRequestsByDatasetIdReturnsJustForSpecificDatasetId(){
+        String darCode1 = "DAR-" + RandomUtils.nextInt(100, 1000);
+        String darCode2 = "DAR-" + RandomUtils.nextInt(100, 1000);
+        Dataset dataset1 = createDataset();
+        Dataset dataset2 = createDataset();
+        User user1 = createUser();
+        User user2 = createUser();
+        DataAccessRequest testDar1 = createDAR(user1, dataset1, darCode1);
+        DataAccessRequest testDar2 = createDAR(user2, dataset2, darCode2);
+
+        Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDataSetId());
+        Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
+        Date now = new Date();
+        voteDAO.updateVote(true,
+                "",
+                now,
+                v1.getVoteId(),
+                false,
+                e1.getElectionId(),
+                now,
+                false);
+
+        Election e2 = createDataAccessElection(testDar2.getReferenceId(), dataset2.getDataSetId());
+        Vote v2 = createFinalVote(dataset2.getCreateUserId(), e2.getElectionId());
+        now = new Date();
+        voteDAO.updateVote(true,
+                "",
+                now,
+                v2.getVoteId(),
+                false,
+                e2.getElectionId(),
+                now,
+                false);
+
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset1.getDataSetId());
+        assertEquals(1, dars.size());
+        assertTrue(dars.get(0).datasetIds.contains(dataset1.getDataSetId()));
+    }
+
     @Test
     public void testFindAllApprovedDataAccessRequestsByDatasetId() {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);

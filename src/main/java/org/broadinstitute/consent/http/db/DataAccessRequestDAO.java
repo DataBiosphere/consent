@@ -51,11 +51,17 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
-      " SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
-        + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar "
-        + "  LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId  "
-        + "  WHERE dar.draft = false"
-          + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
+          " SELECT distinct e.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, "
+              + " dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
+              + " (dar.data #>> '{}')::jsonb AS data "
+              + " FROM data_access_request dar "
+              + " INNER JOIN election e "
+              + " ON e.reference_id = dar.reference_id "
+              + " INNER JOIN vote v "
+              + " ON e.election_id = v.electionid "
+              + " WHERE lower(v.type) = 'final' AND v.vote = true AND e.dataset_id = :datasetId "
+              + " AND e.archived IS NOT true AND lower(e.election_type) = 'dataaccess'"
+  )
   List<DataAccessRequest> findAllDataAccessRequestsByDatasetId(@Bind("datasetId") Integer datasetId);
 
 
