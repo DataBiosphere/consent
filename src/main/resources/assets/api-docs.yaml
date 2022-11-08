@@ -152,8 +152,6 @@ paths:
       responses:
         200:
           description: List of allowed types.
-  /api/consent/{consentId}/association:
-    $ref: './paths/consentByIdAssociation.yaml'
   /api/consent/cases/summary:
     get:
       summary: Get Consent Summary Cases

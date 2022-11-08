@@ -222,12 +222,6 @@ public class ConsentModule extends AbstractModule {
         return new ConsentService(
                 providesConsentDAO(),
                 providesElectionDAO(),
-                providesVoteDAO(),
-                providesDacService(),
-                providesDataAccessRequestDAO(),
-                providesAuditService(),
-                providesJdbi(),
-                providesDatasetDAO(),
                 providesUseRestrictionConverter());
     }
 

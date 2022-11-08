@@ -1,69 +1,36 @@
 package org.broadinstitute.consent.http.service;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.AuditActions;
-import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
-import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.generic.GenericType;
-import org.jdbi.v3.core.statement.PreparedBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
 public class ConsentService {
 
-    private final AuditService auditService;
-    private final Jdbi jdbi;
     private final Logger logger;
-    private final DatasetDAO dataSetDAO;
-
     private final ConsentDAO consentDAO;
     private final ElectionDAO electionDAO;
-    private final VoteDAO voteDAO;
-    private final DacService dacService;
-    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final UseRestrictionConverter useRestrictionConverter;
 
     @Inject
-    public ConsentService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
-                          DataAccessRequestDAO dataAccessRequestDAO, AuditService auditService,
-                          Jdbi jdbi, DatasetDAO dataSetDAO,
+    public ConsentService(ConsentDAO consentDAO, ElectionDAO electionDAO,
                           UseRestrictionConverter useRestrictionConverter) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
-        this.voteDAO = voteDAO;
-        this.dacService = dacService;
-        this.dataAccessRequestDAO = dataAccessRequestDAO;
-        this.auditService = auditService;
-        this.jdbi = jdbi;
-        this.dataSetDAO = dataSetDAO;
         this.useRestrictionConverter = useRestrictionConverter;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
@@ -106,30 +73,6 @@ public class ConsentService {
         return consentDAO.findConsentById(id);
     }
 
-    // POST /consent/:consentid/association <body>=List<ConsentAssociation>
-    // Create new associations for a consent.  For each ConsentAssociation specified, remove the previous
-    // association and create the new one.
-    public List<ConsentAssociation> createAssociation(String consentId, List<ConsentAssociation> new_associations, String createdByUserEmail) {
-        logger.trace(String.format("createAssociation consentId='%s' %d associations supplied",
-                consentId, new_associations.size()));
-        checkConsentExists(consentId);
-        validateAssociations(new_associations);
-        for (ConsentAssociation association : new_associations) {
-            logger.debug(String.format("CreateAssociation, adding associations for '%s', %d ids supplied",
-                    association.getAssociationType(), association.getElements().size()));
-            validateEmptyObjectIds(association.getElements());
-            processAssociation(association.getElements());
-            try {
-                consentDAO.deleteAllAssociationsForType(consentId, association.getAssociationType());
-                List<String> generatedIds = updateAssociations(consentId, association.getAssociationType(), association.getElements());
-                auditService.saveAssociationAuditList(generatedIds, AuditTable.CONSENT_ASSOCIATIONS.getValue(), AuditActions.CREATE.getValue(), createdByUserEmail);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");
-            }
-        }
-        return getAllAssociationsForConsent(consentId);
-    }
-
     public Consent update(String id, Consent rec) throws NotFoundException {
         rec = updateConsentDates(rec);
         if (StringUtils.isEmpty(consentDAO.checkConsentById(id))) {
@@ -143,63 +86,6 @@ public class ConsentService {
                 rec.getDataUseLetter(), rec.getName(), rec.getDulName(), rec.getLastUpdate(),
                 rec.getSortDate(), rec.getTranslatedUseRestriction(), rec.getGroupName(), true);
         return consentDAO.findConsentById(id);
-    }
-
-    // PUT /consent/:consentid/association <body>=List<ConsentAssociaiton>
-    // Update associations for a consent by adding new associations.  For each ConsentAssociation specified, all
-    // the objects specified are added as consent associations.
-    public List<ConsentAssociation> updateAssociation(String consentId, List<ConsentAssociation> new_associations, String modifiedByUserEmail) {
-        logger.trace(String.format("updateAssociation consentId='%s' associations(%d)= '%s'",
-                consentId, new_associations.size(), new_associations.toString()));
-        checkConsentExists(consentId);
-        validateAssociations(new_associations);
-        // Loop over all the ConsentAssociations sent in the body.
-        for (ConsentAssociation association : new_associations) {
-            String atype = association.getAssociationType();
-            List<String> new_ids = association.getElements();
-            validateEmptyObjectIds(new_ids);
-            logger.debug(String.format("updateAssociation, adding associations for '%s', ids(cnt=%d) are '%s'",
-                    atype, new_ids.size(), new_ids.toString()));
-            // First retrieve the existing associations for that type.
-            List<String> old_ids = consentDAO.findAssociationsByType(consentId, atype);
-            // Remove any objectId's that already exist
-            new_ids.removeAll(old_ids);
-            // and add the new associations
-            try {
-                if (new_ids.size() > 0) {
-                    processAssociation(new_ids);
-                    List<String> ids = updateAssociations(consentId, association.getAssociationType(), new_ids);
-                    auditService.saveAssociationAuditList(ids, AuditTable.CONSENT_ASSOCIATIONS.getValue(), AuditActions.REPLACE.getValue(), modifiedByUserEmail);
-                }
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");
-            }
-
-        }
-        return getAllAssociationsForConsent(consentId);
-    }
-
-    public List<ConsentAssociation> getAssociation(String consentId, String associationType, String objectId) {
-        logger.trace(String.format("getAssociation consentId='%s' associationType='%s', objectId='%s'",
-                consentId, associationType, objectId));
-
-        checkConsentExists(consentId);
-        List<ConsentAssociation> result;
-        if (associationType == null)
-            result = getAllAssociationsForConsent(consentId);
-        else {
-            result = new ArrayList<>();
-            List<String> id_list;
-            if (objectId == null)
-                id_list = consentDAO.findAssociationsByType(consentId, associationType);
-            else { // both associationType and objectId specified
-                id_list = new ArrayList<>();
-                if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) != null)
-                    id_list.add(objectId);
-            }
-            result.add(new ConsentAssociation(associationType, id_list));
-        }
-        return result;
     }
 
     public Consent retrieve(String id) throws UnknownIdentifierException {
@@ -230,27 +116,27 @@ public class ConsentService {
             throw new IllegalArgumentException("Consent cannot be deleted because already exist elections associated with it");
     }
 
-    public List<ConsentAssociation> deleteAssociation(String consentId, String associationType, String objectId) {
-        logger.trace(String.format("deleteAssociation consentId='%s' associationType='%s', objectId='%s'",
-                consentId, (associationType == null ? "<null>" : associationType),
-                (objectId == null ? "<null>" : objectId)));
-
-        checkConsentExists(consentId);
-        if (associationType == null)
-            consentDAO.deleteAllAssociationsForConsent(consentId);
-        else if (objectId == null)
-            consentDAO.deleteAllAssociationsForType(consentId, associationType);
-        else { // both associationType and objectId specified
-            if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) == null){
-                throw new NotFoundException();
-            } else {
-                Integer datasetId = dataSetDAO.findDatasetIdByObjectId(objectId);
-                consentDAO.deleteOneAssociation(consentId, associationType, datasetId);
-            }
-
-        }
-        return getAllAssociationsForConsent(consentId);
-    }
+//    public List<ConsentAssociation> deleteAssociation(String consentId, String associationType, String objectId) {
+//        logger.trace(String.format("deleteAssociation consentId='%s' associationType='%s', objectId='%s'",
+//                consentId, (associationType == null ? "<null>" : associationType),
+//                (objectId == null ? "<null>" : objectId)));
+//
+//        checkConsentExists(consentId);
+//        if (associationType == null)
+//            consentDAO.deleteAllAssociationsForConsent(consentId);
+//        else if (objectId == null)
+//            consentDAO.deleteAllAssociationsForType(consentId, associationType);
+//        else { // both associationType and objectId specified
+//            if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) == null){
+//                throw new NotFoundException();
+//            } else {
+//                Integer datasetId = dataSetDAO.findDatasetIdByObjectId(objectId);
+//                consentDAO.deleteOneAssociation(consentId, associationType, datasetId);
+//            }
+//
+//        }
+//        return getAllAssociationsForConsent(consentId);
+//    }
 
     public Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException {
         Consent consent = retrieve(consentId);
@@ -265,90 +151,12 @@ public class ConsentService {
         return consent.getDataUseLetter();
     }
 
-    /**
-     * Can't add this to the DAO interface =(
-     **/
-    private List<String> updateAssociations(String consentId, String associationType, List<String> ids) {
-        Handle h = jdbi.open();
-        PreparedBatch insertBatch = h.prepareBatch("INSERT INTO consent_associations (consent_id, association_type, data_set_id) VALUES (?, ?, ?)");
-        for (String id : ids) {
-            insertBatch.add(consentId, associationType, dataSetDAO.findDatasetIdByObjectId(id));
-        }
-        List<Long> insertedIds = insertBatch.
-                executeAndReturnGeneratedKeys("association_id").
-                collectInto(new GenericType<List<Long>>() {});
-        h.close();
-        List<String> stringsList = new ArrayList<>();
-        for (Long id : insertedIds) stringsList.add(id.toString());
-        return stringsList;
-    }
-
-    private void validateEmptyObjectIds(List<String> newIds) {
-        if (CollectionUtils.isNotEmpty(newIds)) {
-            newIds.stream().forEach(objectId -> {
-                if (StringUtils.isEmpty(objectId)) {
-                    throw new IllegalArgumentException("Elements are required");
-                }
-            });
-        }
-    }
-
-    private void processAssociation(List<String> objectIds) {
-        if (CollectionUtils.isNotEmpty(objectIds)) {
-            List<Dataset> dataSets = dataSetDAO.getDatasetsForObjectIdList(objectIds);
-            List<String> existentObjectsId = dataSets.stream().map(Dataset::getObjectId).collect(Collectors.toList());
-            List<Dataset> dataSetsToCreate = new ArrayList<>();
-            if(CollectionUtils.isNotEmpty(dataSets)) {
-                objectIds.stream().forEach(objectId -> {
-                    if(!existentObjectsId.contains(objectId)) {
-                        dataSetsToCreate.add(new Dataset(objectId));
-                    }
-                });
-            } else {
-                objectIds.stream().forEach(objectId -> {
-                    dataSetsToCreate.add(new Dataset(objectId));
-                });
-            }
-            dataSetDAO.insertAll(dataSetsToCreate);
-        }
-    }
-
-    // Helper methods for Consent Associations
-    //
-    // Check that the list of ConsentAssociations given as an agrument is valid, and throw BadRequestException
-    // if not.  The only error checked for is duplicate associationType.
-    private void validateAssociations(List<ConsentAssociation> assoc_list) {
-        if (assoc_list.size() > 1) {
-            Set<String> atype_list = new HashSet<>();
-            for (ConsentAssociation assoc : assoc_list) {
-                if (atype_list.contains(assoc.getAssociationType()))
-                    throw new WebApplicationException(Response.Status.BAD_REQUEST);
-                atype_list.add(assoc.getAssociationType());
-            }
-        }
-    }
-
     // Check that the specified Consent resource exists, or throw NotFoundException.
     private void checkConsentExists(String consentId) {
         String ck_id = consentDAO.checkConsentById(consentId);
         logger.debug(String.format("CreateAssocition, checkConsentbyId returned '%s'", (ck_id == null ? "<null>" : ck_id)));
         if (ck_id == null)
             throw new NotFoundException(String.format("Consent with id '%s' not found", consentId));
-    }
-
-    // Get the updated list of all the associations for a Consent Resource, to return as a result.
-    private List<ConsentAssociation> getAllAssociationsForConsent(String consentId) {
-        List<ConsentAssociation> assoc_list = new ArrayList<>();
-        List<String> type_list = consentDAO.findAssociationTypesForConsent(consentId);
-        logger.debug(String.format("getAllAssociationsForConsent consentId='%s', types='%s'", consentId, type_list.toString()));
-        for (String atype : type_list) {
-            List<String> id_list = consentDAO.findAssociationsByType(consentId, atype);
-            logger.debug(String.format("getAllAssociationsForConsent adding %d ids to type '%s'", id_list.size(), atype));
-            ConsentAssociation next_assoc = new ConsentAssociation(atype, id_list);
-            assoc_list.add(next_assoc);
-        }
-        logger.debug(String.format("getAllAssociationsForConsent - returning '%s'", assoc_list.toString()));
-        return assoc_list;
     }
 
     private Consent updateConsentDates(Consent c) {
