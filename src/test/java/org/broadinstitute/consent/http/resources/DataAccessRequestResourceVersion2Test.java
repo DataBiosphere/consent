@@ -58,8 +58,19 @@ public class DataAccessRequestResourceVersion2Test {
   @Mock private User mockUser;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
+  private final AuthUser adminUser = new AuthUser("admin@test.com");
+  private final AuthUser chairpersonUser = new AuthUser("chariperson@test.com");
+  private final AuthUser memberUser = new AuthUser("member@test.com");
+  private final AuthUser anotherUser = new AuthUser("bob@test.com");
   private final List<UserRole> roles = Collections.singletonList(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+  private final List<UserRole> adminRoles = Collections.singletonList(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+  private final List<UserRole> chairpersonRoles = Collections.singletonList(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
+  private final List<UserRole> memberRoles = Collections.singletonList(new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName()));
   private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+  private final User admin = new User(2, adminUser.getEmail(), "Admin user", new Date(), adminRoles);
+  private final User chairperson = new User(3, chairpersonUser.getEmail(), "Chairperson user", new Date(), chairpersonRoles);
+  private final User member = new User(4, memberUser.getEmail(), "Member user", new Date(), memberRoles);
+  private final User bob = new User(5, anotherUser.getEmail(), "Bob", new Date(), roles);
 
   private DataAccessRequestResourceVersion2 resource;
 
@@ -195,15 +206,22 @@ public class DataAccessRequestResourceVersion2Test {
 
   @Test
   public void testGetIrbDocument() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    when(userService.findUserByEmail(chairperson.getEmail())).thenReturn(chairperson);
+    when(userService.findUserByEmail(admin.getEmail())).thenReturn(admin);
+    when(userService.findUserByEmail(member.getEmail())).thenReturn(member);
+    when(userService.findUserByEmail(bob.getEmail())).thenReturn(bob);
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setIrbDocumentLocation(RandomStringUtils.randomAlphabetic(10));
     dar.getData().setIrbDocumentName(RandomStringUtils.randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     initResource();
 
-    Response response = resource.getIrbDocument(authUser, "");
-    assertEquals(200, response.getStatus());
+    assertEquals(200, resource.getIrbDocument(chairpersonUser, "").getStatus());
+    assertEquals(200, resource.getIrbDocument(adminUser, "").getStatus());
+    assertEquals(200, resource.getIrbDocument(memberUser, "").getStatus());
+    assertEquals(200, resource.getIrbDocument(authUser, "").getStatus());
+    assertEquals(403, resource.getIrbDocument(anotherUser, "").getStatus());
   }
 
   @Test
@@ -283,15 +301,22 @@ public class DataAccessRequestResourceVersion2Test {
 
   @Test
   public void testGetCollaborationDocument() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    when(userService.findUserByEmail(chairperson.getEmail())).thenReturn(chairperson);
+    when(userService.findUserByEmail(admin.getEmail())).thenReturn(admin);
+    when(userService.findUserByEmail(member.getEmail())).thenReturn(member);
+    when(userService.findUserByEmail(bob.getEmail())).thenReturn(bob);
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setCollaborationLetterLocation(RandomStringUtils.randomAlphabetic(10));
     dar.getData().setCollaborationLetterName(RandomStringUtils.randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     initResource();
 
-    Response response = resource.getCollaborationDocument(authUser, "");
-    assertEquals(200, response.getStatus());
+    assertEquals(200, resource.getCollaborationDocument(chairpersonUser, "").getStatus());
+    assertEquals(200, resource.getCollaborationDocument(adminUser, "").getStatus());
+    assertEquals(200, resource.getCollaborationDocument(memberUser, "").getStatus());
+    assertEquals(200, resource.getCollaborationDocument(authUser, "").getStatus());
+    assertEquals(403, resource.getCollaborationDocument(anotherUser, "").getStatus());
   }
 
   @Test

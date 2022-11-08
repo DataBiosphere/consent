@@ -258,9 +258,11 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @Auth AuthUser authUser,
       @PathParam("referenceId") String referenceId) {
     try {
-      User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest dar = getDarById(referenceId);
-      checkAuthorizedUpdateUser(user, dar);
+      validateAuthedRoleUser(
+              Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+                      .collect(Collectors.toList()),
+              authUser, referenceId);
       if (Objects.nonNull(dar.getData().getIrbDocumentLocation()) &&
         Objects.nonNull(dar.getData().getIrbDocumentName())) {
         String blobIdName = dar.getData().getIrbDocumentLocation();
@@ -306,9 +308,11 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @Auth AuthUser authUser,
       @PathParam("referenceId") String referenceId) {
     try {
-      User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest dar = getDarById(referenceId);
-      checkAuthorizedUpdateUser(user, dar);
+      validateAuthedRoleUser(
+              Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+                      .collect(Collectors.toList()),
+              authUser, referenceId);
       if (Objects.nonNull(dar.getData().getCollaborationLetterLocation()) &&
         Objects.nonNull(dar.getData().getCollaborationLetterName())) {
         String blobIdName = dar.getData().getCollaborationLetterLocation();
