@@ -151,8 +151,7 @@ public class DatasetResource extends Resource {
      */
     public Response createDatasetRegistration(
             @Auth AuthUser authUser,
-            @FormDataParam("file1") FormDataBodyPart file1,
-            @FormDataParam("file2") FormDataBodyPart file2,
+            @FormDataParam("files") FormDataBodyPart formData,
             @FormDataParam("dataset") String json) {
         try {
             try {
@@ -165,18 +164,15 @@ public class DatasetResource extends Resource {
             DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
             User user = userService.findUserByEmail(authUser.getEmail());
             // validate file names if they exist.
-            if (Objects.nonNull(file1)) {
-                for (BodyPart part : file1.getParent().getBodyParts()) {
-                    validateFileDetails(part.getContentDisposition());
-                }
-            }
-            if (Objects.nonNull(file2)) {
-                for (BodyPart part : file2.getParent().getBodyParts()) {
-                    validateFileDetails(part.getContentDisposition());
+            if (Objects.nonNull(formData)) {
+                for (BodyPart part : formData.getParent().getBodyParts()) {
+                    if (Objects.nonNull(part.getContentDisposition().getFileName())) {
+                        validateFileDetails(part.getContentDisposition());
+                    }
                 }
             }
             // Generate datasets from registration
-            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, file1);
+            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, formData);
             URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
             return Response.created(uri).entity(datasets).build();
         } catch (Exception e) {
