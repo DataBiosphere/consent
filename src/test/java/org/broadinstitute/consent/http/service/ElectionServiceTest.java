@@ -342,13 +342,6 @@ public class ElectionServiceTest {
     }
 
     @Test
-    public void testDeleteElection() {
-        initService();
-
-        service.deleteElection(sampleElection1.getElectionId());
-    }
-
-    @Test
     public void testDescribeDataRequestElection() {
         initService();
 

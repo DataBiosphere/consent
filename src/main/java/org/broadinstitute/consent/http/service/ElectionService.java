@@ -63,7 +63,6 @@ public class ElectionService {
     private final DataAccessRequestService dataAccessRequestService;
     private final EmailService emailService;
     private final UseRestrictionConverter useRestrictionConverter;
-    private final String INACTIVE_DS = "Election was not created. The following Datasets are disabled : ";
     private static final Logger logger = LoggerFactory.getLogger("ElectionService");
 
     @Inject
@@ -143,23 +142,6 @@ public class ElectionService {
             sendDataCustodianNotification(election.getReferenceId());
         }
         return electionDAO.findElectionWithFinalVoteById(electionId);
-    }
-
-    public void deleteElection(Integer id) {
-        Election election = electionDAO.findElectionById(id);
-        if (Objects.isNull(election)) {
-            throw new IllegalArgumentException("Does not exist an election for the specified id");
-        }
-        List<Vote> votes = voteDAO.findPendingVotesByElectionId(id);
-        votes.forEach(v -> voteDAO.deleteVoteById(v.getVoteId()));
-        if (election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())) {
-            Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(election.getElectionId());
-            List<Vote> rpVotes = voteDAO.findVotesByElectionId(rpElectionId);
-            rpVotes.forEach(v -> voteDAO.deleteVoteById(v.getVoteId()));
-            electionDAO.deleteAccessRP(id);
-            electionDAO.deleteElectionById(rpElectionId);
-        }
-        electionDAO.deleteElectionById(id);
     }
 
     public Election describeDataRequestElection(String requestId) {

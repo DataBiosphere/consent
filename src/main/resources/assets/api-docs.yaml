@@ -169,65 +169,6 @@ paths:
                 $ref: '#/components/schemas/Summary'
   /api/consent/cases/summary/file:
     $ref: './paths/consentCasesSummaryFile.yaml'
-  /api/consent/{consentId}/election/{id}:
-    put:
-      summary: Update Consent Election
-      description: Updates the election for the consent ID sent as parameter.
-      parameters:
-        - name: consentId
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-        - name: id
-          in: path
-          description: Election ID
-          required: true
-          schema:
-            type: integer
-        - name: rec
-          in: body
-          description: Election to be created
-          required: true
-          schema:
-            $ref: '#/components/schemas/Election'
-      tags:
-        - Election
-        - Consent
-      responses:
-        200:
-          description: Returns the updated election.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Election'
-        404:
-          description: "The Election/Consent doesn't exist."
-    delete:
-      summary: Delete Election
-      description: Deletes the election identified by the IDs.
-      parameters:
-        - name: consentId
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-        - name: id
-          in: path
-          description: Election ID
-          required: true
-          schema:
-            type: integer
-      tags:
-        - Election
-        - Consent
-      responses:
-        200:
-          description: The election was deleted.
-        404:
-          description: "The Election/Consent doesn't exist."
   /api/consent:
     $ref: './paths/consent.yaml'
   /api/consent/{id}:
