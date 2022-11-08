@@ -1,22 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
-import static java.util.stream.Collectors.groupingBy;
-
 import com.google.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -32,6 +16,21 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
 
 public class DacService {
 
@@ -158,10 +157,6 @@ public class DacService {
 
     public List<Dataset> findDatasetsByDacId(Integer dacId) {
         return dataSetDAO.findDatasetsAssociatedWithDac(dacId);
-    }
-
-    public Set<Dataset> findDatasetsByConsentId(String consentId) {
-        return dataSetDAO.findDatasetsForConsentId(consentId);
     }
 
     public List<User> findMembersByDacId(Integer dacId) {

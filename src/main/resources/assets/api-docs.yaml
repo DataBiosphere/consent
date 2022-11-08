@@ -169,34 +169,6 @@ paths:
                 $ref: '#/components/schemas/Summary'
   /api/consent/cases/summary/file:
     $ref: './paths/consentCasesSummaryFile.yaml'
-  /api/consent/{consentId}/election:
-    post:
-      deprecated: true
-      summary: Create Consent Election
-      description: Creates a consent election
-      parameters:
-        - name: consentId
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-        - name: election
-          in: body
-          description: Election to be created
-          required: true
-          schema:
-            $ref: '#/components/schemas/Election'
-      tags:
-        - Election
-        - Consent
-      responses:
-        201:
-          description: Returns the URI to access the newly created election.
-        400:
-          description: There is an existing open election for the consent.
-        404:
-          description: The consent sent as a parameter does not exist.
   /api/consent/{consentId}/election/{id}:
     put:
       summary: Update Consent Election

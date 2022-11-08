@@ -17,7 +17,6 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -299,16 +298,6 @@ public class ElectionServiceTest {
 
     private void initService() {
         service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, libraryCardDAO, datasetAssociationDAO, dataAccessRequestDAO, darCollectionDAO, mailMessageDAO, emailService, dataAccessRequestService, useRestrictionConverter);
-    }
-
-    @Test
-    public void testCreateElection() throws Exception {
-        when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any())).thenReturn(null);
-        when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(new DarCollection());
-        initService();
-        Election election = service.createElection(sampleElection1, sampleElection1.getReferenceId(), ElectionType.DATA_ACCESS);
-        assertNotNull(election);
-        assertEquals(ElectionType.DATA_ACCESS.getValue(), election.getElectionType());
     }
 
     @Test

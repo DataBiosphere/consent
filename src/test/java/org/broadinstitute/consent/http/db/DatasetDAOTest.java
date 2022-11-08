@@ -187,25 +187,6 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertFalse(datasets.get(0).getProperties().isEmpty());
     }
 
-    @Test
-    public void testFindDatasetsForConsentId() {
-        Dataset dataset = createDataset();
-        Dac dac = createDac();
-        datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-        Consent consent = createConsent();
-        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
-
-        Set<Dataset> datasets = datasetDAO.findDatasetsForConsentId(consent.getConsentId());
-        assertFalse(datasets.isEmpty());
-        assertEquals(1, datasets.size());
-        Optional<Dataset> foundDataset = datasets.stream().findFirst();
-        assertTrue(foundDataset.isPresent());
-        assertEquals(dac.getDacId(), foundDataset.get().getDacId());
-        assertEquals(consent.getConsentId(), foundDataset.get().getConsentId());
-        assertEquals(consent.getTranslatedUseRestriction(), foundDataset.get().getTranslatedUseRestriction());
-        assertFalse(foundDataset.get().getProperties().isEmpty());
-    }
-
     // User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
     @Test
     public void testFindDataSetsByAuthUserEmail() {

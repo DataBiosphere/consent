@@ -155,9 +155,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlUpdate("DELETE FROM dataset_user_association WHERE datasetid = :datasetId")
     void deleteUserAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
 
-    @SqlUpdate("DELETE FROM consent_associations WHERE datasetid = :datasetId")
-    void deleteconsent_associationsByDatasetId(@Bind("datasetId") Integer datasetId);
-
     @SqlUpdate(
         "UPDATE dataset_property "
             + "SET property_value = :propertyValue "
@@ -473,19 +470,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         "SELECT DISTINCT d.dataset_id, d.dac_id FROM dataset d " +
             " WHERE d.dac_id IS NOT NULL ")
     List<Pair<Integer, Integer>> findDatasetAndDacIds();
-
-    @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(
-        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use " +
-            " FROM dataset d " +
-            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
-            " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
-            " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-            " INNER JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
-            " INNER JOIN consents c ON c.consent_id = ca.consent_id " +
-            " WHERE c.consent_id = :consentId " +
-            " AND d.active = true ")
-    Set<Dataset> findDatasetsForConsentId(@Bind("consentId") String consentId);
 
     @SqlUpdate(
         "UPDATE dataset " +
