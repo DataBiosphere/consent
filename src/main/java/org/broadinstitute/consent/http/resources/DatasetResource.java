@@ -166,7 +166,9 @@ public class DatasetResource extends Resource {
             // validate file names if they exist.
             if (Objects.nonNull(formDataBodyPart)) {
                 for (BodyPart part : formDataBodyPart.getParent().getBodyParts()) {
-                    validateFileDetails(part.getContentDisposition());
+                    if (Objects.nonNull(part.getContentDisposition().getFileName())) {
+                        validateFileDetails(part.getContentDisposition());
+                    }
                 }
             }
             // Generate datasets from registration
