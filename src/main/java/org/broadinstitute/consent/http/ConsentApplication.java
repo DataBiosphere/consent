@@ -245,7 +245,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
         env.jersey().register(new DataUseLetterResource(auditService, googleStore, userService, consentService));
         env.jersey().register(new ElectionResource(voteService, electionService));
-        env.jersey().register(new ElectionReviewResource(dataAccessRequestService, consentService, electionService, reviewResultsService));
+        env.jersey().register(new ElectionReviewResource(reviewResultsService));
         env.jersey().register(new EmailNotifierResource(emailService));
         env.jersey().register(new IndexerResource(indexerService, googleStore));
         env.jersey().register(new InstitutionResource(userService, institutionService));

@@ -225,10 +225,6 @@ public class ElectionService {
         return election;
     }
 
-    public Integer findRPElectionByElectionAccessId(Integer electionId) {
-        return electionDAO.findRPElectionByElectionAccessId(electionId);
-    }
-
     /**
      * Return true if:
      *      Everyone has already voted
@@ -241,11 +237,11 @@ public class ElectionService {
 
         List<Integer> votingUserIds = electionVotes.stream().
                 map(Vote::getDacUserId).
-                collect(Collectors.toList());
+                toList();
         Set<User> votingUsers = userDAO.findUsersWithRoles(votingUserIds);
         List<UserRole> votingMemberRoles = votingUsers.stream().flatMap(u -> u.getRoles().stream()).
                 filter(r -> r.getRoleId().equals(UserRoles.MEMBER.getRoleId())).
-                collect(Collectors.toList());
+                toList();
         // If the voting member roles are empty, we only have chairpersons left, return true
         return votingMemberRoles.isEmpty();
     }
@@ -342,15 +338,10 @@ public class ElectionService {
         return !electionIds.isEmpty() ? electionDAO.findElectionsWithCardHoldingUsersByElectionIds(electionIds) : Collections.emptyList();
     }
 
-    public Election getConsentElectionByDARElectionId(Integer darElectionId){
-        Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(darElectionId);
-        return electionId != null ? electionDAO.findElectionById(electionId) : null;
-    }
-
     public List<Election> createDataSetElections(String referenceId, Map<User, List<Dataset>> dataOwnerDataSet){
         List<Integer> electionsIds = new ArrayList<>();
         dataOwnerDataSet.forEach((user,dataSets) -> {
-            dataSets.stream().forEach(dataSet -> {
+            dataSets.forEach(dataSet -> {
                 if(electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, dataSet.getDataSetId()) == null) {
                     Integer electionId = electionDAO.insertElection(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), new Date(), referenceId, dataSet.getDataSetId());
                     electionsIds.add(electionId);

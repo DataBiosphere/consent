@@ -534,9 +534,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     ReviewResultsService providesReviewResultsService() {
         return new ReviewResultsService(
-                providesElectionDAO(),
-                providesVoteDAO(),
-                providesConsentDAO()
+                providesElectionDAO()
         );
     }
 

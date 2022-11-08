@@ -1401,31 +1401,6 @@ public class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetElectionConsentIdByDARElectionId() {
-    Dac dac = createDac();
-    Dataset dataset = createDatasetWithDac(dac.getDacId());
-
-    DataAccessRequest dar = createDataAccessRequestV3();
-    String referenceId = dar.getReferenceId();
-    Integer datasetId = dataset.getDataSetId();
-
-    String consentId = UUID.randomUUID().toString();
-    Election datasetAccessElection = createDataAccessElection(referenceId, datasetId);
-    Integer consentElectionId = electionDAO.insertElection(
-            ElectionType.TRANSLATE_DUL.getValue(),
-            ElectionStatus.OPEN.getValue(),
-            new Date(),
-            consentId,
-            datasetId);
-
-    electionDAO.insertAccessAndConsentElection(datasetAccessElection.getElectionId(), consentElectionId);
-
-    assertEquals(consentElectionId,
-            electionDAO.getElectionConsentIdByDARElectionId(
-                    datasetAccessElection.getElectionId()));
-  }
-
-  @Test
   public void testDeleteAccessRP() {
     Dac dac = createDac();
     Dataset dataset = createDatasetWithDac(dac.getDacId());

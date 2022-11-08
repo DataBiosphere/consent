@@ -1766,62 +1766,6 @@ paths:
             text/plain:
               schema:
                 type: string
-  /api/electionReview/access/{electionId}:
-    get:
-      deprecated: true
-      summary: get ElectionReview for access election identified by electionId
-      description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for DataAccess elections.
-      parameters:
-        - name: electionId
-          in: path
-          description: Election Id
-          required: true
-          schema:
-            type: integer
-        - name: isFinalAccess
-          in: query
-          description: Defines if the reviewVote array of the retrieved ElectionReview will contain or not the isFinalAccess = TRUE Vote.
-          required: true
-          schema:
-            type: boolean
-      tags:
-        - ElectionReview
-      responses:
-        200:
-          description: ElectionReview
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ElectionReview'
-  /api/electionReview/rp/{electionId}:
-    get:
-      deprecated: true
-      summary: get ElectionReview for rp election identified by electionId
-      description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for Research Purpose elections.
-      parameters:
-        - name: electionId
-          in: path
-          description: |
-            Election Id for the associated Data Access Election
-            (and not the associated RP Election, this is legacy behavior).
-          required: true
-          schema:
-            type: integer
-        - name: isFinalAccess
-          in: query
-          description: Defines if the reviewVote array of the retrieved ElectionReview will contain or not the isFinalAccess = TRUE Vote.
-          required: true
-          schema:
-            type: boolean
-      tags:
-        - ElectionReview
-      responses:
-        200:
-          description: ElectionReview
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ElectionReview'
   /api/emailNotifier/reminderMessage/{voteId}:
     post:
       summary: Send Reminder Email
@@ -2764,36 +2708,6 @@ components:
           type: integer
           format: int32
           description: The display order of the properties.
-    ElectionReview:
-      type: object
-      properties:
-        reviewVote:
-          type: array
-          items:
-            $ref: '#/components/schemas/ElectionReviewVote'
-          description: Votes related to the Election.
-        election:
-          $ref: '#/components/schemas/Election'
-        consent:
-          $ref: './schemas/Consent.yaml'
-        voteAgreement:
-          $ref: '#/components/schemas/Vote'
-        finalVote:
-          $ref: '#/components/schemas/Vote'
-        rpElectionId:
-          type: integer
-          description: The research purpose ID.
-    ElectionReviewVote:
-      type: object
-      properties:
-        Vote:
-          $ref: '#/components/schemas/Vote'
-        displayName:
-          type: string
-          description: Name of the voter.
-        email:
-          type: string
-          description: Email of the voter.
     Dac:
       type: object
       properties:

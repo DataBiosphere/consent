@@ -25,13 +25,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("SELECT v.* FROM vote v INNER JOIN election ON election.election_id = v.electionid WHERE election.reference_id = :referenceId")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
-    @SqlQuery("SELECT v.*, u.email, u.display_name FROM vote v "
-            + " INNER JOIN election ON election.election_id = v.electionid "
-            + " INNER JOIN users u ON u.user_id = v.dacuserid "
-            + " WHERE election.election_id = :electionId")
-    @UseRowMapper(ElectionReviewVoteMapper.class)
-    List<ElectionReviewVote> findAllElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId);
-
     @SqlQuery(" SELECT v.*, u.email, u.display_name "
             + " FROM vote v "
             + " INNER JOIN election ON election.election_id = v.electionId "
@@ -142,15 +135,8 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("delete from vote where voteId IN (<voteIds>)")
     void removeVotesByIds(@BindList("voteIds") List<Integer> voteIds);
 
-    @SqlQuery("select * from vote v where v.dacUserId = :dacUserId "
-            + " and v.electionId IN (<electionIds>)")
-    List<Vote> findVotesByElectionIdsAndUser(@BindList("electionIds") List<Integer> electionIds, @Bind("dacUserId") Integer dacUserId);
-
     @SqlQuery("SELECT * FROM vote v WHERE v.dacuserid = :dacUserId ")
     List<Vote> findVotesByUserId(@Bind("dacUserId") Integer dacUserId);
-
-    @SqlQuery("select vote from vote v where v.electionId = :electionId and lower(v.type) = 'chairperson'")
-    Boolean findChairPersonVoteByElectionId(@Bind("electionId") Integer electionId);
 
     @SqlUpdate("UPDATE vote v SET rationale = :rationale WHERE v.voteid IN (<voteIds>)")
     void updateRationaleByVoteIds(@BindList("voteIds") List<Integer> voteIds, @Bind("rationale") String rationale);
