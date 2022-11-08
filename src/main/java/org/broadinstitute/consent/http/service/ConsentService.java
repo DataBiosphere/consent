@@ -116,28 +116,6 @@ public class ConsentService {
             throw new IllegalArgumentException("Consent cannot be deleted because already exist elections associated with it");
     }
 
-//    public List<ConsentAssociation> deleteAssociation(String consentId, String associationType, String objectId) {
-//        logger.trace(String.format("deleteAssociation consentId='%s' associationType='%s', objectId='%s'",
-//                consentId, (associationType == null ? "<null>" : associationType),
-//                (objectId == null ? "<null>" : objectId)));
-//
-//        checkConsentExists(consentId);
-//        if (associationType == null)
-//            consentDAO.deleteAllAssociationsForConsent(consentId);
-//        else if (objectId == null)
-//            consentDAO.deleteAllAssociationsForType(consentId, associationType);
-//        else { // both associationType and objectId specified
-//            if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) == null){
-//                throw new NotFoundException();
-//            } else {
-//                Integer datasetId = dataSetDAO.findDatasetIdByObjectId(objectId);
-//                consentDAO.deleteOneAssociation(consentId, associationType, datasetId);
-//            }
-//
-//        }
-//        return getAllAssociationsForConsent(consentId);
-//    }
-
     public Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException {
         Consent consent = retrieve(consentId);
         consent.setDulName(dulName);
