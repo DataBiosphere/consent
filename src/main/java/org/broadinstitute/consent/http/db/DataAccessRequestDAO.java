@@ -45,7 +45,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
 
 
   /**
-   * Find all non-draft DataAccessRequests for the given datasetId
+   * Find all non-draft, approved DataAccessRequests for the given datasetId
    *
    * @return List<DataAccessRequest>
    */
@@ -62,7 +62,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               + " WHERE lower(v.type) = 'final' AND v.vote = true AND e.dataset_id = :datasetId "
               + " AND e.archived IS NOT true AND lower(e.election_type) = 'dataaccess'"
   )
-  List<DataAccessRequest> findAllDataAccessRequestsByDatasetId(@Bind("datasetId") Integer datasetId);
+  List<DataAccessRequest> findAllApprovedDataAccessRequestsByDatasetId(@Bind("datasetId") Integer datasetId);
 
 
   @SqlQuery(

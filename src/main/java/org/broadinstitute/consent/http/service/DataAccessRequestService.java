@@ -543,7 +543,7 @@ public class DataAccessRequestService {
         }
         StringBuilder builder = new StringBuilder();
         builder.append(dataAccessReportsParser.getDatasetApprovedUsersHeader(requestingUser));
-        List<DataAccessRequest> darList = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(datasetId);
+        List<DataAccessRequest> darList = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(datasetId);
         if (CollectionUtils.isNotEmpty(darList)){
             for(DataAccessRequest dar: darList){
                 String referenceId = dar.getReferenceId();

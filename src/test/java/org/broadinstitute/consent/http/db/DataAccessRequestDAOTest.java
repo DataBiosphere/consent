@@ -366,13 +366,13 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     public void testFindAllByDatasetIdArchived() {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Dataset dataset = createDataset();
-        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId());
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset.getDataSetId());
         assertTrue(dars.isEmpty());
 
         User user = createUserWithInstitution();
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-        List returnedDARs = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset.getDataSetId());
+        List returnedDARs = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset.getDataSetId());
         assertTrue(returnedDARs.isEmpty());
     }
 
@@ -412,7 +412,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
                 now,
                 false);
 
-        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset1.getDataSetId());
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset1.getDataSetId());
         assertEquals(1, dars.size());
         assertTrue(dars.get(0).datasetIds.contains(dataset1.getDataSetId()));
     }
@@ -437,7 +437,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId()).isEmpty());
         assertTrue(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).isEmpty());
 
-        assertEquals(0, dataAccessRequestDAO.findAllDataAccessRequestsByDatasetId(dataset2.getDataSetId()).size());
+        assertEquals(0, dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset2.getDataSetId()).size());
 
         Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDataSetId());
         Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
