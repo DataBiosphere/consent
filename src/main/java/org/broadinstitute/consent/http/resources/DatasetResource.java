@@ -253,7 +253,7 @@ public class DatasetResource extends Resource {
     }
 
     @GET
-    @Deprecated
+    @Deprecated // Use /v2/{datasetId}
     @Path("/{datasetId}")
     @Produces("application/json")
     @PermitAll
@@ -266,7 +266,6 @@ public class DatasetResource extends Resource {
         }
     }
 
-    @Deprecated // See DUOS-2176
     @GET
     @Path("/v2/{datasetId}")
     @Produces("application/json")
