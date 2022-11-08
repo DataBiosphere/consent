@@ -379,26 +379,6 @@ public class ElectionServiceTest {
     }
 
     @Test
-    public void testValidateCollectEmailCondition_Member() {
-        when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId())).thenReturn(Arrays.asList(sampleVoteMember));
-        when(userDAO.findUsersWithRoles(any())).thenReturn(Set.of(sampleUserMember));
-        initService();
-
-        boolean validate = service.validateCollectEmailCondition(sampleVoteMember);
-        assertEquals(false, validate);
-    }
-
-    @Test
-    public void testValidateCollectEmailCondition_NoMember() {
-        when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId())).thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
-        when(userDAO.findUsersWithRoles(any())).thenReturn(Set.of(sampleUserChairperson));
-        initService();
-
-        boolean validate = service.validateCollectEmailCondition(sampleVoteChairpersonApproval);
-        assertEquals(true, validate);
-    }
-
-    @Test
     public void testValidateCollectDAREmailCondition_NoVotesNoChair() {
         when(electionDAO.findElectionWithFinalVoteById(sampleVoteChairpersonApproval.getElectionId()))
                 .thenReturn(sampleElection1);

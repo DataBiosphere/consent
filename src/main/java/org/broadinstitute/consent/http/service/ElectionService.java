@@ -28,7 +28,6 @@ import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.slf4j.Logger;
@@ -165,27 +164,6 @@ public class ElectionService {
             throw new NotFoundException();
         }
         return election;
-    }
-
-    /**
-     * Return true if:
-     *      Everyone has already voted
-     *      The only remaining votes are chairperson votes
-     */
-    public boolean validateCollectEmailCondition(Vote vote) {
-        List<Vote> electionVotes = voteDAO.findPendingVotesByElectionId(vote.getElectionId());
-        // Everyone has voted, return true
-        if (electionVotes.isEmpty()) return true;
-
-        List<Integer> votingUserIds = electionVotes.stream().
-                map(Vote::getDacUserId).
-                toList();
-        Set<User> votingUsers = userDAO.findUsersWithRoles(votingUserIds);
-        List<UserRole> votingMemberRoles = votingUsers.stream().flatMap(u -> u.getRoles().stream()).
-                filter(r -> r.getRoleId().equals(UserRoles.MEMBER.getRoleId())).
-                toList();
-        // If the voting member roles are empty, we only have chairpersons left, return true
-        return votingMemberRoles.isEmpty();
     }
 
     /**
