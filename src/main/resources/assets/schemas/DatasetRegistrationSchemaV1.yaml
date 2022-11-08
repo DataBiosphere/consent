@@ -147,6 +147,9 @@ properties:
       - FIC
       - NCATS
       - NCCIH
+  nihInstitutionalCertificationFileName:
+    type: string
+    description: If an Institutional Certification for this consent group exists, please upload it here (file upload)
   nihGenomicProgramAdministratorName:
     type: string
     description: NIH Genomic Program Administrator Name
@@ -333,9 +336,6 @@ required:
         items:
           "$ref": "#/$defs/fileTypeObject"
         description: List of File Types
-      nihInstitutionalCertificationFileName:
-        type: string
-        description: If an Institutional Certification for this consent group exists, please upload it here (file upload)
     required:
       - consentGroupName
       - fileTypes

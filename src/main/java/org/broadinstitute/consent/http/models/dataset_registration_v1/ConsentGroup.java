@@ -12,26 +12,25 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "consentGroupName",
-        "generalResearchUse",
-        "hmb",
-        "diseaseSpecificUse",
-        "poa",
-        "otherPrimary",
-        "nmds",
-        "gso",
-        "pub",
-        "col",
-        "irb",
-        "gs",
-        "mor",
-        "morDate",
-        "npu",
-        "otherSecondary",
-        "dataLocation",
-        "url",
-        "fileTypes",
-        "nihInstitutionalCertificationFileName"
+    "consentGroupName",
+    "generalResearchUse",
+    "hmb",
+    "diseaseSpecificUse",
+    "poa",
+    "otherPrimary",
+    "nmds",
+    "gso",
+    "pub",
+    "col",
+    "irb",
+    "gs",
+    "mor",
+    "morDate",
+    "npu",
+    "otherSecondary",
+    "dataLocation",
+    "url",
+    "fileTypes"
 })
 @Generated("jsonschema2pojo")
 public class ConsentGroup {
@@ -39,129 +38,144 @@ public class ConsentGroup {
     /**
      * Consent Group Name
      * (Required)
+     *
      */
     @JsonProperty("consentGroupName")
     @JsonPropertyDescription("Consent Group Name")
     private String consentGroupName;
     /**
      * General Research Use
+     *
      */
     @JsonProperty("generalResearchUse")
     @JsonPropertyDescription("General Research Use")
     private Boolean generalResearchUse;
     /**
      * Health/Medical/Biomedical Research Use
+     *
      */
     @JsonProperty("hmb")
     @JsonPropertyDescription("Health/Medical/Biomedical Research Use")
     private Boolean hmb;
     /**
      * Disease-Specific Research Use
+     *
      */
     @JsonProperty("diseaseSpecificUse")
     @JsonPropertyDescription("Disease-Specific Research Use")
     private List<String> diseaseSpecificUse = new ArrayList<String>();
     /**
      * Populations, Origins, Ancestry Use
+     *
      */
     @JsonProperty("poa")
     @JsonPropertyDescription("Populations, Origins, Ancestry Use")
     private Boolean poa;
     /**
      * Other
+     *
      */
     @JsonProperty("otherPrimary")
     @JsonPropertyDescription("Other")
     private String otherPrimary;
     /**
      * No Methods Development or validation studies (NMDS)
+     *
      */
     @JsonProperty("nmds")
     @JsonPropertyDescription("No Methods Development or validation studies (NMDS)")
     private Boolean nmds;
     /**
      * Genetic studies only (GSO)
+     *
      */
     @JsonProperty("gso")
     @JsonPropertyDescription("Genetic studies only (GSO)")
     private Boolean gso;
     /**
      * Publication Required (PUB)
+     *
      */
     @JsonProperty("pub")
     @JsonPropertyDescription("Publication Required (PUB)")
     private Boolean pub;
     /**
      * Collaboration Required (COL)
+     *
      */
     @JsonProperty("col")
     @JsonPropertyDescription("Collaboration Required (COL)")
     private Boolean col;
     /**
      * Ethics Approval Required (IRB)
+     *
      */
     @JsonProperty("irb")
     @JsonPropertyDescription("Ethics Approval Required (IRB)")
     private Boolean irb;
     /**
      * Geographic Restriction (GS-)
+     *
      */
     @JsonProperty("gs")
     @JsonPropertyDescription("Geographic Restriction (GS-)")
     private String gs;
     /**
      * Publication Moratorium (MOR)
+     *
      */
     @JsonProperty("mor")
     @JsonPropertyDescription("Publication Moratorium (MOR)")
     private Boolean mor;
     /**
      * Publication Moratorium Date (MOR)
+     *
      */
     @JsonProperty("morDate")
     @JsonPropertyDescription("Publication Moratorium Date (MOR)")
     private String morDate;
     /**
      * Non-profit Use Only (NPU)
+     *
      */
     @JsonProperty("npu")
     @JsonPropertyDescription("Non-profit Use Only (NPU)")
     private Boolean npu;
     /**
      * Other
+     *
      */
     @JsonProperty("otherSecondary")
     @JsonPropertyDescription("Other")
     private String otherSecondary;
     /**
      * Data Location
+     *
      */
     @JsonProperty("dataLocation")
     @JsonPropertyDescription("Data Location")
     private List<DataLocation> dataLocation = new ArrayList<DataLocation>();
     /**
      * Free text field for entering URL of data
+     *
      */
     @JsonProperty("url")
     @JsonPropertyDescription("Free text field for entering URL of data")
     private URI url;
+
     /**
      * List of File Types
      * (Required)
+     *
      */
     @JsonProperty("fileTypes")
     @JsonPropertyDescription("List of File Types")
     private List<FileTypeObject> fileTypes = new ArrayList<FileTypeObject>();
-    /**
-     * If an Institutional Certification for this consent group exists, please upload it here (file upload)
-     */
-    @JsonProperty("nihInstitutionalCertificationFileName")
-    @JsonPropertyDescription("If an Institutional Certification for this consent group exists, please upload it here (file upload)")
-    private String nihInstitutionalCertificationFileName;
 
     /**
      * Consent Group Name
      * (Required)
+     *
      */
     @JsonProperty("consentGroupName")
     public String getConsentGroupName() {
@@ -171,6 +185,7 @@ public class ConsentGroup {
     /**
      * Consent Group Name
      * (Required)
+     *
      */
     @JsonProperty("consentGroupName")
     public void setConsentGroupName(String consentGroupName) {
@@ -179,6 +194,7 @@ public class ConsentGroup {
 
     /**
      * General Research Use
+     *
      */
     @JsonProperty("generalResearchUse")
     public Boolean getGeneralResearchUse() {
@@ -187,6 +203,7 @@ public class ConsentGroup {
 
     /**
      * General Research Use
+     *
      */
     @JsonProperty("generalResearchUse")
     public void setGeneralResearchUse(Boolean generalResearchUse) {
@@ -195,6 +212,7 @@ public class ConsentGroup {
 
     /**
      * Health/Medical/Biomedical Research Use
+     *
      */
     @JsonProperty("hmb")
     public Boolean getHmb() {
@@ -203,6 +221,7 @@ public class ConsentGroup {
 
     /**
      * Health/Medical/Biomedical Research Use
+     *
      */
     @JsonProperty("hmb")
     public void setHmb(Boolean hmb) {
@@ -211,6 +230,7 @@ public class ConsentGroup {
 
     /**
      * Disease-Specific Research Use
+     *
      */
     @JsonProperty("diseaseSpecificUse")
     public List<String> getDiseaseSpecificUse() {
@@ -219,6 +239,7 @@ public class ConsentGroup {
 
     /**
      * Disease-Specific Research Use
+     *
      */
     @JsonProperty("diseaseSpecificUse")
     public void setDiseaseSpecificUse(List<String> diseaseSpecificUse) {
@@ -227,6 +248,7 @@ public class ConsentGroup {
 
     /**
      * Populations, Origins, Ancestry Use
+     *
      */
     @JsonProperty("poa")
     public Boolean getPoa() {
@@ -235,6 +257,7 @@ public class ConsentGroup {
 
     /**
      * Populations, Origins, Ancestry Use
+     *
      */
     @JsonProperty("poa")
     public void setPoa(Boolean poa) {
@@ -243,6 +266,7 @@ public class ConsentGroup {
 
     /**
      * Other
+     *
      */
     @JsonProperty("otherPrimary")
     public String getOtherPrimary() {
@@ -251,6 +275,7 @@ public class ConsentGroup {
 
     /**
      * Other
+     *
      */
     @JsonProperty("otherPrimary")
     public void setOtherPrimary(String otherPrimary) {
@@ -259,6 +284,7 @@ public class ConsentGroup {
 
     /**
      * No Methods Development or validation studies (NMDS)
+     *
      */
     @JsonProperty("nmds")
     public Boolean getNmds() {
@@ -267,6 +293,7 @@ public class ConsentGroup {
 
     /**
      * No Methods Development or validation studies (NMDS)
+     *
      */
     @JsonProperty("nmds")
     public void setNmds(Boolean nmds) {
@@ -275,6 +302,7 @@ public class ConsentGroup {
 
     /**
      * Genetic studies only (GSO)
+     *
      */
     @JsonProperty("gso")
     public Boolean getGso() {
@@ -283,6 +311,7 @@ public class ConsentGroup {
 
     /**
      * Genetic studies only (GSO)
+     *
      */
     @JsonProperty("gso")
     public void setGso(Boolean gso) {
@@ -291,6 +320,7 @@ public class ConsentGroup {
 
     /**
      * Publication Required (PUB)
+     *
      */
     @JsonProperty("pub")
     public Boolean getPub() {
@@ -299,6 +329,7 @@ public class ConsentGroup {
 
     /**
      * Publication Required (PUB)
+     *
      */
     @JsonProperty("pub")
     public void setPub(Boolean pub) {
@@ -307,6 +338,7 @@ public class ConsentGroup {
 
     /**
      * Collaboration Required (COL)
+     *
      */
     @JsonProperty("col")
     public Boolean getCol() {
@@ -315,6 +347,7 @@ public class ConsentGroup {
 
     /**
      * Collaboration Required (COL)
+     *
      */
     @JsonProperty("col")
     public void setCol(Boolean col) {
@@ -323,6 +356,7 @@ public class ConsentGroup {
 
     /**
      * Ethics Approval Required (IRB)
+     *
      */
     @JsonProperty("irb")
     public Boolean getIrb() {
@@ -331,6 +365,7 @@ public class ConsentGroup {
 
     /**
      * Ethics Approval Required (IRB)
+     *
      */
     @JsonProperty("irb")
     public void setIrb(Boolean irb) {
@@ -339,6 +374,7 @@ public class ConsentGroup {
 
     /**
      * Geographic Restriction (GS-)
+     *
      */
     @JsonProperty("gs")
     public String getGs() {
@@ -347,6 +383,7 @@ public class ConsentGroup {
 
     /**
      * Geographic Restriction (GS-)
+     *
      */
     @JsonProperty("gs")
     public void setGs(String gs) {
@@ -355,6 +392,7 @@ public class ConsentGroup {
 
     /**
      * Publication Moratorium (MOR)
+     *
      */
     @JsonProperty("mor")
     public Boolean getMor() {
@@ -363,6 +401,7 @@ public class ConsentGroup {
 
     /**
      * Publication Moratorium (MOR)
+     *
      */
     @JsonProperty("mor")
     public void setMor(Boolean mor) {
@@ -371,6 +410,7 @@ public class ConsentGroup {
 
     /**
      * Publication Moratorium Date (MOR)
+     *
      */
     @JsonProperty("morDate")
     public String getMorDate() {
@@ -379,6 +419,7 @@ public class ConsentGroup {
 
     /**
      * Publication Moratorium Date (MOR)
+     *
      */
     @JsonProperty("morDate")
     public void setMorDate(String morDate) {
@@ -387,6 +428,7 @@ public class ConsentGroup {
 
     /**
      * Non-profit Use Only (NPU)
+     *
      */
     @JsonProperty("npu")
     public Boolean getNpu() {
@@ -395,6 +437,7 @@ public class ConsentGroup {
 
     /**
      * Non-profit Use Only (NPU)
+     *
      */
     @JsonProperty("npu")
     public void setNpu(Boolean npu) {
@@ -403,6 +446,7 @@ public class ConsentGroup {
 
     /**
      * Other
+     *
      */
     @JsonProperty("otherSecondary")
     public String getOtherSecondary() {
@@ -411,6 +455,7 @@ public class ConsentGroup {
 
     /**
      * Other
+     *
      */
     @JsonProperty("otherSecondary")
     public void setOtherSecondary(String otherSecondary) {
@@ -419,6 +464,7 @@ public class ConsentGroup {
 
     /**
      * Data Location
+     *
      */
     @JsonProperty("dataLocation")
     public List<DataLocation> getDataLocation() {
@@ -427,6 +473,7 @@ public class ConsentGroup {
 
     /**
      * Data Location
+     *
      */
     @JsonProperty("dataLocation")
     public void setDataLocation(List<DataLocation> dataLocation) {
@@ -435,6 +482,7 @@ public class ConsentGroup {
 
     /**
      * Free text field for entering URL of data
+     *
      */
     @JsonProperty("url")
     public URI getUrl() {
@@ -443,6 +491,7 @@ public class ConsentGroup {
 
     /**
      * Free text field for entering URL of data
+     *
      */
     @JsonProperty("url")
     public void setUrl(URI url) {
@@ -452,6 +501,7 @@ public class ConsentGroup {
     /**
      * List of File Types
      * (Required)
+     *
      */
     @JsonProperty("fileTypes")
     public List<FileTypeObject> getFileTypes() {
@@ -461,26 +511,11 @@ public class ConsentGroup {
     /**
      * List of File Types
      * (Required)
+     *
      */
     @JsonProperty("fileTypes")
     public void setFileTypes(List<FileTypeObject> fileTypes) {
         this.fileTypes = fileTypes;
-    }
-
-    /**
-     * If an Institutional Certification for this consent group exists, please upload it here (file upload)
-     */
-    @JsonProperty("nihInstitutionalCertificationFileName")
-    public String getNihInstitutionalCertificationFileName() {
-        return nihInstitutionalCertificationFileName;
-    }
-
-    /**
-     * If an Institutional Certification for this consent group exists, please upload it here (file upload)
-     */
-    @JsonProperty("nihInstitutionalCertificationFileName")
-    public void setNihInstitutionalCertificationFileName(String nihInstitutionalCertificationFileName) {
-        this.nihInstitutionalCertificationFileName = nihInstitutionalCertificationFileName;
     }
 
     @Override
@@ -489,86 +524,82 @@ public class ConsentGroup {
         sb.append(ConsentGroup.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
         sb.append("consentGroupName");
         sb.append('=');
-        sb.append(((this.consentGroupName == null) ? "<null>" : this.consentGroupName));
+        sb.append(((this.consentGroupName == null)?"<null>":this.consentGroupName));
         sb.append(',');
         sb.append("generalResearchUse");
         sb.append('=');
-        sb.append(((this.generalResearchUse == null) ? "<null>" : this.generalResearchUse));
+        sb.append(((this.generalResearchUse == null)?"<null>":this.generalResearchUse));
         sb.append(',');
         sb.append("hmb");
         sb.append('=');
-        sb.append(((this.hmb == null) ? "<null>" : this.hmb));
+        sb.append(((this.hmb == null)?"<null>":this.hmb));
         sb.append(',');
         sb.append("diseaseSpecificUse");
         sb.append('=');
-        sb.append(((this.diseaseSpecificUse == null) ? "<null>" : this.diseaseSpecificUse));
+        sb.append(((this.diseaseSpecificUse == null)?"<null>":this.diseaseSpecificUse));
         sb.append(',');
         sb.append("poa");
         sb.append('=');
-        sb.append(((this.poa == null) ? "<null>" : this.poa));
+        sb.append(((this.poa == null)?"<null>":this.poa));
         sb.append(',');
         sb.append("otherPrimary");
         sb.append('=');
-        sb.append(((this.otherPrimary == null) ? "<null>" : this.otherPrimary));
+        sb.append(((this.otherPrimary == null)?"<null>":this.otherPrimary));
         sb.append(',');
         sb.append("nmds");
         sb.append('=');
-        sb.append(((this.nmds == null) ? "<null>" : this.nmds));
+        sb.append(((this.nmds == null)?"<null>":this.nmds));
         sb.append(',');
         sb.append("gso");
         sb.append('=');
-        sb.append(((this.gso == null) ? "<null>" : this.gso));
+        sb.append(((this.gso == null)?"<null>":this.gso));
         sb.append(',');
         sb.append("pub");
         sb.append('=');
-        sb.append(((this.pub == null) ? "<null>" : this.pub));
+        sb.append(((this.pub == null)?"<null>":this.pub));
         sb.append(',');
         sb.append("col");
         sb.append('=');
-        sb.append(((this.col == null) ? "<null>" : this.col));
+        sb.append(((this.col == null)?"<null>":this.col));
         sb.append(',');
         sb.append("irb");
         sb.append('=');
-        sb.append(((this.irb == null) ? "<null>" : this.irb));
+        sb.append(((this.irb == null)?"<null>":this.irb));
         sb.append(',');
         sb.append("gs");
         sb.append('=');
-        sb.append(((this.gs == null) ? "<null>" : this.gs));
+        sb.append(((this.gs == null)?"<null>":this.gs));
         sb.append(',');
         sb.append("mor");
         sb.append('=');
-        sb.append(((this.mor == null) ? "<null>" : this.mor));
+        sb.append(((this.mor == null)?"<null>":this.mor));
         sb.append(',');
         sb.append("morDate");
         sb.append('=');
-        sb.append(((this.morDate == null) ? "<null>" : this.morDate));
+        sb.append(((this.morDate == null)?"<null>":this.morDate));
         sb.append(',');
         sb.append("npu");
         sb.append('=');
-        sb.append(((this.npu == null) ? "<null>" : this.npu));
+        sb.append(((this.npu == null)?"<null>":this.npu));
         sb.append(',');
         sb.append("otherSecondary");
         sb.append('=');
-        sb.append(((this.otherSecondary == null) ? "<null>" : this.otherSecondary));
+        sb.append(((this.otherSecondary == null)?"<null>":this.otherSecondary));
         sb.append(',');
         sb.append("dataLocation");
         sb.append('=');
-        sb.append(((this.dataLocation == null) ? "<null>" : this.dataLocation));
+        sb.append(((this.dataLocation == null)?"<null>":this.dataLocation));
         sb.append(',');
         sb.append("url");
         sb.append('=');
-        sb.append(((this.url == null) ? "<null>" : this.url));
+        sb.append(((this.url == null)?"<null>":this.url));
         sb.append(',');
         sb.append("fileTypes");
         sb.append('=');
-        sb.append(((this.fileTypes == null) ? "<null>" : this.fileTypes));
+        sb.append(((this.fileTypes == null)?"<null>":this.fileTypes));
         sb.append(',');
-        sb.append("nihInstitutionalCertificationFileName");
-        sb.append('=');
-        sb.append(((this.nihInstitutionalCertificationFileName == null) ? "<null>" : this.nihInstitutionalCertificationFileName));
-        sb.append(',');
-        if (sb.charAt((sb.length() - 1)) == ',') {
-            sb.setCharAt((sb.length() - 1), ']');
+        if (sb.charAt((sb.length()- 1)) == ',') {
+            sb.setCharAt((sb.length()- 1), ']');
         } else {
             sb.append(']');
         }
@@ -578,26 +609,26 @@ public class ConsentGroup {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result * 31) + ((this.col == null) ? 0 : this.col.hashCode()));
-        result = ((result * 31) + ((this.gso == null) ? 0 : this.gso.hashCode()));
-        result = ((result * 31) + ((this.generalResearchUse == null) ? 0 : this.generalResearchUse.hashCode()));
-        result = ((result * 31) + ((this.poa == null) ? 0 : this.poa.hashCode()));
-        result = ((result * 31) + ((this.morDate == null) ? 0 : this.morDate.hashCode()));
-        result = ((result * 31) + ((this.otherPrimary == null) ? 0 : this.otherPrimary.hashCode()));
-        result = ((result * 31) + ((this.gs == null) ? 0 : this.gs.hashCode()));
-        result = ((result * 31) + ((this.url == null) ? 0 : this.url.hashCode()));
-        result = ((result * 31) + ((this.fileTypes == null) ? 0 : this.fileTypes.hashCode()));
-        result = ((result * 31) + ((this.diseaseSpecificUse == null) ? 0 : this.diseaseSpecificUse.hashCode()));
-        result = ((result * 31) + ((this.consentGroupName == null) ? 0 : this.consentGroupName.hashCode()));
-        result = ((result * 31) + ((this.mor == null) ? 0 : this.mor.hashCode()));
-        result = ((result * 31) + ((this.npu == null) ? 0 : this.npu.hashCode()));
-        result = ((result * 31) + ((this.dataLocation == null) ? 0 : this.dataLocation.hashCode()));
-        result = ((result * 31) + ((this.nihInstitutionalCertificationFileName == null) ? 0 : this.nihInstitutionalCertificationFileName.hashCode()));
-        result = ((result * 31) + ((this.irb == null) ? 0 : this.irb.hashCode()));
-        result = ((result * 31) + ((this.hmb == null) ? 0 : this.hmb.hashCode()));
-        result = ((result * 31) + ((this.pub == null) ? 0 : this.pub.hashCode()));
-        result = ((result * 31) + ((this.nmds == null) ? 0 : this.nmds.hashCode()));
-        result = ((result * 31) + ((this.otherSecondary == null) ? 0 : this.otherSecondary.hashCode()));
+        result = ((result* 31)+((this.col == null)? 0 :this.col.hashCode()));
+        result = ((result* 31)+((this.gso == null)? 0 :this.gso.hashCode()));
+        result = ((result* 31)+((this.generalResearchUse == null)? 0 :this.generalResearchUse.hashCode()));
+        result = ((result* 31)+((this.poa == null)? 0 :this.poa.hashCode()));
+        result = ((result* 31)+((this.morDate == null)? 0 :this.morDate.hashCode()));
+        result = ((result* 31)+((this.otherPrimary == null)? 0 :this.otherPrimary.hashCode()));
+        result = ((result* 31)+((this.gs == null)? 0 :this.gs.hashCode()));
+        result = ((result* 31)+((this.url == null)? 0 :this.url.hashCode()));
+        result = ((result* 31)+((this.fileTypes == null)? 0 :this.fileTypes.hashCode()));
+        result = ((result* 31)+((this.diseaseSpecificUse == null)? 0 :this.diseaseSpecificUse.hashCode()));
+        result = ((result* 31)+((this.consentGroupName == null)? 0 :this.consentGroupName.hashCode()));
+        result = ((result* 31)+((this.mor == null)? 0 :this.mor.hashCode()));
+        result = ((result* 31)+((this.npu == null)? 0 :this.npu.hashCode()));
+        result = ((result* 31)+((this.dataLocation == null)? 0 :this.dataLocation.hashCode()));
+        result = ((result* 31)+((this.irb == null)? 0 :this.irb.hashCode()));
+        result = ((result* 31)+((this.hmb == null)? 0 :this.hmb.hashCode()));
+        result = ((result* 31)+((this.pub == null)? 0 :this.pub.hashCode()));
+        result = ((result* 31)+((this.nmds == null)? 0 :this.nmds.hashCode()));
+        result = ((result* 31)+((this.otherSecondary == null)? 0 :this.otherSecondary.hashCode()));
+        result = ((result* 31)+((this.fileTypes == null)? 0 :this.fileTypes.hashCode()));
         return result;
     }
 
@@ -610,7 +641,7 @@ public class ConsentGroup {
             return false;
         }
         ConsentGroup rhs = ((ConsentGroup) other);
-        return (((((((((((((((((((((this.col == rhs.col) || ((this.col != null) && this.col.equals(rhs.col))) && ((this.gso == rhs.gso) || ((this.gso != null) && this.gso.equals(rhs.gso)))) && ((this.generalResearchUse == rhs.generalResearchUse) || ((this.generalResearchUse != null) && this.generalResearchUse.equals(rhs.generalResearchUse)))) && ((this.poa == rhs.poa) || ((this.poa != null) && this.poa.equals(rhs.poa)))) && ((this.morDate == rhs.morDate) || ((this.morDate != null) && this.morDate.equals(rhs.morDate)))) && ((this.otherPrimary == rhs.otherPrimary) || ((this.otherPrimary != null) && this.otherPrimary.equals(rhs.otherPrimary)))) && ((this.gs == rhs.gs) || ((this.gs != null) && this.gs.equals(rhs.gs)))) && ((this.url == rhs.url) || ((this.url != null) && this.url.equals(rhs.url)))) && ((this.fileTypes == rhs.fileTypes) || ((this.fileTypes != null) && this.fileTypes.equals(rhs.fileTypes)))) && ((this.diseaseSpecificUse == rhs.diseaseSpecificUse) || ((this.diseaseSpecificUse != null) && this.diseaseSpecificUse.equals(rhs.diseaseSpecificUse)))) && ((this.consentGroupName == rhs.consentGroupName) || ((this.consentGroupName != null) && this.consentGroupName.equals(rhs.consentGroupName)))) && ((this.mor == rhs.mor) || ((this.mor != null) && this.mor.equals(rhs.mor)))) && ((this.npu == rhs.npu) || ((this.npu != null) && this.npu.equals(rhs.npu)))) && ((this.dataLocation == rhs.dataLocation) || ((this.dataLocation != null) && this.dataLocation.equals(rhs.dataLocation)))) && ((this.nihInstitutionalCertificationFileName == rhs.nihInstitutionalCertificationFileName) || ((this.nihInstitutionalCertificationFileName != null) && this.nihInstitutionalCertificationFileName.equals(rhs.nihInstitutionalCertificationFileName)))) && ((this.irb == rhs.irb) || ((this.irb != null) && this.irb.equals(rhs.irb)))) && ((this.hmb == rhs.hmb) || ((this.hmb != null) && this.hmb.equals(rhs.hmb)))) && ((this.pub == rhs.pub) || ((this.pub != null) && this.pub.equals(rhs.pub)))) && ((this.nmds == rhs.nmds) || ((this.nmds != null) && this.nmds.equals(rhs.nmds)))) && ((this.otherSecondary == rhs.otherSecondary) || ((this.otherSecondary != null) && this.otherSecondary.equals(rhs.otherSecondary))));
+        return ((((((((((((((((((this.col == rhs.col)||((this.col!= null)&&this.col.equals(rhs.col)))&&((this.gso == rhs.gso)||((this.gso!= null)&&this.gso.equals(rhs.gso))))&&((this.generalResearchUse == rhs.generalResearchUse)||((this.generalResearchUse!= null)&&this.generalResearchUse.equals(rhs.generalResearchUse))))&&((this.poa == rhs.poa)||((this.poa!= null)&&this.poa.equals(rhs.poa))))&&((this.otherPrimary == rhs.otherPrimary)||((this.otherPrimary!= null)&&this.otherPrimary.equals(rhs.otherPrimary))))&&((this.gs == rhs.gs)||((this.gs!= null)&&this.gs.equals(rhs.gs))))&&((this.url == rhs.url)||((this.url!= null)&&this.url.equals(rhs.url))))&&((this.diseaseSpecificUse == rhs.diseaseSpecificUse)||((this.diseaseSpecificUse!= null)&&this.diseaseSpecificUse.equals(rhs.diseaseSpecificUse))))&&((this.consentGroupName == rhs.consentGroupName)||((this.consentGroupName!= null)&&this.consentGroupName.equals(rhs.consentGroupName))))&&((this.mor == rhs.mor)||((this.mor!= null)&&this.mor.equals(rhs.mor))))&&((this.npu == rhs.npu)||((this.npu!= null)&&this.npu.equals(rhs.npu))))&&((this.dataLocation == rhs.dataLocation)||((this.dataLocation!= null)&&this.dataLocation.equals(rhs.dataLocation))))&&((this.irb == rhs.irb)||((this.irb!= null)&&this.irb.equals(rhs.irb))))&&((this.hmb == rhs.hmb)||((this.hmb!= null)&&this.hmb.equals(rhs.hmb))))&&((this.pub == rhs.pub)||((this.pub!= null)&&this.pub.equals(rhs.pub))))&&((this.nmds == rhs.nmds)||((this.nmds!= null)&&this.nmds.equals(rhs.nmds))))&&((this.otherSecondary == rhs.otherSecondary)||((this.otherSecondary!= null)&&this.otherSecondary.equals(rhs.otherSecondary)))&&((this.fileTypes == rhs.fileTypes)||((this.fileTypes!= null)&&this.fileTypes.equals(rhs.fileTypes))));
     }
 
 }
