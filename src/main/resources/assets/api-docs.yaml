@@ -1519,19 +1519,6 @@ paths:
           description: All incomplete votes for the elections have been advanced.
         500:
           description: Server error.
-  /api/electionReview/openElection:
-    get:
-      summary: describeElectionById
-      description: Endpoint to verify the existence of Open elections.
-      tags:
-        - Election
-      responses:
-        200:
-          description: Returns TRUE if there is at least one Open election otherwise return FALSE.
-          content:
-            text/plain:
-              schema:
-                type: string
   /api/emailNotifier/reminderMessage/{voteId}:
     post:
       summary: Send Reminder Email
