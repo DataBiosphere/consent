@@ -1,0 +1,37 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="103.0" author="connorlbark">
+        <createTable tableName="user_file">
+            <column name="user_file_id" autoIncrement="true" type="int">
+                <constraints primaryKey="true"/>
+            </column>
+
+            <!-- Could be: Reference ID or Dataset ID column. -->
+            <column name="entity_id" type="text"/>
+
+            <column name="file_name" type="text" >
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="bucket_name" type="text">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="blob_id" type="text">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="category" type="text"/>
+
+            <column name="media_type" type="text"/>
+
+            <column name="create_user_id" type="int"/>
+
+            <column name="create_date" type="date"/>
+
+            <column name="deleted" type="boolean"/>
+        </createTable>
+
+    </changeSet>
+</databaseChangeLog>

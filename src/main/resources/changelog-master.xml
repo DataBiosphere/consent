@@ -105,4 +105,5 @@
     <include file="changesets/changelog-consent-100.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-101.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-102.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-103.0.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
