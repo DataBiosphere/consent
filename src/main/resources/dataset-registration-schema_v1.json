@@ -148,11 +148,6 @@
       "description": "NIH Institution/Center for Submission",
       "enum": ["NCI", "NEI", "NHLBI", "NHGRI", "NIA", "NIAAA", "NIAID", "NIAMS", "NIBIB", "NICHD", "NIDCD", "NIDCR", "NIDDK", "NIDA", "NIEHS", "NIGMS", "NIMH", "NIMHD", "NINDS", "NINR", "NLM", "CC", "CIT", "CSR", "FIC", "NCATS", "NCCIH"]
     },
-    "nihInstitutionalCertificationFileName": {
-      "type": "string",
-      "label": "NIH Institutional Certification",
-      "description": "If an Institutional Certification for this consent group exists, please upload it here (file upload)"
-    },
     "nihGenomicProgramAdministratorName": {
       "type": "string",
       "label": "NIH Genomic Program Administrator Name",
