@@ -2415,6 +2415,76 @@ paths:
             application/json:
               schema:
                 type: string
+  /api/user/acknowledgements/{key}:
+    get:
+      summary: Get Acknowledgement by key
+      description: Obtains a specific acknowledgement by acknowledgement key.
+      parameters:
+        - name: key
+          in: path
+          description: The name of the key.
+          required: true
+          schema:
+            type: string
+      tags:
+        - User
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Acknowledgement'
+        401:
+          description: Unauthorized, log in and try the operation again.
+        404:
+          description: No acknowledgement found for the given key.
+        500:
+          description: Error processing the request.
+  /api/user/acknowledgements:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              example: ["key1", "key2", "key3"]
+      tags:
+        - User
+      summary: Set acknowledgements for a user
+      description: Records an acknowledgement record for each entry supplied
+      responses:
+        200:
+          description: Successful operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcknowledgementMap'
+        400:
+          description: The request isn't in the proper format.
+        401:
+          description: Unauthorized, log in and try the operation again.
+        500:
+          description: Error processing the request.
+    get:
+      tags:
+        - User
+      summary: Obtains all acknowledgements for a user
+      description: Obtains an acknowledgement record for each entry supplied.  Missing entries will not have a key in the response
+      responses:
+        200:
+          description: Successful operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcknowledgementMap'
+        401:
+          description: Unauthorized, log in and try the operation again.
+        500:
+          description: Error processing the request.
   /api/nih:
     delete:
       summary: Delete Era Commons Account
@@ -2565,6 +2635,31 @@ components:
             email: email authorization
             profile: profile authorization
   schemas:
+    Acknowledgement:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: The User ID for the current user
+        ack_key:
+          type: string
+          description: The name of the key
+        first_acknowledged:
+          type: integer
+          description: The date first acknowledged, in seconds since January 1, 1970
+        last_acknowledged:
+          type: integer
+          description: The date last acknowledged, in seconds since January 1, 1970
+      example:
+        userId: 1
+        ack_key: "key1"
+        first_acknowledged: 1668461426
+        last_acknowledged: 1668461426
+    AcknowledgementMap:
+      type: object
+      description: A map of keys to their associated Acknowledgement objects.
+      additionalProperties:
+        $ref: '#/components/schemas/Acknowledgement'
     Collaborator:
       $ref: './schemas/Collaborator.yaml'
     Consent:

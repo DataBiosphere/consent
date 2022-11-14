@@ -1,0 +1,24 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="102.0" author="otchet">
+        <createTable tableName="acknowledgement">
+            <column name="ack_key" type="varchar(2047)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="first_acknowledged" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_acknowledged" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="acknowledgement" columnNames="ack_key, user_id" constraintName="pk_acknowledgement"/>
+        <createIndex indexName="idx_user" tableName="acknowledgement">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
