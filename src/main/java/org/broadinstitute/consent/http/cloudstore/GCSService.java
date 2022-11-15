@@ -67,22 +67,23 @@ public class GCSService {
     }
 
     /**
-     * Store an input stream as a Blob
+     * Store an input stream as a Blob with the file name as the blob name
      *
      * @param content InputStream content
      * @param mediaType String media type
-     * @param fileName String file name
+     * @param bucketName String unique name of the bucket
      * @return BlobId of the stored document
      * @throws IOException Exception when storing document
      */
-    public BlobId storeDocument(InputStream content, String mediaType, String fileName)
+    public BlobId storeDocument(InputStream content, String mediaType, String bucketName)
         throws IOException {
         byte[] bytes = IOUtils.toByteArray(content);
-        BlobId blobId = BlobId.of(config.getBucket(), fileName);
+        BlobId blobId = BlobId.of(config.getBucket(), bucketName);
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(mediaType).build();
         Blob blob = storage.create(blobInfo, bytes);
         return blob.getBlobId();
     }
+
 
     /**
      * Delete a document by Blob Id Name
@@ -113,6 +114,15 @@ public class GCSService {
         }
     }
 
+    public InputStream getDocument(BlobId blobId) throws NotFoundException {
+        Optional<Blob> blobOptional = getBlobFromBlobId(blobId);
+        if (blobOptional.isPresent()) {
+            return new ByteArrayInputStream(blobOptional.get().getContent());
+        } else {
+            throw new NotFoundException("Document Not Found: " + blobId.toString());
+        }
+    }
+
     /**
      * Find a blob in the current storage bucket.
      *
@@ -121,6 +131,17 @@ public class GCSService {
      */
     private Optional<Blob> getBlobFromUrl(String blobIdName) {
         Blob blob = storage.get(BlobId.of(config.getBucket(), blobIdName));
+        return Optional.of(blob);
+    }
+
+    /**
+     * Find a blob in the current storage bucket.
+     *
+     * @param blobId Bucket and blob id
+     * @return Optional<Blob>
+     */
+    private Optional<Blob> getBlobFromBlobId(BlobId blobId) {
+        Blob blob = storage.get(blobId);
         return Optional.of(blob);
     }
 }

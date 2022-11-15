@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import org.broadinstitute.consent.http.enumeration.UserFileCategory;
 
+import java.io.InputStream;
 import java.util.Date;
 
 public class UserFile {
@@ -21,13 +22,15 @@ public class UserFile {
     private Integer userFileId;
     private String entityId;
     private String fileName;
-    private String BucketName;
-    private String blobId;
+    private String bucketName;
+    private String blobName;
     private UserFileCategory category;
     private String mediaType;
     private Integer createUserId;
     private Date createDate;
     private Boolean deleted;
+    // only populated when using `fetch` methods in service class
+    private InputStream uploadedFile;
 
     public Integer getUserFileId() {
         return userFileId;
@@ -54,19 +57,19 @@ public class UserFile {
     }
 
     public String getBucketName() {
-        return BucketName;
+        return bucketName;
     }
 
     public void setBucketName(String bucketName) {
-        BucketName = bucketName;
+        this.bucketName = bucketName;
     }
 
-    public String getBlobId() {
-        return blobId;
+    public String getBlobName() {
+        return blobName;
     }
 
-    public void setBlobId(String blobId) {
-        this.blobId = blobId;
+    public void setBlobName(String blobName) {
+        this.blobName = blobName;
     }
 
     public UserFileCategory getCategory() {
@@ -107,5 +110,13 @@ public class UserFile {
 
     public void setDeleted(Boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public InputStream getUploadedFile() {
+        return uploadedFile;
+    }
+
+    public void setUploadedFile(InputStream uploadedFile) {
+        this.uploadedFile = uploadedFile;
     }
 }

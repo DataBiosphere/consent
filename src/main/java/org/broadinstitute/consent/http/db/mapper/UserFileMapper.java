@@ -13,6 +13,10 @@ public class UserFileMapper implements RowMapper<UserFile>, RowMapperHelper {
     @Override
     public UserFile map(ResultSet r, StatementContext statementContext) throws SQLException {
         UserFile file = new UserFile();
+        if (hasColumn(r, "file_name")) {
+            file.setFileName(r.getString("file_name"));
+        }
+
         if (hasColumn(r, "user_file_id")) {
             file.setUserFileId(r.getInt("user_file_id"));
         }
@@ -25,13 +29,13 @@ public class UserFileMapper implements RowMapper<UserFile>, RowMapperHelper {
             file.setBucketName(r.getString("bucket_name"));
         }
 
-        if (hasColumn(r, "blob_id")) {
-            file.setBlobId(r.getString("blob_id"));
+        if (hasColumn(r, "blob_name")) {
+            file.setBlobName(r.getString("blob_name"));
         }
 
         if (hasColumn(r, "category")) {
             try {
-                file.setCategory(UserFileCategory.valueOf(r.getString("category")));
+                file.setCategory(UserFileCategory.findValue(r.getString("category")));
             } catch(Exception e) {
                 file.setCategory(null);
             }

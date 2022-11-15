@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
+import org.broadinstitute.consent.http.enumeration.UserFileCategory;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
@@ -31,6 +32,7 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserFile;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.core.Jdbi;
@@ -83,6 +85,7 @@ public class DAOTestHelper {
     protected static DarCollectionDAO darCollectionDAO;
     protected static DarCollectionSummaryDAO darCollectionSummaryDAO;
     protected static DatasetAssociationDAO datasetAssociationDAO;
+    protected static UserFileDAO userFileDAO;
 
     // This is a test-only DAO class where we manage the deletion
     // of all records between test runs.
@@ -141,6 +144,7 @@ public class DAOTestHelper {
         darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
         darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
         datasetAssociationDAO = jdbi.onDemand(DatasetAssociationDAO.class);
+        userFileDAO = jdbi.onDemand(UserFileDAO.class);
         testingDAO = jdbi.onDemand(TestingDAO.class);
     }
 
@@ -178,6 +182,7 @@ public class DAOTestHelper {
         testingDAO.deleteAllDARCollections();
         testingDAO.deleteAllCounters();
         testingDAO.deleteAllEmailEntities();
+        testingDAO.deleteAllUserFiles();
     }
 
     /*
@@ -608,5 +613,52 @@ public class DAOTestHelper {
         dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
         dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
         return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+    }
+
+
+    protected UserFile createUserFile() {
+        String fileName = RandomStringUtils.randomAlphabetic(10);
+        String category = UserFileCategory.getValues().get(new Random().nextInt(UserFileCategory.getValues().size()));
+        String bucketName = RandomStringUtils.randomAlphabetic(10);
+        String blobName = RandomStringUtils.randomAlphabetic(10);
+        String mediaType = RandomStringUtils.randomAlphabetic(10);
+        String entityId = RandomStringUtils.randomAlphabetic(10);
+        Integer createUserId = new Random().nextInt();
+        Date createDate = new Date();
+
+        Integer newUserFileId = userFileDAO.insertNewFile(
+                fileName,
+                category,
+                bucketName,
+                blobName,
+                mediaType,
+                entityId,
+                createUserId,
+                createDate
+        );
+
+        return userFileDAO.findFileById(newUserFileId);
+    }
+
+    protected UserFile createUserFile(String entityId, UserFileCategory category) {
+        String fileName = RandomStringUtils.randomAlphabetic(10);
+        String bucketName = RandomStringUtils.randomAlphabetic(10);
+        String blobName = RandomStringUtils.randomAlphabetic(10);
+        String mediaType = RandomStringUtils.randomAlphabetic(10);
+        Integer createUserId = new Random().nextInt();
+        Date createDate = new Date();
+
+        Integer newUserFileId = userFileDAO.insertNewFile(
+                fileName,
+                category.getValue(),
+                bucketName,
+                blobName,
+                mediaType,
+                entityId,
+                createUserId,
+                createDate
+        );
+
+        return userFileDAO.findFileById(newUserFileId);
     }
 }

@@ -6,32 +6,23 @@
             <column name="user_file_id" autoIncrement="true" type="int">
                 <constraints primaryKey="true"/>
             </column>
-
-            <!-- Could be: Reference ID or Dataset ID column. -->
+            <!-- Could be: Reference ID, Dataset ID column, etc. -->
             <column name="entity_id" type="text"/>
-
             <column name="file_name" type="text" >
                 <constraints nullable="false"/>
             </column>
-
             <column name="bucket_name" type="text">
                 <constraints nullable="false"/>
             </column>
-
-            <column name="blob_id" type="text">
+            <column name="blob_name" type="text">
                 <constraints nullable="false"/>
             </column>
-
             <column name="category" type="text"/>
-
             <column name="media_type" type="text"/>
-
             <column name="create_user_id" type="int"/>
-
             <column name="create_date" type="date"/>
-
             <column name="deleted" type="boolean"/>
+            <column name="deletedDate" type="date"/>
         </createTable>
-
     </changeSet>
 </databaseChangeLog>

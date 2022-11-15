@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.enumeration;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,5 +31,14 @@ public enum UserFileCategory {
             }
         }
         return false;
+    }
+
+    public static UserFileCategory findValue(String value) {
+        for (UserFileCategory cat : UserFileCategory.values()) {
+            if (cat.getValue().equals(value)) {
+                return cat;
+            }
+        }
+        return null;
     }
 }
