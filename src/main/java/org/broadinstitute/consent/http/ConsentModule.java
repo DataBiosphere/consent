@@ -55,6 +55,7 @@ import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
+import org.broadinstitute.consent.http.service.UserFileService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
@@ -207,6 +208,14 @@ public class ConsentModule extends AbstractModule {
             providesVoteDAO(),
             providesMatchDAO(),
             providesDarCollectionSummaryDAO()
+        );
+    }
+
+    @Provides
+    UserFileService providesUserFileService() {
+        return new UserFileService(
+                providesUserFileDAO(),
+                providesGCSService()
         );
     }
 

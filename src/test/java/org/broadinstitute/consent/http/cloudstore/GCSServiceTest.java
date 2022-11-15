@@ -89,6 +89,29 @@ public class GCSServiceTest {
     }
 
     @Test
+    public void testGetDocument_ByBlobId() throws Exception {
+        String fileName = RandomStringUtils.random(10, true, false);
+        String fileContent = "content";
+        String urlString = "http://localhost/bucket/" + fileName;
+        Date now = new Date();
+        Blob blob = mock(Blob.class);
+        BlobId blobId = BlobId.of("asdf", "ghjkl");
+        when(blob.isDirectory()).thenReturn(false);
+        when(blob.getMediaLink()).thenReturn(urlString);
+        when(blob.getName()).thenReturn("bucket/" + fileName);
+        when(blob.getCreateTime()).thenReturn(now.getTime());
+        when(blob.getContent()).thenReturn((fileContent).getBytes());
+        when(blob.getBlobId()).thenReturn(blobId);
+        when(storage.get(any(BlobId.class))).thenReturn(blob);
+
+        initStore();
+        InputStream is = service.getDocument(BlobId.of("asdf", "ghjkl"));
+        String content = IOUtils.toString(is, Charset.defaultCharset());
+        assertNotNull(is);
+        assertEquals(fileContent, content);
+    }
+
+    @Test
     public void testDeleteDocument() {
         String fileName = RandomStringUtils.random(10, true, false);
         String fileContent = "content";

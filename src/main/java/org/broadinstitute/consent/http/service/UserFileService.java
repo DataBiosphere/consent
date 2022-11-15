@@ -19,7 +19,8 @@ public class UserFileService {
     UserFileDAO userFileDAO;
 
     public UserFileService(UserFileDAO userFileDAO, GCSService gcsService) {
-
+        this.userFileDAO = userFileDAO;
+        this.gcsService = gcsService;
     }
 
     UserFile uploadAndStoreUserFile(
