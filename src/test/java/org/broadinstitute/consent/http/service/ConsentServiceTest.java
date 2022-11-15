@@ -1,44 +1,30 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.jdbi.v3.core.Jdbi;
+import org.joda.time.DateTimeField;
+import org.joda.time.Instant;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ConsentServiceTest {
 
@@ -51,49 +37,15 @@ public class ConsentServiceTest {
     ElectionDAO electionDAO;
 
     @Mock
-    VoteDAO voteDAO;
-
-    @Mock
-    DacService dacService;
-
-    @Mock
-    DataAccessRequestDAO dataAccessRequestDAO;
-
-    @Mock
-    AuditService auditService;
-
-    @Mock
-    DatasetDAO dataSetDAO;
-
-    @Mock
-    DacDAO dacDAO;
-
-    @Mock
-    Jdbi jdbi;
-
-    @Mock
     UseRestrictionConverter useRestrictionConverter;
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     private void initService() {
-        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO, auditService, jdbi, dataSetDAO, useRestrictionConverter);
-    }
-
-    @Test
-    public void testGetById() throws Exception {
-        when(consentDAO.findConsentById(anyString())).thenReturn(new Consent());
-        Election mockElection = this.getTestElection();
-        when(electionDAO.findLastElectionByReferenceIdAndType(anyString(), anyString())).thenReturn(mockElection);
-        initService();
-
-        Consent consent = service.getById(UUID.randomUUID().toString());
-        Assert.assertNotNull(consent);
-        Assert.assertEquals(ElectionStatus.OPEN.getValue(), consent.getLastElectionStatus());
-        Assert.assertFalse(consent.getLastElectionArchived());
+        service = new ConsentService(consentDAO, electionDAO, useRestrictionConverter);
     }
 
     @Test
@@ -138,59 +90,12 @@ public class ConsentServiceTest {
 
         Consent consent = service.update("test consent", testConsent);
         Assert.assertNotNull(consent);
-        Assert.assertEquals(consent.getLastUpdate().getDay(), updateDate.getDay());
-        Assert.assertEquals(consent.getSortDate().getDay(), updateDate.getDay());
+        Assert.assertEquals(getDayOfYear(consent.getLastUpdate()), getDayOfYear(updateDate));
+        Assert.assertEquals(getDayOfYear(consent.getSortDate()), getDayOfYear(updateDate));
     }
 
-    @Test
-    public void testGetAssociation_NoAssociationType() {
-        when(consentDAO.checkConsentById("test consent"))
-                .thenReturn("test consent");
-        when(consentDAO.findAssociationTypesForConsent("test consent"))
-                .thenReturn(Arrays.asList("sample"));
-        when(consentDAO.findAssociationsByType("test consent", "sample"))
-                .thenReturn(Arrays.asList("test object"));
-        ConsentAssociation association = buildConsentAssociation("sample", "test object");
-
-        initService();
-        List<ConsentAssociation> associationList = service.getAssociation("test consent", null, null);
-        Assert.assertNotNull(associationList);
-        Assert.assertEquals(associationList.size(), 1);
-        Assert.assertEquals(associationList.get(0).getElements().get(0), association.getElements().get(0));
-    }
-
-    @Test
-    public void testGetAssociation_WithAssociationTypeNoObjecId() {
-        when(consentDAO.checkConsentById("test consent"))
-                .thenReturn("test consent");
-        when(consentDAO.findAssociationTypesForConsent("test consent"))
-                .thenReturn(Arrays.asList("sample"));
-        when(consentDAO.findAssociationsByType("test consent", "sample"))
-                .thenReturn(Arrays.asList("test object"));
-        ConsentAssociation association = buildConsentAssociation("sample", "test object");
-
-        initService();
-        List<ConsentAssociation> associationList = service.getAssociation("test consent", "sample", null);
-        Assert.assertNotNull(associationList);
-        Assert.assertEquals(associationList.size(), 1);
-        Assert.assertEquals(associationList.get(0).getElements().get(0), association.getElements().get(0));
-    }
-
-    @Test
-    public void testGetAssociation_WithAssociationTypeAndObjecId() {
-        when(consentDAO.checkConsentById("test consent"))
-                .thenReturn("test consent");
-        when(consentDAO.findAssociationTypesForConsent("test consent"))
-                .thenReturn(Arrays.asList("sample"));
-        when(consentDAO.findAssociationByTypeAndId("test consent", "sample", "test object"))
-                .thenReturn("test object");
-        ConsentAssociation association = buildConsentAssociation("sample", "test object");
-
-        initService();
-        List<ConsentAssociation> associationList = service.getAssociation("test consent", "sample", "test object");
-        Assert.assertNotNull(associationList);
-        Assert.assertEquals(associationList.size(), 1);
-        Assert.assertEquals(associationList.get(0).getElements().get(0), association.getElements().get(0));
+    private DateTimeField getDayOfYear(Timestamp timestamp) {
+        return new Instant(timestamp.getTime()).getChronology().dayOfYear();
     }
 
     @Test
@@ -222,56 +127,6 @@ public class ConsentServiceTest {
 
         Consent consent = service.getConsentFromDatasetID(1);
         Assert.assertNotNull(consent);
-    }
-
-    @Test
-    public void testDeleteAssociation_NoAssociationType() {
-        when(consentDAO.checkConsentById("test consent"))
-                .thenReturn("test consent");
-        doNothing().when(consentDAO).deleteAllAssociationsForConsent(any());
-        when(consentDAO.findAssociationTypesForConsent("test consent"))
-                .thenReturn(Arrays.asList("sample"));
-        when(consentDAO.findAssociationsByType("test consent", "sam[le"))
-                .thenReturn(Arrays.asList("test object"));
-
-        initService();
-
-        List<ConsentAssociation> consents = service.deleteAssociation("test consent", null, null);
-        Assert.assertNotNull(consents);
-    }
-
-    @Test
-    public void testDeleteAssociation_WithAssociationType() {
-        when(consentDAO.checkConsentById("test consent"))
-                .thenReturn("test consent");
-        doNothing().when(consentDAO).deleteAllAssociationsForType(any(), any());
-        when(consentDAO.findAssociationTypesForConsent("test consent"))
-                .thenReturn(Arrays.asList("sample"));
-        when(consentDAO.findAssociationsByType("test consent", "sam[le"))
-                .thenReturn(Arrays.asList("test object"));
-
-        initService();
-
-        List<ConsentAssociation> consents = service.deleteAssociation("test consent", "sample", null);
-        Assert.assertNotNull(consents);
-    }
-
-    @Test
-    public void testDeleteAssociation_WithAssociationTypeAndObjectId() {
-        when(consentDAO.checkConsentById("test consent"))
-                .thenReturn("test consent");
-        doNothing().when(consentDAO).deleteOneAssociation(any(), any(), any());
-        when(consentDAO.findAssociationTypesForConsent("test consent"))
-                .thenReturn(Arrays.asList("sample"));
-        when(consentDAO.findAssociationsByType("test consent", "sam[le"))
-                .thenReturn(Arrays.asList("test object"));
-        when(consentDAO.findAssociationByTypeAndId(any(), any(), any()))
-                .thenReturn("sample");
-
-        initService();
-
-        List<ConsentAssociation> consents = service.deleteAssociation("test consent", "sample", "test object");
-        Assert.assertNotNull(consents);
     }
 
     @Test
@@ -348,12 +203,6 @@ public class ConsentServiceTest {
         return consent;
     }
 
-    private ConsentAssociation buildConsentAssociation(String atype, String... elements) {
-        final ArrayList<String> elem_list = new ArrayList<>();
-        Collections.addAll(elem_list, elements);
-        return new ConsentAssociation(atype, elem_list);
-    }
-
     private Election getTestElection() {
         Election mockElection = new Election();
         mockElection.setStatus(ElectionStatus.OPEN.getValue());
@@ -361,14 +210,4 @@ public class ConsentServiceTest {
         return mockElection;
     }
 
-    private AuthUser getUser() {
-        return new AuthUser("User");
-    }
-
-    private Dac getTestDac() {
-        Dac dac = new Dac();
-        dac.setName("test dac");
-        dac.setDacId(1);
-        return dac;
-    }
 }

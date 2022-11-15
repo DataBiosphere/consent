@@ -122,29 +122,6 @@ public class MatchServiceTest {
     }
 
     @Test
-    public void testFindMatchByConsentIdAndPurposeId() {
-        Match m = createMatchObject();
-        when(matchDAO.findMatchByPurposeIdAndConsentId(any(), any())).thenReturn(m);
-        spy(matchDAO);
-        initService();
-
-        Match match = service.findMatchByConsentIdAndPurposeId(m.getConsent(), m.getPurpose());
-        assertNotNull(match);
-        verify(matchDAO, atLeastOnce()).findMatchByPurposeIdAndConsentId(any(), any());
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void testFindMatchByConsentIdAndPurposeIdNotFound() {
-        Match m = createMatchObject();
-        when(matchDAO.findMatchByPurposeIdAndConsentId(any(), any())).thenReturn(null);
-        spy(matchDAO);
-        initService();
-
-        service.findMatchByConsentIdAndPurposeId(m.getConsent(), m.getPurpose());
-        verify(matchDAO, atLeastOnce()).findMatchByPurposeIdAndConsentId(any(), any());
-    }
-
-    @Test
     public void testFindMatchByConsentId() {
         Match m = createMatchObject();
         when(matchDAO.findMatchesByConsentId(any())).thenReturn(List.of(m));

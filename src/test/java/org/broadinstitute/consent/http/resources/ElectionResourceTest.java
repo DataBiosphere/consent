@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
@@ -51,8 +50,6 @@ public class ElectionResourceTest {
         when(electionService.updateElectionById(any(), any())).thenReturn(new Election());
         when(electionService.describeElectionById(any())).thenReturn(new Election());
         when(electionService.describeElectionByVoteId(any())).thenReturn(new Election());
-//        when(electionService.isDataSetElectionOpen()).thenReturn(true);
-        when(electionService.getConsentElectionByDARElectionId(any())).thenReturn(new Election());
         electionResource = new ElectionResource(voteService, electionService);
     }
 

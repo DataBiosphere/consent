@@ -1,5 +1,4 @@
 get:
-  deprecated: true
   summary: Get Datasets
   description: | 
     Returns Dataset list filtered by authenticated user role.

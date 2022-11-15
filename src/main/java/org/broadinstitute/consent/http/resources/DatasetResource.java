@@ -166,7 +166,9 @@ public class DatasetResource extends Resource {
             // validate file names if they exist.
             if (Objects.nonNull(formDataBodyPart)) {
                 for (BodyPart part : formDataBodyPart.getParent().getBodyParts()) {
-                    validateFileDetails(part.getContentDisposition());
+                    if (Objects.nonNull(part.getContentDisposition().getFileName())) {
+                        validateFileDetails(part.getContentDisposition());
+                    }
                 }
             }
             // Generate datasets from registration
@@ -253,7 +255,7 @@ public class DatasetResource extends Resource {
     }
 
     @GET
-    @Deprecated
+    @Deprecated // Use /v2/{datasetId}
     @Path("/{datasetId}")
     @Produces("application/json")
     @PermitAll
@@ -266,7 +268,6 @@ public class DatasetResource extends Resource {
         }
     }
 
-    @Deprecated // See DUOS-2176
     @GET
     @Path("/v2/{datasetId}")
     @Produces("application/json")
