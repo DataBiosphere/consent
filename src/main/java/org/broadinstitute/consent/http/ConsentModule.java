@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserFileDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -95,6 +96,7 @@ public class ConsentModule extends AbstractModule {
     private final DarCollectionSummaryDAO darCollectionSummaryDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
+    private final UserFileDAO userFileDAO;
 
     public static final String DB_ENV = "postgresql";
 
@@ -128,6 +130,7 @@ public class ConsentModule extends AbstractModule {
         this.darCollectionSummaryDAO = this.jdbi.onDemand(DarCollectionSummaryDAO.class);
         this.institutionDAO = this.jdbi.onDemand((InstitutionDAO.class));
         this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
+        this.userFileDAO = this.jdbi.onDemand((UserFileDAO.class));
     }
 
     @Override
@@ -156,6 +159,7 @@ public class ConsentModule extends AbstractModule {
         container.setUserRoleDAO(providesUserRoleDAO());
         container.setVoteDAO(providesVoteDAO());
         container.setInstitutionDAO(providesInstitutionDAO());
+        container.setUserFileDAO(providesUserFileDAO());
         return container;
     }
 
@@ -486,6 +490,11 @@ public class ConsentModule extends AbstractModule {
     @Provides
     InstitutionDAO providesInstitutionDAO() {
         return institutionDAO;
+    }
+
+    @Provides
+    UserFileDAO providesUserFileDAO() {
+        return userFileDAO;
     }
 
     @Provides

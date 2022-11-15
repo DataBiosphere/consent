@@ -617,27 +617,10 @@ public class DAOTestHelper {
 
 
     protected UserFile createUserFile() {
-        String fileName = RandomStringUtils.randomAlphabetic(10);
-        String category = UserFileCategory.getValues().get(new Random().nextInt(UserFileCategory.getValues().size()));
-        String bucketName = RandomStringUtils.randomAlphabetic(10);
-        String blobName = RandomStringUtils.randomAlphabetic(10);
-        String mediaType = RandomStringUtils.randomAlphabetic(10);
+        UserFileCategory category = List.of(UserFileCategory.values()).get(new Random().nextInt(UserFileCategory.values().length));
         String entityId = RandomStringUtils.randomAlphabetic(10);
-        Integer createUserId = new Random().nextInt();
-        Date createDate = new Date();
 
-        Integer newUserFileId = userFileDAO.insertNewFile(
-                fileName,
-                category,
-                bucketName,
-                blobName,
-                mediaType,
-                entityId,
-                createUserId,
-                createDate
-        );
-
-        return userFileDAO.findFileById(newUserFileId);
+        return createUserFile(entityId, category);
     }
 
     protected UserFile createUserFile(String entityId, UserFileCategory category) {
@@ -658,7 +641,6 @@ public class DAOTestHelper {
                 createUserId,
                 createDate
         );
-
         return userFileDAO.findFileById(newUserFileId);
     }
 }

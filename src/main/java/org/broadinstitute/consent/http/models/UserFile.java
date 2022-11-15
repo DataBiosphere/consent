@@ -4,6 +4,7 @@ import org.broadinstitute.consent.http.enumeration.UserFileCategory;
 
 import java.io.InputStream;
 import java.util.Date;
+import java.util.Objects;
 
 public class UserFile {
 
@@ -118,5 +119,18 @@ public class UserFile {
 
     public void setUploadedFile(InputStream uploadedFile) {
         this.uploadedFile = uploadedFile;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserFile userFile = (UserFile) o;
+        return Objects.equals(userFileId, userFile.userFileId) && Objects.equals(entityId, userFile.entityId) && Objects.equals(fileName, userFile.fileName) && Objects.equals(bucketName, userFile.bucketName) && Objects.equals(blobName, userFile.blobName) && category == userFile.category && Objects.equals(mediaType, userFile.mediaType) && Objects.equals(createUserId, userFile.createUserId) && Objects.equals(createDate, userFile.createDate) && Objects.equals(deleted, userFile.deleted);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(userFileId, entityId, fileName, bucketName, blobName, category, mediaType, createUserId, createDate, deleted);
     }
 }

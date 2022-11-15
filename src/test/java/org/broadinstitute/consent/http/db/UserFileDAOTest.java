@@ -56,6 +56,7 @@ public class UserFileDAOTest extends DAOTestHelper {
         UserFile newUserFile = userFileDAO.findFileById(newUserFileId);
 
         assertNotNull(newUserFile);
+        assertNotNull(newUserFile.getUserFileId());
         assertEquals(fileName, newUserFile.getFileName());
         assertEquals(category, newUserFile.getCategory().getValue());
         assertEquals(bucketName, newUserFile.getBucketName());
@@ -113,7 +114,7 @@ public class UserFileDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindFileByEntityId() {
+    public void testFindFilesByEntityId() {
         String entityId = RandomStringUtils.randomAlphabetic(10);
 
         createUserFile();
@@ -123,11 +124,12 @@ public class UserFileDAOTest extends DAOTestHelper {
         UserFile file3 = createUserFile(entityId, UserFileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
         List<UserFile> filesFound = userFileDAO.findFilesByEntityId(entityId);
+        List<Integer> fileIdsfound = filesFound.stream().map(UserFile::getUserFileId).toList();
 
         assertEquals(3, filesFound.size());
-        assertTrue(filesFound.contains(file1));
-        assertTrue(filesFound.contains(file2));
-        assertTrue(filesFound.contains(file3));
+        assertTrue(fileIdsfound.contains(file1.getUserFileId()));
+        assertTrue(fileIdsfound.contains(file2.getUserFileId()));
+        assertTrue(fileIdsfound.contains(file3.getUserFileId()));
     }
 
     @Test
