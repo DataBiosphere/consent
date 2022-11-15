@@ -16,12 +16,12 @@ public class AcknowledgementService {
         this.acknowledgementDAO = acknowledgementDAO;
     }
 
-    public Map<String, Acknowledgement> getAcknowledgementsForUser(User user) {
-        return acknowledgementListToMap(acknowledgementDAO.getAcknowledgementsForUser(user.getUserId()));
+    public Map<String, Acknowledgement> findAcknowledgementsForUser(User user) {
+        return acknowledgementListToMap(acknowledgementDAO.findAcknowledgementsForUser(user.getUserId()));
     }
 
-    public Acknowledgement getAcknowledgementForUserByKey(User user, String key) {
-        return acknowledgementDAO.getAcknowledgementsByKeyForUser(key, user.getUserId());
+    public Acknowledgement findAcknowledgementForUserByKey(User user, String key) {
+        return acknowledgementDAO.findAcknowledgementsByKeyForUser(key, user.getUserId());
     }
 
     public Map<String, Acknowledgement> makeAcknowledgements(List<String> keys, User user) {
@@ -29,11 +29,11 @@ public class AcknowledgementService {
         for (String key : keys) {
             acknowledgementDAO.upsertAcknowledgement(key, userId);
         }
-        List<Acknowledgement> acknowledgementList = acknowledgementDAO.getAcknowledgementsForUser(keys, userId);
+        List<Acknowledgement> acknowledgementList = acknowledgementDAO.findAcknowledgementsForUser(keys, userId);
         return acknowledgementListToMap(acknowledgementList);
     }
 
     private Map<String, Acknowledgement> acknowledgementListToMap(List<Acknowledgement> acknowledgements){
-        return acknowledgements.stream().collect(Collectors.toMap(Acknowledgement::getAck_key, Function.identity()));
+        return acknowledgements.stream().collect(Collectors.toMap(Acknowledgement::getAckKey, Function.identity()));
     }
 }

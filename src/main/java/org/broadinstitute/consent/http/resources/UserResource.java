@@ -350,7 +350,7 @@ public class UserResource extends Resource {
     public Response getUserAcknowledgements(@Auth AuthUser authUser) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.getAcknowledgementsForUser(user);
+            Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.findAcknowledgementsForUser(user);
             return Response.ok().entity(acknowledgementMap).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -364,7 +364,7 @@ public class UserResource extends Resource {
     public Response getUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key){
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            Acknowledgement ack = acknowledgementService.getAcknowledgementForUserByKey(user, key);
+            Acknowledgement ack = acknowledgementService.findAcknowledgementForUserByKey(user, key);
             if (ack == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }

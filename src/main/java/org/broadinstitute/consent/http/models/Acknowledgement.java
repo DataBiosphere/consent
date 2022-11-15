@@ -6,10 +6,10 @@ import java.util.Objects;
 
 public class Acknowledgement {
 
-    private String ack_key;
+    private String ackKey;
     private Integer userId;
-    private Timestamp first_acknowledged;
-    private Timestamp last_acknowledged;
+    private Timestamp firstAcknowledged;
+    private Timestamp lastAcknowledged;
 
     public Integer getUserId() {
         return userId;
@@ -19,26 +19,26 @@ public class Acknowledgement {
         this.userId = userId;
     }
 
-    public Date getFirst_acknowledged() { return first_acknowledged; }
+    public Date getFirstAcknowledged() { return firstAcknowledged; }
 
-    public void setFirst_acknowledged(Timestamp first_acknowledged) {
-        this.first_acknowledged = first_acknowledged;
+    public void setFirstAcknowledged(Timestamp firstAcknowledged) {
+        this.firstAcknowledged = firstAcknowledged;
     }
 
-    public Date getLast_acknowledged() {
-        return last_acknowledged;
+    public Date getLastAcknowledged() {
+        return lastAcknowledged;
     }
 
-    public void setLast_acknowledged(Timestamp last_acknowledged) {
-        this.last_acknowledged = last_acknowledged;
+    public void setLastAcknowledged(Timestamp lastAcknowledged) {
+        this.lastAcknowledged = lastAcknowledged;
     }
 
-    public String getAck_key() {
-        return ack_key;
+    public String getAckKey() {
+        return ackKey;
     }
 
-    public void setAck_key(String ack_key) {
-        this.ack_key = ack_key;
+    public void setAckKey(String ackKey) {
+        this.ackKey = ackKey;
     }
 
     @Override
@@ -46,9 +46,9 @@ public class Acknowledgement {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Acknowledgement ack = (Acknowledgement) o;
-        return (Objects.equals(this.getAck_key(), ack.getAck_key()) &&
+        return (Objects.equals(this.getAckKey(), ack.getAckKey()) &&
                 Objects.equals(this.getUserId(), ack.getUserId()) &&
-                this.getLast_acknowledged().getTime() == (ack.getLast_acknowledged().getTime()) &&
-                this.getFirst_acknowledged().getTime() == (ack.getFirst_acknowledged()).getTime());
+                this.getLastAcknowledged().getTime() == (ack.getLastAcknowledged().getTime()) &&
+                this.getFirstAcknowledged().getTime() == (ack.getFirstAcknowledged()).getTime());
     }
 }

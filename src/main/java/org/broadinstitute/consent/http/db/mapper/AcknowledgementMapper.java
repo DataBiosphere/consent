@@ -11,10 +11,10 @@ public class AcknowledgementMapper implements RowMapper<Acknowledgement> {
     @Override
     public Acknowledgement map(ResultSet rs, StatementContext ctx) throws SQLException {
         Acknowledgement ack = new Acknowledgement();
-        ack.setAck_key(rs.getString("ack_key"));
+        ack.setAckKey(rs.getString("ack_key"));
         ack.setUserId(rs.getInt("user_id"));
-        ack.setFirst_acknowledged(rs.getTimestamp("first_acknowledged"));
-        ack.setLast_acknowledged(rs.getTimestamp("last_acknowledged"));
+        ack.setFirstAcknowledged(rs.getTimestamp("first_acknowledged"));
+        ack.setLastAcknowledged(rs.getTimestamp("last_acknowledged"));
         return ack;
     }
 }

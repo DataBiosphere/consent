@@ -7,9 +7,19 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.Acknowledgement;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
-import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.AcknowledgementService;
+import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.LibraryCardService;
+import org.broadinstitute.consent.http.service.SupportRequestService;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,7 +35,14 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -651,7 +668,7 @@ public class UserResourceTest {
   @Test
   public void testMissingAcknowledgement(){
     String acknowledgementKey = "key1";
-    when(acknowledgementService.getAcknowledgementForUserByKey(any(), any())).thenReturn(null);
+    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
     initResource();
 
     Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
@@ -661,7 +678,7 @@ public class UserResourceTest {
   @Test
   public void testGetAcknowledgementException(){
     String acknowledgementKey = "key1";
-    doThrow(new RuntimeException("some exception during get.")).when(acknowledgementService).getAcknowledgementForUserByKey(any(), any());
+    doThrow(new RuntimeException("some exception during get.")).when(acknowledgementService).findAcknowledgementForUserByKey(any(), any());
     initResource();
 
     Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
@@ -670,7 +687,7 @@ public class UserResourceTest {
 
   @Test
   public void testGetAcknowledgementNull(){
-    when(acknowledgementService.getAcknowledgementForUserByKey(any(), any())).thenReturn(null);
+    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
     initResource();
 
     Response response = userResource.getUserAcknowledgement(authUser, null);
@@ -679,7 +696,7 @@ public class UserResourceTest {
 
   @Test
   public void testGetUnsetAcknowledgementsForUser(){
-    when(acknowledgementService.getAcknowledgementsForUser(any())).thenReturn(null);
+    when(acknowledgementService.findAcknowledgementsForUser(any())).thenReturn(null);
     initResource();
 
     Response response = userResource.getUserAcknowledgements(authUser);
@@ -688,7 +705,7 @@ public class UserResourceTest {
 
   @Test
   public void testGetAcknowledgementsForUserException(){
-    doThrow(new RuntimeException("some get exception")).when(acknowledgementService).getAcknowledgementsForUser(any());
+    doThrow(new RuntimeException("some get exception")).when(acknowledgementService).findAcknowledgementsForUser(any());
     initResource();
 
     Response response = userResource.getUserAcknowledgements(authUser);
@@ -700,7 +717,7 @@ public class UserResourceTest {
     String acknowledgementKey = "key1";
     User user = createUserWithRole();
     Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user, acknowledgementKey);
-    when(acknowledgementService.getAcknowledgementForUserByKey(any(), any())).thenReturn(acknowledgementMap.get(acknowledgementKey));
+    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(acknowledgementMap.get(acknowledgementKey));
     initResource();
 
     Response response = userResource.getUserAcknowledgement(authUser,acknowledgementKey);
@@ -712,7 +729,7 @@ public class UserResourceTest {
     String acknowledgementKey = "key1";
     User user = createUserWithRole();
     Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user, acknowledgementKey);
-    when(acknowledgementService.getAcknowledgementForUserByKey(any(), any())).thenReturn(acknowledgementMap.get(acknowledgementKey));
+    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(acknowledgementMap.get(acknowledgementKey));
     initResource();
 
     Response response = userResource.getUserAcknowledgements(authUser);
@@ -722,9 +739,9 @@ public class UserResourceTest {
   private Map<String, Acknowledgement> getDefaultAcknowledgementForUser(User user, String acknowledgementKey) {
     Acknowledgement ack = new Acknowledgement();
     Timestamp timestamp = new Timestamp(new Date().getTime());
-    ack.setAck_key(acknowledgementKey);
-    ack.setLast_acknowledged(timestamp);
-    ack.setFirst_acknowledged(timestamp);
+    ack.setAckKey(acknowledgementKey);
+    ack.setLastAcknowledged(timestamp);
+    ack.setFirstAcknowledged(timestamp);
     ack.setUserId(user.getUserId());
     HashMap<String, Acknowledgement> map = new HashMap<>();
     map.put(acknowledgementKey, ack);

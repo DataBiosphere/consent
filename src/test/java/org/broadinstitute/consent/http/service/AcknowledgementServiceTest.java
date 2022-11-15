@@ -15,7 +15,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
@@ -41,11 +43,11 @@ public class AcknowledgementServiceTest {
     public void test_noAcknowledgementsForUser(){
         User user = new User(1, "test@domain.com", "Test User", new Date(),
                 List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
-        when(acknowledgementDAO.getAcknowledgementsForUser(anyInt())).thenReturn(new ArrayList<>());
-        when(acknowledgementDAO.getAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(null);
+        when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(new ArrayList<>());
+        when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(null);
         initService();
-        assertTrue(acknowledgementService.getAcknowledgementsForUser(user).isEmpty());
-        assertNull(acknowledgementService.getAcknowledgementForUserByKey(user, "key1"));
+        assertTrue(acknowledgementService.findAcknowledgementsForUser(user).isEmpty());
+        assertNull(acknowledgementService.findAcknowledgementForUserByKey(user, "key1"));
     }
 
     @Test
@@ -57,13 +59,13 @@ public class AcknowledgementServiceTest {
         Timestamp timestamp = new Timestamp(new Date().getTime());
         Acknowledgement key2Acknowledgement = new Acknowledgement();
         key2Acknowledgement.setUserId(user.getUserId());
-        key2Acknowledgement.setAck_key(key);
-        key2Acknowledgement.setFirst_acknowledged(timestamp);
-        key2Acknowledgement.setLast_acknowledged(timestamp);
+        key2Acknowledgement.setAckKey(key);
+        key2Acknowledgement.setFirstAcknowledged(timestamp);
+        key2Acknowledgement.setLastAcknowledged(timestamp);
         List<Acknowledgement> acknowledgementList = List.of(key2Acknowledgement);
-        when(acknowledgementDAO.getAcknowledgementsForUser(any(), any())).thenReturn(acknowledgementList);
-        when(acknowledgementDAO.getAcknowledgementsForUser(anyInt())).thenReturn(acknowledgementList);
-        when(acknowledgementDAO.getAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(key2Acknowledgement);
+        when(acknowledgementDAO.findAcknowledgementsForUser(any(), any())).thenReturn(acknowledgementList);
+        when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(acknowledgementList);
+        when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(key2Acknowledgement);
         initService();
 
         Map<String, Acknowledgement> makeResponse = acknowledgementService.makeAcknowledgements(keys,user);
@@ -71,12 +73,12 @@ public class AcknowledgementServiceTest {
         assertTrue(makeResponse.containsKey(key));
         assertEquals(key2Acknowledgement, makeResponse.get(key));
 
-        Map<String, Acknowledgement> lookupResponse = acknowledgementService.getAcknowledgementsForUser(user);
+        Map<String, Acknowledgement> lookupResponse = acknowledgementService.findAcknowledgementsForUser(user);
         assertEquals(1, lookupResponse.size());
         assertTrue(lookupResponse.containsKey(key));
         assertEquals(key2Acknowledgement, lookupResponse.get(key));
 
-        Acknowledgement singleLookupResponse = acknowledgementService.getAcknowledgementForUserByKey(user,key);
+        Acknowledgement singleLookupResponse = acknowledgementService.findAcknowledgementForUserByKey(user,key);
         assertEquals(singleLookupResponse, key2Acknowledgement);
     }
 }

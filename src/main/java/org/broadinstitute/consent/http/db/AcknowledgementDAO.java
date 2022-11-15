@@ -21,14 +21,14 @@ public interface AcknowledgementDAO extends Transactional<AcknowledgementDAO> {
 
     @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
             + " FROM acknowledgement WHERE ack_key = :key and user_id = :userId")
-    Acknowledgement getAcknowledgementsByKeyForUser(@Bind("key") String key, @Bind("userId") Integer userId);
+    Acknowledgement findAcknowledgementsByKeyForUser(@Bind("key") String key, @Bind("userId") Integer userId);
 
     @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
             + " FROM acknowledgement WHERE user_id = :userId")
-    List<Acknowledgement> getAcknowledgementsForUser(@Bind("userId") Integer userId);
+    List<Acknowledgement> findAcknowledgementsForUser(@Bind("userId") Integer userId);
 
     @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
           + " FROM acknowledgement WHERE user_id = :userId and ack_key IN (<key_list>)")
-    List<Acknowledgement> getAcknowledgementsForUser(@BindList("key_list") List<String> keys, @Bind("userId") Integer userId);
+    List<Acknowledgement> findAcknowledgementsForUser(@BindList("key_list") List<String> keys, @Bind("userId") Integer userId);
 
 }
