@@ -205,30 +205,6 @@ public class EmailService {
         }
     }
 
-    public void sendNewCaseMessageToList(List<Vote> votes, Election election) throws IOException, TemplateException {
-        String rpVoteId = "";
-        String electionType = retrieveElectionTypeString(election.getElectionType());
-        String entityId = election.getReferenceId();
-        String entityName = retrieveReferenceId(election.getElectionType(), election.getReferenceId());
-        for (Vote vote : votes) {
-            User user = findUserById(vote.getDacUserId());
-            if (electionType.equals(ElectionTypeString.DATA_ACCESS.getValue())) {
-                rpVoteId = findRpVoteId(election.getElectionId(), user.getUserId());
-            }
-            String serverUrl = generateUserVoteUrl(SERVER_URL, electionType, vote.getVoteId().toString(), entityId, rpVoteId);
-            Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, entityName, serverUrl);
-            Optional<Response> response = sendGridAPI.sendNewCaseMessage(user.getEmail(), entityId, electionType, template);
-            saveEmailAndResponse(
-                    response.orElse(null),
-                    entityName,
-                    null,
-                    user.getUserId(),
-                    EmailType.NEW_CASE,
-                    template
-            );
-        }
-    }
-
     public void sendDisabledDatasetsMessage(User user, List<String> disabledDatasets, String dataAccessRequestId) throws IOException, TemplateException {
         Writer template = templateHelper.getDisabledDatasetsTemplate(user.getDisplayName(), disabledDatasets, dataAccessRequestId, SERVER_URL);
         Optional<Response> response = sendGridAPI.sendDisabledDatasetMessage(user.getEmail(), dataAccessRequestId, null, template);

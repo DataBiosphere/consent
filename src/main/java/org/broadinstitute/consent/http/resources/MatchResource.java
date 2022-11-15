@@ -31,36 +31,6 @@ public class MatchResource extends Resource {
     this.service = matchService;
   }
 
-  @Deprecated // See DUOS-2176
-  @GET
-  @Path("/{consentId}/{purposeId}")
-  @PermitAll
-  public Response getMatchByConsentAndPurpose(
-      @Auth AuthUser authUser,
-      @PathParam("consentId") String consentId,
-      @PathParam("purposeId") String purposeId) {
-    try {
-      Match match = service.findMatchByConsentIdAndPurposeId(consentId, purposeId);
-      return Response.ok().entity(match).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @Deprecated // See DUOS-2176
-  @GET
-  @Path("/consent/{consentId}")
-  @RolesAllowed({Resource.ADMIN})
-  public Response getMatchesForConsent(
-          @Auth AuthUser authUser, @PathParam("consentId") String consentId) {
-    try{
-      List<Match> matches = service.findMatchByConsentId(consentId);
-      return Response.ok().entity(matches).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   @GET
   @Path("/purpose/batch")
   @PermitAll
@@ -83,20 +53,6 @@ public class MatchResource extends Resource {
           return Response.ok().entity(matchList).build();
         }
       }
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @Deprecated // See DUOS-2176
-  @GET
-  @Path("/purpose/{purposeId}")
-  @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
-  public Response getMatchesForPurpose(
-      @Auth AuthUser authUser, @PathParam("purposeId") String purposeId) {
-    try {
-      List<Match> matches = service.findMatchesByPurposeId(purposeId);
-      return Response.ok().entity(matches).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

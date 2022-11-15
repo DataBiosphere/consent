@@ -17,7 +17,6 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -302,16 +301,6 @@ public class ElectionServiceTest {
     }
 
     @Test
-    public void testCreateElection() throws Exception {
-        when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(any(), any())).thenReturn(null);
-        when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(new DarCollection());
-        initService();
-        Election election = service.createElection(sampleElection1, sampleElection1.getReferenceId(), ElectionType.DATA_ACCESS);
-        assertNotNull(election);
-        assertEquals(ElectionType.DATA_ACCESS.getValue(), election.getElectionType());
-    }
-
-    @Test
     public void testUpdateElectionById() {
         when(electionDAO.findRPElectionByElectionAccessId(any())).thenReturn(1);
 
@@ -353,13 +342,6 @@ public class ElectionServiceTest {
     }
 
     @Test
-    public void testDeleteElection() {
-        initService();
-
-        service.deleteElection(sampleElection1.getElectionId());
-    }
-
-    @Test
     public void testDescribeDataRequestElection() {
         initService();
 
@@ -394,26 +376,6 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.describeElectionByVoteId(sampleElection1.getElectionId());
-    }
-
-    @Test
-    public void testValidateCollectEmailCondition_Member() {
-        when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId())).thenReturn(Arrays.asList(sampleVoteMember));
-        when(userDAO.findUsersWithRoles(any())).thenReturn(Set.of(sampleUserMember));
-        initService();
-
-        boolean validate = service.validateCollectEmailCondition(sampleVoteMember);
-        assertEquals(false, validate);
-    }
-
-    @Test
-    public void testValidateCollectEmailCondition_NoMember() {
-        when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId())).thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
-        when(userDAO.findUsersWithRoles(any())).thenReturn(Set.of(sampleUserChairperson));
-        initService();
-
-        boolean validate = service.validateCollectEmailCondition(sampleVoteChairpersonApproval);
-        assertEquals(true, validate);
     }
 
     @Test

@@ -98,14 +98,6 @@ public class MatchService {
         return match;
     }
 
-    public Match findMatchByConsentIdAndPurposeId(String consentId, String purposeId) {
-        Match match = matchDAO.findMatchByPurposeIdAndConsentId(purposeId, consentId);
-        if (Objects.isNull(match)) {
-            throw new NotFoundException("No match exists for consent id: " + consentId + " and purpose id: " + purposeId);
-        }
-        return match;
-    }
-
     public List<Match> findMatchByConsentId(String consentId) {
         return matchDAO.findMatchesByConsentId(consentId);
     }

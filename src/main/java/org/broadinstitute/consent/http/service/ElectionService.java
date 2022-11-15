@@ -28,7 +28,6 @@ import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.slf4j.Logger;
@@ -45,7 +44,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -64,7 +62,6 @@ public class ElectionService {
     private final DataAccessRequestService dataAccessRequestService;
     private final EmailService emailService;
     private final UseRestrictionConverter useRestrictionConverter;
-    private final String INACTIVE_DS = "Election was not created. The following Datasets are disabled : ";
     private static final Logger logger = LoggerFactory.getLogger("ElectionService");
 
     @Inject
@@ -86,45 +83,6 @@ public class ElectionService {
         this.emailService = emailService;
         this.dataAccessRequestService = dataAccessRequestService;
         this.useRestrictionConverter = useRestrictionConverter;
-    }
-
-    @Deprecated // Use election creation per entity, i.e. DarCollectionService.createElectionsForDarCollection()
-    public Election createElection(Election election, String referenceId, ElectionType electionType) throws Exception {
-        Election consentElection = validateAndGetDULElection(referenceId, electionType);
-        validateAvailableUsers(consentElection);
-        validateReferenceId(referenceId, electionType);
-        validateExistentElection(referenceId, electionType);
-        validateStatus(election.getStatus());
-        setGeneralFields(election, referenceId, electionType);
-        Date createDate = new Date();
-        Integer id = electionDAO.insertElection(
-                election.getElectionType(),
-                election.getStatus(),
-                createDate,
-                election.getReferenceId(),
-                election.getFinalAccessVote() ,
-                election.getDataUseLetter(),
-                election.getDulName(),
-                election.getDataSetId());
-        updateSortDate(referenceId, createDate);
-
-        switch (electionType) {
-            case DATA_ACCESS:
-                if (Objects.nonNull(consentElection)) {
-                    electionDAO.insertAccessAndConsentElection(id, consentElection.getElectionId());
-                }
-                break;
-            case TRANSLATE_DUL:
-                consentDAO.updateConsentUpdateStatus(referenceId, false);
-                break;
-            case RP:
-                Election access = describeDataRequestElection(referenceId);
-                electionDAO.insertAccessRP(access.getElectionId(), id);
-                break;
-            case DATA_SET:
-                break;
-        }
-        return electionDAO.findElectionWithFinalVoteById(id);
     }
 
     public Election updateElectionById(Election rec, Integer electionId) {
@@ -185,23 +143,6 @@ public class ElectionService {
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
-    public void deleteElection(Integer id) {
-        Election election = electionDAO.findElectionById(id);
-        if (Objects.isNull(election)) {
-            throw new IllegalArgumentException("Does not exist an election for the specified id");
-        }
-        List<Vote> votes = voteDAO.findPendingVotesByElectionId(id);
-        votes.forEach(v -> voteDAO.deleteVoteById(v.getVoteId()));
-        if (election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())) {
-            Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(election.getElectionId());
-            List<Vote> rpVotes = voteDAO.findVotesByElectionId(rpElectionId);
-            rpVotes.forEach(v -> voteDAO.deleteVoteById(v.getVoteId()));
-            electionDAO.deleteAccessRP(id);
-            electionDAO.deleteElectionById(rpElectionId);
-        }
-        electionDAO.deleteElectionById(id);
-    }
-
     public Election describeDataRequestElection(String requestId) {
         Election election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(requestId, ElectionType.DATA_ACCESS.getValue());
         if (election == null) {
@@ -223,31 +164,6 @@ public class ElectionService {
             throw new NotFoundException();
         }
         return election;
-    }
-
-    public Integer findRPElectionByElectionAccessId(Integer electionId) {
-        return electionDAO.findRPElectionByElectionAccessId(electionId);
-    }
-
-    /**
-     * Return true if:
-     *      Everyone has already voted
-     *      The only remaining votes are chairperson votes
-     */
-    public boolean validateCollectEmailCondition(Vote vote) {
-        List<Vote> electionVotes = voteDAO.findPendingVotesByElectionId(vote.getElectionId());
-        // Everyone has voted, return true
-        if (electionVotes.isEmpty()) return true;
-
-        List<Integer> votingUserIds = electionVotes.stream().
-                map(Vote::getDacUserId).
-                collect(Collectors.toList());
-        Set<User> votingUsers = userDAO.findUsersWithRoles(votingUserIds);
-        List<UserRole> votingMemberRoles = votingUsers.stream().flatMap(u -> u.getRoles().stream()).
-                filter(r -> r.getRoleId().equals(UserRoles.MEMBER.getRoleId())).
-                collect(Collectors.toList());
-        // If the voting member roles are empty, we only have chairpersons left, return true
-        return votingMemberRoles.isEmpty();
     }
 
     /**
@@ -342,15 +258,10 @@ public class ElectionService {
         return !electionIds.isEmpty() ? electionDAO.findElectionsWithCardHoldingUsersByElectionIds(electionIds) : Collections.emptyList();
     }
 
-    public Election getConsentElectionByDARElectionId(Integer darElectionId){
-        Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(darElectionId);
-        return electionId != null ? electionDAO.findElectionById(electionId) : null;
-    }
-
     public List<Election> createDataSetElections(String referenceId, Map<User, List<Dataset>> dataOwnerDataSet){
         List<Integer> electionsIds = new ArrayList<>();
         dataOwnerDataSet.forEach((user,dataSets) -> {
-            dataSets.stream().forEach(dataSet -> {
+            dataSets.forEach(dataSet -> {
                 if(electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, dataSet.getDataSetId()) == null) {
                     Integer electionId = electionDAO.insertElection(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), new Date(), referenceId, dataSet.getDataSetId());
                     electionsIds.add(electionId);
@@ -371,109 +282,6 @@ public class ElectionService {
             }
         }
         return true;
-    }
-
-
-    private Election validateAndGetDULElection(String referenceId, ElectionType electionType) throws Exception {
-        Election consentElection = null;
-        if (electionType.equals(ElectionType.DATA_ACCESS)) {
-            DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
-            if (Objects.isNull(collection)) {
-                throw new NotFoundException();
-            }
-            List<Integer> datasetIds = dataAccessRequestDAO.findDARDatasetRelations(referenceId);
-            if (!datasetIds.isEmpty()) {
-                verifyActiveDatasets(collection, datasetIds);
-                Consent consent = consentDAO.findConsentFromDatasetID(datasetIds.get(0));
-                consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), ElectionStatus.CLOSED.getValue());
-            }
-        }
-        return consentElection;
-    }
-
-    private void verifyActiveDatasets(DarCollection collection, List<Integer> datasetIds) throws Exception {
-        List<Dataset> datasets = datasetDAO.findDatasetsByIdList(datasetIds);
-        List<String> disabledDatasets = datasets.stream()
-                .filter(ds -> !ds.getActive())
-                .map(Dataset::getObjectId)
-                .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(disabledDatasets)) {
-            boolean createElection = disabledDatasets.size() != datasets.size();
-            User user = userDAO.findUserById(collection.getCreateUserId());
-            emailService.sendDisabledDatasetsMessage(user, disabledDatasets, collection.getDarCode());
-            if (!createElection) {
-                throw new IllegalArgumentException(INACTIVE_DS + disabledDatasets);
-            }
-        }
-    }
-
-    private DataAccessRequest describeDataAccessRequestById(String id) {
-        return dataAccessRequestService.findByReferenceId(id);
-    }
-
-    private void setGeneralFields(Election election, String referenceId, ElectionType electionType) {
-        election.setCreateDate(new Date());
-        election.setReferenceId(referenceId);
-        election.setElectionType(electionType.getValue());
-
-        switch (electionType) {
-            case TRANSLATE_DUL:
-                Consent consent = consentDAO.findConsentById(referenceId);
-                election.setDataUseLetter(consent.getDataUseLetter());
-                election.setDulName(consent.getDulName());
-                break;
-            case DATA_ACCESS:
-            case RP:
-                DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-                List<Integer> datasetIdList = Objects.nonNull(dar) ? dar.getDatasetIds() : Collections.emptyList();
-                if (datasetIdList != null && !datasetIdList.isEmpty()) {
-                    if (datasetIdList.size() > 1) {
-                        logger.warn("DAR " +
-                                referenceId +
-                                " contains multiple datasetId values: " +
-                                StringUtils.join(datasetIdList, ", "));
-                    }
-                    Optional<Integer> datasetId = datasetIdList.stream().findFirst();
-                    datasetId.ifPresent(election::setDataSetId);
-                }
-                break;
-            case DATA_SET:
-                break;
-        }
-
-        if (StringUtils.isEmpty(election.getStatus())) {
-            election.setStatus(ElectionStatus.OPEN.getValue());
-        }
-    }
-
-    private void validateReferenceId(String referenceId, ElectionType electionType) {
-        if (electionType.equals(ElectionType.TRANSLATE_DUL)) {
-            validateConsentId(referenceId);
-        } else {
-            validateDataRequestId(referenceId);
-        }
-    }
-
-    private void validateDataRequestId(String dataRequest) {
-        DataAccessRequest dar = describeDataAccessRequestById(dataRequest);
-        if (dataRequest != null && dar == null ) {
-            throw new NotFoundException("Invalid id: " + dataRequest);
-        }
-    }
-
-    private void validateExistentElection(String referenceId, ElectionType type) {
-        Election election = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, type.getValue());
-        if (election != null) {
-            throw new IllegalArgumentException(
-                    "An open election already exists for the specified id. Election id: "
-                            + election.getElectionId());
-        }
-    }
-
-    private void validateConsentId(String referenceId) {
-        if (referenceId == null || consentDAO.checkConsentById(referenceId) == null) {
-            throw new IllegalArgumentException("Invalid id: " + referenceId);
-        }
     }
 
     private void validateStatus(String status) {
