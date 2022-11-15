@@ -9,7 +9,11 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.Acknowledgement;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
@@ -37,7 +41,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.lang.reflect.Type;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Path("api/user")
