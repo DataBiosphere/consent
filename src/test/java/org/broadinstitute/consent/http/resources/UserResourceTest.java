@@ -657,7 +657,7 @@ public class UserResourceTest {
     when(acknowledgementService.getAcknowledgementForUserByKey(any(), any())).thenReturn(null);
     initResource();
 
-    Response response = userResource.getUserAcknowledgement(authUser,acknowledgementKey);
+    Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -667,8 +667,17 @@ public class UserResourceTest {
     doThrow(new RuntimeException("some exception during get.")).when(acknowledgementService).getAcknowledgementForUserByKey(any(), any());
     initResource();
 
-    Response response = userResource.getUserAcknowledgement(authUser,acknowledgementKey);
+    Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testGetAcknowledgementNull(){
+    when(acknowledgementService.getAcknowledgementForUserByKey(any(), any())).thenReturn(null);
+    initResource();
+
+    Response response = userResource.getUserAcknowledgement(authUser, null);
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
