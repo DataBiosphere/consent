@@ -4,6 +4,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
@@ -34,6 +35,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -369,9 +371,10 @@ public class UserResource extends Resource {
     @Path("/acknowledgements")
     @PermitAll
     public Response postAcknowledgements(@Auth AuthUser authUser, String json) {
-        List<String> keys;
+        ArrayList<String> keys;
         try {
-            keys = gson.fromJson(json, ArrayList.class);
+            Type listOfStringsType = new TypeToken<ArrayList<String>>() {}.getType();
+            keys = gson.fromJson(json, listOfStringsType);
             if (keys == null || keys.isEmpty()){
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }

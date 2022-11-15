@@ -8,16 +8,19 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class AcknowledgementServiceTest {
 
@@ -27,7 +30,7 @@ public class AcknowledgementServiceTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
+        openMocks(this);
     }
 
     private void initService(){
@@ -37,27 +40,27 @@ public class AcknowledgementServiceTest {
     @Test
     public void test_noAcknowledgementsForUser(){
         User user = new User(1, "test@domain.com", "Test User", new Date(),
-                Arrays.asList(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+                List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
         when(acknowledgementDAO.getAcknowledgementsForUser(anyInt())).thenReturn(new ArrayList<>());
         when(acknowledgementDAO.getAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(null);
         initService();
         assertTrue(acknowledgementService.getAcknowledgementsForUser(user).isEmpty());
-        assertEquals(null, acknowledgementService.getAcknowledgementForUserByKey(user, "key1"));
+        assertNull(acknowledgementService.getAcknowledgementForUserByKey(user, "key1"));
     }
 
     @Test
     public void test_makeAcknowledgementForUser(){
         User user = new User(2, "test@domain.com", "Test User", new Date(),
-                Arrays.asList(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+                List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
         String key = "key2";
-        List keys = Arrays.asList(key);
+        List<String> keys = List.of(key);
         Timestamp timestamp = new Timestamp(new Date().getTime());
         Acknowledgement key2Acknowledgement = new Acknowledgement();
         key2Acknowledgement.setUserId(user.getUserId());
         key2Acknowledgement.setAck_key(key);
         key2Acknowledgement.setFirst_acknowledged(timestamp);
         key2Acknowledgement.setLast_acknowledged(timestamp);
-        List acknowledgementList = Arrays.asList(key2Acknowledgement);
+        List<Acknowledgement> acknowledgementList = List.of(key2Acknowledgement);
         when(acknowledgementDAO.getAcknowledgementsForUser(any(), any())).thenReturn(acknowledgementList);
         when(acknowledgementDAO.getAcknowledgementsForUser(anyInt())).thenReturn(acknowledgementList);
         when(acknowledgementDAO.getAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(key2Acknowledgement);
