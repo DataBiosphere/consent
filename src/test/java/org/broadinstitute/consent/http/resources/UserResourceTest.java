@@ -606,7 +606,7 @@ public class UserResourceTest {
     when(acknowledgementService.makeAcknowledgements(anyList(), any())).thenReturn(acknowledgementMap);
     initResource();
 
-    String jsonString = userResource.unmarshal(Arrays.asList(acknowledgementKey));
+    String jsonString = userResource.unmarshal(List.of(acknowledgementKey));
     Response response = userResource.postAcknowledgements(authUser, jsonString);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
@@ -616,7 +616,7 @@ public class UserResourceTest {
     String acknowledgementKey = "key1";
     doThrow(new RuntimeException("exception during post")).when(acknowledgementService).makeAcknowledgements(anyList(), any());
     initResource();
-    String jsonString = userResource.unmarshal(Arrays.asList(acknowledgementKey));
+    String jsonString = userResource.unmarshal(List.of(acknowledgementKey));
 
     Response response = userResource.postAcknowledgements(authUser, jsonString);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
@@ -624,7 +624,6 @@ public class UserResourceTest {
 
   @Test
   public void testPostAcknowledgementBadJson(){
-    String acknowledgementKey = "key1";
     doThrow(new RuntimeException("exception during post")).when(acknowledgementService).makeAcknowledgements(anyList(), any());
     initResource();
     String jsonString = "The quick brown fox jumped over the lazy dog.";
@@ -635,7 +634,6 @@ public class UserResourceTest {
 
   @Test
   public void testPostAcknowledgementEmptyJson(){
-    String acknowledgementKey = "key1";
     initResource();
 
     Response response = userResource.postAcknowledgements(authUser, "");
@@ -644,7 +642,6 @@ public class UserResourceTest {
 
   @Test
   public void testPostAcknowledgementEmptyJsonList(){
-    String acknowledgementKey = "key1";
     initResource();
 
     Response response = userResource.postAcknowledgements(authUser, "[]");
