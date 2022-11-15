@@ -35,19 +35,6 @@ public class ConsentService {
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    public Consent getById(String id) throws UnknownIdentifierException {
-        Consent consent = consentDAO.findConsentById(id);
-        if (consent == null) {
-            throw new UnknownIdentifierException(String.format("Could not find consent with id %s", id));
-        }
-        Election election = electionDAO.findLastElectionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
-        if (election != null) {
-            consent.setLastElectionStatus(election.getStatus());
-            consent.setLastElectionArchived(election.getArchived());
-        }
-        return consent;
-    }
-
     public Consent create(Consent rec) {
         String id;
         if (StringUtils.isNotEmpty(rec.consentId)) {

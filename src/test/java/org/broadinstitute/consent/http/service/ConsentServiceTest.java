@@ -5,7 +5,6 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.grammar.Everything;
@@ -19,10 +18,7 @@ import org.mockito.Mock;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -50,19 +46,6 @@ public class ConsentServiceTest {
 
     private void initService() {
         service = new ConsentService(consentDAO, electionDAO, useRestrictionConverter);
-    }
-
-    @Test
-    public void testGetById() throws Exception {
-        when(consentDAO.findConsentById(anyString())).thenReturn(new Consent());
-        Election mockElection = this.getTestElection();
-        when(electionDAO.findLastElectionByReferenceIdAndType(anyString(), anyString())).thenReturn(mockElection);
-        initService();
-
-        Consent consent = service.getById(UUID.randomUUID().toString());
-        Assert.assertNotNull(consent);
-        Assert.assertEquals(ElectionStatus.OPEN.getValue(), consent.getLastElectionStatus());
-        Assert.assertFalse(consent.getLastElectionArchived());
     }
 
     @Test
