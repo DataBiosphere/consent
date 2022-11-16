@@ -24,6 +24,7 @@ public class DAOContainer {
   private VoteDAO voteDAO;
   private ConsentAuditDAO consentAuditDAO;
   private InstitutionDAO institutionDAO;
+  private AcknowledgementDAO acknowledgementDAO;
 
   public ConsentDAO getConsentDAO() {
     return consentDAO;
@@ -162,4 +163,12 @@ public class DAOContainer {
   public InstitutionDAO getInstitutionDAO() { return institutionDAO; }
 
   public void setInstitutionDAO(InstitutionDAO institutionDAO) { this.institutionDAO = institutionDAO; }
+
+  public AcknowledgementDAO getAcknowledgementDAO() {
+    return acknowledgementDAO;
+  }
+
+  public void setAcknowledgementDAO(AcknowledgementDAO acknowledgementDAO) {
+    this.acknowledgementDAO = acknowledgementDAO;
+  }
 }

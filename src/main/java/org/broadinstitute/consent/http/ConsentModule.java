@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.ConsentAuditDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
@@ -33,6 +34,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
@@ -95,6 +97,7 @@ public class ConsentModule extends AbstractModule {
     private final DarCollectionSummaryDAO darCollectionSummaryDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
+    private final AcknowledgementDAO acknowledgementDAO;
 
     public static final String DB_ENV = "postgresql";
 
@@ -128,6 +131,7 @@ public class ConsentModule extends AbstractModule {
         this.darCollectionSummaryDAO = this.jdbi.onDemand(DarCollectionSummaryDAO.class);
         this.institutionDAO = this.jdbi.onDemand((InstitutionDAO.class));
         this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
+        this.acknowledgementDAO = this.jdbi.onDemand((AcknowledgementDAO.class));
     }
 
     @Override
@@ -156,6 +160,7 @@ public class ConsentModule extends AbstractModule {
         container.setUserRoleDAO(providesUserRoleDAO());
         container.setVoteDAO(providesVoteDAO());
         container.setInstitutionDAO(providesInstitutionDAO());
+        container.setAcknowledgementDAO(providesAcknowledgementDAO());
         return container;
     }
 
@@ -492,6 +497,9 @@ public class ConsentModule extends AbstractModule {
     LibraryCardDAO providesLibraryCardDAO() { return libraryCardDAO; }
 
     @Provides
+    AcknowledgementDAO providesAcknowledgementDAO() { return acknowledgementDAO; }
+
+    @Provides
     InstitutionService providesInstitutionService() {
         return new InstitutionService(providesInstitutionDAO(), providesUserDAO());
     }
@@ -502,6 +510,13 @@ public class ConsentModule extends AbstractModule {
                 providesLibraryCardDAO(),
                 providesInstitutionDAO(),
                 providesUserDAO());
+    }
+
+    @Provides
+    AcknowledgementService providesAcknowledgementService() {
+        return new AcknowledgementService(
+                providesAcknowledgementDAO()
+        );
     }
 
     @Provides
