@@ -2641,20 +2641,20 @@ components:
         userId:
           type: integer
           description: The User ID for the current user
-        ack_key:
+        ackKey:
           type: string
           description: The name of the key
-        first_acknowledged:
+        firstAcknowledged:
           type: integer
           description: The date first acknowledged, in seconds since January 1, 1970
-        last_acknowledged:
+        lastAcknowledged:
           type: integer
           description: The date last acknowledged, in seconds since January 1, 1970
       example:
         userId: 1
-        ack_key: "key1"
-        first_acknowledged: 1668461426
-        last_acknowledged: 1668461426
+        ackKey: "key1"
+        firstAcknowledged: 1668461426
+        lastAcknowledged: 1668461426
     AcknowledgementMap:
       type: object
       description: A map of keys to their associated Acknowledgement objects.
