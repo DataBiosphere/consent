@@ -72,11 +72,11 @@ public class GCSService {
     }
 
     /**
-     * Store an input stream as a Blob with the file name as the blob name
+     * Store an input stream as a Blob
      *
      * @param content InputStream content
      * @param mediaType String media type
-     * @param bucketName String unique name of the bucket
+     * @param id String UUID of the file
      * @return BlobId of the stored document
      * @throws IOException Exception when storing document
      */
