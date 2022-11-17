@@ -1,44 +1,20 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
-import com.google.gson.JsonObject;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
-import org.broadinstitute.consent.http.db.InstitutionDAO;
-import org.broadinstitute.consent.http.db.LibraryCardDAO;
-import org.broadinstitute.consent.http.db.SamDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.UserFileDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.UserFileCategory;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.LibraryCard;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserFile;
-import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.UserUpdateFields;
-import org.broadinstitute.consent.http.models.sam.UserStatus;
-import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -49,9 +25,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -59,15 +33,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-public class UserFileServiceTest {
+public class FileStorageObjectServiceTest {
 
     @Mock
-    UserFileDAO userFileDAO;
+    FileStorageObjectDAO fileStorageObjectDAO;
 
     @Mock
     GCSService gcsService;
 
-    UserFileService service;
+    FileStorageObjectService service;
 
     @Before
     public void setUp() {
@@ -75,7 +49,7 @@ public class UserFileServiceTest {
     }
 
     private void initService() {
-        service = new UserFileService(userFileDAO, gcsService);
+        service = new FileStorageObjectService(fileStorageObjectDAO, gcsService);
     }
 
     @Test
@@ -83,51 +57,50 @@ public class UserFileServiceTest {
         InputStream content = new ByteArrayInputStream(new byte[]{});
         String fileName = RandomStringUtils.randomAlphabetic(10);
         String mediaType = RandomStringUtils.randomAlphabetic(10);
-        UserFileCategory category = List.of(UserFileCategory.values()).get(new Random().nextInt(UserFileCategory.values().length));
+        FileCategory category = List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
         String entityId = RandomStringUtils.randomAlphabetic(10);
         Integer createUserId = new Random().nextInt();
-        String bucketName = RandomStringUtils.randomAlphabetic(10);
-        String blobName = RandomStringUtils.randomAlphabetic(10);
+
+        String bucket = RandomStringUtils.randomAlphabetic(10);
+        String blob = RandomStringUtils.randomAlphabetic(10);
 
 
-        when(userFileDAO.insertNewFile(
+        when(fileStorageObjectDAO.insertNewFile(
                 eq(fileName),
                 eq(category.getValue()),
-                eq(bucketName),
-                eq(blobName),
+                eq(BlobId.of(bucket, blob).toGsUtilUri()),
                 eq(mediaType),
                 eq(entityId),
                 eq(createUserId),
                 any())).thenReturn(10);
 
-        UserFile newUserFile = new UserFile();
-        newUserFile.setFileName(RandomStringUtils.randomAlphabetic(10));
+        FileStorageObject newFileStorageObject = new FileStorageObject();
+        newFileStorageObject.setFileName(RandomStringUtils.randomAlphabetic(10));
 
-        when(userFileDAO.findFileById(10)).thenReturn(newUserFile);
+        when(fileStorageObjectDAO.findFileById(10)).thenReturn(newFileStorageObject);
         when(
                 gcsService.storeDocument(eq(content), eq(mediaType), any())
-        ).thenReturn(BlobId.of(bucketName, blobName));
+        ).thenReturn(BlobId.of(bucket, blob));
 
-        spy(userFileDAO);
+        spy(fileStorageObjectDAO);
         spy(gcsService);
 
         initService();
 
-        UserFile returned = service.uploadAndStoreUserFile(content, fileName, mediaType, category, entityId, createUserId);
+        FileStorageObject returned = service.uploadAndStoreUserFile(content, fileName, mediaType, category, entityId, createUserId);
 
-        assertEquals(newUserFile, returned);
+        assertEquals(newFileStorageObject, returned);
 
         verify(
                 gcsService, times(1)
         ).storeDocument(eq(content), eq(mediaType), any());
 
         verify(
-                userFileDAO, times(1)
+                fileStorageObjectDAO, times(1)
         ).insertNewFile(
                 eq(fileName),
                 eq(category.getValue()),
-                eq(bucketName),
-                eq(blobName),
+                eq(BlobId.of(bucket, blob).toGsUtilUri()),
                 eq(mediaType),
                 eq(entityId),
                 eq(createUserId),
@@ -137,26 +110,25 @@ public class UserFileServiceTest {
 
     @Test
     public void testFetchById() throws IOException {
-        String bucketName = RandomStringUtils.randomAlphabetic(10);
-        String blobName = RandomStringUtils.randomAlphabetic(10);
+        String bucket = RandomStringUtils.randomAlphabetic(10);
+        String blob = RandomStringUtils.randomAlphabetic(10);
 
-        UserFile file = new UserFile();
-        file.setBucketName(bucketName);
-        file.setBlobName(blobName);
+        FileStorageObject file = new FileStorageObject();
+        file.setBlobId(BlobId.of(bucket, blob));
 
         String content = RandomStringUtils.randomAlphabetic(10);
 
         when(
-                gcsService.getDocument(BlobId.of(file.getBucketName(), file.getBlobName()))
+                gcsService.getDocument(BlobId.of(bucket, blob))
         ).thenReturn(new ByteArrayInputStream(content.getBytes()));
 
         when(
-                userFileDAO.findFileById(10)
+                fileStorageObjectDAO.findFileById(10)
         ).thenReturn(file);
 
         initService();
 
-        UserFile returned = service.fetchById(10);
+        FileStorageObject returned = service.fetchById(10);
 
         assertEquals(file, returned);
 
@@ -172,41 +144,36 @@ public class UserFileServiceTest {
         String bucket3Name = RandomStringUtils.randomAlphabetic(10);
         String blob3Name = RandomStringUtils.randomAlphabetic(10);
 
-        UserFile file1 = new UserFile();
-        file1.setBucketName(bucket1Name);
-        file1.setBlobName(blob1Name);
+        FileStorageObject file1 = new FileStorageObject();
+        file1.setBlobId(BlobId.of(bucket1Name, blob1Name));
 
-        UserFile file2 = new UserFile();
-        file2.setBucketName(bucket2Name);
-        file2.setBlobName(blob2Name);
+        FileStorageObject file2 = new FileStorageObject();
+        file2.setBlobId(BlobId.of(bucket2Name, blob2Name));
 
-        UserFile file3 = new UserFile();
-        file3.setBucketName(bucket3Name);
-        file3.setBlobName(blob3Name);
+        FileStorageObject file3 = new FileStorageObject();
+        file3.setBlobId(BlobId.of(bucket3Name, blob3Name));
 
         String content1 = RandomStringUtils.randomAlphabetic(10);
         String content2 = RandomStringUtils.randomAlphabetic(10);
         String content3 = RandomStringUtils.randomAlphabetic(10);
 
         when(
-                gcsService.getDocument(BlobId.of(file1.getBucketName(), file1.getBlobName()))
-        ).thenReturn(new ByteArrayInputStream(content1.getBytes()));
-        when(
-                gcsService.getDocument(BlobId.of(file2.getBucketName(), file2.getBlobName()))
-        ).thenReturn(new ByteArrayInputStream(content2.getBytes()));
-        when(
-                gcsService.getDocument(BlobId.of(file3.getBucketName(), file3.getBlobName()))
-        ).thenReturn(new ByteArrayInputStream(content3.getBytes()));
+                gcsService.getDocuments(List.of(file1.getBlobId(), file2.getBlobId(), file3.getBlobId()))
+        ).thenReturn(Map.of(
+                file1.getBlobId(), new ByteArrayInputStream(content1.getBytes()),
+                file2.getBlobId(), new ByteArrayInputStream(content2.getBytes()),
+                file3.getBlobId(), new ByteArrayInputStream(content3.getBytes())
+        ));
 
         String entityId = RandomStringUtils.randomAlphabetic(10);
 
         when(
-                userFileDAO.findFilesByEntityId(entityId)
+                fileStorageObjectDAO.findFilesByEntityId(entityId)
         ).thenReturn(List.of(file1, file2, file3));
 
         initService();
 
-        List<UserFile> returned = service.fetchAllByEntityId(entityId);
+        List<FileStorageObject> returned = service.fetchAllByEntityId(entityId);
 
         assertEquals(3, returned.size());
 
@@ -228,42 +195,37 @@ public class UserFileServiceTest {
         String bucket3Name = RandomStringUtils.randomAlphabetic(10);
         String blob3Name = RandomStringUtils.randomAlphabetic(10);
 
-        UserFile file1 = new UserFile();
-        file1.setBucketName(bucket1Name);
-        file1.setBlobName(blob1Name);
+        FileStorageObject file1 = new FileStorageObject();
+        file1.setBlobId(BlobId.of(bucket1Name, blob1Name));
 
-        UserFile file2 = new UserFile();
-        file2.setBucketName(bucket2Name);
-        file2.setBlobName(blob2Name);
+        FileStorageObject file2 = new FileStorageObject();
+        file2.setBlobId(BlobId.of(bucket2Name, blob2Name));
 
-        UserFile file3 = new UserFile();
-        file3.setBucketName(bucket3Name);
-        file3.setBlobName(blob3Name);
+        FileStorageObject file3 = new FileStorageObject();
+        file3.setBlobId(BlobId.of(bucket3Name, blob3Name));
 
         String content1 = RandomStringUtils.randomAlphabetic(10);
         String content2 = RandomStringUtils.randomAlphabetic(10);
         String content3 = RandomStringUtils.randomAlphabetic(10);
 
         when(
-                gcsService.getDocument(BlobId.of(file1.getBucketName(), file1.getBlobName()))
-        ).thenReturn(new ByteArrayInputStream(content1.getBytes()));
-        when(
-                gcsService.getDocument(BlobId.of(file2.getBucketName(), file2.getBlobName()))
-        ).thenReturn(new ByteArrayInputStream(content2.getBytes()));
-        when(
-                gcsService.getDocument(BlobId.of(file3.getBucketName(), file3.getBlobName()))
-        ).thenReturn(new ByteArrayInputStream(content3.getBytes()));
+                gcsService.getDocuments(List.of(file1.getBlobId(), file2.getBlobId(), file3.getBlobId()))
+        ).thenReturn(Map.of(
+                file1.getBlobId(), new ByteArrayInputStream(content1.getBytes()),
+                file2.getBlobId(), new ByteArrayInputStream(content2.getBytes()),
+                file3.getBlobId(), new ByteArrayInputStream(content3.getBytes())
+        ));
 
         String entityId = RandomStringUtils.randomAlphabetic(10);
-        UserFileCategory category = List.of(UserFileCategory.values()).get(new Random().nextInt(UserFileCategory.values().length));
+        FileCategory category = List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
 
         when(
-                userFileDAO.findFilesByEntityIdAndCategory(entityId, category.getValue())
+                fileStorageObjectDAO.findFilesByEntityIdAndCategory(entityId, category.getValue())
         ).thenReturn(List.of(file1, file2, file3));
 
         initService();
 
-        List<UserFile> returned = service.fetchAllByEntityIdAndCategory(entityId, category);
+        List<FileStorageObject> returned = service.fetchAllByEntityIdAndCategory(entityId, category);
 
         assertEquals(3, returned.size());
 

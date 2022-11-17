@@ -29,7 +29,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.UserFileDAO;
+import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -57,7 +57,7 @@ import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UseRestrictionValidator;
-import org.broadinstitute.consent.http.service.UserFileService;
+import org.broadinstitute.consent.http.service.FileStorageObjectService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
@@ -99,7 +99,7 @@ public class ConsentModule extends AbstractModule {
     private final DarCollectionSummaryDAO darCollectionSummaryDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
-    private final UserFileDAO userFileDAO;
+    private final FileStorageObjectDAO fileStorageObjectDAO;
     private final AcknowledgementDAO acknowledgementDAO;
 
     public static final String DB_ENV = "postgresql";
@@ -134,7 +134,7 @@ public class ConsentModule extends AbstractModule {
         this.darCollectionSummaryDAO = this.jdbi.onDemand(DarCollectionSummaryDAO.class);
         this.institutionDAO = this.jdbi.onDemand((InstitutionDAO.class));
         this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
-        this.userFileDAO = this.jdbi.onDemand((UserFileDAO.class));
+        this.fileStorageObjectDAO = this.jdbi.onDemand((FileStorageObjectDAO.class));
         this.acknowledgementDAO = this.jdbi.onDemand((AcknowledgementDAO.class));
     }
 
@@ -217,8 +217,8 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    UserFileService providesUserFileService() {
-        return new UserFileService(
+    FileStorageObjectService providesUserFileService() {
+        return new FileStorageObjectService(
                 providesUserFileDAO(),
                 providesGCSService()
         );
@@ -507,8 +507,8 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    UserFileDAO providesUserFileDAO() {
-        return userFileDAO;
+    FileStorageObjectDAO providesUserFileDAO() {
+        return fileStorageObjectDAO;
     }
 
     @Provides

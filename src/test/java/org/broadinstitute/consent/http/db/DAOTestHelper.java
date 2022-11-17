@@ -14,7 +14,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
-import org.broadinstitute.consent.http.enumeration.UserFileCategory;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
@@ -32,7 +32,7 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserFile;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.core.Jdbi;
@@ -85,7 +85,7 @@ public class DAOTestHelper {
     protected static DarCollectionDAO darCollectionDAO;
     protected static DarCollectionSummaryDAO darCollectionSummaryDAO;
     protected static DatasetAssociationDAO datasetAssociationDAO;
-    protected static UserFileDAO userFileDAO;
+    protected static FileStorageObjectDAO fileStorageObjectDAO;
     protected static AcknowledgementDAO acknowledgementDAO;
 
     // This is a test-only DAO class where we manage the deletion
@@ -145,7 +145,7 @@ public class DAOTestHelper {
         darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
         darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
         datasetAssociationDAO = jdbi.onDemand(DatasetAssociationDAO.class);
-        userFileDAO = jdbi.onDemand(UserFileDAO.class);
+        fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
         acknowledgementDAO = jdbi.onDemand(AcknowledgementDAO.class);
         testingDAO = jdbi.onDemand(TestingDAO.class);
     }
@@ -619,31 +619,29 @@ public class DAOTestHelper {
     }
 
 
-    protected UserFile createUserFile() {
-        UserFileCategory category = List.of(UserFileCategory.values()).get(new Random().nextInt(UserFileCategory.values().length));
+    protected FileStorageObject createUserFile() {
+        FileCategory category = List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
         String entityId = RandomStringUtils.randomAlphabetic(10);
 
         return createUserFile(entityId, category);
     }
 
-    protected UserFile createUserFile(String entityId, UserFileCategory category) {
+    protected FileStorageObject createUserFile(String entityId, FileCategory category) {
         String fileName = RandomStringUtils.randomAlphabetic(10);
         String bucketName = RandomStringUtils.randomAlphabetic(10);
-        String blobName = RandomStringUtils.randomAlphabetic(10);
-        String mediaType = RandomStringUtils.randomAlphabetic(10);
+        String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
         Integer createUserId = new Random().nextInt();
         Date createDate = new Date();
 
-        Integer newUserFileId = userFileDAO.insertNewFile(
+        Integer newUserFileId = fileStorageObjectDAO.insertNewFile(
                 fileName,
                 category.getValue(),
                 bucketName,
-                blobName,
-                mediaType,
+                gcsFileUri,
                 entityId,
                 createUserId,
                 createDate
         );
-        return userFileDAO.findFileById(newUserFileId);
+        return fileStorageObjectDAO.findFileById(newUserFileId);
     }
 }
