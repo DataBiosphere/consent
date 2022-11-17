@@ -53,7 +53,7 @@ public class FileStorageObjectServiceTest {
     }
 
     @Test
-    public void testUploadAndStoreUserFile() throws IOException {
+    public void testUploadAndStoreFile() throws IOException {
         InputStream content = new ByteArrayInputStream(new byte[]{});
         String fileName = RandomStringUtils.randomAlphabetic(10);
         String mediaType = RandomStringUtils.randomAlphabetic(10);
@@ -87,7 +87,7 @@ public class FileStorageObjectServiceTest {
 
         initService();
 
-        FileStorageObject returned = service.uploadAndStoreUserFile(content, fileName, mediaType, category, entityId, createUserId);
+        FileStorageObject returned = service.uploadAndStoreFile(content, fileName, mediaType, category, entityId, createUserId);
 
         assertEquals(newFileStorageObject, returned);
 

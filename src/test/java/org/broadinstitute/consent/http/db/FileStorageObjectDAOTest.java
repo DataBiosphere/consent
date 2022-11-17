@@ -29,7 +29,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         Integer createUserId = new Random().nextInt();
         Date createDate = new Date();
 
-        Integer newUserFileId = fileStorageObjectDAO.insertNewFile(
+        Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
                 fileName,
                 category,
                 gcsFileUri,
@@ -39,7 +39,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
                 createDate
         );
 
-        FileStorageObject newFileStorageObject = fileStorageObjectDAO.findFileById(newUserFileId);
+        FileStorageObject newFileStorageObject = fileStorageObjectDAO.findFileById(newFileStorageObjectId);
 
         assertNotNull(newFileStorageObject);
         assertNotNull(newFileStorageObject.getFileStorageObjectId());
@@ -59,7 +59,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
 
     @Test
     public void testDeleteFileById() {
-        FileStorageObject origFile = createUserFile();
+        FileStorageObject origFile = createFileStorageObject();
 
         Integer deleteUserId = new Random().nextInt();
         Date deleteDate = new Date();
@@ -89,10 +89,10 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         Integer deleteUserId = new Random().nextInt();
         Date deleteDate = new Date();
 
-        FileStorageObject file1 = createUserFile(entityId, FileCategory.IRB_COLLABORATION_LETTER);
-        FileStorageObject file2 = createUserFile(entityId, FileCategory.DATA_USE_LETTER);
-        FileStorageObject file3 = createUserFile(entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
-        FileStorageObject file4 = createUserFile(otherEntityId, FileCategory.IRB_COLLABORATION_LETTER);
+        FileStorageObject file1 = createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
+        FileStorageObject file2 = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+        FileStorageObject file3 = createFileStorageObject(entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+        FileStorageObject file4 = createFileStorageObject(otherEntityId, FileCategory.IRB_COLLABORATION_LETTER);
 
         assertFalse(file1.getDeleted());
         assertNull(file1.getDeleteUserId());
@@ -141,11 +141,11 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
     public void testFindFilesByEntityId() {
         String entityId = RandomStringUtils.randomAlphabetic(10);
 
-        createUserFile();
-        createUserFile(); // random other files
-        FileStorageObject file1 = createUserFile(entityId, FileCategory.IRB_COLLABORATION_LETTER);
-        FileStorageObject file2 = createUserFile(entityId, FileCategory.DATA_USE_LETTER);
-        FileStorageObject file3 = createUserFile(entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+        createFileStorageObject();
+        createFileStorageObject(); // random other files
+        FileStorageObject file1 = createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
+        FileStorageObject file2 = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+        FileStorageObject file3 = createFileStorageObject(entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
         List<FileStorageObject> filesFound = fileStorageObjectDAO.findFilesByEntityId(entityId);
         List<Integer> fileIdsfound = filesFound.stream().map(FileStorageObject::getFileStorageObjectId).toList();
@@ -161,11 +161,11 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         String entityId = RandomStringUtils.randomAlphabetic(10);
 
         // different entity id, same category, shouldn't be returned.
-        createUserFile("asdf", FileCategory.IRB_COLLABORATION_LETTER);
-        createUserFile();
-        FileStorageObject file1 = createUserFile(entityId, FileCategory.IRB_COLLABORATION_LETTER);
-        FileStorageObject file2 = createUserFile(entityId, FileCategory.IRB_COLLABORATION_LETTER);
-        FileStorageObject file3 = createUserFile(entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+        createFileStorageObject("asdf", FileCategory.IRB_COLLABORATION_LETTER);
+        createFileStorageObject();
+        FileStorageObject file1 = createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
+        FileStorageObject file2 = createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
+        FileStorageObject file3 = createFileStorageObject(entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
         List<FileStorageObject> irbFiles = fileStorageObjectDAO.findFilesByEntityIdAndCategory(entityId, FileCategory.IRB_COLLABORATION_LETTER.getValue());
         List<FileStorageObject> altDataSharingFiles = fileStorageObjectDAO.findFilesByEntityIdAndCategory(entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue());

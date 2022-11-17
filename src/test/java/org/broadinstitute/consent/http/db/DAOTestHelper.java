@@ -185,7 +185,7 @@ public class DAOTestHelper {
         testingDAO.deleteAllDARCollections();
         testingDAO.deleteAllCounters();
         testingDAO.deleteAllEmailEntities();
-        testingDAO.deleteAllUserFiles();
+        testingDAO.deleteAllFileStorageObjects();
     }
 
     /*
@@ -619,21 +619,21 @@ public class DAOTestHelper {
     }
 
 
-    protected FileStorageObject createUserFile() {
+    protected FileStorageObject createFileStorageObject() {
         FileCategory category = List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
         String entityId = RandomStringUtils.randomAlphabetic(10);
 
-        return createUserFile(entityId, category);
+        return createFileStorageObject(entityId, category);
     }
 
-    protected FileStorageObject createUserFile(String entityId, FileCategory category) {
+    protected FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
         String fileName = RandomStringUtils.randomAlphabetic(10);
         String bucketName = RandomStringUtils.randomAlphabetic(10);
         String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
         Integer createUserId = new Random().nextInt();
         Date createDate = new Date();
 
-        Integer newUserFileId = fileStorageObjectDAO.insertNewFile(
+        Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
                 fileName,
                 category.getValue(),
                 bucketName,
@@ -642,6 +642,6 @@ public class DAOTestHelper {
                 createUserId,
                 createDate
         );
-        return fileStorageObjectDAO.findFileById(newUserFileId);
+        return fileStorageObjectDAO.findFileById(newFileStorageObjectId);
     }
 }

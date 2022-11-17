@@ -164,7 +164,7 @@ public class ConsentModule extends AbstractModule {
         container.setUserRoleDAO(providesUserRoleDAO());
         container.setVoteDAO(providesVoteDAO());
         container.setInstitutionDAO(providesInstitutionDAO());
-        container.setUserFileDAO(providesUserFileDAO());
+        container.setFileStorageObjectDAO(providesFileStorageObjectDAO());
         container.setAcknowledgementDAO(providesAcknowledgementDAO());
         return container;
     }
@@ -217,9 +217,9 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    FileStorageObjectService providesUserFileService() {
+    FileStorageObjectService providesFileStorageObjectService() {
         return new FileStorageObjectService(
-                providesUserFileDAO(),
+                providesFileStorageObjectDAO(),
                 providesGCSService()
         );
     }
@@ -507,7 +507,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    FileStorageObjectDAO providesUserFileDAO() {
+    FileStorageObjectDAO providesFileStorageObjectDAO() {
         return fileStorageObjectDAO;
     }
 

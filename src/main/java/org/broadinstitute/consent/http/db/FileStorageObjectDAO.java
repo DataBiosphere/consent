@@ -37,9 +37,9 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
     );
 
     @SqlUpdate(
-            "UPDATE file_storage_object SET deleted=true, delete_user_id=:deleteUserId, delete_date=:deleteDate WHERE file_storage_object_id = :userFileId"
+            "UPDATE file_storage_object SET deleted=true, delete_user_id=:deleteUserId, delete_date=:deleteDate WHERE file_storage_object_id = :fileStorageObjectId"
     )
-    void deleteFileById(@Bind("userFileId") Integer userFileId,
+    void deleteFileById(@Bind("fileStorageObjectId") Integer fileStorageObjectId,
                         @Bind("deleteUserId") Integer deleteUserId,
                         @Bind("deleteDate") Date deleteDate);
 
@@ -52,9 +52,9 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
 
 
     @SqlQuery(
-            "SELECT * FROM file_storage_object WHERE file_storage_object_id = :userFileId"
+            "SELECT * FROM file_storage_object WHERE file_storage_object_id = :fileStorageObjectId"
     )
-    FileStorageObject findFileById(@Bind("userFileId") Integer userFileId);
+    FileStorageObject findFileById(@Bind("fileStorageObjectId") Integer fileStorageObjectId);
 
     @SqlQuery(
             "SELECT * FROM file_storage_object WHERE entity_id = :entityId AND deleted != true"

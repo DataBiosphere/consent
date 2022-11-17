@@ -1,10 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
-import org.broadinstitute.consent.http.db.mapper.RowMapperHelper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.slf4j.Logger;
@@ -32,7 +30,7 @@ public class FileStorageObjectService {
         this.gcsService = gcsService;
     }
 
-    FileStorageObject uploadAndStoreUserFile(
+    FileStorageObject uploadAndStoreFile(
             InputStream content,
             String fileName,
             String mediaType,
@@ -54,7 +52,7 @@ public class FileStorageObjectService {
         }
 
         // insert file
-        Integer userFileId = fileStorageObjectDAO.insertNewFile(
+        Integer fileStorageObjectId = fileStorageObjectDAO.insertNewFile(
                 fileName,
                 category.getValue(),
                 blobId.toGsUtilUri(),
@@ -64,10 +62,10 @@ public class FileStorageObjectService {
                 new Date()
         );
 
-        return fileStorageObjectDAO.findFileById(userFileId);
+        return fileStorageObjectDAO.findFileById(fileStorageObjectId);
     }
 
-    // fetches file from GCS and adds it to the userFile
+    // fetches file from GCS and adds it to the fileStorageObject
     private void fetchAndPopulateUploadedFile(FileStorageObject fileStorageObject) throws NotFoundException  {
         try {
             InputStream document = gcsService.getDocument(fileStorageObject.getBlobId());
@@ -92,9 +90,9 @@ public class FileStorageObjectService {
     }
 
     public FileStorageObject fetchById(
-            Integer userFileId
+            Integer fileStorageObjectId
     ) throws NotFoundException {
-        FileStorageObject fileStorageObject = fileStorageObjectDAO.findFileById(userFileId);
+        FileStorageObject fileStorageObject = fileStorageObjectDAO.findFileById(fileStorageObjectId);
         // download file from GCS
         fetchAndPopulateUploadedFile(fileStorageObject);
         return fileStorageObject;

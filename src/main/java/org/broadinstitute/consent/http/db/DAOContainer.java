@@ -164,8 +164,8 @@ public class DAOContainer {
   public InstitutionDAO getInstitutionDAO() { return institutionDAO; }
 
   public void setInstitutionDAO(InstitutionDAO institutionDAO) { this.institutionDAO = institutionDAO; }
-  public FileStorageObjectDAO getUserFileDAO() { return fileStorageObjectDAO; }
-  public void setUserFileDAO(FileStorageObjectDAO fileStorageObjectDAO) { this.fileStorageObjectDAO = fileStorageObjectDAO; }
+  public FileStorageObjectDAO getFileStorageObjectDAO() { return fileStorageObjectDAO; }
+  public void setFileStorageObjectDAO(FileStorageObjectDAO fileStorageObjectDAO) { this.fileStorageObjectDAO = fileStorageObjectDAO; }
 
   public AcknowledgementDAO getAcknowledgementDAO() {
     return acknowledgementDAO;
