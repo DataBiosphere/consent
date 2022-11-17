@@ -109,19 +109,6 @@ public class FileStorageObject {
         this.uploadedFile = uploadedFile;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        FileStorageObject fileStorageObject = (FileStorageObject) o;
-        return Objects.equals(fileStorageObjectId, fileStorageObject.fileStorageObjectId) && Objects.equals(entityId, fileStorageObject.entityId) && Objects.equals(fileName, fileStorageObject.fileName) && Objects.equals(blobId, fileStorageObject.blobId) && category == fileStorageObject.category && Objects.equals(mediaType, fileStorageObject.mediaType) && Objects.equals(createUserId, fileStorageObject.createUserId) && Objects.equals(createDate, fileStorageObject.createDate) && Objects.equals(deleted, fileStorageObject.deleted);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(fileStorageObjectId, entityId, fileName, blobId, category, mediaType, createUserId, createDate, deleted);
-    }
-
     public Integer getDeleteUserId() {
         return deleteUserId;
     }
@@ -160,5 +147,18 @@ public class FileStorageObject {
 
     public void setBlobId(BlobId blobId) {
         this.blobId = blobId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FileStorageObject fileStorageObject = (FileStorageObject) o;
+        return Objects.equals(fileStorageObjectId, fileStorageObject.fileStorageObjectId) && Objects.equals(entityId, fileStorageObject.entityId) && Objects.equals(fileName, fileStorageObject.fileName) && Objects.equals(blobId, fileStorageObject.blobId) && category == fileStorageObject.category && Objects.equals(mediaType, fileStorageObject.mediaType) && Objects.equals(createUserId, fileStorageObject.createUserId) && Objects.equals(createDate, fileStorageObject.createDate) && Objects.equals(deleted, fileStorageObject.deleted);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fileStorageObjectId, entityId, fileName, blobId, category, mediaType, createUserId, createDate, deleted);
     }
 }
