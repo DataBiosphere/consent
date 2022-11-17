@@ -64,6 +64,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(dac.getDacId(), dataset.getDacId());
         assertEquals(doc, dataset.getSharingPlanDocument());
         assertEquals(docName, dataset.getSharingPlanDocumentName());
+        assertFalse(dataset.getNeedsApproval());
     }
 
     @Test
@@ -142,6 +143,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(consent.getConsentId(), datasets.get(0).getConsentId());
         assertEquals(consent.getTranslatedUseRestriction(), datasets.get(0).getTranslatedUseRestriction());
         assertFalse(datasets.get(0).getProperties().isEmpty());
+        assertTrue(datasets.get(0).getNeedsApproval());
     }
 
     @Test
@@ -554,6 +556,12 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertNotNull(updatedDataset);
         assertEquals(datasetId, updatedDataset.getDataSetId());
         assertTrue(updatedDataset.getDacApproval());
+        datasetDAO.updateDatasetApproval(false, Instant.now(), userId, datasetId);
+        Dataset updatedDatasetAfterApprovalFalse = datasetDAO.findDatasetById(datasetId);
+        assertNotNull(updatedDatasetAfterApprovalFalse);
+        assertEquals(datasetId, updatedDatasetAfterApprovalFalse.getDataSetId());
+        assertFalse(updatedDatasetAfterApprovalFalse.getDacApproval());
+
     }
 
     private DarCollection createDarCollectionWithDatasets(int dacId, User user, List<Dataset> datasets) {
