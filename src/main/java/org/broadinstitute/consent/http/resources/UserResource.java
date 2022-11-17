@@ -4,16 +4,19 @@ package org.broadinstitute.consent.http.resources;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -36,9 +39,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.lang.reflect.Type;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,14 +57,17 @@ public class UserResource extends Resource {
     private final SamService samService;
     private final DatasetService datasetService;
     private final SupportRequestService supportRequestService;
+    private final AcknowledgementService acknowledgementService;
 
     @Inject
     public UserResource(SamService samService, UserService userService,
-                        DatasetService datasetService, SupportRequestService supportRequestService) {
+                        DatasetService datasetService, SupportRequestService supportRequestService,
+                        AcknowledgementService acknowledgementService) {
         this.samService = samService;
         this.userService = userService;
         this.datasetService = datasetService;
         this.supportRequestService = supportRequestService;
+        this.acknowledgementService = acknowledgementService;
     }
 
     @GET
@@ -330,6 +339,63 @@ public class UserResource extends Resource {
             }
             return Response.ok().entity(Collections.emptyList()).build();
         } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/acknowledgements")
+    @PermitAll
+    public Response getUserAcknowledgements(@Auth AuthUser authUser) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.findAcknowledgementsForUser(user);
+            return Response.ok().entity(acknowledgementMap).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/acknowledgements/{key}")
+    @PermitAll
+    public Response getUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key){
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            Acknowledgement ack = acknowledgementService.findAcknowledgementForUserByKey(user, key);
+            if (ack == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            return Response.ok().entity(ack).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/acknowledgements")
+    @PermitAll
+    public Response postAcknowledgements(@Auth AuthUser authUser, String json) {
+        ArrayList<String> keys;
+        try {
+            Type listOfStringsType = new TypeToken<ArrayList<String>>() {}.getType();
+            keys = gson.fromJson(json, listOfStringsType);
+            if (keys == null || keys.isEmpty()){
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        try{
+            User user = userService.findUserByEmail(authUser.getEmail());
+            Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.makeAcknowledgements(keys, user);
+            return Response.ok().entity(acknowledgementMap).build();
+        } catch (Exception e){
             return createExceptionResponse(e);
         }
     }

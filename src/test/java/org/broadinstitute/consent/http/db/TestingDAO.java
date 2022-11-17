@@ -87,4 +87,7 @@ public interface TestingDAO extends Transactional<TestingDAO> {
 
   @SqlUpdate("DELETE FROM user_file")
   void deleteAllUserFiles();
+
+  @SqlUpdate("DELETE FROM acknowledgement")
+  void deleteAllAcknowledgements();
 }

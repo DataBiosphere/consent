@@ -1,28 +1,28 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-    <changeSet id="103.0" author="connorlbark">
-        <createTable tableName="user_file">
-            <column name="user_file_id" autoIncrement="true" type="int">
-                <constraints primaryKey="true"/>
-            </column>
-            <!-- Could be: Reference ID, Dataset ID column, etc. -->
-            <column name="entity_id" type="text"/>
-            <column name="file_name" type="text" >
+    <changeSet id="103.0" author="otchet">
+        <createTable tableName="acknowledgement">
+            <column name="ack_key" type="varchar(2047)">
                 <constraints nullable="false"/>
             </column>
-            <column name="bucket_name" type="text">
+            <column name="user_id" type="bigint">
+                <constraints foreignKeyName="fk_user_id" nullable="false"/>
+            </column>
+            <column name="first_acknowledged" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="blob_name" type="text">
+            <column name="last_acknowledged" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="category" type="text"/>
-            <column name="media_type" type="text"/>
-            <column name="create_user_id" type="int"/>
-            <column name="create_date" type="date"/>
-            <column name="deleted" type="boolean"/>
-            <column name="deletedDate" type="date"/>
         </createTable>
+        <addPrimaryKey tableName="acknowledgement" columnNames="ack_key, user_id" constraintName="pk_acknowledgement"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="acknowledgement" constraintName="fk_user_id"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="user_id" referencedTableName="users"
+                                 referencesUniqueColumn="true"/>
+        <createIndex indexName="idx_user" tableName="acknowledgement">
+            <column name="user_id"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>
