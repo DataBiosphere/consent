@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.junit.Test;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -27,7 +28,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         String mediaType = RandomStringUtils.randomAlphabetic(10);
         String entityId = RandomStringUtils.randomAlphabetic(10);
         Integer createUserId = new Random().nextInt();
-        Date createDate = new Date();
+        Instant createDate = Instant.now();
 
         Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
                 fileName,
@@ -50,9 +51,8 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         assertEquals(entityId, newFileStorageObject.getEntityId());
         assertEquals(createUserId, newFileStorageObject.getCreateUserId());
         assertEquals(
-                createDate.getTime(),
-                newFileStorageObject.getCreateDate().getTime(),
-                86400000); // delta: within one day (86,400,000 ms)
+                createDate,
+                newFileStorageObject.getCreateDate());
         assertFalse(newFileStorageObject.getDeleted());
         assertNull(newFileStorageObject.getUploadedFile());
     }
@@ -62,7 +62,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         FileStorageObject origFile = createFileStorageObject();
 
         Integer deleteUserId = new Random().nextInt();
-        Date deleteDate = new Date();
+        Instant deleteDate = Instant.now();
 
         assertFalse(origFile.getDeleted());
         assertNull(origFile.getDeleteUserId());
@@ -75,10 +75,8 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         assertTrue(deletedFile.getDeleted());
         assertEquals(deleteUserId, deletedFile.getDeleteUserId());
         assertEquals(
-                deleteDate.getTime(),
-                deletedFile.getDeleteDate().getTime(),
-                86400000); // delta: within one day (86,400,000 ms)
-
+                deleteDate,
+                deletedFile.getDeleteDate());
     }
 
     @Test
@@ -87,7 +85,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         String otherEntityId = RandomStringUtils.randomAlphabetic(8);
 
         Integer deleteUserId = new Random().nextInt();
-        Date deleteDate = new Date();
+        Instant deleteDate = Instant.now();
 
         FileStorageObject file1 = createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
         FileStorageObject file2 = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
@@ -117,21 +115,18 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         assertTrue(file1.getDeleted());
         assertEquals(deleteUserId, file1.getDeleteUserId());
         assertEquals(
-                deleteDate.getTime(),
-                file1.getDeleteDate().getTime(),
-                86400000); // delta: within one day (86,400,000 ms)
+                deleteDate,
+                file1.getDeleteDate());
         assertTrue(file2.getDeleted());
         assertEquals(deleteUserId, file2.getDeleteUserId());
         assertEquals(
-                deleteDate.getTime(),
-                file2.getDeleteDate().getTime(),
-                86400000); // delta: within one day (86,400,000 ms)
+                deleteDate,
+                file2.getDeleteDate());
         assertTrue(file3.getDeleted());
         assertEquals(deleteUserId, file3.getDeleteUserId());
         assertEquals(
-                deleteDate.getTime(),
-                file3.getDeleteDate().getTime(),
-                86400000); // delta: within one day (86,400,000 ms)
+                deleteDate,
+                file3.getDeleteDate());
         assertFalse(file4.getDeleted()); // should not be effected
         assertNull(file4.getDeleteUserId());
         assertNull(file4.getDeleteDate());
@@ -178,5 +173,30 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         assertTrue(altDataSharingFiles.contains(file3));
     }
 
+    protected FileStorageObject createFileStorageObject() {
+        FileCategory category = List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
+        String entityId = RandomStringUtils.randomAlphabetic(10);
+
+        return createFileStorageObject(entityId, category);
+    }
+
+    protected FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
+        String fileName = RandomStringUtils.randomAlphabetic(10);
+        String bucketName = RandomStringUtils.randomAlphabetic(10);
+        String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
+        Integer createUserId = new Random().nextInt();
+        Instant createDate = Instant.now();
+
+        Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
+                fileName,
+                category.getValue(),
+                bucketName,
+                gcsFileUri,
+                entityId,
+                createUserId,
+                createDate
+        );
+        return fileStorageObjectDAO.findFileById(newFileStorageObjectId);
+    }
 
 }

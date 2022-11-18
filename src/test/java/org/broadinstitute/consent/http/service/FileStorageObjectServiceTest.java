@@ -36,12 +36,12 @@ import static org.mockito.MockitoAnnotations.openMocks;
 public class FileStorageObjectServiceTest {
 
     @Mock
-    FileStorageObjectDAO fileStorageObjectDAO;
+    private FileStorageObjectDAO fileStorageObjectDAO;
 
     @Mock
-    GCSService gcsService;
+    private GCSService gcsService;
 
-    FileStorageObjectService service;
+    private FileStorageObjectService service;
 
     @Before
     public void setUp() {
@@ -54,7 +54,7 @@ public class FileStorageObjectServiceTest {
 
     @Test
     public void testUploadAndStoreFile() throws IOException {
-        InputStream content = new ByteArrayInputStream(new byte[]{});
+        InputStream content = new ByteArrayInputStream(RandomStringUtils.random(20).getBytes());
         String fileName = RandomStringUtils.randomAlphabetic(10);
         String mediaType = RandomStringUtils.randomAlphabetic(10);
         FileCategory category = List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
@@ -116,7 +116,7 @@ public class FileStorageObjectServiceTest {
         FileStorageObject file = new FileStorageObject();
         file.setBlobId(BlobId.of(bucket, blob));
 
-        String content = RandomStringUtils.randomAlphabetic(10);
+        String content = RandomStringUtils.random(100);
 
         when(
                 gcsService.getDocument(BlobId.of(bucket, blob))

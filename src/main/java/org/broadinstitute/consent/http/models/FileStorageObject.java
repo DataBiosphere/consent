@@ -4,7 +4,7 @@ import com.google.cloud.storage.BlobId;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 
 import java.io.InputStream;
-import java.util.Date;
+import java.time.Instant;
 import java.util.Objects;
 
 public class FileStorageObject {
@@ -28,12 +28,12 @@ public class FileStorageObject {
     private FileCategory category;
     private String mediaType;
     private Integer createUserId;
-    private Date createDate;
+    private Instant createDate;
     private Boolean deleted;
     private Integer deleteUserId;
-    private Date deleteDate;
+    private Instant deleteDate;
     private Integer updateUserId;
-    private Date updateDate;
+    private Instant updateDate;
     // only populated when using `fetch` methods in service class
     private InputStream uploadedFile;
 
@@ -85,11 +85,11 @@ public class FileStorageObject {
         this.createUserId = createUserId;
     }
 
-    public Date getCreateDate() {
+    public Instant getCreateDate() {
         return createDate;
     }
 
-    public void setCreateDate(Date createDate) {
+    public void setCreateDate(Instant createDate) {
         this.createDate = createDate;
     }
 
@@ -117,11 +117,11 @@ public class FileStorageObject {
         this.deleteUserId = deleteUserId;
     }
 
-    public Date getDeleteDate() {
+    public Instant getDeleteDate() {
         return deleteDate;
     }
 
-    public void setDeleteDate(Date deleteDate) {
+    public void setDeleteDate(Instant deleteDate) {
         this.deleteDate = deleteDate;
     }
 
@@ -133,11 +133,11 @@ public class FileStorageObject {
         this.updateUserId = updateUserId;
     }
 
-    public Date getUpdateDate() {
+    public Instant getUpdateDate() {
         return updateDate;
     }
 
-    public void setUpdateDate(Date updateDate) {
+    public void setUpdateDate(Instant updateDate) {
         this.updateDate = updateDate;
     }
 
@@ -154,7 +154,7 @@ public class FileStorageObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FileStorageObject fileStorageObject = (FileStorageObject) o;
-        return Objects.equals(fileStorageObjectId, fileStorageObject.fileStorageObjectId) && Objects.equals(entityId, fileStorageObject.entityId) && Objects.equals(fileName, fileStorageObject.fileName) && Objects.equals(blobId, fileStorageObject.blobId) && category == fileStorageObject.category && Objects.equals(mediaType, fileStorageObject.mediaType) && Objects.equals(createUserId, fileStorageObject.createUserId) && Objects.equals(createDate, fileStorageObject.createDate) && Objects.equals(deleted, fileStorageObject.deleted);
+        return Objects.equals(fileStorageObjectId, fileStorageObject.fileStorageObjectId);
     }
 
     @Override

@@ -17,14 +17,14 @@
             <column name="category" type="text"/>
             <column name="media_type" type="text"/>
             <column name="create_user_id" type="integer"/>
-            <column name="create_date" type="date"/>
+            <column name="create_date" type="timestamp"/>
             <column name="deleted" type="boolean"/>
             <column name="delete_user_id" type="integer" defaultValue="null">
                 <constraints nullable="true" />
             </column>
-            <column name="delete_date" type="date"/>
+            <column name="delete_date" type="timestamp"/>
             <column name="update_user_id" type="integer" defaultValue="null"/>
-            <column name="update_date" type="date"/>
+            <column name="update_date" type="timestamp"/>
 
         </createTable>
     </changeSet>

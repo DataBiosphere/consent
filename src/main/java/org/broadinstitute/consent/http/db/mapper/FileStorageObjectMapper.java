@@ -3,6 +3,10 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.Optional;
 
 import com.google.cloud.storage.BlobId;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -51,7 +55,8 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
         }
 
         if (hasColumn(r, "create_date")) {
-            file.setCreateDate(r.getDate("create_date"));
+            Timestamp createDate = r.getTimestamp("create_Date");
+            file.setCreateDate((Objects.nonNull(createDate) ? createDate.toInstant() : null));
         }
 
         if (hasColumn(r, "deleted")) {
@@ -63,7 +68,8 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
         }
 
         if (hasColumn(r, "delete_date")) {
-            file.setDeleteDate(r.getDate("delete_date"));
+            Timestamp deleteDate = r.getTimestamp("delete_date");
+            file.setDeleteDate((Objects.nonNull(deleteDate) ? deleteDate.toInstant() : null));
         }
 
         if (hasColumn(r, "update_user_id")) {
@@ -72,7 +78,8 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
         }
 
         if (hasColumn(r, "update_date")) {
-            file.setUpdateDate(r.getDate("update_date"));
+            Timestamp updateDate = r.getTimestamp("update_date");
+            file.setUpdateDate((Objects.nonNull(updateDate) ? updateDate.toInstant() : null));
         }
 
         return file;

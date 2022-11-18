@@ -9,7 +9,7 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 @RegisterRowMapper(FileStorageObjectMapper.class)
@@ -33,7 +33,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
             @Bind("mediaType") String mediaType,
             @Bind("entityId") String entityId,
             @Bind("createUserId") Integer createUserId,
-            @Bind("createDate") Date createDate
+            @Bind("createDate") Instant createDate
     );
 
     @SqlUpdate(
@@ -41,14 +41,14 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
     )
     void deleteFileById(@Bind("fileStorageObjectId") Integer fileStorageObjectId,
                         @Bind("deleteUserId") Integer deleteUserId,
-                        @Bind("deleteDate") Date deleteDate);
+                        @Bind("deleteDate") Instant deleteDate);
 
     @SqlUpdate(
             "UPDATE file_storage_object SET deleted=true, delete_user_id=:deleteUserId, delete_date=:deleteDate WHERE entity_id = :entityId"
     )
     void deleteFilesByEntityId(@Bind("entityId") String entityId,
                                @Bind("deleteUserId") Integer deleteUserId,
-                               @Bind("deleteDate") Date deleteDate);
+                               @Bind("deleteDate") Instant deleteDate);
 
 
     @SqlQuery(

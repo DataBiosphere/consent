@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,7 @@ public class FileStorageObjectService {
                     mediaType,
                     UUID.randomUUID());
         } catch (Exception e) {
-            log.error("Failed to upload user file", e);
+            log.warn("Failed to upload file for user id " + createUserId + ": " + e.getMessage());
             throw e;
         }
 
@@ -59,7 +60,7 @@ public class FileStorageObjectService {
                 mediaType,
                 entityId,
                 createUserId,
-                new Date()
+                Instant.now()
         );
 
         return fileStorageObjectDAO.findFileById(fileStorageObjectId);
@@ -70,8 +71,11 @@ public class FileStorageObjectService {
         try {
             InputStream document = gcsService.getDocument(fileStorageObject.getBlobId());
             fileStorageObject.setUploadedFile(document);
+        } catch (NotFoundException e) {
+            throw e; // pass along
         } catch (Exception e) {
-            log.error("Could not get file from GCS", e);
+            // all other exceptions
+            log.warn("Failed to get document from GCS: " + e.getMessage());
             throw e;
         }
     }
@@ -82,9 +86,11 @@ public class FileStorageObjectService {
                     fileStorageObjects.stream().map(FileStorageObject::getBlobId).collect(Collectors.toList()));
 
             fileStorageObjects.forEach((fso) -> fso.setUploadedFile(documentMap.get(fso.getBlobId())));
-
+        } catch (NotFoundException e) {
+            throw e; // pass along
         } catch (Exception e) {
-            log.error("Could not get file from GCS", e);
+            // all other exceptions
+            log.warn("Failed to get document from GCS: " + e.getMessage());
             throw e;
         }
     }
