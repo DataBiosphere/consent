@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,12 +19,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class FileStorageObjectService {
+public class FileStorageObjectService implements ConsentLogger {
 
     GCSService gcsService;
     FileStorageObjectDAO fileStorageObjectDAO;
-
-    Logger log = LoggerFactory.getLogger(FileStorageObjectService.class);
 
 
     public FileStorageObjectService(FileStorageObjectDAO fileStorageObjectDAO, GCSService gcsService) {
@@ -48,7 +47,7 @@ public class FileStorageObjectService {
                     mediaType,
                     UUID.randomUUID());
         } catch (Exception e) {
-            log.warn("Failed to upload file for user id " + createUserId + ": " + e.getMessage());
+            logWarn("Failed to upload file for user id " + createUserId + ": " + e.getMessage());
             throw e;
         }
 
@@ -75,7 +74,7 @@ public class FileStorageObjectService {
             throw e; // pass along
         } catch (Exception e) {
             // all other exceptions
-            log.warn("Failed to get document from GCS: " + e.getMessage());
+            logWarn("Failed to get document from GCS: " + e.getMessage());
             throw e;
         }
     }
@@ -90,7 +89,7 @@ public class FileStorageObjectService {
             throw e; // pass along
         } catch (Exception e) {
             // all other exceptions
-            log.warn("Failed to get document from GCS: " + e.getMessage());
+            logWarn("Failed to get document from GCS: " + e.getMessage());
             throw e;
         }
     }

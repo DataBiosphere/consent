@@ -4,10 +4,10 @@ import com.google.cloud.storage.BlobId;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.User;
 import org.junit.Test;
 
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -20,6 +20,10 @@ import static org.junit.Assert.assertTrue;
 public class FileStorageObjectDAOTest extends DAOTestHelper {
     @Test
     public void testInsertFile() {
+
+        createFileStorageObject(); // add random other files to db
+        createFileStorageObject();
+
         String fileName = RandomStringUtils.randomAlphabetic(10);
         String category = FileCategory.getValues().get(new Random().nextInt(FileCategory.getValues().size()));
         String gcsFileUri = BlobId.of(
@@ -27,7 +31,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
                 RandomStringUtils.randomAlphabetic(10)).toGsUtilUri();
         String mediaType = RandomStringUtils.randomAlphabetic(10);
         String entityId = RandomStringUtils.randomAlphabetic(10);
-        Integer createUserId = new Random().nextInt();
+        User createUser = createUser();
         Instant createDate = Instant.now();
 
         Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
@@ -36,9 +40,12 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
                 gcsFileUri,
                 mediaType,
                 entityId,
-                createUserId,
+                createUser.getUserId(),
                 createDate
         );
+
+        createFileStorageObject();
+
 
         FileStorageObject newFileStorageObject = fileStorageObjectDAO.findFileById(newFileStorageObjectId);
 
@@ -49,7 +56,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         assertEquals(BlobId.fromGsUtilUri(gcsFileUri), newFileStorageObject.getBlobId());
         assertEquals(mediaType, newFileStorageObject.getMediaType());
         assertEquals(entityId, newFileStorageObject.getEntityId());
-        assertEquals(createUserId, newFileStorageObject.getCreateUserId());
+        assertEquals(createUser.getUserId(), newFileStorageObject.getCreateUserId());
         assertEquals(
                 createDate.getEpochSecond(),
                 newFileStorageObject.getCreateDate().getEpochSecond());
@@ -61,19 +68,19 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
     public void testDeleteFileById() {
         FileStorageObject origFile = createFileStorageObject();
 
-        Integer deleteUserId = new Random().nextInt();
+        User deleteUser = createUser();
         Instant deleteDate = Instant.now();
 
         assertFalse(origFile.getDeleted());
         assertNull(origFile.getDeleteUserId());
         assertNull(origFile.getDeleteDate());
 
-        fileStorageObjectDAO.deleteFileById(origFile.getFileStorageObjectId(), deleteUserId, deleteDate);
+        fileStorageObjectDAO.deleteFileById(origFile.getFileStorageObjectId(), deleteUser.getUserId(), deleteDate);
 
         FileStorageObject deletedFile = fileStorageObjectDAO.findFileById(origFile.getFileStorageObjectId());
 
         assertTrue(deletedFile.getDeleted());
-        assertEquals(deleteUserId, deletedFile.getDeleteUserId());
+        assertEquals(deleteUser.getUserId(), deletedFile.getDeleteUserId());
         assertEquals(
                 deleteDate.getEpochSecond(),
                 deletedFile.getDeleteDate().getEpochSecond());
@@ -84,7 +91,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         String entityId = RandomStringUtils.randomAlphabetic(10);
         String otherEntityId = RandomStringUtils.randomAlphabetic(8);
 
-        Integer deleteUserId = new Random().nextInt();
+        User deleteUser = createUser();
         Instant deleteDate = Instant.now();
 
         FileStorageObject file1 = createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
@@ -105,7 +112,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         assertNull(file4.getDeleteUserId());
         assertNull(file4.getDeleteDate());
 
-        fileStorageObjectDAO.deleteFilesByEntityId(entityId, deleteUserId, deleteDate);
+        fileStorageObjectDAO.deleteFilesByEntityId(entityId, deleteUser.getUserId(), deleteDate);
 
         file1 = fileStorageObjectDAO.findFileById(file1.getFileStorageObjectId());
         file2 = fileStorageObjectDAO.findFileById(file2.getFileStorageObjectId());
@@ -113,17 +120,17 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         file4 = fileStorageObjectDAO.findFileById(file4.getFileStorageObjectId());
 
         assertTrue(file1.getDeleted());
-        assertEquals(deleteUserId, file1.getDeleteUserId());
+        assertEquals(deleteUser.getUserId(), file1.getDeleteUserId());
         assertEquals(
                 deleteDate.getEpochSecond(),
                 file1.getDeleteDate().getEpochSecond());
         assertTrue(file2.getDeleted());
-        assertEquals(deleteUserId, file2.getDeleteUserId());
+        assertEquals(deleteUser.getUserId(), file2.getDeleteUserId());
         assertEquals(
                 deleteDate.getEpochSecond(),
                 file2.getDeleteDate().getEpochSecond());
         assertTrue(file3.getDeleted());
-        assertEquals(deleteUserId, file3.getDeleteUserId());
+        assertEquals(deleteUser.getUserId(), file3.getDeleteUserId());
         assertEquals(
                 deleteDate.getEpochSecond(),
                 file3.getDeleteDate().getEpochSecond());
@@ -184,7 +191,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         String fileName = RandomStringUtils.randomAlphabetic(10);
         String bucketName = RandomStringUtils.randomAlphabetic(10);
         String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
-        Integer createUserId = new Random().nextInt();
+        User createUser = createUser();
         Instant createDate = Instant.now();
 
         Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
@@ -193,7 +200,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
                 bucketName,
                 gcsFileUri,
                 entityId,
-                createUserId,
+                createUser.getUserId(),
                 createDate
         );
         return fileStorageObjectDAO.findFileById(newFileStorageObjectId);

@@ -180,12 +180,12 @@ public class DAOTestHelper {
         testingDAO.deleteAllUserProperties();
         testingDAO.deleteAllUserRoles();
         testingDAO.deleteAllAcknowledgements();
+        testingDAO.deleteAllFileStorageObjects();
         testingDAO.deleteAllUsers();
         testingDAO.deleteAllDARs();
         testingDAO.deleteAllDARCollections();
         testingDAO.deleteAllCounters();
         testingDAO.deleteAllEmailEntities();
-        testingDAO.deleteAllFileStorageObjects();
     }
 
     /*

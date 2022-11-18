@@ -55,7 +55,7 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
         }
 
         if (hasColumn(r, "create_date")) {
-            Timestamp createDate = r.getTimestamp("create_Date");
+            Timestamp createDate = r.getTimestamp("create_date");
             file.setCreateDate((Objects.nonNull(createDate) ? createDate.toInstant() : null));
         }
 
