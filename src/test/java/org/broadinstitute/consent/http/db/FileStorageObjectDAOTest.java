@@ -51,8 +51,8 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         assertEquals(entityId, newFileStorageObject.getEntityId());
         assertEquals(createUserId, newFileStorageObject.getCreateUserId());
         assertEquals(
-                createDate,
-                newFileStorageObject.getCreateDate());
+                createDate.getEpochSecond(),
+                newFileStorageObject.getCreateDate().getEpochSecond());
         assertFalse(newFileStorageObject.getDeleted());
         assertNull(newFileStorageObject.getUploadedFile());
     }
@@ -75,8 +75,8 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         assertTrue(deletedFile.getDeleted());
         assertEquals(deleteUserId, deletedFile.getDeleteUserId());
         assertEquals(
-                deleteDate,
-                deletedFile.getDeleteDate());
+                deleteDate.getEpochSecond(),
+                deletedFile.getDeleteDate().getEpochSecond());
     }
 
     @Test
@@ -115,18 +115,18 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         assertTrue(file1.getDeleted());
         assertEquals(deleteUserId, file1.getDeleteUserId());
         assertEquals(
-                deleteDate,
-                file1.getDeleteDate());
+                deleteDate.getEpochSecond(),
+                file1.getDeleteDate().getEpochSecond());
         assertTrue(file2.getDeleted());
         assertEquals(deleteUserId, file2.getDeleteUserId());
         assertEquals(
-                deleteDate,
-                file2.getDeleteDate());
+                deleteDate.getEpochSecond(),
+                file2.getDeleteDate().getEpochSecond());
         assertTrue(file3.getDeleted());
         assertEquals(deleteUserId, file3.getDeleteUserId());
         assertEquals(
-                deleteDate,
-                file3.getDeleteDate());
+                deleteDate.getEpochSecond(),
+                file3.getDeleteDate().getEpochSecond());
         assertFalse(file4.getDeleted()); // should not be effected
         assertNull(file4.getDeleteUserId());
         assertNull(file4.getDeleteDate());
