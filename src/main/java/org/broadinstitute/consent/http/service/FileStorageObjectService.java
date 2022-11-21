@@ -6,15 +6,12 @@ import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
-import java.util.Date;
-import java.util.List;
+]import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;

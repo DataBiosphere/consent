@@ -4,9 +4,7 @@ package org.broadinstitute.consent.http.db.mapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.Objects;
-import java.util.Optional;
 
 import com.google.cloud.storage.BlobId;
 import org.broadinstitute.consent.http.enumeration.FileCategory;

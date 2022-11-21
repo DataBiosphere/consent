@@ -9,18 +9,6 @@ import java.util.Objects;
 
 public class FileStorageObject {
 
-    public static final String FILE_STORAGE_OBJECT_QUERY_WITH_FSO_PREFIX =
-            "fso.file_storage_object_id as fso_use_file_id, "
-            + " fso.entity_id as fso_entity_id, "
-            + " fso.file_name as fso_file_name, "
-            + " fso.bucket_name as fso_file_name, "
-            + " fso.blob_id as fso_file_name, "
-            + " fso.category as fso_file_name, "
-            + " fso.media_type as fso_file_name, "
-            + " fso.create_user_id as fso_file_name, "
-            + " fso.create_date as fso_create_date, "
-            + " fso.deleted as fso_deleted ";
-
     private Integer fileStorageObjectId;
     private String entityId;
     private String fileName;
