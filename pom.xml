@@ -403,7 +403,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>6.7.0</version>
+      <version>6.8.0</version>
     </dependency>
 
     <!-- Support for JSON logging -->
