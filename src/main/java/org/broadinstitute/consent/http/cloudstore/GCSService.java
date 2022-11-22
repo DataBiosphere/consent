@@ -13,7 +13,12 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
@@ -71,18 +76,19 @@ public class GCSService {
      *
      * @param content InputStream content
      * @param mediaType String media type
-     * @param fileName String file name
+     * @param id String UUID of the file
      * @return BlobId of the stored document
      * @throws IOException Exception when storing document
      */
-    public BlobId storeDocument(InputStream content, String mediaType, String fileName)
+    public BlobId storeDocument(InputStream content, String mediaType, UUID id)
         throws IOException {
         byte[] bytes = IOUtils.toByteArray(content);
-        BlobId blobId = BlobId.of(config.getBucket(), fileName);
+        BlobId blobId = BlobId.of(config.getBucket(), id.toString());
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(mediaType).build();
         Blob blob = storage.create(blobInfo, bytes);
         return blob.getBlobId();
     }
+
 
     /**
      * Delete a document by Blob Id Name
@@ -113,6 +119,27 @@ public class GCSService {
         }
     }
 
+    public InputStream getDocument(BlobId blobId) throws NotFoundException {
+        Optional<Blob> blobOptional = getBlobFromBlobId(blobId);
+        if (blobOptional.isPresent()) {
+            return new ByteArrayInputStream(blobOptional.get().getContent());
+        } else {
+            throw new NotFoundException("Document Not Found: " + blobId.toString());
+        }
+    }
+
+    public Map<BlobId, InputStream> getDocuments(List<BlobId> blobIds) throws NotFoundException {
+        Optional<List<Blob>> blobOptional = getBlobsFromBlobIds(blobIds);
+        if (blobOptional.isPresent()) {
+            List<Blob> blobs = blobOptional.get();
+            Map<BlobId, InputStream> output = new HashMap<>();
+            blobs.forEach((b) -> output.put(b.getBlobId(), new ByteArrayInputStream(b.getContent())));
+            return output;
+        } else {
+            throw new NotFoundException("Document Not Found: " + blobIds.toString());
+        }
+    }
+
     /**
      * Find a blob in the current storage bucket.
      *
@@ -122,5 +149,21 @@ public class GCSService {
     private Optional<Blob> getBlobFromUrl(String blobIdName) {
         Blob blob = storage.get(BlobId.of(config.getBucket(), blobIdName));
         return Optional.of(blob);
+    }
+
+    /**
+     * Find a blob in the current storage bucket.
+     *
+     * @param blobId Bucket and blob id
+     * @return Optional<Blob>
+     */
+    private Optional<Blob> getBlobFromBlobId(BlobId blobId) {
+        Blob blob = storage.get(blobId);
+        return Optional.of(blob);
+    }
+
+    private Optional<List<Blob>> getBlobsFromBlobIds(List<BlobId> blobIds) {
+        List<Blob> blobs = storage.get(blobIds);
+        return Optional.of(blobs);
     }
 }

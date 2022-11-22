@@ -18,8 +18,6 @@ import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -425,8 +423,8 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       FormDataContentDisposition fileDetail) throws IOException {
     validateFileDetails(fileDetail);
     String fileName = fileDetail.getFileName();
-    String blobFileName =  UUID.randomUUID().toString();
-    BlobId blobId = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), blobFileName);
+    UUID id =  UUID.randomUUID();
+    BlobId blobId = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), id);
     switch (type) {
       case IRB:
         // Delete the current document if it exists

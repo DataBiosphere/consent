@@ -1,0 +1,53 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="104.0" author="connorlbark">
+        <createTable tableName="file_storage_object">
+            <column name="file_storage_object_id" autoIncrement="true" type="int">
+                <constraints primaryKey="true"/>
+            </column>
+            <!-- Could be: Reference ID, Dataset ID column, etc. -->
+            <column name="entity_id" type="text"/>
+            <column name="file_name" type="text" >
+                <constraints nullable="false"/>
+            </column>
+            <column name="gcs_file_uri" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="text"/>
+            <column name="media_type" type="text"/>
+            <column name="create_user_id" type="integer">
+                <constraints foreignKeyName="fk_create_user_id" nullable="false"/>
+            </column>
+            <column name="create_date" type="timestamp">
+                <constraints nullable="false" />
+            </column>
+            <column name="deleted" type="boolean"/>
+            <column name="delete_user_id" type="integer">
+                <constraints foreignKeyName="fk_delete_user_id" nullable="true"/>
+            </column>
+            <column name="delete_date" type="timestamp"/>
+            <column name="update_user_id" type="integer">
+                <constraints foreignKeyName="fk_update_user_id" nullable="true"/>
+            </column>
+            <column name="update_date" type="timestamp"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseColumnNames="delete_user_id" baseTableName="file_storage_object" constraintName="fk_delete_user_id"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="user_id" referencedTableName="users"
+                                 referencesUniqueColumn="true"/>
+
+        <addForeignKeyConstraint baseColumnNames="create_user_id" baseTableName="file_storage_object" constraintName="fk_create_user_id"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="user_id" referencedTableName="users"
+                                 referencesUniqueColumn="true"/>
+
+        <addForeignKeyConstraint baseColumnNames="update_user_id" baseTableName="file_storage_object" constraintName="fk_update_user_id"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="user_id" referencedTableName="users"
+                                 referencesUniqueColumn="true"/>
+
+
+    </changeSet>
+</databaseChangeLog>

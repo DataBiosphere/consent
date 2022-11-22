@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.cloudstore;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -14,6 +15,9 @@ import com.google.cloud.storage.Storage;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import javax.ws.rs.core.MediaType;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -53,22 +57,22 @@ public class GCSServiceTest {
 
     @Test
     public void testStoreDocument() throws Exception {
-        String filename = "filename.txt";
-        BlobId blobId = BlobId.of(config.getEndpoint(), filename);
+        UUID id = UUID.randomUUID();
+        BlobId blobId = BlobId.of(config.getEndpoint(), id.toString());
         when(blob.getBlobId()).thenReturn(blobId);
         when(storage.create(any(BlobInfo.class), any())).thenReturn(blob);
         when(storage.create(any(BlobInfo.class), any(), new Storage.BlobTargetOption[0])).thenReturn(blob);
         initStore();
 
         InputStream is = IOUtils.toInputStream("content", Charset.defaultCharset());
-        BlobId storedBlobId = service.storeDocument(is, MediaType.TEXT_PLAIN, filename);
+        BlobId storedBlobId = service.storeDocument(is, MediaType.TEXT_PLAIN, id);
         assertNotNull(storedBlobId);
     }
 
     @Test
     public void testGetDocument() throws Exception {
-        String fileName = RandomStringUtils.random(10, true, false);
-        String fileContent = "content";
+        String fileName = RandomStringUtils.randomAlphanumeric(10);
+        String fileContent = RandomStringUtils.randomAlphanumeric(10);
         String urlString = "http://localhost/bucket/" + fileName;
         Date now = new Date();
         Blob blob = mock(Blob.class);
@@ -86,6 +90,66 @@ public class GCSServiceTest {
         String content = IOUtils.toString(is, Charset.defaultCharset());
         assertNotNull(is);
         assertEquals(fileContent, content);
+    }
+
+    @Test
+    public void testGetDocument_ByBlobId() throws Exception {
+        String fileName = RandomStringUtils.randomAlphanumeric(10);
+        String fileContent = RandomStringUtils.randomAlphanumeric(10);
+        String urlString = "http://localhost/bucket/" + fileName;
+        Date now = new Date();
+        Blob blob = mock(Blob.class);
+        BlobId blobId = BlobId.of("asdf", "ghjkl");
+        when(blob.isDirectory()).thenReturn(false);
+        when(blob.getMediaLink()).thenReturn(urlString);
+        when(blob.getName()).thenReturn("bucket/" + fileName);
+        when(blob.getCreateTime()).thenReturn(now.getTime());
+        when(blob.getContent()).thenReturn((fileContent).getBytes());
+        when(blob.getBlobId()).thenReturn(blobId);
+        when(storage.get(any(BlobId.class))).thenReturn(blob);
+
+        initStore();
+        InputStream is = service.getDocument(BlobId.of("asdf", "ghjkl"));
+        String content = IOUtils.toString(is, Charset.defaultCharset());
+        assertNotNull(is);
+        assertEquals(fileContent, content);
+    }
+
+    @Test
+    public void testGetDocuments() throws Exception {
+        String fileName1 = RandomStringUtils.randomAlphanumeric(10);
+        String fileName2 = RandomStringUtils.randomAlphanumeric(10);
+        String fileContent1 = RandomStringUtils.randomAlphanumeric(10);
+        String fileContent2 = RandomStringUtils.randomAlphanumeric(10);
+
+        Date now = new Date();
+        Blob blob1 = mock(Blob.class);
+        BlobId blobId1 = BlobId.of("bucket", fileName1);
+        when(blob1.isDirectory()).thenReturn(false);
+        when(blob1.getMediaLink()).thenReturn("http://localhost/bucket/" + fileName1);
+        when(blob1.getName()).thenReturn("bucket/" + fileName1);
+        when(blob1.getCreateTime()).thenReturn(now.getTime());
+        when(blob1.getContent()).thenReturn((fileContent1).getBytes());
+        when(blob1.getBlobId()).thenReturn(blobId1);
+
+        Blob blob2 = mock(Blob.class);
+        BlobId blobId2 = BlobId.of("bucket", fileName2);
+        when(blob2.isDirectory()).thenReturn(false);
+        when(blob2.getMediaLink()).thenReturn("http://localhost/bucket/" + fileName2);
+        when(blob2.getName()).thenReturn("bucket/" + fileName2);
+        when(blob2.getCreateTime()).thenReturn(now.getTime());
+        when(blob2.getContent()).thenReturn((fileContent2).getBytes());
+        when(blob2.getBlobId()).thenReturn(blobId2);
+
+
+        when(storage.get(List.of(blobId1, blobId2))).thenReturn(List.of(blob1, blob2));
+
+        initStore();
+        Map<BlobId, InputStream> out = service.getDocuments(List.of(blobId1, blobId2));
+        assertNotNull(out);
+        assertEquals(2, out.size());
+        assertArrayEquals(fileContent1.getBytes(), out.get(blobId1).readAllBytes());
+        assertArrayEquals(fileContent2.getBytes(), out.get(blobId2).readAllBytes());
     }
 
     @Test
