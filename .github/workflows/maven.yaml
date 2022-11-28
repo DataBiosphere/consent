@@ -19,7 +19,7 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Package
         env:
-          MAVEN_OPTS: -Dmaven.test.skip=true -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
+          MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dmaven.test.skip=true -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
           mvn -v
-          mvn clean package --no-transfer-progress
+          mvn clean package  --batch-mode
