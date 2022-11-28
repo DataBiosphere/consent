@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -27,6 +28,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Match;
@@ -45,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -614,5 +617,31 @@ public class DAOTestHelper {
         dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
         dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
         return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+    }
+
+    protected FileStorageObject createFileStorageObject() {
+        FileCategory category = List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
+        String entityId = RandomStringUtils.randomAlphabetic(10);
+
+        return createFileStorageObject(entityId, category);
+    }
+
+    protected FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
+        String fileName = RandomStringUtils.randomAlphabetic(10);
+        String bucketName = RandomStringUtils.randomAlphabetic(10);
+        String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
+        User createUser = createUser();
+        Instant createDate = Instant.now();
+
+        Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
+                fileName,
+                category.getValue(),
+                bucketName,
+                gcsFileUri,
+                entityId,
+                createUser.getUserId(),
+                createDate
+        );
+        return fileStorageObjectDAO.findFileById(newFileStorageObjectId);
     }
 }

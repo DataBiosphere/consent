@@ -4,10 +4,12 @@ import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -16,6 +18,8 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
 
   @Override
   public void accumulate(Map<Integer, Dataset> map, RowView rowView) {
+    FileStorageObject nihInstitutionalCertificationFile = null;
+
     Dataset dataset =
         map.computeIfAbsent(
             rowView.getColumn("dataset_id", Integer.class), id -> rowView.getRow(Dataset.class));
@@ -75,6 +79,25 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
         }
       }
     }
+
+    if (hasColumn(rowView, "fso_file_storage_object_id", Integer.class)
+      && Objects.nonNull(rowView.getColumn("fso_file_storage_object_id", Integer.class))
+    ) {
+      FileStorageObject fileStorageObject = rowView.getRow(FileStorageObject.class);
+
+      switch (fileStorageObject.getCategory()) {
+        case NIH_INSTITUTIONAL_CERTIFICATION -> {
+          if (Objects.isNull(dataset.getNihInstitutionalCertificationFile())
+                  || fileStorageObject.getLatestUpdateDate().isAfter(dataset.getNihInstitutionalCertificationFile().getLatestUpdateDate())) {
+            dataset.setNihInstitutionalCertificationFile(fileStorageObject);
+          }
+        }
+        default -> {
+        }
+      }
+    }
+
+
     // The name property doesn't always come through, add it manually:
     Optional<DatasetProperty> nameProp =
       Objects.isNull(dataset.getProperties()) ?

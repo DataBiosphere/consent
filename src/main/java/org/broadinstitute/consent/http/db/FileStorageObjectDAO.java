@@ -43,6 +43,17 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
                         @Bind("deleteUserId") Integer deleteUserId,
                         @Bind("deleteDate") Instant deleteDate);
 
+
+    @SqlUpdate(
+            "UPDATE file_storage_object SET gcs_file_uri=:gcsFileUri, media_type=:mediaType, update_user_id=:updateUserId, update_date=:updateDate WHERE file_storage_object_id = :fileStorageObjectId"
+    )
+    void updateFileById(
+            @Bind("fileStorageObjectId") Integer fileStorageObjectId,
+            @Bind("gcsFileUri") String gcsFileUri,
+            @Bind("mediaType") String mediaType,
+            @Bind("updateUserId") Integer updateUserId,
+            @Bind("updateDate") Instant updateDate);
+
     @SqlUpdate(
             "UPDATE file_storage_object SET deleted=true, delete_user_id=:deleteUserId, delete_date=:deleteDate WHERE entity_id = :entityId"
     )

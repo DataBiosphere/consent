@@ -16,70 +16,82 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
     @Override
     public FileStorageObject map(ResultSet r, StatementContext statementContext) throws SQLException {
         FileStorageObject file = new FileStorageObject();
-        if (hasColumn(r, "file_name")) {
-            file.setFileName(r.getString("file_name"));
+
+        if (hasColumn(r, addPrefix("file_name"))) {
+            file.setFileName(r.getString(addPrefix("file_name")));
         }
 
-        if (hasColumn(r, "file_storage_object_id")) {
-            file.setFileStorageObjectId(r.getInt("file_storage_object_id"));
+
+        if (hasColumn(r, addPrefix("file_storage_object_id"))) {
+            file.setFileStorageObjectId(r.getInt(addPrefix("file_storage_object_id")));
         }
 
-        if (hasColumn(r, "entity_id")) {
-            file.setEntityId(r.getString("entity_id"));
+        if (hasColumn(r, addPrefix("entity_id"))) {
+            file.setEntityId(r.getString(addPrefix("entity_id")));
         }
 
-        if (hasColumn(r, "gcs_file_uri")) {
+        if (hasColumn(r, addPrefix( "gcs_file_uri"))) {
             try {
-                file.setBlobId(BlobId.fromGsUtilUri(r.getString("gcs_file_uri")));
+                file.setBlobId(BlobId.fromGsUtilUri(r.getString(addPrefix("gcs_file_uri"))));
             } catch (Exception e) {
                 file.setBlobId(null);
             }
         }
 
-        if (hasColumn(r, "category")) {
+
+        if (hasColumn(r, addPrefix("category"))) {
             try {
-                file.setCategory(FileCategory.findValue(r.getString("category")));
+                file.setCategory(FileCategory.findValue(r.getString(addPrefix("category"))));
             } catch(Exception e) {
                 file.setCategory(null);
             }
         }
 
-        if (hasColumn(r, "media_type")) {
-            file.setMediaType(r.getString("media_type"));
+        if (hasColumn(r, addPrefix("media_type"))) {
+            file.setMediaType(r.getString(addPrefix("media_type")));
         }
 
-        if (hasColumn(r, "create_user_id")) {
-            file.setCreateUserId(r.getInt("create_user_id"));
+        if (hasColumn(r, addPrefix("create_user_id"))) {
+            file.setCreateUserId(r.getInt(addPrefix("create_user_id")));
         }
 
-        if (hasColumn(r, "create_date")) {
-            Timestamp createDate = r.getTimestamp("create_date");
+        if (hasColumn(r, addPrefix("create_date"))) {
+            Timestamp createDate = r.getTimestamp(addPrefix("create_date"));
             file.setCreateDate((Objects.nonNull(createDate) ? createDate.toInstant() : null));
         }
 
-        if (hasColumn(r, "deleted")) {
-            file.setDeleted(r.getBoolean("deleted"));
+        if (hasColumn(r, addPrefix("deleted"))) {
+            file.setDeleted(r.getBoolean(addPrefix("deleted")));
         }
 
-        if (hasColumn(r, "delete_user_id")) {
-            file.setDeleteUserId(r.getObject("delete_user_id", Integer.class));
+        if (hasColumn(r, addPrefix("delete_user_id"))) {
+            Integer id = r.getInt(addPrefix("delete_user_id"));
+            file.setDeleteUserId(id.equals(0) ? null : id);
         }
 
-        if (hasColumn(r, "delete_date")) {
-            Timestamp deleteDate = r.getTimestamp("delete_date");
+        if (hasColumn(r,  addPrefix("delete_date"))) {
+            Timestamp deleteDate = r.getTimestamp(addPrefix("delete_date"));
             file.setDeleteDate((Objects.nonNull(deleteDate) ? deleteDate.toInstant() : null));
         }
 
-        if (hasColumn(r, "update_user_id")) {
-            file.setUpdateUserId(r.getObject("update_user_id", Integer.class));
-
+        if (hasColumn(r, addPrefix("update_user_id"))) {
+            Integer id = r.getInt(addPrefix("update_user_id"));
+            file.setUpdateUserId(id.equals(0) ? null : id);
         }
 
-        if (hasColumn(r, "update_date")) {
-            Timestamp updateDate = r.getTimestamp("update_date");
+        if (hasColumn(r, addPrefix("update_date"))) {
+            Timestamp updateDate = r.getTimestamp(addPrefix("update_date"));
             file.setUpdateDate((Objects.nonNull(updateDate) ? updateDate.toInstant() : null));
         }
 
         return file;
+    }
+
+    public String getPrefix() {
+        return "";
+    }
+
+    private String addPrefix(String columnName) {
+        return getPrefix() + columnName;
     }
 }

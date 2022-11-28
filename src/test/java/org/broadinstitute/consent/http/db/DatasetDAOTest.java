@@ -5,6 +5,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -14,6 +15,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
@@ -143,6 +145,131 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(consent.getTranslatedUseRestriction(), datasets.get(0).getTranslatedUseRestriction());
         assertFalse(datasets.get(0).getProperties().isEmpty());
         assertTrue(datasets.get(0).getNeedsApproval());
+    }
+
+    @Test
+    public void testGetNIHInstitutionalFile() {
+        Dataset dataset = createDataset();
+
+        createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.ALTERNATIVE_DATA_SHARING_PLAN
+        );
+        FileStorageObject nihFile = createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+        );
+        createFileStorageObject();
+        createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.DATA_USE_LETTER
+        );
+
+        Dataset found = datasetDAO.findDatasetById(dataset.getDataSetId());
+
+        assertEquals(nihFile, found.getNihInstitutionalCertificationFile());
+        assertEquals(nihFile.getBlobId(), found.getNihInstitutionalCertificationFile().getBlobId());
+    }
+
+    @Test
+    public void testGetNIHInstitutionalFile_AlwaysLatestUpdated() throws InterruptedException {
+        Dataset dataset = createDataset();
+
+
+        FileStorageObject nihFileCreatedFirstUpdatedSecond = createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+        );
+
+        Thread.sleep(10);
+
+        FileStorageObject nihFileCreatedSecondUpdatedFirst = createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+        );
+
+        Thread.sleep(10);
+
+        User updateUser = createUser();
+
+
+        fileStorageObjectDAO.updateFileById(
+                nihFileCreatedSecondUpdatedFirst.getFileStorageObjectId(),
+                RandomStringUtils.randomAlphabetic(20),
+                RandomStringUtils.randomAlphabetic(20),
+                updateUser.getUserId(),
+                Instant.now());
+
+        Thread.sleep(10);
+
+        fileStorageObjectDAO.updateFileById(
+                nihFileCreatedFirstUpdatedSecond.getFileStorageObjectId(),
+                RandomStringUtils.randomAlphabetic(20),
+                RandomStringUtils.randomAlphabetic(20),
+                updateUser.getUserId(),
+                Instant.now());
+
+        Dataset found = datasetDAO.findDatasetById(dataset.getDataSetId());
+
+        // returns last updated file
+        assertEquals(nihFileCreatedFirstUpdatedSecond, found.getNihInstitutionalCertificationFile());
+    }
+
+    @Test
+    public void testGetNIHInstitutionalFile_AlwaysLatestCreated() throws InterruptedException {
+        Dataset dataset = createDataset();
+
+
+        FileStorageObject nihFileCreatedFirst = createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+        );
+
+        User updateUser = createUser();
+
+        Thread.sleep(10);
+
+        fileStorageObjectDAO.updateFileById(
+                nihFileCreatedFirst.getFileStorageObjectId(),
+                RandomStringUtils.randomAlphabetic(20),
+                RandomStringUtils.randomAlphabetic(20),
+                updateUser.getUserId(),
+                Instant.now());
+
+        Thread.sleep(10);
+
+        FileStorageObject nihFileCreatedSecond = createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+        );
+
+
+        Dataset found = datasetDAO.findDatasetById(dataset.getDataSetId());
+
+        // returns last updated file
+        assertEquals(nihFileCreatedSecond, found.getNihInstitutionalCertificationFile());
+    }
+
+    @Test
+    public void testGetNIHInstitutionalFile_NotDeleted() {
+        Dataset dataset = createDataset();
+
+        FileStorageObject nihFile = createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+        );
+
+        User deleteUser = createUser();
+
+        fileStorageObjectDAO.deleteFileById(
+                nihFile.getFileStorageObjectId(),
+                deleteUser.getUserId(),
+                Instant.now()
+        );
+
+        Dataset found = datasetDAO.findDatasetById(dataset.getDataSetId());
+
+        assertNull(found.getNihInstitutionalCertificationFile());
     }
 
     @Test

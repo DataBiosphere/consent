@@ -58,7 +58,6 @@ public class FileStorageObjectServiceTest {
         String bucket = RandomStringUtils.randomAlphabetic(10);
         String blob = RandomStringUtils.randomAlphabetic(10);
 
-
         when(fileStorageObjectDAO.insertNewFile(
                 eq(fileName),
                 eq(category.getValue()),
