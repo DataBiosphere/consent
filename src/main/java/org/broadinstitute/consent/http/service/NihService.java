@@ -34,8 +34,9 @@ public class NihService implements ConsentLogger {
     }
 
     public List<UserProperty> authenticateNih(NIHUserAccount nihAccount, AuthUser authUser, Integer userId) throws BadRequestException {
-        if (Objects.isNull(nihAccount)) {
-            logWarn("Null NIH Account for user: " + authUser.getEmail());
+        // fail fast
+        if (Objects.isNull(nihAccount) || Objects.isNull(nihAccount.getStatus()) || Objects.isNull(nihAccount.getEraExpiration())) {
+            logWarn("Invalid NIH Account for user: " + authUser.getEmail());
             throw new BadRequestException("Invalid NIH Authentication for user : " + authUser.getEmail());
         }
         User user = userDAO.findUserById(userId);
@@ -47,8 +48,8 @@ public class NihService implements ConsentLogger {
             nihAccount.setStatus(true);
             try {
                 serviceDAO.updateUserNihStatus(user, nihAccount);
-            } catch (SQLException sqlException) {
-                logException(sqlException);
+            } catch (SQLException | IllegalArgumentException e) {
+                logException(e);
             }
             return researcherService.describeUserProperties(userId);
         } else {

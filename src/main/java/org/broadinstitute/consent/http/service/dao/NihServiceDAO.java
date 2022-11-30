@@ -11,6 +11,7 @@ import org.jdbi.v3.core.statement.Update;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 
 public class NihServiceDAO implements ConsentLogger {
 
@@ -21,7 +22,11 @@ public class NihServiceDAO implements ConsentLogger {
         this.jdbi = jdbi;
     }
 
-    public void updateUserNihStatus(User user, NIHUserAccount nihAccount) throws SQLException {
+    public void updateUserNihStatus(User user, NIHUserAccount nihAccount) throws SQLException, IllegalArgumentException {
+        // fail fast
+        if (Objects.isNull(nihAccount) || Objects.isNull(nihAccount.getStatus()) || Objects.isNull(nihAccount.getEraExpiration())) {
+            throw new IllegalArgumentException("Invalid NIH account information");
+        }
         jdbi.useHandle(handle -> {
             handle.getConnection().setAutoCommit(false);
             List<Update> updates = List.of(

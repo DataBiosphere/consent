@@ -3,7 +3,9 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.security.PermitAll;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -32,6 +34,10 @@ public class NihAccountResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser authUser) {
+        if (Objects.isNull(nihAccount) || Objects.isNull(nihAccount.getStatus()) || Objects.isNull(nihAccount.getEraExpiration())) {
+            logWarn("Invalid NIH account information for user: " + authUser.getEmail());
+            return createExceptionResponse(new BadRequestException("Invalid NIH account information"));
+        }
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, authUser, user.getUserId());

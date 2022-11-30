@@ -88,6 +88,22 @@ public class NihServiceTest {
         service.authenticateNih(null, authUser, 1);
     }
 
+    @Test (expected = BadRequestException.class)
+    public void testAuthenticateNih_BadRequestNullAccountStatus() {
+        NIHUserAccount account = new NIHUserAccount();
+        account.setEraExpiration("test");
+        initService();
+        service.authenticateNih(account, authUser, 1);
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void testAuthenticateNih_BadRequestNullAccountExpiration() {
+        NIHUserAccount account = new NIHUserAccount();
+        account.setStatus(true);
+        initService();
+        service.authenticateNih(account, authUser, 1);
+    }
+
     @Test
     public void testDeleteNihAccountById() {
         doNothing().when(researcherService).deleteResearcherProperties(any());
