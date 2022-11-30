@@ -160,7 +160,7 @@ public class ConsentModule extends AbstractModule {
         container.setElectionDAO(providesElectionDAO());
         container.setMailMessageDAO(providesMailMessageDAO());
         container.setMatchDAO(providesMatchDAO());
-        container.setResearcherPropertyDAO(providesUserPropertyDAO());
+        container.setUserPropertyDAO(providesUserPropertyDAO());
         container.setUserDAO(providesUserDAO());
         container.setUserRoleDAO(providesUserRoleDAO());
         container.setVoteDAO(providesVoteDAO());
