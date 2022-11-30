@@ -39,6 +39,8 @@ public class NihAccountResourceTest {
     @Before
     public void setUp() {
         openMocks(this);
+        when(nihAccount.getStatus()).thenReturn(true);
+        when(nihAccount.getEraExpiration()).thenReturn("test");
     }
 
     @Test
