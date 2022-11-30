@@ -22,24 +22,22 @@ public class NihServiceDAO implements ConsentLogger {
     }
 
     public void updateUserNihStatus(User user, NIHUserAccount nihAccount) throws SQLException {
-        jdbi.useHandle(
-                handle -> {
-                    handle.getConnection().setAutoCommit(false);
-                    List<Update> updates = List.of(
-                            createUpsertPropStatement(handle, user.getUserId(), UserFields.ERA_STATUS.getValue(), nihAccount.getStatus().toString()),
-                            createUpsertPropStatement(handle, user.getUserId(), UserFields.ERA_EXPIRATION_DATE.getValue(), nihAccount.getEraExpiration()),
-                            createUpdateLCStatement(handle, user.getUserId(), nihAccount.getNihUsername()),
-                            createUpdateUserStatement(handle, user.getUserId(), nihAccount.getNihUsername())
-                    );
-                    updates.forEach(update -> {
-                        try {
-                            update.execute();
-                        } catch (Exception e) {
-                            logException(e);
-                        }
-                    });
-                    handle.commit();
-                });
+        jdbi.useHandle(handle -> {
+            handle.getConnection().setAutoCommit(false);
+            List<Update> updates = List.of(
+                createUpsertPropStatement(handle, user.getUserId(), UserFields.ERA_STATUS.getValue(), nihAccount.getStatus().toString()),
+                createUpsertPropStatement(handle, user.getUserId(), UserFields.ERA_EXPIRATION_DATE.getValue(), nihAccount.getEraExpiration()),
+                createUpdateLCStatement(handle, user.getUserId(), nihAccount.getNihUsername()),
+                createUpdateUserStatement(handle, user.getUserId(), nihAccount.getNihUsername()));
+            updates.forEach(update -> {
+                try {
+                    update.execute();
+                } catch (Exception e) {
+                    logException(e);
+                }
+            });
+            handle.commit();
+        });
     }
 
     private Update createUpsertPropStatement(Handle handle, Integer userId, String propertyKey, String propertyValue) {
