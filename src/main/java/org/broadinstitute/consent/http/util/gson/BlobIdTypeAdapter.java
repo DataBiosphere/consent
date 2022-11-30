@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util.gson;
 
+import com.google.cloud.storage.BlobId;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -12,19 +13,19 @@ import java.lang.reflect.Type;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 
-public class InstantTypeAdapter
-        implements JsonSerializer<Instant>, JsonDeserializer<Instant> {
+public class BlobIdTypeAdapter
+        implements JsonSerializer<BlobId>, JsonDeserializer<BlobId> {
     @Override
-    public JsonElement serialize(Instant src, Type srcType, JsonSerializationContext context) {
-        return new JsonPrimitive(src.toString());
+    public JsonElement serialize(BlobId src, Type srcType, JsonSerializationContext context) {
+        return new JsonPrimitive(src.toGsUtilUri());
     }
 
     @Override
-    public Instant deserialize(JsonElement json, Type type, JsonDeserializationContext context)
+    public BlobId deserialize(JsonElement json, Type type, JsonDeserializationContext context)
             throws JsonParseException {
         try {
-            return Instant.parse(json.getAsString());
-        } catch (DateTimeParseException e) {
+            return BlobId.fromGsUtilUri(json.getAsString());
+        } catch (IllegalArgumentException e) {
             throw new JsonParseException(e.getMessage());
         }
     }

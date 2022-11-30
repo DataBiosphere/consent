@@ -9,7 +9,6 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
-import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -18,8 +17,6 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
 
   @Override
   public void accumulate(Map<Integer, Dataset> map, RowView rowView) {
-    FileStorageObject nihInstitutionalCertificationFile = null;
-
     Dataset dataset =
         map.computeIfAbsent(
             rowView.getColumn("dataset_id", Integer.class), id -> rowView.getRow(Dataset.class));

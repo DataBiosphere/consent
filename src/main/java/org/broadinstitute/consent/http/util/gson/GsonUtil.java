@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util.gson;
 
+import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -14,6 +15,9 @@ public class GsonUtil {
         return new GsonBuilder()
                 .registerTypeAdapter(
                         Instant.class,
-                        new InstantTypeAdapter());
+                        new InstantTypeAdapter())
+                .registerTypeAdapter(
+                        BlobId.class,
+                        new BlobIdTypeAdapter());
     }
 }

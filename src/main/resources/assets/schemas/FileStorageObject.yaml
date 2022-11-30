@@ -1,0 +1,45 @@
+type: object
+properties:
+  fileStorageObjectId:
+    type: integer
+    description: ID of the File Storage Object
+  entityId:
+    type: string
+    description: ID of the object the file is associated with
+  fileName:
+    type: string
+    description: Name of the file
+  blobId:
+    type: string
+    description: GCS URI of the file, e.g. 'gs://bucket/name'
+  category:
+    type: string
+    enum: [irbCollaborationLetter, dataUseLetter, alternativeDataSharingPlan, nihInstitutionalCertification]
+    description: The purpose of the file uploaded
+  mediaType:
+    type: string
+    description: The type of media uploaded, e.g. `pdf`
+  createUserId:
+    type: integer
+    description: The user who created this file
+  createDate:
+    type: string
+    format: date-time
+    description: Time of creation
+  updateUserId:
+    type: integer
+    description: The user who last updated this file
+  updateDate:
+    type: string
+    format: date-time
+    description: Time of last update
+  deleteUserId:
+    type: integer
+    description: The user who deleted this file
+  deleteDate:
+    type: string
+    format: date-time
+    description: Time of deletion
+  deleted:
+    type: boolean
+    description: If true, this file is deleted / archived
