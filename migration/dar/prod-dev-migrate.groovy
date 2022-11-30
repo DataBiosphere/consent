@@ -2,6 +2,7 @@
 @Grab('com.google.code.GSON:GSON:2.8.6')
 import com.google.gson.Gson
 import groovy.json.JsonSlurper
+import org.broadinstitute.consent.http.util.gson.GsonUtil
 
 import static groovyx.net.http.HttpBuilder.configure
 import static groovyx.net.http.util.SslUtils.ignoreSslIssues
@@ -85,7 +86,7 @@ static Object createNewDar(String authToken, String uriHost, String referenceId,
         request.accept = 'application/json'
         request.headers['Authorization'] = 'Bearer ' + authToken
     }.post {
-        request.body = new Gson().toJson(dar)
+        request.body = GsonUtil.buildGson().toJson(dar)
         response.parser('application/json') { cc, fs ->
             new JsonSlurper().parse(fs.inputStream)
         }

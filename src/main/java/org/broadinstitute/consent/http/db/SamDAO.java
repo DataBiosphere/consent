@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
@@ -56,7 +57,7 @@ public class SamDAO {
     }
     String body = response.parseAsString();
     Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>() {}.getType();
-    return new Gson().fromJson(body, resourceTypesListType);
+    return GsonUtil.buildGson().fromJson(body, resourceTypesListType);
   }
 
   public UserStatusInfo getRegistrationInfo(AuthUser authUser) throws Exception {
@@ -67,7 +68,7 @@ public class SamDAO {
       logger.error("Error getting user registration information from Sam: " + response.getStatusMessage());
     }
     String body = response.parseAsString();
-    return new Gson().fromJson(body, UserStatusInfo.class);
+    return GsonUtil.buildGson().fromJson(body, UserStatusInfo.class);
   }
 
   public UserStatusDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
@@ -78,7 +79,7 @@ public class SamDAO {
       logger.error("Error getting enabled statuses of user from Sam: " + response.getStatusMessage());
     }
     String body = response.parseAsString();
-    return new Gson().fromJson(body, UserStatusDiagnostics.class);
+    return GsonUtil.buildGson().fromJson(body, UserStatusDiagnostics.class);
   }
 
   public UserStatus postRegistrationInfo(AuthUser authUser) throws Exception {
@@ -89,7 +90,7 @@ public class SamDAO {
       logger.error("Error posting user registration information to Sam: " + response.getStatusMessage());
     }
     String body = response.parseAsString();
-    return new Gson().fromJson(body, UserStatus.class);
+    return GsonUtil.buildGson().fromJson(body, UserStatus.class);
   }
 
   public void asyncPostRegistrationInfo(AuthUser authUser) {
@@ -132,7 +133,7 @@ public class SamDAO {
       logger.error("Error accepting Terms of Service through Sam: " + response.getStatusMessage());
     }
     String body = response.parseAsString();
-    return new Gson().fromJson(body, TosResponse.class);
+    return GsonUtil.buildGson().fromJson(body, TosResponse.class);
   }
 
   public TosResponse removeTosAcceptedStatus(AuthUser authUser) throws Exception {
@@ -143,6 +144,6 @@ public class SamDAO {
       logger.error("Error removing Terms of Service acceptance through Sam: " + response.getStatusMessage());
     }
     String body = response.parseAsString();
-    return new Gson().fromJson(body, TosResponse.class);
+    return GsonUtil.buildGson().fromJson(body, TosResponse.class);
   }
 }

@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -35,6 +38,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
@@ -65,12 +69,17 @@ import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.broadinstitute.consent.http.util.gson.InstantTypeAdapter;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.gson2.Gson2Config;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
 import javax.ws.rs.client.Client;
+import java.sql.Timestamp;
+import java.time.Instant;
 
 public class ConsentModule extends AbstractModule {
 
@@ -115,6 +124,7 @@ public class ConsentModule extends AbstractModule {
         jdbi.installPlugin(new SqlObjectPlugin());
         jdbi.installPlugin(new Gson2Plugin());
         jdbi.installPlugin(new GuavaPlugin());
+        jdbi.getConfig().get(Gson2Config.class).setGson(GsonUtil.buildGson());
 
         this.consentDAO = this.jdbi.onDemand(ConsentDAO.class);
         this.counterDAO = this.jdbi.onDemand(CounterDAO.class);

@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -55,7 +56,7 @@ public class DacResourceTest {
 
     private final AuthUser authUser = new AuthUser("test@test.com");
 
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtil.buildGson();
 
     @Before
     public void setUp() {
@@ -565,7 +566,7 @@ public class DacResourceTest {
     
 
     private JsonArray getListFromEntityString(String str) {
-        return new Gson().fromJson(str, JsonArray.class);
+        return GsonUtil.buildGson().fromJson(str, JsonArray.class);
     }
 
     private Dac buildDac(User chair) {

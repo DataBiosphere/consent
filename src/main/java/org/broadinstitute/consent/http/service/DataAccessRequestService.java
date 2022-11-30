@@ -30,6 +30,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -274,7 +275,7 @@ public class DataAccessRequestService {
         String referenceId = UUID.randomUUID().toString();
         Date now = new Date();
         // Clone the dar's data object and reset values that need to be updated for the clone
-        DataAccessRequestData newData = new Gson().fromJson(sourceData.toString(), DataAccessRequestData.class);
+        DataAccessRequestData newData = GsonUtil.buildGson().fromJson(sourceData.toString(), DataAccessRequestData.class);
         newData.setDarCode(null);
         newData.setStatus(null);
         newData.setReferenceId(referenceId);

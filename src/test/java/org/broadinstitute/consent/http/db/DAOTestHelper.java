@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import com.google.gson.GsonBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
@@ -35,7 +36,9 @@ import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.util.gson.InstantTypeAdapter;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.gson2.Gson2Config;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
@@ -128,6 +131,12 @@ public class DAOTestHelper {
         jdbi.installPlugin(new SqlObjectPlugin());
         jdbi.installPlugin(new Gson2Plugin());
         jdbi.installPlugin(new GuavaPlugin());
+        jdbi.getConfig().get(Gson2Config.class).setGson(new GsonBuilder()
+                .registerTypeHierarchyAdapter(
+                        Instant.class,
+                        new InstantTypeAdapter())
+                .create());
+
         consentAuditDAO = jdbi.onDemand(ConsentAuditDAO.class);
         consentDAO = jdbi.onDemand(ConsentDAO.class);
         counterDAO = jdbi.onDemand(CounterDAO.class);
