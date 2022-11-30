@@ -9,7 +9,6 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.sql.SQLException;
 import java.util.Date;
@@ -19,6 +18,7 @@ import java.util.Optional;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
@@ -139,7 +139,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
         // superclass jdbi is not a mock, we need to mock it locally to simulate a sql exception
         Jdbi jdbi = mock(Jdbi.class);
         serviceDAO = new NihServiceDAO(jdbi);
-        doThrow(new SQLException()).when(jdbi).useHandle(Mockito.any());
+        doThrow(new SQLException()).when(jdbi).useHandle(any());
         User user = createUser();
         NIHUserAccount userAccount = new NIHUserAccount();
         userAccount.setStatus(true);
