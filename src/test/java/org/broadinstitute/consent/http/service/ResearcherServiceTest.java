@@ -59,7 +59,7 @@ public class ResearcherServiceTest {
     public void testUpdateProperties() {
         when(userDAO.findUserById(any())).thenReturn(user);
         when(userDAO.findUserByEmail(any())).thenReturn(user);
-        when(userPropertyDAO.findResearcherPropertiesByUser(any(), any())).thenReturn(List.of());
+        when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(List.of());
         doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(anyInt());
         doNothing().when(userPropertyDAO).insertAll(any());
         initService();

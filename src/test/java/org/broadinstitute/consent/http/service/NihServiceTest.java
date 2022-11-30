@@ -1,18 +1,18 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -21,7 +21,6 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 public class NihServiceTest {
@@ -29,11 +28,11 @@ public class NihServiceTest {
     @Mock
     private ResearcherService researcherService;
 
-    @Spy
-    private LibraryCardDAO libraryCardDAO;
-
-    @Spy
+    @Mock
     private UserDAO userDAO;
+
+    @Mock
+    private NihServiceDAO nihServiceDAO;
 
     private NihService service;
     private NIHUserAccount nihUserAccount;
@@ -47,31 +46,27 @@ public class NihServiceTest {
     }
 
     private void initService() {
-        service = new NihService(researcherService, libraryCardDAO, userDAO);
+        service = new NihService(researcherService, userDAO, nihServiceDAO);
     }
 
-    @Test
+    @Test (expected = NotFoundException.class)
     public void testAuthenticateNih_InvalidUser() {
         initService();
-        try {
-            service.authenticateNih(new NIHUserAccount(), new AuthUser("test@test.com"), 1);
-            assert false;
-        } catch (BadRequestException bre) {
-            assert true;
-        }
+        service.authenticateNih(new NIHUserAccount(), new AuthUser("test@test.com"), 1);
     }
 
     @Test
     public void testAuthenticateNih() {
         List<UserProperty> props = Collections.singletonList(new UserProperty(1, 1, "test", "value"));
-        when(researcherService.updateProperties(any(), any(),any())).thenReturn(props);
+        when(researcherService.describeUserProperties(any())).thenReturn(props);
+        User user = new User();
+        user.setUserId(1);
+        when(userDAO.findUserById(any())).thenReturn(user);
         initService();
         try {
             List<UserProperty> properties = service.authenticateNih(nihUserAccount, authUser, 1);
             assertEquals(1, properties.size());
             assertEquals(Integer.valueOf(1), properties.get(0).getPropertyId());
-            Mockito.verify(libraryCardDAO, times(1)).updateEraCommonsForUser(any(), any());
-            Mockito.verify(userDAO, times(1)).updateEraCommonsId(any(), any());
         } catch (BadRequestException bre) {
             assert false;
         }
@@ -79,9 +74,18 @@ public class NihServiceTest {
 
     @Test (expected = BadRequestException.class)
     public void testAuthenticateNih_BadRequest() {
+        User user = new User();
+        user.setUserId(1);
+        when(userDAO.findUserById(any())).thenReturn(user);
         nihUserAccount.setNihUsername("");
         initService();
         service.authenticateNih(nihUserAccount, authUser, 1);
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void testAuthenticateNih_BadRequestNullAccount() {
+        initService();
+        service.authenticateNih(null, authUser, 1);
     }
 
     @Test

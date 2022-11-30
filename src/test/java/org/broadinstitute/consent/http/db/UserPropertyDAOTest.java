@@ -31,7 +31,7 @@ public class UserPropertyDAOTest extends DAOTestHelper {
         notPresent.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
         notPresent.setUserId(user.getUserId());
 
-        List<UserProperty> props = userPropertyDAO.findResearcherPropertiesByUser(
+        List<UserProperty> props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
                 user.getUserId(),
                 List.of(UserFields.SUGGESTED_INSTITUTION.getValue(),
                         UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
@@ -45,7 +45,7 @@ public class UserPropertyDAOTest extends DAOTestHelper {
                 notPresent
         ));
 
-        props = userPropertyDAO.findResearcherPropertiesByUser(
+        props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
                 user.getUserId(),
                 List.of(UserFields.SUGGESTED_INSTITUTION.getValue(),
                         UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),

@@ -40,7 +40,7 @@ public class ResearcherService {
         Map<String, String> validatedProperties = validateExistentFields(researcherPropertiesMap);
         List<UserProperty> properties = getResearcherProperties(validatedProperties, user.getUserId());
         saveProperties(properties);
-        return describeResearcherProperties(user.getUserId());
+        return describeUserProperties(user.getUserId());
     }
 
     private void saveProperties(List<UserProperty> properties) {
@@ -70,9 +70,9 @@ public class ResearcherService {
         return user;
     }
 
-    private List<UserProperty> describeResearcherProperties(Integer userId) {
+    public List<UserProperty> describeUserProperties(Integer userId) {
         validateUser(userId);
-        return userPropertyDAO.findResearcherPropertiesByUser(userId,
+        return userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(userId,
                 UserFields.getValues());
     }
 
