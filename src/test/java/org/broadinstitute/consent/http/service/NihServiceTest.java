@@ -52,7 +52,7 @@ public class NihServiceTest {
     @Test (expected = NotFoundException.class)
     public void testAuthenticateNih_InvalidUser() {
         initService();
-        service.authenticateNih(new NIHUserAccount(), new AuthUser("test@test.com"), 1);
+        service.authenticateNih(nihUserAccount, new AuthUser("test@test.com"), 1);
     }
 
     @Test
