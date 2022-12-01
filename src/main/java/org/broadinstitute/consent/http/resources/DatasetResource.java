@@ -247,8 +247,7 @@ public class DatasetResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
-            Gson gson = new Gson();
-            return Response.ok(gson.toJson(datasets)).build();
+            return Response.ok(datasets).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -316,7 +315,7 @@ public class DatasetResource extends Resource {
     public Response validateDatasetName(@QueryParam("name") String name) {
         try {
             Dataset datasetWithName = datasetService.getDatasetByName(name);
-            return Response.ok().entity(datasetWithName.getDataSetId()).build();
+            return Response.ok(datasetWithName.getDataSetId()).build();
         } catch (Exception e) {
             throw new NotFoundException("Could not find the dataset with name: " + name);
         }
@@ -461,7 +460,7 @@ public class DatasetResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<Dataset> datasets = datasetService.searchDatasets(query, user);
-            return Response.ok().entity(datasets).build();
+            return Response.ok(datasets).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -473,7 +472,7 @@ public class DatasetResource extends Resource {
     public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
         try{
             Dataset dataset = datasetService.updateNeedsReviewDatasets(dataSetId, needsApproval);
-            return Response.ok().entity(unmarshal(dataset)).build();
+            return Response.ok(dataset).build();
         }catch (Exception e){
             return createExceptionResponse(e);
         }
