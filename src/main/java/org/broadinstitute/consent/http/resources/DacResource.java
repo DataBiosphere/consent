@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.List;
@@ -55,7 +54,7 @@ public class DacResource extends Resource {
     public Response findAll(@Auth AuthUser authUser, @QueryParam("withUsers") Optional<Boolean> withUsers) {
         final Boolean includeUsers = withUsers.orElse(true);
         List<Dac> dacs = dacService.findDacsWithMembersOption(includeUsers);
-        return Response.ok(dacs).build();
+        return Response.ok().entity(unmarshal(dacs)).build();
     }
 
     @POST
@@ -77,7 +76,7 @@ public class DacResource extends Resource {
             throw new Exception("Unable to create DAC with name: " + dac.getName() + " and description: " + dac.getDescription());
         }
         Dac savedDac = dacService.findById(dacId);
-        return Response.ok(savedDac).build();
+        return Response.ok().entity(unmarshal(savedDac)).build();
     }
 
     @PUT
@@ -99,7 +98,7 @@ public class DacResource extends Resource {
         }
         dacService.updateDac(dac.getName(), dac.getDescription(), dac.getDacId());
         Dac savedDac = dacService.findById(dac.getDacId());
-        return Response.ok(savedDac).build();
+        return Response.ok().entity(unmarshal(savedDac)).build();
     }
 
     @GET
@@ -108,7 +107,7 @@ public class DacResource extends Resource {
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
     public Response findById(@PathParam("dacId") Integer dacId) {
         Dac dac = findDacById(dacId);
-        return Response.ok(dac).build();
+        return Response.ok().entity(unmarshal(dac)).build();
     }
 
     @DELETE
