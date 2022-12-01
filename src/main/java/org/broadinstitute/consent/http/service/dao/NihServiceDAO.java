@@ -46,7 +46,7 @@ public class NihServiceDAO implements ConsentLogger {
     }
 
     private Update createUpsertPropStatement(Handle handle, Integer userId, String propertyKey, String propertyValue) {
-        String sql = """
+        final String sql = """
                     INSERT INTO user_property (userid, propertykey, propertyvalue)
                     VALUES (:userId, :propertyKey, :propertyValue)
                     ON CONFLICT (userid, propertykey)
@@ -60,7 +60,7 @@ public class NihServiceDAO implements ConsentLogger {
     }
 
     private Update createUpdateLCStatement(Handle handle, Integer userId, String eraCommonsId) {
-        String sql = """
+        final String sql = """
                     UPDATE library_card
                     SET era_commons_id = :eraCommonsId
                     WHERE user_id = :userId
@@ -72,7 +72,7 @@ public class NihServiceDAO implements ConsentLogger {
     }
 
     private Update createUpdateUserStatement(Handle handle, Integer userId, String eraCommonsId) {
-        String sql = """
+        final String sql = """
                     UPDATE users
                     SET era_commons_id = :eraCommonsId
                     WHERE user_id = :userId;
