@@ -154,3 +154,6 @@ automation/.bsp/*
 /config/
 /config_postgres/
 /env.properties
+
+## Shade
+dependency-reduced-pom.xml
