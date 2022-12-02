@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.broadinstitute.consent.http.util.gson.InstantTypeAdapter;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
@@ -131,11 +132,9 @@ public class DAOTestHelper {
         jdbi.installPlugin(new SqlObjectPlugin());
         jdbi.installPlugin(new Gson2Plugin());
         jdbi.installPlugin(new GuavaPlugin());
-        jdbi.getConfig().get(Gson2Config.class).setGson(new GsonBuilder()
-                .registerTypeHierarchyAdapter(
-                        Instant.class,
-                        new InstantTypeAdapter())
-                .create());
+        jdbi.getConfig().get(Gson2Config.class).setGson(
+                GsonUtil.buildGson()
+        );
 
         consentAuditDAO = jdbi.onDemand(ConsentAuditDAO.class);
         consentDAO = jdbi.onDemand(ConsentDAO.class);
