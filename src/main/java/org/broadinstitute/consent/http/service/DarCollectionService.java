@@ -29,7 +29,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -378,7 +377,7 @@ public class DarCollectionService {
     this.dataAccessRequestDAO.updateDraftByCollectionId(sourceCollection.getDarCollectionId(), true);
     sourceCollection.getDars().values().forEach((d) -> {
       Date now = new Date();
-      DataAccessRequestData newData = GsonUtil.buildGson().fromJson(d.getData().toString(), DataAccessRequestData.class);
+      DataAccessRequestData newData = new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
       newData.setDarCode(null);
       newData.setStatus(null);
       newData.setReferenceId(d.getReferenceId());
