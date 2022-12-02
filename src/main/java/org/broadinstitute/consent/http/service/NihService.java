@@ -13,7 +13,6 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -48,7 +47,7 @@ public class NihService implements ConsentLogger {
             nihAccount.setStatus(true);
             try {
                 serviceDAO.updateUserNihStatus(user, nihAccount);
-            } catch (SQLException | IllegalArgumentException e) {
+            } catch (IllegalArgumentException e) {
                 logException(e);
             }
             return researcherService.describeUserProperties(userId);

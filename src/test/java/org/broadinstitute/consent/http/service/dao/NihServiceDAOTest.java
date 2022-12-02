@@ -10,7 +10,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -32,17 +31,17 @@ public class NihServiceDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testUpdateUserNihStatus_existing() throws Exception {
+    public void testUpdateUserNihStatus_existing() {
         // create a user
         User user = createUser();
         // Create ERA Account Props
         UserProperty prop1 = new UserProperty(
-            user.getUserId(),
+                user.getUserId(),
                 UserFields.ERA_STATUS.getValue(),
                 Boolean.TRUE.toString()
         );
         UserProperty prop2 = new UserProperty(
-            user.getUserId(),
+                user.getUserId(),
                 UserFields.ERA_EXPIRATION_DATE.getValue(),
                 new Date().toString()
         );
@@ -62,20 +61,20 @@ public class NihServiceDAOTest extends DAOTestHelper {
 
         // assert that props are updated to the new values
         List<UserProperty> updatedProps = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
-            user.getUserId(),
-            List.of(UserFields.ERA_STATUS.getValue(), UserFields.ERA_EXPIRATION_DATE.getValue()));
+                user.getUserId(),
+                List.of(UserFields.ERA_STATUS.getValue(), UserFields.ERA_EXPIRATION_DATE.getValue()));
 
         Optional<UserProperty> statusProp = updatedProps
-            .stream()
-            .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
-            .findFirst();
+                .stream()
+                .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
+                .findFirst();
         assertTrue(statusProp.isPresent());
         assertEquals(statusProp.get().getPropertyValue(), userAccount.getStatus().toString());
 
         Optional<UserProperty> expirationProp = updatedProps
-            .stream()
-            .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
-            .findFirst();
+                .stream()
+                .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
+                .findFirst();
         assertTrue(expirationProp.isPresent());
         assertEquals(expirationProp.get().getPropertyValue(), userAccount.getEraExpiration());
 
@@ -89,7 +88,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testUpdateUserNihStatus_new() throws Exception {
+    public void testUpdateUserNihStatus_new() {
         // create a user
         User user = createUser();
 
@@ -102,20 +101,20 @@ public class NihServiceDAOTest extends DAOTestHelper {
 
         // assert that props are updated to the new values
         List<UserProperty> updatedProps = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
-            user.getUserId(),
-            List.of(UserFields.ERA_STATUS.getValue(), UserFields.ERA_EXPIRATION_DATE.getValue()));
+                user.getUserId(),
+                List.of(UserFields.ERA_STATUS.getValue(), UserFields.ERA_EXPIRATION_DATE.getValue()));
 
         Optional<UserProperty> statusProp = updatedProps
-            .stream()
-            .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
-            .findFirst();
+                .stream()
+                .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
+                .findFirst();
         assertTrue(statusProp.isPresent());
         assertEquals(statusProp.get().getPropertyValue(), userAccount.getStatus().toString());
 
         Optional<UserProperty> expirationProp = updatedProps
-            .stream()
-            .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
-            .findFirst();
+                .stream()
+                .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
+                .findFirst();
         assertTrue(expirationProp.isPresent());
         assertEquals(expirationProp.get().getPropertyValue(), userAccount.getEraExpiration());
 
@@ -129,17 +128,17 @@ public class NihServiceDAOTest extends DAOTestHelper {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testUpdateUserNihStatus_nullAccount() throws Exception {
+    public void testUpdateUserNihStatus_nullAccount() {
         User user = createUser();
         serviceDAO.updateUserNihStatus(user, null);
     }
 
-    @Test(expected = SQLException.class)
-    public void testUpdateUserNihStatus_sqlError() throws Exception {
-        // superclass jdbi is not a mock, we need to mock it locally to simulate a sql exception
+    @Test(expected = Exception.class)
+    public void testUpdateUserNihStatus_jdbiError() {
+        // superclass jdbi is not a mock, we need to mock it locally to simulate an exception
         Jdbi jdbi = mock(Jdbi.class);
         serviceDAO = new NihServiceDAO(jdbi);
-        doThrow(new SQLException()).when(jdbi).useHandle(any());
+        doThrow(new Exception()).when(jdbi).useTransaction(any());
         User user = createUser();
         NIHUserAccount userAccount = new NIHUserAccount();
         userAccount.setStatus(true);
@@ -148,4 +147,46 @@ public class NihServiceDAOTest extends DAOTestHelper {
         serviceDAO.updateUserNihStatus(user, userAccount);
     }
 
+//    @Test(expected = Exception.class)
+//    public void testUpdateUserNihStatus_libraryCardDAOError() {
+//        // superclass jdbi and daos are not mocks, mock the ones relevant to exception testing
+//        LibraryCardDAO libraryCardDAO = mock(LibraryCardDAO.class);
+//        serviceDAO = new NihServiceDAO(jdbi, libraryCardDAO, userDAO, userPropertyDAO);
+//        doThrow(new Exception()).when(libraryCardDAO).updateEraCommonsForUser(any(), any());
+//        User user = createUser();
+//        NIHUserAccount userAccount = new NIHUserAccount();
+//        userAccount.setStatus(true);
+//        userAccount.setNihUsername("NEW_ID");
+//        userAccount.setEraExpiration("new expiration");
+//        serviceDAO.updateUserNihStatus(user, userAccount);
+//    }
+//
+//    @Test(expected = Exception.class)
+//    public void testUpdateUserNihStatus_userDAOError() {
+//        // superclass jdbi and daos are not mocks, mock the ones relevant to exception testing
+//        UserDAO userDAO = mock(UserDAO.class);
+//        serviceDAO = new NihServiceDAO(jdbi, libraryCardDAO, userDAO, userPropertyDAO);
+//        doThrow(new Exception()).when(userDAO).updateEraCommonsId(any(), any());
+//        User user = createUser();
+//        NIHUserAccount userAccount = new NIHUserAccount();
+//        userAccount.setStatus(true);
+//        userAccount.setNihUsername("NEW_ID");
+//        userAccount.setEraExpiration("new expiration");
+//        serviceDAO.updateUserNihStatus(user, userAccount);
+//    }
+//
+//    @Test(expected = Exception.class)
+//    public void testUpdateUserNihStatus_userPropertyDAOError() {
+//        // superclass jdbi and daos are not mocks, mock the ones relevant to exception testing
+//        UserPropertyDAO userPropertyDAO = mock(UserPropertyDAO.class);
+//        serviceDAO = new NihServiceDAO(jdbi, libraryCardDAO, userDAO, userPropertyDAO);
+//        doThrow(new Exception()).when(userDAO).updateEraCommonsId(any(), any());
+//        User user = createUser();
+//        NIHUserAccount userAccount = new NIHUserAccount();
+//        userAccount.setStatus(true);
+//        userAccount.setNihUsername("NEW_ID");
+//        userAccount.setEraExpiration("new expiration");
+//        serviceDAO.updateUserNihStatus(user, userAccount);
+//    }
+//
 }
