@@ -4,6 +4,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -267,7 +269,11 @@ public class UserResourceTest {
   @Test
   public void testAddRoleToUser() {
     User user = createUserWithRole();
+    User activeUser = createUserWithRole();
+    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    activeUser.addRole(admin);
     when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
     when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
     when(libraryCardService.findLibraryCardsByUserId(any()))
         .thenReturn(createLibraryCards());
@@ -278,6 +284,10 @@ public class UserResourceTest {
 
   @Test
   public void testAddRoleToUserNotFound() {
+    User activeUser = createUserWithRole();
+    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    activeUser.addRole(admin);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
     doThrow(new NotFoundException()).when(userService).findUserById(any());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1, UserRoles.ADMIN.getRoleId());
@@ -286,8 +296,12 @@ public class UserResourceTest {
 
   @Test
   public void testAddRoleToUserNotModified() {
+    User activeUser = createUserWithRole();
+    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    activeUser.addRole(admin);
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
     when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
     when(libraryCardService.findLibraryCardsByUserId(any()))
         .thenReturn(createLibraryCards());
@@ -298,14 +312,118 @@ public class UserResourceTest {
 
   @Test
   public void testAddRoleToUserBadRequest() {
+    User activeUser = createUserWithRole();
+    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    activeUser.addRole(admin);
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
     when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
     when(libraryCardService.findLibraryCardsByUserId(any()))
         .thenReturn(createLibraryCards());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1, 1000);
     assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void testAddRoleToUserBySoWithoutUserAndSoInstitution() {
+    User activeUser = createUserWithRole();
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    activeUser.addRole(so);
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
+    when(libraryCardService.findLibraryCardsByUserId(any()))
+            .thenReturn(createLibraryCards());
+    initResource();
+    Response response = userResource.addRoleToUser(authUser, 1, UserRoles.DATASUBMITTER.getRoleId());
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void testAddRoleToUserBySoInstitutionWithoutUserInstitution() {
+    User activeUser = createUserWithRole();
+    activeUser.setInstitutionId(10);
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    activeUser.addRole(so);
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
+    when(libraryCardService.findLibraryCardsByUserId(any()))
+            .thenReturn(createLibraryCards());
+    initResource();
+    Response response = userResource.addRoleToUser(authUser, 1, UserRoles.DATASUBMITTER.getRoleId());
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testAddRoleToUserBySoWithoutSoInstitution() {
+    User activeUser = createUserWithRole();
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    activeUser.addRole(so);
+    User user = createUserWithRole();
+    user.setInstitutionId(10);
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
+    when(libraryCardService.findLibraryCardsByUserId(any()))
+            .thenReturn(createLibraryCards());
+    initResource();
+    Response response = userResource.addRoleToUser(authUser, 1, UserRoles.DATASUBMITTER.getRoleId());
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void testAddRoleToUserBySoWithDeniedRoles() {
+    User activeUser = createUserWithRole();
+    activeUser.setInstitutionId(10);
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    activeUser.addRole(so);
+    User user = createUserWithRole();
+    user.setInstitutionId(10);
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
+    when(libraryCardService.findLibraryCardsByUserId(any()))
+            .thenReturn(createLibraryCards());
+    initResource();
+    Response response = userResource.addRoleToUser(authUser, 1, UserRoles.ADMIN.getRoleId());
+    assertEquals(400, response.getStatus());
+    response = userResource.addRoleToUser(authUser, 1, UserRoles.RESEARCHER.getRoleId());
+    assertEquals(400, response.getStatus());
+    response = userResource.addRoleToUser(authUser, 1, UserRoles.MEMBER.getRoleId());
+    assertEquals(400, response.getStatus());
+    response = userResource.addRoleToUser(authUser, 1, UserRoles.CHAIRPERSON.getRoleId());
+    assertEquals(400, response.getStatus());
+    response = userResource.addRoleToUser(authUser, 1, UserRoles.DATAOWNER.getRoleId());
+    assertEquals(400, response.getStatus());
+    response = userResource.addRoleToUser(authUser, 1, UserRoles.ALUMNI.getRoleId());
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void testAddRoleToUserBySoWithPermittedRoles() {
+    User activeUser = createUserWithRole();
+    activeUser.setInstitutionId(10);
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    activeUser.addRole(so);
+    User user = createUserWithRole();
+    user.setInstitutionId(10);
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
+    when(libraryCardService.findLibraryCardsByUserId(any()))
+            .thenReturn(createLibraryCards());
+    initResource();
+    Response response = userResource.addRoleToUser(authUser, 1, UserRoles.DATASUBMITTER.getRoleId());
+    assertEquals(200, response.getStatus());
+    response = userResource.addRoleToUser(authUser, 1, UserRoles.ITDIRECTOR.getRoleId());
+    assertEquals(200, response.getStatus());
+    response = userResource.addRoleToUser(authUser, 1, UserRoles.ITDIRECTOR.getRoleId());
+    assertEquals(200, response.getStatus());
   }
 
   @SuppressWarnings({"unchecked"})
@@ -509,6 +627,29 @@ public class UserResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
+  @Test
+  public void testUpdateSelfInstitutionIdNullAsSO_ExistingInstitution() {
+    User user = createUserWithRole();
+    UserRole itd = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    user.addRole(itd);
+    user.setInstitutionId(10);
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    userUpdateFields.setInstitutionId(null);
+    Gson gson = new Gson();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
+    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(gson.toJsonTree(user).getAsJsonObject());
+    spy(supportRequestService);
+    initResource();
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    user.setInstitutionId(20);
+    userUpdateFields.setInstitutionId(20);
+    Response response2 = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response2.getStatus());
+  }
+
 
   @Test
   public void testUpdateSelfSupportRequestError() {
@@ -560,7 +701,11 @@ public class UserResourceTest {
   @Test
   public void testDeleteRoleFromUser() {
     User user = createUserWithRole();
+    User activeUser = createUserWithRole();
+    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    activeUser.addRole(admin);
     when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
     Gson gson = new Gson();
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(userJson.getAsJsonObject());
@@ -574,16 +719,126 @@ public class UserResourceTest {
   @Test
   public void testDeleteRoleFromUser_InvalidRole() {
     User user = createUserWithRole();
+    User activeUser = createUserWithRole();
+    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    activeUser.addRole(admin);
     when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), 20);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
+  public void testDeleteDeniedRoleBySoShouldFail() {
+    User user = createUserWithRole();
+    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    user.addRole(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
+    user.addRole(new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName()));
+    user.addRole(new UserRole(UserRoles.ALUMNI.getRoleId(), UserRoles.ALUMNI.getRoleName()));
+    user.addRole(new UserRole(UserRoles.DATAOWNER.getRoleId(), UserRoles.DATAOWNER.getRoleName()));
+    user.setInstitutionId(10);
+    User activeUser = createUserWithRole();
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    activeUser.addRole(so);
+    activeUser.setInstitutionId(10);
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.ADMIN.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.RESEARCHER.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.CHAIRPERSON.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.MEMBER.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.ALUMNI.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.DATAOWNER.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  public void testDeletePermittedRolesBySoShouldSucceedForUserWithSameInstitution() {
+    User user = createUserWithRole();
+    user.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    user.addRole(new UserRole(UserRoles.DATASUBMITTER.getRoleId(), UserRoles.DATASUBMITTER.getRoleName()));
+    user.addRole(new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
+    user.setInstitutionId(10);
+    User activeUser = createUserWithRole();
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    activeUser.addRole(so);
+    activeUser.setInstitutionId(10);
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.ITDIRECTOR.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.DATASUBMITTER.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.SIGNINGOFFICIAL.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testDeletePermittedRolesBySoShouldFailForUserWitNullInstitution() {
+    User user = createUserWithRole();
+    user.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    user.addRole(new UserRole(UserRoles.DATASUBMITTER.getRoleId(), UserRoles.DATASUBMITTER.getRoleName()));
+    user.addRole(new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
+    User activeUser = createUserWithRole();
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    activeUser.addRole(so);
+    activeUser.setInstitutionId(10);
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.ITDIRECTOR.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.DATASUBMITTER.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.SIGNINGOFFICIAL.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  public void testDeleteSORoleFromSOInOtherOrgSOShouldFail() {
+    User user = createUserWithRole();
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    user.addRole(so);
+    user.setInstitutionId(1);
+    User activeUser = createUserWithRole();
+    activeUser.addRole(so);
+    activeUser.setInstitutionId(2);
+    assertNotEquals(user.getInstitutionId(), activeUser.getInstitutionId());
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.SIGNINGOFFICIAL.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  public void testDeleteSORoleFromSelfShouldFail() {
+    User user = createUserWithRole();
+    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    user.addRole(so);
+    user.setInstitutionId(1);
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),  UserRoles.SIGNINGOFFICIAL.getRoleId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+  @Test
   public void testDeleteRoleFromUser_UserWithoutRole() {
     User user = createUserWithRole();
+    User activeUser = createUserWithRole();
+    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    activeUser.addRole(admin);
     when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
     Gson gson = new Gson();
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(userJson.getAsJsonObject());
@@ -596,10 +851,26 @@ public class UserResourceTest {
 
   @Test
   public void testDeleteRoleFromUser_UserNotFound() {
+    User activeUser = createUserWithRole();
+    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    activeUser.addRole(admin);
     when(userService.findUserById(any())).thenThrow(new NotFoundException());
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, 1, UserRoles.ADMIN.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void testDeleteRoleFromUserInvalidRoleId() {
+    User activeUser = createUserWithRole();
+    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    activeUser.addRole(admin);
+    when(userService.findUserById(any())).thenThrow(new NotFoundException());
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    initResource();
+    Response response = userResource.deleteRoleFromUser(authUser, 1, 1000);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
@@ -751,7 +1022,7 @@ public class UserResourceTest {
 
   private User createUserWithRole() {
     User user = new User();
-    user.setUserId(1);
+    user.setUserId(RandomUtils.nextInt(1,100));
     user.setDisplayName("Test");
     user.setEmail("Test");
     UserRole researcher = new UserRole();
