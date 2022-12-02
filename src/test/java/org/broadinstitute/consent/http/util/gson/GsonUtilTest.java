@@ -3,14 +3,12 @@ package org.broadinstitute.consent.http.util.gson;
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 import java.time.Instant;
-import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 
@@ -81,7 +79,5 @@ public class GsonUtilTest {
         assertEquals(fso.getCreateDate(), parsedFso.getCreateDate());
         assertEquals(fso.getBlobId(), parsedFso.getBlobId());
         assertEquals(fso.getFileName(), parsedFso.getFileName());
-
-
     }
 }
