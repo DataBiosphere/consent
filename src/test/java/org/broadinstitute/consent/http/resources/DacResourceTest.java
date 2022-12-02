@@ -112,7 +112,7 @@ public class DacResourceTest {
 
         Response response = dacResource.findAllDacDatasets(authUser, 1);
         assertEquals(200, response.getStatus());
-        assertEquals(List.of(ds), response.getEntity());
+        assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
     }
 
     @Test(expected = NotFoundException.class)
@@ -149,7 +149,7 @@ public class DacResourceTest {
 
         Response response = dacResource.findAllDacDatasets(authUser, 1);
         assertEquals(200, response.getStatus());
-        assertEquals(List.of(ds), response.getEntity());
+        assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
     }
 
     @Test(expected = NotAuthorizedException.class)
@@ -520,8 +520,7 @@ public class DacResourceTest {
             .thenReturn(dataset);
         Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        Boolean approval = ((Dataset) (response.getEntity())).getDacApproval();
-        assertTrue(approval);
+        assertEquals(GsonUtil.buildGson().toJson(dataset), response.getEntity());
     }
 
     @Test
@@ -542,8 +541,7 @@ public class DacResourceTest {
                 .thenReturn(datasetResponse);
         Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        Boolean approval = ((Dataset)(response.getEntity())).getDacApproval();
-        assertTrue(approval);
+        assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
     }
 
     @Test

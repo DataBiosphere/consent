@@ -82,7 +82,7 @@ public class TDRResource extends Resource {
                 throw new NotFoundException("Could not find dataset " + identifier);
             }
 
-            return Response.ok(dataset).build();
+            return Response.ok(unmarshal(dataset)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
