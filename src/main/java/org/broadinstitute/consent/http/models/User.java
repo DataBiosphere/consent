@@ -279,7 +279,7 @@ public class User {
             this.setRoles(new ArrayList<>());
         }
 
-        if (!this.getRoles().stream().map(UserRole::getRoleId).collect(Collectors.toList()).contains(userRole.getRoleId())) {
+        if (!this.getRoles().contains(userRole)) {
             this.getRoles().add(userRole);
         }
     }

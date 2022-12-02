@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -10,7 +9,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Assert;
 import org.junit.Test;
@@ -22,10 +20,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -209,7 +207,6 @@ public class UserDAOTest extends DAOTestHelper {
         libraryCardDAO.insertLibraryCard(user2.getUserId(), user.getInstitutionId(), "asdf", user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
 
         List<User> users = userDAO.findUsersWithLCsAndInstitution();
-        System.out.println(users.stream().map((u) -> u.getUserId()).collect(Collectors.toList()));
         assertNotNull(users);
         assertFalse(users.isEmpty());
         assertEquals(2, users.size());
@@ -279,7 +276,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         Consent consent = createConsent();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+        datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
         Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getUserId(), election.getElectionId());
 
@@ -297,7 +294,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
         Consent consent = createConsent();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+        datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
         Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         createDacVote(user.getUserId(), election.getElectionId());
 
@@ -314,7 +311,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
         Consent consent = createConsent();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+        datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Set<User> users = userDAO.findUsersForDatasetsByRole(
@@ -384,7 +381,7 @@ public class UserDAOTest extends DAOTestHelper {
         assertEquals(card.getUserEmail(), user.getEmail());
         assertEquals(1, cards.size());
         assertEquals(card.getId(), userCard.getId());
-        assertEquals(null, card.getUserId());
+        assertNull(card.getUserId());
     }
 
     @Test
@@ -446,9 +443,33 @@ public class UserDAOTest extends DAOTestHelper {
         }
     }
 
-    private String getRandomEmailAddress() {
-        String user = RandomStringUtils.randomAlphanumeric(20);
-        String domain = RandomStringUtils.randomAlphanumeric(10);
-        return user + "@" + domain + ".org";
+    @Test
+    public void testCanBeChairOfTwoDACs() {
+        User u = createUser();
+        Dac dac1 = createDac();
+        Dac dac2 = createDac();
+        UserRole chairperson1 = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        chairperson1.setDacId(dac1.getDacId());
+        chairperson1.setUserId(u.getUserId());
+        UserRole chairperson2 = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        chairperson2.setDacId(dac2.getDacId());
+        chairperson2.setUserId(u.getUserId());
+        assertNotEquals(chairperson1, chairperson2);
+
+        u.addRole(chairperson1);
+        u.addRole(chairperson2);
+        assertEquals(3, u.getRoles().size());
+        assertTrue(u.getRoles().contains(chairperson1));
+        assertTrue(u.getRoles().contains(chairperson2));
+
+        dacDAO.addDacMember(chairperson1.getRoleId(), u.getUserId(), chairperson1.getDacId());
+        dacDAO.addDacMember(chairperson2.getRoleId(), u.getUserId(), chairperson2.getDacId());
+
+        User found = userDAO.findUserById(u.getUserId());
+        assertEquals(3, found.getRoles().size());
+        assertTrue(found.getRoles().stream().anyMatch(chairperson1::equals));
+        assertTrue(found.getRoles().contains(chairperson1));
+        assertTrue(found.getRoles().stream().anyMatch(chairperson2::equals));
+        assertTrue(found.getRoles().contains(chairperson2));
     }
 }

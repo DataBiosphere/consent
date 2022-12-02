@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.gson.Gson;
 import com.google.gson.stream.MalformedJsonException;
 import io.sentry.Sentry;
 import io.sentry.SentryEvent;
@@ -12,6 +11,7 @@ import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.owasp.fileio.FileValidator;
@@ -225,7 +225,7 @@ abstract public class Resource implements ConsentLogger {
      * @return String version of the object
      */
     protected String unmarshal(Object o) {
-        return new Gson().toJson(o);
+        return GsonUtil.buildGson().toJson(o);
     }
 
 }

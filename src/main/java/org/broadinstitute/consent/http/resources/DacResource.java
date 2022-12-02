@@ -32,7 +32,6 @@ import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.broadinstitute.consent.http.util.gson.InstantTypeAdapter;
 
 @Path("api/dac")
 public class DacResource extends Resource {
@@ -55,7 +54,7 @@ public class DacResource extends Resource {
     public Response findAll(@Auth AuthUser authUser, @QueryParam("withUsers") Optional<Boolean> withUsers) {
         final Boolean includeUsers = withUsers.orElse(true);
         List<Dac> dacs = dacService.findDacsWithMembersOption(includeUsers);
-        return Response.ok(dacs).build();
+        return Response.ok().entity(unmarshal(dacs)).build();
     }
 
     @POST
@@ -77,7 +76,7 @@ public class DacResource extends Resource {
             throw new Exception("Unable to create DAC with name: " + dac.getName() + " and description: " + dac.getDescription());
         }
         Dac savedDac = dacService.findById(dacId);
-        return Response.ok(savedDac).build();
+        return Response.ok().entity(unmarshal(savedDac)).build();
     }
 
     @PUT
@@ -99,7 +98,7 @@ public class DacResource extends Resource {
         }
         dacService.updateDac(dac.getName(), dac.getDescription(), dac.getDacId());
         Dac savedDac = dacService.findById(dac.getDacId());
-        return Response.ok(savedDac).build();
+        return Response.ok().entity(unmarshal(savedDac)).build();
     }
 
     @GET
@@ -108,7 +107,7 @@ public class DacResource extends Resource {
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
     public Response findById(@PathParam("dacId") Integer dacId) {
         Dac dac = findDacById(dacId);
-        return Response.ok(dac).build();
+        return Response.ok().entity(unmarshal(dac)).build();
     }
 
     @DELETE
@@ -137,7 +136,7 @@ public class DacResource extends Resource {
         checkUserRoleInDac(dac, authUser);
         try {
             User member = dacService.addDacMember(role, user, dac);
-            return Response.ok(member).build();
+            return Response.ok().entity(member).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -170,7 +169,7 @@ public class DacResource extends Resource {
         checkUserRoleInDac(dac, authUser);
         try {
             User member = dacService.addDacMember(role, user, dac);
-            return Response.ok(member).build();
+            return Response.ok().entity(member).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -200,7 +199,7 @@ public class DacResource extends Resource {
         Dac dac = findDacById(dacId);
         checkUserRoleInDac(dac, user);
         List<Dataset> datasets = dacService.findDatasetsByDacId(dacId);
-        return Response.ok(datasets).build();
+        return Response.ok().entity(datasets).build();
     }
 
     @GET
@@ -209,7 +208,7 @@ public class DacResource extends Resource {
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
     public Response filterUsers(@PathParam("term") String term) {
         List<User> users = dacService.findAllDACUsersBySearchString(term);
-        return Response.ok(users).build();
+        return Response.ok().entity(users).build();
     }
 
     @PUT
@@ -237,7 +236,7 @@ public class DacResource extends Resource {
                 throw new BadRequestException("Invalid request payload");
             }
             Dataset updatedDataset = datasetService.approveDataset(dataset, user, payload.getApproval());
-            return Response.ok(updatedDataset).build();
+            return Response.ok().entity(updatedDataset).build();
         } catch(Exception e) {
             return createExceptionResponse(e);
         }
