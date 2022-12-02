@@ -44,6 +44,27 @@ public class AcknowledgementDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void createAndDeleteAcknowledgement() {
+        User user = createUser();
+        Integer user_id = user.getUserId();
+        String key1 = RandomStringUtils.randomAlphabetic(100);
+        String key2 = RandomStringUtils.randomAlphabetic(100);
+        assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user_id).isEmpty());
+
+        acknowledgementDAO.upsertAcknowledgement(key1, user_id);
+        acknowledgementDAO.upsertAcknowledgement(key2, user_id);
+        Acknowledgement upsertResult = acknowledgementDAO.findAcknowledgementsForUser(user_id).get(0);
+
+        assertEquals(2, acknowledgementDAO.findAcknowledgementsForUser(user_id).size());
+        assertEquals(upsertResult, acknowledgementDAO.findAcknowledgementsForUser(user_id).get(0));
+
+        acknowledgementDAO.deleteAcknowledgement(key1, user_id);
+        assertEquals(1, acknowledgementDAO.findAcknowledgementsForUser(user_id).size());
+        Acknowledgement secondAcknowledgement = acknowledgementDAO.findAcknowledgementsForUser(user_id).get(0);
+        assertEquals(key2, secondAcknowledgement.getAckKey());
+    }
+
+    @Test
     public void ensureMissingAcknowledgementWorks(){
         User user2 = createUser();
         User user3 = createUser();
