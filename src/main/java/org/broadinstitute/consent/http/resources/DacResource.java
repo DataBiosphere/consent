@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.List;
@@ -32,6 +31,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @Path("api/dac")
 public class DacResource extends Resource {
@@ -61,7 +61,7 @@ public class DacResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN})
     public Response createDac(@Auth AuthUser authUser, String json) throws Exception {
-        Dac dac = new Gson().fromJson(json, Dac.class);
+        Dac dac = GsonUtil.buildGson().fromJson(json, Dac.class);
         if (dac == null) {
             throw new BadRequestException("DAC is required");
         }
@@ -83,7 +83,7 @@ public class DacResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN})
     public Response updateDac(@Auth AuthUser authUser, String json) {
-        Dac dac = new Gson().fromJson(json, Dac.class);
+        Dac dac = GsonUtil.buildGson().fromJson(json, Dac.class);
         if (dac == null) {
             throw new BadRequestException("DAC is required");
         }
@@ -231,7 +231,7 @@ public class DacResource extends Resource {
             if(Objects.isNull(json) || json.isBlank()) {
                 throw new BadRequestException("Request body is empty");
             }
-            DatasetApproval payload = new Gson().fromJson(json, DatasetApproval.class);
+            DatasetApproval payload = GsonUtil.buildGson().fromJson(json, DatasetApproval.class);
             if(Objects.isNull(payload.getApproval())) {
                 throw new BadRequestException("Invalid request payload");
             }

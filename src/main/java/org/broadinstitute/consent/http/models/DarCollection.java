@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 import java.sql.Timestamp;
 import java.util.HashSet;
@@ -75,7 +76,7 @@ public class DarCollection {
   }
 
   public DarCollection deepCopy() {
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.buildGson();
     String json = gson.toJson(this);
     return gson.fromJson(json, DarCollection.class);
   }
@@ -190,6 +191,6 @@ public class DarCollection {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.buildGson().toJson(this);
   }
 }
