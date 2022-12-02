@@ -1,14 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
-import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetDTOWithPropertiesMapper;
+import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
@@ -32,6 +27,12 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 @RegisterRowMapper(DatasetMapper.class)
 public interface DatasetDAO extends Transactional<DatasetDAO> {
@@ -183,14 +184,18 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             + "WHERE dataset_id = :datasetId")
     void updateDatasetNeedsApproval(@Bind("datasetId") Integer datasetId, @Bind("needsApproval") Boolean needsApproval);
 
-    @SqlUpdate(
-            "UPDATE dataset " +
-                " SET name = :datasetName," +
-                    " update_date = :updateDate, " +
-                    " update_user_id = :updateUserId, " +
-                    " needs_approval = :needsApproval " +
-                " WHERE dataset_id = :datasetId")
-    void updateDataset(@Bind("datasetId") Integer datasetId, @Bind("datasetName") String datasetName, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId, @Bind("needsApproval") Boolean needsApproval);
+    @SqlUpdate("""
+                 UPDATE dataset
+                 SET name = :datasetName, 
+                     update_date = :updateDate, 
+                     update_user_id = :updateUserId, 
+                     needs_approval = :needsApproval, 
+                     dac_id = :dacId 
+                 WHERE dataset_id = :datasetId
+                 """)
+    void updateDataset(@Bind("datasetId") Integer datasetId,
+       @Bind("datasetName") String datasetName, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId,
+       @Bind("needsApproval") Boolean needsApproval, @Bind("dacId") Integer updatedDacId);
 
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(

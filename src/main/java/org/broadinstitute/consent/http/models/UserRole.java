@@ -79,7 +79,7 @@ public class UserRole {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.userRoleId, this.name, this.dacId);
+        return Objects.hashCode(this.userId, this.name, this.dacId);
     }
 
     @Override
@@ -88,7 +88,9 @@ public class UserRole {
             return false;
         }
         UserRole otherUserRole = (UserRole) o;
-        return Objects.equal(this.getUserRoleId(), otherUserRole.getUserRoleId());
+        return Objects.equal(this.getName(), otherUserRole.getName())
+                && Objects.equal(this.getDacId(), otherUserRole.getDacId())
+                && Objects.equal(this.getUserId(), otherUserRole.getUserId());
     }
 
     @Override
