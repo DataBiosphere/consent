@@ -21,6 +21,18 @@ public enum UserRoles {
 
     private final String roleName;
     private final Integer roleId;
+    private static final HashSet<Integer> LIST_OF_NON_DAC_ROLE_IDS = new HashSet<>(Arrays.asList(
+            ALUMNI.getRoleId(),
+            ADMIN.getRoleId(),
+            RESEARCHER.getRoleId(),
+            DATAOWNER.getRoleId(),
+            SIGNINGOFFICIAL.getRoleId(),
+            DATASUBMITTER.getRoleId(),
+            ITDIRECTOR.getRoleId()));
+    private static final HashSet<Integer> LIST_OF_SO_AUTHORIZED_ROLES_TO_ADJUST = new HashSet<>(Arrays.asList(
+            ITDIRECTOR.getRoleId(),
+            SIGNINGOFFICIAL.getRoleId(),
+            DATASUBMITTER.getRoleId()));
 
     UserRoles(String roleName, Integer roleId) {
         this.roleName = roleName;
@@ -63,25 +75,12 @@ public enum UserRoles {
           .anyMatch(roleName::equalsIgnoreCase);
     }
 
-    private static final HashSet<Integer> listOfNonDacRoleIds = new HashSet<>(Arrays.asList(
-            ALUMNI.getRoleId(),
-            ADMIN.getRoleId(),
-            RESEARCHER.getRoleId(),
-            DATAOWNER.getRoleId(),
-            SIGNINGOFFICIAL.getRoleId(),
-            DATASUBMITTER.getRoleId(),
-            ITDIRECTOR.getRoleId()));
-
     public static boolean isValidNonDACRoleId(Integer roleId) {
-        return !Objects.isNull(roleId) && listOfNonDacRoleIds.contains(roleId);
+        return !Objects.isNull(roleId) && LIST_OF_NON_DAC_ROLE_IDS.contains(roleId);
     }
 
-    private static final HashSet<Integer> listOfSoAuthorizedRolesToAdjust = new HashSet<>(Arrays.asList(
-            ITDIRECTOR.getRoleId(),
-            SIGNINGOFFICIAL.getRoleId(),
-            DATASUBMITTER.getRoleId()));
     public static boolean isValidSoAdjustableRoleId(Integer roleId) {
-        return !Objects.isNull(roleId) && listOfSoAuthorizedRolesToAdjust.contains(roleId);
+        return !Objects.isNull(roleId) && LIST_OF_SO_AUTHORIZED_ROLES_TO_ADJUST.contains(roleId);
     }
 
 }

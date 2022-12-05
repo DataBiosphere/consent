@@ -1,7 +1,6 @@
-package org.broadinstitute.consent.http.service;
+package org.broadinstitute.consent.http.service.dao;
 
 import org.broadinstitute.consent.http.db.DAOTestHelper;
-import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -10,7 +9,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 import java.util.Optional;
 
@@ -21,16 +19,14 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 // This is a utility test to verify a pattern for Database Transactions continues to be supported and works as expected.
 // It should be updated to include new patterns that are developed.
-public class JdbiTransactionPatternTest extends DAOTestHelper {
+public class UserServiceDAOTest extends DAOTestHelper {
 
-    UserService service;
-    @Mock
-    private SamDAO samDAO;
+    UserServiceDAO serviceDAO;
 
     @Before
     public void setup() {
         openMocks(this);
-        service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO, samDAO, jdbi);
+        serviceDAO = new UserServiceDAO(jdbi, userDAO, userRoleDAO);
     }
 
     @Test
@@ -39,8 +35,8 @@ public class JdbiTransactionPatternTest extends DAOTestHelper {
         Institution institution = createInstitution();
         assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
         UserRole userRole = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
-        service.insertRoleAndInstitutionForUser(userRole,institution.getId(), testUser.getUserId());
-        User fetchedUser = service.findUserById(testUser.getUserId());
+        serviceDAO.insertRoleAndInstitutionTxn(userRole,institution.getId(), testUser.getUserId());
+        User fetchedUser = userDAO.findUserById(testUser.getUserId());
         assertEquals(fetchedUser.getUserId(), testUser.getUserId());
         assertEquals(fetchedUser.getInstitutionId(), institution.getId());
     }
@@ -63,7 +59,7 @@ public class JdbiTransactionPatternTest extends DAOTestHelper {
                 throw new RuntimeException("interrupt the transaction.");
             });
         } catch (Exception e) {
-            User fetchedUser = service.findUserById(testUser.getUserId());
+            User fetchedUser = userDAO.findUserById(testUser.getUserId());
             assertEquals(fetchedUser.getUserId(), testUser.getUserId());
             assertEquals(1, fetchedUser.getRoles().size());
             assertEquals(UserRoles.RESEARCHER.getRoleId(), fetchedUser.getRoles().get(0).getRoleId());

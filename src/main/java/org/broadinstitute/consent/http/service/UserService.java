@@ -25,7 +25,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
-import org.jdbi.v3.core.Jdbi;
+import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,11 +51,11 @@ public class UserService {
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
     private final SamDAO samDAO;
-    private final Jdbi jdbi;
+    private final UserServiceDAO userServiceDAO;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
-    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO, SamDAO samDAO, Jdbi jdbi) {
+    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO, SamDAO samDAO, UserServiceDAO userServiceDAO) {
         this.userDAO = userDAO;
         this.userPropertyDAO = userPropertyDAO;
         this.userRoleDAO = userRoleDAO;
@@ -63,7 +63,7 @@ public class UserService {
         this.institutionDAO = institutionDAO;
         this.libraryCardDAO = libraryCardDAO;
         this.samDAO = samDAO;
-        this.jdbi = jdbi;
+        this.userServiceDAO = userServiceDAO;
     }
 
     /**
@@ -118,12 +118,13 @@ public class UserService {
     }
 
     public void insertRoleAndInstitutionForUser(UserRole role, Integer institutionId, Integer userId) {
-        jdbi.useTransaction(transactionHandle -> {
-            UserDAO userDAOT = transactionHandle.attach(UserDAO.class);
-            UserRoleDAO userRoleDAOT = transactionHandle.attach(UserRoleDAO.class);
-            userDAOT.updateInstitutionId(userId, institutionId);
-            userRoleDAOT.insertSingleUserRole(role.getRoleId(), userId);
-        });
+        try{
+            userServiceDAO.insertRoleAndInstitutionTxn(role, institutionId, userId);
+        } catch (Exception e) {
+            logger.error("Error when updating user: %s, institution: %s, role: %s",
+                    userId.toString(), institutionId.toString(), role.toString());
+            throw e;
+        }
     }
 
     public static class SimplifiedUser {
