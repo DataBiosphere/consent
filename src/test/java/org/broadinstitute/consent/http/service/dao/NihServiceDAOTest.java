@@ -147,46 +147,4 @@ public class NihServiceDAOTest extends DAOTestHelper {
         serviceDAO.updateUserNihStatus(user, userAccount);
     }
 
-//    @Test(expected = Exception.class)
-//    public void testUpdateUserNihStatus_libraryCardDAOError() {
-//        // superclass jdbi and daos are not mocks, mock the ones relevant to exception testing
-//        LibraryCardDAO libraryCardDAO = mock(LibraryCardDAO.class);
-//        serviceDAO = new NihServiceDAO(jdbi, libraryCardDAO, userDAO, userPropertyDAO);
-//        doThrow(new Exception()).when(libraryCardDAO).updateEraCommonsForUser(any(), any());
-//        User user = createUser();
-//        NIHUserAccount userAccount = new NIHUserAccount();
-//        userAccount.setStatus(true);
-//        userAccount.setNihUsername("NEW_ID");
-//        userAccount.setEraExpiration("new expiration");
-//        serviceDAO.updateUserNihStatus(user, userAccount);
-//    }
-//
-//    @Test(expected = Exception.class)
-//    public void testUpdateUserNihStatus_userDAOError() {
-//        // superclass jdbi and daos are not mocks, mock the ones relevant to exception testing
-//        UserDAO userDAO = mock(UserDAO.class);
-//        serviceDAO = new NihServiceDAO(jdbi, libraryCardDAO, userDAO, userPropertyDAO);
-//        doThrow(new Exception()).when(userDAO).updateEraCommonsId(any(), any());
-//        User user = createUser();
-//        NIHUserAccount userAccount = new NIHUserAccount();
-//        userAccount.setStatus(true);
-//        userAccount.setNihUsername("NEW_ID");
-//        userAccount.setEraExpiration("new expiration");
-//        serviceDAO.updateUserNihStatus(user, userAccount);
-//    }
-//
-//    @Test(expected = Exception.class)
-//    public void testUpdateUserNihStatus_userPropertyDAOError() {
-//        // superclass jdbi and daos are not mocks, mock the ones relevant to exception testing
-//        UserPropertyDAO userPropertyDAO = mock(UserPropertyDAO.class);
-//        serviceDAO = new NihServiceDAO(jdbi, libraryCardDAO, userDAO, userPropertyDAO);
-//        doThrow(new Exception()).when(userDAO).updateEraCommonsId(any(), any());
-//        User user = createUser();
-//        NIHUserAccount userAccount = new NIHUserAccount();
-//        userAccount.setStatus(true);
-//        userAccount.setNihUsername("NEW_ID");
-//        userAccount.setEraExpiration("new expiration");
-//        serviceDAO.updateUserNihStatus(user, userAccount);
-//    }
-//
 }
