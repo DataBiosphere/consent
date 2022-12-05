@@ -247,8 +247,7 @@ public class DatasetResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
-            Gson gson = new Gson();
-            return Response.ok(gson.toJson(datasets)).build();
+            return Response.ok(unmarshal(datasets)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

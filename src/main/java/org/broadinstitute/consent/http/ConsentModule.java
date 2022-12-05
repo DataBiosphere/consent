@@ -66,7 +66,9 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.gson2.Gson2Config;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
@@ -116,6 +118,7 @@ public class ConsentModule extends AbstractModule {
         jdbi.installPlugin(new SqlObjectPlugin());
         jdbi.installPlugin(new Gson2Plugin());
         jdbi.installPlugin(new GuavaPlugin());
+        jdbi.getConfig().get(Gson2Config.class).setGson(GsonUtil.buildGson());
 
         this.consentDAO = this.jdbi.onDemand(ConsentDAO.class);
         this.counterDAO = this.jdbi.onDemand(CounterDAO.class);
