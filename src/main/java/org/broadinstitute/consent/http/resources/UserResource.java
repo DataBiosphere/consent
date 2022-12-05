@@ -361,13 +361,31 @@ public class UserResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/acknowledgements/{key}")
     @PermitAll
-    public Response getUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key){
+    public Response getUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             Acknowledgement ack = acknowledgementService.findAcknowledgementForUserByKey(user, key);
             if (ack == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
+            return Response.ok().entity(ack).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path ("/acknowledgements/{key}")
+    @RolesAllowed(ADMIN)
+    public Response deleteUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            Acknowledgement ack = acknowledgementService.findAcknowledgementForUserByKey(user, key);
+            if (Objects.isNull(ack)) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            acknowledgementService.deleteAcknowledgementForUserByKey(user, key);
             return Response.ok().entity(ack).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

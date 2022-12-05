@@ -36,4 +36,8 @@ public class AcknowledgementService {
     private Map<String, Acknowledgement> acknowledgementListToMap(List<Acknowledgement> acknowledgements){
         return acknowledgements.stream().collect(Collectors.toMap(Acknowledgement::getAckKey, Function.identity()));
     }
+
+    public void deleteAcknowledgementForUserByKey(User user, String key) {
+        acknowledgementDAO.deleteAcknowledgement(key, user.getUserId());
+    }
 }
