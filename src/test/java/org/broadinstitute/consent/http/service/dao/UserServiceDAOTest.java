@@ -49,7 +49,7 @@ public class UserServiceDAOTest extends DAOTestHelper {
         assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
         UserRole userRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
         try{
-            //it's necessary to copy the code in from the service layer because we're testing that the transaction
+            //it's necessary to copy the code in from the service dao layer because we're testing that the transaction
             //does indeed roll back from postgres.  mocking won't confirm that behavior.
             jdbi.useTransaction(transactionHandle -> {
                 UserDAO userDAOT = transactionHandle.attach(UserDAO.class);
