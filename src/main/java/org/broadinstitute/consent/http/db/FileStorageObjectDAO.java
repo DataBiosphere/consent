@@ -16,14 +16,16 @@ import java.util.List;
 public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
 
     @SqlUpdate(
-        "INSERT INTO file_storage_object "
-            + " (file_name, category, gcs_file_uri, "
-            + " media_type, entity_id, create_user_id,"
-            + " create_date, deleted) "
-            + " VALUES "
-            + " (:fileName, :category, :gcsFileUri, "
-            + " :mediaType, :entityId, :createUserId, "
-            + " :createDate, false) "
+            """
+            INSERT INTO file_storage_object
+            (file_name, category, gcs_file_uri,
+            media_type, entity_id, create_user_id,
+            create_date, deleted)
+            VALUES
+            (:fileName, :category, :gcsFileUri,
+            :mediaType, :entityId, :createUserId,
+            :createDate, false)
+            """
     )
     @GetGeneratedKeys
     Integer insertNewFile(
@@ -37,7 +39,13 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
     );
 
     @SqlUpdate(
-            "UPDATE file_storage_object SET deleted=true, delete_user_id=:deleteUserId, delete_date=:deleteDate WHERE file_storage_object_id = :fileStorageObjectId"
+            """
+            UPDATE file_storage_object
+            SET deleted=true,
+                delete_user_id=:deleteUserId,
+                delete_date=:deleteDate
+            WHERE file_storage_object_id = :fileStorageObjectId
+            """
     )
     void deleteFileById(@Bind("fileStorageObjectId") Integer fileStorageObjectId,
                         @Bind("deleteUserId") Integer deleteUserId,
@@ -45,7 +53,14 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
 
 
     @SqlUpdate(
-            "UPDATE file_storage_object SET gcs_file_uri=:gcsFileUri, media_type=:mediaType, update_user_id=:updateUserId, update_date=:updateDate WHERE file_storage_object_id = :fileStorageObjectId"
+            """
+            UPDATE file_storage_object
+            SET gcs_file_uri=:gcsFileUri,
+                media_type=:mediaType,
+                update_user_id=:updateUserId,
+                update_date=:updateDate
+            WHERE file_storage_object_id = :fileStorageObjectId
+            """
     )
     void updateFileById(
             @Bind("fileStorageObjectId") Integer fileStorageObjectId,
@@ -55,7 +70,13 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
             @Bind("updateDate") Instant updateDate);
 
     @SqlUpdate(
-            "UPDATE file_storage_object SET deleted=true, delete_user_id=:deleteUserId, delete_date=:deleteDate WHERE entity_id = :entityId"
+            """
+            UPDATE file_storage_object
+            SET deleted=true,
+                delete_user_id=:deleteUserId,
+                delete_date=:deleteDate
+            WHERE entity_id = :entityId
+            """
     )
     void deleteFilesByEntityId(@Bind("entityId") String entityId,
                                @Bind("deleteUserId") Integer deleteUserId,
@@ -63,17 +84,32 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
 
 
     @SqlQuery(
-            "SELECT * FROM file_storage_object WHERE file_storage_object_id = :fileStorageObjectId"
+            """
+            SELECT *
+            FROM file_storage_object
+            WHERE file_storage_object_id = :fileStorageObjectId
+            """
     )
     FileStorageObject findFileById(@Bind("fileStorageObjectId") Integer fileStorageObjectId);
 
     @SqlQuery(
-            "SELECT * FROM file_storage_object WHERE entity_id = :entityId AND deleted != true"
+            """
+            SELECT *
+            FROM file_storage_object
+            WHERE entity_id = :entityId AND
+                  deleted != true
+            """
     )
     List<FileStorageObject> findFilesByEntityId(@Bind("entityId") String entityId);
 
     @SqlQuery(
-            "SELECT * FROM file_storage_object WHERE entity_id = :entityId AND category = :category AND deleted != true"
+            """
+            SELECT *
+            FROM file_storage_object
+            WHERE entity_id = :entityId
+                  AND category = :category
+                  AND deleted != true
+            """
     )
     List<FileStorageObject> findFilesByEntityIdAndCategory(@Bind("entityId") String entityId, @Bind("category") String category);
 }
