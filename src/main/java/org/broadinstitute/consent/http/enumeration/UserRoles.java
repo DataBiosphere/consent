@@ -4,8 +4,8 @@ import org.broadinstitute.consent.http.resources.Resource;
 
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public enum UserRoles {
 
@@ -21,7 +21,7 @@ public enum UserRoles {
 
     private final String roleName;
     private final Integer roleId;
-    private static final HashSet<Integer> LIST_OF_NON_DAC_ROLE_IDS = new HashSet<>(List.of(
+    private static final HashSet<Integer> LIST_OF_NON_DAC_ROLE_IDS = new HashSet<>(Set.of(
             ALUMNI.getRoleId(),
             ADMIN.getRoleId(),
             RESEARCHER.getRoleId(),
@@ -29,7 +29,7 @@ public enum UserRoles {
             SIGNINGOFFICIAL.getRoleId(),
             DATASUBMITTER.getRoleId(),
             ITDIRECTOR.getRoleId()));
-    private static final HashSet<Integer> LIST_OF_SO_AUTHORIZED_ROLES_TO_ADJUST = new HashSet<>(List.of(
+    private static final HashSet<Integer> LIST_OF_SO_AUTHORIZED_ROLES_TO_ADJUST = new HashSet<>(Set.of(
             ITDIRECTOR.getRoleId(),
             SIGNINGOFFICIAL.getRoleId(),
             DATASUBMITTER.getRoleId()));
