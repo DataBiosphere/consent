@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.enumeration;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;

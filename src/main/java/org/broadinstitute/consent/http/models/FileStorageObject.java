@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class FileStorageObject {
 
@@ -160,11 +161,14 @@ public class FileStorageObject {
      * @return The last time the file has been changed.
      */
     public Instant getLatestUpdateDate() {
-        List<Instant> dates = new ArrayList<>();
-        dates.add(this.getCreateDate());
-        dates.add(this.getUpdateDate());
-        dates.add(this.getDeleteDate());
-        return dates.stream().filter(Objects::nonNull).max(Instant::compareTo).orElse(this.getCreateDate());
+        return Stream.of(
+                        this.getCreateDate(),
+                        this.getUpdateDate(),
+                        this.getDeleteDate())
+                .filter(Objects::nonNull)
+                .max(Instant::compareTo)
+                // there should always at least be a create date, but if somehow not, send very old date
+                .orElse(Instant.MIN);
     }
 
     @Override

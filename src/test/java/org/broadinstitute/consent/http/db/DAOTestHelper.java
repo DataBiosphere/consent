@@ -624,30 +624,4 @@ public class DAOTestHelper {
         dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
         return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     }
-
-    protected FileStorageObject createFileStorageObject() {
-        FileCategory category = List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
-        String entityId = RandomStringUtils.randomAlphabetic(10);
-
-        return createFileStorageObject(entityId, category);
-    }
-
-    protected FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
-        String fileName = RandomStringUtils.randomAlphabetic(10);
-        String bucketName = RandomStringUtils.randomAlphabetic(10);
-        String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
-        User createUser = createUser();
-        Instant createDate = Instant.now();
-
-        Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
-                fileName,
-                category.getValue(),
-                bucketName,
-                gcsFileUri,
-                entityId,
-                createUser.getUserId(),
-                createDate
-        );
-        return fileStorageObjectDAO.findFileById(newFileStorageObjectId);
-    }
 }
