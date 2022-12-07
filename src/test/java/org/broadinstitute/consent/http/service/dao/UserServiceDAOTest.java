@@ -21,7 +21,7 @@ import static org.mockito.MockitoAnnotations.openMocks;
 // It should be updated to include new patterns that are developed.
 public class UserServiceDAOTest extends DAOTestHelper {
 
-    UserServiceDAO serviceDAO;
+    private UserServiceDAO serviceDAO;
 
     @Before
     public void setup() {

@@ -2,9 +2,9 @@ package org.broadinstitute.consent.http.enumeration;
 
 import org.broadinstitute.consent.http.resources.Resource;
 
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 
 public enum UserRoles {
@@ -21,7 +21,7 @@ public enum UserRoles {
 
     private final String roleName;
     private final Integer roleId;
-    private static final HashSet<Integer> LIST_OF_NON_DAC_ROLE_IDS = new HashSet<>(Arrays.asList(
+    private static final HashSet<Integer> LIST_OF_NON_DAC_ROLE_IDS = new HashSet<>(List.of(
             ALUMNI.getRoleId(),
             ADMIN.getRoleId(),
             RESEARCHER.getRoleId(),
@@ -29,7 +29,7 @@ public enum UserRoles {
             SIGNINGOFFICIAL.getRoleId(),
             DATASUBMITTER.getRoleId(),
             ITDIRECTOR.getRoleId()));
-    private static final HashSet<Integer> LIST_OF_SO_AUTHORIZED_ROLES_TO_ADJUST = new HashSet<>(Arrays.asList(
+    private static final HashSet<Integer> LIST_OF_SO_AUTHORIZED_ROLES_TO_ADJUST = new HashSet<>(List.of(
             ITDIRECTOR.getRoleId(),
             SIGNINGOFFICIAL.getRoleId(),
             DATASUBMITTER.getRoleId()));
