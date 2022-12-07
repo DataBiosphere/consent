@@ -1866,6 +1866,31 @@ paths:
           description: No acknowledgement found for the given key.
         500:
           description: Error processing the request.
+    delete:
+      summary: ADMIN ONLY - Delete Acknowledgement by key
+      description: Deletes a specific acknowledgement for the current user by acknowledgement key.  Returns the deleted acknowledgement.
+      parameters:
+        - name: key
+          in: path
+          description: The name of the key.
+          required: true
+          schema:
+            type: string
+      tags:
+        - User
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Acknowledgement'
+        401:
+          description: Unauthorized, log in and try the operation again.
+        404:
+          description: No acknowledgement found for the given key.
+        500:
+          description: Error processing the request.
   /api/user/acknowledgements:
     post:
       requestBody:

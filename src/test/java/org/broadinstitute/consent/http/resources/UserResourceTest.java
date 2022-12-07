@@ -996,6 +996,28 @@ public class UserResourceTest {
   }
 
   @Test
+  public void testDeleteAcknowledgementForUser(){
+    String acknowledgementKey = "key1";
+    User user = createUserWithRole();
+    Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user, acknowledgementKey);
+    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(acknowledgementMap.get(acknowledgementKey));
+    initResource();
+
+    Response response = userResource.deleteUserAcknowledgement(authUser,acknowledgementKey);
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testDeleteMissingAcknowledgementForUser(){
+    User user = createUserWithRole();
+    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
+    initResource();
+
+    Response response = userResource.deleteUserAcknowledgement(authUser, "key");
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
   public void testGetAllAcknowledgements(){
     String acknowledgementKey = "key1";
     User user = createUserWithRole();
