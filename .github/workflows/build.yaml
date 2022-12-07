@@ -23,9 +23,7 @@ jobs:
     - name: Auth to GCR
       uses: 'google-github-actions/auth@v1'
       with:
-        version: '270.0.0'
-        service_account_email: ${{ secrets.GCR_PUBLISH_EMAIL }}
-        service_account_key: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
+        credentials_json: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v1'
     - name: Auth Docker for GCR
