@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -51,7 +52,7 @@ public class AcknowledgementServiceTest {
     }
 
     @Test
-    public void test_makeAcknowledgementForUser(){
+    public void test_makeAndDeleteAcknowledgementForUser(){
         User user = new User(2, "test@domain.com", "Test User", new Date(),
                 List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
         String key = "key2";
@@ -66,6 +67,7 @@ public class AcknowledgementServiceTest {
         when(acknowledgementDAO.findAcknowledgementsForUser(any(), any())).thenReturn(acknowledgementList);
         when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(acknowledgementList);
         when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(key2Acknowledgement);
+        doNothing().when(acknowledgementDAO).deleteAcknowledgement(anyString(), anyInt());
         initService();
 
         Map<String, Acknowledgement> makeResponse = acknowledgementService.makeAcknowledgements(keys,user);
@@ -80,5 +82,7 @@ public class AcknowledgementServiceTest {
 
         Acknowledgement singleLookupResponse = acknowledgementService.findAcknowledgementForUserByKey(user,key);
         assertEquals(singleLookupResponse, key2Acknowledgement);
+
+        acknowledgementService.deleteAcknowledgementForUserByKey(user, key);
     }
 }
