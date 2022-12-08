@@ -21,6 +21,9 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class NihServiceTest {
@@ -62,11 +65,13 @@ public class NihServiceTest {
         User user = new User();
         user.setUserId(1);
         when(userDAO.findUserById(any())).thenReturn(user);
+        spy(nihServiceDAO);
         initService();
         try {
-            List<UserProperty> properties = service.authenticateNih(nihUserAccount, authUser, 1);
+            List<UserProperty> properties = service.authenticateNih(nihUserAccount, authUser, user.getUserId());
             assertEquals(1, properties.size());
             assertEquals(Integer.valueOf(1), properties.get(0).getPropertyId());
+            verify(nihServiceDAO, times(1)).updateUserNihStatus(user, nihUserAccount);
         } catch (BadRequestException bre) {
             assert false;
         }
