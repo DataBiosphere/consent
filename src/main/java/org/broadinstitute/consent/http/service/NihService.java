@@ -33,7 +33,7 @@ public class NihService implements ConsentLogger {
     }
 
     public void validateNihUserAccount(NIHUserAccount nihAccount, AuthUser authUser) throws BadRequestException {
-        if (Objects.isNull(nihAccount) || Objects.isNull(nihAccount.getStatus()) || Objects.isNull(nihAccount.getEraExpiration())) {
+        if (Objects.isNull(nihAccount) || Objects.isNull(nihAccount.getEraExpiration())) {
             logWarn("Invalid NIH Account for user: " + authUser.getEmail());
             throw new BadRequestException("Invalid NIH Authentication for user : " + authUser.getEmail());
         }
