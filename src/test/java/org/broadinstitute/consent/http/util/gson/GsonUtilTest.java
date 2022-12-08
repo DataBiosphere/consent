@@ -54,30 +54,4 @@ public class GsonUtilTest {
 
         assertEquals(id, parsed);
     }
-
-    @Test
-    public void testBuildJsonWithCustomObjects() {
-        Gson gson = GsonUtil.buildGson();
-
-        FileStorageObject fso = new FileStorageObject();
-        fso.setCreateDate(Instant.now());
-        fso.setBlobId(BlobId.of(
-                RandomStringUtils.randomAlphabetic(5),
-                RandomStringUtils.randomAlphabetic(10)));
-        fso.setFileName(RandomStringUtils.randomAlphanumeric(20));
-
-        String fsoAsJsonString = gson.toJson(fso);
-
-        JsonObject parsedJsonObj = gson.fromJson(fsoAsJsonString, JsonObject.class);
-
-        assertEquals(fso.getCreateDate().toString(), parsedJsonObj.get("createDate").getAsString());
-        assertEquals(fso.getBlobId().toGsUtilUri(), parsedJsonObj.get("blobId").getAsString());
-        assertEquals(fso.getFileName(), parsedJsonObj.get("fileName").getAsString());
-
-        FileStorageObject parsedFso = gson.fromJson(fsoAsJsonString, FileStorageObject.class);
-
-        assertEquals(fso.getCreateDate(), parsedFso.getCreateDate());
-        assertEquals(fso.getBlobId(), parsedFso.getBlobId());
-        assertEquals(fso.getFileName(), parsedFso.getFileName());
-    }
 }
