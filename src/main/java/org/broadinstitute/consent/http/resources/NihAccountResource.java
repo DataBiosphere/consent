@@ -34,9 +34,11 @@ public class NihAccountResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser authUser) {
-        if (Objects.isNull(nihAccount) || Objects.isNull(nihAccount.getStatus()) || Objects.isNull(nihAccount.getEraExpiration())) {
+        try {
+            nihService.validateNihUserAccount(nihAccount, authUser);
             logWarn("Invalid NIH account information for user: " + authUser.getEmail());
-            return createExceptionResponse(new BadRequestException("Invalid NIH account information"));
+        } catch (BadRequestException e) {
+            return createExceptionResponse(e);
         }
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
