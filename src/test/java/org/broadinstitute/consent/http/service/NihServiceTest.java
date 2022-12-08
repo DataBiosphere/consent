@@ -107,18 +107,6 @@ public class NihServiceTest {
     }
 
     @Test
-    public void testAuthenticateNih_BadRequestNullAccountStatus() {
-        NIHUserAccount account = new NIHUserAccount();
-        account.setEraExpiration("test");
-        initService();
-        try {
-            service.authenticateNih(account, authUser, 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
-    }
-
-    @Test
     public void testAuthenticateNih_BadRequestNullAccountExpiration() {
         NIHUserAccount account = new NIHUserAccount();
         account.setStatus(true);
