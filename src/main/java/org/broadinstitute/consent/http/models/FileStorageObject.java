@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.cloud.storage.BlobId;
+import com.google.gson.annotations.Expose;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 
 import java.io.InputStream;
@@ -31,7 +32,8 @@ public class FileStorageObject {
     private Integer fileStorageObjectId;
     private String entityId;
     private String fileName;
-    private BlobId blobId;
+    // transient will prevent serialization
+    private transient BlobId blobId;
     private FileCategory category;
     private String mediaType;
     private Integer createUserId;
@@ -42,7 +44,7 @@ public class FileStorageObject {
     private Integer updateUserId;
     private Instant updateDate;
     // only populated when using `fetch` methods in service class
-    private InputStream uploadedFile;
+    private transient InputStream uploadedFile;
 
     public Integer getFileStorageObjectId() {
         return fileStorageObjectId;
