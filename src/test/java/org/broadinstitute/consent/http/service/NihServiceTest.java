@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
@@ -52,10 +53,14 @@ public class NihServiceTest {
         service = new NihService(researcherService, userDAO, nihServiceDAO);
     }
 
-    @Test (expected = NotFoundException.class)
+    @Test
     public void testAuthenticateNih_InvalidUser() {
         initService();
-        service.authenticateNih(nihUserAccount, new AuthUser("test@test.com"), 1);
+        try {
+            service.authenticateNih(nihUserAccount, new AuthUser("test@test.com"), 1);
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFoundException);
+        }
     }
 
     @Test
@@ -77,36 +82,52 @@ public class NihServiceTest {
         }
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test
     public void testAuthenticateNih_BadRequest() {
         User user = new User();
         user.setUserId(1);
         when(userDAO.findUserById(any())).thenReturn(user);
         nihUserAccount.setNihUsername("");
         initService();
-        service.authenticateNih(nihUserAccount, authUser, 1);
+        try {
+            service.authenticateNih(nihUserAccount, authUser, 1);
+        } catch (Exception e) {
+            assertTrue(e instanceof BadRequestException);
+        }
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test
     public void testAuthenticateNih_BadRequestNullAccount() {
         initService();
-        service.authenticateNih(null, authUser, 1);
+        try {
+            service.authenticateNih(null, authUser, 1);
+        } catch (Exception e) {
+            assertTrue(e instanceof BadRequestException);
+        }
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test
     public void testAuthenticateNih_BadRequestNullAccountStatus() {
         NIHUserAccount account = new NIHUserAccount();
         account.setEraExpiration("test");
         initService();
-        service.authenticateNih(account, authUser, 1);
+        try {
+            service.authenticateNih(account, authUser, 1);
+        } catch (Exception e) {
+            assertTrue(e instanceof BadRequestException);
+        }
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test
     public void testAuthenticateNih_BadRequestNullAccountExpiration() {
         NIHUserAccount account = new NIHUserAccount();
         account.setStatus(true);
         initService();
-        service.authenticateNih(account, authUser, 1);
+        try {
+            service.authenticateNih(account, authUser, 1);
+        } catch (Exception e) {
+            assertTrue(e instanceof BadRequestException);
+        }
     }
 
     @Test
