@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
@@ -70,6 +71,7 @@ public class NihAccountResourceTest {
 
     @Test
     public void testRegisterResearcherNullAccountError() {
+        doThrow(new BadRequestException()).when(nihService).validateNihUserAccount(any(), any());
         resource = new NihAccountResource(nihService, userService);
         Response response = resource.registerResearcher(null, authUser);
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());

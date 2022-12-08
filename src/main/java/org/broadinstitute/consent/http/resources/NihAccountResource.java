@@ -2,21 +2,20 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.util.List;
-import java.util.Objects;
-import javax.annotation.security.PermitAll;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
+
+import javax.annotation.security.PermitAll;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Path("api/nih")
 public class NihAccountResource extends Resource {
@@ -36,11 +35,6 @@ public class NihAccountResource extends Resource {
     public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser authUser) {
         try {
             nihService.validateNihUserAccount(nihAccount, authUser);
-            logWarn("Invalid NIH account information for user: " + authUser.getEmail());
-        } catch (BadRequestException e) {
-            return createExceptionResponse(e);
-        }
-        try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, authUser, user.getUserId());
             return Response.ok(authUserProps).build();

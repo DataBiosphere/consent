@@ -32,7 +32,7 @@ public class NihService implements ConsentLogger {
         this.serviceDAO = serviceDAO;
     }
 
-    public void validateNihUserAccount(NIHUserAccount nihAccount, AuthUser authUser) {
+    public void validateNihUserAccount(NIHUserAccount nihAccount, AuthUser authUser) throws BadRequestException {
         if (Objects.isNull(nihAccount) || Objects.isNull(nihAccount.getStatus()) || Objects.isNull(nihAccount.getEraExpiration())) {
             logWarn("Invalid NIH Account for user: " + authUser.getEmail());
             throw new BadRequestException("Invalid NIH Authentication for user : " + authUser.getEmail());
