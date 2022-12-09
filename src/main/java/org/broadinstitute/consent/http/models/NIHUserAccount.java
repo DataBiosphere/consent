@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 
 import java.util.ArrayList;
@@ -10,48 +8,44 @@ import java.util.Map;
 
 public class NIHUserAccount {
 
-    @JsonProperty("linkedNihUsername")
-    private String nihUsername;
+    private String linkedNihUsername;
 
-    @JsonProperty("datasetPermissions")
     private ArrayList datasetPermissions;
 
-    @JsonProperty("linkExpireTime")
-    private String eraExpiration;
+    private String linkExpireTime;
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Boolean status;
 
     public NIHUserAccount() {}
 
-    public NIHUserAccount(String nihUsername, ArrayList datasetPermissions, String eraExpiration, Boolean status) {
-        this.nihUsername = nihUsername;
+    public NIHUserAccount(String linkedNihUsername, ArrayList datasetPermissions, String linkExpireTime, Boolean status) {
+        this.linkedNihUsername = linkedNihUsername;
         this.datasetPermissions = datasetPermissions;
-        this.eraExpiration = eraExpiration;
+        this.linkExpireTime = linkExpireTime;
         this.status = status;
     }
 
     public Map<String, String> getNihMap() {
         Map<String, String> nihComponents = new HashMap<>();
         nihComponents.put(UserFields.ERA_STATUS.getValue(), Boolean.TRUE.toString());
-        nihComponents.put(UserFields.ERA_EXPIRATION_DATE.getValue(), this.eraExpiration);
+        nihComponents.put(UserFields.ERA_EXPIRATION_DATE.getValue(), this.linkExpireTime);
         return nihComponents;
     }
 
-    public String getNihUsername() {
-        return nihUsername;
+    public String getLinkedNihUsername() {
+        return linkedNihUsername;
     }
 
-    public void setNihUsername(String nihUsername) {
-        this.nihUsername = nihUsername;
+    public void setLinkedNihUsername(String linkedNihUsername) {
+        this.linkedNihUsername = linkedNihUsername;
     }
 
-    public String getEraExpiration() {
-        return eraExpiration;
+    public String getLinkExpireTime() {
+        return linkExpireTime;
     }
 
-    public void setEraExpiration(String eraExpiration) {
-        this.eraExpiration = eraExpiration;
+    public void setLinkExpireTime(String linkExpireTime) {
+        this.linkExpireTime = linkExpireTime;
     }
 
 

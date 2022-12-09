@@ -29,12 +29,12 @@ public class NihService {
     }
 
     public List<UserProperty> authenticateNih(NIHUserAccount nihAccount, AuthUser authUser, Integer userId) throws BadRequestException {
-        if (StringUtils.isNotEmpty(nihAccount.getNihUsername()) && !nihAccount.getNihUsername().isEmpty()) {
-            nihAccount.setEraExpiration(generateEraExpirationDates());
+        if (StringUtils.isNotEmpty(nihAccount.getLinkedNihUsername()) && !nihAccount.getLinkedNihUsername().isEmpty()) {
+            nihAccount.setLinkExpireTime(generateEraExpirationDates());
             nihAccount.setStatus(true);
             List<UserProperty> updatedProps = researcherService.updateProperties(nihAccount.getNihMap(), authUser, false);
-            libraryCardDAO.updateEraCommonsForUser(userId, nihAccount.getNihUsername());
-            userDAO.updateEraCommonsId(userId, nihAccount.getNihUsername());
+            libraryCardDAO.updateEraCommonsForUser(userId, nihAccount.getLinkedNihUsername());
+            userDAO.updateEraCommonsId(userId, nihAccount.getLinkedNihUsername());
             return updatedProps;
         } else {
             throw new BadRequestException("Invalid NIH UserName for user : " + authUser.getEmail());

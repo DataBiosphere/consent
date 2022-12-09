@@ -79,7 +79,7 @@ public class NihServiceTest {
 
     @Test (expected = BadRequestException.class)
     public void testAuthenticateNih_BadRequest() {
-        nihUserAccount.setNihUsername("");
+        nihUserAccount.setLinkedNihUsername("");
         initService();
         service.authenticateNih(nihUserAccount, authUser, 1);
     }
