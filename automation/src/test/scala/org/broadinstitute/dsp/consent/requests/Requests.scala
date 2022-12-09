@@ -332,7 +332,6 @@ object Requests {
 
   object PendingCases {
     val consentPendingResponse: String = "consentPendingResponse"
-    val dataRequestPendingResponse: String = "dataRequestPendingResponse"
 
     def getPendingCasesByUserId(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get Pending Cases")
