@@ -9,6 +9,8 @@ import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -33,11 +35,11 @@ public class GsonUtilTest {
 
         String instantAsJsonString = gson.toJson(instant);
 
-        assertEquals("\"" + instant.toString() + "\"", instantAsJsonString);
+        assertEquals(Long.toString(instant.toEpochMilli()), instantAsJsonString);
 
         Instant parsed = gson.fromJson(instantAsJsonString, Instant.class);
 
-        assertEquals(instant, parsed);
+        assertEquals(instant.truncatedTo(ChronoUnit.MILLIS), parsed);
     }
 
     @Test
@@ -70,13 +72,13 @@ public class GsonUtilTest {
 
         JsonObject parsedJsonObj = gson.fromJson(fsoAsJsonString, JsonObject.class);
 
-        assertEquals(fso.getCreateDate().toString(), parsedJsonObj.get("createDate").getAsString());
+        assertEquals(fso.getCreateDate().toEpochMilli(), parsedJsonObj.get("createDate").getAsLong());
         assertEquals(fso.getBlobId().toGsUtilUri(), parsedJsonObj.get("blobId").getAsString());
         assertEquals(fso.getFileName(), parsedJsonObj.get("fileName").getAsString());
 
         FileStorageObject parsedFso = gson.fromJson(fsoAsJsonString, FileStorageObject.class);
 
-        assertEquals(fso.getCreateDate(), parsedFso.getCreateDate());
+        assertEquals(fso.getCreateDate().truncatedTo(ChronoUnit.MILLIS), parsedFso.getCreateDate());
         assertEquals(fso.getBlobId(), parsedFso.getBlobId());
         assertEquals(fso.getFileName(), parsedFso.getFileName());
     }
