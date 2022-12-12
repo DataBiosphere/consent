@@ -23,12 +23,6 @@ properties:
   deletable:
     type: boolean
     description: Describes if this DataSet can be deleted (This information is only given to the Admin).
-  sharingPlanDocument:
-    type: string
-    description: The sharing plan document location
-  sharingPlanDocumentName:
-    type: string
-    description: The sharing plan document name
   properties:
     type: array
     items:
@@ -77,4 +71,5 @@ properties:
     description: DAC approval/disapproval for this dataset
   nihCertificationFile:
     $ref: './FileStorageObject.yaml'
-
+  alternativeDataSharingPlanFile:
+    $ref: './FileStorageObject.yaml'
