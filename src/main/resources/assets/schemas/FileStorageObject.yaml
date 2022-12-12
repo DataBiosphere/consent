@@ -9,9 +9,6 @@ properties:
   fileName:
     type: string
     description: Name of the file
-  blobId:
-    type: string
-    description: GCS URI of the file, e.g. 'gs://bucket/name'
   category:
     type: string
     enum: [irbCollaborationLetter, dataUseLetter, alternativeDataSharingPlan, nihInstitutionalCertification]
