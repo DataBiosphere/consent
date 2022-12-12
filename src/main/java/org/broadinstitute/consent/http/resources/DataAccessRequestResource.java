@@ -26,12 +26,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Logger;
 
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
 
-    private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
     private final DataAccessRequestService dataAccessRequestService;
     private final UserService userService;
 
@@ -143,7 +141,7 @@ public class DataAccessRequestResource extends Resource {
         if (Objects.nonNull(dataAccessRequest.getUserId()) && dataAccessRequest.getUserId() > 0) {
             super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
         } else {
-            logger.warning("DataAccessRequest '" + referenceId + "' has an invalid userId" );
+            logWarn("DataAccessRequest '" + referenceId + "' has an invalid userId" );
             super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
         }
     }
