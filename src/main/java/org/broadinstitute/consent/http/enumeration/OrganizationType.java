@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.enumeration;
 
-import liquibase.hub.model.Organization;
-
 public enum OrganizationType {
     FOR_PROFIT("For-Profit"),
     NON_PROFIT("Nonprofit");

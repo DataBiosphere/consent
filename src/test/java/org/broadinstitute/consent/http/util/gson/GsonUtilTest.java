@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.util.gson;
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
@@ -53,31 +52,5 @@ public class GsonUtilTest {
         BlobId parsed = gson.fromJson(blobIdAsJsonString, BlobId.class);
 
         assertEquals(id, parsed);
-    }
-
-    @Test
-    public void testBuildJsonWithCustomObjects() {
-        Gson gson = GsonUtil.buildGson();
-
-        FileStorageObject fso = new FileStorageObject();
-        fso.setCreateDate(Instant.now());
-        fso.setBlobId(BlobId.of(
-                RandomStringUtils.randomAlphabetic(5),
-                RandomStringUtils.randomAlphabetic(10)));
-        fso.setFileName(RandomStringUtils.randomAlphanumeric(20));
-
-        String fsoAsJsonString = gson.toJson(fso);
-
-        JsonObject parsedJsonObj = gson.fromJson(fsoAsJsonString, JsonObject.class);
-
-        assertEquals(fso.getCreateDate().toString(), parsedJsonObj.get("createDate").getAsString());
-        assertEquals(fso.getBlobId().toGsUtilUri(), parsedJsonObj.get("blobId").getAsString());
-        assertEquals(fso.getFileName(), parsedJsonObj.get("fileName").getAsString());
-
-        FileStorageObject parsedFso = gson.fromJson(fsoAsJsonString, FileStorageObject.class);
-
-        assertEquals(fso.getCreateDate(), parsedFso.getCreateDate());
-        assertEquals(fso.getBlobId(), parsedFso.getBlobId());
-        assertEquals(fso.getFileName(), parsedFso.getFileName());
     }
 }

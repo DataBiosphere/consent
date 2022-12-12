@@ -75,3 +75,6 @@ properties:
   dacApproval:
     type: boolean
     description: DAC approval/disapproval for this dataset
+  nihCertificationFile:
+    $ref: './FileStorageObject.yaml'
+

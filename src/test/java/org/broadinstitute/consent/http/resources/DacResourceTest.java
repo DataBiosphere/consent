@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -55,7 +56,7 @@ public class DacResourceTest {
 
     private final AuthUser authUser = new AuthUser("test@test.com");
 
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtil.buildGson();
 
     @Before
     public void setUp() {
@@ -111,7 +112,7 @@ public class DacResourceTest {
 
         Response response = dacResource.findAllDacDatasets(authUser, 1);
         assertEquals(200, response.getStatus());
-        assertEquals(List.of(ds), response.getEntity());
+        assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
     }
 
     @Test(expected = NotFoundException.class)
@@ -148,7 +149,7 @@ public class DacResourceTest {
 
         Response response = dacResource.findAllDacDatasets(authUser, 1);
         assertEquals(200, response.getStatus());
-        assertEquals(List.of(ds), response.getEntity());
+        assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
     }
 
     @Test(expected = NotAuthorizedException.class)
@@ -519,8 +520,7 @@ public class DacResourceTest {
             .thenReturn(dataset);
         Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        Boolean approval = ((Dataset) (response.getEntity())).getDacApproval();
-        assertTrue(approval);
+        assertEquals(GsonUtil.buildGson().toJson(dataset), response.getEntity());
     }
 
     @Test
@@ -541,8 +541,7 @@ public class DacResourceTest {
                 .thenReturn(datasetResponse);
         Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        Boolean approval = ((Dataset)(response.getEntity())).getDacApproval();
-        assertTrue(approval);
+        assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
     }
 
     @Test
@@ -565,7 +564,7 @@ public class DacResourceTest {
     
 
     private JsonArray getListFromEntityString(String str) {
-        return new Gson().fromJson(str, JsonArray.class);
+        return GsonUtil.buildGson().fromJson(str, JsonArray.class);
     }
 
     private Dac buildDac(User chair) {
