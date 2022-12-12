@@ -89,10 +89,6 @@ public class ConsentService {
         return consent;
     }
 
-    public Consent getConsentFromDatasetID(Integer datasetId) {
-        return consentDAO.findConsentFromDatasetID(datasetId);
-    }
-
     public void delete(String id) throws IllegalArgumentException {
         checkConsentExists(id);
         List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(id);

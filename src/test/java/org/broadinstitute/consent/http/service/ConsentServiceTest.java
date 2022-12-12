@@ -119,17 +119,6 @@ public class ConsentServiceTest {
     }
 
     @Test
-    public void testGetConsentFromDatasetID() {
-        when(consentDAO.findConsentFromDatasetID(any()))
-                .thenReturn(this.getTestConsent());
-
-        initService();
-
-        Consent consent = service.getConsentFromDatasetID(1);
-        Assert.assertNotNull(consent);
-    }
-
-    @Test
     public void testUpdateConsentDul() {
         when(consentDAO.checkConsentById("test consent"))
                 .thenReturn("test consent");

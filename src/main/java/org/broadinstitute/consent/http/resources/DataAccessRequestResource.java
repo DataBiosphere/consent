@@ -5,15 +5,12 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 
-import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
@@ -30,52 +27,18 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
 
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
     private final DataAccessRequestService dataAccessRequestService;
-    private final ConsentService consentService;
     private final UserService userService;
 
     @Inject
-    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, UserService userService, ConsentService consentService) {
+    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, UserService userService) {
         this.dataAccessRequestService = dataAccessRequestService;
-        this.consentService = consentService;
         this.userService = userService;
-    }
-
-    /**
-     * Note that this method assumes a single consent for a DAR. The UI doesn't curently handle the
-     * case where there are multiple datasets associated to a DAR.
-     * See https://broadinstitute.atlassian.net/browse/BTRX-717 to handle that condition.
-     *
-     * @param id The Data Access Request ID
-     * @return consent The consent associated to the first dataset id the DAR refers to.
-     */
-    @GET
-    @Path("/find/{id}/consent")
-    @Produces("application/json")
-    @PermitAll
-    public Consent describeConsentForDAR(@Auth AuthUser authUser, @PathParam("id") String id) {
-        validateAuthedRoleUser(
-            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-                .collect(Collectors.toList()),
-            authUser, id);
-        Optional<Integer> dataSetId = getDatasetIdForDarId(id);
-        Consent c;
-        if (dataSetId.isPresent()) {
-            c = consentService.getConsentFromDatasetID(dataSetId.get());
-            if (c == null) {
-                throw new NotFoundException("Unable to find the consent related to the datasetId present in the DAR.");
-            }
-        } else {
-            throw new NotFoundException("Unable to find the datasetId related to the DAR.");
-        }
-        return c;
     }
 
     @GET
@@ -135,21 +98,6 @@ public class DataAccessRequestResource extends Resource {
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
-    }
-
-    /**
-     * @param id The DAR document id
-     * @return Optional value of the referenced dataset id.
-     */
-    private Optional<Integer> getDatasetIdForDarId(String id) {
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-        List<Integer> datasetIdList = (Objects.nonNull(dar.getData())) ?
-                dar.getDatasetIds() :
-                Collections.emptyList();
-        if (datasetIdList == null || datasetIdList.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(datasetIdList.get(0));
     }
 
     static class UnreviewedCases {
