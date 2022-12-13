@@ -31,4 +31,6 @@ public interface AcknowledgementDAO extends Transactional<AcknowledgementDAO> {
           + " FROM acknowledgement WHERE user_id = :userId and ack_key IN (<key_list>)")
     List<Acknowledgement> findAcknowledgementsForUser(@BindList("key_list") List<String> keys, @Bind("userId") Integer userId);
 
+    @SqlUpdate("DELETE FROM acknowledgement where user_id = :userId AND ack_key = :key")
+    void deleteAcknowledgement(@Bind("key") String key, @Bind("userId") Integer userId);
 }

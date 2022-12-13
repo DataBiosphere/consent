@@ -53,6 +53,8 @@ public class Dataset {
 
     private String sharingPlanDocumentName;
 
+    private FileStorageObject nihInstitutionalCertificationFile;
+
     private Set<DatasetProperty> properties;
 
     private Boolean dacApproval;
@@ -370,5 +372,13 @@ public class Dataset {
     @Override
     public int hashCode() {
         return com.google.common.base.Objects.hashCode(dataSetId);
+    }
+
+    public FileStorageObject getNihInstitutionalCertificationFile() {
+        return nihInstitutionalCertificationFile;
+    }
+
+    public void setNihInstitutionalCertificationFile(FileStorageObject nihInstitutionalCertificationFile) {
+        this.nihInstitutionalCertificationFile = nihInstitutionalCertificationFile;
     }
 }

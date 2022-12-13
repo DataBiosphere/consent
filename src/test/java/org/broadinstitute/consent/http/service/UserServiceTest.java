@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -33,6 +34,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -70,6 +72,9 @@ public class UserServiceTest {
     @Mock
     private SamDAO samDAO;
 
+    @Mock
+    private UserServiceDAO userServiceDAO;
+
     private UserService service;
 
     @Before
@@ -78,7 +83,7 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO, samDAO);
+        service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO, samDAO, userServiceDAO);
     }
 
     @Test
@@ -459,7 +464,7 @@ public class UserServiceTest {
             .setUserStatusInfo(info);
         when(userDAO.findUserById(anyInt())).thenReturn(user);
         when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
-        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt(), any())).thenReturn(List.of(new UserProperty()));
+        when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(List.of(new UserProperty()));
 
         initService();
         JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
@@ -482,7 +487,7 @@ public class UserServiceTest {
             .setUserStatusInfo(info);
         when(userDAO.findUserById(anyInt())).thenReturn(user);
         when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
-        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt(), any())).thenReturn(List.of(new UserProperty()));
+        when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(List.of(new UserProperty()));
 
         initService();
         JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
@@ -559,6 +564,57 @@ public class UserServiceTest {
         verify(userRoleDAO, times(1)).insertUserRoles(any(), any());
         verify(libraryCardDAO, times(1)).findAllLibraryCardsByUserEmail(any());
         verify(userDAO, times(1)).insertUser(any(), any(), any());
+    }
+
+    @Test
+    public void insertUserRoleAndInstitution() {
+        boolean encounteredException = false;
+        Integer institutionId = 1;
+        User testUser = generateUserWithoutInstitution();
+        User returnUser = new User();
+        returnUser.setUserId(testUser.getUserId());
+        returnUser.setEmail(testUser.getEmail());
+        returnUser.setDisplayName(testUser.getDisplayName());
+        returnUser.setInstitutionId(1);
+        UserRole role = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        returnUser.addRole(role);
+        assertNotEquals(testUser.getInstitutionId(), returnUser.getInstitutionId());
+        doNothing().when(userServiceDAO).insertRoleAndInstitutionTxn(any(), any(), any());
+        when(userDAO.findUserById(anyInt())).thenReturn(returnUser);
+        initService();
+        try {
+            service.insertRoleAndInstitutionForUser(role, institutionId, testUser.getUserId());
+        } catch (Exception e) {
+            encounteredException = true;
+        }
+        User fetchedUser = service.findUserById(testUser.getUserId());
+        assertEquals(fetchedUser.getUserId(), testUser.getUserId());
+        assertEquals(fetchedUser.getInstitutionId(), returnUser.getInstitutionId());
+        assertFalse(encounteredException);
+    }
+
+    @Test
+    public void insertUserRoleAndInstitution_FailingTxn(){
+        boolean encounteredException = false;
+        Integer institutionId = 1;
+        User testUser = generateUserWithoutInstitution();
+        assertNull(testUser.getInstitutionId());
+        UserRole role = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        when(userDAO.findUserById(anyInt())).thenReturn(testUser);
+        doThrow(new RuntimeException("txn error")).when(userServiceDAO).insertRoleAndInstitutionTxn(any(), any(), any());
+        initService();
+        try {
+            service.insertRoleAndInstitutionForUser(role, institutionId, testUser.getUserId());
+        } catch(Exception e) {
+            encounteredException = true;
+        }
+        assertTrue(encounteredException);
+    }
+
+    private User generateUserWithoutInstitution() {
+        User u = generateUser();
+        u.setInstitutionId(null);
+        return u;
     }
 
     private User generateUser() {

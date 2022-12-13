@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -113,7 +114,7 @@ public class TDRResourceTest {
         Response r = resource.getDatasetByIdentifier(new AuthUser(), "DUOS-00003");
 
         assertEquals(200, r.getStatus());
-        assertEquals(d, r.getEntity());
+        assertEquals(GsonUtil.buildGson().toJson(d), r.getEntity());
     }
 
 

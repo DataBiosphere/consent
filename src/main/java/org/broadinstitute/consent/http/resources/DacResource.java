@@ -199,7 +199,7 @@ public class DacResource extends Resource {
         Dac dac = findDacById(dacId);
         checkUserRoleInDac(dac, user);
         List<Dataset> datasets = dacService.findDatasetsByDacId(dacId);
-        return Response.ok().entity(datasets).build();
+        return Response.ok().entity(unmarshal(datasets)).build();
     }
 
     @GET
@@ -236,7 +236,7 @@ public class DacResource extends Resource {
                 throw new BadRequestException("Invalid request payload");
             }
             Dataset updatedDataset = datasetService.approveDataset(dataset, user, payload.getApproval());
-            return Response.ok().entity(updatedDataset).build();
+            return Response.ok().entity(unmarshal(updatedDataset)).build();
         } catch(Exception e) {
             return createExceptionResponse(e);
         }

@@ -120,11 +120,11 @@ public class DAOContainer {
     this.matchDAO = matchDAO;
   }
 
-  public UserPropertyDAO getResearcherPropertyDAO() {
+  public UserPropertyDAO getUserPropertyDAO() {
     return userPropertyDAO;
   }
 
-  public void setResearcherPropertyDAO(
+  public void setUserPropertyDAO(
       UserPropertyDAO userPropertyDAO) {
     this.userPropertyDAO = userPropertyDAO;
   }

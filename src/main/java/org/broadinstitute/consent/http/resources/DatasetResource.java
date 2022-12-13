@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
@@ -174,7 +175,7 @@ public class DatasetResource extends Resource {
             // Generate datasets from registration
             List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, formDataBodyPart);
             URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
-            return Response.created(uri).entity(datasets).build();
+            return Response.created(uri).entity(unmarshal(datasets)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -277,7 +278,7 @@ public class DatasetResource extends Resource {
             if (Objects.isNull(dataset)) {
                 throw new NotFoundException("Could not find the dataset with id: " + datasetId.toString());
             }
-            return Response.ok(dataset, MediaType.APPLICATION_JSON).build();
+            return Response.ok(unmarshal(dataset)).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
@@ -301,7 +302,7 @@ public class DatasetResource extends Resource {
                                 + String.join(",", differences.stream().map((i) -> i.toString()).collect(Collectors.toSet())));
 
             }
-            return Response.ok(datasets).build();
+            return Response.ok(unmarshal(datasets)).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
@@ -446,7 +447,7 @@ public class DatasetResource extends Resource {
             User dacUser = userService.findUserByEmail(authUser.getEmail());
             Integer dacUserId = dacUser.getUserId();
             List<Map<String, String>> datasets = datasetService.autoCompleteDatasets(partial, dacUserId);
-            return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
+            return Response.ok(unmarshal(datasets), MediaType.APPLICATION_JSON).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -460,7 +461,7 @@ public class DatasetResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<Dataset> datasets = datasetService.searchDatasets(query, user);
-            return Response.ok().entity(datasets).build();
+            return Response.ok().entity(unmarshal(datasets)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

@@ -1,13 +1,20 @@
 package org.broadinstitute.consent.http.enumeration;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public enum FileCategory {
+
+    @SerializedName("irbCollaborationLetter")
     IRB_COLLABORATION_LETTER("irbCollaborationLetter"),
+    @SerializedName("dataUseLetter")
     DATA_USE_LETTER("dataUseLetter"),
+    @SerializedName("alternativeDataSharingPlan")
     ALTERNATIVE_DATA_SHARING_PLAN("alternativeDataSharingPlan"),
+    @SerializedName("nihInstitutionalCertification")
     NIH_INSTITUTIONAL_CERTIFICATION("nihInstitutionalCertification");
 
     private final String value;

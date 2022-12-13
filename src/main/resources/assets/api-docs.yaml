@@ -1819,106 +1819,7 @@ paths:
         500:
           description: Server error.
   /api/user/{userId}/{roleId}:
-    put:
-      summary: Add a role to a user
-      description: Add a role to a user id. Available to Admin roles
-      parameters:
-        - name: userId
-          in: path
-          description: The id of the user
-          required: true
-          schema:
-            type: number
-        - name: roleId
-          in: path
-          description: |
-            The id of the role. Members and Chairpersons cannot be added this way.
-            See DAC endpoints for those roles.
-            ALUMNI: 3
-            ADMIN: 4
-            RESEARCHER: 5
-            DATAOWNER: 6
-            SIGNINGOFFICIAL: 7
-            DATASUBMITTER: 8
-            ITDIRECTOR: 9
-          required: true
-          schema:
-            type: number
-            nullable: false
-            enum:
-              - 3
-              - 4
-              - 5
-              - 6
-              - 7
-              - 8
-              - 9
-      tags:
-        - User
-      responses:
-        200:
-          description: Updated user along with researcher properties and library cards
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        304:
-          description: Not modified
-        400:
-          description: Bad Request
-        404:
-          description: User not found
-        500:
-          description: Server error.
-    delete:
-      summary: Delete a role from a user
-      description: Delete a role from a user, specified by given userId. Available to Admin roles
-      parameters:
-        - name: userId
-          in: path
-          description: The id of the user
-          required: true
-          schema:
-            type: number
-        - name: roleId
-          in: path
-          description: |
-            The id of the role. Members and Chairpersons cannot be deleted this way.
-            See DAC endpoints for those roles.
-            ALUMNI: 3
-            ADMIN: 4
-            RESEARCHER: 5
-            DATAOWNER: 6
-            SIGNINGOFFICIAL: 7
-            DATASUBMITTER: 8
-            ITDIRECTOR: 9
-          required: true
-          schema:
-            type: number
-            nullable: false
-            enum:
-              - 3
-              - 4
-              - 5
-              - 6
-              - 7
-              - 8
-              - 9
-      tags:
-        - User
-      responses:
-        200:
-          description: Updated user along with researcher properties and library cards
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        400:
-          description: Bad Request
-        404:
-          description: User not found
-        500:
-          description: Server error.
+    $ref: './paths/userRole.yaml'
   /api/user/{email}:
     delete:
       summary: Delete User by email
@@ -1943,6 +1844,31 @@ paths:
     get:
       summary: Get Acknowledgement by key
       description: Obtains a specific acknowledgement by acknowledgement key.
+      parameters:
+        - name: key
+          in: path
+          description: The name of the key.
+          required: true
+          schema:
+            type: string
+      tags:
+        - User
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Acknowledgement'
+        401:
+          description: Unauthorized, log in and try the operation again.
+        404:
+          description: No acknowledgement found for the given key.
+        500:
+          description: Error processing the request.
+    delete:
+      summary: ADMIN ONLY - Delete Acknowledgement by key
+      description: Deletes a specific acknowledgement for the current user by acknowledgement key.  Returns the deleted acknowledgement.
       parameters:
         - name: key
           in: path

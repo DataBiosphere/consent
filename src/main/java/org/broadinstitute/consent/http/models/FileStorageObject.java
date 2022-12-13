@@ -1,18 +1,39 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.cloud.storage.BlobId;
+import com.google.gson.annotations.Expose;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class FileStorageObject {
+
+    public static final String QUERY_FIELDS_WITH_FSO_PREFIX =
+            """
+            fso.file_storage_object_id AS fso_file_storage_object_id,
+            fso.entity_id AS fso_entity_id,
+            fso.file_name AS fso_file_name,
+            fso.category AS fso_category,
+            fso.gcs_file_uri AS fso_gcs_file_uri,
+            fso.media_type AS fso_media_type,
+            fso.create_date AS fso_create_date,
+            fso.create_user_id AS fso_create_user_id,
+            fso.update_date AS fso_update_date,
+            fso.update_user_id AS fso_update_user_id,
+            fso.deleted AS fso_deleted,
+            fso.delete_user_id AS fso_delete_user_id
+            """;
 
     private Integer fileStorageObjectId;
     private String entityId;
     private String fileName;
-    private BlobId blobId;
+    // transient will prevent serialization
+    private transient BlobId blobId;
     private FileCategory category;
     private String mediaType;
     private Integer createUserId;
@@ -23,7 +44,7 @@ public class FileStorageObject {
     private Integer updateUserId;
     private Instant updateDate;
     // only populated when using `fetch` methods in service class
-    private InputStream uploadedFile;
+    private transient InputStream uploadedFile;
 
     public Integer getFileStorageObjectId() {
         return fileStorageObjectId;
@@ -135,6 +156,21 @@ public class FileStorageObject {
 
     public void setBlobId(BlobId blobId) {
         this.blobId = blobId;
+    }
+
+    /**
+     * Computes the last time this file was changed, be it created, updated, or deleted.
+     * @return The last time the file has been changed.
+     */
+    public Instant getLatestUpdateDate() {
+        return Stream.of(
+                        this.getCreateDate(),
+                        this.getUpdateDate(),
+                        this.getDeleteDate())
+                .filter(Objects::nonNull)
+                .max(Instant::compareTo)
+                // there should always at least be a create date, but if somehow not, send very old date
+                .orElse(Instant.MIN);
     }
 
     @Override

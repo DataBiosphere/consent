@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
@@ -20,6 +21,7 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -642,7 +644,7 @@ public class DatasetResourceTest {
         Response response = resource.searchDatasets(authUser, "search query");
 
         assertEquals(200, response.getStatus());
-        assertEquals(List.of(ds), response.getEntity());
+        assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
     }
 
     @Test
@@ -661,11 +663,10 @@ public class DatasetResourceTest {
         ds.setDataSetId(1);
         ds.setName("asdfasdfasdfasdfasdfasdf");
         when(datasetService.getDataset(1)).thenReturn(ds);
-
         initResource();
         Response response = resource.getDataset(1);
         assertEquals(200, response.getStatus());
-        assertEquals(ds, response.getEntity());
+        assertEquals(GsonUtil.buildGson().toJson(ds), response.getEntity());
     }
 
     @Test
@@ -695,7 +696,7 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDatasets(List.of(1,2,3));
         assertEquals(200, response.getStatus());
-        assertEquals(List.of(ds1,ds2,ds3), response.getEntity());
+        assertEquals(GsonUtil.buildGson().toJson(List.of(ds1,ds2,ds3)), response.getEntity());
     }
 
     @Test
@@ -716,7 +717,7 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDatasets(List.of(1,1,2,2,3,3));
         assertEquals(200, response.getStatus());
-        assertEquals(List.of(ds1,ds2,ds3), response.getEntity());
+        assertEquals(GsonUtil.buildGson().toJson(List.of(ds1,ds2,ds3)), response.getEntity());
     }
 
     @Test

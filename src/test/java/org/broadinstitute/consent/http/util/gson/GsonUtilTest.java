@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.util.gson;
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
@@ -82,4 +81,5 @@ public class GsonUtilTest {
         assertEquals(fso.getBlobId(), parsedFso.getBlobId());
         assertEquals(fso.getFileName(), parsedFso.getFileName());
     }
+
 }

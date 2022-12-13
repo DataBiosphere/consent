@@ -180,14 +180,14 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         assertTrue(altDataSharingFiles.contains(file3));
     }
 
-    protected FileStorageObject createFileStorageObject() {
+    private FileStorageObject createFileStorageObject() {
         FileCategory category = List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
         String entityId = RandomStringUtils.randomAlphabetic(10);
 
         return createFileStorageObject(entityId, category);
     }
 
-    protected FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
+    private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
         String fileName = RandomStringUtils.randomAlphabetic(10);
         String bucketName = RandomStringUtils.randomAlphabetic(10);
         String gcsFileUri = RandomStringUtils.randomAlphabetic(10);

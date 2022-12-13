@@ -28,6 +28,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -46,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -205,7 +207,7 @@ public class UserResource extends Resource {
                 throw new BadRequestException("Cannot change user's roles.");
             }
 
-            if (Objects.nonNull(userUpdateFields.getInstitutionId()) && !canUpdateInstitution(user, userUpdateFields.getInstitutionId())) {
+            if (!canUpdateInstitution(user, userUpdateFields.getInstitutionId())) {
                 throw new BadRequestException("Cannot update user's institution id.");
             }
 
@@ -221,32 +223,54 @@ public class UserResource extends Resource {
     }
 
     private boolean canUpdateInstitution(User user, Integer newInstitutionId) {
-        if (Objects.nonNull(user.getInstitutionId()) && user.getInstitutionId().equals(newInstitutionId)) {
-            return true; // no op, no change
+        if ((!Objects.isNull(user.getUserId()) || !Objects.isNull(newInstitutionId)) && !Objects.equals(user.getInstitutionId(), newInstitutionId)) {
+            if (user.hasUserRole(UserRoles.ADMIN)) {
+                return true; // admins can do everything.
+            }
+
+            if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL) || user.hasUserRole(UserRoles.ITDIRECTOR)) {
+                // can only update institution if not set.
+                return Objects.isNull(user.getInstitutionId()) && Objects.nonNull(newInstitutionId);
+            }
+
+            return false;
+        } else {
+            return true; // no op, no change, supports keeping no institution set to no institution.
         }
 
-        if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL) || user.hasUserRole(UserRoles.ITDIRECTOR)) {
-            // can only update institution if not set.
-            return Objects.isNull(user.getInstitutionId());
-        }
-
-        return true;
     }
 
     @PUT
     @Path("/{userId}/{roleId}")
     @Produces("application/json")
-    @RolesAllowed({ADMIN})
+    @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
     public Response addRoleToUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
+        UserRoles targetRole = UserRoles.getUserRoleFromId(roleId);
+        if (Objects.isNull(targetRole)) {
+            return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST).build();
+        }
+        UserRole role = new UserRole(roleId, targetRole.getRoleName());
         try {
+            User activeUser = userService.findUserByEmail(authUser.getEmail());
             User user = userService.findUserById(userId);
             List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
-            if (UserRoles.isValidNonDACRoleId(roleId)) {
+            if (activeUser.hasUserRole(UserRoles.ADMIN) && UserRoles.isValidNonDACRoleId(roleId)) {
                 if (!currentUserRoleIds.contains(roleId)) {
-                    UserRole role = new UserRole(roleId, UserRoles.getUserRoleFromId(roleId).getRoleName());
                     userService.insertUserRoles(Collections.singletonList(role), user.getUserId());
-                    JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
-                    return Response.ok().entity(gson.toJson(userJson)).build();
+                    return getUserResponse(authUser, userId);
+                } else {
+                    return Response.notModified().build();
+                }
+            } else if (signingOfficialMeetsRequirements(roleId, activeUser, user)) {
+                // update the user role with the active user's institution id.
+                if (!currentUserRoleIds.contains(roleId)) {
+                    // update the user's institution if it was set to null and add the role.
+                    if (Optional.ofNullable(user.getInstitutionId()).isEmpty()) {
+                        userService.insertRoleAndInstitutionForUser(role, activeUser.getInstitutionId(), user.getUserId());
+                    } else {
+                        userService.insertUserRoles(Collections.singletonList(role), user.getUserId());
+                    }
+                    return getUserResponse(authUser, userId);
                 } else {
                     return Response.notModified().build();
                 }
@@ -258,28 +282,67 @@ public class UserResource extends Resource {
         }
     }
 
+    private static boolean signingOfficialMeetsRequirements(Integer roleId, User activeUser, User user) {
+        return activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
+                && Objects.nonNull(activeUser.getInstitutionId())
+                && UserRoles.isValidSoAdjustableRoleId(roleId)
+                && (Objects.equals(user.getInstitutionId(), activeUser.getInstitutionId()) ||
+                Optional.ofNullable(user.getInstitutionId()).isEmpty());
+    }
+
+    private Response getUserResponse(AuthUser authUser, Integer userId) {
+        JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
+        return Response.ok().entity(gson.toJson(userJson)).build();
+    }
+
     @DELETE
     @Path("/{userId}/{roleId}")
     @Produces("application/json")
-    @RolesAllowed({ADMIN})
+    @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
     public Response deleteRoleFromUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
+        UserRoles targetRole = UserRoles.getUserRoleFromId(roleId);
+        if (Objects.isNull(targetRole)) {
+            return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST).build();
+        }
         try {
+            User activeUser = userService.findUserByEmail(authUser.getEmail());
             User user = userService.findUserById(userId);
-            if (!UserRoles.isValidNonDACRoleId(roleId)) {
-                throw new BadRequestException("Invalid Role Id");
+            if (activeUser.hasUserRole(UserRoles.ADMIN)) {
+                if (!UserRoles.isValidNonDACRoleId(roleId)) {
+                    throw new BadRequestException("Invalid Role Id");
+                }
+                return doDelete(authUser, userId, roleId, activeUser, user);
+            } else if (activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+                if (!UserRoles.isValidSoAdjustableRoleId(roleId)) {
+                    throw new ForbiddenException("A Signing Official may only remove the following role ids: [6, 7, 8] ");
+                }
+                if (Objects.equals(user.getUserId(), activeUser.getUserId())
+                        && (UserRoles.getUserRoleFromId(roleId) == UserRoles.SIGNINGOFFICIAL)) {
+                    throw new BadRequestException("You cannot remove the SIGNINGOFFICIAL role from yourself.");
+                }
+                if (Objects.nonNull(activeUser.getInstitutionId())
+                        && Objects.equals(activeUser.getInstitutionId(), user.getInstitutionId())) {
+                    return doDelete(authUser, userId, roleId, activeUser, user);
+                } else {
+                    throw new ForbiddenException("Not authorized to remove roles");
+                }
+            } else {
+                throw new ForbiddenException("Not authorized to remove roles.");
             }
-            List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
-            if (!currentUserRoleIds.contains(roleId)) {
-                JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
-                return Response.ok().entity(gson.toJson(userJson)).build();
-            }
-            User auth = userService.findUserByEmail(authUser.getEmail());
-            userService.deleteUserRole(auth, userId, roleId);
-            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
-            return Response.ok().entity(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
+    }
+
+    private Response doDelete(AuthUser authUser, Integer userId, Integer roleId, User activeUser, User user) {
+        List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
+        if (!currentUserRoleIds.contains(roleId)) {
+            JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
+            return Response.ok().entity(gson.toJson(userJson)).build();
+        }
+        userService.deleteUserRole(activeUser, userId, roleId);
+        JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
+        return Response.ok().entity(gson.toJson(userJson)).build();
     }
 
     @POST
@@ -361,13 +424,31 @@ public class UserResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/acknowledgements/{key}")
     @PermitAll
-    public Response getUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key){
+    public Response getUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             Acknowledgement ack = acknowledgementService.findAcknowledgementForUserByKey(user, key);
             if (ack == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
+            return Response.ok().entity(ack).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path ("/acknowledgements/{key}")
+    @RolesAllowed(ADMIN)
+    public Response deleteUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            Acknowledgement ack = acknowledgementService.findAcknowledgementForUserByKey(user, key);
+            if (Objects.isNull(ack)) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            acknowledgementService.deleteAcknowledgementForUserByKey(user, key);
             return Response.ok().entity(ack).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
