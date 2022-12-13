@@ -464,7 +464,7 @@ public class UserServiceTest {
             .setUserStatusInfo(info);
         when(userDAO.findUserById(anyInt())).thenReturn(user);
         when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
-        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt(), any())).thenReturn(List.of(new UserProperty()));
+        when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(List.of(new UserProperty()));
 
         initService();
         JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
@@ -487,7 +487,7 @@ public class UserServiceTest {
             .setUserStatusInfo(info);
         when(userDAO.findUserById(anyInt())).thenReturn(user);
         when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
-        when(userPropertyDAO.findResearcherPropertiesByUser(anyInt(), any())).thenReturn(List.of(new UserProperty()));
+        when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(List.of(new UserProperty()));
 
         initService();
         JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
