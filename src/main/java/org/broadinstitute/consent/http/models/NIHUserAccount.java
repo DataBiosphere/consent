@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
+import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 
 import java.util.ArrayList;
@@ -8,44 +9,46 @@ import java.util.Map;
 
 public class NIHUserAccount {
 
-    private String linkedNihUsername;
+    @SerializedName("linkedNihUsername")
+    private String nihUsername;
 
     private ArrayList datasetPermissions;
 
-    private String linkExpireTime;
+    @SerializedName("linkExpireTime")
+    private String eraExpiration;
 
     private Boolean status;
 
     public NIHUserAccount() {}
 
-    public NIHUserAccount(String linkedNihUsername, ArrayList datasetPermissions, String linkExpireTime, Boolean status) {
-        this.linkedNihUsername = linkedNihUsername;
+    public NIHUserAccount(String nihUsername, ArrayList datasetPermissions, String eraExpiration, Boolean status) {
+        this.nihUsername = nihUsername;
         this.datasetPermissions = datasetPermissions;
-        this.linkExpireTime = linkExpireTime;
+        this.eraExpiration = eraExpiration;
         this.status = status;
     }
 
     public Map<String, String> getNihMap() {
         Map<String, String> nihComponents = new HashMap<>();
         nihComponents.put(UserFields.ERA_STATUS.getValue(), Boolean.TRUE.toString());
-        nihComponents.put(UserFields.ERA_EXPIRATION_DATE.getValue(), this.linkExpireTime);
+        nihComponents.put(UserFields.ERA_EXPIRATION_DATE.getValue(), this.eraExpiration);
         return nihComponents;
     }
 
-    public String getLinkedNihUsername() {
-        return linkedNihUsername;
+    public String getNihUsername() {
+        return nihUsername;
     }
 
-    public void setLinkedNihUsername(String linkedNihUsername) {
-        this.linkedNihUsername = linkedNihUsername;
+    public void setNihUsername(String nihUsername) {
+        this.nihUsername = nihUsername;
     }
 
-    public String getLinkExpireTime() {
-        return linkExpireTime;
+    public String getEraExpiration() {
+        return eraExpiration;
     }
 
-    public void setLinkExpireTime(String linkExpireTime) {
-        this.linkExpireTime = linkExpireTime;
+    public void setEraExpiration(String eraExpiration) {
+        this.eraExpiration = eraExpiration;
     }
 
 

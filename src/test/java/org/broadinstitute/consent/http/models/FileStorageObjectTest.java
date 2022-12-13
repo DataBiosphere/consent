@@ -11,6 +11,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 public class FileStorageObjectTest {
 
@@ -29,7 +30,7 @@ public class FileStorageObjectTest {
 
         assertEquals(3, fsoJsonObject.size());
         assertTrue(fsoJsonObject.has("createDate"));
-        assertEquals(fso.getCreateDate().toString(), fsoJsonObject.get("createDate").getAsString());
+        assertEquals(fso.getCreateDate().toEpochMilli(), fsoJsonObject.get("createDate").getAsLong());
         assertTrue(fsoJsonObject.has("fileName"));
         assertEquals(fso.getFileName(), fsoJsonObject.get("fileName").getAsString());
         assertTrue(fsoJsonObject.has("category"));

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.util.gson;
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
@@ -12,6 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class GsonUtilTest {
     @Test
@@ -72,13 +74,13 @@ public class GsonUtilTest {
         JsonObject parsedJsonObj = gson.fromJson(fsoAsJsonString, JsonObject.class);
 
         assertEquals(fso.getCreateDate().toEpochMilli(), parsedJsonObj.get("createDate").getAsLong());
-        assertEquals(fso.getBlobId().toGsUtilUri(), parsedJsonObj.get("blobId").getAsString());
+        assertNull(parsedJsonObj.get("blobId"));
         assertEquals(fso.getFileName(), parsedJsonObj.get("fileName").getAsString());
 
         FileStorageObject parsedFso = gson.fromJson(fsoAsJsonString, FileStorageObject.class);
 
         assertEquals(fso.getCreateDate().truncatedTo(ChronoUnit.MILLIS), parsedFso.getCreateDate());
-        assertEquals(fso.getBlobId(), parsedFso.getBlobId());
+        assertNull(parsedFso.getBlobId()); // should not be parsed, since transient
         assertEquals(fso.getFileName(), parsedFso.getFileName());
     }
 

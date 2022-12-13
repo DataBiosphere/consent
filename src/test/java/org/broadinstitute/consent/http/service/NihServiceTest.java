@@ -87,7 +87,7 @@ public class NihServiceTest {
         User user = new User();
         user.setUserId(1);
         when(userDAO.findUserById(any())).thenReturn(user);
-        nihUserAccount.setLinkedNihUsername("");
+        nihUserAccount.setNihUsername("");
         initService();
         try {
             service.authenticateNih(nihUserAccount, authUser, 1);

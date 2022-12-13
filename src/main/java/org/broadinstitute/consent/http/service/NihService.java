@@ -46,7 +46,7 @@ public class NihService implements ConsentLogger {
         if (Objects.isNull(user)) {
             throw new NotFoundException("User not found: " + authUser.getEmail());
         }
-        if (StringUtils.isNotEmpty(nihAccount.getLinkedNihUsername()) && !nihAccount.getLinkedNihUsername().isEmpty()) {
+        if (StringUtils.isNotEmpty(nihAccount.getNihUsername()) && !nihAccount.getNihUsername().isEmpty()) {
             nihAccount.setEraExpiration(generateEraExpirationDates());
             nihAccount.setStatus(true);
             try {
