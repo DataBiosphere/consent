@@ -90,6 +90,11 @@ public class FreeMarkerTemplateHelper {
         return generateDatasetDeniedTemplate(dataSubmitterName, datasetName, dacName, temp);
     }
 
+    public Writer getNewResearcherTemplate(String researcherName) throws IOException, TemplateException {
+        Template temp = freeMarkerConfig.getTemplate("new-researcher.html");
+        return generateNewResearcherTemplate(researcherName, temp);
+    }
+
 
     private Writer generateDataCustodianApprovalTemplate(List<DatasetMailDTO> datasets,
                                                          String dataDepositorName, String darCode,
@@ -110,6 +115,13 @@ public class FreeMarkerTemplateHelper {
 
     private Writer generateDatasetDeniedTemplate(String dataSubmitterName, String datasetName, String dacName, Template temp) throws IOException, TemplateException {
         DatasetDeniedModel model = new DatasetDeniedModel(dataSubmitterName, datasetName, dacName);
+        Writer out = new StringWriter();
+        temp.process(model, out);
+        return out;
+    }
+
+    private Writer generateNewResearcherTemplate(String researcherName, Template temp) throws IOException, TemplateException {
+        NewResearcherModel model = new NewResearcherModel(researcherName);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;

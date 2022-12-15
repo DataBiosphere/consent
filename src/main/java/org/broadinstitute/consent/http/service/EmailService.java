@@ -325,6 +325,20 @@ public class EmailService {
         );
     }
 
+    public void sendNewResearcherMessage(User researcher,
+                                         User signingOfficial) throws Exception {
+        Writer template = templateHelper.getNewResearcherTemplate(researcher.getDisplayName());
+        Optional<Response> response = sendGridAPI.sendDatasetDeniedMessage(signingOfficial.getEmail(), template);
+        saveEmailAndResponse(
+                response.orElse(null),
+                researcher.getUserId().toString(),
+                null,
+                researcher.getUserId(),
+                EmailType.NEW_RESEARCHER,
+                template
+        );
+    }
+
     private User findUserById(Integer id) throws IllegalArgumentException {
         User user = userDAO.findUserById(id);
         if (user == null) {

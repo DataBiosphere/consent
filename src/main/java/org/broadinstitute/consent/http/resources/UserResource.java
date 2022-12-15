@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
@@ -55,6 +56,7 @@ import java.util.stream.Collectors;
 public class UserResource extends Resource {
 
     private final UserService userService;
+    private final EmailService emailService;
     private final Gson gson = new Gson();
     private final SamService samService;
     private final DatasetService datasetService;
@@ -64,12 +66,13 @@ public class UserResource extends Resource {
     @Inject
     public UserResource(SamService samService, UserService userService,
                         DatasetService datasetService, SupportRequestService supportRequestService,
-                        AcknowledgementService acknowledgementService) {
+                        AcknowledgementService acknowledgementService, EmailService emailService) {
         this.samService = samService;
         this.userService = userService;
         this.datasetService = datasetService;
         this.supportRequestService = supportRequestService;
         this.acknowledgementService = acknowledgementService;
+        this.emailService = emailService;
     }
 
     @GET
