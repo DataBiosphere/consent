@@ -74,7 +74,7 @@ jobs:
       needs: [ tag-build-push ]
       with:
         new-version: ${{ needs.tag-build-push.outputs.sherlock-version }}
-        chart-name: 'duos'
+        chart-name: 'consent'
       permissions:
         contents: 'read'
         id-token: 'write'
@@ -84,7 +84,7 @@ jobs:
     needs: [ tag-build-push, report-to-sherlock ]
     with:
       new-version: ${{ needs.tag-build-push.outputs.sherlock-version }}
-      chart-name: 'duos'
+      chart-name: 'consent'
       environment-name: 'dev'
     secrets:
       sync-git-token: ${{ secrets.BROADBOT_TOKEN }}
