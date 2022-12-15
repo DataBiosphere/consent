@@ -10,8 +10,10 @@ import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -50,7 +52,7 @@ public class GsonUtilTest {
         boolean deserializationFailed = false;
         BlobId id = BlobId.of(RandomStringUtils.randomAlphabetic(20), RandomStringUtils.randomAlphabetic(20));
         try {
-            String blobIdAsJsonString = gson.toJson(id);
+            gson.toJson(id);
         } catch (RuntimeException rte) {
             serializationFailed = true;
         }
@@ -58,7 +60,7 @@ public class GsonUtilTest {
 
         try {
             String json = "{\"fileName\":\"asdf\", \"invalidField\":\"bot\", \"blobId\":\"test\"}";
-            BlobId parsed = gson.fromJson(json, BlobId.class);
+            gson.fromJson(json, BlobId.class);
         } catch (RuntimeException rte) {
             deserializationFailed = true;
         }
@@ -66,29 +68,47 @@ public class GsonUtilTest {
     }
 
     @Test
-    public void testBuildJsonWithCustomObjects() {
+    public void testBuildJsonWithCustomObjects_Serialization() {
         Gson gson = GsonUtil.buildGson();
 
-        FileStorageObject fso = new FileStorageObject();
-        fso.setCreateDate(Instant.now());
-        fso.setBlobId(BlobId.of(
-                RandomStringUtils.randomAlphabetic(5),
-                RandomStringUtils.randomAlphabetic(10)));
-        fso.setFileName(RandomStringUtils.randomAlphanumeric(20));
+        GsonTestObject obj = new GsonTestObject();
+        Instant now = Instant.now();
 
-        String fsoAsJsonString = gson.toJson(fso);
+        // date and instant should render the exact same time
+        obj.setDate(new Date(now.toEpochMilli()));
+        obj.setInstant(now);
 
-        JsonObject parsedJsonObj = gson.fromJson(fsoAsJsonString, JsonObject.class);
+        obj.setTransientField("should never serialize");
 
-        assertEquals(fso.getCreateDate().toEpochMilli(), parsedJsonObj.get("createDate").getAsLong());
-        assertNull(parsedJsonObj.get("blobId"));
-        assertEquals(fso.getFileName(), parsedJsonObj.get("fileName").getAsString());
+        String objAsJsonString = gson.toJson(obj);
 
-        FileStorageObject parsedFso = gson.fromJson(fsoAsJsonString, FileStorageObject.class);
+        JsonObject parsedJsonObj = gson.fromJson(objAsJsonString, JsonObject.class);
 
-        assertEquals(fso.getCreateDate().truncatedTo(ChronoUnit.MILLIS), parsedFso.getCreateDate());
-        assertNull(parsedFso.getBlobId()); // should not be parsed, since transient
-        assertEquals(fso.getFileName(), parsedFso.getFileName());
+        assertEquals(2, parsedJsonObj.size());
+        assertEquals(parsedJsonObj.get("date"), parsedJsonObj.get("instant"));
+        assertEquals(obj.getDate().getTime(), parsedJsonObj.get("date").getAsLong());
+        assertEquals(obj.getInstant().truncatedTo(ChronoUnit.MILLIS).toEpochMilli(), parsedJsonObj.get("instant").getAsLong());
+
+        assertFalse(parsedJsonObj.has("transientField"));
+    }
+
+    @Test
+    public void testBuildJsonWithCustomObjects_Deserialization() {
+        Gson gson = GsonUtil.buildGson();
+
+        String json = """
+                {
+                    "transientField": "asdfasdfa",
+                    "date": 123456,
+                    "instant": 567890
+                }
+                """;
+
+        GsonTestObject parsedObj = gson.fromJson(json, GsonTestObject.class);
+
+        assertEquals(123456, parsedObj.getDate().getTime());
+        assertEquals(567890, parsedObj.getInstant().toEpochMilli());
+        assertNull(parsedObj.getTransientField());
     }
 
 }
