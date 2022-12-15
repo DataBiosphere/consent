@@ -2,20 +2,19 @@ package org.broadinstitute.consent.http.models;
 
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.time.Instant;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
-import java.io.ByteArrayInputStream;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 public class FileStorageObjectTest {
 
@@ -60,5 +59,13 @@ public class FileStorageObjectTest {
         assertEquals("asdf", fso.getFileName());
         assertNull(fso.getBlobId());
         assertNull(fso.getUploadedFile());
+    }
+
+    @Test
+    public void testFileStorageObjectDeserializationFromString_no_BlobId() {
+        String json = "{\"fileName\":\"asdf\", \"invalidField\":\"bot\", \"blobId\":\"test\"}";
+
+        FileStorageObject fso = GsonUtil.buildGson().fromJson(json, FileStorageObject.class);
+        assertNull(fso.getBlobId());
     }
 }

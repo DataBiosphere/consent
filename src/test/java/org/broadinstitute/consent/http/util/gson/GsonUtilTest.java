@@ -10,10 +10,10 @@ import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class GsonUtilTest {
     @Test
@@ -46,16 +46,23 @@ public class GsonUtilTest {
     @Test
     public void testBlobIdJson() {
         Gson gson = GsonUtil.buildGson();
-
+        boolean serializationFailed = false;
+        boolean deserializationFailed = false;
         BlobId id = BlobId.of(RandomStringUtils.randomAlphabetic(20), RandomStringUtils.randomAlphabetic(20));
+        try {
+            String blobIdAsJsonString = gson.toJson(id);
+        } catch (RuntimeException rte) {
+            serializationFailed = true;
+        }
+        assertTrue(serializationFailed);
 
-        String blobIdAsJsonString = gson.toJson(id);
-
-        assertEquals("\"" + id.toGsUtilUri() + "\"", blobIdAsJsonString);
-
-        BlobId parsed = gson.fromJson(blobIdAsJsonString, BlobId.class);
-
-        assertEquals(id, parsed);
+        try {
+            String json = "{\"fileName\":\"asdf\", \"invalidField\":\"bot\", \"blobId\":\"test\"}";
+            BlobId parsed = gson.fromJson(json, BlobId.class);
+        } catch (RuntimeException rte) {
+            deserializationFailed = true;
+        }
+        assertTrue(deserializationFailed);
     }
 
     @Test
