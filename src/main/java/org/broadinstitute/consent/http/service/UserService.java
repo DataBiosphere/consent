@@ -103,6 +103,8 @@ public class UserService {
 
             Integer soIdAfterUpdate = this.getSigningOfficialForUser(userId);
 
+            // if SO went from not specified to specified (i.e. set for the first time)
+            // then send an email
             if (Objects.isNull(soIdBeforeUpdate) && Objects.nonNull(soIdAfterUpdate)) {
                 try {
                     emailService.sendNewResearcherMessage(

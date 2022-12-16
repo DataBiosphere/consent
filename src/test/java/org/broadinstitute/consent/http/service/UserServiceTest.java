@@ -75,6 +75,10 @@ public class UserServiceTest {
     @Mock
     private UserServiceDAO userServiceDAO;
 
+    @Mock
+    private EmailService emailService;
+
+
     private UserService service;
 
     @Before
@@ -83,7 +87,7 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO, samDAO, userServiceDAO);
+        service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO, samDAO, userServiceDAO, emailService);
     }
 
     @Test
@@ -102,6 +106,9 @@ public class UserServiceTest {
         // and the researcher & chairperson roles remain.
         when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(List.of(admin, researcher, chair));
         when(userDAO.findUserById(any())).thenReturn(user);
+        UserProperty prop = new UserProperty();
+        prop.setPropertyValue("1");
+        when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(List.of(prop));
         spy(userDAO);
         spy(userPropertyDAO);
         spy(userRoleDAO);
@@ -133,6 +140,125 @@ public class UserServiceTest {
         // Verify role additions/deletions.
         verify(userRoleDAO, times(1)).insertUserRoles(List.of(so), 1);
         verify(userRoleDAO, times(1)).removeUserRoles( 1, List.of(admin.getRoleId()));
+    }
+
+    @Test
+    public void testUpdateUserFieldsById_SendsEmailWhenSOInitalized() throws Exception {
+        UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+        UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+
+        User user = new User();
+        user.setUserId(1);
+
+        when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(List.of(admin, researcher, chair));
+        when(userDAO.findUserById(any())).thenReturn(user);
+        UserProperty prop = new UserProperty();
+        prop.setPropertyValue("1");
+        when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
+                .thenReturn(List.of()) // first time, no SO id
+                .thenReturn(List.of(prop)); // second time, has SO id
+        spy(userDAO);
+        spy(userPropertyDAO);
+        spy(userRoleDAO);
+        initService();
+        try {
+            UserUpdateFields fields = new UserUpdateFields();
+            fields.setSelectedSigningOfficialId(1);
+
+            assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
+            service.updateUserFieldsById(fields, user.getUserId());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        // We added 3 user property values, we should have props for them:
+        verify(userDAO, times(0)).updateDisplayName(any(), any());
+        verify(userDAO, times(0)).updateInstitutionId(any(), any());
+        verify(userDAO, times(0)).updateEmailPreference(any(), any());
+        verify(userDAO, times(0)).updateEraCommonsId(any(), any());
+        verify(userPropertyDAO, times(1)).insertAll(any());
+
+        verify(emailService, times(1)).sendNewResearcherMessage(any(), any());
+    }
+
+    @Test
+    public void testUpdateUserFieldsById_NoEmailOnSOChange() throws Exception {
+        UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+        UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+
+        User user = new User();
+        user.setUserId(1);
+
+        when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(List.of(admin, researcher, chair));
+        when(userDAO.findUserById(any())).thenReturn(user);
+        UserProperty prop1 = new UserProperty();
+        prop1.setPropertyValue("1");
+        UserProperty prop2 = new UserProperty();
+        prop2.setPropertyValue("2");
+        when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
+                .thenReturn(List.of(prop1)) // first SO id
+                .thenReturn(List.of(prop2)); // second SO id
+        spy(userDAO);
+        spy(userPropertyDAO);
+        spy(userRoleDAO);
+        initService();
+        try {
+            UserUpdateFields fields = new UserUpdateFields();
+            fields.setSelectedSigningOfficialId(2);
+
+            assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
+            service.updateUserFieldsById(fields, user.getUserId());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        // We added 3 user property values, we should have props for them:
+        verify(userDAO, times(0)).updateDisplayName(any(), any());
+        verify(userDAO, times(0)).updateInstitutionId(any(), any());
+        verify(userDAO, times(0)).updateEmailPreference(any(), any());
+        verify(userDAO, times(0)).updateEraCommonsId(any(), any());
+        verify(userPropertyDAO, times(1)).insertAll(any());
+
+        verify(emailService, times(0)).sendNewResearcherMessage(any(), any());
+    }
+
+    @Test
+    public void testUpdateUserFieldsById_NoEmailOnNoChange() throws Exception {
+        UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+        UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+
+        User user = new User();
+        user.setUserId(1);
+
+        when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(List.of(admin, researcher, chair));
+        when(userDAO.findUserById(any())).thenReturn(user);
+        UserProperty prop = new UserProperty();
+        prop.setPropertyValue("1");
+        when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
+                .thenReturn(List.of(prop)) // first SO id
+                .thenReturn(List.of(prop)); // second SO id
+        spy(userDAO);
+        spy(userPropertyDAO);
+        spy(userRoleDAO);
+        initService();
+        try {
+            UserUpdateFields fields = new UserUpdateFields();
+            fields.setSelectedSigningOfficialId(1);
+
+            assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
+            service.updateUserFieldsById(fields, user.getUserId());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        // We added 3 user property values, we should have props for them:
+        verify(userDAO, times(0)).updateDisplayName(any(), any());
+        verify(userDAO, times(0)).updateInstitutionId(any(), any());
+        verify(userDAO, times(0)).updateEmailPreference(any(), any());
+        verify(userDAO, times(0)).updateEraCommonsId(any(), any());
+        verify(userPropertyDAO, times(1)).insertAll(any());
+
+        verify(emailService, times(0)).sendNewResearcherMessage(any(), any());
     }
 
     @Test
