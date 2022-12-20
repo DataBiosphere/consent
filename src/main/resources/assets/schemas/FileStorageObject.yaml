@@ -20,23 +20,20 @@ properties:
     type: integer
     description: The user who created this file
   createDate:
-    type: string
-    format: date-time
-    description: Time of creation
+    type: integer
+    description: Time of creation, in epoch milliseconds
   updateUserId:
     type: integer
     description: The user who last updated this file
   updateDate:
-    type: string
-    format: date-time
-    description: Time of last update
+    type: integer
+    description: Time of last update, in epoch milliseconds
   deleteUserId:
     type: integer
     description: The user who deleted this file
   deleteDate:
-    type: string
-    format: date-time
-    description: Time of deletion
+    type: integer
+    description: Time of deletion, in epoch milliseconds
   deleted:
     type: boolean
     description: If true, this file is deleted / archived

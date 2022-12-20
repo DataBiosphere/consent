@@ -53,7 +53,7 @@ public class MetricsService {
   }
 
   public class DarMetricsSummary {
-    @JsonProperty final Timestamp updateDate;
+    final Timestamp updateDate;
     @JsonProperty final String projectTitle;
     @JsonProperty final String darCode;
     @JsonProperty final String nonTechRus;
